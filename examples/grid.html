@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Grid</title>
+  <script src="../build/mathbox-bundle.js"></script>
+</head>
+<body>
+  <script>
+    mathbox = mathBox();
+    three = mathbox.three;
+
+    mathbox.viewport({
+      'type': 'cartesian',
+      'range': [[0, 1], [0, 1], [0, 1]],
+      'position': [0, 0, 0],
+      'scale': [1, 1, 1],
+      'rotation': [0, 0, 0, 1],
+    });
+    mathbox.grid();
+  </script>
+</body>
+</html>

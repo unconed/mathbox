@@ -1,0 +1,27 @@
+{
+  "name": "mathbox",
+  "version": "0.0.1",
+  "description": "WebGL math graphing",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unconed/mathbox.git"
+  },
+  "main": "build/mathbox-bundle.js",
+  "dependencies": {
+    "three": ">=0.58.10"
+  },
+  "devDependencies": {
+    "gulp": "~3.4.0",
+    "gulp-uglify": "~0.1.0",
+    "gulp-concat": "~2.1.7",
+    "gulp-rename": "~0.2.2",
+    "gulp-karma": "0.0.2",
+    "karma": "~0.10.9",
+    "lodash": "~2.4.1",
+    "run-sequence": "~0.3.1",
+    "gulp-coffee": "~1.4.1",
+    "gulp-browserify": "~0.4.2"
+  },
+  "author": "Steven Wittens",
+  "license": "MIT"
+}
