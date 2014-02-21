@@ -1,5 +1,5 @@
-Primitive = require('./primitive').Primitive
+PrimitiveGroup = require('../primitive').PrimitiveGroup
 
-class Viewport extends Primitive
+class Viewport extends PrimitiveGroup
 
 exports.primitive = Viewport

@@ -13,7 +13,7 @@ Context = (function() {
       script = [];
     }
     this.factory = new Primitives.Factory;
-    this.model = new Stage.Model(camera, this.factory.make('root'));
+    this.model = new Stage.Model(this.factory.make('root'), camera);
     this.animator = new Stage.Animator(this.model);
     this.controller = new Stage.Controller(this.model);
     this.director = new Stage.Director(this.controller, this.animator, script);
@@ -40,7 +40,7 @@ Context = (function() {
 
 exports.Context = Context;
 
-},{"./primitives":4,"./render":9,"./stage":16}],2:[function(require,module,exports){
+},{"./primitives":4,"./render":10,"./stage":17}],2:[function(require,module,exports){
 var Context, mathBox;
 
 exports.version = '2';
@@ -131,7 +131,7 @@ Factory = (function() {
   };
 
   Factory.prototype.make = function(type, options) {
-    return this.types[type](options);
+    return new this.types[type](options);
   };
 
   return Factory;
@@ -140,13 +140,15 @@ Factory = (function() {
 
 exports.Factory = Factory;
 
-},{"./types":7}],4:[function(require,module,exports){
+},{"./types":6}],4:[function(require,module,exports){
 exports.Factory = require('./factory').Factory;
 
 exports.Primitive = require('./primitive').Primitive;
 
 },{"./factory":3,"./primitive":5}],5:[function(require,module,exports){
-var Primitive;
+var Primitive, PrimitiveGroup,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = (function() {
   function Primitive() {}
@@ -155,14 +157,79 @@ Primitive = (function() {
 
 })();
 
+PrimitiveGroup = (function(_super) {
+  __extends(PrimitiveGroup, _super);
+
+  function PrimitiveGroup() {
+    this.children = [];
+    PrimitiveGroup.__super__.constructor.apply(this, arguments);
+  }
+
+  PrimitiveGroup.prototype.add = function(primitive) {
+    return this.children.push(primitive);
+  };
+
+  PrimitiveGroup.prototype.remove = function(primitive) {
+    var child;
+    return this.children = (function() {
+      var _i, _len, _ref, _results;
+      _ref = this.children;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        child = _ref[_i];
+        if (child !== primitive) {
+          _results.push(child);
+        }
+      }
+      return _results;
+    }).call(this);
+  };
+
+  return PrimitiveGroup;
+
+})(Primitive);
+
 exports.Primitive = Primitive;
 
+exports.PrimitiveGroup = PrimitiveGroup;
+
 },{}],6:[function(require,module,exports){
-var Primitive, Root,
+var types;
+
+types = {
+  grid: require('./types/grid').primitive,
+  root: require('./types/root').primitive,
+  viewport: require('./types/viewport').primitive
+};
+
+exports.types = types;
+
+},{"./types/grid":7,"./types/root":8,"./types/viewport":9}],7:[function(require,module,exports){
+var Grid, Primitive,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Primitive = require('./primitive').Primitive;
+Primitive = require('../primitive').Primitive;
+
+Grid = (function(_super) {
+  __extends(Grid, _super);
+
+  function Grid() {
+    return Grid.__super__.constructor.apply(this, arguments);
+  }
+
+  return Grid;
+
+})(Primitive);
+
+exports.primitive = Grid;
+
+},{"../primitive":5}],8:[function(require,module,exports){
+var PrimitiveGroup, Root,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+PrimitiveGroup = require('../primitive').PrimitiveGroup;
 
 Root = (function(_super) {
   __extends(Root, _super);
@@ -173,26 +240,16 @@ Root = (function(_super) {
 
   return Root;
 
-})(Primitive);
+})(PrimitiveGroup);
 
 exports.primitive = Root;
 
-},{"./primitive":5}],7:[function(require,module,exports){
-var types;
-
-types = {
-  root: require('./root').primitive,
-  viewport: require('./viewport').primitive
-};
-
-exports.types = types;
-
-},{"./root":6,"./viewport":8}],8:[function(require,module,exports){
-var Primitive, Viewport,
+},{"../primitive":5}],9:[function(require,module,exports){
+var PrimitiveGroup, Viewport,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Primitive = require('./primitive').Primitive;
+PrimitiveGroup = require('../primitive').PrimitiveGroup;
 
 Viewport = (function(_super) {
   __extends(Viewport, _super);
@@ -203,16 +260,16 @@ Viewport = (function(_super) {
 
   return Viewport;
 
-})(Primitive);
+})(PrimitiveGroup);
 
 exports.primitive = Viewport;
 
-},{"./primitive":5}],9:[function(require,module,exports){
+},{"../primitive":5}],10:[function(require,module,exports){
 exports.Scene = require('./scene').Scene;
 
 exports.Render = require('./render').Render;
 
-},{"./render":10,"./scene":11}],10:[function(require,module,exports){
+},{"./render":11,"./scene":12}],11:[function(require,module,exports){
 var Render;
 
 Render = (function() {
@@ -224,7 +281,7 @@ Render = (function() {
 
 exports.Render = Render;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var Scene;
 
 Scene = (function() {
@@ -248,7 +305,7 @@ Scene = (function() {
 
 exports.Scene = Scene;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var Animator;
 
 Animator = (function() {
@@ -264,25 +321,29 @@ Animator = (function() {
 
 exports.Animator = Animator;
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var API;
 
 API = (function() {
-  function API(controller, animator, director, factory) {
-    this.controller = controller;
-    this.animator = animator;
-    this.director = director;
-    this.factory = factory;
-    this.factory.getTypes().forEach((function(_this) {
+  function API(_controller, _animator, _director, _factory) {
+    this._controller = _controller;
+    this._animator = _animator;
+    this._director = _director;
+    this._factory = _factory;
+    this._factory.getTypes().forEach((function(_this) {
       return function(type) {
         return _this[type] = function(options) {
           var primitive;
-          primitive = _this.factory.make(type, options);
-          return _this.controller = _this.controller.push(primitive);
+          primitive = _this._factory.make(type, options);
+          return _this._controller = _this._controller.add(primitive);
         };
       };
     })(this));
   }
+
+  API.prototype.end = function() {
+    return this._controller.pop();
+  };
 
   return API;
 
@@ -290,7 +351,7 @@ API = (function() {
 
 exports.API = API;
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var Controller;
 
 Controller = (function() {
@@ -299,18 +360,21 @@ Controller = (function() {
     this.director = director;
     this.previous = previous;
     this.target = target != null ? target : this.model.getRoot();
+    console.log('ctor', this.target);
   }
 
   Controller.prototype.add = function(primitive) {
     this.target.add(primitive);
+    console.log('add', this.target, primitive, primitive.children);
     if (primitive.children) {
-      return this.push;
+      return this.push(primitive);
+    } else {
+      return this;
     }
   };
 
   Controller.prototype.push = function(primitive) {
-    var controller;
-    return controller = new Controller(this.model, this.director, this, primitive);
+    return new Controller(this.model, this.director, this, primitive);
   };
 
   Controller.prototype.pop = function() {
@@ -324,7 +388,7 @@ Controller = (function() {
 
 exports.Controller = Controller;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var Director;
 
 Director = (function() {
@@ -339,7 +403,7 @@ Director = (function() {
 
 exports.Director = Director;
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 exports.Animator = require('./animator').Animator;
 
 exports.API = require('./api').API;
@@ -350,7 +414,7 @@ exports.Director = require('./director').Director;
 
 exports.Model = require('./model').Model;
 
-},{"./animator":12,"./api":13,"./controller":14,"./director":15,"./model":17}],17:[function(require,module,exports){
+},{"./animator":13,"./api":14,"./controller":15,"./director":16,"./model":18}],18:[function(require,module,exports){
 var Model;
 
 Model = (function() {

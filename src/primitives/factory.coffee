@@ -8,6 +8,6 @@ class Factory
     Object.keys @types
 
   make: (type, options) ->
-    @types[type](options)
+    new @types[type](options)
 
 exports.Factory = Factory

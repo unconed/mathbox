@@ -1,10 +1,13 @@
 class API
-  constructor: (@controller, @animator, @director, @factory) ->
+  constructor: (@_controller, @_animator, @_director, @_factory) ->
 
     # Primitive factory
-    @factory.getTypes().forEach (type) =>
+    @_factory.getTypes().forEach (type) =>
       @[type] = (options) =>
-        primitive = @factory.make(type, options)
-        @controller = @controller.push primitive
+        primitive = @_factory.make(type, options)
+        @_controller = @_controller.add primitive
+
+  end: () ->
+    @_controller.pop()
 
 exports.API = API

@@ -11,7 +11,7 @@ class Context
 
     # Stage: model + controllers
 
-    @model = new Stage.Model camera, @factory.make('root')
+    @model = new Stage.Model @factory.make('root'), camera
     @animator = new Stage.Animator @model
     @controller = new Stage.Controller @model
     @director = new Stage.Director @controller, @animator, script

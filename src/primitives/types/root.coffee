@@ -1,5 +1,5 @@
-Primitive = require('./primitive').Primitive
+PrimitiveGroup = require('../primitive').PrimitiveGroup
 
-class Root extends Primitive
+class Root extends PrimitiveGroup
 
 exports.primitive = Root

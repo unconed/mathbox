@@ -1,4 +1,4 @@
-Primitive = require('./primitive').Primitive
+Primitive = require('../primitive').Primitive
 
 class Grid extends Primitive
 
