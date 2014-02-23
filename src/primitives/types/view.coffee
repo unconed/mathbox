@@ -1,8 +1,8 @@
 Group = require('./group').Group
 
 class View extends Group
-  constructor: (options) ->
+  constructor: (options, attributes) ->
     @extend 'object', 'view'
-    super options
+    super options, attributes
 
 exports.View = View

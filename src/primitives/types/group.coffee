@@ -1,9 +1,9 @@
 Primitive = require('../primitive').Primitive
 
 class Group extends Primitive
-  constructor: (options) ->
+  constructor: (options, attributes) ->
     @children = []
-    super options
+    super options, attributes
 
   add: (primitive) ->
     @children.push primitive

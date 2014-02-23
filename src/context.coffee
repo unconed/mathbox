@@ -7,7 +7,8 @@ class Context
 
     # Primitives
 
-    @factory = new Primitives.Factory
+    @attributes = new Primitives.Attributes Primitives.Types.Traits
+    @factory = new Primitives.Factory Primitives.Types.Classes, @attributes
 
     # Stage: model + controllers
 
@@ -34,5 +35,6 @@ class Context
 
   update: () ->
     @animator.update()
+    @attributes.digest()
 
 exports.Context = Context

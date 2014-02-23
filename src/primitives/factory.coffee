@@ -1,13 +1,10 @@
-types = require('./types').types
-
 class Factory
-  constructor: () ->
-    @types = types
+  constructor: (@classes, @attributes) ->
 
   getTypes: () ->
-    Object.keys @types
+    Object.keys @classes
 
   make: (type, options) ->
-    new @types[type](options)
+    new @classes[type](options, @attributes)
 
 exports.Factory = Factory
