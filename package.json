@@ -19,8 +19,9 @@
     "karma": "~0.10.9",
     "lodash": "~2.4.1",
     "run-sequence": "~0.3.1",
-    "gulp-coffee": "~1.4.1",
-    "gulp-browserify": "~0.4.2"
+    "gulp-browserify": "~0.4.2",
+    "gulp-watch": "~0.5.0",
+    "coffeeify": "~0.6.0"
   },
   "author": "Steven Wittens",
   "license": "MIT"

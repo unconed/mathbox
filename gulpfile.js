@@ -7,6 +7,7 @@ var rename = require("gulp-rename");
 var karma = require('gulp-karma');
 var runSequence = require('run-sequence');
 var browserify = require('gulp-browserify');
+var watch = require('gulp-watch');
 
 var builds = {
   core: 'build/mathbox-core.js',
@@ -24,7 +25,7 @@ var vendor = [
 ];
 
 var core = [
-  '.tmp/browserify/index.js'
+  '.tmp/index.js'
 ];
 
 var bundle = vendor.concat(core);
@@ -37,18 +38,27 @@ var test = bundle.concat([
   'test/**/*.spec.js',
 ]);
 
+/*
 gulp.task('coffee', function () {
   return gulp.src(coffees)
     .pipe(coffee({bare: true}).on('error', gutil.log))
     .pipe(gulp.dest('.tmp'));
 });
+*/
 
 gulp.task('browserify', function () {
-  return gulp.src('.tmp/index.js', { read: false })
+  return gulp.src('src/index.coffee', { read: false })
       .pipe(browserify({
-        detectGlobals: false,
+        debug: false,
+        //detectGlobals: false,
+        bare: true,
+        transform: ['coffeeify'],
+        extensions: ['.coffee'],
       }))
-      .pipe(gulp.dest('.tmp/browserify/'))
+      .pipe(rename({
+        ext: ".js"
+      }))
+      .pipe(gulp.dest('.tmp/'))
 });
 
 gulp.task('core', function () {
@@ -80,6 +90,13 @@ gulp.task('test', function() {
     }));
 });
 
+gulp.task('watch', function () {
+  gulp.watch(coffees[0], function () {
+    gulp.run('default');
+  });
+});
+
+
 gulp.task('default', function (callback) {
-  runSequence('coffee', 'browserify', ['core', 'bundle'], 'uglify', callback);
+  runSequence('browserify', ['core', 'bundle'], 'uglify', callback);
 });

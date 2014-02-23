@@ -1,10 +1,12 @@
-exports.version = '2'
-
 mathBox = (options) ->
   options ?= {}
   options.plugins ?= ['core', 'mathbox']
   three = THREE.Bootstrap options
   three.mathbox
+
+window.MathBox = exports
+window.mathBox = exports.mathBox = mathBox
+exports.version = '2'
 
 ###
 ###
@@ -46,9 +48,3 @@ THREE.Bootstrap.registerPlugin 'mathbox',
 
 ###
 ###
-
-exports.mathBox = mathBox
-
-if window?
-  window.mathBox = mathBox
-  window.MathBox = exports

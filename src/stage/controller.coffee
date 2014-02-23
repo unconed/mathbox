@@ -1,16 +1,14 @@
 class Controller
-  constructor: (@model, @director, @previous, @target = @model.getRoot()) ->
-    console.log 'ctor', @target
+  constructor: (@model, @director) ->
 
-  add: (primitive) ->
-    @target.add primitive
-    console.log 'add', @target, primitive, primitive.children
-    if primitive.children then @push(primitive) else @
+  add: (primitive, target = @model.getRoot()) ->
 
-  push: (primitive) ->
-    new Controller(@model, @director, @, primitive)
+    # Backwards compatibility: push leafs into first child if present
+    if !primitive.children &&
+       target == @model.getRoot() &&
+       target.children.length
+      target = target.children[0]
 
-  pop: () ->
-    @previous ? @
+    target.add primitive
 
 exports.Controller = Controller

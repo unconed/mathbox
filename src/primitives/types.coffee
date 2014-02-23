@@ -1,6 +1,8 @@
 types =
-  grid: require('./types/grid').primitive
-  root: require('./types/root').primitive
-  viewport: require('./types/viewport').primitive
+  grid: require('./types/grid').Grid
+  root: require('./types/root').Root
+
+  view: require('./types/view').View
+  cartesian: require('./types/cartesian').Cartesian
 
 exports.types = types

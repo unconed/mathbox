@@ -1,7 +1,8 @@
 Group = require('./group').Group
 
-class Root extends Group
+class View extends Group
   constructor: (options) ->
+    @extend 'object', 'view'
     super options
 
-exports.Root = Root
+exports.View = View
