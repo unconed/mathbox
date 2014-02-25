@@ -1,10 +1,10 @@
 class Factory
-  constructor: (@classes, @attributes) ->
+  constructor: (@classes, @attributes, @renderables) ->
 
   getTypes: () ->
     Object.keys @classes
 
   make: (type, options) ->
-    new @classes[type](options, @attributes)
+    new @classes[type] options, @attributes, @renderables
 
-exports.Factory = Factory
+module.exports = Factory

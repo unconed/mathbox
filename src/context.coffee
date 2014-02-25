@@ -3,38 +3,29 @@ Render = require('./render')
 Primitives = require('./primitives')
 
 class Context
-  constructor: (scene, camera, script = []) ->
+  constructor: (gl, scene, camera, script = []) ->
 
-    # Primitives
+    @renderables = new Render.Factory gl, Render.Types.Classes
+    @scene       = new Render.Scene scene
 
-    @attributes = new Primitives.Attributes Primitives.Types.Traits
-    @factory = new Primitives.Factory Primitives.Types.Classes, @attributes
+    @attributes  = new Primitives.Attributes Primitives.Types.Traits
+    @primitives  = new Primitives.Factory Primitives.Types.Classes, @attributes, @renderables
 
-    # Stage: model + controllers
+    @model       = new Stage.Model camera
+    @controller  = new Stage.Controller @model, @scene, @primitives
+    @animator    = new Stage.Animator @model
+    @director    = new Stage.Director @controller, @animator, script
 
-    @model = new Stage.Model @factory.make('root'), camera
-    @animator = new Stage.Animator @model
-    @controller = new Stage.Controller @model
-    @director = new Stage.Director @controller, @animator, script
-
-    # Renderables
-
-    @scene = new Render.Scene scene, camera
-#    @render = new Render.Render @scene
-
-    # External API
-
-    @api = new Stage.API @controller, @animator, @director, @factory
+    @api         = new Stage.API @controller, @animator, @director
 
   init: () ->
-    @scene.init()
+    @scene.inject()
 
   destroy: () ->
-    @scene.destroy()
-    @model = @animator = @controller = @director = @factory = @api = null
+    @scene.unject()
 
   update: () ->
     @animator.update()
     @attributes.digest()
 
-exports.Context = Context
+module.exports = Context

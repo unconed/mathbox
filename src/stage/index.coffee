@@ -1,5 +1,5 @@
-exports.Animator   = require('./animator').Animator
-exports.API        = require('./api').API
-exports.Controller = require('./controller').Controller
-exports.Director   = require('./director').Director
-exports.Model      = require('./model').Model
+exports.Animator   = require('./animator')
+exports.API        = require('./api')
+exports.Controller = require('./controller')
+exports.Director   = require('./director')
+exports.Model      = require('./model')

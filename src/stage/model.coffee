@@ -1,7 +1,9 @@
 class Model
-  constructor: (@root, @camera) ->
+  constructor: (@camera) ->
+
+  setRoot: (@root) ->
 
   getRoot: () ->
     @root
 
-exports.Model = Model
+module.exports = Model

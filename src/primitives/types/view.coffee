@@ -1,8 +1,8 @@
-Group = require('./group').Group
+Group = require('./group')
 
 class View extends Group
-  constructor: (options, attributes) ->
-    @extend 'object', 'view'
-    super options, attributes
+  constructor: (options, attributes, factory) ->
+    @_extend 'object', 'view'
+    super options, attributes, factory
 
-exports.View = View
+module.exports = View

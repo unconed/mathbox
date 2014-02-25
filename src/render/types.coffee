@@ -1,4 +1,6 @@
-types =
-  lines: require('./types/lines').renderable
+Classes =
+  line: require('./meshes').Line
+  linebuffer: require('./buffer').LineBuffer
+  surfacebuffer: require('./buffer').SurfaceBuffer
 
-exports.types = types
+exports.Classes = Classes

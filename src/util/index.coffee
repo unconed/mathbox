@@ -1,0 +1,1 @@
+exports.Ticks = require('./ticks')

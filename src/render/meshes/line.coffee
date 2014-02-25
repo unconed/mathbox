@@ -1,3 +1,40 @@
+Renderable = require('../renderable')
+LineGeometry = require('../geometry').LineGeometry
+
+class Line extends Renderable
+  constructor: (@gl, @options, map) ->
+    @_map map, ['lineWidth', 'lineColor']
+
+    geometry = new LineGeometry
+      samples: 2
+      strips: 1
+      ribbons: 1
+
+    return
+
+    material = new THREE.ShaderMaterial({
+      attributes: this.attributes(),
+      uniforms: this.uniforms(),
+      vertexShader: getShader(this.vertexShader),
+      fragmentShader: getShader(this.fragmentShader),
+      side: THREE.DoubleSide,
+    });
+    material.defaultAttributeValues = null;
+
+    this._geometry = geometry;
+    this._material = material;
+    this.mesh = new THREE.Mesh(geometry, material);
+    this.mesh.frustumCulled = false;
+
+    @object = mesh
+
+  dispose: () ->
+    super
+
+module.exports = Line
+
+###
+
 Acko.Line = function (options) {
   if (options === undefined) return;
 
@@ -90,3 +127,5 @@ Acko.Line.prototype = _.extend(new THREE.Object3D(), {
   },
 
 });
+
+###

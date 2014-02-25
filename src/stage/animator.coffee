@@ -4,4 +4,4 @@ class Animator
   update: () ->
 
 
-exports.Animator = Animator
+module.exports = Animator

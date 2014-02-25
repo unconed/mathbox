@@ -1,13 +1,14 @@
 Classes =
-  grid: require('./grid').Grid
-  root: require('./root').Root
-
-  view: require('./view').View
-  cartesian: require('./cartesian').Cartesian
+  root: require('./root')
+  group: require('./group')
+  view: require('./view')
+  cartesian: require('./cartesian')
+  grid: require('./grid')
 
 Types =
 
   array: (type, size) ->
+    uniform: () -> type.uniform() + 'v'
     make: () ->
       (type.make() for i in [0...size])
     validate: (value, target) ->
@@ -22,11 +23,13 @@ Types =
       return
 
   bool: (value) ->
+    uniform: () -> 'f'
     make: () -> !!value
     validate: (value) ->
       !!value
 
   number: (value = 0) ->
+    uniform: () -> 'f'
     make: () -> +value
     validate: (value) ->
       +value || 0
@@ -39,6 +42,7 @@ Types =
   scale: (value) -> new Types.string(value)
 
   vec2: (x = 0, y = 0) ->
+    uniform: () -> 'v2'
     make:
       () -> new THREE.Vector2 x, y
     validate: (value, target) ->
@@ -52,6 +56,7 @@ Types =
       return
 
   vec3: (x = 0, y = 0, z = 0) ->
+    uniform: () -> 'v3'
     make:
       () -> new THREE.Vector3 x, y, z
     validate: (value, target) ->
@@ -66,6 +71,7 @@ Types =
       return
 
   vec4: (x = 0, y = 0, z = 0, w = 0) ->
+    uniform: () -> 'v4'
     make:
       () -> new THREE.Vector4 x, y, z, w
     validate: (value, target) ->
@@ -83,6 +89,7 @@ Types =
   quat: (x = 0, y = 0, z = 0, w = 1) ->
     vec4 = Types.vec4(x, y, z, w)
 
+    uniform: () -> 'v4'
     make:
       () -> new THREE.Quaternion
     validate: (value, target) ->
@@ -95,6 +102,7 @@ Types =
   color: (r = .5, g = .5, b = .5) ->
     vec3 = Types.vec3(r, g, b)
 
+    uniform: () -> 'v3'
     make: () -> new THREE.Vector3()
     validate: (value, target) ->
       if value == +value
@@ -110,6 +118,7 @@ Types =
 
 Traits =
   object:
+    visible: Types.bool()
     position: Types.vec4()
     rotation: Types.quat()
     scale: Types.vec4(1, 1, 1, 1)

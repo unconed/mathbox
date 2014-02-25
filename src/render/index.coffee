@@ -1,3 +1,5 @@
-exports.Scene  = require('./scene').Scene
-exports.Render = require('./render').Render
+exports.Scene      = require('./scene')
+exports.Factory    = require('./factory')
+exports.Renderable = require('./scene')
 
+exports.Types   = require('./types')

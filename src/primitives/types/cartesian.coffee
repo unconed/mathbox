@@ -1,8 +1,8 @@
-View = require('./view').View
+View = require('./view')
 
 class Cartesian extends View
-  constructor: (options, attributes) ->
-    #@extend 'object', 'view'
-    super options, attributes
+  constructor: (options, attributes, factory) ->
+    #@_extend 'object', 'view'
+    super options, attributes, factory
 
-exports.Cartesian = Cartesian
+module.exports = Cartesian
