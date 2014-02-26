@@ -5,7 +5,7 @@ Traits =
     position:    Types.vec4()
     rotation:    Types.quat()
     scale:       Types.vec4(1, 1, 1, 1)
-    visible:     Types.bool()
+    visible:     Types.bool(true)
   style:
     opacity:     Types.number(1)
     color:       Types.color()

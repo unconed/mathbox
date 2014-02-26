@@ -41,7 +41,7 @@ class Data
 
     # Get/set
     get = (key) =>
-      @[key].value
+      @[key]?.value
     set = (key, value, ignore) =>
       replace = validate key, value, @[key].value
       @[key].value = replace if replace?
@@ -49,7 +49,7 @@ class Data
 
     object.get = (key) ->
       if key?
-        get(key) if validators[key]?
+        get(key)
       else
         out = {}
         out[key] = value.value for key, value of @
@@ -84,14 +84,16 @@ class Data
 
       changes[key] = @[key].value
 
+    event =
+      type: 'change'
+      changed: null
+
     digest = () ->
-      changed = changes
+      event.changed = changes
       changes = {}
       dirty = false
 
-      object.trigger
-        type: 'change'
-        changed: changed
+      object.trigger event
 
     # Add in traits
     values = {}

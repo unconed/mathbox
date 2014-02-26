@@ -15,7 +15,7 @@ class LineBuffer extends Buffer
 
     @data = new Float32Array @samples * @channels
     @texture = new Texture @gl, @samples, @history, @channels
-    @index = 0;
+    @index = 0
 
     @dataPointer = @uniforms.dataPointer.value
 
