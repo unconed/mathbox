@@ -38,7 +38,7 @@ class Texture
     @uniforms =
       dataResolution:
         type: 'v2'
-        value: new THREE.Vector2(1 / @width, 1 / @height)
+        value: new THREE.Vector2 1 / @width, 1 / @height
       dataTexture:
         type: 't'
         value: @textureObject

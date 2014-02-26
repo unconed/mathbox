@@ -5,10 +5,10 @@ Primitives = require('./primitives')
 class Context
   constructor: (gl, scene, camera, script = []) ->
 
-    @renderables = new Render.Factory gl, Render.Types.Classes
     @scene       = new Render.Scene scene
+    @renderables = new Render.Factory gl, Render.Types.Classes
 
-    @attributes  = new Primitives.Attributes Primitives.Types.Traits
+    @attributes  = new Primitives.Attributes Primitives.Types.Traits, Primitives.Types.Types
     @primitives  = new Primitives.Factory Primitives.Types.Classes, @attributes, @renderables
 
     @model       = new Stage.Model camera

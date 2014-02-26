@@ -1,13 +1,17 @@
 ###
  Custom attribute model
- - Stores attributes in three.js uniform-style object so they can be passed around by reference
+ - Stores attributes in three.js uniform-style objects so they can be passed around by reference into renderables
  - Avoids copying value objects on set
  - Coalesces update notifications per object
 ###
 
 class Attributes
-  constructor: (@traits) ->
+  constructor: (@traits, @types) ->
     @pending = []
+
+  make: (type) ->
+    type: type.uniform?()
+    value: type.make()
 
   getSpec: (name) ->
     @traits[name]
@@ -30,6 +34,7 @@ class Attributes
       throw Error("Infinite loop in Data::digest")
 
     return
+
 
 class Data
   constructor: (object, traits = [], attributes) ->

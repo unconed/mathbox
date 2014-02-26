@@ -9,7 +9,7 @@
  @param bias - Integer to bias divisions one or more levels up or down (to create nested scales)
 ###
 
-linear = (min, max, n, unit, scale, inclusive, bias) ->
+linear = (min, max, n, unit, base, inclusive, bias) ->
   # Desired
   n ||= 10
   bias ||= 0
@@ -21,12 +21,12 @@ linear = (min, max, n, unit, scale, inclusive, bias) ->
   # Round to the floor'd power of 'scale'
   unit ||= 1
   scale ||= 10
-  ref = unit * (bias + Math.pow(scale, Math.floor(Math.log(ideal / unit) / Math.log(scale))))
+  ref = unit * (bias + Math.pow(base, Math.floor(Math.log(ideal / unit) / Math.log(base))))
 
   # Make derived steps at sensible factors.
-  factors = if      scale % 2 == 0 then [scale / 2, 1, 1/2]
-            else if scale % 3 == 0 then [scale / 3, 1, 1/3]
-            else                        [1]
+  factors = if      base % 2 == 0 then [base / 2, 1, 1/2]
+            else if base % 3 == 0 then [base / 3, 1, 1/3]
+            else                       [1]
   steps = ref * factor for factor in factors
 
   # Find step size closest to ideal.
@@ -54,7 +54,9 @@ linear = (min, max, n, unit, scale, inclusive, bias) ->
  Generate logarithmically spaced ticks in a range at sensible positions.
 ###
 
-log = function (min, max, n, unit, scale, inclusive, bias) ->
+log = function (min, max, n, unit, base, inclusive, bias) ->
+  throw "Log ticks not yet implemented."
+  ###
   base = Math.log(scale)
   ibase = 1 / base
   l = (x) -> Math.log(x) * ibase
@@ -70,5 +72,13 @@ log = function (min, max, n, unit, scale, inclusive, bias) ->
     ref = Math.exp floor * base
     value = ref * Math.round 1 + (base - 1) * frac
 
+  ###
+
+make = (type, min, max, ticks, unit, base, inclusive, bias) ->
+  switch scale
+    when 'linear' then Ticks.linear min, max, ticks, unit, base, inclusive, bias
+    when 'log'    then Ticks.log    min, max, ticks, unit, base, inclusive, bias
+
+exports.make = make
 exports.linear = linear
 exports.log = log

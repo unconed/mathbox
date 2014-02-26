@@ -18,6 +18,13 @@ class Primitive
 
   _change: (changed) ->
 
+  _inherit: (trait) ->
+    object = @
+    while object
+      return object if trait in object.traits
+      object = object.parent
+    null
+
   _added: (parent) ->
     @parent = parent
     @root = parent.root

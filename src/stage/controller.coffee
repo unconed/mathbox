@@ -24,7 +24,6 @@ class Controller
     target.add primitive
 
   remove: (primitive) ->
-    primitive.unmake()
 
     # Remove primitive from tree
     target = primitive.parent || @model.getRoot()

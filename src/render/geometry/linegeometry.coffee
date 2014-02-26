@@ -1,6 +1,12 @@
 Geometry = require('./geometry')
 
 class LineGeometry extends Geometry
+
+  shaderAttributes: () ->
+    line:
+      type: 'v2'
+      value: null
+
   constructor: (options) ->
     THREE.BufferGeometry.call @
 
