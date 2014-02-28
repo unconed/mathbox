@@ -3,11 +3,14 @@ class Primitive
     @attributes = @_attributes.apply(@, @traits)
     @parent = null
     @root = null
-    @ancestors = []
+    @inherited = []
+    @traits ?= []
     @set options, null, true
 
     @on 'change', (event) =>
       @_change event.changed if @root
+
+  # Construction of renderables
 
   rebuild: () ->
     if @root
@@ -17,43 +20,60 @@ class Primitive
   _make: () ->
   _unmake: () ->
 
+  # Attribute changes
+
   _change: (changed) ->
 
-  _inherit: (trait) ->
-    object = @
-    while object
-      if trait in object.traits
+  _listen: (object, key) ->
+    return if object == @
 
-        handler = (event) =>
-          @_change event.changed if @root
-        @ancestors.push [object, handler]
-        object.on 'change', handler
+    handler = (event) =>
+      changed = event.changed
+      @_change changed if @root and changed[key]?
+    object.on 'change', handler
 
-        return object
-      object = object.parent
+    inherited = [object, handler]
+    @inherited.push inherited
 
-    null
+  _unlisten: (inherited) ->
+    [object, handler] = inherited
+    object.off 'change', handler
+
+  # Trait inheritance
+  _traits: () ->
+    @traits ?= []
+    @traits = [].concat.apply @traits, arguments
+
+  _inherit: (trait, name, target = @, key) ->
+
+    key ?= [trait, name].join '.'
+
+    if @get(key)?
+      if !@get([trait, 'inherit'].join '.')
+        target._listen @, key
+        return @
+
+    if @parent?
+      @parent._inherit trait, name, target, key
+    else
+      null
 
   _unherit: () ->
-    for ancestor in @ancestors
-      [object, handler] = ancestor
-      object.off 'change', handler
-    @ancestors = []
+    @_unlisten(inherited) for inherited in @inherited
+    @inherited = []
 
+  # Add/removal callback
   _added: (parent) ->
     @parent = parent
     @root = parent.root
     @_make()
-    @_change {}
+    @_change {}, true
 
   _removed: () ->
     @_unmake()
     @root = @parent = null
 
-  _extend: () ->
-    @traits ?= []
-    @traits = [].concat.apply @traits, arguments
-
+  # Emit/withdraw renderables
   _render: (renderable) ->
     @trigger
       type: 'render'

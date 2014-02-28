@@ -4,7 +4,7 @@ Types = require('./types')
 
 class Grid extends Primitive
   constructor: (options, attributes, factory) ->
-    @_extend 'line', 'object', 'grid', 'axis:axis[0]', 'axis:axis[1]'
+    @_traits 'line', 'object', 'grid', 'axis:axis[0]', 'axis:axis[1]'
     super options, attributes, factory
 
     @widths  = []

@@ -2,14 +2,14 @@ Primitive = require('../primitive')
 
 class Axis extends Primitive
   constructor: (options, attributes, factory) ->
-    @_extend 'object', 'style', 'line', 'axis'
+    @_traits 'object', 'style', 'line', 'axis'
     super options, attributes, factory
 
     @line   = null
 
   _make: () ->
 
-    @inherit = @_inherit 'view'
+    @inherit = @_inherit 'view', 'range'
 
     types = @_attributes.types
 
@@ -39,27 +39,33 @@ class Axis extends Primitive
     @line = null
     @_unherit()
 
-  _change: (changed) ->
+  _change: (changed, first) ->
     @rebuild() if changed['axis.detail']?
 
-    inherit   = @get 'axis.inherit'
-    dimension = @get 'axis.dimension'
+    if changed['view.range']? or
+       changed['axis.range']? or
+       changed['axis.dimension']? or
+       changed['axis.inherit']? or
+       first
 
-    if inherit and @inherit
-      ranges = @inherit.get 'view.range'
-      range  = ranges[dimension - 1]
-    else
-      range  = @get 'axis.range'
+      inherit   = @get 'axis.inherit'
+      dimension = @get 'axis.dimension'
 
-    min    = range.x
-    max    = range.y
+      if inherit and @inherit
+        ranges = @inherit.get 'view.range'
+        range  = ranges[dimension - 1]
+      else
+        range  = @get 'axis.range'
 
-    x = if dimension == 1 then 1 else 0
-    y = if dimension == 2 then 1 else 0
-    z = if dimension == 3 then 1 else 0
-    w = if dimension == 4 then 1 else 0
+      min    = range.x
+      max    = range.y
 
-    @axisPosition.set(x, y, z, w).multiplyScalar(min)
-    @axisLength.set(x, y, z, w).multiplyScalar(max - min)
+      x = if dimension == 1 then 1 else 0
+      y = if dimension == 2 then 1 else 0
+      z = if dimension == 3 then 1 else 0
+      w = if dimension == 4 then 1 else 0
+
+      @axisPosition.set(x, y, z, w).multiplyScalar(min)
+      @axisLength.set(x, y, z, w).multiplyScalar(max - min)
 
 module.exports = Axis

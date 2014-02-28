@@ -15,6 +15,7 @@ Traits =
   line:
     width:       Types.number(.01)
   view:
+    inherit:     Types.bool(false)
     range:       Types.array(Types.vec2(-1, 1), 4)
   axis:
     inherit:     Types.bool(true)

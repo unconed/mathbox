@@ -350,8 +350,7 @@ exports.Types = require('./types');
 
 
 },{"./attributes":3,"./factory":4,"./primitive":6,"./types":11}],6:[function(require,module,exports){
-var Primitive,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+var Primitive;
 
 Primitive = (function() {
   function Primitive(options, _attributes, _factory) {
@@ -360,7 +359,10 @@ Primitive = (function() {
     this.attributes = this._attributes.apply(this, this.traits);
     this.parent = null;
     this.root = null;
-    this.ancestors = [];
+    this.inherited = [];
+    if (this.traits == null) {
+      this.traits = [];
+    }
     this.set(options, null, true);
     this.on('change', (function(_this) {
       return function(event) {
@@ -384,55 +386,78 @@ Primitive = (function() {
 
   Primitive.prototype._change = function(changed) {};
 
-  Primitive.prototype._inherit = function(trait) {
-    var handler, object;
-    object = this;
-    while (object) {
-      if (__indexOf.call(object.traits, trait) >= 0) {
-        handler = (function(_this) {
-          return function(event) {
-            if (_this.root) {
-              return _this._change(event.changed);
-            }
-          };
-        })(this);
-        this.ancestors.push([object, handler]);
-        object.on('change', handler);
-        return object;
-      }
-      object = object.parent;
+  Primitive.prototype._listen = function(object, key) {
+    var handler, inherited;
+    if (object === this) {
+      return;
     }
-    return null;
+    handler = (function(_this) {
+      return function(event) {
+        var changed;
+        changed = event.changed;
+        if (_this.root && (changed[key] != null)) {
+          return _this._change(changed);
+        }
+      };
+    })(this);
+    object.on('change', handler);
+    inherited = [object, handler];
+    return this.inherited.push(inherited);
+  };
+
+  Primitive.prototype._unlisten = function(inherited) {
+    var handler, object;
+    object = inherited[0], handler = inherited[1];
+    return object.off('change', handler);
+  };
+
+  Primitive.prototype._traits = function() {
+    if (this.traits == null) {
+      this.traits = [];
+    }
+    return this.traits = [].concat.apply(this.traits, arguments);
+  };
+
+  Primitive.prototype._inherit = function(trait, name, target, key) {
+    if (target == null) {
+      target = this;
+    }
+    if (key == null) {
+      key = [trait, name].join('.');
+    }
+    if (this.get(key) != null) {
+      if (!this.get([trait, 'inherit'].join('.'))) {
+        target._listen(this, key);
+        return this;
+      }
+    }
+    if (this.parent != null) {
+      return this.parent._inherit(trait, name, target, key);
+    } else {
+      return null;
+    }
   };
 
   Primitive.prototype._unherit = function() {
-    var ancestor, handler, object, _i, _len, _ref;
-    _ref = this.ancestors;
+    var inherited, _i, _len, _ref;
+    _ref = this.inherited;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      ancestor = _ref[_i];
-      object = ancestor[0], handler = ancestor[1];
-      object.off('change', handler);
+      inherited = _ref[_i];
+      this._unlisten(inherited);
     }
-    return this.ancestors = [];
+    return this.inherited = [];
   };
 
   Primitive.prototype._added = function(parent) {
     this.parent = parent;
     this.root = parent.root;
     this._make();
-    return this._change({});
+    return this._change({}, true);
   };
 
   Primitive.prototype._removed = function() {
     this._unmake();
     return this.root = this.parent = null;
-  };
-
-  Primitive.prototype._extend = function() {
-    if (this.traits == null) {
-      this.traits = [];
-    }
-    return this.traits = [].concat.apply(this.traits, arguments);
   };
 
   Primitive.prototype._render = function(renderable) {
@@ -469,14 +494,14 @@ Axis = (function(_super) {
   __extends(Axis, _super);
 
   function Axis(options, attributes, factory) {
-    this._extend('object', 'style', 'line', 'axis');
+    this._traits('object', 'style', 'line', 'axis');
     Axis.__super__.constructor.call(this, options, attributes, factory);
     this.line = null;
   }
 
   Axis.prototype._make = function() {
     var detail, samples, types, uniforms;
-    this.inherit = this._inherit('view');
+    this.inherit = this._inherit('view', 'range');
     types = this._attributes.types;
     uniforms = {
       lineWidth: this.attributes['line.width'],
@@ -503,27 +528,29 @@ Axis = (function(_super) {
     return this._unherit();
   };
 
-  Axis.prototype._change = function(changed) {
+  Axis.prototype._change = function(changed, first) {
     var dimension, inherit, max, min, range, ranges, w, x, y, z;
     if (changed['axis.detail'] != null) {
       this.rebuild();
     }
-    inherit = this.get('axis.inherit');
-    dimension = this.get('axis.dimension');
-    if (inherit && this.inherit) {
-      ranges = this.inherit.get('view.range');
-      range = ranges[dimension - 1];
-    } else {
-      range = this.get('axis.range');
+    if ((changed['view.range'] != null) || (changed['axis.range'] != null) || (changed['axis.dimension'] != null) || (changed['axis.inherit'] != null) || first) {
+      inherit = this.get('axis.inherit');
+      dimension = this.get('axis.dimension');
+      if (inherit && this.inherit) {
+        ranges = this.inherit.get('view.range');
+        range = ranges[dimension - 1];
+      } else {
+        range = this.get('axis.range');
+      }
+      min = range.x;
+      max = range.y;
+      x = dimension === 1 ? 1 : 0;
+      y = dimension === 2 ? 1 : 0;
+      z = dimension === 3 ? 1 : 0;
+      w = dimension === 4 ? 1 : 0;
+      this.axisPosition.set(x, y, z, w).multiplyScalar(min);
+      return this.axisLength.set(x, y, z, w).multiplyScalar(max - min);
     }
-    min = range.x;
-    max = range.y;
-    x = dimension === 1 ? 1 : 0;
-    y = dimension === 2 ? 1 : 0;
-    z = dimension === 3 ? 1 : 0;
-    w = dimension === 4 ? 1 : 0;
-    this.axisPosition.set(x, y, z, w).multiplyScalar(min);
-    return this.axisLength.set(x, y, z, w).multiplyScalar(max - min);
   };
 
   return Axis;
@@ -547,6 +574,16 @@ Cartesian = (function(_super) {
     Cartesian.__super__.constructor.call(this, options, attributes, factory);
   }
 
+  Cartesian.prototype._make = function() {
+    return this.inherit = this._inherit('view');
+  };
+
+  Cartesian.prototype._unmake = function() {
+    return this._unherit();
+  };
+
+  Cartesian.prototype._change = function(changed) {};
+
   return Cartesian;
 
 })(View);
@@ -569,7 +606,7 @@ Grid = (function(_super) {
   __extends(Grid, _super);
 
   function Grid(options, attributes, factory) {
-    this._extend('line', 'object', 'grid', 'axis:axis[0]', 'axis:axis[1]');
+    this._traits('line', 'object', 'grid', 'axis:axis[0]', 'axis:axis[1]');
     Grid.__super__.constructor.call(this, options, attributes, factory);
     this.widths = [];
     this.lines = null;
@@ -778,6 +815,7 @@ Traits = {
     width: Types.number(.01)
   },
   view: {
+    inherit: Types.bool(false),
     range: Types.array(Types.vec2(-1, 1), 4)
   },
   axis: {
@@ -1061,7 +1099,7 @@ View = (function(_super) {
   __extends(View, _super);
 
   function View(options, attributes, factory) {
-    this._extend('object', 'style', 'view');
+    this._traits('object', 'view');
     View.__super__.constructor.call(this, options, attributes, factory);
   }
 
