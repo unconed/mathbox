@@ -13,7 +13,7 @@ Traits =
     position:    Types.object()
     color:       Types.object()
   line:
-    width:       Types.number(1)
+    width:       Types.number(.01)
   view:
     range:       Types.array(Types.vec2(-1, 1), 4)
   axis:

@@ -360,6 +360,7 @@ Primitive = (function() {
     this.attributes = this._attributes.apply(this, this.traits);
     this.parent = null;
     this.root = null;
+    this.ancestors = [];
     this.set(options, null, true);
     this.on('change', (function(_this) {
       return function(event) {
@@ -384,15 +385,35 @@ Primitive = (function() {
   Primitive.prototype._change = function(changed) {};
 
   Primitive.prototype._inherit = function(trait) {
-    var object;
+    var handler, object;
     object = this;
     while (object) {
       if (__indexOf.call(object.traits, trait) >= 0) {
+        handler = (function(_this) {
+          return function(event) {
+            if (_this.root) {
+              return _this._change(event.changed);
+            }
+          };
+        })(this);
+        this.ancestors.push([object, handler]);
+        object.on('change', handler);
         return object;
       }
       object = object.parent;
     }
     return null;
+  };
+
+  Primitive.prototype._unherit = function() {
+    var ancestor, handler, object, _i, _len, _ref;
+    _ref = this.ancestors;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      ancestor = _ref[_i];
+      object = ancestor[0], handler = ancestor[1];
+      object.off('change', handler);
+    }
+    return this.ancestors = [];
   };
 
   Primitive.prototype._added = function(parent) {
@@ -478,7 +499,8 @@ Axis = (function(_super) {
   Axis.prototype._unmake = function() {
     this._unrender(this.line);
     this.line.dispose();
-    return this.line = null;
+    this.line = null;
+    return this._unherit();
   };
 
   Axis.prototype._change = function(changed) {
@@ -753,7 +775,7 @@ Traits = {
     color: Types.object()
   },
   line: {
-    width: Types.number(1)
+    width: Types.number(.01)
   },
   view: {
     range: Types.array(Types.vec2(-1, 1), 4)

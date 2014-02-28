@@ -3,6 +3,7 @@ class Primitive
     @attributes = @_attributes.apply(@, @traits)
     @parent = null
     @root = null
+    @ancestors = []
     @set options, null, true
 
     @on 'change', (event) =>
@@ -21,9 +22,23 @@ class Primitive
   _inherit: (trait) ->
     object = @
     while object
-      return object if trait in object.traits
+      if trait in object.traits
+
+        handler = (event) =>
+          @_change event.changed if @root
+        @ancestors.push [object, handler]
+        object.on 'change', handler
+
+        return object
       object = object.parent
+
     null
+
+  _unherit: () ->
+    for ancestor in @ancestors
+      [object, handler] = ancestor
+      object.off 'change', handler
+    @ancestors = []
 
   _added: (parent) ->
     @parent = parent

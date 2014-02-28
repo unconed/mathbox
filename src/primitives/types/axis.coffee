@@ -37,6 +37,7 @@ class Axis extends Primitive
     @line.dispose()
 
     @line = null
+    @_unherit()
 
   _change: (changed) ->
     @rebuild() if changed['axis.detail']?
