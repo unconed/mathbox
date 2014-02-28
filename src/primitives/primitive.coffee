@@ -1,6 +1,6 @@
 class Primitive
-  constructor: (options, attributes, @_factory) ->
-    @_attributes = attributes.apply(@, @traits)
+  constructor: (options, @_attributes, @_factory) ->
+    @attributes = @_attributes.apply(@, @traits)
     @parent = null
     @root = null
     @set options, null, true
@@ -29,6 +29,7 @@ class Primitive
     @parent = parent
     @root = parent.root
     @_make()
+    @_change {}
 
   _removed: () ->
     @_unmake()
@@ -38,15 +39,15 @@ class Primitive
     @traits ?= []
     @traits = [].concat.apply @traits, arguments
 
-  _render: (object) ->
+  _render: (renderable) ->
     @trigger
       type: 'render'
-      object: object
+      renderable: renderable
 
-  _unrender: (object) ->
+  _unrender: (renderable) ->
     @trigger
       type: 'unrender'
-      object: object
+      renderable: renderable
 
 THREE.Binder.apply Primitive::
 

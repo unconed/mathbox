@@ -16,15 +16,16 @@ Traits =
     width:       Types.number(1)
   view:
     range:       Types.array(Types.vec2(-1, 1), 4)
-  grid:
-    axes:        Types.vec2(1, 2)
   axis:
     inherit:     Types.bool(true)
     range:       Types.vec2(-1, 1)
-    ticks:       Types.number(10)
+    dimension:   Types.number(1)
+    detail:      Types.number(1)
+  ticks:
+    divide:      Types.number(10)
     unit:        Types.number(1)
     base:        Types.number(10)
-    detail:      Types.number(2)
     scale:       Types.scale()
+    size:        Types.number(5)
 
 module.exports = Traits

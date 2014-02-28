@@ -1,6 +1,6 @@
 Primitive = require('../primitive')
-Ticks = require('../util').Ticks
-Types = require('.')
+Ticks = require('../../util').Ticks
+Types = require('./types')
 
 class Grid extends Primitive
   constructor: (options, attributes, factory) ->
@@ -14,20 +14,20 @@ class Grid extends Primitive
 
   _make: () ->
 
-    @inherit = _inherit 'view'
+    @inherit = @_inherit 'view'
 
     uniforms =
-      lineWidth:   @_attributes['line.width']
-      lineColor:   @_attributes['style.color']
-      lineOpacity: @_attributes['style.opacity']
+      lineWidth:   @attributes['line.width']
+      lineColor:   @attributes['style.color']
+      lineOpacity: @attributes['style.opacity']
 
     axis = (prefix, dimension) ->
-      types = attributes.types
+      types = @_attributes.types
 
       grid =
-        gridRange:  attributes.make types.vec2 -1, 1
-        gridAxis:   attributes.make types.vec3 0, 2, 0
-        gridOffset: attributes.make types.vec2 0, -1, 0
+        gridRange:  @_attributes.make types.vec2 -1, 1
+        gridAxis:   @_attributes.make types.vec3 0, 2, 0
+        gridOffset: @_attributes.make types.vec2 0, -1, 0
       grid[key] = value for key, value of uniforms
 
       ticks = @get prefix + 'ticks'
@@ -64,7 +64,7 @@ class Grid extends Primitive
     @lines   = null
     @buffers = null
 
-  change: (changed) ->
+  _change: (changed) ->
 
     return @rebuild() if changed['axis1.ticks']? || changed['axis2.ticks']?
 

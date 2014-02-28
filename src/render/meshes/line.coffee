@@ -1,28 +1,11 @@
 vertexShader = """
 
-uniform vec2 gridRange;
-uniform vec4 gridAxis;
-uniform vec4 gridOffset;
-
-vec2 mapUV(vec2 uv) {
-  
-}
-
-vec4 transformData(vec2 uv, vec4 data) {
-  return vec4(data.r, 0, 0, 0) + gridAxis * uv.x + gridOffset;
-}
-
-vec3 getViewPos(vec4 position) {
-  return (modelViewMatrix * vec4(position.xyz, 1.0)).xyz
-}
+/*
+//Data sampler
 
 uniform sampler2D dataTexture;
 uniform vec2 dataResolution;
 uniform vec2 dataPointer;
-
-uniform float lineWidth;
-
-attribute vec2 line;
 
 vec2 mapUV(vec2 xy) {
   return vec2(xy.y, 0);
@@ -34,12 +17,43 @@ vec4 sampleData(vec2 xy) {
   return transformData(uv, sample);
 }
 
+*/
+
+/*
+// Grid
+uniform vec2 gridRange;
+uniform vec4 gridAxis;
+uniform vec4 gridOffset;
+
+vec4 transformData(vec2 uv, vec4 data) {
+  return vec4(data.r, 0, 0, 0) + gridAxis * uv.x + gridOffset;
+}
+*/
+
+/*
+// Axis
+*/
+uniform vec4 axisLength;
+uniform vec4 axisPosition;
+
+vec4 sampleData(vec2 uv) {
+  return axisLength * uv.x + axisPosition;
+}
+
+vec3 getViewPos(vec4 position) {
+  return (modelViewMatrix * vec4(position.xyz, 1.0)).xyz;
+}
+
+uniform float lineWidth;
+
+attribute vec2 line;
+
 void getLineGeometry(vec2 xy, float edge, inout vec4 left, inout vec4 center, inout vec4 right) {
   vec2 step = vec2(1.0, 0.0);
 
   center = sampleData(xy);
-  left = (edge < -0.5) ? center : sampleData(xy - step)
-  right = (edge > 0.5) ? center : sampleData(xy + step)
+  left = (edge < -0.5) ? center : sampleData(xy - step);
+  right = (edge > 0.5) ? center : sampleData(xy + step);
 }
 
 vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {
@@ -56,9 +70,9 @@ vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {
     bitangent = normalize(cross(normal, legRight));
   }
   else {
-    vec3 joinLeft = normalize(cross(joinNormal, legLeft));
-    vec3 joinRight = normalize(cross(joinNormal, legRight));
-    float scale = min(4.0, tan(acos(dot(joinLeft, joinRight)*.999) * .5) * .5);
+    vec3 joinLeft = normalize(cross(normal, legLeft));
+    vec3 joinRight = normalize(cross(normal, legRight));
+    float scale = min(4.0, tan(acos(dot(joinLeft, joinRight) * .999) * .5) * .5);
     bitangent = normalize(joinLeft + joinRight) * sqrt(1.0 + scale * scale);
   }
   
@@ -76,9 +90,9 @@ void main() {
   vec3 viewRight = getViewPos(right);
 	vec3 viewCenter = getViewPos(center);
 
-  vec3 lineJoin = getLineJoin(edge, left, center, right);
+  vec3 lineJoin = getLineJoin(edge, viewLeft, viewCenter, viewRight);
 
-	vec4 glPosition = projectionMatrix * vec4(center + lineJoin * offset * lineWidth, 1.0);
+	vec4 glPosition = projectionMatrix * vec4(viewCenter + lineJoin * offset * lineWidth, 1.0);
 
   gl_Position = glPosition;
 }
@@ -100,29 +114,34 @@ Renderable = require('../renderable')
 LineGeometry = require('../geometry').LineGeometry
 
 class Line extends Renderable
-  constructor: (@gl, @options) ->
-    map = options.map ? {}
+  constructor: (gl, options) ->
+    super gl
+
+    uniforms = options.uniforms ? {}
     buffer = options.buffer
 
-    @_map uniforms, ['lineWidth', 'lineColor', 'lineOpacity']
+    @_adopt uniforms
 
     @geometry = new LineGeometry
-      samples: 2
-      strips: 1
-      ribbons: 1
+      samples: options.samples || 2
+      strips:  options.strips  || 1
+      ribbons: options.ribbons || 1
 
     @material = new THREE.ShaderMaterial
-      attributes: geometry.shaderAttributes()
+      attributes: @geometry.shaderAttributes()
       uniforms: @uniforms
       vertexShader: vertexShader
       fragmentShader: fragmentShader
       side: THREE.DoubleSide
       defaultAttributeValues: null
 
-    @object = new THREE.Mesh geometry, material
+    @object = new THREE.Mesh @geometry, @material
     @object.frustumCulled = false;
 
   dispose: () ->
+    @geometry.dispose()
+    @material.dispose()
+    @object = @geometry = @material = null
     super
 
 module.exports = Line

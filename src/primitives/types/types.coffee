@@ -101,7 +101,7 @@ Types =
     vec3 = Types.vec3(r, g, b)
 
     uniform: () -> 'v3'
-    make: () -> new THREE.Vector4()
+    make: () -> new THREE.Vector3 r, g, b
     validate: (value, target) ->
       if value == "" + value
         string = value

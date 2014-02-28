@@ -7,16 +7,23 @@ class LineGeometry extends Geometry
       type: 'v2'
       value: null
 
+  clip: (start, end) ->
+    @offsets = [
+      start: start * 6
+      count: (end - start) * 6
+    ]
+
   constructor: (options) ->
     THREE.BufferGeometry.call @
 
-    samples  = +options.samples || 2
-    strips   = +options.strips  || 1
-    ribbons  = +options.ribbons || 1
-    segments = samples - 1
+    @samples  = samples = +options.samples || 2
+    @strips   = strips  = +options.strips  || 1
+    @ribbons  = ribbons = +options.ribbons || 1
+    @segments = segments = samples - 1
 
-    points    = samples      * strips * ribbons
-    triangles = segments * 2 * strips * ribbons
+    points    = samples  * strips * ribbons * 2
+    quads     = segments * strips * ribbons
+    triangles = quads    * 2
 
     @addAttribute 'index',    Uint16Array,  triangles * 3, 1
     @addAttribute 'position', Float32Array, points,        3
@@ -29,7 +36,7 @@ class LineGeometry extends Geometry
     base = 0
     for i in [0...ribbons]
       for j in [0...strips]
-        for k in [0...samples - 1]
+        for k in [0..samples] # note ..
           index base
           index base + 1
           index base + 2
@@ -58,6 +65,8 @@ class LineGeometry extends Geometry
           x++
         #
       y++
+
+    @clip 0, quads
 
     return
 

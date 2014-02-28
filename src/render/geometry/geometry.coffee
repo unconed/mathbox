@@ -4,9 +4,8 @@ class Geometry extends THREE.BufferGeometry
 
   _emitter: (name) ->
     attribute = @attributes[name]
+    dimensions = attribute.itemSize
     array = attribute.array
-
-    n = attribute.itemSize
     offset = 0
 
     one = (a) ->
@@ -24,6 +23,6 @@ class Geometry extends THREE.BufferGeometry
       array[offset++] = c
       array[offset++] = d
 
-    [null, one, two, three, four][itemSize]
+    [null, one, two, three, four][dimensions]
 
 module.exports = Geometry

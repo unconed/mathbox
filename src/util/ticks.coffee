@@ -20,11 +20,12 @@ linear = (min, max, n, unit, base, inclusive, bias) ->
 
   # Round to the floor'd power of 'scale'
   unit ||= 1
-  scale ||= 10
+  base ||= 10
   ref = unit * (bias + Math.pow(base, Math.floor(Math.log(ideal / unit) / Math.log(base))))
 
   # Make derived steps at sensible factors.
-  factors = if      base % 2 == 0 then [base / 2, 1, 1/2]
+  factors =
+            if base % 2 == 0 then [base / 2, 1, 1/2]
             else if base % 3 == 0 then [base / 3, 1, 1/3]
             else                       [1]
   steps = ref * factor for factor in factors
@@ -48,16 +49,15 @@ linear = (min, max, n, unit, base, inclusive, bias) ->
 
   # Generate equally spaced ticks
   min + x * step for i in [0..n]
-};
 
 ###
  Generate logarithmically spaced ticks in a range at sensible positions.
 ###
 
-log = function (min, max, n, unit, base, inclusive, bias) ->
+log = (min, max, n, unit, base, inclusive, bias) ->
   throw "Log ticks not yet implemented."
   ###
-  base = Math.log(scale)
+  base = Math.log(base)
   ibase = 1 / base
   l = (x) -> Math.log(x) * ibase
 

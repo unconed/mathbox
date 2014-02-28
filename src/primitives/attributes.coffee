@@ -47,7 +47,7 @@ class Data
       @[key].value = replace if replace?
       change key if !ignore
 
-    object.get = (key) ->
+    object.get = (key) =>
       if key?
         get(key)
       else
@@ -106,7 +106,6 @@ class Data
         @[key] =
           type: options.uniform?()
           value: options.make()
-        change key
 
         makers[key] = options.make
         validators[key] = options.validate
