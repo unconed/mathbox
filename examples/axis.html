@@ -18,9 +18,11 @@
     three.camera.position.set(1, .5, .6);
 
     mathbox.cartesian({
-      'view.range': [[0, 1], [0, 1], [0, 1]],
+      'view.range': [[-1, 1], [0, 1], [0, 1]],
     });
-    mathbox.axis();
+    mathbox.axis({
+      'axis.detail': 30,
+    });
   </script>
 </body>
 </html>

@@ -16,6 +16,7 @@ class Primitive
     if @root
       @_unmake()
       @_make()
+      @_change {}, true
 
   _make: () ->
   _unmake: () ->
@@ -44,17 +45,14 @@ class Primitive
     @traits ?= []
     @traits = [].concat.apply @traits, arguments
 
-  _inherit: (trait, name, target = @, key) ->
-
-    key ?= [trait, name].join '.'
+  _inherit: (key, target = @) ->
 
     if @get(key)?
-      if !@get([trait, 'inherit'].join '.')
-        target._listen @, key
-        return @
+      target._listen @, key
+      return @
 
     if @parent?
-      @parent._inherit trait, name, target, key
+      @parent._inherit key, target
     else
       null
 

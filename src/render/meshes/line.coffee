@@ -33,11 +33,12 @@ vec4 transformData(vec2 uv, vec4 data) {
 /*
 // Axis
 */
+uniform float axisResolution;
 uniform vec4 axisLength;
 uniform vec4 axisPosition;
 
 vec4 sampleData(vec2 uv) {
-  return axisLength * uv.x + axisPosition;
+  return axisLength * uv.x * axisResolution + axisPosition + vec4(0, 0.05 * sin(uv.x * 141231.123), 0, 0);
 }
 
 vec3 getViewPos(vec4 position) {
@@ -72,7 +73,8 @@ vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {
   else {
     vec3 joinLeft = normalize(cross(normal, legLeft));
     vec3 joinRight = normalize(cross(normal, legRight));
-    float scale = min(4.0, tan(acos(dot(joinLeft, joinRight) * .999) * .5) * .5);
+    float dotLR = dot(joinLeft, joinRight);
+    float scale = min(8.0, tan(acos(dotLR * .999) * .5) * .5);
     bitangent = normalize(joinLeft + joinRight) * sqrt(1.0 + scale * scale);
   }
   

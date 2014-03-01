@@ -376,7 +376,8 @@ Primitive = (function() {
   Primitive.prototype.rebuild = function() {
     if (this.root) {
       this._unmake();
-      return this._make();
+      this._make();
+      return this._change({}, true);
     }
   };
 
@@ -418,21 +419,16 @@ Primitive = (function() {
     return this.traits = [].concat.apply(this.traits, arguments);
   };
 
-  Primitive.prototype._inherit = function(trait, name, target, key) {
+  Primitive.prototype._inherit = function(key, target) {
     if (target == null) {
       target = this;
     }
-    if (key == null) {
-      key = [trait, name].join('.');
-    }
     if (this.get(key) != null) {
-      if (!this.get([trait, 'inherit'].join('.'))) {
-        target._listen(this, key);
-        return this;
-      }
+      target._listen(this, key);
+      return this;
     }
     if (this.parent != null) {
-      return this.parent._inherit(trait, name, target, key);
+      return this.parent._inherit(key, target);
     } else {
       return null;
     }
@@ -500,20 +496,22 @@ Axis = (function(_super) {
   }
 
   Axis.prototype._make = function() {
-    var detail, samples, types, uniforms;
-    this.inherit = this._inherit('view', 'range');
+    var detail, resolution, samples, types, uniforms;
+    this.inherit = this._inherit('view.range');
+    detail = this.get('axis.detail');
+    samples = detail + 1;
+    resolution = 1 / detail;
     types = this._attributes.types;
     uniforms = {
       lineWidth: this.attributes['line.width'],
       lineColor: this.attributes['style.color'],
       lineOpacity: this.attributes['style.opacity'],
+      axisResolution: this._attributes.make(types.number(resolution)),
       axisLength: this._attributes.make(types.vec4()),
       axisPosition: this._attributes.make(types.vec4())
     };
     this.axisLength = uniforms.axisLength.value;
     this.axisPosition = uniforms.axisPosition.value;
-    detail = this.get('axis.detail');
-    samples = detail + 1;
     this.line = this._factory.make('line', {
       uniforms: uniforms,
       samples: samples
@@ -815,7 +813,6 @@ Traits = {
     width: Types.number(.01)
   },
   view: {
-    inherit: Types.bool(false),
     range: Types.array(Types.vec2(-1, 1), 4)
   },
   axis: {
@@ -1533,10 +1530,10 @@ LineGeometry = (function(_super) {
           index(base + 2);
           index(base + 1);
           index(base + 3);
+          base += 2;
         }
         base += 2;
       }
-      base += 2;
     }
     for (i = _l = 0; 0 <= ribbons ? _l < ribbons : _l > ribbons; i = 0 <= ribbons ? ++_l : --_l) {
       y = 0;
@@ -1583,7 +1580,7 @@ var Line, LineGeometry, Renderable, fragmentShader, vertexShader,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-vertexShader = "\n/*\n//Data sampler\n\nuniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 mapUV(vec2 xy) {\n  return vec2(xy.y, 0);\n}\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((mapUV(xy) + dataPointer) * dataResolution);\n  vec4 sample = texture2D(dataTexture, uv);\n  return transformData(uv, sample);\n}\n\n*/\n\n/*\n// Grid\nuniform vec2 gridRange;\nuniform vec4 gridAxis;\nuniform vec4 gridOffset;\n\nvec4 transformData(vec2 uv, vec4 data) {\n  return vec4(data.r, 0, 0, 0) + gridAxis * uv.x + gridOffset;\n}\n*/\n\n/*\n// Axis\n*/\nuniform vec4 axisLength;\nuniform vec4 axisPosition;\n\nvec4 sampleData(vec2 uv) {\n  return axisLength * uv.x + axisPosition;\n}\n\nvec3 getViewPos(vec4 position) {\n  return (modelViewMatrix * vec4(position.xyz, 1.0)).xyz;\n}\n\nuniform float lineWidth;\n\nattribute vec2 line;\n\nvoid getLineGeometry(vec2 xy, float edge, inout vec4 left, inout vec4 center, inout vec4 right) {\n  vec2 step = vec2(1.0, 0.0);\n\n  center = sampleData(xy);\n  left = (edge < -0.5) ? center : sampleData(xy - step);\n  right = (edge > 0.5) ? center : sampleData(xy + step);\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec3 bitangent;\n  vec3 normal = center;\n\n  vec3 legLeft = center - left;\n  vec3 legRight = right - center;\n\n  if (edge > 0.5) {\n    bitangent = normalize(cross(normal, legLeft));\n  }\n  else if (edge < -0.5) {\n    bitangent = normalize(cross(normal, legRight));\n  }\n  else {\n    vec3 joinLeft = normalize(cross(normal, legLeft));\n    vec3 joinRight = normalize(cross(normal, legRight));\n    float scale = min(4.0, tan(acos(dot(joinLeft, joinRight) * .999) * .5) * .5);\n    bitangent = normalize(joinLeft + joinRight) * sqrt(1.0 + scale * scale);\n  }\n  \n  return bitangent;\n}\n\nvoid main() {\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 left, center, right;\n  getLineGeometry(position.xy, edge, left, center, right);\n\n  vec3 viewLeft = getViewPos(left);\n  vec3 viewRight = getViewPos(right);\n	vec3 viewCenter = getViewPos(center);\n\n  vec3 lineJoin = getLineJoin(edge, viewLeft, viewCenter, viewRight);\n\n	vec4 glPosition = projectionMatrix * vec4(viewCenter + lineJoin * offset * lineWidth, 1.0);\n\n  gl_Position = glPosition;\n}\n";
+vertexShader = "\n/*\n//Data sampler\n\nuniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 mapUV(vec2 xy) {\n  return vec2(xy.y, 0);\n}\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((mapUV(xy) + dataPointer) * dataResolution);\n  vec4 sample = texture2D(dataTexture, uv);\n  return transformData(uv, sample);\n}\n\n*/\n\n/*\n// Grid\nuniform vec2 gridRange;\nuniform vec4 gridAxis;\nuniform vec4 gridOffset;\n\nvec4 transformData(vec2 uv, vec4 data) {\n  return vec4(data.r, 0, 0, 0) + gridAxis * uv.x + gridOffset;\n}\n*/\n\n/*\n// Axis\n*/\nuniform float axisResolution;\nuniform vec4 axisLength;\nuniform vec4 axisPosition;\n\nvec4 sampleData(vec2 uv) {\n  return axisLength * uv.x * axisResolution + axisPosition + vec4(0, 0.05 * sin(uv.x * 141231.123), 0, 0);\n}\n\nvec3 getViewPos(vec4 position) {\n  return (modelViewMatrix * vec4(position.xyz, 1.0)).xyz;\n}\n\nuniform float lineWidth;\n\nattribute vec2 line;\n\nvoid getLineGeometry(vec2 xy, float edge, inout vec4 left, inout vec4 center, inout vec4 right) {\n  vec2 step = vec2(1.0, 0.0);\n\n  center = sampleData(xy);\n  left = (edge < -0.5) ? center : sampleData(xy - step);\n  right = (edge > 0.5) ? center : sampleData(xy + step);\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec3 bitangent;\n  vec3 normal = center;\n\n  vec3 legLeft = center - left;\n  vec3 legRight = right - center;\n\n  if (edge > 0.5) {\n    bitangent = normalize(cross(normal, legLeft));\n  }\n  else if (edge < -0.5) {\n    bitangent = normalize(cross(normal, legRight));\n  }\n  else {\n    vec3 joinLeft = normalize(cross(normal, legLeft));\n    vec3 joinRight = normalize(cross(normal, legRight));\n    float dotLR = dot(joinLeft, joinRight);\n    float scale = min(8.0, tan(acos(dotLR * .999) * .5) * .5);\n    bitangent = normalize(joinLeft + joinRight) * sqrt(1.0 + scale * scale);\n  }\n  \n  return bitangent;\n}\n\nvoid main() {\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 left, center, right;\n  getLineGeometry(position.xy, edge, left, center, right);\n\n  vec3 viewLeft = getViewPos(left);\n  vec3 viewRight = getViewPos(right);\n	vec3 viewCenter = getViewPos(center);\n\n  vec3 lineJoin = getLineJoin(edge, viewLeft, viewCenter, viewRight);\n\n	vec4 glPosition = projectionMatrix * vec4(viewCenter + lineJoin * offset * lineWidth, 1.0);\n\n  gl_Position = glPosition;\n}\n";
 
 fragmentShader = "uniform vec3 lineColor;\nuniform float lineOpacity;\n\nvoid main() {\n	gl_FragColor = vec4(lineColor, lineOpacity);\n}";
 

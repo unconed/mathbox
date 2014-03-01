@@ -44,8 +44,9 @@ class LineGeometry extends Geometry
           index base + 2
           index base + 1
           index base + 3
+
+          base += 2
         base += 2
-      base += 2
 
     for i in [0...ribbons]
       y = 0

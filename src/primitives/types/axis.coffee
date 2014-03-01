@@ -9,22 +9,23 @@ class Axis extends Primitive
 
   _make: () ->
 
-    @inherit = @_inherit 'view', 'range'
-
-    types = @_attributes.types
-
-    uniforms =
-      lineWidth:    @attributes['line.width']
-      lineColor:    @attributes['style.color']
-      lineOpacity:  @attributes['style.opacity']
-      axisLength:   @_attributes.make types.vec4()
-      axisPosition: @_attributes.make types.vec4()
-
-    @axisLength    = uniforms.axisLength.value
-    @axisPosition  = uniforms.axisPosition.value
+    @inherit = @_inherit 'view.range'
 
     detail = @get 'axis.detail'
     samples = detail + 1
+    resolution = 1 / detail
+
+    types = @_attributes.types
+    uniforms =
+      lineWidth:      @attributes['line.width']
+      lineColor:      @attributes['style.color']
+      lineOpacity:    @attributes['style.opacity']
+      axisResolution: @_attributes.make types.number(resolution)
+      axisLength:     @_attributes.make types.vec4()
+      axisPosition:   @_attributes.make types.vec4()
+
+    @axisLength     = uniforms.axisLength.value
+    @axisPosition   = uniforms.axisPosition.value
 
     @line = @_factory.make 'line',
               uniforms: uniforms
