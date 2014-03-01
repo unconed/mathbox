@@ -58,8 +58,8 @@ class Axis extends Primitive
       else
         range  = @get 'axis.range'
 
-      min    = range.x
-      max    = range.y
+      min = range.x
+      max = range.y
 
       x = if dimension == 1 then 1 else 0
       y = if dimension == 2 then 1 else 0

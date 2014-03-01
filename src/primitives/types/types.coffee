@@ -40,6 +40,7 @@ Types =
       value
 
   vec2: (x = 0, y = 0) ->
+    defaults = [x, y]
     uniform: () -> 'v2'
     make:
       () -> new THREE.Vector2 x, y
@@ -47,13 +48,14 @@ Types =
       if value instanceof THREE.Vector2
         target.copy value
       else if value?.constructor == Array
-        target.set value[0] ? x,
-                   value[1] ? y
+        value = value.concat(defaults.slice(value.length))
+        target.set.apply target, value
       else
         target.set x, y
       return
 
   vec3: (x = 0, y = 0, z = 0) ->
+    defaults = [x, y, z]
     uniform: () -> 'v3'
     make:
       () -> new THREE.Vector3 x, y, z
@@ -61,14 +63,14 @@ Types =
       if value instanceof THREE.Vector3
         target.copy value
       else if value?.constructor == Array
-        target.set value[0] ? x,
-                   value[1] ? y,
-                   value[2] ? z
+        value = value.concat(defaults.slice(value.length))
+        target.set.apply target, value
       else
         target.set x, y, z
       return
 
   vec4: (x = 0, y = 0, z = 0, w = 0) ->
+    defaults = [x, y, z, w]
     uniform: () -> 'v4'
     make:
       () -> new THREE.Vector4 x, y, z, w
@@ -76,12 +78,26 @@ Types =
       if value instanceof THREE.Vector4
         target.copy value
       else if value?.constructor == Array
-        target.set value[0] ? x,
-                   value[1] ? y,
-                   value[2] ? z,
-                   value[3] ? w
+        value = value.concat(defaults.slice(value.length))
+        target.set.apply target, value
       else
         target.set x, y, z, w
+      return
+
+  mat4: (n11 = 1, n12 = 0, n13 = 0, n14 = 0, n21 = 0, n22 = 1, n23 = 0, n24 = 0, n31 = 0, n32 = 0, n33 = 1, n34 = 0, n41 = 0, n42 = 0, n43 = 0, n44 = 1) ->
+    defaults = [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44]
+
+    uniform: () -> 'm4'
+    make:
+      () -> new THREE.Matrix4 n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44
+    validate: (value, target) ->
+      if value instanceof THREE.Matrix4
+        target.copy value
+      else if value?.constructor == Array
+        value = value.concat(defaults.slice(value.length))
+        target.set.apply target, value
+      else
+        target.set n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44
       return
 
   quat: (x = 0, y = 0, z = 0, w = 1) ->

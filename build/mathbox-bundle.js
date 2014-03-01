@@ -46168,14 +46168,36 @@ Cartesian = (function(_super) {
   }
 
   Cartesian.prototype._make = function() {
-    return this.inherit = this._inherit('view');
+    var types, uniforms;
+    types = this._attributes.types;
+    uniforms = {
+      viewMatrix: this._attributes.make(types.mat4()),
+      inverseViewMatrix: this._attributes.make(types.mat4())
+    };
+    this.viewMatrix = uniforms.viewMatrix.value;
+    return this.inverseViewMatrix = uniforms.inverseViewMatrix.value;
   };
 
   Cartesian.prototype._unmake = function() {
     return this._unherit();
   };
 
-  Cartesian.prototype._change = function(changed) {};
+  Cartesian.prototype._change = function(changed) {
+    var dx, dy, dz, r, s, sx, sy, sz, x, y, z;
+    r = this.get('view.range');
+    s = this.get('object.scale');
+    x = r[0].x;
+    y = r[1].x;
+    z = r[2].x;
+    dx = r[0].y - x;
+    dy = r[1].y - y;
+    dz = r[2].y - z;
+    sx = s[0];
+    sy = s[1];
+    sz = s[2];
+    this.viewMatrix.set(2 * sx / dx, 0, 0, -(2 * x + dx) * sx / dx, 0, 2 * sy / dy, 0, -(2 * y + dy) * sy / dy, 0, 0, 2 * sz / dz, -(2 * z + dz) * sz / dz, 0, 0, 0, 1);
+    return this.inverseViewMatrix.set(dx / (2 * sx), 0, 0, x + dx / 2, 0, dy / (2 * sy), 0, y + dy / 2, 0, 0, dz / (2 * sz), z + dz / 2, 0, 0, 0, 1);
+  };
 
   return Cartesian;
 
@@ -46520,12 +46542,14 @@ Types = {
     };
   },
   vec2: function(x, y) {
+    var defaults;
     if (x == null) {
       x = 0;
     }
     if (y == null) {
       y = 0;
     }
+    defaults = [x, y];
     return {
       uniform: function() {
         return 'v2';
@@ -46534,11 +46558,11 @@ Types = {
         return new THREE.Vector2(x, y);
       },
       validate: function(value, target) {
-        var _ref, _ref1;
         if (value instanceof THREE.Vector2) {
           target.copy(value);
         } else if ((value != null ? value.constructor : void 0) === Array) {
-          target.set((_ref = value[0]) != null ? _ref : x, (_ref1 = value[1]) != null ? _ref1 : y);
+          value = value.concat(defaults.slice(value.length));
+          target.set.apply(target, value);
         } else {
           target.set(x, y);
         }
@@ -46546,6 +46570,7 @@ Types = {
     };
   },
   vec3: function(x, y, z) {
+    var defaults;
     if (x == null) {
       x = 0;
     }
@@ -46555,6 +46580,7 @@ Types = {
     if (z == null) {
       z = 0;
     }
+    defaults = [x, y, z];
     return {
       uniform: function() {
         return 'v3';
@@ -46563,11 +46589,11 @@ Types = {
         return new THREE.Vector3(x, y, z);
       },
       validate: function(value, target) {
-        var _ref, _ref1, _ref2;
         if (value instanceof THREE.Vector3) {
           target.copy(value);
         } else if ((value != null ? value.constructor : void 0) === Array) {
-          target.set((_ref = value[0]) != null ? _ref : x, (_ref1 = value[1]) != null ? _ref1 : y, (_ref2 = value[2]) != null ? _ref2 : z);
+          value = value.concat(defaults.slice(value.length));
+          target.set.apply(target, value);
         } else {
           target.set(x, y, z);
         }
@@ -46575,6 +46601,7 @@ Types = {
     };
   },
   vec4: function(x, y, z, w) {
+    var defaults;
     if (x == null) {
       x = 0;
     }
@@ -46587,6 +46614,7 @@ Types = {
     if (w == null) {
       w = 0;
     }
+    defaults = [x, y, z, w];
     return {
       uniform: function() {
         return 'v4';
@@ -46595,13 +46623,83 @@ Types = {
         return new THREE.Vector4(x, y, z, w);
       },
       validate: function(value, target) {
-        var _ref, _ref1, _ref2, _ref3;
         if (value instanceof THREE.Vector4) {
           target.copy(value);
         } else if ((value != null ? value.constructor : void 0) === Array) {
-          target.set((_ref = value[0]) != null ? _ref : x, (_ref1 = value[1]) != null ? _ref1 : y, (_ref2 = value[2]) != null ? _ref2 : z, (_ref3 = value[3]) != null ? _ref3 : w);
+          value = value.concat(defaults.slice(value.length));
+          target.set.apply(target, value);
         } else {
           target.set(x, y, z, w);
+        }
+      }
+    };
+  },
+  mat4: function(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
+    var defaults;
+    if (n11 == null) {
+      n11 = 1;
+    }
+    if (n12 == null) {
+      n12 = 0;
+    }
+    if (n13 == null) {
+      n13 = 0;
+    }
+    if (n14 == null) {
+      n14 = 0;
+    }
+    if (n21 == null) {
+      n21 = 0;
+    }
+    if (n22 == null) {
+      n22 = 1;
+    }
+    if (n23 == null) {
+      n23 = 0;
+    }
+    if (n24 == null) {
+      n24 = 0;
+    }
+    if (n31 == null) {
+      n31 = 0;
+    }
+    if (n32 == null) {
+      n32 = 0;
+    }
+    if (n33 == null) {
+      n33 = 1;
+    }
+    if (n34 == null) {
+      n34 = 0;
+    }
+    if (n41 == null) {
+      n41 = 0;
+    }
+    if (n42 == null) {
+      n42 = 0;
+    }
+    if (n43 == null) {
+      n43 = 0;
+    }
+    if (n44 == null) {
+      n44 = 1;
+    }
+    defaults = [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44];
+    return {
+      uniform: function() {
+        return 'm4';
+      },
+      make: function() {
+        return new THREE.Matrix4(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44);
+      },
+      validate: function(value, target) {
+        if (value instanceof THREE.Matrix4) {
+          target.copy(value);
+        } else if ((value != null ? value.constructor : void 0) === Array) {
+          value = value.concat(defaults.slice(value.length));
+          target.set.apply(target, value);
+        } else {
+          target.set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44);
         }
       }
     };
@@ -46681,11 +46779,13 @@ module.exports = Types;
 
 
 },{}],15:[function(require,module,exports){
-var Group, View,
+var Group, Range, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Group = require('./group');
+
+Range = require('../../util').Range;
 
 View = (function(_super) {
   __extends(View, _super);
@@ -46695,6 +46795,11 @@ View = (function(_super) {
     View.__super__.constructor.call(this, options, attributes, factory);
   }
 
+  View.prototype.axis = function(dimension) {
+    var range;
+    return range = this.get('view.range')[dimension - 1];
+  };
+
   return View;
 
 })(Group);
@@ -46702,7 +46807,7 @@ View = (function(_super) {
 module.exports = View;
 
 
-},{"./group":10}],16:[function(require,module,exports){
+},{"../../util":37,"./group":10}],16:[function(require,module,exports){
 var Buffer, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };

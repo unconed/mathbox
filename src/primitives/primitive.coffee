@@ -21,6 +21,37 @@ class Primitive
   _make: () ->
   _unmake: () ->
 
+  # Add/removal callback
+  _added: (parent) ->
+    @parent = parent
+    @root = parent.root
+    @_make()
+    @_change {}, true
+
+  _removed: () ->
+    @_unmake()
+    @root = @parent = null
+
+  # Emit/withdraw renderable
+  _render: (renderable) ->
+    @trigger
+      type: 'render'
+      renderable: renderable
+
+  _unrender: (renderable) ->
+    @trigger
+      type: 'unrender'
+      renderable: renderable
+
+  # Transform pipeline
+  _transform: (shader) ->
+    @parent?._transform shader
+
+  # Traits (groups of attributes)
+  _traits: () ->
+    @traits ?= []
+    @traits = [].concat.apply @traits, arguments
+
   # Attribute changes
 
   _change: (changed) ->
@@ -40,11 +71,7 @@ class Primitive
     [object, handler] = inherited
     object.off 'change', handler
 
-  # Trait inheritance
-  _traits: () ->
-    @traits ?= []
-    @traits = [].concat.apply @traits, arguments
-
+  # Attribute inheritance
   _inherit: (key, target = @) ->
 
     if @get(key)?
@@ -59,28 +86,6 @@ class Primitive
   _unherit: () ->
     @_unlisten(inherited) for inherited in @inherited
     @inherited = []
-
-  # Add/removal callback
-  _added: (parent) ->
-    @parent = parent
-    @root = parent.root
-    @_make()
-    @_change {}, true
-
-  _removed: () ->
-    @_unmake()
-    @root = @parent = null
-
-  # Emit/withdraw renderables
-  _render: (renderable) ->
-    @trigger
-      type: 'render'
-      renderable: renderable
-
-  _unrender: (renderable) ->
-    @trigger
-      type: 'unrender'
-      renderable: renderable
 
 THREE.Binder.apply Primitive::
 
