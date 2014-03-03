@@ -3,9 +3,10 @@ Ticks = require('../../util').Ticks
 Types = require('./types')
 
 class Grid extends Primitive
-  constructor: (options, attributes, factory) ->
-    @_traits 'line', 'object', 'grid', 'axis:axis[0]', 'axis:axis[1]'
-    super options, attributes, factory
+  @traits: ['line', 'object', 'grid', 'axis:axis[0]', 'axis:axis[1]']
+
+  constructor: (model, attributes, factory) ->
+    super model, attributes, factory
 
     @widths  = []
     @lines   = null

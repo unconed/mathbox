@@ -1,3 +1,4 @@
+Model = require('./model')
 Stage = require('./stage')
 Render = require('./render')
 Primitives = require('./primitives')
@@ -8,10 +9,10 @@ class Context
     @scene       = new Render.Scene scene
     @renderables = new Render.Factory gl, Render.Types.Classes
 
-    @attributes  = new Primitives.Attributes Primitives.Types.Traits, Primitives.Types.Types
+    @attributes  = new Model.Attributes Primitives.Types.Traits, Primitives.Types.Types
     @primitives  = new Primitives.Factory Primitives.Types.Classes, @attributes, @renderables
+    @model       = new Model.Model @primitives.make('root')
 
-    @model       = new Stage.Model camera
     @controller  = new Stage.Controller @model, @scene, @primitives
     @animator    = new Stage.Animator @model
     @director    = new Stage.Director @controller, @animator, script

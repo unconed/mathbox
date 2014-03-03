@@ -1,9 +1,10 @@
 Primitive = require('../primitive')
 
 class Axis extends Primitive
-  constructor: (options, attributes, factory) ->
-    @_traits 'object', 'style', 'line', 'axis'
-    super options, attributes, factory
+  @traits: ['object', 'style', 'line', 'axis']
+
+  constructor: (model, attributes, factory) ->
+    super model, attributes, factory
 
     @line   = null
 
@@ -11,15 +12,15 @@ class Axis extends Primitive
 
     @inherit = @_inherit 'view.range'
 
-    detail = @get 'axis.detail'
+    detail = @model.get 'axis.detail'
     samples = detail + 1
     resolution = 1 / detail
 
     types = @_attributes.types
     uniforms =
-      lineWidth:      @attributes['line.width']
-      lineColor:      @attributes['style.color']
-      lineOpacity:    @attributes['style.opacity']
+      lineWidth:      @model.attributes['line.width']
+      lineColor:      @model.attributes['style.color']
+      lineOpacity:    @model.attributes['style.opacity']
       axisPosition:   @_attributes.make types.vec4()
       axisStep:       @_attributes.make types.vec4()
 
@@ -49,14 +50,14 @@ class Axis extends Primitive
        changed['axis.inherit']? or
        first
 
-      inherit   = @get 'axis.inherit'
-      dimension = @get 'axis.dimension'
+      inherit   = @model.get 'axis.inherit'
+      dimension = @model.get 'axis.dimension'
 
       if inherit and @inherit
-        ranges = @inherit.get 'view.range'
+        ranges = @inherit.model.get 'view.range'
         range  = ranges[dimension - 1]
       else
-        range  = @get 'axis.range'
+        range  = @model.get 'axis.range'
 
       min = range.x
       max = range.y

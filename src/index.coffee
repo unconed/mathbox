@@ -37,6 +37,9 @@ THREE.Bootstrap.registerPlugin 'mathbox',
 
         @context.init()
 
+        window.model = @context.model
+        window.root = @context.model.root
+
       destroy: () =>
         return if !inited
         inited = false

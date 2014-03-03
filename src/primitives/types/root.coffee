@@ -1,9 +1,6 @@
-Group = require('./group')
+Group = require './group'
 
 class Root extends Group
-  constructor: (options, attributes, factory) ->
-    super options, attributes, factory
-
-    @root = @
+  @traits = ['object']
 
 module.exports = Root

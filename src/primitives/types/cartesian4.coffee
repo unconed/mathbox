@@ -1,9 +1,7 @@
 View = require('./view')
 
 class Cartesian4 extends View
-  constructor: (options, attributes, factory) ->
-    #@_traits 'object', 'view'
-    super options, attributes, factory
+  @traits: ['object', 'view']
 
   _make: () ->
 

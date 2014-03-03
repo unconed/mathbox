@@ -10,21 +10,21 @@ class API
     @_model = @_controller.model
 
   add: (type, options) ->
-    # Make primitive
-    primitive = @_controller.make type, options
+    # Make node/primitive
+    node = @_controller.make type, options
 
     # Backwards compatibility: push root leafs into first group if present
     target = @target ? @_controller.getRoot()
-    if !primitive.children &&
+    if !node.children &&
        target == @_controller.getRoot()
       target = (object for object in target.children when object.children?)[0] || target
 
     # Add to target
-    @_controller.add primitive, target
+    @_controller.add node, target
 
-    # Enter primitive if it is capable of children
-    if primitive.children
-      @push primitive
+    # Enter node if it is capable of children
+    if node.children
+      @push node
     else @
 
   push: (target) ->

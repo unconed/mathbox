@@ -1,14 +1,25 @@
-class Primitive
-  constructor: (options, @_attributes, @_factory) ->
-    @attributes = @_attributes.apply @, @traits
-    @parent = null
-    @root = null
-    @inherited = []
-    @traits ?= []
-    @set options, null, true
+Model = require '../model'
 
-    @on 'change', (event) =>
+class Primitive
+  @Node = Model.Node
+  @Group = Model.Group
+
+  @model  = @Node
+  @traits = []
+
+  constructor: (@model, @_attributes, @_factory) ->
+    @model.primitive = @
+
+    @model.on 'change', (event) =>
       @_change event.changed if @root
+
+    @model.on 'added', (event) =>
+      @_added()
+
+    @model.on 'removed', (event) =>
+      @_removed()
+
+    @inherited = []
 
   # Construction of renderables
 
@@ -22,15 +33,15 @@ class Primitive
   _unmake: () ->
 
   # Add/removal callback
-  _added: (parent) ->
-    @parent = parent
-    @root = parent.root
+  _added: () ->
+    @root = @model.root
+    @parent = @model.parent.primitive
+
     @_make()
     @_change {}, true
 
   _removed: () ->
-    @_unmake()
-    @root = @parent = null
+    @root = null
 
   # Emit/withdraw renderable
   _render: (renderable) ->
@@ -47,11 +58,6 @@ class Primitive
   _transform: (shader) ->
     @parent?._transform shader
 
-  # Traits (groups of attributes)
-  _traits: () ->
-    @traits ?= []
-    @traits = [].concat.apply @traits, arguments
-
   # Attribute changes
 
   _change: (changed) ->
@@ -62,19 +68,19 @@ class Primitive
     handler = (event) =>
       changed = event.changed
       @_change changed if @root and changed[key]?
-    object.on 'change', handler
+    object.model.on 'change', handler
 
     inherited = [object, handler]
     @inherited.push inherited
 
   _unlisten: (inherited) ->
     [object, handler] = inherited
-    object.off 'change', handler
+    object.model.off 'change', handler
 
   # Attribute inheritance
   _inherit: (key, target = @) ->
 
-    if @get(key)?
+    if @model.get(key)?
       target._listen @, key
       return @
 

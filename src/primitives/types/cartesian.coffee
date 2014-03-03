@@ -1,9 +1,6 @@
 View = require('./view')
 
 class Cartesian extends View
-  constructor: (options, attributes, factory) ->
-    #@_traits 'object', 'view'
-    super options, attributes, factory
 
   _make: () ->
 
@@ -26,10 +23,10 @@ class Cartesian extends View
 
   _change: (changed) ->
 
-    o = @get 'object.position'
-    s = @get 'object.scale'
-    q = @get 'object.rotation'
-    r = @get 'view.range'
+    o = @model.get 'object.position'
+    s = @model.get 'object.scale'
+    q = @model.get 'object.rotation'
+    r = @model.get 'view.range'
 
     x = r[0].x
     y = r[1].x
