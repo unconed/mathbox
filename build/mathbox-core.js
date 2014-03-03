@@ -385,6 +385,44 @@ Primitive = (function() {
 
   Primitive.prototype._unmake = function() {};
 
+  Primitive.prototype._added = function(parent) {
+    this.parent = parent;
+    this.root = parent.root;
+    this._make();
+    return this._change({}, true);
+  };
+
+  Primitive.prototype._removed = function() {
+    this._unmake();
+    return this.root = this.parent = null;
+  };
+
+  Primitive.prototype._render = function(renderable) {
+    return this.trigger({
+      type: 'render',
+      renderable: renderable
+    });
+  };
+
+  Primitive.prototype._unrender = function(renderable) {
+    return this.trigger({
+      type: 'unrender',
+      renderable: renderable
+    });
+  };
+
+  Primitive.prototype._transform = function(shader) {
+    var _ref;
+    return (_ref = this.parent) != null ? _ref._transform(shader) : void 0;
+  };
+
+  Primitive.prototype._traits = function() {
+    if (this.traits == null) {
+      this.traits = [];
+    }
+    return this.traits = [].concat.apply(this.traits, arguments);
+  };
+
   Primitive.prototype._change = function(changed) {};
 
   Primitive.prototype._listen = function(object, key) {
@@ -412,13 +450,6 @@ Primitive = (function() {
     return object.off('change', handler);
   };
 
-  Primitive.prototype._traits = function() {
-    if (this.traits == null) {
-      this.traits = [];
-    }
-    return this.traits = [].concat.apply(this.traits, arguments);
-  };
-
   Primitive.prototype._inherit = function(key, target) {
     if (target == null) {
       target = this;
@@ -442,32 +473,6 @@ Primitive = (function() {
       this._unlisten(inherited);
     }
     return this.inherited = [];
-  };
-
-  Primitive.prototype._added = function(parent) {
-    this.parent = parent;
-    this.root = parent.root;
-    this._make();
-    return this._change({}, true);
-  };
-
-  Primitive.prototype._removed = function() {
-    this._unmake();
-    return this.root = this.parent = null;
-  };
-
-  Primitive.prototype._render = function(renderable) {
-    return this.trigger({
-      type: 'render',
-      renderable: renderable
-    });
-  };
-
-  Primitive.prototype._unrender = function(renderable) {
-    return this.trigger({
-      type: 'unrender',
-      renderable: renderable
-    });
   };
 
   return Primitive;
@@ -506,12 +511,12 @@ Axis = (function(_super) {
       lineWidth: this.attributes['line.width'],
       lineColor: this.attributes['style.color'],
       lineOpacity: this.attributes['style.opacity'],
-      axisResolution: this._attributes.make(types.number(resolution)),
-      axisLength: this._attributes.make(types.vec4()),
-      axisPosition: this._attributes.make(types.vec4())
+      axisPosition: this._attributes.make(types.vec4()),
+      axisStep: this._attributes.make(types.vec4())
     };
-    this.axisLength = uniforms.axisLength.value;
     this.axisPosition = uniforms.axisPosition.value;
+    this.axisStep = uniforms.axisStep.value;
+    this.resolution = 1 / detail;
     this.line = this._factory.make('line', {
       uniforms: uniforms,
       samples: samples
@@ -547,7 +552,7 @@ Axis = (function(_super) {
       z = dimension === 3 ? 1 : 0;
       w = dimension === 4 ? 1 : 0;
       this.axisPosition.set(x, y, z, w).multiplyScalar(min);
-      return this.axisLength.set(x, y, z, w).multiplyScalar(max - min);
+      return this.axisStep.set(x, y, z, w).multiplyScalar((max - min) * this.resolution);
     }
   };
 
@@ -573,36 +578,69 @@ Cartesian = (function(_super) {
   }
 
   Cartesian.prototype._make = function() {
-    var types, uniforms;
+    var types;
     types = this._attributes.types;
-    uniforms = {
-      viewMatrix: this._attributes.make(types.mat4()),
-      inverseViewMatrix: this._attributes.make(types.mat4())
+    this.uniforms = {
+      cartesianMatrix: this._attributes.make(types.mat4())
     };
-    this.viewMatrix = uniforms.viewMatrix.value;
-    return this.inverseViewMatrix = uniforms.inverseViewMatrix.value;
+    this.cartesianMatrix = this.uniforms.cartesianMatrix.value;
+    return this.rotationMatrix = new THREE.Matrix4();
   };
 
   Cartesian.prototype._unmake = function() {
-    return this._unherit();
+    delete this.cartesianMatrix;
+    return delete this.rotationMatrix;
   };
 
   Cartesian.prototype._change = function(changed) {
-    var dx, dy, dz, r, s, sx, sy, sz, x, y, z;
-    r = this.get('view.range');
+    var dx, dy, dz, o, q, r, s, sx, sy, sz, x, y, z;
+    o = this.get('object.position');
     s = this.get('object.scale');
+    q = this.get('object.rotation');
+    r = this.get('view.range');
     x = r[0].x;
     y = r[1].x;
     z = r[2].x;
-    dx = r[0].y - x;
-    dy = r[1].y - y;
-    dz = r[2].y - z;
+    dx = (r[0].y - x) || 1;
+    dy = (r[1].y - y) || 1;
+    dz = (r[2].y - z) || 1;
     sx = s[0];
     sy = s[1];
     sz = s[2];
-    this.viewMatrix.set(2 * sx / dx, 0, 0, -(2 * x + dx) * sx / dx, 0, 2 * sy / dy, 0, -(2 * y + dy) * sy / dy, 0, 0, 2 * sz / dz, -(2 * z + dz) * sz / dz, 0, 0, 0, 1);
-    return this.inverseViewMatrix.set(dx / (2 * sx), 0, 0, x + dx / 2, 0, dy / (2 * sy), 0, y + dy / 2, 0, 0, dz / (2 * sz), z + dz / 2, 0, 0, 0, 1);
+    this.cartesianMatrix.set(2 * sx / dx, 0, 0, -(2 * x + dx) * sx / dx, 0, 2 * sy / dy, 0, -(2 * y + dy) * sy / dy, 0, 0, 2 * sz / dz, -(2 * z + dz) * sz / dz, 0, 0, 0, 1);
+    this.rotationMatrix.makeRotationFromQuaternion(q);
+    return this.cartesianMatrix.multiplyMatrices(this.rotationMatrix, this.cartesianMatrix);
+
+    /*
+     * Backward transform
+    @inverseViewMatrix.set(
+      dx/(2*sx), 0, 0, (x+dx/2),
+      0, dy/(2*sy), 0, (y+dy/2),
+      0, 0, dz/(2*sz), (z+dz/2),
+      0, 0, 0, 1 #,
+    )
+    @q.copy(q).inverse()
+    @rotationMatrix.makeRotationFromQuaternion q
+    @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
+     */
   };
+
+  Cartesian.prototype.to = function(vector) {
+    return vector.applyMatrix4(this.cartesianMatrix);
+  };
+
+  Cartesian.prototype._transform = function(shader) {
+    var _ref;
+    shader.snippet('cartesian', this.uniforms);
+    return (_ref = this.parent) != null ? _ref._transform(shader) : void 0;
+  };
+
+
+  /*
+  from: (vector) ->
+    this.inverse.multiplyVector3(vector);
+  },
+   */
 
   return Cartesian;
 
@@ -835,6 +873,7 @@ Traits = {
     width: Types.number(.01)
   },
   view: {
+    dimensions: Types.number(3),
     range: Types.array(Types.vec2(-1, 1), 4)
   },
   axis: {
@@ -1204,6 +1243,8 @@ View = (function(_super) {
     var range;
     return range = this.get('view.range')[dimension - 1];
   };
+
+  View.prototype.to = function(vector) {};
 
   return View;
 
@@ -1685,7 +1726,7 @@ var Line, LineGeometry, Renderable, fragmentShader, vertexShader,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-vertexShader = "\n/*\n//Data sampler\n\nuniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 mapUV(vec2 xy) {\n  return vec2(xy.y, 0);\n}\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((mapUV(xy) + dataPointer) * dataResolution);\n  vec4 sample = texture2D(dataTexture, uv);\n  return transformData(uv, sample);\n}\n\n*/\n\n/*\n// Grid\nuniform vec2 gridRange;\nuniform vec4 gridAxis;\nuniform vec4 gridOffset;\n\nvec4 transformData(vec2 uv, vec4 data) {\n  return vec4(data.r, 0, 0, 0) + gridAxis * uv.x + gridOffset;\n}\n*/\n\n/*\n// Axis\n*/\nuniform float axisResolution;\nuniform vec4 axisLength;\nuniform vec4 axisPosition;\n\nvec4 sampleData(vec2 uv) {\n  return axisLength * uv.x * axisResolution + axisPosition + vec4(0, 0.05 * sin(uv.x * 141231.123), 0, 0);\n}\n\nvec3 getViewPos(vec4 position) {\n  return (modelViewMatrix * vec4(position.xyz, 1.0)).xyz;\n}\n\nuniform float lineWidth;\n\nattribute vec2 line;\n\nvoid getLineGeometry(vec2 xy, float edge, inout vec4 left, inout vec4 center, inout vec4 right) {\n  vec2 step = vec2(1.0, 0.0);\n\n  center = sampleData(xy);\n  left = (edge < -0.5) ? center : sampleData(xy - step);\n  right = (edge > 0.5) ? center : sampleData(xy + step);\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec3 bitangent;\n  vec3 normal = center;\n\n  vec3 legLeft = center - left;\n  vec3 legRight = right - center;\n\n  if (edge > 0.5) {\n    bitangent = normalize(cross(normal, legLeft));\n  }\n  else if (edge < -0.5) {\n    bitangent = normalize(cross(normal, legRight));\n  }\n  else {\n    vec3 joinLeft = normalize(cross(normal, legLeft));\n    vec3 joinRight = normalize(cross(normal, legRight));\n    float dotLR = dot(joinLeft, joinRight);\n    float scale = min(8.0, tan(acos(dotLR * .999) * .5) * .5);\n    bitangent = normalize(joinLeft + joinRight) * sqrt(1.0 + scale * scale);\n  }\n  \n  return bitangent;\n}\n\nvoid main() {\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 left, center, right;\n  getLineGeometry(position.xy, edge, left, center, right);\n\n  vec3 viewLeft = getViewPos(left);\n  vec3 viewRight = getViewPos(right);\n	vec3 viewCenter = getViewPos(center);\n\n  vec3 lineJoin = getLineJoin(edge, viewLeft, viewCenter, viewRight);\n\n	vec4 glPosition = projectionMatrix * vec4(viewCenter + lineJoin * offset * lineWidth, 1.0);\n\n  gl_Position = glPosition;\n}\n";
+vertexShader = "\n/*\n//Data sampler\n\nuniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 mapUV(vec2 xy) {\n  return vec2(xy.y, 0);\n}\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((mapUV(xy) + dataPointer) * dataResolution);\n  vec4 sample = texture2D(dataTexture, uv);\n  return transformData(uv, sample);\n}\n\n*/\n\n/*\n// Grid\nuniform vec2 gridRange;\nuniform vec4 gridAxis;\nuniform vec4 gridOffset;\n\nvec4 transformData(vec2 uv, vec4 data) {\n  return vec4(data.r, 0, 0, 0) + gridAxis * uv.x + gridOffset;\n}\n*/\n\n/*\n// Axis\n*/\nuniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 sampleData(vec2 uv) {\n  return axisStep * uv.x + axisPosition;\n}\n\n/*\n// Viewport\n*/\nuniform mat4 cartesianMatrix;\n\nvec4 cartesian(vec4 position) {\n//  return cartesianMatrix * vec4(position.xyz, 1.0);\n  return vec4(position.xyz, 1.0);\n}\n\n/*\nvec4 cartesian4(vec4 position) {\n  return cartesian4Matrix * position;\n}\n*/\n\n/*\n// Pipeline\n*/\nvec3 worldToView(vec4 position) {\n  return (modelViewMatrix * vec4(position.xyz, 1.0)).xyz;\n}\n\nvec3 transformToView(vec4 position) {\n  return worldToView(cartesian(position));\n}\n\nvec3 samplePosition(vec2 xy) {\n  vec4 sample = sampleData(xy);\n  return transformToView(sample);\n}\n\n\n/*\n//Line\n*/\n\nvoid getLineGeometry(vec2 xy, float edge, inout vec3 left, inout vec3 center, inout vec3 right) {\n  vec2 step = vec2(1.0, 0.0);\n\n  center = samplePosition(xy);\n  left = (edge < -0.5) ? center : samplePosition(xy - step);\n  right = (edge > 0.5) ? center : samplePosition(xy + step);\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec3 bitangent;\n  vec3 normal = center;\n\n  vec3 legLeft = center - left;\n  vec3 legRight = right - center;\n\n  if (edge > 0.5) {\n    bitangent = normalize(cross(normal, legLeft));\n  }\n  else if (edge < -0.5) {\n    bitangent = normalize(cross(normal, legRight));\n  }\n  else {\n    vec3 joinLeft = normalize(cross(normal, legLeft));\n    vec3 joinRight = normalize(cross(normal, legRight));\n    float dotLR = dot(joinLeft, joinRight);\n    float scale = min(8.0, tan(acos(dotLR * .999) * .5) * .5);\n    bitangent = normalize(joinLeft + joinRight) * sqrt(1.0 + scale * scale);\n  }\n  \n  return bitangent;\n}\n\nuniform float lineWidth;\nattribute vec2 line;\n//attribute vec3 position;\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position.xy, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n\n////\n\nvoid projectPosition(vec3 point) {\n	vec4 glPosition = projectionMatrix * vec4(point, 1.0);\n  gl_Position = glPosition;\n}\n\nvoid main() {\n  vec3 position = getLinePosition();\n  projectPosition(position);\n}";
 
 fragmentShader = "uniform vec3 lineColor;\nuniform float lineOpacity;\n\nvoid main() {\n	gl_FragColor = vec4(lineColor, lineOpacity);\n}";
 

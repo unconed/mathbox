@@ -20,12 +20,12 @@ class Axis extends Primitive
       lineWidth:      @attributes['line.width']
       lineColor:      @attributes['style.color']
       lineOpacity:    @attributes['style.opacity']
-      axisResolution: @_attributes.make types.number(resolution)
-      axisLength:     @_attributes.make types.vec4()
       axisPosition:   @_attributes.make types.vec4()
+      axisStep:       @_attributes.make types.vec4()
 
-    @axisLength     = uniforms.axisLength.value
     @axisPosition   = uniforms.axisPosition.value
+    @axisStep       = uniforms.axisStep.value
+    @resolution     = 1 / detail
 
     @line = @_factory.make 'line',
               uniforms: uniforms
@@ -36,8 +36,8 @@ class Axis extends Primitive
   _unmake: () ->
     @_unrender @line
     @line.dispose()
-
     @line = null
+
     @_unherit()
 
   _change: (changed, first) ->
@@ -67,6 +67,6 @@ class Axis extends Primitive
       w = if dimension == 4 then 1 else 0
 
       @axisPosition.set(x, y, z, w).multiplyScalar(min)
-      @axisLength.set(x, y, z, w).multiplyScalar(max - min)
+      @axisStep.set(x, y, z, w).multiplyScalar((max - min) * @resolution)
 
 module.exports = Axis

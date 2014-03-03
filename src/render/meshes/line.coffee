@@ -33,28 +33,56 @@ vec4 transformData(vec2 uv, vec4 data) {
 /*
 // Axis
 */
-uniform float axisResolution;
-uniform vec4 axisLength;
+uniform vec4 axisStep;
 uniform vec4 axisPosition;
 
 vec4 sampleData(vec2 uv) {
-  return axisLength * uv.x * axisResolution + axisPosition + vec4(0, 0.05 * sin(uv.x * 141231.123), 0, 0);
+  return axisStep * uv.x + axisPosition;
 }
 
-vec3 getViewPos(vec4 position) {
+/*
+// Viewport
+*/
+uniform mat4 cartesianMatrix;
+
+vec4 cartesian(vec4 position) {
+//  return cartesianMatrix * vec4(position.xyz, 1.0);
+  return vec4(position.xyz, 1.0);
+}
+
+/*
+vec4 cartesian4(vec4 position) {
+  return cartesian4Matrix * position;
+}
+*/
+
+/*
+// Pipeline
+*/
+vec3 worldToView(vec4 position) {
   return (modelViewMatrix * vec4(position.xyz, 1.0)).xyz;
 }
 
-uniform float lineWidth;
+vec3 transformToView(vec4 position) {
+  return worldToView(cartesian(position));
+}
 
-attribute vec2 line;
+vec3 samplePosition(vec2 xy) {
+  vec4 sample = sampleData(xy);
+  return transformToView(sample);
+}
 
-void getLineGeometry(vec2 xy, float edge, inout vec4 left, inout vec4 center, inout vec4 right) {
+
+/*
+//Line
+*/
+
+void getLineGeometry(vec2 xy, float edge, inout vec3 left, inout vec3 center, inout vec3 right) {
   vec2 step = vec2(1.0, 0.0);
 
-  center = sampleData(xy);
-  left = (edge < -0.5) ? center : sampleData(xy - step);
-  right = (edge > 0.5) ? center : sampleData(xy + step);
+  center = samplePosition(xy);
+  left = (edge < -0.5) ? center : samplePosition(xy - step);
+  right = (edge > 0.5) ? center : samplePosition(xy + step);
 }
 
 vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {
@@ -81,24 +109,32 @@ vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {
   return bitangent;
 }
 
-void main() {
+uniform float lineWidth;
+attribute vec2 line;
+//attribute vec3 position;
+
+vec3 getLinePosition() {
+  vec3 left, center, right, join;
+
   float edge = line.x;
   float offset = line.y;
 
-  vec4 left, center, right;
   getLineGeometry(position.xy, edge, left, center, right);
+  join = getLineJoin(edge, left, center, right);
+  return center + join * offset * lineWidth;
+}
 
-  vec3 viewLeft = getViewPos(left);
-  vec3 viewRight = getViewPos(right);
-	vec3 viewCenter = getViewPos(center);
+////
 
-  vec3 lineJoin = getLineJoin(edge, viewLeft, viewCenter, viewRight);
-
-	vec4 glPosition = projectionMatrix * vec4(viewCenter + lineJoin * offset * lineWidth, 1.0);
-
+void projectPosition(vec3 point) {
+	vec4 glPosition = projectionMatrix * vec4(point, 1.0);
   gl_Position = glPosition;
 }
 
+void main() {
+  vec3 position = getLinePosition();
+  projectPosition(position);
+}
 """
 
 fragmentShader = """

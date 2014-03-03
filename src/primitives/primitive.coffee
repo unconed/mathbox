@@ -1,6 +1,6 @@
 class Primitive
   constructor: (options, @_attributes, @_factory) ->
-    @attributes = @_attributes.apply(@, @traits)
+    @attributes = @_attributes.apply @, @traits
     @parent = null
     @root = null
     @inherited = []
