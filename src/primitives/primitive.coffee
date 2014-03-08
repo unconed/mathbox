@@ -82,7 +82,7 @@ class Primitive
 
     if @model.get(key)?
       target._listen @, key
-      return @
+      return @model
 
     if @parent?
       @parent._inherit key, target

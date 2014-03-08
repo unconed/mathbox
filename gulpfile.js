@@ -1,7 +1,6 @@
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 var uglify = require('gulp-uglify');
-var coffee = require('gulp-coffee');
 var concat = require('gulp-concat');
 var rename = require("gulp-rename");
 var karma = require('gulp-karma');
@@ -37,14 +36,6 @@ var coffees = [
 var test = bundle.concat([
   'test/**/*.spec.js',
 ]);
-
-/*
-gulp.task('coffee', function () {
-  return gulp.src(coffees)
-    .pipe(coffee({bare: true}).on('error', gutil.log))
-    .pipe(gulp.dest('.tmp'));
-});
-*/
 
 gulp.task('browserify', function () {
   return gulp.src('src/index.coffee', { read: false })
@@ -82,7 +73,7 @@ gulp.task('uglify', function () {
     .pipe(gulp.dest('build'));
 });
 
-gulp.task('test', function() {
+gulp.task('karma', function() {
   return gulp.src(test)
     .pipe(karma({
       configFile: 'karma.conf.js',
@@ -91,12 +82,13 @@ gulp.task('test', function() {
 });
 
 gulp.task('watch', function () {
-  gulp.watch(coffees[0], function () {
-    gulp.run('default');
-  });
+  return gulp.watch(coffees[0], ['default']);
 });
-
 
 gulp.task('default', function (callback) {
   runSequence('browserify', ['core', 'bundle'], 'uglify', callback);
+});
+
+gulp.task('test', function (callback) {
+  runSequence('build', 'karma', callback);
 });

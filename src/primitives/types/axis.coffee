@@ -1,4 +1,5 @@
 Primitive = require('../primitive')
+Shader = require('shadergraph').Shader
 
 class Axis extends Primitive
   @traits: ['object', 'style', 'line', 'axis']
@@ -6,31 +7,39 @@ class Axis extends Primitive
   constructor: (model, attributes, factory) ->
     super model, attributes, factory
 
-    @line   = null
+    @axisPosition = @axisStep = @position = @resolution = @line = null
 
   _make: () ->
 
     @inherit = @_inherit 'view.range'
 
-    detail = @model.get 'axis.detail'
-    samples = detail + 1
-    resolution = 1 / detail
-
+    # Position shader
     types = @_attributes.types
-    uniforms =
-      lineWidth:      @model.attributes['line.width']
-      lineColor:      @model.attributes['style.color']
-      lineOpacity:    @model.attributes['style.opacity']
+    positionUniforms
       axisPosition:   @_attributes.make types.vec4()
       axisStep:       @_attributes.make types.vec4()
 
-    @axisPosition   = uniforms.axisPosition.value
-    @axisStep       = uniforms.axisStep.value
-    @resolution     = 1 / detail
+    @axisPosition   = positionUniforms.axisPosition.value
+    @axisStep       = positionUniforms.axisStep.value
+
+    @position = new Shader()
+    @position.snippet 'axis.position', positionUniforms
+    @_transform @position
+
+    # Line geometry
+    detail = @model.get 'axis.detail'
+    samples = detail + 1
+    @resolution = 1 / detail
+
+    lineUniforms =
+      lineWidth:      @model.attributes['line.width']
+      lineColor:      @model.attributes['style.color']
+      lineOpacity:    @model.attributes['style.opacity']
 
     @line = @_factory.make 'line',
-              uniforms: uniforms
+              uniforms: lineUniforms
               samples:  samples
+              position: @position
 
     @_render @line
 
@@ -38,6 +47,8 @@ class Axis extends Primitive
     @_unrender @line
     @line.dispose()
     @line = null
+
+    @position = null
 
     @_unherit()
 
@@ -54,7 +65,7 @@ class Axis extends Primitive
       dimension = @model.get 'axis.dimension'
 
       if inherit and @inherit
-        ranges = @inherit.model.get 'view.range'
+        ranges = @inherit.get 'view.range'
         range  = ranges[dimension - 1]
       else
         range  = @model.get 'axis.range'
