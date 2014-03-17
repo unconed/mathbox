@@ -1,6 +1,6 @@
 uniform vec3 lineColor;
 uniform float lineOpacity;
 
-void getLineColor() {
+void setLineColor() {
 	gl_FragColor = vec4(lineColor, lineOpacity);
 }

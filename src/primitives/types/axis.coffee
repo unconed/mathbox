@@ -48,8 +48,6 @@ class Axis extends Primitive
     @line.dispose()
     @line = null
 
-    @position = null
-
     @_unherit()
 
   _change: (changed, first) ->
