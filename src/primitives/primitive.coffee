@@ -7,7 +7,7 @@ class Primitive
   @model  = @Node
   @traits = []
 
-  constructor: (@model, @_attributes, @_factory) ->
+  constructor: (@model, @_attributes, @_factory, @_shaders) ->
     @model.primitive = @
 
     @model.on 'change', (event) =>

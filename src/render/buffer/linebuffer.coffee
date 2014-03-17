@@ -2,13 +2,13 @@ Buffer = require('./buffer')
 Texture = require('./texture')
 
 class LineBuffer extends Buffer
-  constructor: (gl, options) ->
+  constructor: (gl, shaders, options) ->
     @callback = options.callback || ->
     @width    = options.width    || 1
     @history  = options.history  || 1
 
     @samples = @width
-    super gl, options
+    super gl, shaders, options
 
   build: () ->
     super

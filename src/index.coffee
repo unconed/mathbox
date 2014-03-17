@@ -8,10 +8,12 @@ window.MathBox = exports
 window.mathBox = exports.mathBox = mathBox
 exports.version = '2'
 
+require '../build/shaders'
+
 ###
 ###
 
-Context = require('./context')
+Context = require './context'
 
 THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:

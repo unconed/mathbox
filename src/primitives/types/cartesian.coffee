@@ -34,9 +34,9 @@ class Cartesian extends View
     dx = (r[0].y - x) || 1
     dy = (r[1].y - y) || 1
     dz = (r[2].y - z) || 1
-    sx = s[0]
-    sy = s[1]
-    sz = s[2]
+    sx = s.x
+    sy = s.y
+    sz = s.z
 
     # Forward transform
     @cartesianMatrix.set(
@@ -65,7 +65,7 @@ class Cartesian extends View
     vector.applyMatrix4 @cartesianMatrix
 
   _transform: (shader) ->
-    shader.snippet 'cartesian', @uniforms
+    shader.call 'cartesian.position', @uniforms
     @parent?._transform shader
 
   ###

@@ -1,13 +1,13 @@
 Primitive = require('../primitive')
-Shader = require('shadergraph').Shader
+#Shader = require('shadergraph').Shader
 
 class Axis extends Primitive
   @traits: ['object', 'style', 'line', 'axis']
 
-  constructor: (model, attributes, factory) ->
-    super model, attributes, factory
+  constructor: (model, attributes, factory, shaders) ->
+    super model, attributes, factory, shaders
 
-    @axisPosition = @axisStep = @position = @resolution = @line = null
+    @axisPosition = @axisStep = @resolution = @line = null
 
   _make: () ->
 
@@ -15,16 +15,16 @@ class Axis extends Primitive
 
     # Position shader
     types = @_attributes.types
-    positionUniforms
+    positionUniforms =
       axisPosition:   @_attributes.make types.vec4()
       axisStep:       @_attributes.make types.vec4()
 
     @axisPosition   = positionUniforms.axisPosition.value
     @axisStep       = positionUniforms.axisStep.value
 
-    @position = new Shader()
-    @position.snippet 'axis.position', positionUniforms
-    @_transform @position
+    position = @_shaders.shader()
+    position.call 'axis.position', positionUniforms
+    @_transform position
 
     # Line geometry
     detail = @model.get 'axis.detail'
@@ -39,7 +39,7 @@ class Axis extends Primitive
     @line = @_factory.make 'line',
               uniforms: lineUniforms
               samples:  samples
-              position: @position
+              position: position
 
     @_render @line
 

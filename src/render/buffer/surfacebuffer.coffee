@@ -2,7 +2,7 @@ Buffer = require('./buffer')
 Texture = require('./texture')
 
 class SurfaceBuffer extends Buffer
-  constructor: (gl, options) ->
+  constructor: (gl, shaders, options) ->
     @callback = options.callback || ->
     @width    = options.width    || 1
     @height   = options.height   || 1
@@ -10,7 +10,7 @@ class SurfaceBuffer extends Buffer
     @channels = options.channels || 4
 
     @samples = @width * @height
-    super gl, options
+    super gl, shaders, options
 
   build: () ->
     super

@@ -3,11 +3,11 @@ Renderable = require('../renderable')
 class Buffer extends Renderable
   iterationLimit = 0xFFFF
 
-  constructor: (gl, options) ->
+  constructor: (gl, shaders, options) ->
     @samples  ?= options.samples  || 1
     @channels ?= options.channels || 4
 
-    super gl
+    super gl, shaders
     @build()
 
   build: () ->

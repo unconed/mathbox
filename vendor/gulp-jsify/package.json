@@ -1,0 +1,14 @@
+{
+  "name": "gulp-glsl",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "through": "~2.3.4",
+    "gulp-util": "~2.2.5"
+  },
+  "scripts": {
+  },
+  "author": "Steven Wittens",
+  "license": "MIT"
+}

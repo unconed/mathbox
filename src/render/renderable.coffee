@@ -1,5 +1,5 @@
 class Renderable
-  constructor: (@gl) ->
+  constructor: (@gl, @shaders) ->
     @uniforms ?= {}
 
   dispose: () ->

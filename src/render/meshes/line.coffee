@@ -152,26 +152,32 @@ Renderable = require('../renderable')
 LineGeometry = require('../geometry').LineGeometry
 
 class Line extends Renderable
-  constructor: (gl, options) ->
-    super gl
+  constructor: (gl, shaders, options) ->
+    super gl, shaders
 
     uniforms = options.uniforms ? {}
-    buffer = options.buffer
-
-    @_adopt uniforms
+    position = options.position
 
     @geometry = new LineGeometry
       samples: options.samples || 2
       strips:  options.strips  || 1
       ribbons: options.ribbons || 1
 
-    @material = new THREE.ShaderMaterial
-      attributes: @geometry.shaderAttributes()
-      uniforms: @uniforms
-      vertexShader: vertexShader
-      fragmentShader: fragmentShader
+    factory = shaders.material()
+
+    v = factory.vertex
+    v.import position if position
+    v.call 'line.position', uniforms
+    v.call 'project.position'
+
+    f = factory.fragment
+    f.call 'line.color', uniforms
+
+    @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
       defaultAttributeValues: null
+
+    window.material = @material
 
     @object = new THREE.Mesh @geometry, @material
     @object.frustumCulled = false;

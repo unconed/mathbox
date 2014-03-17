@@ -5,8 +5,8 @@ Types = require('./types')
 class Grid extends Primitive
   @traits: ['line', 'object', 'grid', 'axis:axis[0]', 'axis:axis[1]']
 
-  constructor: (model, attributes, factory) ->
-    super model, attributes, factory
+  constructor: (model, attributes, factory, shaders) ->
+    super model, attributes, factory, shaders
 
     @widths  = []
     @lines   = null

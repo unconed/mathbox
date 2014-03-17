@@ -1,12 +1,13 @@
-var gulp = require('gulp');
-var gutil = require('gulp-util');
-var uglify = require('gulp-uglify');
-var concat = require('gulp-concat');
-var rename = require("gulp-rename");
-var karma = require('gulp-karma');
-var runSequence = require('run-sequence');
+var gulp       = require('gulp');
+var gutil      = require('gulp-util');
+var uglify     = require('gulp-uglify');
+var concat     = require('gulp-concat');
+var rename     = require("gulp-rename");
+var karma      = require('gulp-karma');
+var sequence   = require('run-sequence');
 var browserify = require('gulp-browserify');
-var watch = require('gulp-watch');
+var watch      = require('gulp-watch');
+var jsify      = require('./vendor/gulp-jsify');
 
 var builds = {
   core: 'build/mathbox-core.js',
@@ -21,6 +22,8 @@ var products = [
 var vendor = [
   'vendor/three.js',
   'vendor/threestrap/build/threestrap.js',
+  'vendor/shadergraph/build/shadergraph.js',
+  'vendor/fix.js',
 ];
 
 var core = [
@@ -29,6 +32,10 @@ var core = [
 
 var bundle = vendor.concat(core);
 
+var glsls = [
+  'src/shaders/glsl/**/*.glsl'
+];
+
 var coffees = [
   'src/**/*.coffee'
 ];
@@ -36,6 +43,12 @@ var coffees = [
 var test = bundle.concat([
   'test/**/*.spec.js',
 ]);
+
+gulp.task('glsl', function () {
+  return gulp.src(glsls)
+    .pipe(jsify("shaders.js", "window.MathBox.Shaders"))
+    .pipe(gulp.dest('./build/'))
+});
 
 gulp.task('browserify', function () {
   return gulp.src('src/index.coffee', { read: false })
@@ -77,18 +90,41 @@ gulp.task('karma', function() {
   return gulp.src(test)
     .pipe(karma({
       configFile: 'karma.conf.js',
-      action: 'run'
+      action: 'single',
     }));
 });
 
-gulp.task('watch', function () {
-  return gulp.watch(coffees[0], ['default']);
+gulp.task('watch-karma', function() {
+  return gulp.src(test)
+    .pipe(karma({
+      configFile: 'karma.conf.js',
+      action: 'watch',
+    }));
 });
 
+gulp.task('watch-build', function () {
+  gulp.src(coffees)
+    .pipe(
+      watch(function(files) {
+        return gulp.start('build');
+      })
+    );
+});
+
+// Main tasks
+
+gulp.task('build', function (callback) {
+  sequence('glsl', 'browserify', ['core', 'bundle'], callback);
+})
+
 gulp.task('default', function (callback) {
-  runSequence('browserify', ['core', 'bundle'], 'uglify', callback);
+  sequence('build', 'uglify', callback);
 });
 
 gulp.task('test', function (callback) {
-  runSequence('build', 'karma', callback);
+  sequence('build', 'karma', callback);
+});
+
+gulp.task('watch', function (callback) {
+  sequence('watch-build', 'watch-karma', callback);
 });
