@@ -5,7 +5,7 @@ class View extends Group
   @traits: ['object', 'view']
 
   axis: (dimension) ->
-    range = @get('view.range')[dimension - 1]
+    range = @_get('view.range')[dimension - 1]
 
   to: (vector) ->
 

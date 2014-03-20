@@ -617,7 +617,8 @@ Primitive = (function() {
       };
     })(this));
     this.inherited = [];
-    this.helper = helpers(this);
+    this._helper = helpers(this);
+    this._get = this.model.get.bind(this.model);
   }
 
   Primitive.prototype.rebuild = function() {
@@ -753,7 +754,7 @@ Axis = (function(_super) {
     position = this._shaders.shader();
     position.call('axis.position', positionUniforms);
     this._transform(position);
-    detail = this.model.get('axis.detail');
+    detail = this._get('axis.detail');
     samples = detail + 1;
     this.resolution = 1 / detail;
     lineUniforms = {
@@ -782,14 +783,14 @@ Axis = (function(_super) {
       this.rebuild();
     }
     if ((changed['view.range'] != null) || (changed['span.range'] != null) || (changed['axis.dimension'] != null) || (changed['span.inherit'] != null) || first) {
-      dimension = this.model.get('axis.dimension');
-      range = this.helper.getSpanRange('', dimension);
+      dimension = this._get('axis.dimension');
+      range = this._helper.getSpanRange('', dimension);
       min = range.x;
       max = range.y;
-      this.helper.setDimension(this.axisPosition, dimension).multiplyScalar(min);
-      this.helper.setDimension(this.axisStep, dimension).multiplyScalar((max - min) * this.resolution);
+      this._helper.setDimension(this.axisPosition, dimension).multiplyScalar(min);
+      this._helper.setDimension(this.axisStep, dimension).multiplyScalar((max - min) * this.resolution);
     }
-    return this.helper.setMeshVisible(this.line);
+    return this._helper.setMeshVisible(this.line);
   };
 
   return Axis;
@@ -830,10 +831,10 @@ Cartesian = (function(_super) {
 
   Cartesian.prototype._change = function(changed) {
     var dx, dy, dz, o, q, r, s, sx, sy, sz, x, y, z;
-    o = this.model.get('object.position');
-    s = this.model.get('object.scale');
-    q = this.model.get('object.rotation');
-    r = this.model.get('view.range');
+    o = this._get('object.position');
+    s = this._get('object.scale');
+    q = this._get('object.rotation');
+    r = this._get('view.range');
     x = r[0].x;
     y = r[1].x;
     z = r[2].x;
@@ -912,10 +913,10 @@ Grid = (function(_super) {
     axis = (function(_this) {
       return function(first, second) {
         var buffer, detail, divide, line, lineUniforms, p, position, positionUniforms, quads, resolution, ribbons, samples, types, uniforms;
-        detail = _this.model.get(first + 'axis.detail');
+        detail = _this._get(first + 'axis.detail');
         samples = detail + 1;
         resolution = 1 / detail;
-        divide = _this.model.get(second + 'scale.divide');
+        divide = _this._get(second + 'scale.divide');
         ribbons = divide * Grid.EXCESS;
         buffer = _this._factory.make('databuffer', {
           samples: ribbons,
@@ -969,8 +970,8 @@ Grid = (function(_super) {
         };
       };
     })(this);
-    first = this.model.get('grid.first');
-    second = this.model.get('grid.second');
+    first = this._get('grid.first');
+    second = this._get('grid.second');
     first && this.axes.push(axis('x.', 'y.'));
     return second && this.axes.push(axis('y.', 'x.'));
   };
@@ -998,22 +999,22 @@ Grid = (function(_super) {
         first = axis.first, second = axis.second, quads = axis.quads, resolution = axis.resolution, line = axis.line, buffer = axis.buffer, uniforms = axis.uniforms;
         min = range1.x;
         max = range1.y;
-        _this.helper.setDimension(uniforms.gridPosition, x).multiplyScalar(min);
-        _this.helper.setDimension(uniforms.gridStep, x).multiplyScalar((max - min) * resolution);
+        _this._helper.setDimension(uniforms.gridPosition, x).multiplyScalar(min);
+        _this._helper.setDimension(uniforms.gridStep, x).multiplyScalar((max - min) * resolution);
         min = range2.x;
         max = range2.y;
-        _this.helper.setDimension(uniforms.gridAxis, y);
-        ticks = _this.helper.generateScale(second, buffer, min, max);
+        _this._helper.setDimension(uniforms.gridAxis, y);
+        ticks = _this._helper.generateScale(second, buffer, min, max);
         n = ticks.length;
         line.geometry.clip(0, n * quads);
-        return _this.helper.setMeshVisible(line);
+        return _this._helper.setMeshVisible(line);
       };
     })(this);
-    axes = this.model.get('grid.axes');
-    range1 = this.helper.getSpanRange('x.', axes.x);
-    range2 = this.helper.getSpanRange('y.', axes.y);
-    first = this.model.get('grid.first');
-    second = this.model.get('grid.second');
+    axes = this._get('grid.axes');
+    range1 = this._helper.getSpanRange('x.', axes.x);
+    range2 = this._helper.getSpanRange('y.', axes.y);
+    first = this._get('grid.first');
+    second = this._get('grid.second');
     j = 0;
     if (first) {
       axis(axes.x, axes.y, range1, range2, this.axes[0]);
@@ -1129,7 +1130,7 @@ Ticks = (function(_super) {
   Ticks.prototype._make = function() {
     var divide, lineUniforms, p, position, positionUniforms, samples, types;
     this.inherit = this._inherit('view.range');
-    divide = this.model.get('scale.divide');
+    divide = this._get('scale.divide');
     this.resolution = samples = divide * Ticks.EXCESS;
     this.buffer = this._factory.make('databuffer', {
       samples: samples,
@@ -1189,17 +1190,17 @@ Ticks = (function(_super) {
       this.rebuild();
     }
     if ((changed['view.range'] != null) || (changed['span.range'] != null) || (changed['span.inherit'] != null) || (changed['ticks.dimension'] != null) || (changed['scale.divide'] != null) || (changed['scale.unit'] != null) || (changed['scale.base'] != null) || (changed['scale.mode'] != null) || first) {
-      dimension = this.model.get('ticks.dimension');
-      range = this.helper.getSpanRange('', dimension);
+      dimension = this._get('ticks.dimension');
+      range = this._helper.getSpanRange('', dimension);
       min = range.x;
       max = range.y;
-      this.helper.setDimension(this.tickAxis, dimension);
-      this.helper.setDimensionNormal(this.tickNormal, dimension);
-      ticks = this.helper.generateScale('', this.buffer, min, max);
+      this._helper.setDimension(this.tickAxis, dimension);
+      this._helper.setDimensionNormal(this.tickNormal, dimension);
+      ticks = this._helper.generateScale('', this.buffer, min, max);
       n = ticks.length;
       this.line.geometry.clip(0, n * 2);
     }
-    return this.helper.setMeshVisible(this.line);
+    return this._helper.setMeshVisible(this.line);
   };
 
   return Ticks;
@@ -1612,7 +1613,7 @@ View = (function(_super) {
 
   View.prototype.axis = function(dimension) {
     var range;
-    return range = this.get('view.range')[dimension - 1];
+    return range = this._get('view.range')[dimension - 1];
   };
 
   View.prototype.to = function(vector) {};

@@ -21,7 +21,9 @@ class Primitive
       @_removed()
 
     @inherited = []
-    @helper = helpers @
+
+    @_helper = helpers @
+    @_get = @model.get.bind @model
 
   # Construction of renderables
 

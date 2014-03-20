@@ -28,7 +28,7 @@ class Axis extends Primitive
     @_transform position
 
     # Make line renderable
-    detail = @model.get 'axis.detail'
+    detail = @_get 'axis.detail'
     samples = detail + 1
     @resolution = 1 / detail
 
@@ -60,15 +60,15 @@ class Axis extends Primitive
        changed['span.inherit']?   or
        first
 
-      dimension = @model.get 'axis.dimension'
-      range = @helper.getSpanRange '', dimension
+      dimension = @_get 'axis.dimension'
+      range = @_helper.getSpanRange '', dimension
 
       min = range.x
       max = range.y
 
-      @helper.setDimension(@axisPosition, dimension).multiplyScalar(min)
-      @helper.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
+      @_helper.setDimension(@axisPosition, dimension).multiplyScalar(min)
+      @_helper.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
 
-    @helper.setMeshVisible @line
+    @_helper.setMeshVisible @line
 
 module.exports = Axis

@@ -20,11 +20,11 @@ class Grid extends Primitive
 
     axis = (first, second) =>
       # Prepare data buffer of tick positions
-      detail   = @model.get first  + 'axis.detail'
+      detail   = @_get first  + 'axis.detail'
       samples = detail + 1
       resolution = 1 / detail
 
-      divide  = @model.get second + 'scale.divide'
+      divide  = @_get second + 'scale.divide'
       ribbons = divide * Grid.EXCESS
 
       buffer = @_factory.make 'databuffer',
@@ -82,8 +82,8 @@ class Grid extends Primitive
 
       {first, second, quads, resolution, line, buffer, uniforms}
 
-    first  = @model.get 'grid.first'
-    second = @model.get 'grid.second'
+    first  = @_get 'grid.first'
+    second = @_get 'grid.second'
 
     first  && @axes.push axis 'x.', 'y.'
     second && @axes.push axis 'y.', 'x.'
@@ -108,26 +108,26 @@ class Grid extends Primitive
 
       min    = range1.x
       max    = range1.y
-      @helper.setDimension(uniforms.gridPosition, x).multiplyScalar(min)
-      @helper.setDimension(uniforms.gridStep,     x).multiplyScalar((max - min) * resolution)
+      @_helper.setDimension(uniforms.gridPosition, x).multiplyScalar(min)
+      @_helper.setDimension(uniforms.gridStep,     x).multiplyScalar((max - min) * resolution)
 
       min    = range2.x
       max    = range2.y
 
-      @helper.setDimension uniforms.gridAxis, y
-      ticks = @helper.generateScale second, buffer, min, max
+      @_helper.setDimension uniforms.gridAxis, y
+      ticks = @_helper.generateScale second, buffer, min, max
 
       n = ticks.length
       line.geometry.clip 0, n * quads
 
-      @helper.setMeshVisible line
+      @_helper.setMeshVisible line
 
-    axes = @model.get 'grid.axes'
-    range1 = @helper.getSpanRange 'x.', axes.x
-    range2 = @helper.getSpanRange 'y.', axes.y
+    axes = @_get 'grid.axes'
+    range1 = @_helper.getSpanRange 'x.', axes.x
+    range2 = @_helper.getSpanRange 'y.', axes.y
 
-    first  = @model.get 'grid.first'
-    second = @model.get 'grid.second'
+    first  = @_get 'grid.first'
+    second = @_get 'grid.second'
 
     j = 0
     if first

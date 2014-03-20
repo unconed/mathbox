@@ -15,7 +15,7 @@ class Ticks extends Primitive
     @inherit = @_inherit 'view.range'
 
     # Prepare data buffer of tick positions
-    divide = @model.get 'scale.divide'
+    divide = @_get 'scale.divide'
     @resolution = samples = divide * Ticks.EXCESS
 
     @buffer = @_factory.make 'databuffer',
@@ -94,19 +94,19 @@ class Ticks extends Primitive
        changed['scale.mode']?      or
        first
 
-      dimension = @model.get 'ticks.dimension'
-      range  = @helper.getSpanRange '', dimension
+      dimension = @_get 'ticks.dimension'
+      range  = @_helper.getSpanRange '', dimension
 
       min = range.x
       max = range.y
 
-      @helper.setDimension @tickAxis, dimension
-      @helper.setDimensionNormal @tickNormal, dimension
-      ticks = @helper.generateScale '', @buffer, min, max
+      @_helper.setDimension @tickAxis, dimension
+      @_helper.setDimensionNormal @tickNormal, dimension
+      ticks = @_helper.generateScale '', @buffer, min, max
 
       n = ticks.length
       @line.geometry.clip 0, n * 2
 
-    @helper.setMeshVisible @line
+    @_helper.setMeshVisible @line
 
 module.exports = Ticks

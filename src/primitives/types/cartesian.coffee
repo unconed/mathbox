@@ -23,10 +23,10 @@ class Cartesian extends View
 
   _change: (changed) ->
 
-    o = @model.get 'object.position'
-    s = @model.get 'object.scale'
-    q = @model.get 'object.rotation'
-    r = @model.get 'view.range'
+    o = @_get 'object.position'
+    s = @_get 'object.scale'
+    q = @_get 'object.rotation'
+    r = @_get 'view.range'
 
     x = r[0].x
     y = r[1].x

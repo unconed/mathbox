@@ -23,9 +23,9 @@ class Cartesian4 extends View
 
   _change: (changed) ->
 
-    o = @get 'object.position'
-    r = @get 'view.range'
-    s = @get 'object.scale'
+    o = @_get 'object.position'
+    r = @_get 'view.range'
+    s = @_get 'object.scale'
 
     x = r[0].x
     y = r[1].x
