@@ -1,57 +1,99 @@
 Primitive = require('../primitive')
-Ticks = require('../../util').Ticks
-Types = require('./types')
+Util      = require '../../util'
+Types     = require('./types')
 
 class Grid extends Primitive
-  @traits: ['line', 'object', 'grid', 'axis:axis[0]', 'axis:axis[1]']
+  @traits: ['object', 'style', 'line', 'grid',
+            'axis:x.axis',   'axis:y.axis',
+            'scale:x.scale', 'scale:y.scale',
+            'span:x.span',   'span:y.span']
+  @EXCESS: 2.5
 
   constructor: (model, attributes, factory, shaders) ->
     super model, attributes, factory, shaders
 
-    @widths  = []
-    @lines   = null
-    @buffers = null
-    @grids   = []
+    @quads       = []
+    @resolutions = []
+    @lines       = []
+    @buffers     = []
+    @axes        = []
 
   _make: () ->
 
-    @inherit = @_inherit 'view'
+    # Look up range of nearest view to inherit from
+    @inherit = @_inherit 'view.range'
 
-    uniforms =
-      lineWidth:   @attributes['line.width']
-      lineColor:   @attributes['style.color']
-      lineOpacity: @attributes['style.opacity']
+    axis = (first, second) =>
+      # Prepare data buffer of tick positions
+      detail   = @model.get first  + 'axis.detail'
+      samples = detail + 1
+      resolution = 1 / detail
 
-    axis = (prefix, dimension) ->
-      types = @_attributes.types
-
-      grid =
-        gridRange:  @_attributes.make types.vec2 -1, 1
-        gridAxis:   @_attributes.make types.vec3 0, 2, 0
-        gridOffset: @_attributes.make types.vec2 0, -1, 0
-      grid[key] = value for key, value of uniforms
-
-      ticks = @get prefix + 'ticks'
-      width = ticks * 2
+      divide  = @model.get second + 'scale.divide'
+      ribbons = divide * Grid.EXCESS
 
       buffer = @_factory.make 'databuffer',
-                samples: width
-                channels: 1
+               samples:  ribbons
+               channels: 1
 
-      line   = @_factory.make 'line',
-                uniforms: uniforms
-                buffer: buffer
+      @resolutions.push resolution
+      @buffers    .push buffer
 
-      @widths.push  width
-      @buffers.push buffer
-      @lines.push   line
-      @grids.push   grid
+      # Prepare position shader
+      types = @_attributes.types
+      positionUniforms =
+        gridPosition:  @_attributes.make types.vec4()
+        gridStep:      @_attributes.make types.vec4()
+        gridAxis:      @_attributes.make types.vec4()
+
+      @axes.push
+        gridPosition: positionUniforms.gridPosition.value
+        gridStep:     positionUniforms.gridStep.value
+        gridAxis:     positionUniforms.gridAxis.value
+
+      # Build transform chain
+      p = position = @_shaders.shader()
+
+      # Collect buffer sampler as callback
+      p.callback();
+      buffer.shader p
+      p.join()
+
+      # Calculate grid position
+      p.call 'grid.position', positionUniforms
+
+      # Apply view transform
+      @_transform position
+
+      ###
+      debug = @_factory.make 'debug',
+               map: buffer.texture.textureObject
+      @_render debug
+      ###
+
+      # Make line renderable
+      lineUniforms =
+        lineWidth:      @model.attributes['line.width']
+        lineColor:      @model.attributes['style.color']
+        lineOpacity:    @model.attributes['style.opacity']
+
+      @quads.push samples - 1
+
+      line = @_factory.make 'line',
+                uniforms: lineUniforms
+                samples:  samples
+                strips:   1
+                ribbons:  ribbons
+                position: position
 
       @_render line
+      @lines.push line
 
-    axes = @get 'grid.axes'
-    axis 'axis[0].', axes[0]
-    #axis 'axis[1].', axes[1]
+    first  = @model.get 'grid.first'
+    second = @model.get 'grid.second'
+
+    first  && axis 'x.', 'y.'
+    second && axis 'y.', 'x.'
 
   _unmake: () ->
     for buffer in @buffers
@@ -61,36 +103,71 @@ class Grid extends Primitive
       @_unrender line
       line.dispose()
 
-    @widths  = []
-    @lines   = null
-    @buffers = null
+    @resolutions = []
+    @lines       = []
+    @buffers     = []
+    @axes        = []
 
   _change: (changed) ->
 
-    return @rebuild() if changed['axis1.ticks']? || changed['axis2.ticks']?
+    return @rebuild() if changed['x.axis.detail']? or
+                         changed['y.axis.detail']? or
+                         changed['grid.first']?    or
+                         changed['grid.second']?
 
-    axis = (prefix, dimension, buffer, grid) ->
-      inherit = @get prefix + 'inherit'
+    setDimension = (vec, dimension) ->
+      x = if dimension == 1 then 1 else 0
+      y = if dimension == 2 then 1 else 0
+      z = if dimension == 3 then 1 else 0
+      w = if dimension == 4 then 1 else 0
+      vec.set x, y, z, w
+
+    getRange = (prefix, dimension) =>
+      inherit = @model.get prefix + 'span.inherit'
 
       if inherit and @inherit
         ranges = @inherit.get 'view.range'
-        range  = ranges[dimension]
+        range  = ranges[dimension - 1]
       else
-        range  = @get prefix + 'range'
+        range  = @model.get prefix + 'span.range'
 
-      ticks  = @get prefix + 'ticks'
-      unit   = @get prefix + 'unit'
-      base   = @get prefix + 'base'
-      scale  = @get prefix + 'scale'
+      range
 
-      min    = range.x
-      max    = range.y
-      ticks  = Ticks.make scale, min, max, ticks, unit, base
+    axis = (first, second, x, y, range1, range2, resolution, buffer, line, axis, quads) =>
 
+      min    = range1.x
+      max    = range1.y
+      setDimension(axis.gridPosition, x).multiplyScalar(min)
+      setDimension(axis.gridStep,     x).multiplyScalar((max - min) * resolution)
+
+      min    = range2.x
+      max    = range2.y
+
+      divide = @model.get second + 'scale.divide'
+      unit   = @model.get second + 'scale.unit'
+      base   = @model.get second + 'scale.base'
+      mode   = @model.get second + 'scale.mode'
+
+      setDimension axis.gridAxis, y
+
+      ticks = Util.Ticks.make mode, min, max, divide, unit, base, true, 0
       buffer.copy ticks
 
-    axes = @get 'grid.axes'
-    axis 'axis[0].', axes[0], @buffer[0], @grid[0]
-    #axis 'axis[1].', axes[1], @buffer[1], @grid[1]
+      n = ticks.length
+      line.geometry.clip 0, n * quads
+
+    axes = @model.get 'grid.axes'
+    range1 = getRange 'x.', axes.x
+    range2 = getRange 'y.', axes.y
+
+    first  = @model.get 'grid.first'
+    second = @model.get 'grid.second'
+
+    j = 0
+    if first
+      axis 'x.', 'y.', axes.x, axes.y, range1, range2, @resolutions[0], @buffers[0], @lines[0], @axes[0], @quads[0]
+      j = 1
+    if second
+      axis 'y.', 'x.', axes.y, axes.x, range2, range1, @resolutions[j], @buffers[j], @lines[j], @axes[j], @quads[j]
 
 module.exports = Grid

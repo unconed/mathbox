@@ -30,8 +30,6 @@ var core = [
   '.tmp/index.js'
 ];
 
-var bundle = vendor.concat(core);
-
 var glsls = [
   'src/shaders/glsl/**/*.glsl'
 ];
@@ -39,6 +37,9 @@ var glsls = [
 var coffees = [
   'src/**/*.coffee'
 ];
+
+var source = coffees.concat(glsls);
+var bundle = vendor.concat(core);
 
 var test = bundle.concat([
   'test/**/*.spec.js',
@@ -103,7 +104,7 @@ gulp.task('watch-karma', function() {
 });
 
 gulp.task('watch-build', function () {
-  gulp.src(coffees)
+  gulp.src(source)
     .pipe(
       watch(function(files) {
         return gulp.start('build');

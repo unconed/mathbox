@@ -7,13 +7,26 @@
 </head>
 <body>
   <script>
-    mathbox = mathBox();
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'mathbox'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
     three = mathbox.three;
 
+    three.camera.position.set(2.3, 1, 2);
+    three.renderer.setClearColor(new THREE.Color(0x505050), 1.0);
+
     mathbox.cartesian({
-      'view.range': [[0, 1], [0, 1], [0, 1]],
+      'view.range': [[-2, 2], [-1, 1], [-1, 1]],
+      'object.scale': [2, 1, 1],
     });
-    mathbox.grid();
+    mathbox.grid({
+      'x.scale.divide': 20,
+      'line.width': 0.005,
+      'style.opacity': 0.5,
+    });
   </script>
 </body>
 </html>

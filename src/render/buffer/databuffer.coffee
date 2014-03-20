@@ -13,9 +13,8 @@ class DataBuffer extends Buffer
     @dataPointer = @uniforms.dataPointer.value
     @_adopt @texture.uniforms
 
-  write: () ->
-    @texture.write @data, 0, @index, @samples, 1
-    @dataPointer.set .5, @index + .5
-    @index = (@index + 1) % @history
+  write: (samples = @samples) ->
+    @texture.write @data, 0, 0, samples, 1
+    @dataPointer.set .5, .5
 
-module.exports = LineBuffer
+module.exports = DataBuffer

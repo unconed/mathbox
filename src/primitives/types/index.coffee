@@ -8,6 +8,7 @@ Classes =
   cartesian: require './cartesian'
   group:     require './group'
   root:      require './root'
+  ticks:     require './ticks'
   view:      require './view'
 
 exports.Classes = Classes

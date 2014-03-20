@@ -1,8 +1,7 @@
-Primitive = require('../primitive')
-#Shader = require('shadergraph').Shader
+Primitive = require '../primitive'
 
 class Axis extends Primitive
-  @traits: ['object', 'style', 'line', 'axis']
+  @traits: ['object', 'style', 'line', 'axis', 'span']
 
   constructor: (model, attributes, factory, shaders) ->
     super model, attributes, factory, shaders
@@ -11,9 +10,10 @@ class Axis extends Primitive
 
   _make: () ->
 
+    # Look up range of nearest view to inherit from
     @inherit = @_inherit 'view.range'
 
-    # Position shader
+    # Prepare position shader
     types = @_attributes.types
     positionUniforms =
       axisPosition:   @_attributes.make types.vec4()
@@ -22,11 +22,12 @@ class Axis extends Primitive
     @axisPosition   = positionUniforms.axisPosition.value
     @axisStep       = positionUniforms.axisStep.value
 
+    # Build transform chain
     position = @_shaders.shader()
     position.call 'axis.position', positionUniforms
     @_transform position
 
-    # Line geometry
+    # Make line renderable
     detail = @model.get 'axis.detail'
     samples = detail + 1
     @resolution = 1 / detail
@@ -53,20 +54,20 @@ class Axis extends Primitive
   _change: (changed, first) ->
     @rebuild() if changed['axis.detail']?
 
-    if changed['view.range']? or
-       changed['axis.range']? or
+    if changed['view.range']?     or
+       changed['span.range']?     or
        changed['axis.dimension']? or
-       changed['axis.inherit']? or
+       changed['span.inherit']?   or
        first
 
-      inherit   = @model.get 'axis.inherit'
+      inherit   = @model.get 'span.inherit'
       dimension = @model.get 'axis.dimension'
 
       if inherit and @inherit
         ranges = @inherit.get 'view.range'
         range  = ranges[dimension - 1]
       else
-        range  = @model.get 'axis.range'
+        range  = @model.get 'span.range'
 
       min = range.x
       max = range.y
@@ -76,7 +77,11 @@ class Axis extends Primitive
       z = if dimension == 3 then 1 else 0
       w = if dimension == 4 then 1 else 0
 
-      @axisPosition.set(x, y, z, w).multiplyScalar(min)
-      @axisStep.set(x, y, z, w).multiplyScalar((max - min) * @resolution)
+      @axisPosition
+        .set(x, y, z, w)
+        .multiplyScalar(min)
+      @axisStep
+        .set(x, y, z, w)
+        .multiplyScalar((max - min) * @resolution)
 
 module.exports = Axis

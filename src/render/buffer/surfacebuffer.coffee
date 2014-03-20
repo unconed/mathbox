@@ -39,8 +39,9 @@ class SurfaceBuffer extends Buffer
 
     return
 
-  write: () ->
-    @texture.write @data, 0, @index, @width, @height
+  write: (width = @width, height = @height) ->
+    throw "Not Implemented: passing (samples) to (width, height) write()"
+    @texture.write @data, 0, @index, width, height
     @dataPointer.set .5, @index + .5
     @index = (@index + 1) % @history
 

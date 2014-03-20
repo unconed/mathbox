@@ -10,6 +10,9 @@ class Buffer extends Renderable
     super gl, shaders
     @build()
 
+  shader: (shader) ->
+    shader.call 'sample.2d', @uniforms
+
   build: () ->
     @uniforms =
       dataPointer:
@@ -29,7 +32,7 @@ class Buffer extends Renderable
     n = Math.min data.length, @samples * @channels
     for i in [0...n]
       @data[i] = data[i]
-    @write()
+    @write n
 
   write: () ->
   iterate: () ->

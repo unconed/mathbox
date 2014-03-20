@@ -36,7 +36,7 @@ class LineGeometry extends Geometry
     base = 0
     for i in [0...ribbons]
       for j in [0...strips]
-        for k in [0..samples] # note ..
+        for k in [0...segments] # note ..
           index base
           index base + 1
           index base + 2
@@ -48,11 +48,11 @@ class LineGeometry extends Geometry
           base += 2
         base += 2
 
+    y = 0
     for i in [0...ribbons]
-      y = 0
 
+      x = 0
       for j in [0...strips]
-        x = 0
 
         for k in [0...samples]
           edge = if k == 0 then -1 else if k == segments then 1 else 0

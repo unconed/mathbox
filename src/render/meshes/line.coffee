@@ -148,7 +148,7 @@ void main() {
 
 
 
-Renderable = require('../renderable')
+Renderable   = require '../renderable'
 LineGeometry = require('../geometry').LineGeometry
 
 class Line extends Renderable

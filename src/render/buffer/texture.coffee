@@ -19,7 +19,7 @@ class Texture
     # Attach empty data
     @data = new Float32Array @n
     gl.pixelStorei gl.UNPACK_ALIGNMENT, 1
-    gl.texImage2D  gl.TEXTURE_2D, 0, gl.RGBA, @width, @height, 0, @type, gl.FLOAT, @data
+    gl.texImage2D  gl.TEXTURE_2D, 0, @type, @width, @height, 0, @type, gl.FLOAT, @data
 
     # Make wrapper texture object.
     @textureObject = new THREE.Texture(
@@ -32,7 +32,7 @@ class Texture
 
     # Pre-init texture to trick WebGLRenderer
     @textureObject.__webglInit = true;
-    @textureObject.__webglTexture = texture;
+    @textureObject.__webglTexture = @texture;
 
     # Create uniforms
     @uniforms =

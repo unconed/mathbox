@@ -1,4 +1,4 @@
-Types = require('./types')
+Types = require './types'
 
 Traits =
   object:
@@ -17,16 +17,23 @@ Traits =
   view:
     dimensions:  Types.number(3)
     range:       Types.array(Types.vec2(-1, 1), 4)
-  axis:
+  span:
     inherit:     Types.bool(true)
     range:       Types.vec2(-1, 1)
-    dimension:   Types.number(1)
+  grid:
+    axes:        Types.vec2(1, 2)
+    first:       Types.bool(true)
+    second:      Types.bool(true)
+  axis:
     detail:      Types.number(1)
-  ticks:
+    dimension:   Types.number(1)
+  scale:
     divide:      Types.number(10)
     unit:        Types.number(1)
     base:        Types.number(10)
-    scale:       Types.scale()
-    size:        Types.number(5)
+    mode:        Types.scale()
+  ticks:
+    size:        Types.number(.05)
+    dimension:   Types.number(1)
 
 module.exports = Traits

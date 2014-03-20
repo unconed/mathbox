@@ -30,8 +30,8 @@ class LineBuffer extends Buffer
       true
     return
 
-  write: () ->
-    @texture.write @data, 0, @index, @samples, 1
+  write: (samples = @samples) ->
+    @texture.write @data, 0, @index, samples, 1
     @dataPointer.set .5, @index + .5
     @index = (@index + 1) % @history
 

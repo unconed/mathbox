@@ -28,7 +28,7 @@ linear = (min, max, n, unit, base, inclusive, bias) ->
             if base % 2 == 0 then [base / 2, 1, 1/2]
             else if base % 3 == 0 then [base / 3, 1, 1/3]
             else                       [1]
-  steps = ref * factor for factor in factors
+  steps = (ref * factor for factor in factors)
 
   # Find step size closest to ideal.
   distance = Infinity
@@ -48,7 +48,7 @@ linear = (min, max, n, unit, base, inclusive, bias) ->
   n = Math.ceil((max - min) / step)
 
   # Generate equally spaced ticks
-  min + x * step for i in [0..n]
+  min + i * step for i in [0..n]
 
 ###
  Generate logarithmically spaced ticks in a range at sensible positions.
@@ -75,9 +75,9 @@ log = (min, max, n, unit, base, inclusive, bias) ->
   ###
 
 make = (type, min, max, ticks, unit, base, inclusive, bias) ->
-  switch scale
-    when 'linear' then Ticks.linear min, max, ticks, unit, base, inclusive, bias
-    when 'log'    then Ticks.log    min, max, ticks, unit, base, inclusive, bias
+  switch type
+    when 'linear' then linear min, max, ticks, unit, base, inclusive, bias
+    when 'log'    then log    min, max, ticks, unit, base, inclusive, bias
 
 exports.make = make
 exports.linear = linear

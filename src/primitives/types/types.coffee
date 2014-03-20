@@ -32,7 +32,7 @@ Types =
     validate: (value) ->
       "" + value
 
-  scale: (value) -> new Types.string value
+  scale: () -> new Types.string 'linear'
 
   object: () ->
     make: () -> {}
