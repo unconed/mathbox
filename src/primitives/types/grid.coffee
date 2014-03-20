@@ -120,8 +120,6 @@ class Grid extends Primitive
       n = ticks.length
       line.geometry.clip 0, n * quads
 
-      @_helper.setMeshVisible line
-
     if changed['x']    or
        changed['y']    or
        changed['grid'] or
@@ -140,5 +138,7 @@ class Grid extends Primitive
         j = 1
       if second
         axis axes.y, axes.x, range2, range1, @axes[j]
+
+    @_helper.setMeshVisible axis.line for axis in @axes
 
 module.exports = Grid

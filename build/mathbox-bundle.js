@@ -51738,7 +51738,7 @@ Grid = (function(_super) {
   };
 
   Grid.prototype._change = function(changed, init) {
-    var axes, axis, first, j, range1, range2, second;
+    var axes, axis, first, j, range1, range2, second, _i, _len, _ref, _results;
     if ((changed['x.axis.detail'] != null) || (changed['y.axis.detail'] != null) || (changed['grid.first'] != null) || (changed['grid.second'] != null)) {
       return this.rebuild();
     }
@@ -51755,8 +51755,7 @@ Grid = (function(_super) {
         _this._helper.setDimension(uniforms.gridAxis, y);
         ticks = _this._helper.generateScale(second, buffer, min, max);
         n = ticks.length;
-        line.geometry.clip(0, n * quads);
-        return _this._helper.setMeshVisible(line);
+        return line.geometry.clip(0, n * quads);
       };
     })(this);
     if (changed['x'] || changed['y'] || changed['grid'] || init) {
@@ -51771,9 +51770,16 @@ Grid = (function(_super) {
         j = 1;
       }
       if (second) {
-        return axis(axes.y, axes.x, range2, range1, this.axes[j]);
+        axis(axes.y, axes.x, range2, range1, this.axes[j]);
       }
     }
+    _ref = this.axes;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      axis = _ref[_i];
+      _results.push(this._helper.setMeshVisible(axis.line));
+    }
+    return _results;
   };
 
   return Grid;
