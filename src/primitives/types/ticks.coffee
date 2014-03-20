@@ -1,5 +1,4 @@
 Primitive = require '../primitive'
-Util      = require '../../util'
 
 class Ticks extends Primitive
   @traits: ['object', 'style', 'line', 'ticks', 'span', 'scale']
@@ -95,37 +94,19 @@ class Ticks extends Primitive
        changed['scale.mode']?      or
        first
 
-      inherit   = @model.get 'span.inherit'
       dimension = @model.get 'ticks.dimension'
-
-      if inherit and @inherit
-        ranges = @inherit.get 'view.range'
-        range  = ranges[dimension - 1]
-      else
-        range  = @model.get 'span.range'
+      range  = @helper.getSpanRange '', dimension
 
       min = range.x
       max = range.y
 
-      x = if dimension == 1 then 1 else 0
-      y = if dimension == 2 then 1 else 0
-      z = if dimension == 3 then 1 else 0
-      w = if dimension == 4 then 1 else 0
-
-      @tickAxis
-        .set(x, y, z, w)
-      @tickNormal
-        .set(y, z + x, w, 0)
-
-      divide = @model.get 'scale.divide'
-      unit   = @model.get 'scale.unit'
-      base   = @model.get 'scale.base'
-      mode   = @model.get 'scale.mode'
-
-      ticks = Util.Ticks.make mode, min, max, divide, unit, base, true, 0
-      @buffer.copy ticks
+      @helper.setDimension @tickAxis, dimension
+      @helper.setDimensionNormal @tickNormal, dimension
+      ticks = @helper.generateScale '', @buffer, min, max
 
       n = ticks.length
-      line.geometry.clip 0, n * 2
+      @line.geometry.clip 0, n * 2
+
+    @helper.setMeshVisible @line
 
 module.exports = Ticks

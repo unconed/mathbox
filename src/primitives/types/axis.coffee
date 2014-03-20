@@ -60,28 +60,15 @@ class Axis extends Primitive
        changed['span.inherit']?   or
        first
 
-      inherit   = @model.get 'span.inherit'
       dimension = @model.get 'axis.dimension'
-
-      if inherit and @inherit
-        ranges = @inherit.get 'view.range'
-        range  = ranges[dimension - 1]
-      else
-        range  = @model.get 'span.range'
+      range = @helper.getSpanRange '', dimension
 
       min = range.x
       max = range.y
 
-      x = if dimension == 1 then 1 else 0
-      y = if dimension == 2 then 1 else 0
-      z = if dimension == 3 then 1 else 0
-      w = if dimension == 4 then 1 else 0
+      @helper.setDimension(@axisPosition, dimension).multiplyScalar(min)
+      @helper.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
 
-      @axisPosition
-        .set(x, y, z, w)
-        .multiplyScalar(min)
-      @axisStep
-        .set(x, y, z, w)
-        .multiplyScalar((max - min) * @resolution)
+    @helper.setMeshVisible @line
 
 module.exports = Axis

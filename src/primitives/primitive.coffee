@@ -1,4 +1,5 @@
 Model = require '../model'
+helpers = require './helpers'
 
 class Primitive
   @Node = Model.Node
@@ -20,6 +21,7 @@ class Primitive
       @_removed()
 
     @inherited = []
+    @helper = helpers @
 
   # Construction of renderables
 
@@ -92,6 +94,8 @@ class Primitive
   _unherit: () ->
     @_unlisten(inherited) for inherited in @inherited
     @inherited = []
+
+
 
 THREE.Binder.apply Primitive::
 

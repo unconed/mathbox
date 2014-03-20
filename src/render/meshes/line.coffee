@@ -148,10 +148,10 @@ void main() {
 
 
 
-Renderable   = require '../renderable'
+Mesh         = require './mesh'
 LineGeometry = require('../geometry').LineGeometry
 
-class Line extends Renderable
+class Line extends Mesh
   constructor: (gl, shaders, options) ->
     super gl, shaders
 
