@@ -51636,13 +51636,11 @@ module.exports = Cartesian;
 
 
 },{"./view":22}],15:[function(require,module,exports){
-var Grid, Primitive, Types,
+var Grid, Primitive,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = require('../primitive');
-
-Types = require('./types');
 
 Grid = (function(_super) {
   __extends(Grid, _super);
@@ -51758,7 +51756,7 @@ Grid = (function(_super) {
         return line.geometry.clip(0, n * quads);
       };
     })(this);
-    if (changed['x'] || changed['y'] || changed['grid'] || init) {
+    if (changed['x'] || changed['y'] || changed['grid'] || changed['view'] || init) {
       axes = this._get('grid.axes');
       range1 = this._helper.getSpanRange('x.', axes.x);
       range2 = this._helper.getSpanRange('y.', axes.y);
@@ -51789,7 +51787,7 @@ Grid = (function(_super) {
 module.exports = Grid;
 
 
-},{"../primitive":12,"./types":21}],16:[function(require,module,exports){
+},{"../primitive":12}],16:[function(require,module,exports){
 var Group, Primitive,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -51955,7 +51953,7 @@ Ticks = (function(_super) {
       this._helper.setDimensionNormal(this.tickNormal, dimension);
       ticks = this._helper.generateScale('', this.buffer, min, max);
       n = ticks.length;
-      this.line.geometry.clip(0, n * 2);
+      this.line.geometry.clip(0, n);
     }
     return this._helper.setMeshVisible(this.line);
   };
@@ -53369,8 +53367,9 @@ linear = function(min, max, n, unit, base, inclusive, bias) {
   })();
   distance = Infinity;
   step = steps.reduce(function(ref, step) {
-    var d;
-    d = Math.abs(step - ideal);
+    var d, f;
+    f = step / ideal;
+    d = Math.max(f, 1 / f);
     if (d < distance) {
       distance = d;
       return step;

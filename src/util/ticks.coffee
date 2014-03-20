@@ -10,6 +10,7 @@
 ###
 
 linear = (min, max, n, unit, base, inclusive, bias) ->
+
   # Desired
   n ||= 10
   bias ||= 0
@@ -33,7 +34,9 @@ linear = (min, max, n, unit, base, inclusive, bias) ->
   # Find step size closest to ideal.
   distance = Infinity
   step = steps.reduce (ref, step) ->
-    d = Math.abs(step - ideal)
+    f = step / ideal
+    d = Math.max(f, 1/f)
+
     if d < distance
       distance = d
       step

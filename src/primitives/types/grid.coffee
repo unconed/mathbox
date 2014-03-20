@@ -1,5 +1,4 @@
 Primitive = require('../primitive')
-Types     = require('./types')
 
 class Grid extends Primitive
   @traits: ['object', 'style', 'line', 'grid',
@@ -123,6 +122,7 @@ class Grid extends Primitive
     if changed['x']    or
        changed['y']    or
        changed['grid'] or
+       changed['view'] or
        init
 
       axes = @_get 'grid.axes'

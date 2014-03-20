@@ -101,7 +101,7 @@ class Ticks extends Primitive
       ticks = @_helper.generateScale '', @buffer, min, max
 
       n = ticks.length
-      @line.geometry.clip 0, n * 2
+      @line.geometry.clip 0, n
 
     @_helper.setMeshVisible @line
 
