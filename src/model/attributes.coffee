@@ -82,7 +82,12 @@ class Data
         dirty = true
         attributes.queue digest
 
+      # Log change
       changes[key] = @[key].value
+
+      # Mark trait as dirty
+      trait = key.split('.')[0]
+      changes[trait] = true
 
     event =
       type: 'change'

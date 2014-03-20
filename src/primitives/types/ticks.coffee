@@ -81,18 +81,14 @@ class Ticks extends Primitive
 
     @_unherit()
 
-  _change: (changed, first) ->
+  _change: (changed, init) ->
     @rebuild() if changed['scale.divide']?
 
     if changed['view.range']?      or
-       changed['span.range']?      or
-       changed['span.inherit']?    or
        changed['ticks.dimension']? or
-       changed['scale.divide']?    or
-       changed['scale.unit']?      or
-       changed['scale.base']?      or
-       changed['scale.mode']?      or
-       first
+       changed['span']?            or
+       changed['scale']?           or
+       init
 
       dimension = @_get 'ticks.dimension'
       range  = @_helper.getSpanRange '', dimension

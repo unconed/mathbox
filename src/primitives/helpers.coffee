@@ -20,21 +20,21 @@ helpers =
 
   getSpanRange: (prefix, dimension) ->
 
-    inherit = @model.get prefix + 'span.inherit'
+    inherit = @_get prefix + 'span.inherit'
 
     if inherit and @inherit
       ranges = @inherit.get 'view.range'
       range  = ranges[dimension - 1]
     else
-      range  = @model.get prefix + 'span.range'
+      range  = @_get prefix + 'span.range'
 
     range
 
   generateScale: (prefix, buffer, min, max) ->
-    divide = @model.get prefix + 'scale.divide'
-    unit   = @model.get prefix + 'scale.unit'
-    base   = @model.get prefix + 'scale.base'
-    mode   = @model.get prefix + 'scale.mode'
+    divide = @_get prefix + 'scale.divide'
+    unit   = @_get prefix + 'scale.unit'
+    base   = @_get prefix + 'scale.base'
+    mode   = @_get prefix + 'scale.mode'
 
     ticks = Util.Ticks.make mode, min, max, divide, unit, base, true, 0
     buffer.copy ticks
@@ -43,8 +43,8 @@ helpers =
   setMeshVisible: (mesh) ->
     opacity = 1
     if @model.attributes['style.opacity']
-      opacity = @model.get 'style.opacity'
-    visible = @model.get 'object.visible'
+      opacity = @_get 'style.opacity'
+    visible = @_get 'object.visible'
 
     if visible && opacity > 0
       mesh.show opacity < 1

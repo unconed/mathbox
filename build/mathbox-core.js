@@ -289,11 +289,14 @@ Data = (function() {
     changes = {};
     change = (function(_this) {
       return function(key) {
+        var trait;
         if (!dirty) {
           dirty = true;
           attributes.queue(digest);
         }
-        return changes[key] = _this[key].value;
+        changes[key] = _this[key].value;
+        trait = key.split('.')[0];
+        return changes[trait] = true;
       };
     })(this);
     event = {
@@ -516,21 +519,21 @@ helpers = {
   },
   getSpanRange: function(prefix, dimension) {
     var inherit, range, ranges;
-    inherit = this.model.get(prefix + 'span.inherit');
+    inherit = this._get(prefix + 'span.inherit');
     if (inherit && this.inherit) {
       ranges = this.inherit.get('view.range');
       range = ranges[dimension - 1];
     } else {
-      range = this.model.get(prefix + 'span.range');
+      range = this._get(prefix + 'span.range');
     }
     return range;
   },
   generateScale: function(prefix, buffer, min, max) {
     var base, divide, mode, ticks, unit;
-    divide = this.model.get(prefix + 'scale.divide');
-    unit = this.model.get(prefix + 'scale.unit');
-    base = this.model.get(prefix + 'scale.base');
-    mode = this.model.get(prefix + 'scale.mode');
+    divide = this._get(prefix + 'scale.divide');
+    unit = this._get(prefix + 'scale.unit');
+    base = this._get(prefix + 'scale.base');
+    mode = this._get(prefix + 'scale.mode');
     ticks = Util.Ticks.make(mode, min, max, divide, unit, base, true, 0);
     buffer.copy(ticks);
     return ticks;
@@ -539,9 +542,9 @@ helpers = {
     var opacity, visible;
     opacity = 1;
     if (this.model.attributes['style.opacity']) {
-      opacity = this.model.get('style.opacity');
+      opacity = this._get('style.opacity');
     }
-    visible = this.model.get('object.visible');
+    visible = this._get('object.visible');
     if (visible && opacity > 0) {
       return mesh.show(opacity < 1);
     } else {
@@ -777,12 +780,12 @@ Axis = (function(_super) {
     return this._unherit();
   };
 
-  Axis.prototype._change = function(changed, first) {
+  Axis.prototype._change = function(changed, init) {
     var dimension, max, min, range;
     if (changed['axis.detail'] != null) {
       this.rebuild();
     }
-    if ((changed['view.range'] != null) || (changed['span.range'] != null) || (changed['axis.dimension'] != null) || (changed['span.inherit'] != null) || first) {
+    if ((changed['view.range'] != null) || (changed['axis.dimension'] != null) || (changed['span'] != null) || init) {
       dimension = this._get('axis.dimension');
       range = this._helper.getSpanRange('', dimension);
       min = range.x;
@@ -988,7 +991,7 @@ Grid = (function(_super) {
     return this.axes = [];
   };
 
-  Grid.prototype._change = function(changed) {
+  Grid.prototype._change = function(changed, init) {
     var axes, axis, first, j, range1, range2, second;
     if ((changed['x.axis.detail'] != null) || (changed['y.axis.detail'] != null) || (changed['grid.first'] != null) || (changed['grid.second'] != null)) {
       return this.rebuild();
@@ -1010,18 +1013,20 @@ Grid = (function(_super) {
         return _this._helper.setMeshVisible(line);
       };
     })(this);
-    axes = this._get('grid.axes');
-    range1 = this._helper.getSpanRange('x.', axes.x);
-    range2 = this._helper.getSpanRange('y.', axes.y);
-    first = this._get('grid.first');
-    second = this._get('grid.second');
-    j = 0;
-    if (first) {
-      axis(axes.x, axes.y, range1, range2, this.axes[0]);
-      j = 1;
-    }
-    if (second) {
-      return axis(axes.y, axes.x, range2, range1, this.axes[j]);
+    if (changed['x'] || changed['y'] || changed['grid'] || init) {
+      axes = this._get('grid.axes');
+      range1 = this._helper.getSpanRange('x.', axes.x);
+      range2 = this._helper.getSpanRange('y.', axes.y);
+      first = this._get('grid.first');
+      second = this._get('grid.second');
+      j = 0;
+      if (first) {
+        axis(axes.x, axes.y, range1, range2, this.axes[0]);
+        j = 1;
+      }
+      if (second) {
+        return axis(axes.y, axes.x, range2, range1, this.axes[j]);
+      }
     }
   };
 
@@ -1184,12 +1189,12 @@ Ticks = (function(_super) {
     return this._unherit();
   };
 
-  Ticks.prototype._change = function(changed, first) {
+  Ticks.prototype._change = function(changed, init) {
     var dimension, max, min, n, range, ticks;
     if (changed['scale.divide'] != null) {
       this.rebuild();
     }
-    if ((changed['view.range'] != null) || (changed['span.range'] != null) || (changed['span.inherit'] != null) || (changed['ticks.dimension'] != null) || (changed['scale.divide'] != null) || (changed['scale.unit'] != null) || (changed['scale.base'] != null) || (changed['scale.mode'] != null) || first) {
+    if ((changed['view.range'] != null) || (changed['ticks.dimension'] != null) || (changed['span'] != null) || (changed['scale'] != null) || init) {
       dimension = this._get('ticks.dimension');
       range = this._helper.getSpanRange('', dimension);
       min = range.x;

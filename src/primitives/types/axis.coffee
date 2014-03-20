@@ -51,14 +51,13 @@ class Axis extends Primitive
 
     @_unherit()
 
-  _change: (changed, first) ->
+  _change: (changed, init) ->
     @rebuild() if changed['axis.detail']?
 
     if changed['view.range']?     or
-       changed['span.range']?     or
        changed['axis.dimension']? or
-       changed['span.inherit']?   or
-       first
+       changed['span']?           or
+       init
 
       dimension = @_get 'axis.dimension'
       range = @_helper.getSpanRange '', dimension

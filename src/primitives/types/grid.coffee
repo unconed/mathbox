@@ -96,7 +96,7 @@ class Grid extends Primitive
 
     @axes = []
 
-  _change: (changed) ->
+  _change: (changed, init) ->
 
     return @rebuild() if changed['x.axis.detail']? or
                          changed['y.axis.detail']? or
@@ -122,18 +122,23 @@ class Grid extends Primitive
 
       @_helper.setMeshVisible line
 
-    axes = @_get 'grid.axes'
-    range1 = @_helper.getSpanRange 'x.', axes.x
-    range2 = @_helper.getSpanRange 'y.', axes.y
+    if changed['x']    or
+       changed['y']    or
+       changed['grid'] or
+       init
 
-    first  = @_get 'grid.first'
-    second = @_get 'grid.second'
+      axes = @_get 'grid.axes'
+      range1 = @_helper.getSpanRange 'x.', axes.x
+      range2 = @_helper.getSpanRange 'y.', axes.y
 
-    j = 0
-    if first
-      axis axes.x, axes.y, range1, range2, @axes[0]
-      j = 1
-    if second
-      axis axes.y, axes.x, range2, range1, @axes[j]
+      first  = @_get 'grid.first'
+      second = @_get 'grid.second'
+
+      j = 0
+      if first
+        axis axes.x, axes.y, range1, range2, @axes[0]
+        j = 1
+      if second
+        axis axes.y, axes.x, range2, range1, @axes[j]
 
 module.exports = Grid
