@@ -25,7 +25,7 @@ class Ticks extends Primitive
     # Prepare position shader
     types = @_attributes.types
     positionUniforms =
-      tickSize:    @model.attributes['ticks.size']
+      tickSize:    @node.attributes['ticks.size']
       tickAxis:    @_attributes.make types.vec4()
       tickNormal:  @_attributes.make types.vec4()
 
@@ -59,9 +59,9 @@ class Ticks extends Primitive
 
     # Make line renderable
     lineUniforms =
-      lineWidth:      @model.attributes['line.width']
-      lineColor:      @model.attributes['style.color']
-      lineOpacity:    @model.attributes['style.opacity']
+      lineWidth:      @node.attributes['line.width']
+      lineColor:      @node.attributes['style.color']
+      lineOpacity:    @node.attributes['style.opacity']
 
     @line = @_factory.make 'line',
               uniforms: lineUniforms
@@ -90,16 +90,18 @@ class Ticks extends Primitive
        changed['scale']           or
        init
 
+      # Fetch range along axis
       dimension = @_get 'ticks.dimension'
       range  = @_helper.getSpanRange '', dimension
 
+      # Calculate scale along axis
       min = range.x
       max = range.y
-
       @_helper.setDimension @tickAxis, dimension
       @_helper.setDimensionNormal @tickNormal, dimension
       ticks = @_helper.generateScale '', @buffer, min, max
 
+      # Clip to number of ticks
       n = ticks.length
       @line.geometry.clip 0, n
 

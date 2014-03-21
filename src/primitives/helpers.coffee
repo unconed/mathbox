@@ -20,13 +20,11 @@ helpers =
 
   getSpanRange: (prefix, dimension) ->
 
-    inherit = @_get prefix + 'span.inherit'
+    range = @_get prefix + 'span.range'
 
-    if inherit and @inherit
+    if !range and @inherit
       ranges = @inherit.get 'view.range'
       range  = ranges[dimension - 1]
-    else
-      range  = @_get prefix + 'span.range'
 
     range
 
@@ -42,7 +40,7 @@ helpers =
 
   setMeshVisible: (mesh) ->
     opacity = 1
-    if @model.attributes['style.opacity']
+    if @node.attributes['style.opacity']
       opacity = @_get 'style.opacity'
     visible = @_get 'object.visible'
 

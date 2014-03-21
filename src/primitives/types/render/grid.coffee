@@ -64,9 +64,9 @@ class Grid extends Primitive
 
       # Make line renderable
       lineUniforms =
-        lineWidth:      @model.attributes['line.width']
-        lineColor:      @model.attributes['style.color']
-        lineOpacity:    @model.attributes['style.opacity']
+        lineWidth:      @node.attributes['line.width']
+        lineColor:      @node.attributes['style.color']
+        lineOpacity:    @node.attributes['style.opacity']
 
       quads = samples - 1
 
@@ -79,8 +79,10 @@ class Grid extends Primitive
 
       @_render line
 
+      # Store axis object for manipulation later
       {first, second, quads, resolution, line, buffer, uniforms}
 
+    # Generate both line sets
     first  = @_get 'grid.first'
     second = @_get 'grid.second'
 
@@ -105,17 +107,19 @@ class Grid extends Primitive
     axis = (x, y, range1, range2, axis) =>
       {first, second, quads, resolution, line, buffer, uniforms} = axis
 
+      # Set line steps along first axis
       min    = range1.x
       max    = range1.y
       @_helper.setDimension(uniforms.gridPosition, x).multiplyScalar(min)
       @_helper.setDimension(uniforms.gridStep,     x).multiplyScalar((max - min) * resolution)
 
+      # Calculate scale along second axis
       min    = range2.x
       max    = range2.y
-
       @_helper.setDimension uniforms.gridAxis, y
       ticks = @_helper.generateScale second, buffer, min, max
 
+      # Clip to number of ticks
       n = ticks.length
       line.geometry.clip 0, n * quads
 
@@ -125,19 +129,19 @@ class Grid extends Primitive
        changed['view'] or
        init
 
-      axes = @_get 'grid.axes'
+      # Fetch grid range in both dimensions
+      axes   = @_get 'grid.axes'
       range1 = @_helper.getSpanRange 'x.', axes.x
       range2 = @_helper.getSpanRange 'y.', axes.y
 
+      # Update both line sets
       first  = @_get 'grid.first'
       second = @_get 'grid.second'
 
-      j = 0
       if first
         axis axes.x, axes.y, range1, range2, @axes[0]
-        j = 1
       if second
-        axis axes.y, axes.x, range2, range1, @axes[j]
+        axis axes.y, axes.x, range2, range1, @axes[+first]
 
     @_helper.setMeshVisible axis.line for axis in @axes
 

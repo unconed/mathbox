@@ -13,6 +13,7 @@ Classes =
 
   array:      require './data/array'
   matrix:     require './data/matrix'
+  sample1D:   require './data/sample1D'
 
   group:      require './group'
   root:       require './root'

@@ -1,7 +1,7 @@
 Data = require './data'
 
-class Array extends Data
-  @traits: ['node', 'data', 'array']
+class _Array extends Data
+  @traits: ['node', 'data', _Array]
 
   constructor: (model, attributes, factory, shaders) ->
     super model, attributes, factory, shaders
@@ -10,23 +10,37 @@ class Array extends Data
     @space  = 0
     @length = 0
 
+  shader: (shader) ->
+    @buffer.shader shader
+
   make: () ->
     super
 
-    samples = @get['array.length']
-    history = @get['array.history']
+    length   = @_get('array.length')
+    history  = @_get('array.history')
+    channels = @_get('array.dimensions')
 
-    @space = @length = Math.max @space, samples
+    @space = @length = Math.max @space, length
+    @channels = channels
+    @history  = history
 
+    # Allocate to right array size right away
+    data = @_get('data.data')
+    if data?
+      @space = Math.max @space, Math.floor data.length / channels
+
+    # Create linebuffer
     if @space > 0
       @buffer = @_factory.make 'linebuffer',
-                samples:  @space
-                history:  history
-                channels: 4
+                length:   @space
+                history:  @history
+                channels: channels
 
+    # Notify of buffer reallocation
     @trigger
-      event: resize
-      buffer: buffer
+      event:   'rebuild'
+      buffer:  @buffer
+      samples: @space
 
   unmake: () ->
     super
@@ -36,23 +50,27 @@ class Array extends Data
 
   change: (changed, init) ->
     @rebuild() if changed['array.length'] or
-                  changed['array.history']
+                  changed['array.history'] or
+                  changed['array.dimensions']
 
     return unless @buffer
 
     if changed['data.expression']? or
        init
 
-      callback = @get['data.expression']
-      @buffer.callback = callback ? () ->
+      callback = @_get('data.expression')
+      @buffer.callback = @callback callback
 
   update: () ->
     return unless @buffer
 
-    data = @get['data.source']
+    data = @_get('data.data')
+
+    length = @length
 
     if data?
-      @length = data.length
+      @length = Math.floor data.length / @channels
+
       if @length > @space
         @space = Math.min @length, @space * 2
         @rebuild()
@@ -65,5 +83,12 @@ class Array extends Data
     else
       @length = @buffer.update()
 
+    if length != @length
+      @trigger
+        event:   'resize'
+        buffer:  @buffer
+        samples: @space
+        history: @history
 
-module.exports = Array
+
+module.exports = _Array

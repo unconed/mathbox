@@ -6,14 +6,18 @@ class Data extends Primitive
   constructor: (model, attributes, factory, shaders) ->
     super model, attributes, factory, shaders
 
+  callback: (callback) ->
+    callback ? () ->
+
+  shader: () ->
   update: () ->
 
   make: () ->
     @handler = () => @update()
-    @model.root.model.on 'update', @handler
+    @node.root.model.on  'update', @handler
 
   unmake: () ->
-    @model.root.model.off 'update', @handler
+    @node.root.model.off 'update', @handler
 
 
 

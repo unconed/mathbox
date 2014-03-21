@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Axis</title>
+  <script src="../build/mathbox-bundle.js"></script>
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'mathbox'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(2.3, 1, 2);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    mathbox.cartesian({
+      id: 'cartesian',
+      range: [[-2, 2], [-1, 1], [-1, 1]],
+      scale: [2, 1, 1],
+    });
+    mathbox.axis({
+      id: 'axis1',
+      detail: 30,
+    });
+    mathbox.axis({
+      id: 'axis2',
+      dimension: 2,
+    });
+    mathbox.ticks({
+      id: 'ticks',
+      classes: ['foo', 'bar'],
+      divide: 10,
+    });
+    mathbox.sample1D({
+      id: 'sampler',
+      length: 128,
+      expression: function (x, i, emit) {
+        var t = +new Date() / 1000;
+        return emit(x, Math.sin(x + t));
+      },
+      dimensions: 2,
+      history: 32,
+    });
+    mathbox.grid({
+      id: 'legrid',
+      divideX: 20,
+      width: 0.005,
+      opacity: 0.5,
+    });
+    mathbox.curve({
+      points: '#sampler',
+      color: 'blue',
+    });
+  </script>
+</body>
+</html>

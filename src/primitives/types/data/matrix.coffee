@@ -13,9 +13,13 @@ class Matrix extends Data
   make: () ->
     super
 
-    width   = @get['matrix.width']
-    height  = @get['matrix.height']
-    history = @get['matrix.history']
+    width    = @_get('matrix.width')
+    height   = @_get('matrix.height')
+    history  = @_get('matrix.history')
+    channels = @_get('array.dimensions')
+
+    @channels = channels
+    @history  = history
 
 ##    samples = width * height
 ##    @space = @length = Math.max @space, samples
@@ -25,7 +29,7 @@ class Matrix extends Data
                 width:    width
                 height:   height
                 history:  history
-                channels: 4
+                channels: channels
 
   unmake: () ->
     super
@@ -34,22 +38,23 @@ class Matrix extends Data
       @buffer = null
 
   change: (changed, init) ->
-    @rebuild() if changed['matrix.width']   or
-                  changed['matrix.height']  or
-                  changed['matrix.history']
+    @rebuild() if changed['matrix.width']      or
+                  changed['matrix.height']     or
+                  changed['matrix.history']    or
+                  changed['matrix.dimensions']
 
     return unless @buffer
 
     if changed['data.expression']? or
        init
 
-      callback = @get['data.expression']
+      callback = @_get('data.expression')
       @buffer.callback = callback ? () ->
 
   update: () ->
     return unless @buffer
 
-    data = @get['data.source']
+    data = @_get('data.data')
 
     if data?
       throw "Matrix autosize not implemented"

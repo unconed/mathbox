@@ -1,4 +1,5 @@
 Primitive = require '../../primitive'
+_Array = require '../data/array'
 
 class Curve extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'curve']
@@ -6,63 +7,74 @@ class Curve extends Primitive
   constructor: (model, attributes, factory, shaders) ->
     super model, attributes, factory, shaders
 
-    @resolution = @line = null
+    @resolution = @line = @array = @inherit = @resizeHandler = null
+
+  bind: () ->
+    unbind() if @resizeHandler
+
+    # Fetch attached points array
+    @array = @_attached 'curve.points', _Array
+
+    # Monitor array for reallocation / resize
+    @resizeHandler = (event) -> @clip()
+    @rebuildHandler = (event) -> @rebuild()
+    @array.on 'rebuild', @rebuildHandler
+    @array.on 'resize',  @resizeHandler
+
+  unbind: () ->
+    @array.off 'rebuild', @rebuildHandler
+    @array.off 'resize',  @resizeHandler
+    @rebuildHandler = null
+    @resizeHandler = null
+
+  clip: () ->
+    return unless @line and @array
+    n = @array.length
+#    @line.geometry.clip 0, n - 1
 
   make: () ->
-
-    # Look up range of nearest view to inherit from
-    @inherit = @_inherit 'view.range'
-    @array   = @_attached 'data.source', Array
+    @bind()
 
     # Build transform chain
     position = @_shaders.shader()
 
     # Fetch position and transform to view
-    @array.shader p
-    @_transform position
+    @array.shader position
+    @transform position
 
     # Make line renderable
-    samples = @buffer.space
-    @resolution = 1 / detail
+    samples = @array.space
+    history = @array.history
 
     lineUniforms =
-      lineWidth:      @model.attributes['line.width']
-      lineColor:      @model.attributes['style.color']
-      lineOpacity:    @model.attributes['style.opacity']
+      lineWidth:      @node.attributes['line.width']
+      lineColor:      @node.attributes['style.color']
+      lineOpacity:    @node.attributes['style.opacity']
 
     @line = @_factory.make 'line',
               uniforms: lineUniforms
               samples:  samples
+              ribbons:  history
               position: position
 
     @_render @line
 
+    @clip()
+
   unmake: () ->
+    @unbind()
+
     @_unrender @line
     @line.dispose()
     @line    = null
 
     @array   = null
-    @inherit = null
 
     @_unherit()
 
   change: (changed, init) ->
-    @rebuild() if changed['axis.detail']?
-
-    if changed['view.range']     or
-       changed['axis.dimension'] or
-       changed['span']           or
-       init
-
-      dimension = @_get 'axis.dimension'
-      range = @_helper.getSpanRange '', dimension
-
-      min = range.x
-      max = range.y
-
-      @_helper.setDimension(@axisPosition, dimension).multiplyScalar(min)
-      @_helper.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
+    @rebuild() if changed['axis.detail']? or
+                  changed['curve.points']?
 
     @_helper.setMeshVisible @line
 

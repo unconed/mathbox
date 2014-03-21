@@ -10,7 +10,7 @@ class Model
     @types    = {}
     @nodes    = []
 
-    # CSS Sauron
+    # Prepare CSSauron
     @language = cssauron
       tag:      'type'
       id:       'id'
@@ -28,6 +28,7 @@ class Model
       object = event.object
       @_dispose object
 
+    # Triggered by node addition/removal
     @on 'added',   @_add
     @on 'removed', @_remove
 
@@ -46,8 +47,8 @@ class Model
     # Track id/class changes
     @_update = (event, object, force) =>
       _id    = force or event.changed['node.id']
-      _class = force or event.changed['node.class']
-      return unless _id or _class
+      _klass = force or event.changed['node.classes']
+      return unless _id or _klass
 
       if _id
         id = object.get 'node.id'
@@ -55,14 +56,14 @@ class Model
           removeID object.id, object
           addID    id,          object
 
-      if _class
+      if _klass
         classes = object.get 'node.classes'
         klass = classes.join ','
         if klass != object.klass
           removeClasses object.classes, object
-          addClasses    classes,          object
+          addClasses    classes,        object
           object.klass   = klass
-          object.classes = classes
+          object.classes = classes.slice()
 
     addID = (id, object) =>
       if @ids[id]
@@ -86,7 +87,7 @@ class Model
     removeClasses = (classes, object) =>
       if classes?
         for k in classes
-          list = @classes[k] ? []
+          list = @classes[k]
           index = list.indexOf object
           list.splice index, 1 if index >= 0
           if list.length == 0
@@ -114,10 +115,14 @@ class Model
       if list.length == 0
         delete @types[type]
 
-  # Selector
+  # Querying via CSS selectors
+
+  filter: (nodes, selector) ->
+    selector = @language selector
+    node for node in nodes when selector(node)
 
   select: (selectors) ->
-    out = []
+    out    = []
     out    = out.concat @_select s for s in selectors.split /,/g
     unique = out.filter (object, i) -> out.indexOf(object) == i
 
@@ -128,17 +133,18 @@ class Model
 
     # Check for simple #id, .class or type selector
     id    = s.match /^#([A-Za-z0-9_]+)$/
-    klass = s.match /^\.([A-Za-z0-9_]+)$/
-    type  = s.match /^[A-Za-z0-9_]+$/
+    return        @ids[id[1]] || [] if id
 
-    return @ids[id[1]]        || [] if id
+    klass = s.match /^\.([A-Za-z0-9_]+)$/
     return @classes[klass[1]] || [] if klass
-    return @types[type[0]]    || [] if type
+
+    type  = s.match /^[A-Za-z0-9_]+$/
+    return    @types[type[0]] || [] if type
 
     # Otherwise iterate over everything
-    selector = @language s
-    node for node in @nodes when selector(node)
+    @filter @nodes, s
 
+  # Notify primitives of update
   update: () ->
     @trigger
       type: 'update'

@@ -1,7 +1,7 @@
 Renderable = require('../renderable')
 
 class Buffer extends Renderable
-  iterationLimit = 0xFFFF
+  @iterationLimit: 0xFFFF
 
   constructor: (gl, shaders, options) ->
     @samples  ?= options.samples  || 1
@@ -11,7 +11,8 @@ class Buffer extends Renderable
     @build()
 
   shader: (shader) ->
-    shader.call 'sample.2d', @uniforms
+    name = "sample.2d.#{@channels}"
+    shader.call name, @uniforms
 
   build: () ->
     @uniforms =
@@ -33,12 +34,12 @@ class Buffer extends Renderable
     n = Math.min data.length, @samples * @channels
     for i in [0...n]
       @data[i] = data[i]
-    @write n
+    @write Math.floor n / @channels
 
   write: () ->
   iterate: () ->
   generate: () ->
-    limit = @samples
+    limit = @samples * @channels
     data = @data
     done = false
     p = 0

@@ -18,9 +18,21 @@ Types =
 
   nullable: (type) ->
     make: () -> null
-    validate: (value) ->
+    validate: (value, target) ->
       return value if value == null
-      type.validate value
+      if target == null
+        target = type.make()
+      value = type.validate value, target
+      if value != undefined then value else target
+
+  select: (type) ->
+    make: () -> null
+    validate: (value, target) ->
+      return value if value == null or typeof value == 'string'
+      if target == null or typeof target == 'string'
+        target = type.make()
+      value = type.validate value, target
+      if value != undefined then value else target
 
   bool: (value) ->
     uniform: () -> 'f'

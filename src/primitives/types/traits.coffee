@@ -12,17 +12,13 @@ Traits =
   style:
     opacity:     Types.number(1)
     color:       Types.color()
-  bind:
-    position:    Types.nullable(Types.object())
-    color:       Types.nullable(Types.object())
   line:
     width:       Types.number(.01)
   view:
     dimensions:  Types.number(3)
     range:       Types.array(Types.vec2(-1, 1), 4)
   span:
-    inherit:     Types.bool(true)
-    range:       Types.vec2(-1, 1)
+    range:       Types.nullable(Types.vec2(-1, 1))
   grid:
     axes:        Types.vec2(1, 2)
     first:       Types.bool(true)
@@ -38,15 +34,21 @@ Traits =
   ticks:
     size:        Types.number(.05)
     dimension:   Types.number(1)
+  curve:
+    points:      Types.select(Types.object())
+    colors:      Types.select(Types.object())
   data:
-    source:      Types.nullable(Types.object())
+    data:        Types.nullable(Types.object())
     expression:  Types.nullable(Types.func())
   array:
+    dimensions:  Types.number(3)
     length:      Types.number(1)
     history:     Types.number(1)
   matrix:
+    dimensions:  Types.number(3)
     width:       Types.number(1)
     height:      Types.number(1)
     history:     Types.number(1)
-
+  sample1D:
+    dimension:   Types.number(1)
 module.exports = Traits

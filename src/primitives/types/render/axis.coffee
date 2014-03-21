@@ -33,9 +33,9 @@ class Axis extends Primitive
     @resolution = 1 / detail
 
     lineUniforms =
-      lineWidth:      @model.attributes['line.width']
-      lineColor:      @model.attributes['style.color']
-      lineOpacity:    @model.attributes['style.opacity']
+      lineWidth:      @node.attributes['line.width']
+      lineColor:      @node.attributes['style.color']
+      lineOpacity:    @node.attributes['style.opacity']
 
     @line = @_factory.make 'line',
               uniforms: lineUniforms

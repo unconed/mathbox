@@ -5,25 +5,25 @@ class Primitive
   @Node = Model.Node
   @Group = Model.Group
 
-  @model  = @Node
+  @model = @Node
   @traits = []
 
-  constructor: (@model, @_attributes, @_factory, @_shaders) ->
-    @model.primitive = @
+  constructor: (@node, @_attributes, @_factory, @_shaders) ->
+    @node.primitive = @
 
-    @model.on 'change', (event) =>
+    @node.on 'change', (event) =>
       @change event.changed if @root
 
-    @model.on 'added', (event) =>
+    @node.on 'added', (event) =>
       @_added()
 
-    @model.on 'removed', (event) =>
+    @node.on 'removed', (event) =>
       @_removed()
 
     @inherited = []
 
     @_helper = helpers @
-    @_get = @model.get.bind @model
+    @_get = @node.get.bind @node
 
   # Construction of renderables
 
@@ -42,8 +42,8 @@ class Primitive
 
   # Add/removal callback
   _added: () ->
-    @root = @model.root
-    @parent = @model.parent.primitive
+    @root = @node.root
+    @parent = @node.parent.primitive
 
     @make()
     @change {}, true
@@ -72,21 +72,21 @@ class Primitive
     handler = (event) =>
       changed = event.changed
       @_change changed if @root and changed[key]?
-    object.model.on 'change', handler
+    object.node.on 'change', handler
 
     inherited = [object, handler]
     @inherited.push inherited
 
   _unlisten: (inherited) ->
     [object, handler] = inherited
-    object.model.off 'change', handler
+    object.node.off 'change', handler
 
   # Attribute inheritance
   _inherit: (key, target = @) ->
 
     if @_get(key)?
       target._listen @, key
-      return @model
+      return @node
 
     if @parent?
       @parent._inherit key, target
@@ -99,8 +99,21 @@ class Primitive
 
   # Find attached data model
   _attached: (key, klass) ->
-    object = @_get key
-    return object if object instanceof klass
+
+    # Explicitly bound node
+    object    = @_get key
+
+    if typeof object == 'string'
+      node = @root.model.select(object)[0]
+      return node.primitive if node and node.primitive instanceof klass
+
+    if typeof object == 'object'
+      node = object
+      return node.primitive if node and node.primitive instanceof klass
+
+    # Implicitly associated node 
+    previous = @node.parent.children[@node.index - 1]
+    return previous.primitive if previous.primitive instanceof klass
 
 
 THREE.Binder.apply Primitive::
