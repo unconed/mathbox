@@ -25,8 +25,9 @@ class Buffer extends Renderable
     super
 
   update: () ->
-    @iterate()
+    n = @iterate()
     @write()
+    n
 
   copy: (data) ->
     n = Math.min data.length, @samples * @channels

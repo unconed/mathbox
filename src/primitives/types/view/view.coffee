@@ -1,8 +1,7 @@
-Group = require('./group')
-Range = require('../../util').Range
+Group = require('../group')
 
 class View extends Group
-  @traits: ['object', 'view']
+  @traits: ['node', 'object', 'view']
 
   axis: (dimension) ->
     range = @_get('view.range')[dimension - 1]

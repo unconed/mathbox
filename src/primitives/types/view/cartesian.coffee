@@ -2,7 +2,7 @@ View = require('./view')
 
 class Cartesian extends View
 
-  _make: () ->
+  make: () ->
 
     types = @_attributes.types
     @uniforms =
@@ -14,14 +14,16 @@ class Cartesian extends View
     @rotationMatrix           = new THREE.Matrix4()
 #    @q                   = new THREE.Quaternion()
 
-  _unmake: () ->
+  unmake: () ->
 
     delete @cartesianMatrix
 #    delete @inverseCartesianMatrix
     delete @rotationMatrix
 #    delete @q
 
-  _change: (changed) ->
+  change: (changed) ->
+
+    return unless changed['object'] or changed['view']
 
     o = @_get 'object.position'
     s = @_get 'object.scale'
@@ -64,9 +66,9 @@ class Cartesian extends View
   to: (vector) ->
     vector.applyMatrix4 @cartesianMatrix
 
-  _transform: (shader) ->
+  transform: (shader) ->
     shader.call 'cartesian.position', @uniforms
-    @parent?._transform shader
+    @parent?.transform shader
 
   ###
   from: (vector) ->

@@ -16,21 +16,28 @@
     three = mathbox.three;
 
     three.camera.position.set(2.3, 1, 2);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     mathbox.cartesian({
+      'node.id': 'cartesian',
       'view.range': [[-2, 2], [-1, 1], [-1, 1]],
       'object.scale': [2, 1, 1],
     });
     mathbox.axis({
+      'node.id': 'axis1',
       'axis.detail': 30,
     });
     mathbox.axis({
+      'node.id': 'axis2',
       'axis.dimension': 2,
     });
     mathbox.ticks({
+      'node.id': 'ticks',
+      'node.classes': ['foo', 'bar'],
       'ticks.divide': 10,
     });
     mathbox.grid({
+      'node.id': 'legrid',
       'x.scale.divide': 20,
       'line.width': 0.005,
       'style.opacity': 0.5,

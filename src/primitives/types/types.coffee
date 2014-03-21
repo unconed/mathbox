@@ -1,19 +1,26 @@
 Types =
 
   array: (type, size) ->
-    uniform: () -> type.uniform() + 'v'
+    uniform: () -> if type.uniform then type.uniform() + 'v' else undefined
     make: () ->
+      return [] if !size
       (type.make() for i in [0...size])
     validate: (value, target) ->
       if value.constructor? and value.constructor == Array
         target.length = if size then size else value.length
         for i in [0...target.length]
           replace = type.validate value[i], target[i]
-          target[i] = replace if replace?
+          target[i] = replace if replace != undefined
       else
         target.length = size
         target[i] = type.value for i in [0..target.length]
       return
+
+  nullable: (type) ->
+    make: () -> null
+    validate: (value) ->
+      return value if value == null
+      type.validate value
 
   bool: (value) ->
     uniform: () -> 'f'
@@ -34,10 +41,15 @@ Types =
 
   scale: () -> new Types.string 'linear'
 
-  object: () ->
-    make: () -> {}
+  func: () ->
+    make: () -> () ->
     validate: (value) ->
-      value
+      return value if typeof value == 'function'
+
+  object: (value) ->
+    make: () -> value ? {}
+    validate: (value) ->
+      return value if typeof value == 'object'
 
   vec2: (x = 0, y = 0) ->
     defaults = [x, y]

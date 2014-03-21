@@ -37,7 +37,7 @@ class SurfaceBuffer extends Buffer
         i = 0
         j++
 
-    return
+    return k - 1
 
   write: (width = @width, height = @height) ->
     throw "Not Implemented: passing (samples) to (width, height) write()"

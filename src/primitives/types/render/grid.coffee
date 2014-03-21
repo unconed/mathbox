@@ -1,7 +1,7 @@
-Primitive = require('../primitive')
+Primitive = require('../../primitive')
 
 class Grid extends Primitive
-  @traits: ['object', 'style', 'line', 'grid',
+  @traits: ['node', 'object', 'style', 'line', 'grid',
             'axis:x.axis',   'axis:y.axis',
             'scale:x.scale', 'scale:y.scale',
             'span:x.span',   'span:y.span']
@@ -12,7 +12,7 @@ class Grid extends Primitive
 
     @axes        = []
 
-  _make: () ->
+  make: () ->
 
     # Look up range of nearest view to inherit from
     @inherit = @_inherit 'view.range'
@@ -54,7 +54,7 @@ class Grid extends Primitive
       p.call 'grid.position', positionUniforms
 
       # Apply view transform
-      @_transform position
+      @transform position
 
       ###
       debug = @_factory.make 'debug',
@@ -87,7 +87,7 @@ class Grid extends Primitive
     first  && @axes.push axis 'x.', 'y.'
     second && @axes.push axis 'y.', 'x.'
 
-  _unmake: () ->
+  unmake: () ->
     for axis in @axes
       axis.buffer.dispose()
       @_unrender axis.line
@@ -95,12 +95,12 @@ class Grid extends Primitive
 
     @axes = []
 
-  _change: (changed, init) ->
+  change: (changed, init) ->
 
-    return @rebuild() if changed['x.axis.detail']? or
-                         changed['y.axis.detail']? or
-                         changed['grid.first']?    or
-                         changed['grid.second']?
+    @rebuild() if changed['x.axis.detail'] or
+                  changed['y.axis.detail'] or
+                  changed['grid.first']    or
+                  changed['grid.second']
 
     axis = (x, y, range1, range2, axis) =>
       {first, second, quads, resolution, line, buffer, uniforms} = axis

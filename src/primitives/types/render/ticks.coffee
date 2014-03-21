@@ -1,7 +1,7 @@
-Primitive = require '../primitive'
+Primitive = require '../../primitive'
 
 class Ticks extends Primitive
-  @traits: ['object', 'style', 'line', 'ticks', 'span', 'scale']
+  @traits: ['node', 'object', 'style', 'line', 'ticks', 'span', 'scale']
   @EXCESS: 2.5
 
   constructor: (model, attributes, factory, shaders) ->
@@ -9,7 +9,7 @@ class Ticks extends Primitive
 
     @tickAxis = @tickNormal = @resolution = @line = null
 
-  _make: () ->
+  make: () ->
 
     # Look up range of nearest view to inherit from
     @inherit = @_inherit 'view.range'
@@ -38,7 +38,7 @@ class Ticks extends Primitive
 
     # Collect view transform as callback
     p  .callback();
-    @_transform position
+    @transform position
     p  .join()
     p.next()
 
@@ -72,7 +72,7 @@ class Ticks extends Primitive
 
     @_render @line
 
-  _unmake: () ->
+  unmake: () ->
     @_unrender @line
     @line.dispose()
     @line = null
@@ -81,13 +81,13 @@ class Ticks extends Primitive
 
     @_unherit()
 
-  _change: (changed, init) ->
-    @rebuild() if changed['scale.divide']?
+  change: (changed, init) ->
+    @rebuild() if changed['scale.divide']
 
-    if changed['view.range']?      or
-       changed['ticks.dimension']? or
-       changed['span']?            or
-       changed['scale']?           or
+    if changed['view.range']      or
+       changed['ticks.dimension'] or
+       changed['span']            or
+       changed['scale']           or
        init
 
       dimension = @_get 'ticks.dimension'

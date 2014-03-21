@@ -15,13 +15,18 @@ class Context
     @attributes  = new Model.Attributes   Primitives.Traits, Primitives.Types
     @primitives  = new Primitives.Factory Primitives.Classes, @attributes, @renderables, @shaders
 
-    @model       = new Model.Model        @primitives.make 'root'
+    @root        = @primitives.make 'root'
+
+    @model       = new Model.Model        @root
 
     @controller  = new Stage.Controller   @model, @scene, @primitives
     @animator    = new Stage.Animator     @model
     @director    = new Stage.Director     @controller, @animator, script
 
     @api         = new Stage.API          @controller, @animator, @director
+
+    window.model = @model
+    window.root  = @model.root
 
   init: () ->
     @scene.inject()
@@ -30,7 +35,8 @@ class Context
     @scene.unject()
 
   update: () ->
-    @animator  .update()
+    @animator.update()
     @attributes.digest()
+    @model.update()
 
 module.exports = Context

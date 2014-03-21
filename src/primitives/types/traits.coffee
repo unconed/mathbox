@@ -1,6 +1,9 @@
 Types = require './types'
 
 Traits =
+  node:
+    id:          Types.nullable(Types.string())
+    classes:     Types.array(Types.string())
   object:
     position:    Types.vec4()
     rotation:    Types.quat()
@@ -9,9 +12,9 @@ Traits =
   style:
     opacity:     Types.number(1)
     color:       Types.color()
-  data:
-    position:    Types.object()
-    color:       Types.object()
+  bind:
+    position:    Types.nullable(Types.object())
+    color:       Types.nullable(Types.object())
   line:
     width:       Types.number(.01)
   view:
@@ -35,5 +38,15 @@ Traits =
   ticks:
     size:        Types.number(.05)
     dimension:   Types.number(1)
+  data:
+    source:      Types.nullable(Types.object())
+    expression:  Types.nullable(Types.func())
+  array:
+    length:      Types.number(1)
+    history:     Types.number(1)
+  matrix:
+    width:       Types.number(1)
+    height:      Types.number(1)
+    history:     Types.number(1)
 
 module.exports = Traits

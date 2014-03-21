@@ -12,7 +12,7 @@ class Primitive
     @model.primitive = @
 
     @model.on 'change', (event) =>
-      @_change event.changed if @root
+      @change event.changed if @root
 
     @model.on 'added', (event) =>
       @_added()
@@ -29,20 +29,24 @@ class Primitive
 
   rebuild: () ->
     if @root
-      @_unmake()
-      @_make()
-      @_change {}, true
+      @unmake()
+      @make()
+      @change {}, true
 
-  _make: () ->
-  _unmake: () ->
+  make: () ->
+  unmake: () ->
+
+  # Transform pipeline
+  transform: (shader) ->
+    @parent?.transform shader
 
   # Add/removal callback
   _added: () ->
     @root = @model.root
     @parent = @model.parent.primitive
 
-    @_make()
-    @_change {}, true
+    @make()
+    @change {}, true
 
   _removed: () ->
     @root = null
@@ -57,10 +61,6 @@ class Primitive
     @trigger
       type: 'unrender'
       renderable: renderable
-
-  # Transform pipeline
-  _transform: (shader) ->
-    @parent?._transform shader
 
   # Attribute changes
 
@@ -84,7 +84,7 @@ class Primitive
   # Attribute inheritance
   _inherit: (key, target = @) ->
 
-    if @model.get(key)?
+    if @_get(key)?
       target._listen @, key
       return @model
 
@@ -97,6 +97,10 @@ class Primitive
     @_unlisten(inherited) for inherited in @inherited
     @inherited = []
 
+  # Find attached data model
+  _attached: (key, klass) ->
+    object = @_get key
+    return object if object instanceof klass
 
 
 THREE.Binder.apply Primitive::

@@ -19,7 +19,8 @@
     "gulp": "^3.4.0",
     "gulp-uglify": "^0.1.0",
     "karma": "^0.10.10",
-    "browserify": "^3.32.1"
+    "browserify": "^3.32.1",
+    "cssauron": "^1.1.0"
   },
   "devDependencies": {
     "gulp": "~3.4.0",

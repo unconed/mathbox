@@ -1,9 +1,9 @@
 View = require('./view')
 
 class Cartesian4 extends View
-  @traits: ['object', 'view']
+  @traits: ['node', 'object', 'view']
 
-  _make: () ->
+  make: () ->
 
     types = @_attributes.types
     uniforms =
@@ -17,11 +17,13 @@ class Cartesian4 extends View
     @inverseViewMatrix   = uniforms.inverseViewMatrix.value
     @worldOffset         = uniforms.worldOffset.value
 
-  _unmake: () ->
+  unmake: () ->
 
     @_unherit()
 
-  _change: (changed) ->
+  change: (changed) ->
+
+    return unless changed['object'] or changed['view']
 
     o = @_get 'object.position'
     r = @_get 'view.range'

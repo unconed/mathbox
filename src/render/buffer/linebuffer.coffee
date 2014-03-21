@@ -4,10 +4,10 @@ Texture = require('./texture')
 class LineBuffer extends Buffer
   constructor: (gl, shaders, options) ->
     @callback = options.callback || ->
-    @width    = options.width    || 1
+    @length   = options.length   || 1
     @history  = options.history  || 1
 
-    @samples = @width
+    @samples = @length
     super gl, shaders, options
 
   build: () ->
@@ -28,7 +28,7 @@ class LineBuffer extends Buffer
     i = 0
     while callback(i++, output) && i < Buffer.iterationLimit
       true
-    return
+    return i - 1
 
   write: (samples = @samples) ->
     @texture.write @data, 0, @index, samples, 1

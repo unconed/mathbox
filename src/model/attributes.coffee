@@ -44,7 +44,7 @@ class Data
       @[key]?.value
     set = (key, value, ignore) =>
       replace = validate key, value, @[key].value
-      @[key].value = replace if replace?
+      @[key].value = replace if replace != undefined
       change key if !ignore
 
     object.get = (key) =>
@@ -72,7 +72,7 @@ class Data
       make = makers[key]
       target = make() if make?
       replace = validate key, value, target
-      if replace? then replace else target
+      if replace != undefined then replace else target
 
     # Coalesce changes
     dirty = false
@@ -83,7 +83,7 @@ class Data
         attributes.queue digest
 
       # Log change
-      changes[key] = @[key].value
+      changes[key] = true
 
       # Mark trait as dirty
       trait = key.split('.')[0]

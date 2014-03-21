@@ -1,14 +1,14 @@
-Primitive = require '../primitive'
+Primitive = require '../../primitive'
 
 class Axis extends Primitive
-  @traits: ['object', 'style', 'line', 'axis', 'span']
+  @traits: ['node', 'object', 'style', 'line', 'axis', 'span']
 
   constructor: (model, attributes, factory, shaders) ->
     super model, attributes, factory, shaders
 
     @axisPosition = @axisStep = @resolution = @line = null
 
-  _make: () ->
+  make: () ->
 
     # Look up range of nearest view to inherit from
     @inherit = @_inherit 'view.range'
@@ -25,7 +25,7 @@ class Axis extends Primitive
     # Build transform chain
     position = @_shaders.shader()
     position.call 'axis.position', positionUniforms
-    @_transform position
+    @transform position
 
     # Make line renderable
     detail = @_get 'axis.detail'
@@ -44,19 +44,19 @@ class Axis extends Primitive
 
     @_render @line
 
-  _unmake: () ->
+  unmake: () ->
     @_unrender @line
     @line.dispose()
     @line = null
 
     @_unherit()
 
-  _change: (changed, init) ->
+  change: (changed, init) ->
     @rebuild() if changed['axis.detail']?
 
-    if changed['view.range']?     or
-       changed['axis.dimension']? or
-       changed['span']?           or
+    if changed['view.range']     or
+       changed['axis.dimension'] or
+       changed['span']           or
        init
 
       dimension = @_get 'axis.dimension'

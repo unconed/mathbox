@@ -6,9 +6,6 @@ class Scene
   constructor: (@scene) ->
     @root = new MathBox
 
-  getRoot: () ->
-    @root
-
   inject: () ->
     @scene.add @root
 
