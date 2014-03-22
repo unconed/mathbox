@@ -5715,6 +5715,15 @@ helpers = {
       return ticks;
     }
   },
+  line: {
+    uniforms: function() {
+      return {
+        lineWidth: this.node.attributes['line.width'],
+        lineColor: this.node.attributes['style.color'],
+        lineOpacity: this.node.attributes['style.opacity']
+      };
+    }
+  },
   object: {
     visible: function(mesh) {
       var opacity, visible;
@@ -5814,11 +5823,7 @@ Axis = (function(_super) {
     detail = this._get('axis.detail');
     samples = detail + 1;
     this.resolution = 1 / detail;
-    lineUniforms = {
-      lineWidth: this.node.attributes['line.width'],
-      lineColor: this.node.attributes['style.color'],
-      lineOpacity: this.node.attributes['style.opacity']
-    };
+    lineUniforms = this._helper.line.uniforms();
     this.line = this._factory.make('line', {
       uniforms: lineUniforms,
       samples: samples,
@@ -5914,11 +5919,7 @@ Curve = (function(_super) {
     this.transform(position);
     samples = this.array.space;
     history = this.array.history;
-    lineUniforms = {
-      lineWidth: this.node.attributes['line.width'],
-      lineColor: this.node.attributes['style.color'],
-      lineOpacity: this.node.attributes['style.opacity']
-    };
+    lineUniforms = this._helper.line.uniforms();
     this.line = this._factory.make('line', {
       uniforms: lineUniforms,
       samples: samples,
@@ -6011,12 +6012,8 @@ Grid = (function(_super) {
                  map: buffer.texture.textureObject
         @_render debug
          */
-        lineUniforms = {
-          lineWidth: _this.node.attributes['line.width'],
-          lineColor: _this.node.attributes['style.color'],
-          lineOpacity: _this.node.attributes['style.opacity']
-        };
         quads = samples - 1;
+        lineUniforms = _this._helper.line.uniforms();
         line = _this._factory.make('line', {
           uniforms: lineUniforms,
           samples: samples,
@@ -6160,11 +6157,7 @@ Ticks = (function(_super) {
      */
     p.join();
     p.call('ticks.position', positionUniforms);
-    lineUniforms = {
-      lineWidth: this.node.attributes['line.width'],
-      lineColor: this.node.attributes['style.color'],
-      lineOpacity: this.node.attributes['style.opacity']
-    };
+    lineUniforms = this._helper.line.uniforms();
     this.line = this._factory.make('line', {
       uniforms: lineUniforms,
       samples: 2,

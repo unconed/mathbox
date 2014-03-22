@@ -34,8 +34,13 @@ helpers =
       buffer.copy ticks
       ticks
 
-  object:
+  line:
+    uniforms: () ->
+      lineWidth:   @node.attributes['line.width']
+      lineColor:   @node.attributes['style.color']
+      lineOpacity: @node.attributes['style.opacity']
 
+  object:
     visible: (mesh) ->
       opacity = 1
       if @node.attributes['style.opacity']

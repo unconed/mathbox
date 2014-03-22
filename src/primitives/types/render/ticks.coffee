@@ -58,11 +58,7 @@ class Ticks extends Primitive
     p.call 'ticks.position', positionUniforms
 
     # Make line renderable
-    lineUniforms =
-      lineWidth:      @node.attributes['line.width']
-      lineColor:      @node.attributes['style.color']
-      lineOpacity:    @node.attributes['style.opacity']
-
+    lineUniforms = @_helper.line.uniforms()
     @line = @_factory.make 'line',
               uniforms: lineUniforms
               samples:  2

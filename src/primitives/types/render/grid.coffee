@@ -63,13 +63,9 @@ class Grid extends Primitive
       ###
 
       # Make line renderable
-      lineUniforms =
-        lineWidth:      @node.attributes['line.width']
-        lineColor:      @node.attributes['style.color']
-        lineOpacity:    @node.attributes['style.opacity']
-
       quads = samples - 1
 
+      lineUniforms = @_helper.line.uniforms()
       line = @_factory.make 'line',
                 uniforms: lineUniforms
                 samples:  samples
