@@ -17,17 +17,21 @@ helpers =
       delete @spanHandler
 
     get: (prefix, dimension) ->
+      # Return literal range
       range = @_get prefix + 'span.range'
       return range if range?
 
+      # Inherit from view
       if @span
         return @span.axis dimension
 
   scale:
+    # Divisions to allocate on scale
     divide: (prefix) ->
       divide = @_get prefix + 'scale.divide'
       divide * 2.5
 
+    # Generate ticks on scale
     generate: (prefix, buffer, min, max) ->
       divide = @_get prefix + 'scale.divide'
       unit   = @_get prefix + 'scale.unit'
@@ -39,6 +43,7 @@ helpers =
       ticks
 
   line:
+    # Return bound line style uniforms
     uniforms: () ->
       lineWidth:   @node.attributes['line.width']
       lineColor:   @node.attributes['style.color']

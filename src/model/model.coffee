@@ -21,33 +21,33 @@ class Model
       children: 'children'
 
     # Track object lifecycle
-    @_add = (event) =>
+    add = (event) =>
       object = event.object
-      @_adopt object
-      @_update event, object, true
+      adopt object
+      update event, object, true
 
-    @_remove = (event) =>
+    remove = (event) =>
       object = event.object
-      @_dispose object
+      dispose object
 
     # Triggered by node addition/removal
-    @on 'added',   @_add
-    @on 'removed', @_remove
+    @on 'added',   add
+    @on 'removed', remove
 
-    @_adopt = (object) ->
+    adopt = (object) =>
       addNode object
       addType object
-      object.on 'change:node', @_update
+      object.on 'change:node', update
 
-    @_dispose = (object) ->
+    dispose = (object) =>
       removeNode object
       removeType object
       removeID      object.id
       removeClasses object.classes
-      object.off 'change:node', @_update
+      object.off 'change:node', update
 
     # Track id/class changes
-    @_update = (event, object, force) =>
+    update = (event, object, force) =>
       _id    = force or event.changed['node.id']
       _klass = force or event.changed['node.classes']
 
@@ -55,7 +55,7 @@ class Model
         id = object.get 'node.id'
         if id != object.id
           removeID object.id, object
-          addID    id,          object
+          addID    id,        object
 
       if _klass
         classes = object.get 'node.classes'

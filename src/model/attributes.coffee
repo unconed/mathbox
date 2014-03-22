@@ -133,7 +133,7 @@ class Data
         event.type = "change:#{trait}"
         object.trigger event
 
-    # Convert prefix.ns.key into keyPrefix
+    # Convert name.trait.key into keyName
     shorthand = (name) ->
       parts = name.split /\./g
       suffix = parts.pop()

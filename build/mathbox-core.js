@@ -4934,7 +4934,7 @@ cssauron = require('cssauron');
 
 Model = (function() {
   function Model(root) {
-    var addClasses, addID, addNode, addType, removeClasses, removeID, removeNode, removeType;
+    var add, addClasses, addID, addNode, addType, adopt, dispose, remove, removeClasses, removeID, removeNode, removeType, update;
     this.root = root;
     this.root.model = this;
     this.root.root = this.root;
@@ -4954,36 +4954,40 @@ Model = (function() {
       parent: 'parent',
       children: 'children'
     });
-    this._add = (function(_this) {
+    add = (function(_this) {
       return function(event) {
         var object;
         object = event.object;
-        _this._adopt(object);
-        return _this._update(event, object, true);
+        adopt(object);
+        return update(event, object, true);
       };
     })(this);
-    this._remove = (function(_this) {
+    remove = (function(_this) {
       return function(event) {
         var object;
         object = event.object;
-        return _this._dispose(object);
+        return dispose(object);
       };
     })(this);
-    this.on('added', this._add);
-    this.on('removed', this._remove);
-    this._adopt = function(object) {
-      addNode(object);
-      addType(object);
-      return object.on('change:node', this._update);
-    };
-    this._dispose = function(object) {
-      removeNode(object);
-      removeType(object);
-      removeID(object.id);
-      removeClasses(object.classes);
-      return object.off('change:node', this._update);
-    };
-    this._update = (function(_this) {
+    this.on('added', add);
+    this.on('removed', remove);
+    adopt = (function(_this) {
+      return function(object) {
+        addNode(object);
+        addType(object);
+        return object.on('change:node', update);
+      };
+    })(this);
+    dispose = (function(_this) {
+      return function(object) {
+        removeNode(object);
+        removeType(object);
+        removeID(object.id);
+        removeClasses(object.classes);
+        return object.off('change:node', update);
+      };
+    })(this);
+    update = (function(_this) {
       return function(event, object, force) {
         var classes, id, klass, _id, _klass;
         _id = force || event.changed['node.id'];
