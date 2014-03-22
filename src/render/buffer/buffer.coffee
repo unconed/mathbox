@@ -31,46 +31,47 @@ class Buffer extends Renderable
     n
 
   copy: (data) ->
-    n = Math.min data.length, @samples * @channels
-    for i in [0...n]
-      @data[i] = data[i]
+    n    = Math.min data.length, @samples * @channels
+    d    = @data
+    d[i] = data[i] for i in [0...n]
     @write Math.floor n / @channels
 
   write: () ->
   iterate: () ->
   generate: () ->
     limit = @samples * @channels
-    data = @data
-    done = false
-    p = 0
+    data  = @data
+
+    done  = false
+    i     = 0
 
     switch @channels
       when 1 then (x) ->
         if !done
-          data[p++] = x || 0
+          data[i++] = x
 
-        !(done = p >= limit)
+        !(done = i >= limit)
       when 2 then (x, y) ->
         if !done
-          data[p++] = x || 0
-          data[p++] = y || 0
+          data[i++] = x
+          data[i++] = y
 
-        !(done = p >= limit)
+        !(done = i >= limit)
       when 3 then (x, y, z) ->
         if !done
-          data[p++] = x || 0
-          data[p++] = y || 0
-          data[p++] = z || 0
+          data[i++] = x
+          data[i++] = y
+          data[i++] = z
 
-        !(done = p >= limit)
+        !(done = i >= limit)
       when 4 then (x, y, z, w) ->
         if !done
-          data[p++] = x || 0
-          data[p++] = y || 0
-          data[p++] = z || 0
-          data[p++] = w || 0
+          data[i++] = x
+          data[i++] = y
+          data[i++] = z
+          data[i++] = w
 
-        !(done = p >= limit)
+        !(done = i >= limit)
 
 
 module.exports = Buffer

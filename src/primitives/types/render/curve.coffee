@@ -4,8 +4,8 @@ _Array = require '../data/array'
 class Curve extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'curve']
 
-  constructor: (model, attributes, factory, shaders) ->
-    super model, attributes, factory, shaders
+  constructor: (model, attributes, factory, shaders, helper) ->
+    super model, attributes, factory, shaders, helper
 
     @resolution = @line = @array = @inherit = @resizeHandler = null
 
@@ -66,9 +66,9 @@ class Curve extends Primitive
 
     @_unrender @line
     @line.dispose()
-    @line    = null
+    @line  = null
 
-    @array   = null
+    @array = null
 
     @_unherit()
 
@@ -76,6 +76,6 @@ class Curve extends Primitive
     @rebuild() if changed['axis.detail']? or
                   changed['curve.points']?
 
-    @_helper.setMeshVisible @line
+    @_helper.object.visible @line
 
 module.exports = Curve

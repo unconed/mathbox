@@ -1,4 +1,5 @@
 Primitive = require('../../primitive')
+Util = require '../../../util'
 
 class Grid extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'grid',
@@ -7,15 +8,14 @@ class Grid extends Primitive
             'span:x.span',   'span:y.span']
   @EXCESS: 2.5
 
-  constructor: (model, attributes, factory, shaders) ->
-    super model, attributes, factory, shaders
+  constructor: (model, attributes, factory, shaders, helper) ->
+    super model, attributes, factory, shaders, helper
 
     @axes        = []
 
   make: () ->
 
-    # Look up range of nearest view to inherit from
-    @inherit = @_inherit 'view.range'
+    @_helper.span.make()
 
     axis = (first, second) =>
       # Prepare data buffer of tick positions
@@ -90,6 +90,8 @@ class Grid extends Primitive
     second && @axes.push axis 'y.', 'x.'
 
   unmake: () ->
+    @_helper.span.unmake()
+
     for axis in @axes
       axis.buffer.dispose()
       @_unrender axis.line
@@ -110,14 +112,14 @@ class Grid extends Primitive
       # Set line steps along first axis
       min    = range1.x
       max    = range1.y
-      @_helper.setDimension(uniforms.gridPosition, x).multiplyScalar(min)
-      @_helper.setDimension(uniforms.gridStep,     x).multiplyScalar((max - min) * resolution)
+      Util.setDimension(uniforms.gridPosition, x).multiplyScalar(min)
+      Util.setDimension(uniforms.gridStep,     x).multiplyScalar((max - min) * resolution)
 
       # Calculate scale along second axis
       min    = range2.x
       max    = range2.y
-      @_helper.setDimension uniforms.gridAxis, y
-      ticks = @_helper.generateScale second, buffer, min, max
+      Util.setDimension uniforms.gridAxis, y
+      ticks = @_helper.scale.generate second, buffer, min, max
 
       # Clip to number of ticks
       n = ticks.length
@@ -131,8 +133,8 @@ class Grid extends Primitive
 
       # Fetch grid range in both dimensions
       axes   = @_get 'grid.axes'
-      range1 = @_helper.getSpanRange 'x.', axes.x
-      range2 = @_helper.getSpanRange 'y.', axes.y
+      range1 = @_helper.span.get 'x.', axes.x
+      range2 = @_helper.span.get 'y.', axes.y
 
       # Update both line sets
       first  = @_get 'grid.first'
@@ -143,6 +145,6 @@ class Grid extends Primitive
       if second
         axis axes.y, axes.x, range2, range1, @axes[+first]
 
-    @_helper.setMeshVisible axis.line for axis in @axes
+    @_helper.object.visible axis.line for axis in @axes
 
 module.exports = Grid

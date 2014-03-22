@@ -3,8 +3,8 @@ Data = require './data'
 class Matrix extends Data
   @traits: ['node', 'data', 'matrix']
 
-  constructor: (model, attributes, factory, shaders) ->
-    super model, attributes, factory, shaders
+  constructor: (model, attributes, factory, shaders, helper) ->
+    super model, attributes, factory, shaders, helper
 
     @buffer = null
     @space  = 0

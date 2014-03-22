@@ -1,17 +1,17 @@
 Primitive = require '../../primitive'
+Util = require '../../../util'
 
 class Axis extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'axis', 'span']
 
-  constructor: (model, attributes, factory, shaders) ->
-    super model, attributes, factory, shaders
+  constructor: (model, attributes, factory, shaders, helper) ->
+    super model, attributes, factory, shaders, helper
 
     @axisPosition = @axisStep = @resolution = @line = null
 
   make: () ->
 
-    # Look up range of nearest view to inherit from
-    @inherit = @_inherit 'view.range'
+    @_helper.span.make()
 
     # Prepare position shader
     types = @_attributes.types
@@ -49,7 +49,7 @@ class Axis extends Primitive
     @line.dispose()
     @line = null
 
-    @_unherit()
+    @_helper.span.unmake()
 
   change: (changed, init) ->
     @rebuild() if changed['axis.detail']?
@@ -60,14 +60,14 @@ class Axis extends Primitive
        init
 
       dimension = @_get 'axis.dimension'
-      range = @_helper.getSpanRange '', dimension
+      range = @_helper.span.get '', dimension
 
       min = range.x
       max = range.y
 
-      @_helper.setDimension(@axisPosition, dimension).multiplyScalar(min)
-      @_helper.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
+      Util.setDimension(@axisPosition, dimension).multiplyScalar(min)
+      Util.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
 
-    @_helper.setMeshVisible @line
+    @_helper.object.visible @line
 
 module.exports = Axis

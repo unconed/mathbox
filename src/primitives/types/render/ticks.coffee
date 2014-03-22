@@ -1,18 +1,18 @@
 Primitive = require '../../primitive'
+Util = require '../../../util'
 
 class Ticks extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'ticks', 'span', 'scale']
   @EXCESS: 2.5
 
-  constructor: (model, attributes, factory, shaders) ->
-    super model, attributes, factory, shaders
+  constructor: (model, attributes, factory, shaders, helper) ->
+    super model, attributes, factory, shaders, helper
 
     @tickAxis = @tickNormal = @resolution = @line = null
 
   make: () ->
 
-    # Look up range of nearest view to inherit from
-    @inherit = @_inherit 'view.range'
+    @_helper.span.make()
 
     # Prepare data buffer of tick positions
     divide = @_get 'scale.divide'
@@ -79,7 +79,7 @@ class Ticks extends Primitive
 
     @tickAxis = @tickNormal = null
 
-    @_unherit()
+    @_helper.span.unmake()
 
   change: (changed, init) ->
     @rebuild() if changed['scale.divide']
@@ -92,19 +92,19 @@ class Ticks extends Primitive
 
       # Fetch range along axis
       dimension = @_get 'ticks.dimension'
-      range  = @_helper.getSpanRange '', dimension
+      range  = @_helper.span.get '', dimension
 
       # Calculate scale along axis
       min = range.x
       max = range.y
-      @_helper.setDimension @tickAxis, dimension
-      @_helper.setDimensionNormal @tickNormal, dimension
-      ticks = @_helper.generateScale '', @buffer, min, max
+      Util.setDimension @tickAxis, dimension
+      Util.setDimensionNormal @tickNormal, dimension
+      ticks = @_helper.scale.generate '', @buffer, min, max
 
       # Clip to number of ticks
       n = ticks.length
       @line.geometry.clip 0, n
 
-    @_helper.setMeshVisible @line
+    @_helper.object.visible @line
 
 module.exports = Ticks

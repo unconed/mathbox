@@ -18,6 +18,8 @@ Classes =
   group:      require './group'
   root:       require './root'
 
+
 exports.Classes = Classes
 exports.Types   = require './types'
 exports.Traits  = require './traits'
+exports.Helpers = require './helpers'

@@ -8,8 +8,9 @@ class DataBuffer extends Buffer
   build: () ->
     super
 
-    @data = new Float32Array @samples * @channels
+    @data    = new Float32Array @samples * @channels
     @texture = new Texture @gl, @samples, 1, @channels
+
     @dataPointer = @uniforms.dataPointer.value
     @_adopt @texture.uniforms
 

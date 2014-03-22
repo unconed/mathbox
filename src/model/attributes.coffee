@@ -10,7 +10,9 @@
 ###
 
 class Attributes
-  constructor: (@traits, @types) ->
+  constructor: (definitions) ->
+    @traits = definitions.Traits
+    @types  = definitions.Types
     @pending = []
 
   make: (type) ->

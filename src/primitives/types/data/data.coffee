@@ -3,8 +3,8 @@ Primitive = require '../../primitive'
 class Data extends Primitive
   @traits: ['node', 'data']
 
-  constructor: (model, attributes, factory, shaders) ->
-    super model, attributes, factory, shaders
+  constructor: (model, attributes, factory, shaders, helper) ->
+    super model, attributes, factory, shaders, helper
 
   callback: (callback) ->
     callback ? () ->

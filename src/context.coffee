@@ -12,8 +12,8 @@ class Context
     @scene       = new Render.Scene       scene
     @renderables = new Render.Factory     gl, Render.Classes, @shaders
 
-    @attributes  = new Model.Attributes   Primitives.Traits, Primitives.Types
-    @primitives  = new Primitives.Factory Primitives.Classes, @attributes, @renderables, @shaders
+    @attributes  = new Model.Attributes   Primitives.Types
+    @primitives  = new Primitives.Factory Primitives.Types, @attributes, @renderables, @shaders
 
     @root        = @primitives.make 'root'
 

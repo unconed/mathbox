@@ -15,9 +15,9 @@ class SurfaceBuffer extends Buffer
   build: () ->
     super
 
-    @data = new Float32Array @samples * @channels
+    @data    = new Float32Array @samples * @channels
     @texture = new Texture @gl, @width, @height * @history, @channels
-    @index = 0
+    @index   = 0
 
     @dataPointer = @uniforms.dataPointer.value
 

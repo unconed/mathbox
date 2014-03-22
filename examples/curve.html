@@ -44,7 +44,6 @@
         return emit(x, Math.sin(x + t));
       },
       dimensions: 2,
-      history: 32,
     });
     mathbox.grid({
       id: 'legrid',
@@ -55,6 +54,7 @@
     mathbox.curve({
       points: '#sampler',
       color: 'blue',
+      width: 0.05,
     });
   </script>
 </body>

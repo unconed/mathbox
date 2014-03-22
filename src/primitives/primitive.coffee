@@ -1,5 +1,4 @@
 Model = require '../model'
-helpers = require './helpers'
 
 class Primitive
   @Node = Model.Node
@@ -8,7 +7,7 @@ class Primitive
   @model = @Node
   @traits = []
 
-  constructor: (@node, @_attributes, @_factory, @_shaders) ->
+  constructor: (@node, @_attributes, @_factory, @_shaders, @_helper) ->
     @node.primitive = @
 
     @node.on 'change', (event) =>
@@ -20,10 +19,8 @@ class Primitive
     @node.on 'removed', (event) =>
       @_removed()
 
-    @inherited = []
-
-    @_helper = helpers @
     @_get = @node.get.bind @node
+    @_helper = @_helper @
 
   # Construction of renderables
 
@@ -33,7 +30,7 @@ class Primitive
       @make()
       @change {}, true
 
-  make: () ->
+  make:   () ->
   unmake: () ->
 
   # Transform pipeline
@@ -42,7 +39,7 @@ class Primitive
 
   # Add/removal callback
   _added: () ->
-    @root = @node.root
+    @root   = @node.root
     @parent = @node.parent.primitive
 
     @make()
@@ -66,36 +63,17 @@ class Primitive
 
   _change: (changed) ->
 
-  _listen: (object, key) ->
-    return if object == @
-
-    handler = (event) =>
-      changed = event.changed
-      @_change changed if @root and changed[key]?
-    object.node.on 'change', handler
-
-    inherited = [object, handler]
-    @inherited.push inherited
-
-  _unlisten: (inherited) ->
-    [object, handler] = inherited
-    object.node.off 'change', handler
-
   # Attribute inheritance
-  _inherit: (key, target = @) ->
 
-    if @_get(key)?
-      target._listen @, key
-      return @node
+  _inherit: (klass) ->
+
+    if @ instanceof klass
+      return @
 
     if @parent?
-      @parent._inherit key, target
+      @parent._inherit klass
     else
       null
-
-  _unherit: () ->
-    @_unlisten(inherited) for inherited in @inherited
-    @inherited = []
 
   # Find attached data model
   _attached: (key, klass) ->
@@ -111,9 +89,13 @@ class Primitive
       node = object
       return node.primitive if node and node.primitive instanceof klass
 
-    # Implicitly associated node 
-    previous = @node.parent.children[@node.index - 1]
-    return previous.primitive if previous.primitive instanceof klass
+    # Implicitly associated node (scan backwards for peers)
+    previous = @node
+    while previous
+      previous = previous.parent.children[previous.index - 1]
+      return previous.primitive if previous?.primitive instanceof klass
+
+    null
 
 
 THREE.Binder.apply Primitive::
