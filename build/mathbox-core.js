@@ -5723,7 +5723,7 @@ helpers = {
           return _this.change({}, {}, true);
         };
       })(this);
-      return this.span.on('resize', this.spanHandler);
+      return this.span.on('range', this.spanHandler);
     },
     unmake: function() {
       this.span.off('resize', this.spanHandler);
@@ -6864,9 +6864,8 @@ Cartesian = (function(_super) {
     @rotationMatrix.makeRotationFromQuaternion q
     @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
      */
-    console.log('cartesian resize');
     return this.trigger({
-      type: 'resize'
+      type: 'range'
     });
   };
 

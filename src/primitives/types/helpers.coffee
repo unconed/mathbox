@@ -9,7 +9,7 @@ helpers =
       # Monitor size changes
       @span = @_inherit View
       @spanHandler = (event) => @change {}, {}, true
-      @span.on 'resize', @spanHandler
+      @span.on 'range', @spanHandler
 
     unmake: () ->
       @span.off 'resize', @spanHandler

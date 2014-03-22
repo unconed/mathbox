@@ -65,9 +65,8 @@ class Cartesian extends View
     @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
     ###
 
-    console.log 'cartesian resize'
     @trigger
-      type: 'resize'
+      type: 'range'
 
   to: (vector) ->
     vector.applyMatrix4 @cartesianMatrix
