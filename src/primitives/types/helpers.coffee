@@ -8,7 +8,7 @@ helpers =
       # Look up nearest view to inherit from
       # Monitor size changes
       @span = @_inherit View
-      @spanHandler = (event) => @change {}, true
+      @spanHandler = (event) => @change {}, {}, true
       @span.on 'resize', @spanHandler
 
     unmake: () ->

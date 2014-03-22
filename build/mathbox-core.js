@@ -5720,7 +5720,7 @@ helpers = {
       this.span = this._inherit(View);
       this.spanHandler = (function(_this) {
         return function(event) {
-          return _this.change({}, true);
+          return _this.change({}, {}, true);
         };
       })(this);
       return this.span.on('resize', this.spanHandler);
@@ -5954,6 +5954,7 @@ Axis = (function(_super) {
     if (changed['axis.detail'] != null) {
       this.rebuild();
     }
+    console.log(touched, init);
     if (touched['interval'] || touched['span'] || touched['view'] || init) {
       dimension = this._get('interval.axis');
       range = this._helper.span.get('', dimension);
@@ -6863,6 +6864,7 @@ Cartesian = (function(_super) {
     @rotationMatrix.makeRotationFromQuaternion q
     @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
      */
+    console.log('cartesian resize');
     return this.trigger({
       type: 'resize'
     });
