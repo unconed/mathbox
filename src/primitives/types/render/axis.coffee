@@ -45,8 +45,6 @@ class Axis extends Primitive
   change: (changed, touched, init) ->
     @rebuild() if changed['axis.detail']?
 
-    console.log touched, init
-
     if touched['interval'] or
        touched['span']     or
        touched['view']     or

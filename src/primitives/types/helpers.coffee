@@ -108,8 +108,7 @@ helpers =
 module.exports = (object, traits) ->
   h = {}
   for trait in traits
-    methods = helpers[trait]
-    continue unless methods
+    continue unless methods = helpers[trait]
 
     h[trait] = {}
     h[trait][key] = method.bind(object) for key, method of methods

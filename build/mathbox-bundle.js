@@ -50750,7 +50750,7 @@ window.MathBox.Shaders = {"axis.position": "uniform vec4 axisStep;\nuniform vec4
 "cartesian.position": "uniform mat4 cartesianMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return cartesianMatrix * vec4(position.xyz, 1.0);\n}\n",
 "grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec2 uv) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(uv.y, 0.0)).x;\n  vec4 offAxis = gridStep * uv.x + gridPosition;\n  return onAxis + offAxis;\n}\n",
 "line.color": "uniform vec3 lineColor;\nuniform float lineOpacity;\n\nvoid setLineColor() {\n\tgl_FragColor = vec4(lineColor, lineOpacity);\n}\n",
-"line.position": "uniform float lineWidth;\nattribute vec2 line;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getLineGeometry(vec2 xy, float edge, inout vec3 left, inout vec3 center, inout vec3 right) {\n  vec2 delta = vec2(1.0, 0.0);\n\n  center =                 getPosition(xy);\n  left   = (edge > -0.5) ? getPosition(xy - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xy + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec3 bitangent;\n  vec3 normal = center;\n\n  vec3 legLeft = center - left;\n  vec3 legRight = right - center;\n\n  if (edge > 0.5) {\n    bitangent = normalize(cross(normal, legLeft));\n  }\n  else if (edge < -0.5) {\n    bitangent = normalize(cross(normal, legRight));\n  }\n  else {\n    vec3 joinLeft = normalize(cross(normal, legLeft));\n    vec3 joinRight = normalize(cross(normal, legRight));\n    float dotLR = dot(joinLeft, joinRight);\n    float scale = min(8.0, tan(acos(dotLR * .999) * .5) * .5);\n    bitangent = normalize(joinLeft + joinRight) * sqrt(1.0 + scale * scale);\n  }\n  \n  return bitangent;\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position.xy, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
+"line.position": "uniform float lineWidth;\nattribute vec2 line;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getLineGeometry(vec2 xy, float edge, inout vec3 left, inout vec3 center, inout vec3 right) {\n  vec2 delta = vec2(1.0, 0.0);\n\n  center =                 getPosition(xy);\n  left   = (edge > -0.5) ? getPosition(xy - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xy + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    if (edge > 0.5) {\n      vec4 a = vec4(left.xy, center.xy);\n      vec4 b = a / vec4(left.zz, center.zz);\n      vec2 nl = normalize(b.xy - b.zw);\n      vec2 tl = vec2(nl.y, -nl.x);\n\n      join = tl;\n    }\n    else if (edge < -0.5) {\n      vec4 a = vec4(center.xy, right.xy);\n      vec4 b = a / vec4(center.zz, right.zz);\n      vec2 nr = normalize(b.xy - b.zw);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n      join = tr;\n    }\n    else {\n      vec4 a = vec4(left.xy, right.xy);\n      vec4 b = a / vec4(left.zz, right.zz);\n\n      vec2 l = b.xy;\n      vec2 r = b.zw;\n      vec2 c = center.xy / center.z;\n\n      vec4 d = vec4(c, l) - vec4(r, c);\n\n      vec2 nl = normalize(d.xy);\n      vec2 nr = normalize(d.zw);\n\n      vec2 tl = vec2(nl.y, -nl.x);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n      vec2 tc = normalize(tl + tr);\n      \n      float cosAngle = abs(dot(nl, tc));\n      float scale = sqrt(1.0 + cosAngle * cosAngle);\n\n      join = tc * scale;\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position.xy, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
 "project.position": "void setPosition(vec3 position) {\n  gl_Position = projectionMatrix * vec4(position, 1.0);\n}\n",
 "sample.2d.1": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).x, 0.0, 0.0, 0.0);\n}\n",
 "sample.2d.2": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).xw, 0.0, 0.0);\n}\n",
@@ -56601,8 +56601,7 @@ module.exports = function(object, traits) {
   h = {};
   for (_i = 0, _len = traits.length; _i < _len; _i++) {
     trait = traits[_i];
-    methods = helpers[trait];
-    if (!methods) {
+    if (!(methods = helpers[trait])) {
       continue;
     }
     h[trait] = {};
@@ -56701,7 +56700,6 @@ Axis = (function(_super) {
     if (changed['axis.detail'] != null) {
       this.rebuild();
     }
-    console.log(touched, init);
     if (touched['interval'] || touched['span'] || touched['view'] || init) {
       dimension = this._get('interval.axis');
       range = this._helper.span.get('', dimension);

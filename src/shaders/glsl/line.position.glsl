@@ -13,27 +13,51 @@ void getLineGeometry(vec2 xy, float edge, inout vec3 left, inout vec3 center, in
 }
 
 vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {
-  vec3 bitangent;
-  vec3 normal = center;
+  vec2 join = vec2(1.0, 0.0);
 
-  vec3 legLeft = center - left;
-  vec3 legRight = right - center;
+  if (center.z < 0.0) {
+    if (edge > 0.5) {
+      vec4 a = vec4(left.xy, center.xy);
+      vec4 b = a / vec4(left.zz, center.zz);
+      vec2 nl = normalize(b.xy - b.zw);
+      vec2 tl = vec2(nl.y, -nl.x);
 
-  if (edge > 0.5) {
-    bitangent = normalize(cross(normal, legLeft));
+      join = tl;
+    }
+    else if (edge < -0.5) {
+      vec4 a = vec4(center.xy, right.xy);
+      vec4 b = a / vec4(center.zz, right.zz);
+      vec2 nr = normalize(b.xy - b.zw);
+      vec2 tr = vec2(nr.y, -nr.x);
+
+      join = tr;
+    }
+    else {
+      vec4 a = vec4(left.xy, right.xy);
+      vec4 b = a / vec4(left.zz, right.zz);
+
+      vec2 l = b.xy;
+      vec2 r = b.zw;
+      vec2 c = center.xy / center.z;
+
+      vec4 d = vec4(c, l) - vec4(r, c);
+
+      vec2 nl = normalize(d.xy);
+      vec2 nr = normalize(d.zw);
+
+      vec2 tl = vec2(nl.y, -nl.x);
+      vec2 tr = vec2(nr.y, -nr.x);
+
+      vec2 tc = normalize(tl + tr);
+      
+      float cosAngle = abs(dot(nl, tc));
+      float scale = sqrt(1.0 + cosAngle * cosAngle);
+
+      join = tc * scale;
+    }
   }
-  else if (edge < -0.5) {
-    bitangent = normalize(cross(normal, legRight));
-  }
-  else {
-    vec3 joinLeft = normalize(cross(normal, legLeft));
-    vec3 joinRight = normalize(cross(normal, legRight));
-    float dotLR = dot(joinLeft, joinRight);
-    float scale = min(8.0, tan(acos(dotLR * .999) * .5) * .5);
-    bitangent = normalize(joinLeft + joinRight) * sqrt(1.0 + scale * scale);
-  }
-  
-  return bitangent;
+    
+  return vec3(join, 0.0);
 }
 
 vec3 getLinePosition() {
