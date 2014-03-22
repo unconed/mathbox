@@ -7,7 +7,7 @@ class Curve extends Primitive
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
 
-    @resolution = @line = @array = @inherit = @resizeHandler = null
+    @resolution = @line = @array = @resizeHandler = @rebuildHandler = null
 
   bind: () ->
     unbind() if @resizeHandler
@@ -16,21 +16,21 @@ class Curve extends Primitive
     @array = @_attached 'curve.points', _Array
 
     # Monitor array for reallocation / resize
-    @resizeHandler = (event) -> @clip()
+    @resizeHandler  = (event) -> @clip()
     @rebuildHandler = (event) -> @rebuild()
-    @array.on 'rebuild', @rebuildHandler
     @array.on 'resize',  @resizeHandler
+    @array.on 'rebuild', @rebuildHandler
 
   unbind: () ->
-    @array.off 'rebuild', @rebuildHandler
     @array.off 'resize',  @resizeHandler
+    @array.off 'rebuild', @rebuildHandler
+    @resizeHandler  = null
     @rebuildHandler = null
-    @resizeHandler = null
 
   clip: () ->
     return unless @line and @array
     n = @array.length
-#    @line.geometry.clip 0, n - 1
+    @line.geometry.clip 0, n - 1
 
   make: () ->
     @bind()
@@ -53,25 +53,20 @@ class Curve extends Primitive
               ribbons:  history
               position: position
 
-    @_render @line
-
     @clip()
+
+    @_helper.object.make [@line]
 
   unmake: () ->
     @unbind()
-
-    @_unrender @line
-    @line.dispose()
-    @line  = null
+    @_helper.object.unmake()
 
     @array = null
 
     @_unherit()
 
-  change: (changed, init) ->
+  change: (changed, touched, init) ->
     @rebuild() if changed['axis.detail']? or
                   changed['curve.points']?
-
-    @_helper.object.visible @line
 
 module.exports = Curve

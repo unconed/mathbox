@@ -55385,7 +55385,7 @@ THREE.Bootstrap.registerPlugin('mathbox', {
  - Organizes attributes by trait/namespace so the usage in code is organized
  - Provides shorthand aliases to access via simpler flat namespace API
  - Values are stored in three.js uniform-style objects by reference
- - Types avoid copying value objects on set
+ - Type validators/setters avoid copying value objects on write
  - Coalesces update notifications per object and per trait
  
   Actual type and trait definitions are injected from Primitives
@@ -55406,19 +55406,15 @@ Attributes = (function() {
     };
   };
 
-  Attributes.prototype.getSpec = function(name) {
-    return this.traits[name];
-  };
-
-  Attributes.prototype.queue = function(callback) {
-    return this.pending.push(callback);
-  };
-
   Attributes.prototype.apply = function(object, traits) {
     if (traits == null) {
       traits = [];
     }
     return new Data(object, traits, this);
+  };
+
+  Attributes.prototype.queue = function(callback) {
+    return this.pending.push(callback);
   };
 
   Attributes.prototype.digest = function() {
@@ -55437,13 +55433,17 @@ Attributes = (function() {
     }
   };
 
+  Attributes.prototype.getTrait = function(name) {
+    return this.traits[name];
+  };
+
   return Attributes;
 
 })();
 
 Data = (function() {
   function Data(object, traits, attributes) {
-    var change, changes, define, digest, dirty, event, from, get, key, makers, mapFrom, mapTo, name, options, set, shorthand, spec, to, trait, validate, validators, values, _i, _len, _ref;
+    var change, changes, define, digest, dirty, event, from, get, key, list, makers, mapFrom, mapTo, name, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _len, _ref;
     if (traits == null) {
       traits = [];
     }
@@ -55476,7 +55476,7 @@ Data = (function() {
         var replace;
         key = to(key);
         if (validators[key] == null) {
-          return;
+          return console.warn("Setting unknown property `" + key + "`");
         }
         replace = validate(key, value, _this[key].value);
         if (replace !== void 0) {
@@ -55534,6 +55534,7 @@ Data = (function() {
     };
     dirty = false;
     changes = {};
+    touched = {};
     change = (function(_this) {
       return function(key) {
         var trait;
@@ -55541,20 +55542,33 @@ Data = (function() {
           dirty = true;
           attributes.queue(digest);
         }
-        changes[key] = true;
         trait = key.split('.')[0];
-        return changes[trait] = true;
+        changes[key] = true;
+        return touched[trait] = true;
       };
     })(this);
     event = {
       type: 'change',
-      changed: null
+      changed: null,
+      touched: null
     };
     digest = function() {
+      var dummy, trait, _ref, _results;
       event.changed = changes;
+      event.touched = touched;
       changes = {};
+      touched = {};
       dirty = false;
-      return object.trigger(event);
+      event.type = 'change';
+      object.trigger(event);
+      _ref = event.touched;
+      _results = [];
+      for (trait in _ref) {
+        dummy = _ref[trait];
+        event.type = "change:" + trait;
+        _results.push(object.trigger(event));
+      }
+      return _results;
     };
     shorthand = function(name) {
       var parts, suffix;
@@ -55566,6 +55580,7 @@ Data = (function() {
         return a + b.charAt(0).toUpperCase() + b.substring(1);
       });
     };
+    list = [];
     values = {};
     for (_i = 0, _len = traits.length; _i < _len; _i++) {
       trait = traits[_i];
@@ -55573,7 +55588,8 @@ Data = (function() {
       if (name == null) {
         name = trait;
       }
-      spec = attributes.getSpec(trait);
+      spec = attributes.getTrait(trait);
+      list.push(trait);
       for (key in spec) {
         options = spec[key];
         key = [name, key].join('.');
@@ -55586,6 +55602,10 @@ Data = (function() {
         validators[key] = options.validate;
       }
     }
+    unique = list.filter(function(object, i) {
+      return list.indexOf(object) === i;
+    });
+    object.traits = unique;
   }
 
   return Data;
@@ -55664,8 +55684,13 @@ Model = (function() {
     this.root.root = this.root;
     this.ids = {};
     this.classes = {};
-    this.types = {};
+    this.types = {
+      root: [this.root]
+    };
     this.nodes = [];
+    this.event = {
+      type: 'update'
+    };
     this.language = cssauron({
       tag: 'type',
       id: 'id',
@@ -55693,23 +55718,20 @@ Model = (function() {
     this._adopt = function(object) {
       addNode(object);
       addType(object);
-      return object.on('change', this._update);
+      return object.on('change:node', this._update);
     };
     this._dispose = function(object) {
       removeNode(object);
       removeType(object);
       removeID(object.id);
       removeClasses(object.classes);
-      return object.off('change', this._update);
+      return object.off('change:node', this._update);
     };
     this._update = (function(_this) {
       return function(event, object, force) {
         var classes, id, klass, _id, _klass;
         _id = force || event.changed['node.id'];
         _klass = force || event.changed['node.classes'];
-        if (!(_id || _klass)) {
-          return;
-        }
         if (_id) {
           id = object.get('node.id');
           if (id !== object.id) {
@@ -55866,9 +55888,7 @@ Model = (function() {
   };
 
   Model.prototype.update = function() {
-    return this.trigger({
-      type: 'update'
-    });
+    return this.trigger(this.event);
   };
 
   Model.prototype.getRoot = function() {
@@ -55890,8 +55910,10 @@ var Node;
 Node = (function() {
   function Node(options, type, traits, attributes) {
     this.type = type;
-    this.traits = traits != null ? traits : [];
-    this.attributes = attributes.apply(this, this.traits);
+    if (traits == null) {
+      traits = [];
+    }
+    this.attributes = attributes.apply(this, traits);
     this.parent = null;
     this.root = null;
     this.set(options, null, true);
@@ -55988,17 +56010,16 @@ Primitive = (function() {
 
   Primitive.traits = [];
 
-  function Primitive(node, _attributes, _factory, _shaders, _helper) {
+  function Primitive(node, _attributes, _factory, _shaders, _helpers) {
     this.node = node;
     this._attributes = _attributes;
     this._factory = _factory;
     this._shaders = _shaders;
-    this._helper = _helper;
     this.node.primitive = this;
     this.node.on('change', (function(_this) {
       return function(event) {
         if (_this.root) {
-          return _this.change(event.changed);
+          return _this.change(event.changed, event.touched);
         }
       };
     })(this));
@@ -56013,14 +56034,15 @@ Primitive = (function() {
       };
     })(this));
     this._get = this.node.get.bind(this.node);
-    this._helper = this._helper(this);
+    this._helper = _helpers(this, this.node.traits);
+    this.handlers = {};
   }
 
   Primitive.prototype.rebuild = function() {
     if (this.root) {
       this.unmake();
       this.make();
-      return this.change({}, true);
+      return this.change({}, {}, true);
     }
   };
 
@@ -56037,25 +56059,13 @@ Primitive = (function() {
     this.root = this.node.root;
     this.parent = this.node.parent.primitive;
     this.make();
-    return this.change({}, true);
+    return this.change({}, {}, true);
   };
 
   Primitive.prototype._removed = function() {
-    return this.root = null;
-  };
-
-  Primitive.prototype._render = function(renderable) {
-    return this.trigger({
-      type: 'render',
-      renderable: renderable
-    });
-  };
-
-  Primitive.prototype._unrender = function(renderable) {
-    return this.trigger({
-      type: 'unrender',
-      renderable: renderable
-    });
+    this.root = null;
+    this.parent = null;
+    return this.parents = null;
   };
 
   Primitive.prototype._change = function(changed) {};
@@ -56072,7 +56082,7 @@ Primitive = (function() {
   };
 
   Primitive.prototype._attached = function(key, klass) {
-    var node, object, previous;
+    var node, object, parent, previous;
     object = this._get(key);
     if (typeof object === 'string') {
       node = this.root.model.select(object)[0];
@@ -56088,7 +56098,11 @@ Primitive = (function() {
     }
     previous = this.node;
     while (previous) {
-      previous = previous.parent.children[previous.index - 1];
+      parent = previous.parent;
+      previous = parent.children[previous.index - 1];
+      if (!previous) {
+        previous = parent;
+      }
       if ((previous != null ? previous.primitive : void 0) instanceof klass) {
         return previous.primitive;
       }
@@ -56122,6 +56136,7 @@ _Array = (function(_super) {
     this.buffer = null;
     this.space = 0;
     this.length = 0;
+    this.filled = false;
   }
 
   _Array.prototype.shader = function(shader) {
@@ -56149,9 +56164,7 @@ _Array = (function(_super) {
       });
     }
     return this.trigger({
-      event: 'rebuild',
-      buffer: this.buffer,
-      samples: this.space
+      event: 'rebuild'
     });
   };
 
@@ -56163,9 +56176,9 @@ _Array = (function(_super) {
     }
   };
 
-  _Array.prototype.change = function(changed, init) {
+  _Array.prototype.change = function(changed, touched, init) {
     var callback;
-    if (changed['array.length'] || changed['array.history'] || changed['array.dimensions']) {
+    if (touched['array']) {
       this.rebuild();
     }
     if (!this.buffer) {
@@ -56182,6 +56195,12 @@ _Array = (function(_super) {
     if (!this.buffer) {
       return;
     }
+    if (!(!this.filled || this._get('data.live'))) {
+      return;
+    }
+    if (!this.parent.visible) {
+      return;
+    }
     data = this._get('data.data');
     length = this.length;
     if (data != null) {
@@ -56195,13 +56214,11 @@ _Array = (function(_super) {
       this.length = this.buffer.update();
     }
     if (length !== this.length) {
-      return this.trigger({
-        event: 'resize',
-        buffer: this.buffer,
-        samples: this.space,
-        history: this.history
+      this.trigger({
+        event: 'resize'
       });
     }
+    return this.filled = true;
   };
 
   return _Array;
@@ -56256,6 +56273,53 @@ module.exports = Data;
 
 
 },{"../../primitive":28}],31:[function(require,module,exports){
+var Interval, _Array,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+_Array = require('./array');
+
+Interval = (function(_super) {
+  __extends(Interval, _super);
+
+  function Interval() {
+    return Interval.__super__.constructor.apply(this, arguments);
+  }
+
+  Interval.traits = ['node', 'data', 'array', 'span', 'interval'];
+
+  Interval.prototype.callback = function(callback) {
+    var a, b, dimension, inverse, range;
+    dimension = this._get('interval.axis');
+    range = this._helper.span.get('', dimension);
+    inverse = 1 / Math.max(1, this.length - 1);
+    a = range.x;
+    b = (range.y - range.x) * inverse;
+    return function(i, emit) {
+      var x;
+      x = a + b * i;
+      return callback(x, i, emit);
+    };
+  };
+
+  Interval.prototype.make = function() {
+    Interval.__super__.make.apply(this, arguments);
+    return this._helper.span.make();
+  };
+
+  Interval.prototype.unmake = function() {
+    Interval.__super__.unmake.apply(this, arguments);
+    return this._helper.span.unmake();
+  };
+
+  return Interval;
+
+})(_Array);
+
+module.exports = Interval;
+
+
+},{"./array":29}],32:[function(require,module,exports){
 var Data, Matrix,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56272,6 +56336,7 @@ Matrix = (function(_super) {
     this.buffer = null;
     this.space = 0;
     this.length = 0;
+    this.filled = false;
   }
 
   Matrix.prototype.make = function() {
@@ -56301,9 +56366,9 @@ Matrix = (function(_super) {
     }
   };
 
-  Matrix.prototype.change = function(changed, init) {
+  Matrix.prototype.change = function(changed, touched, init) {
     var callback;
-    if (changed['matrix.width'] || changed['matrix.height'] || changed['matrix.history'] || changed['matrix.dimensions']) {
+    if (touched['matrix']) {
       this.rebuild();
     }
     if (!this.buffer) {
@@ -56320,6 +56385,12 @@ Matrix = (function(_super) {
     if (!this.buffer) {
       return;
     }
+    if (!(!this.filled || this._get('data.live'))) {
+      return;
+    }
+    if (!this.parent.visible) {
+      return;
+    }
     data = this._get('data.data');
     if (data != null) {
       throw "Matrix autosize not implemented";
@@ -56333,10 +56404,11 @@ Matrix = (function(_super) {
         @space = @length
         @rebuild()
        */
-      return this.buffer.copy(data);
+      this.buffer.copy(data);
     } else {
-      return this.length = this.buffer.update();
+      this.length = this.buffer.update();
     }
+    return this.filled = true;
   };
 
   return Matrix;
@@ -56346,54 +56418,7 @@ Matrix = (function(_super) {
 module.exports = Array;
 
 
-},{"./data":30}],32:[function(require,module,exports){
-var Sample1D, _Array,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-_Array = require('./array');
-
-Sample1D = (function(_super) {
-  __extends(Sample1D, _super);
-
-  function Sample1D() {
-    return Sample1D.__super__.constructor.apply(this, arguments);
-  }
-
-  Sample1D.traits = ['node', 'data', 'array', 'span', 'sample1D'];
-
-  Sample1D.prototype.callback = function(callback) {
-    var a, b, dimension, inverse, range;
-    dimension = this._get('sample1D.dimension');
-    range = this._helper.span.get('', dimension);
-    inverse = 1 / Math.max(1, this.length - 1);
-    a = range.x;
-    b = (range.y - range.x) * inverse;
-    return function(i, emit) {
-      var x;
-      x = a + b * i;
-      return callback(x, i, emit);
-    };
-  };
-
-  Sample1D.prototype.make = function() {
-    Sample1D.__super__.make.apply(this, arguments);
-    return this._helper.span.make();
-  };
-
-  Sample1D.prototype.unmake = function() {
-    Sample1D.__super__.unmake.apply(this, arguments);
-    return this._helper.span.unmake();
-  };
-
-  return Sample1D;
-
-})(_Array);
-
-module.exports = Sample1D;
-
-
-},{"./array":29}],33:[function(require,module,exports){
+},{"./data":30}],33:[function(require,module,exports){
 var Group, Primitive,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56408,6 +56433,16 @@ Group = (function(_super) {
   }
 
   Group.model = Primitive.Group;
+
+  Group.traits = ['object'];
+
+  Group.prototype.make = function() {
+    return this._helper.object.make();
+  };
+
+  Group.prototype.unmake = function() {
+    return this._helper.object.unmake();
+  };
 
   return Group;
 
@@ -56451,6 +56486,11 @@ helpers = {
     }
   },
   scale: {
+    divide: function(prefix) {
+      var divide;
+      divide = this._get(prefix + 'scale.divide');
+      return divide * 2.5;
+    },
     generate: function(prefix, buffer, min, max) {
       var base, divide, mode, ticks, unit;
       divide = this._get(prefix + 'scale.divide');
@@ -56472,27 +56512,96 @@ helpers = {
     }
   },
   object: {
-    visible: function(mesh) {
-      var opacity, visible;
-      opacity = 1;
-      if (this.node.attributes['style.opacity']) {
-        opacity = this._get('style.opacity');
+    render: function(object) {
+      return this.trigger({
+        type: 'render',
+        renderable: object
+      });
+    },
+    unrender: function(object) {
+      return this.trigger({
+        type: 'unrender',
+        renderable: object
+      });
+    },
+    make: function(objects) {
+      var e, object, _i, _len, _ref, _results;
+      this.objects = objects != null ? objects : [];
+      e = {
+        type: 'visible'
+      };
+      this.handlers.refresh = (function(_this) {
+        return function(event) {
+          var changed;
+          changed = event.changed;
+          if (changed['object.visible'] || changed['style.opacity']) {
+            return _this.handlers.visible();
+          }
+        };
+      })(this);
+      this.handlers.visible = (function(_this) {
+        return function() {
+          var o, opacity, visible, _i, _len, _ref;
+          opacity = 1;
+          visible = _this._get('object.visible');
+          if (visible && _this.node.attributes['style.opacity']) {
+            opacity = _this._get('style.opacity');
+            visible = opacity > 0;
+          }
+          if (visible && _this.parent) {
+            visible = _this.parent.visible;
+          }
+          _ref = _this.objects;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            o = _ref[_i];
+            if (visible) {
+              o.show(opacity < 1);
+            } else {
+              o.hide();
+            }
+          }
+          _this.visible = visible;
+          return _this.trigger(e);
+        };
+      })(this);
+      this.node.on('change:object', this.handlers.refresh);
+      this.node.on('change:style', this.handlers.refresh);
+      this.parent.on('visible', this.handlers.visible);
+      this.handlers.visible();
+      _ref = this.objects;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        object = _ref[_i];
+        _results.push(this._helper.object.render(object));
       }
-      visible = this._get('object.visible');
-      if (visible && opacity > 0) {
-        return mesh.show(opacity < 1);
-      } else {
-        return mesh.hide();
+      return _results;
+    },
+    unmake: function() {
+      var object, _i, _len, _ref;
+      _ref = this.objects;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        object = _ref[_i];
+        this._helper.object.unrender(object);
       }
+      delete this.visible;
+      this.node.off('change:object', this.handlers.refresh);
+      this.node.off('change:style', this.handlers.refresh);
+      this.parent.off('visible', this.handlers.visible);
+      delete this.handlers.refresh;
+      return delete this.handlers.visible;
     }
   }
 };
 
-module.exports = function(object) {
-  var h, key, method, methods, trait;
+module.exports = function(object, traits) {
+  var h, key, method, methods, trait, _i, _len;
   h = {};
-  for (trait in helpers) {
+  for (_i = 0, _len = traits.length; _i < _len; _i++) {
+    trait = traits[_i];
     methods = helpers[trait];
+    if (!methods) {
+      continue;
+    }
     h[trait] = {};
     for (key in methods) {
       method = methods[key];
@@ -56520,8 +56629,8 @@ Classes = {
   cartesian: require('./view/cartesian'),
   view: require('./view/view'),
   array: require('./data/array'),
+  interval: require('./data/interval'),
   matrix: require('./data/matrix'),
-  sample1D: require('./data/sample1D'),
   group: require('./group'),
   root: require('./root')
 };
@@ -56535,7 +56644,7 @@ exports.Traits = require('./traits');
 exports.Helpers = require('./helpers');
 
 
-},{"../../model":23,"./data/array":29,"./data/matrix":31,"./data/sample1D":32,"./group":33,"./helpers":34,"./render/axis":36,"./render/curve":37,"./render/grid":38,"./render/ticks":39,"./root":40,"./traits":41,"./types":42,"./view/cartesian":43,"./view/view":44}],36:[function(require,module,exports){
+},{"../../model":23,"./data/array":29,"./data/interval":31,"./data/matrix":32,"./group":33,"./helpers":34,"./render/axis":36,"./render/curve":37,"./render/grid":38,"./render/ticks":39,"./root":40,"./traits":41,"./types":42,"./view/cartesian":43,"./view/view":44}],36:[function(require,module,exports){
 var Axis, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56547,7 +56656,7 @@ Util = require('../../../util');
 Axis = (function(_super) {
   __extends(Axis, _super);
 
-  Axis.traits = ['node', 'object', 'style', 'line', 'axis', 'span'];
+  Axis.traits = ['node', 'object', 'style', 'line', 'axis', 'span', 'interval'];
 
   function Axis(model, attributes, factory, shaders, helper) {
     Axis.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
@@ -56556,7 +56665,6 @@ Axis = (function(_super) {
 
   Axis.prototype.make = function() {
     var detail, lineUniforms, position, positionUniforms, samples, types;
-    this._helper.span.make();
     types = this._attributes.types;
     positionUniforms = {
       axisPosition: this._attributes.make(types.vec4()),
@@ -56576,30 +56684,28 @@ Axis = (function(_super) {
       samples: samples,
       position: position
     });
-    return this._render(this.line);
+    this._helper.object.make([this.line]);
+    return this._helper.span.make();
   };
 
   Axis.prototype.unmake = function() {
-    this._unrender(this.line);
-    this.line.dispose();
-    this.line = null;
+    this._helper.object.unmake();
     return this._helper.span.unmake();
   };
 
-  Axis.prototype.change = function(changed, init) {
+  Axis.prototype.change = function(changed, touched, init) {
     var dimension, max, min, range;
     if (changed['axis.detail'] != null) {
       this.rebuild();
     }
-    if (changed['view.range'] || changed['axis.dimension'] || changed['span'] || init) {
-      dimension = this._get('axis.dimension');
+    if (touched['interval'] || touched['span'] || touched['view'] || init) {
+      dimension = this._get('interval.axis');
       range = this._helper.span.get('', dimension);
       min = range.x;
       max = range.y;
       Util.setDimension(this.axisPosition, dimension).multiplyScalar(min);
-      Util.setDimension(this.axisStep, dimension).multiplyScalar((max - min) * this.resolution);
+      return Util.setDimension(this.axisStep, dimension).multiplyScalar((max - min) * this.resolution);
     }
-    return this._helper.object.visible(this.line);
   };
 
   return Axis;
@@ -56625,7 +56731,7 @@ Curve = (function(_super) {
 
   function Curve(model, attributes, factory, shaders, helper) {
     Curve.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
-    this.resolution = this.line = this.array = this.inherit = this.resizeHandler = null;
+    this.resolution = this.line = this.array = this.resizeHandler = this.rebuildHandler = null;
   }
 
   Curve.prototype.bind = function() {
@@ -56639,15 +56745,15 @@ Curve = (function(_super) {
     this.rebuildHandler = function(event) {
       return this.rebuild();
     };
-    this.array.on('rebuild', this.rebuildHandler);
-    return this.array.on('resize', this.resizeHandler);
+    this.array.on('resize', this.resizeHandler);
+    return this.array.on('rebuild', this.rebuildHandler);
   };
 
   Curve.prototype.unbind = function() {
-    this.array.off('rebuild', this.rebuildHandler);
     this.array.off('resize', this.resizeHandler);
-    this.rebuildHandler = null;
-    return this.resizeHandler = null;
+    this.array.off('rebuild', this.rebuildHandler);
+    this.resizeHandler = null;
+    return this.rebuildHandler = null;
   };
 
   Curve.prototype.clip = function() {
@@ -56655,7 +56761,8 @@ Curve = (function(_super) {
     if (!(this.line && this.array)) {
       return;
     }
-    return n = this.array.length;
+    n = this.array.length;
+    return this.line.geometry.clip(0, n - 1);
   };
 
   Curve.prototype.make = function() {
@@ -56673,24 +56780,21 @@ Curve = (function(_super) {
       ribbons: history,
       position: position
     });
-    this._render(this.line);
-    return this.clip();
+    this.clip();
+    return this._helper.object.make([this.line]);
   };
 
   Curve.prototype.unmake = function() {
     this.unbind();
-    this._unrender(this.line);
-    this.line.dispose();
-    this.line = null;
+    this._helper.object.unmake();
     this.array = null;
     return this._unherit();
   };
 
-  Curve.prototype.change = function(changed, init) {
+  Curve.prototype.change = function(changed, touched, init) {
     if ((changed['axis.detail'] != null) || (changed['curve.points'] != null)) {
-      this.rebuild();
+      return this.rebuild();
     }
-    return this._helper.object.visible(this.line);
   };
 
   return Curve;
@@ -56712,9 +56816,7 @@ Util = require('../../../util');
 Grid = (function(_super) {
   __extends(Grid, _super);
 
-  Grid.traits = ['node', 'object', 'style', 'line', 'grid', 'axis:x.axis', 'axis:y.axis', 'scale:x.scale', 'scale:y.scale', 'span:x.span', 'span:y.span'];
-
-  Grid.EXCESS = 2.5;
+  Grid.traits = ['node', 'object', 'style', 'line', 'grid', 'area', 'axis:x.axis', 'axis:y.axis', 'scale:x.scale', 'scale:y.scale', 'span:x.span', 'span:y.span'];
 
   function Grid(model, attributes, factory, shaders, helper) {
     Grid.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
@@ -56722,16 +56824,14 @@ Grid = (function(_super) {
   }
 
   Grid.prototype.make = function() {
-    var axis, first, second;
-    this._helper.span.make();
+    var axis, first, lines, second;
     axis = (function(_this) {
       return function(first, second) {
-        var buffer, detail, divide, line, lineUniforms, p, position, positionUniforms, quads, resolution, ribbons, samples, types, uniforms;
+        var buffer, detail, line, lineUniforms, p, position, positionUniforms, quads, resolution, ribbons, samples, types, values;
         detail = _this._get(first + 'axis.detail');
         samples = detail + 1;
         resolution = 1 / detail;
-        divide = _this._get(second + 'scale.divide');
-        ribbons = divide * Grid.EXCESS;
+        ribbons = _this._helper.scale.divide(second);
         buffer = _this._factory.make('databuffer', {
           samples: ribbons,
           channels: 1
@@ -56742,7 +56842,7 @@ Grid = (function(_super) {
           gridStep: _this._attributes.make(types.vec4()),
           gridAxis: _this._attributes.make(types.vec4())
         };
-        uniforms = {
+        values = {
           gridPosition: positionUniforms.gridPosition.value,
           gridStep: positionUniforms.gridStep.value,
           gridAxis: positionUniforms.gridAxis.value
@@ -56768,7 +56868,6 @@ Grid = (function(_super) {
           ribbons: ribbons,
           position: position
         });
-        _this._render(line);
         return {
           first: first,
           second: second,
@@ -56776,18 +56875,31 @@ Grid = (function(_super) {
           resolution: resolution,
           line: line,
           buffer: buffer,
-          uniforms: uniforms
+          values: values
         };
       };
     })(this);
     first = this._get('grid.first');
     second = this._get('grid.second');
     first && this.axes.push(axis('x.', 'y.'));
-    return second && this.axes.push(axis('y.', 'x.'));
+    second && this.axes.push(axis('y.', 'x.'));
+    lines = (function() {
+      var _i, _len, _ref, _results;
+      _ref = this.axes;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        axis = _ref[_i];
+        _results.push(axis.line);
+      }
+      return _results;
+    }).call(this);
+    this._helper.object.make(lines);
+    return this._helper.span.make();
   };
 
   Grid.prototype.unmake = function() {
     var axis, _i, _len, _ref;
+    this._helper.object.unmake();
     this._helper.span.unmake();
     _ref = this.axes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -56799,29 +56911,29 @@ Grid = (function(_super) {
     return this.axes = [];
   };
 
-  Grid.prototype.change = function(changed, init) {
-    var axes, axis, first, range1, range2, second, _i, _len, _ref, _results;
+  Grid.prototype.change = function(changed, touched, init) {
+    var axes, axis, first, range1, range2, second;
     if (changed['x.axis.detail'] || changed['y.axis.detail'] || changed['grid.first'] || changed['grid.second']) {
       this.rebuild();
     }
     axis = (function(_this) {
       return function(x, y, range1, range2, axis) {
-        var buffer, first, line, max, min, n, quads, resolution, second, ticks, uniforms;
-        first = axis.first, second = axis.second, quads = axis.quads, resolution = axis.resolution, line = axis.line, buffer = axis.buffer, uniforms = axis.uniforms;
+        var buffer, first, line, max, min, n, quads, resolution, second, ticks, values;
+        first = axis.first, second = axis.second, quads = axis.quads, resolution = axis.resolution, line = axis.line, buffer = axis.buffer, values = axis.values;
         min = range1.x;
         max = range1.y;
-        Util.setDimension(uniforms.gridPosition, x).multiplyScalar(min);
-        Util.setDimension(uniforms.gridStep, x).multiplyScalar((max - min) * resolution);
+        Util.setDimension(values.gridPosition, x).multiplyScalar(min);
+        Util.setDimension(values.gridStep, x).multiplyScalar((max - min) * resolution);
         min = range2.x;
         max = range2.y;
-        Util.setDimension(uniforms.gridAxis, y);
         ticks = _this._helper.scale.generate(second, buffer, min, max);
+        Util.setDimension(values.gridAxis, y);
         n = ticks.length;
         return line.geometry.clip(0, n * quads);
       };
     })(this);
-    if (changed['x'] || changed['y'] || changed['grid'] || changed['view'] || init) {
-      axes = this._get('grid.axes');
+    if (touched['x'] || touched['y'] || touched['area'] || touched['grid'] || touched['view'] || init) {
+      axes = this._get('area.axes');
       range1 = this._helper.span.get('x.', axes.x);
       range2 = this._helper.span.get('y.', axes.y);
       first = this._get('grid.first');
@@ -56830,16 +56942,9 @@ Grid = (function(_super) {
         axis(axes.x, axes.y, range1, range2, this.axes[0]);
       }
       if (second) {
-        axis(axes.y, axes.x, range2, range1, this.axes[+first]);
+        return axis(axes.y, axes.x, range2, range1, this.axes[+first]);
       }
     }
-    _ref = this.axes;
-    _results = [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      axis = _ref[_i];
-      _results.push(this._helper.object.visible(axis.line));
-    }
-    return _results;
   };
 
   return Grid;
@@ -56861,9 +56966,7 @@ Util = require('../../../util');
 Ticks = (function(_super) {
   __extends(Ticks, _super);
 
-  Ticks.traits = ['node', 'object', 'style', 'line', 'ticks', 'span', 'scale'];
-
-  Ticks.EXCESS = 2.5;
+  Ticks.traits = ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale'];
 
   function Ticks(model, attributes, factory, shaders, helper) {
     Ticks.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
@@ -56871,10 +56974,8 @@ Ticks = (function(_super) {
   }
 
   Ticks.prototype.make = function() {
-    var divide, lineUniforms, p, position, positionUniforms, samples, types;
-    this._helper.span.make();
-    divide = this._get('scale.divide');
-    this.resolution = samples = divide * Ticks.EXCESS;
+    var lineUniforms, p, position, positionUniforms, samples, types;
+    this.resolution = samples = this._helper.scale.divide('');
     this.buffer = this._factory.make('databuffer', {
       samples: samples,
       channels: 1
@@ -56896,12 +56997,6 @@ Ticks = (function(_super) {
     p.callback();
     this.buffer.shader(p);
     p.join();
-
-    /*
-    @debug = @_factory.make 'debug',
-             map: @buffer.texture.textureObject
-    @_render @debug
-     */
     p.join();
     p.call('ticks.position', positionUniforms);
     lineUniforms = this._helper.line.uniforms();
@@ -56912,34 +57007,38 @@ Ticks = (function(_super) {
       ribbons: samples,
       position: position
     });
-    return this._render(this.line);
+
+    /*
+    @debug = @_factory.make 'debug',
+             map: @buffer.texture.textureObject
+    @_render @debug
+     */
+    this._helper.object.make([this.line]);
+    return this._helper.span.make();
   };
 
   Ticks.prototype.unmake = function() {
-    this._unrender(this.line);
-    this.line.dispose();
-    this.line = null;
     this.tickAxis = this.tickNormal = null;
+    this._helper.object.unmake();
     return this._helper.span.unmake();
   };
 
-  Ticks.prototype.change = function(changed, init) {
+  Ticks.prototype.change = function(changed, touched, init) {
     var dimension, max, min, n, range, ticks;
     if (changed['scale.divide']) {
       this.rebuild();
     }
-    if (changed['view.range'] || changed['ticks.dimension'] || changed['span'] || changed['scale'] || init) {
-      dimension = this._get('ticks.dimension');
+    if (touched['view'] || touched['interval'] || touched['span'] || touched['scale'] || init) {
+      dimension = this._get('interval.axis');
       range = this._helper.span.get('', dimension);
       min = range.x;
       max = range.y;
+      ticks = this._helper.scale.generate('', this.buffer, min, max);
       Util.setDimension(this.tickAxis, dimension);
       Util.setDimensionNormal(this.tickNormal, dimension);
-      ticks = this._helper.scale.generate('', this.buffer, min, max);
       n = ticks.length;
-      this.line.geometry.clip(0, n);
+      return this.line.geometry.clip(0, n);
     }
-    return this._helper.object.visible(this.line);
   };
 
   return Ticks;
@@ -56959,11 +57058,10 @@ Group = require('./group');
 Root = (function(_super) {
   __extends(Root, _super);
 
-  function Root() {
-    return Root.__super__.constructor.apply(this, arguments);
+  function Root(model, attributes, factory, shaders, helper) {
+    Root.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+    this.visible = true;
   }
-
-  Root.traits = ['object'];
 
   Root.prototype.transform = function(shader) {
     return shader.call('view.position');
@@ -57006,14 +57104,11 @@ Traits = {
   span: {
     range: Types.nullable(Types.vec2(-1, 1))
   },
-  grid: {
-    axes: Types.vec2(1, 2),
-    first: Types.bool(true),
-    second: Types.bool(true)
+  interval: {
+    axis: Types.number(1)
   },
-  axis: {
-    detail: Types.number(1),
-    dimension: Types.number(1)
+  area: {
+    axes: Types.vec2(1, 2)
   },
   scale: {
     divide: Types.number(10),
@@ -57021,9 +57116,15 @@ Traits = {
     base: Types.number(10),
     mode: Types.scale()
   },
+  grid: {
+    first: Types.bool(true),
+    second: Types.bool(true)
+  },
+  axis: {
+    detail: Types.number(1)
+  },
   ticks: {
-    size: Types.number(.05),
-    dimension: Types.number(1)
+    size: Types.number(.05)
   },
   curve: {
     points: Types.select(Types.object()),
@@ -57031,7 +57132,8 @@ Traits = {
   },
   data: {
     data: Types.nullable(Types.object()),
-    expression: Types.nullable(Types.func())
+    expression: Types.nullable(Types.func()),
+    live: Types.bool(true)
   },
   array: {
     dimensions: Types.number(3),
@@ -57043,9 +57145,6 @@ Traits = {
     width: Types.number(1),
     height: Types.number(1),
     history: Types.number(1)
-  },
-  sample1D: {
-    dimension: Types.number(1)
   }
 };
 
@@ -57459,6 +57558,7 @@ Cartesian = (function(_super) {
 
   Cartesian.prototype.make = function() {
     var types;
+    Cartesian.__super__.make.apply(this, arguments);
     types = this._attributes.types;
     this.uniforms = {
       cartesianMatrix: this._attributes.make(types.mat4())
@@ -57468,13 +57568,14 @@ Cartesian = (function(_super) {
   };
 
   Cartesian.prototype.unmake = function() {
+    Cartesian.__super__.unmake.apply(this, arguments);
     delete this.cartesianMatrix;
     return delete this.rotationMatrix;
   };
 
-  Cartesian.prototype.change = function(changed) {
+  Cartesian.prototype.change = function(changed, touched) {
     var dx, dy, dz, o, q, r, s, sx, sy, sz, x, y, z;
-    if (!(changed['object'] || changed['view'])) {
+    if (!(touched['object'] || touched['view'])) {
       return;
     }
     o = this._get('object.position');
@@ -57492,7 +57593,7 @@ Cartesian = (function(_super) {
     sz = s.z;
     this.cartesianMatrix.set(2 * sx / dx, 0, 0, -(2 * x + dx) * sx / dx, 0, 2 * sy / dy, 0, -(2 * y + dy) * sy / dy, 0, 0, 2 * sz / dz, -(2 * z + dz) * sz / dz, 0, 0, 0, 1);
     this.rotationMatrix.makeRotationFromQuaternion(q);
-    return this.cartesianMatrix.multiplyMatrices(this.rotationMatrix, this.cartesianMatrix);
+    this.cartesianMatrix.multiplyMatrices(this.rotationMatrix, this.cartesianMatrix);
 
     /*
      * Backward transform
@@ -57506,6 +57607,9 @@ Cartesian = (function(_super) {
     @rotationMatrix.makeRotationFromQuaternion q
     @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
      */
+    return this.trigger({
+      type: 'resize'
+    });
   };
 
   Cartesian.prototype.to = function(vector) {

@@ -9,6 +9,7 @@ class _Array extends Data
     @buffer = null
     @space  = 0
     @length = 0
+    @filled = false
 
   shader: (shader) ->
     @buffer.shader shader
@@ -39,8 +40,6 @@ class _Array extends Data
     # Notify of buffer reallocation
     @trigger
       event:   'rebuild'
-      buffer:  @buffer
-      samples: @space
 
   unmake: () ->
     super
@@ -48,10 +47,8 @@ class _Array extends Data
       @buffer.dispose()
       @buffer = null
 
-  change: (changed, init) ->
-    @rebuild() if changed['array.length'] or
-                  changed['array.history'] or
-                  changed['array.dimensions']
+  change: (changed, touched, init) ->
+    @rebuild() if touched['array']
 
     return unless @buffer
 
@@ -63,6 +60,8 @@ class _Array extends Data
 
   update: () ->
     return unless @buffer
+    return unless !@filled or @_get('data.live')
+    return unless @parent.visible
 
     data = @_get('data.data')
 
@@ -85,10 +84,9 @@ class _Array extends Data
 
     if length != @length
       @trigger
-        event:   'resize'
-        buffer:  @buffer
-        samples: @space
-        history: @history
+        event: 'resize'
+
+    @filled = true
 
 
 module.exports = _Array

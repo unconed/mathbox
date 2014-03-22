@@ -7,8 +7,10 @@ class Model
 
     @ids      = {}
     @classes  = {}
-    @types    = {}
+    @types    = { root: [@root] }
     @nodes    = []
+
+    @event = type: 'update'
 
     # Prepare CSSauron
     @language = cssauron
@@ -35,20 +37,19 @@ class Model
     @_adopt = (object) ->
       addNode object
       addType object
-      object.on 'change', @_update
+      object.on 'change:node', @_update
 
     @_dispose = (object) ->
       removeNode object
       removeType object
       removeID      object.id
       removeClasses object.classes
-      object.off 'change', @_update
+      object.off 'change:node', @_update
 
     # Track id/class changes
     @_update = (event, object, force) =>
       _id    = force or event.changed['node.id']
       _klass = force or event.changed['node.classes']
-      return unless _id or _klass
 
       if _id
         id = object.get 'node.id'
@@ -146,8 +147,7 @@ class Model
 
   # Notify primitives of update
   update: () ->
-    @trigger
-      type: 'update'
+    @trigger @event
 
   getRoot: () ->
     @root

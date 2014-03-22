@@ -2,8 +2,7 @@ Primitive = require '../../primitive'
 Util = require '../../../util'
 
 class Ticks extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'ticks', 'span', 'scale']
-  @EXCESS: 2.5
+  @traits: ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
@@ -12,11 +11,8 @@ class Ticks extends Primitive
 
   make: () ->
 
-    @_helper.span.make()
-
     # Prepare data buffer of tick positions
-    divide = @_get 'scale.divide'
-    @resolution = samples = divide * Ticks.EXCESS
+    @resolution = samples = @_helper.scale.divide ''
 
     @buffer = @_factory.make 'databuffer',
               samples:  samples
@@ -47,12 +43,6 @@ class Ticks extends Primitive
     @buffer.shader p
     p  .join()
 
-    ###
-    @debug = @_factory.make 'debug',
-             map: @buffer.texture.textureObject
-    @_render @debug
-    ###
-
     # Link to tick shader
     p.join()
     p.call 'ticks.position', positionUniforms
@@ -66,41 +56,45 @@ class Ticks extends Primitive
               ribbons:  samples
               position: position
 
-    @_render @line
+    ###
+    @debug = @_factory.make 'debug',
+             map: @buffer.texture.textureObject
+    @_render @debug
+    ###
+
+    @_helper.object.make [@line]
+    @_helper.span.make()
+
 
   unmake: () ->
-    @_unrender @line
-    @line.dispose()
-    @line = null
-
     @tickAxis = @tickNormal = null
 
+    @_helper.object.unmake()
     @_helper.span.unmake()
 
-  change: (changed, init) ->
+  change: (changed, touched, init) ->
     @rebuild() if changed['scale.divide']
 
-    if changed['view.range']      or
-       changed['ticks.dimension'] or
-       changed['span']            or
-       changed['scale']           or
+    if touched['view']     or
+       touched['interval'] or
+       touched['span']     or
+       touched['scale']    or
        init
 
       # Fetch range along axis
-      dimension = @_get 'ticks.dimension'
-      range  = @_helper.span.get '', dimension
+      dimension = @_get 'interval.axis'
+      range     = @_helper.span.get '', dimension
 
       # Calculate scale along axis
-      min = range.x
-      max = range.y
-      Util.setDimension @tickAxis, dimension
-      Util.setDimensionNormal @tickNormal, dimension
+      min   = range.x
+      max   = range.y
       ticks = @_helper.scale.generate '', @buffer, min, max
+
+      Util.setDimension       @tickAxis,   dimension
+      Util.setDimensionNormal @tickNormal, dimension
 
       # Clip to number of ticks
       n = ticks.length
       @line.geometry.clip 0, n
-
-    @_helper.object.visible @line
 
 module.exports = Ticks

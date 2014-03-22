@@ -1,6 +1,6 @@
 class Node
-  constructor: (options, @type, @traits = [], attributes) ->
-    @attributes = attributes.apply @, @traits
+  constructor: (options, @type, traits = [], attributes) ->
+    @attributes = attributes.apply @, traits
     @parent = null
     @root = null
     @set options, null, true

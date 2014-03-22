@@ -29,14 +29,14 @@
     });
     mathbox.axis({
       id: 'axis2',
-      dimension: 2,
+      axis: 2,
     });
     mathbox.ticks({
       id: 'ticks',
       classes: ['foo', 'bar'],
       divide: 10,
     });
-    mathbox.sample1D({
+    mathbox.interval({
       id: 'sampler',
       length: 128,
       expression: function (x, i, emit) {

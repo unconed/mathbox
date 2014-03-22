@@ -1,7 +1,10 @@
 Group = require './group'
 
 class Root extends Group
-  @traits = ['object']
+  constructor: (model, attributes, factory, shaders, helper) ->
+    super model, attributes, factory, shaders, helper
+
+    @visible = true
 
   transform: (shader) ->
     shader.call 'view.position'

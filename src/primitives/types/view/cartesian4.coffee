@@ -21,9 +21,9 @@ class Cartesian4 extends View
 
     @_unherit()
 
-  change: (changed) ->
+  change: (changed, touched) ->
 
-    return unless changed['object'] or changed['view']
+    return unless touched['object'] or touched['view']
 
     o = @_get 'object.position'
     r = @_get 'view.range'

@@ -12,8 +12,9 @@ Classes =
   view:       require './view/view'
 
   array:      require './data/array'
+  interval:   require './data/interval'
+
   matrix:     require './data/matrix'
-  sample1D:   require './data/sample1D'
 
   group:      require './group'
   root:       require './root'

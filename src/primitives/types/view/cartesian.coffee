@@ -3,6 +3,7 @@ View = require('./view')
 class Cartesian extends View
 
   make: () ->
+    super
 
     types = @_attributes.types
     @uniforms =
@@ -15,15 +16,16 @@ class Cartesian extends View
 #    @q                   = new THREE.Quaternion()
 
   unmake: () ->
+    super
 
     delete @cartesianMatrix
 #    delete @inverseCartesianMatrix
     delete @rotationMatrix
 #    delete @q
 
-  change: (changed) ->
+  change: (changed, touched) ->
 
-    return unless changed['object'] or changed['view']
+    return unless touched['object'] or touched['view']
 
     o = @_get 'object.position'
     s = @_get 'object.scale'
@@ -62,6 +64,9 @@ class Cartesian extends View
     @rotationMatrix.makeRotationFromQuaternion q
     @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
     ###
+
+    @trigger
+      type: 'resize'
 
   to: (vector) ->
     vector.applyMatrix4 @cartesianMatrix

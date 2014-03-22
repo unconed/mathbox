@@ -9,6 +9,7 @@ class Matrix extends Data
     @buffer = null
     @space  = 0
     @length = 0
+    @filled = false
 
   make: () ->
     super
@@ -37,11 +38,8 @@ class Matrix extends Data
       @buffer.dispose()
       @buffer = null
 
-  change: (changed, init) ->
-    @rebuild() if changed['matrix.width']      or
-                  changed['matrix.height']     or
-                  changed['matrix.history']    or
-                  changed['matrix.dimensions']
+  change: (changed, touched, init) ->
+    @rebuild() if touched['matrix']
 
     return unless @buffer
 
@@ -53,6 +51,8 @@ class Matrix extends Data
 
   update: () ->
     return unless @buffer
+    return unless !@filled or @_get('data.live')
+    return unless @parent.visible
 
     data = @_get('data.data')
 
@@ -72,6 +72,8 @@ class Matrix extends Data
 
     else
       @length = @buffer.update()
+
+    @filled = true
 
 
 module.exports = Array

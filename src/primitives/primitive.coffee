@@ -7,11 +7,11 @@ class Primitive
   @model = @Node
   @traits = []
 
-  constructor: (@node, @_attributes, @_factory, @_shaders, @_helper) ->
+  constructor: (@node, @_attributes, @_factory, @_shaders, _helpers) ->
     @node.primitive = @
 
     @node.on 'change', (event) =>
-      @change event.changed if @root
+      @change event.changed, event.touched if @root
 
     @node.on 'added', (event) =>
       @_added()
@@ -20,7 +20,8 @@ class Primitive
       @_removed()
 
     @_get = @node.get.bind @node
-    @_helper = @_helper @
+    @_helper = _helpers @, @node.traits
+    @handlers = {}
 
   # Construction of renderables
 
@@ -28,7 +29,7 @@ class Primitive
     if @root
       @unmake()
       @make()
-      @change {}, true
+      @change {}, {}, true
 
   make:   () ->
   unmake: () ->
@@ -39,25 +40,16 @@ class Primitive
 
   # Add/removal callback
   _added: () ->
-    @root   = @node.root
-    @parent = @node.parent.primitive
+    @root    = @node.root
+    @parent  = @node.parent.primitive
 
     @make()
-    @change {}, true
+    @change {}, {}, true
 
   _removed: () ->
-    @root = null
-
-  # Emit/withdraw renderable
-  _render: (renderable) ->
-    @trigger
-      type: 'render'
-      renderable: renderable
-
-  _unrender: (renderable) ->
-    @trigger
-      type: 'unrender'
-      renderable: renderable
+    @root    = null
+    @parent  = null
+    @parents = null
 
   # Attribute changes
 
@@ -89,10 +81,12 @@ class Primitive
       node = object
       return node.primitive if node and node.primitive instanceof klass
 
-    # Implicitly associated node (scan backwards for peers)
+    # Implicitly associated node (scan backwards until we find one)
     previous = @node
     while previous
-      previous = previous.parent.children[previous.index - 1]
+      parent   = previous.parent
+      previous = parent.children[previous.index - 1]
+      previous = parent if !previous
       return previous.primitive if previous?.primitive instanceof klass
 
     null

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util = require '../../../util'
 
 class Axis extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'axis', 'span']
+  @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
@@ -10,9 +10,6 @@ class Axis extends Primitive
     @axisPosition = @axisStep = @resolution = @line = null
 
   make: () ->
-
-    @_helper.span.make()
-
     # Prepare position shader
     types = @_attributes.types
     positionUniforms =
@@ -38,24 +35,22 @@ class Axis extends Primitive
               samples:  samples
               position: position
 
-    @_render @line
+    @_helper.object.make [@line]
+    @_helper.span.make()
 
   unmake: () ->
-    @_unrender @line
-    @line.dispose()
-    @line = null
-
+    @_helper.object.unmake()
     @_helper.span.unmake()
 
-  change: (changed, init) ->
+  change: (changed, touched, init) ->
     @rebuild() if changed['axis.detail']?
 
-    if changed['view.range']     or
-       changed['axis.dimension'] or
-       changed['span']           or
+    if touched['interval'] or
+       touched['span']     or
+       touched['view']     or
        init
 
-      dimension = @_get 'axis.dimension'
+      dimension = @_get 'interval.axis'
       range = @_helper.span.get '', dimension
 
       min = range.x
@@ -64,6 +59,5 @@ class Axis extends Primitive
       Util.setDimension(@axisPosition, dimension).multiplyScalar(min)
       Util.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
 
-    @_helper.object.visible @line
 
 module.exports = Axis

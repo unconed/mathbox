@@ -1,10 +1,10 @@
 _Array = require './array'
 
-class Sample1D extends _Array
-  @traits: ['node', 'data', 'array', 'span', 'sample1D']
+class Interval extends _Array
+  @traits: ['node', 'data', 'array', 'span', 'interval']
 
   callback: (callback) ->
-    dimension = @_get 'sample1D.dimension'
+    dimension = @_get 'interval.axis'
     range     = @_helper.span.get '', dimension
     inverse   = 1 / Math.max 1, @length - 1
 
@@ -23,4 +23,4 @@ class Sample1D extends _Array
     super
     @_helper.span.unmake()
 
-module.exports = Sample1D
+module.exports = Interval

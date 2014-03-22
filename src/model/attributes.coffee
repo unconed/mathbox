@@ -3,7 +3,7 @@
  - Organizes attributes by trait/namespace so the usage in code is organized
  - Provides shorthand aliases to access via simpler flat namespace API
  - Values are stored in three.js uniform-style objects by reference
- - Types avoid copying value objects on set
+ - Type validators/setters avoid copying value objects on write
  - Coalesces update notifications per object and per trait
  
   Actual type and trait definitions are injected from Primitives
@@ -19,14 +19,11 @@ class Attributes
     type: type.uniform?()
     value: type.make()
 
-  getSpec: (name) ->
-    @traits[name]
+  apply: (object, traits = []) ->
+    new Data object, traits, @
 
   queue: (callback) ->
     @pending.push callback
-
-  apply: (object, traits = []) ->
-    new Data object, traits, @
 
   digest: () ->
     limit = 10
@@ -40,6 +37,9 @@ class Attributes
       throw Error("Infinite loop in Data::digest")
 
     return
+
+  getTrait: (name) ->
+    @traits[name]
 
 
 class Data
@@ -61,7 +61,7 @@ class Data
       @[key]?.value
     set = (key, value, ignore) =>
       key = to(key)
-      return unless validators[key]?
+      return console.warn "Setting unknown property `#{key}`" unless validators[key]?
 
       replace = validate key, value, @[key].value
       @[key].value = replace if replace != undefined
@@ -97,28 +97,38 @@ class Data
     # Coalesce changes
     dirty = false
     changes = {}
+    touched = {}
     change = (key) =>
       if !dirty
         dirty = true
         attributes.queue digest
 
+      trait = key.split('.')[0]
+
       # Log change
-      changes[key] = true
+      changes[key]   = true
 
       # Mark trait/namespace as dirty
-      trait = key.split('.')[0]
-      changes[trait] = true
+      touched[trait] = true
 
     event =
       type: 'change'
       changed: null
+      touched: null
 
     digest = () ->
       event.changed = changes
+      event.touched = touched
       changes = {}
+      touched = {}
       dirty = false
 
+      event.type = 'change'
       object.trigger event
+
+      for trait, dummy of event.touched
+        event.type = "change:#{trait}"
+        object.trigger event
 
     shorthand = (name) ->
       parts = name.split /\./g
@@ -128,11 +138,13 @@ class Data
       parts.reduce (a, b) -> a + b.charAt(0).toUpperCase() + b.substring(1)
 
     # Add in traits
+    list   = []
     values = {}
     for trait in traits
       [trait, name] = trait.split ':'
       name ?= trait
-      spec = attributes.getSpec trait
+      spec = attributes.getTrait trait
+      list.push trait
       for key, options of spec
         key = [name, key].join '.'
         @[key] =
@@ -143,5 +155,8 @@ class Data
 
         makers[key] = options.make
         validators[key] = options.validate
+
+    unique = list.filter (object, i) -> list.indexOf(object) == i
+    object.traits = unique
 
 module.exports = Attributes
