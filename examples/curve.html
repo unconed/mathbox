@@ -41,7 +41,7 @@
       length: 128,
       expression: function (x, i, emit) {
         var t = +new Date() / 1000;
-        return emit(x, Math.sin(x + t));
+        return emit(x, Math.sin(x + t) + (i%2)*Math.sin(x * 400000 + x * x * 10000)*.05);
       },
       dimensions: 2,
     });
@@ -54,7 +54,7 @@
     mathbox.curve({
       points: '#sampler',
       color: 'blue',
-      width: 0.05,
+      width: 0.01,
     });
   </script>
 </body>

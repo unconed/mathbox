@@ -50,8 +50,10 @@ vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {
 
       vec2 tc = normalize(tl + tr);
       
-      float cosAngle = abs(dot(nl, tc));
-      float scale = sqrt(1.0 + cosAngle * cosAngle);
+      float cosA = dot(nl, tc);
+      float sinA = max(0.1, abs(dot(tl, tc)));
+      float factor = cosA / sinA;
+      float scale = sqrt(1.0 + factor * factor);
 
       join = tc * scale;
     }
