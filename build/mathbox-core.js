@@ -4696,7 +4696,7 @@ Attributes = (function() {
 
 Data = (function() {
   function Data(object, traits, attributes) {
-    var change, changes, define, digest, dirty, event, from, get, key, list, makers, mapFrom, mapTo, name, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _len, _ref;
+    var change, changed, define, digest, dirty, event, from, get, getNS, key, list, makers, mapFrom, mapTo, name, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _len, _ref;
     if (traits == null) {
       traits = [];
     }
@@ -4786,8 +4786,11 @@ Data = (function() {
       }
     };
     dirty = false;
-    changes = {};
+    changed = {};
     touched = {};
+    getNS = function(key) {
+      return key.split('.')[0];
+    };
     change = (function(_this) {
       return function(key) {
         var trait;
@@ -4795,8 +4798,8 @@ Data = (function() {
           dirty = true;
           attributes.queue(digest);
         }
-        trait = key.split('.')[0];
-        changes[key] = true;
+        trait = getNS(key);
+        changed[key] = true;
         return touched[trait] = true;
       };
     })(this);
@@ -4806,11 +4809,11 @@ Data = (function() {
       touched: null
     };
     digest = function() {
-      var dummy, trait, _ref, _results;
-      event.changed = changes;
+      var changes, dummy, touches, trait, _ref, _results;
+      event.changed = changed;
       event.touched = touched;
       changes = {};
-      touched = {};
+      touches = {};
       dirty = false;
       event.type = 'change';
       object.trigger(event);

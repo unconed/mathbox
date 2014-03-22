@@ -83,7 +83,7 @@ class Data
         set(key, value, ignore) for key, value of options
       return
 
-    # Validate
+    # Validate value for key
     makers = {}
     validators = {}
     validate = (key, value, target) ->
@@ -94,19 +94,20 @@ class Data
       replace = validate key, value, target
       if replace != undefined then replace else target
 
-    # Coalesce changes
+    # Accumulate changes
     dirty = false
-    changes = {}
+    changed = {}
     touched = {}
+    getNS  = (key) -> key.split('.')[0]
     change = (key) =>
       if !dirty
         dirty = true
         attributes.queue digest
 
-      trait = key.split('.')[0]
+      trait = getNS key
 
       # Log change
-      changes[key]   = true
+      changed[key]   = true
 
       # Mark trait/namespace as dirty
       touched[trait] = true
@@ -116,11 +117,13 @@ class Data
       changed: null
       touched: null
 
+    # Notify listeners of accumulated changes
     digest = () ->
-      event.changed = changes
+      event.changed = changed
       event.touched = touched
       changes = {}
-      touched = {}
+      touches = {}
+
       dirty = false
 
       event.type = 'change'
@@ -130,6 +133,7 @@ class Data
         event.type = "change:#{trait}"
         object.trigger event
 
+    # Convert prefix.ns.key into keyPrefix
     shorthand = (name) ->
       parts = name.split /\./g
       suffix = parts.pop()
@@ -145,14 +149,17 @@ class Data
       name ?= trait
       spec = attributes.getTrait trait
       list.push trait
+
       for key, options of spec
         key = [name, key].join '.'
         @[key] =
           type: options.uniform?()
           value: options.make()
 
+        # Define flat namespace alias
         define key, shorthand key
 
+        # Collect makers and validators
         makers[key] = options.make
         validators[key] = options.validate
 
