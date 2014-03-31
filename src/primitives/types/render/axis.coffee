@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util = require '../../../util'
 
 class Axis extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval']
+  @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
@@ -24,18 +24,29 @@ class Axis extends Primitive
     position.call 'axis.position', positionUniforms
     @transform position
 
+    # Prepare bound uniforms
+    styleUniforms = @_helper.style.uniforms()
+    lineUniforms  = @_helper.line.uniforms()
+    arrowUniforms = @_helper.arrow.uniforms()
+
     # Make line renderable
     detail = @_get 'axis.detail'
     samples = detail + 1
     @resolution = 1 / detail
 
-    lineUniforms = @_helper.line.uniforms()
     @line = @_factory.make 'line',
-              uniforms: lineUniforms
+              uniforms: @_helper.object.merge lineUniforms, styleUniforms
               samples:  samples
               position: position
 
-    @_helper.object.make [@line]
+    # Make arrow renderable
+    @arrow = @_factory.make 'arrow',
+              uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+              samples:  samples
+              position: position
+
+    # Object and span traits
+    @_helper.object.make [@line, @arrow]
     @_helper.span.make()
 
   unmake: () ->

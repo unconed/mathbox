@@ -4,6 +4,9 @@ mathBox = (options) ->
   three = THREE.Bootstrap options
   three.mathbox
 
+window.π = Math.PI
+window.τ = π * 2
+
 window.MathBox = exports
 window.mathBox = exports.mathBox = mathBox
 exports.version = '2'

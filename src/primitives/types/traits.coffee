@@ -2,6 +2,7 @@ Types = require './types'
 
 Traits =
   node:
+    type:        Types.string()
     id:          Types.nullable(Types.string())
     classes:     Types.array(Types.string())
 
@@ -14,8 +15,13 @@ Traits =
   style:
     opacity:     Types.number(1)
     color:       Types.color()
+
   line:
     width:       Types.number(.01)
+  arrow:
+    size:        Types.number(.07)
+  ticks:
+    size:        Types.number(.05)
 
   view:
     dimensions:  Types.number(3)
@@ -39,8 +45,6 @@ Traits =
     second:      Types.bool(true)
   axis:
     detail:      Types.number(1)
-  ticks:
-    size:        Types.number(.05)
 
   curve:
     points:      Types.select(Types.object())

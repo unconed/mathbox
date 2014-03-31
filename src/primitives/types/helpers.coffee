@@ -42,14 +42,29 @@ helpers =
       buffer.copy ticks
       ticks
 
+  style:
+    # Return bound style uniforms
+    uniforms: () ->
+      styleColor:   @node.attributes['style.color']
+      styleOpacity: @node.attributes['style.opacity']
+
+  arrow:
+    # Return bound arrow style uniforms
+    uniforms: () ->
+      arrowSize:   @node.attributes['arrow.size']
+
   line:
     # Return bound line style uniforms
     uniforms: () ->
       lineWidth:   @node.attributes['line.width']
-      lineColor:   @node.attributes['style.color']
-      lineOpacity: @node.attributes['style.opacity']
 
   object:
+    # Merge multiple uniforms objects
+    merge: () ->
+      x = {}
+      (x[k] = v for k, v of obj) for obj in arguments
+      x
+
     # Notify controller of renderables
     render: (object) ->
       @trigger

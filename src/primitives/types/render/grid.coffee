@@ -42,7 +42,7 @@ class Grid extends Primitive
       p = position = @_shaders.shader()
 
       # Collect buffer sampler as callback
-      p.callback();
+      p.callback()
       buffer.shader p
       p.join()
 
@@ -58,12 +58,15 @@ class Grid extends Primitive
       @_render debug
       ###
 
+      # Prepare bound uniforms
+      styleUniforms = @_helper.style.uniforms()
+      lineUniforms  = @_helper.line.uniforms()
+
       # Make line renderable
       quads = samples - 1
 
-      lineUniforms = @_helper.line.uniforms()
       line = @_factory.make 'line',
-                uniforms: lineUniforms
+                uniforms: @_helper.object.merge lineUniforms, styleUniforms
                 samples:  samples
                 strips:   1
                 ribbons:  ribbons

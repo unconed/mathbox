@@ -47,10 +47,13 @@ class Ticks extends Primitive
     p.join()
     p.call 'ticks.position', positionUniforms
 
+    # Prepare bound uniforms
+    styleUniforms = @_helper.style.uniforms()
+    lineUniforms  = @_helper.line.uniforms()
+
     # Make line renderable
-    lineUniforms = @_helper.line.uniforms()
     @line = @_factory.make 'line',
-              uniforms: lineUniforms
+              uniforms: @_helper.object.merge lineUniforms, styleUniforms
               samples:  2
               strips:   1
               ribbons:  samples

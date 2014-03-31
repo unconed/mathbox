@@ -9,7 +9,7 @@ vec3 transformPosition(vec4 value);
 vec3 getTickPosition(vec2 xy) {
 
   const float epsilon = 0.0001;
-  float line = xy.x * 2.0 - 1.0;
+  float line = xy.x - .5;
 
   vec4 center = tickAxis * sampleData(vec2(xy.y, 0.0));
   vec4 edge   = tickNormal * epsilon;

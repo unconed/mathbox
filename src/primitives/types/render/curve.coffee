@@ -42,13 +42,16 @@ class Curve extends Primitive
     @array.shader position
     @transform position
 
+    # Prepare bound uniforms
+    styleUniforms = @_helper.style.uniforms()
+    lineUniforms  = @_helper.line.uniforms()
+
     # Make line renderable
     samples = @array.space
     history = @array.history
 
-    lineUniforms = @_helper.line.uniforms()
     @line = @_factory.make 'line',
-              uniforms: lineUniforms
+              uniforms: @_helper.object.merge lineUniforms, styleUniforms
               samples:  samples
               ribbons:  history
               position: position

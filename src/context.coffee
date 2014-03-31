@@ -1,8 +1,8 @@
-Model      = require('./model')
-Stage      = require('./stage')
-Render     = require('./render')
-Shaders    = require('./shaders')
-Primitives = require('./primitives')
+Model      = require './model'
+Stage      = require './stage'
+Render     = require './render'
+Shaders    = require './shaders'
+Primitives = require './primitives'
 
 class Context
   constructor: (gl, scene, camera, script = []) ->
@@ -35,8 +35,8 @@ class Context
     @scene.unject()
 
   update: () ->
-    @animator.update()
+    @animator  .update()
     @attributes.digest()
-    @model.update()
+    @model     .update()
 
 module.exports = Context
