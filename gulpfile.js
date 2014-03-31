@@ -38,7 +38,7 @@ var coffees = [
   'src/**/*.coffee'
 ];
 
-var source = coffees.concat(glsls);
+var source = coffees.concat(glsls).concat(vendor);
 var bundle = vendor.concat(core);
 
 var test = bundle.concat([

@@ -29,6 +29,8 @@ class Axis extends Primitive
     lineUniforms  = @_helper.line.uniforms()
     arrowUniforms = @_helper.arrow.uniforms()
 
+    lineUniforms.clipRange = arrowUniforms.arrowSize
+
     # Make line renderable
     detail = @_get 'axis.detail'
     samples = detail + 1
@@ -38,6 +40,7 @@ class Axis extends Primitive
               uniforms: @_helper.object.merge lineUniforms, styleUniforms
               samples:  samples
               position: position
+              clip:     true
 
     # Make arrow renderable
     @arrow = @_factory.make 'arrow',

@@ -7,20 +7,26 @@ class Line extends Mesh
 
     uniforms = options.uniforms ? {}
     position = options.position
+    clip     = options.clip
 
     @geometry = new LineGeometry
       samples: options.samples || 2
       strips:  options.strips  || 1
       ribbons: options.ribbons || 1
+      anchor:  options.anchor  || options.samples - 1
 
     factory = shaders.material()
 
     v = factory.vertex
     v.import position if position
-    v.call 'line.position', uniforms
+    v.split()
+    v  .call 'line.position', uniforms
+    v.pass()
+    v.call 'line.clip', uniforms, '_clip_' if clip
     v.call 'project.position'
 
     f = factory.fragment
+    f.call 'style.clip', {}, '_clip_' if clip
     f.call 'style.color', uniforms
 
     @material = new THREE.ShaderMaterial factory.build

@@ -6,6 +6,9 @@ class LineGeometry extends Geometry
     line:
       type: 'v2'
       value: null
+    strip:
+      type: 'v2'
+      value: null
 
   clip: (start, end) ->
     @offsets = [
@@ -19,6 +22,7 @@ class LineGeometry extends Geometry
     @samples  = samples = +options.samples || 2
     @strips   = strips  = +options.strips  || 1
     @ribbons  = ribbons = +options.ribbons || 1
+    @anchor   = anchor  = +options.anchor  || samples - 1
     @segments = segments = samples - 1
 
     points    = samples  * strips * ribbons * 2
@@ -28,10 +32,12 @@ class LineGeometry extends Geometry
     @addAttribute 'index',    Uint16Array,  triangles * 3, 1
     @addAttribute 'position', Float32Array, points,        3
     @addAttribute 'line',     Float32Array, points,        2
+    @addAttribute 'strip',    Float32Array, points,        2
 
     index    = @_emitter 'index'
     position = @_emitter 'position'
     line     = @_emitter 'line'
+    strip    = @_emitter 'strip'
 
     base = 0
     for i in [0...ribbons]
@@ -54,6 +60,9 @@ class LineGeometry extends Geometry
       x = 0
       for j in [0...strips]
 
+        start = x
+        end   = x + anchor
+
         for k in [0...samples]
           edge = if k == 0 then -1 else if k == segments then 1 else 0
 
@@ -62,6 +71,9 @@ class LineGeometry extends Geometry
 
           line edge, 1
           line edge, -1
+
+          strip start, end
+          strip start, end
 
           x++
         #
