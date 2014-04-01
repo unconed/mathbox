@@ -22,9 +22,9 @@ class Cartesian extends View
     delete @positionMatrix
     delete @scale
 
-  change: (changed, touched, first) ->
+  change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or first
+    return unless touched['object'] or touched['view'] or init
 
     o = @_get 'object.position'
     s = @_get 'object.scale'

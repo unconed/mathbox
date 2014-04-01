@@ -16,8 +16,8 @@ class Curve extends Primitive
     @array = @_attached 'curve.points', _Array
 
     # Monitor array for reallocation / resize
-    @resizeHandler  = (event) -> @clip()
-    @rebuildHandler = (event) -> @rebuild()
+    @resizeHandler  = (event) => @clip()
+    @rebuildHandler = (event) => @rebuild()
     @array.on 'resize',  @resizeHandler
     @array.on 'rebuild', @rebuildHandler
 

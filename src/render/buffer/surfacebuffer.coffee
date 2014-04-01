@@ -25,11 +25,13 @@ class SurfaceBuffer extends Buffer
 
   iterate: () ->
     callback = @callback
-    output = @generate()
-    n = @width
+    output   = @generate()
+
+    n     = @width
+    limit = @samples
 
     i = j = k = 0
-    while ++k < Buffer.iterationLimit
+    while ++k <= limit
       repeat = callback(i, j, output)
       if !repeat
         break
@@ -37,14 +39,42 @@ class SurfaceBuffer extends Buffer
         i = 0
         j++
 
-    return k - 1
+    k - 1
 
-  write: (samples) ->
+  write: (samples = @samples) ->
     width = @width
     height = Math.ceil samples / width
 
     @texture.write @data, 0, @index, width, height
     @dataPointer.set .5, @index + .5
     @index = (@index + 1) % @history
+
+  copy2D: (data) ->
+    w    = Math.min data[0].length, @width * @channels
+    h    = Math.min data.length,    @height
+
+    o = 0
+    data = @data
+    for k in [0...h]
+      d = data[k]
+      d[o++] = (d[i] ? 0) for i in [0...w]
+
+    @write Math.floor o / @channels
+
+  copy3D: (data) ->
+    c    = Math.min data[0][0].length, @channels
+    w    = Math.min data[0].length,    @width
+    h    = Math.min data.length,       @height
+
+    o = 0
+    data = @data
+    for k in [0...h]
+      d = data[k]
+      for j in [0...w]
+        v = d[j]
+        d[o++] = (v[i] ? 0) for i in [0...c]
+
+    @write Math.floor n / @channels
+
 
 module.exports = SurfaceBuffer

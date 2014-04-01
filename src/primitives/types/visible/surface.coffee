@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Matrix = require '../data/matrix'
 
 class Surface extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'surface', 'position']
+  @traits: ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
@@ -16,8 +16,8 @@ class Surface extends Primitive
     @matrix = @_attached 'surface.points', Matrix
 
     # Monitor array for reallocation / resize
-    @resizeHandler  = (event) -> @clip()
-    @rebuildHandler = (event) -> @rebuild()
+    @resizeHandler  = (event) => @clip()
+    @rebuildHandler = (event) => @rebuild()
     @matrix.on 'resize',  @resizeHandler
     @matrix.on 'rebuild', @rebuildHandler
 
@@ -31,7 +31,8 @@ class Surface extends Primitive
     return unless @line and @array
     w = @matrix.width
     h = @matrix.height
-    @surface.geometry.clip 0, (w - 1) * (h - 1)
+    console.log 'surface::clip', w, h
+    @surface.geometry.clip 0, Math.floor((w - 1) * (h - 1))
 
   make: () ->
     @bind()
@@ -54,6 +55,10 @@ class Surface extends Primitive
     width  = @matrix.width
     height = @matrix.height
 
+    console.log 'surface::make', width, height
+
+    shaded = @_get 'mesh.shaded'
+
     ###
     @line = @_factory.make 'line',
               uniforms: @_helper.object.merge lineUniforms, styleUniforms
@@ -67,6 +72,7 @@ class Surface extends Primitive
               width:  width
               height: height
               position: position
+              shaded: false
 
     @clip()
 
@@ -82,6 +88,7 @@ class Surface extends Primitive
     @_unherit()
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['surface.points']?
+    @rebuild() if changed['surface.points']? or
+                  changed['mesh.shaded']
 
-module.exports = Curve
+module.exports = Surface

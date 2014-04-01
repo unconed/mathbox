@@ -1,7 +1,7 @@
 Base            = require './base'
 SurfaceGeometry = require('../geometry').SurfaceGeometry
 
-class Mesh extends Base
+class Surface extends Base
   constructor: (gl, shaders, options) ->
     super gl, shaders
 
@@ -41,4 +41,4 @@ class Mesh extends Base
     @object = @geometry = @material = null
     super
 
-module.exports = Mesh
+module.exports = Surface

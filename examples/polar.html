@@ -19,7 +19,7 @@
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     mathbox.polar({
-      bend: 1,
+      bend: .25,
       range: [[-π, π], [0, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
@@ -58,7 +58,7 @@
       length: 128,
       expression: function (x, i, emit) {
         var t = +new Date() / 1000;
-        return emit(x, .5 + .5 * (Math.sin(x + t) + (i%2)*Math.sin(x * 400000 + t + x * x * 10000)*.05));
+        return emit(x, .5 + .5 * Math.sin(x + t));
       },
       dimensions: 2,
     });
@@ -77,9 +77,6 @@
       width: 0.01,
     });
 
-    false && setTimeout(function () {
-      three.Loop.stop()
-    }, 1000);
   </script>
 </body>
 </html>

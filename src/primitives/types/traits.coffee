@@ -63,12 +63,11 @@ Traits =
     data:        Types.nullable(Types.object())
     expression:  Types.nullable(Types.func())
     live:        Types.bool(true)
-  array:
     dimensions:  Types.number(3)
+  array:
     length:      Types.number(1)
     history:     Types.number(1)
   matrix:
-    dimensions:  Types.number(3)
     width:       Types.number(1)
     height:      Types.number(1)
     history:     Types.number(1)

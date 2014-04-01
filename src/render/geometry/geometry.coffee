@@ -1,13 +1,18 @@
 class Geometry extends THREE.BufferGeometry
   constructor: () ->
     THREE.BufferGeometry.call @
-    @dynamic = false
+#    @dynamic = false
 
   _emitter: (name) ->
     attribute = @attributes[name]
     dimensions = attribute.itemSize
     array = attribute.array
     offset = 0
+
+    if name != 'index'
+      numItems = attribute.array.length / attribute.itemSize
+      if numItems > 65536
+        throw "Index out of bounds. Cannot exceed 65536 indexed vertices."
 
     one = (a) ->
       array[offset++] = a

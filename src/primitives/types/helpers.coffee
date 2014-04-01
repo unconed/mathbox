@@ -60,8 +60,8 @@ helpers =
 
   surface:
     # Return bound line style uniforms
-    uniforms: () ->
-      surfaceWat:   @node.attributes['line.width']
+    uniforms: () -> {}
+#      surfaceWat:   @node.attributes['line.width']
 
   position:
     make: () ->

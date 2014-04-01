@@ -35,9 +35,9 @@ class Polar extends View
     delete @positionMatrix
     delete @scale
 
-  change: (changed, touched, first) ->
+  change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or touched['polar'] or first
+    return unless touched['object'] or touched['view'] or touched['polar'] or init
 
     @helix = helix = @_get 'polar.helix'
     @bend  = bend  = @_get 'polar.bend'

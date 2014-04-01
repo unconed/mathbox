@@ -7,9 +7,12 @@ class Matrix extends Data
     super model, attributes, factory, shaders, helper
 
     @buffer = null
-    @space  = 0
-    @length = 0
+    @spaceWidth  = 0
+    @spaceHeight = 0
     @filled = false
+
+  shader: (shader) ->
+    @buffer.shader shader
 
   make: () ->
     super
@@ -17,20 +20,37 @@ class Matrix extends Data
     width    = @_get 'matrix.width'
     height   = @_get 'matrix.height'
     history  = @_get 'matrix.history'
-    channels = @_get 'array.dimensions'
+    channels = @_get 'data.dimensions'
 
     @channels = channels
     @history  = history
 
-##    samples = width * height
-##    @space = @length = Math.max @space, samples
+    # Allocate to right matrix size right away
+    data = @_get 'data.data'
+    if data?
+      if data[0]?.length
+        if data[0][0]?.length
+          @spaceWidth = Math.max @spaceWidth, data[0].length
+        else
+          @spaceWidth = Math.max @spaceWidth, data[0].length / @channels
+        @spaceHeight = Math.max @spaceHeight, data.length
+      else
+        @spaceHeight = Math.max @spaceHeight, Math.floor data.length / @spaceWidth
 
-    if @space > 0
+    @width  = @spaceWidth  = Math.max @spaceWidth, width
+    @height = @spaceHeight = Math.max @spaceHeight, height
+
+    # Create surfacebuffer
+    if @spaceWidth * @spaceHeight > 0
       @buffer = @_factory.make 'surfacebuffer',
-                width:    width
-                height:   height
+                width:    @spaceWidth
+                height:   @spaceHeight
                 history:  history
                 channels: channels
+
+    # Notify of buffer reallocation
+    @trigger
+      event: 'rebuild'
 
   unmake: () ->
     super
@@ -39,7 +59,7 @@ class Matrix extends Data
       @buffer = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['matrix']
+    @rebuild() if touched['matrix'] or changed['data.dimensions']
 
     return unless @buffer
 
@@ -47,7 +67,7 @@ class Matrix extends Data
        init
 
       callback = @_get 'data.expression'
-      @buffer.callback = callback ? () ->
+      @buffer.callback = @callback callback
 
   update: () ->
     return unless @buffer
@@ -56,24 +76,55 @@ class Matrix extends Data
 
     data = @_get 'data.data'
 
-    if data?
-      throw "Matrix autosize not implemented"
-      ###
-      @length = data.length
-      if @length > @space
-        @space = Math.min @length, @space * 2
-        @rebuild()
-      if @length < @space * .1
-        @space = @length
-        @rebuild()
-        ###
+    oldWidth  = @width
+    oldHeight = @height
 
-      @buffer.copy data
+    width    = @spaceWidth
+    height   = @spaceHeight
+    channels = @channels
+
+    if data?
+
+      w = h = 0
+      method = 'copy'
+
+      # Autosize width/height based on data layout
+      if data[0]?.length
+        w = data[0].length
+        h = data.length
+
+        if !data[0][0]?.length
+          w /= channels
+          method = 'copy3D'
+        else
+          method = 'copy2D'
+      else
+        w = width
+        h = data.length / channels / width
+        method = 'copy'
+
+      # Enlarge if needed
+      if w > width           || h > height           #||
+#         w < @bufwidth * .33 || h < @bufheight * .33
+        @spaceWidth  = w
+        @spaceHeight = h
+        @rebuild()
+
+      @buffer[method] data
+      @width  = w
+      @height = h
 
     else
-      @length = @buffer.update()
+      length  = @buffer.update()
+
+      @width  = width
+      @height = length / @width
+
+    if oldWidth  != @width or
+       oldHeight != @height
+      @trigger
+        type: 'resize'
 
     @filled = true
-
 
 module.exports = Matrix

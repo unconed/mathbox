@@ -19,16 +19,21 @@ class _Array extends Data
 
     length   = @_get 'array.length'
     history  = @_get 'array.history'
-    channels = @_get 'array.dimensions'
+    channels = @_get 'data.dimensions'
 
-    @space = @length = Math.max @space, length
+    @space = Math.max @space, length
     @channels = channels
     @history  = history
 
     # Allocate to right array size right away
-    data = @_get('data.data')
+    data = @_get 'data.data'
     if data?
-      @space = Math.max @space, Math.floor data.length / channels
+      if data[0]?.length
+        @space = Math.max @space, data.length
+      else
+        @space = Math.max @space, Math.floor data.length / channels
+
+    @length = @space
 
     # Create linebuffer
     if @space > 0
@@ -39,7 +44,7 @@ class _Array extends Data
 
     # Notify of buffer reallocation
     @trigger
-      event:   'rebuild'
+      event: 'rebuild'
 
   unmake: () ->
     super
@@ -48,7 +53,7 @@ class _Array extends Data
       @buffer = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['array']
+    @rebuild() if touched['array'] or changed['data.dimensions']
 
     return unless @buffer
 
@@ -68,7 +73,10 @@ class _Array extends Data
     length = @length
 
     if data?
-      @length = Math.floor data.length / @channels
+      if data[0]?.length
+        @length = data.length
+      else
+        @length = Math.floor data.length / @channels
 
       if @length > @space
         @space = Math.min @length, @space * 2
@@ -77,7 +85,10 @@ class _Array extends Data
 #        @space = @length
 #        @rebuild()
 
-      @buffer.copy data
+      if data[0].length
+        @buffer.copy2D data
+      else
+        @buffer.copy data
 
     else
       @length = @buffer.update()

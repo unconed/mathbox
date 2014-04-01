@@ -2,7 +2,7 @@ View = require('./view')
 
 class Cartesian4 extends View
   @traits: ['node', 'object', 'view']
-
+###
   make: () ->
 
     types = @_attributes.types
@@ -21,9 +21,9 @@ class Cartesian4 extends View
 
     @_unherit()
 
-  change: (changed, touched) ->
+  change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view']
+    return unless touched['object'] or touched['view'] or init
 
     o = @_get 'object.position'
     r = @_get 'view.range'
@@ -66,5 +66,5 @@ class Cartesian4 extends View
       0, 0, dz/(2*sz), 0,
       0, 0, 0, dw/(2*sw) #,
     )
-
-module.exports = Cartesian
+###
+module.exports = Cartesian4

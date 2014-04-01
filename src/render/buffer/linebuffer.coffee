@@ -24,15 +24,29 @@ class LineBuffer extends Buffer
   iterate: () ->
     callback = @callback
     output = @generate()
+    limit = @samples * @channels
 
     i = 0
-    while callback(i++, output) && i < Buffer.iterationLimit
+    while callback(i++, output) && i <= limit
       true
-    return i - 1
+
+    i - 1
 
   write: (samples = @samples) ->
     @texture.write @data, 0, @index, samples, 1
     @dataPointer.set .5, @index + .5
     @index = (@index + 1) % @history
+
+  copy2D: (data) ->
+    c = Math.min data[0].length, @channels
+    n = Math.min data.length,    @samples
+
+    o = 0
+    data = @data
+    for k in [0...n]
+      d = data[k]
+      d[o++] = (v[i] ? 0) for i in [0...c]
+
+    @write Math.floor o / @channels
 
 module.exports = LineBuffer

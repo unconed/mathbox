@@ -27,7 +27,7 @@ class Buffer extends Renderable
 
   update: () ->
     n = @iterate()
-    @write()
+    @write n
     n
 
   copy: (data) ->
@@ -39,43 +39,32 @@ class Buffer extends Renderable
   write: () ->
   iterate: () ->
   generate: () ->
-    limit = @samples * @channels
     data  = @data
-
-    done  = false
-    i     = 0
+    i = 0
 
     switch @channels
 
       when 1 then (x) ->
-        if !done
-          data[i++] = x
-
-        !(done = i >= limit)
+        data[i++] = x
+        true
 
       when 2 then (x, y) ->
-        if !done
-          data[i++] = x
-          data[i++] = y
-
-        !(done = i >= limit)
+        data[i++] = x
+        data[i++] = y
+        true
 
       when 3 then (x, y, z) ->
-        if !done
-          data[i++] = x
-          data[i++] = y
-          data[i++] = z
-
-        !(done = i >= limit)
+        data[i++] = x
+        data[i++] = y
+        data[i++] = z
+        true
 
       when 4 then (x, y, z, w) ->
-        if !done
-          data[i++] = x
-          data[i++] = y
-          data[i++] = z
-          data[i++] = w
-
-        !(done = i >= limit)
+        data[i++] = x
+        data[i++] = y
+        data[i++] = z
+        data[i++] = w
+        true
 
 
 module.exports = Buffer
