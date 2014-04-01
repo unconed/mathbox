@@ -1,8 +1,8 @@
 Primitive = require '../../primitive'
-_Array = require '../data/array'
+Matrix = require '../data/matrix'
 
-class Curve extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'curve', 'position']
+class Surface extends Primitive
+  @traits: ['node', 'object', 'style', 'line', 'surface', 'position']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
@@ -13,24 +13,25 @@ class Curve extends Primitive
     unbind() if @resizeHandler
 
     # Fetch attached points array
-    @array = @_attached 'curve.points', _Array
+    @matrix = @_attached 'surface.points', Matrix
 
     # Monitor array for reallocation / resize
     @resizeHandler  = (event) -> @clip()
     @rebuildHandler = (event) -> @rebuild()
-    @array.on 'resize',  @resizeHandler
-    @array.on 'rebuild', @rebuildHandler
+    @matrix.on 'resize',  @resizeHandler
+    @matrix.on 'rebuild', @rebuildHandler
 
   unbind: () ->
-    @array.off 'resize',  @resizeHandler
-    @array.off 'rebuild', @rebuildHandler
+    @matrix.off 'resize',  @resizeHandler
+    @matrix.off 'rebuild', @rebuildHandler
     @resizeHandler  = null
     @rebuildHandler = null
 
   clip: () ->
     return unless @line and @array
-    n = @array.length
-    @line.geometry.clip 0, n - 1
+    w = @matrix.width
+    h = @matrix.height
+    @surface.geometry.clip 0, (w - 1) * (h - 1)
 
   make: () ->
     @bind()
@@ -40,27 +41,36 @@ class Curve extends Primitive
     @_helper.position.make()
 
     # Fetch position and transform to view
-    @array.shader position
+    @matrix.shader position
     @_helper.position.shader position
     @transform position
 
     # Prepare bound uniforms
     styleUniforms = @_helper.style.uniforms()
     lineUniforms  = @_helper.line.uniforms()
+    surfaceUniforms  = @_helper.surface.uniforms()
 
-    # Make line renderable
-    samples = @array.space
-    history = @array.history
+    # Make line and surface renderables
+    width  = @matrix.width
+    height = @matrix.height
 
+    ###
     @line = @_factory.make 'line',
               uniforms: @_helper.object.merge lineUniforms, styleUniforms
-              samples:  samples
-              ribbons:  history
+              samples:  width
+              ribbons:  height
+              position: position
+    ###
+
+    @surface = @_factory.make 'surface',
+              uniforms: @_helper.object.merge surfaceUniforms, styleUniforms
+              width:  width
+              height: height
               position: position
 
     @clip()
 
-    @_helper.object.make [@line]
+    @_helper.object.make [@surface]
 
   unmake: () ->
     @unbind()
@@ -72,6 +82,6 @@ class Curve extends Primitive
     @_unherit()
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['curve.points']?
+    @rebuild() if changed['surface.points']?
 
 module.exports = Curve

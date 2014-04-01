@@ -1,7 +1,7 @@
-Mesh         = require './mesh'
+Base         = require './base'
 LineGeometry = require('../geometry').LineGeometry
 
-class Line extends Mesh
+class Line extends Base
   constructor: (gl, shaders, options) ->
     super gl, shaders
 

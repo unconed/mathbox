@@ -46,17 +46,20 @@ class Buffer extends Renderable
     i     = 0
 
     switch @channels
+
       when 1 then (x) ->
         if !done
           data[i++] = x
 
         !(done = i >= limit)
+
       when 2 then (x, y) ->
         if !done
           data[i++] = x
           data[i++] = y
 
         !(done = i >= limit)
+
       when 3 then (x, y, z) ->
         if !done
           data[i++] = x
@@ -64,6 +67,7 @@ class Buffer extends Renderable
           data[i++] = z
 
         !(done = i >= limit)
+
       when 4 then (x, y, z, w) ->
         if !done
           data[i++] = x

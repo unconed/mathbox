@@ -1,7 +1,7 @@
-Mesh          = require './mesh'
+Base          = require './base'
 ArrowGeometry = require('../geometry').ArrowGeometry
 
-class Arrow extends Mesh
+class Arrow extends Base
   constructor: (gl, shaders, options) ->
     super gl, shaders
 

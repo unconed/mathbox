@@ -14,10 +14,10 @@ class Matrix extends Data
   make: () ->
     super
 
-    width    = @_get('matrix.width')
-    height   = @_get('matrix.height')
-    history  = @_get('matrix.history')
-    channels = @_get('array.dimensions')
+    width    = @_get 'matrix.width'
+    height   = @_get 'matrix.height'
+    history  = @_get 'matrix.history'
+    channels = @_get 'array.dimensions'
 
     @channels = channels
     @history  = history
@@ -46,15 +46,15 @@ class Matrix extends Data
     if changed['data.expression']? or
        init
 
-      callback = @_get('data.expression')
+      callback = @_get 'data.expression'
       @buffer.callback = callback ? () ->
 
   update: () ->
     return unless @buffer
-    return unless !@filled or @_get('data.live')
+    return unless !@filled or @_get 'data.live'
     return unless @parent.visible
 
-    data = @_get('data.data')
+    data = @_get 'data.data'
 
     if data?
       throw "Matrix autosize not implemented"
@@ -76,4 +76,4 @@ class Matrix extends Data
     @filled = true
 
 
-module.exports = Array
+module.exports = Matrix

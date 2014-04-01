@@ -58,9 +58,14 @@ helpers =
     uniforms: () ->
       lineWidth:   @node.attributes['line.width']
 
+  surface:
+    # Return bound line style uniforms
+    uniforms: () ->
+      surfaceWat:   @node.attributes['line.width']
+
   position:
     make: () ->
-      @positionMatrix = @_attributes.make @_attributes.types.mat4()
+      @objectMatrix = @_attributes.make @_attributes.types.mat4()
 
       @handlers.position = (event) =>
         changed = event.changed
@@ -74,20 +79,20 @@ helpers =
         s = @_get 'object.scale'
         q = @_get 'object.rotation'
 
-        @positionMatrix.value.compose o, q, s
+        @objectMatrix.value.compose o, q, s
 
-      @node.on   'change:object', @handlers.position
+      @node.on  'change:object', @handlers.position
       recalc()
 
     unmake: () ->
-      @node.off  'change:object', @handlers.position
+      @node.off 'change:object', @handlers.position
 
-      delete @positionMatrix
+      delete @objectMatrix
       delete @handler.position
 
     shader: (shader) ->
-      shader.call 'cartesian.position',
-        viewMatrix: @positionMatrix
+      shader.call 'object.position',
+        objectMatrix: @objectMatrix
 
   object:
 

@@ -4,5 +4,5 @@ uniform vec2 dataPointer;
 
 vec4 sampleData(vec2 xy) {
   vec2 uv = fract((xy + dataPointer) * dataResolution);
-  return vec4(texture2D(dataTexture, uv).x, 0.0, 0.0, 0.0);
+  return vec4(texture2D(dataTexture, uv).x, 0.0, 0.0, 1.0);
 }

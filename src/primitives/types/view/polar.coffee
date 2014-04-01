@@ -63,7 +63,7 @@ class Polar extends View
     idx = if dx > 0 then 1 else -1
 
     # Recenter viewport on origin the more it's bent
-    if @bend > 0
+    if bend > 0
       y1 = y
       y2 = y + dy
 
@@ -144,7 +144,7 @@ class Polar extends View
       max = Math.max Math.abs(max), Math.abs(min)
       min = Math.max -@focus / @aspect + .001, min
 
-    return new THREE.Vector2(min, max)
+    return new THREE.Vector2 min, max
 
   ###
   from: (vector) ->

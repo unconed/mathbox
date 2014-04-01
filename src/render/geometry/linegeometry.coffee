@@ -1,11 +1,12 @@
 Geometry = require('./geometry')
 
 ###
-Line strips arranged in lines and rows
+Line strips arranged in columns and rows
 
 +----+ +----+ +----+ +----+
+
 +----+ +----+ +----+ +----+
-+----+ +----+ +----+ +----+
+
 +----+ +----+ +----+ +----+
 ###
 
@@ -26,7 +27,7 @@ class LineGeometry extends Geometry
     ]
 
   constructor: (options) ->
-    THREE.BufferGeometry.call @
+    super options
 
     @samples  = samples = +options.samples || 2
     @strips   = strips  = +options.strips  || 1

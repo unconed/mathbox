@@ -18,6 +18,8 @@ Traits =
 
   line:
     width:       Types.number(.01)
+  mesh:
+    shaded:      Types.bool(true)
   arrow:
     size:        Types.number(.07)
   ticks:
@@ -53,6 +55,9 @@ Traits =
   curve:
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())
+  surface:
+    points:      Types.select(Types.object())
+    colors:      Types.select(Types.object())
 
   data:
     data:        Types.nullable(Types.object())
@@ -67,4 +72,5 @@ Traits =
     width:       Types.number(1)
     height:      Types.number(1)
     history:     Types.number(1)
+
 module.exports = Traits

@@ -17,9 +17,9 @@ class _Array extends Data
   make: () ->
     super
 
-    length   = @_get('array.length')
-    history  = @_get('array.history')
-    channels = @_get('array.dimensions')
+    length   = @_get 'array.length'
+    history  = @_get 'array.history'
+    channels = @_get 'array.dimensions'
 
     @space = @length = Math.max @space, length
     @channels = channels
@@ -55,15 +55,15 @@ class _Array extends Data
     if changed['data.expression']? or
        init
 
-      callback = @_get('data.expression')
+      callback = @_get 'data.expression'
       @buffer.callback = @callback callback
 
   update: () ->
     return unless @buffer
-    return unless !@filled or @_get('data.live')
+    return unless !@filled or @_get 'data.live'
     return unless @parent.visible
 
-    data = @_get('data.data')
+    data = @_get 'data.data'
 
     length = @length
 

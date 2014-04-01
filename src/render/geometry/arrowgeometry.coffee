@@ -3,13 +3,13 @@ Geometry = require('./geometry')
 ###
 Cones to attach as arrowheads on line strips
 
-...> ...> ...> ...>
-...> ...> ...> ...>
-...> ...> ...> ...>
-...> ...> ...> ...>
+.....> .....> .....> .....>
 
+.....> .....> .....> .....>
 
+.....> .....> .....> .....>
 ###
+
 class ArrowGeometry extends Geometry
 
   shaderAttributes: () ->
@@ -24,7 +24,7 @@ class ArrowGeometry extends Geometry
     ]
 
   constructor: (options) ->
-    THREE.BufferGeometry.call @
+    super options
 
     @sides    = sides   = +options.sides   || 12
     @samples  = samples = +options.samples || 2
