@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Curve</title>
+  <title>MathBox - Polar</title>
   <script src="../build/mathbox-bundle.js"></script>
 </head>
 <body>
@@ -18,44 +18,68 @@
     three.camera.position.set(2.3, 1, 2);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    mathbox.cartesian({
-      id: 'cartesian',
-      range: [[-2, 2], [-1, 1], [-1, 1]],
+    mathbox.polar({
+      bend: .25,
+      range: [[-π, π], [1, 2], [-1, 1]],
       scale: [2, 1, 1],
     });
+
     mathbox.axis({
       id: 'axis1',
       detail: 30,
-    });
-    mathbox.axis({
-      id: 'axis2',
-      axis: 2,
+      position: [0, .5, 0],
     });
     mathbox.ticks({
       id: 'ticks',
       classes: ['foo', 'bar'],
       divide: 10,
+      unit: π,
+      base: 2,
+      position: [0, .5, 0],
     });
+
+    mathbox.axis({
+      id: 'axis2',
+      axis: 2,
+    });
+    mathbox.axis({
+      id: 'axis3',
+      axis: 2,
+      position: [π/2, 0, 0],
+    });
+    mathbox.axis({
+      id: 'axis4',
+      axis: 2,
+      position: [-π/2, 0, 0],
+    });
+
     mathbox.interval({
       id: 'sampler',
       length: 128,
       expression: function (x, i, emit) {
         var t = +new Date() / 1000;
-        return emit(x, Math.sin(x + t) + (i%2)*Math.sin(x * 400000 + t + x * x * 10000)*.05);
+        return emit(x, .5 + .5 * (Math.sin(x + t) + (i%2)*Math.sin(x * 400000 + t + x * x * 10000)*.05));
       },
       dimensions: 2,
     });
     mathbox.grid({
       id: 'legrid',
       divideX: 20,
+      detailX: 48,
       width: 0.005,
       opacity: 0.5,
+      unitX: π,
+      baseX: 2,
     });
     mathbox.curve({
       points: '#sampler',
       color: 'blue',
       width: 0.01,
     });
+
+    false && setTimeout(function () {
+      three.Loop.stop()
+    }, 1000);
   </script>
 </body>
 </html>

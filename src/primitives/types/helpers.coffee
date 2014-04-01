@@ -58,14 +58,46 @@ helpers =
     uniforms: () ->
       lineWidth:   @node.attributes['line.width']
 
+  position:
+    make: () ->
+      @positionMatrix = @_attributes.make @_attributes.types.mat4()
+
+      @handlers.position = (event) =>
+        changed = event.changed
+        if changed['object.position'] or
+           changed['object.rotation'] or
+           changed['object.scale']
+          recalc()
+
+      recalc = () =>
+        o = @_get 'object.position'
+        s = @_get 'object.scale'
+        q = @_get 'object.rotation'
+
+        @positionMatrix.value.compose o, q, s
+
+      @node.on   'change:object', @handlers.position
+      recalc()
+
+    unmake: () ->
+      @node.off  'change:object', @handlers.position
+
+      delete @positionMatrix
+      delete @handler.position
+
+    shader: (shader) ->
+      shader.call 'cartesian.position',
+        viewMatrix: @positionMatrix
+
   object:
+
     # Merge multiple uniforms objects
     merge: () ->
       x = {}
       (x[k] = v for k, v of obj) for obj in arguments
       x
 
-    # Notify controller of renderables
+    # Notify outside controller of renderables
     render: (object) ->
       @trigger
         type: 'render'

@@ -1,5 +1,15 @@
 Geometry = require('./geometry')
 
+###
+Cones to attach as arrowheads on line strips
+
+...> ...> ...> ...>
+...> ...> ...> ...>
+...> ...> ...> ...>
+...> ...> ...> ...>
+
+
+###
 class ArrowGeometry extends Geometry
 
   shaderAttributes: () ->

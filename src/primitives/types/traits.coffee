@@ -29,6 +29,10 @@ Traits =
   span:
     range:       Types.nullable(Types.vec2(-1, 1))
 
+  polar:
+    bend:        Types.number(1)
+    helix:       Types.number(0)
+
   interval:
     axis:        Types.number(1)
   area:

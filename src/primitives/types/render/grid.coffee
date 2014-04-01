@@ -2,7 +2,7 @@ Primitive = require('../../primitive')
 Util = require '../../../util'
 
 class Grid extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'grid', 'area',
+  @traits: ['node', 'object', 'style', 'line', 'grid', 'area', 'position',
             'axis:x.axis',   'axis:y.axis',
             'scale:x.scale', 'scale:y.scale',
             'span:x.span',   'span:y.span']
@@ -40,6 +40,7 @@ class Grid extends Primitive
 
       # Build transform chain
       p = position = @_shaders.shader()
+      @_helper.position.make()
 
       # Collect buffer sampler as callback
       p.callback()
@@ -50,6 +51,7 @@ class Grid extends Primitive
       p.call 'grid.position', positionUniforms
 
       # Apply view transform
+      @_helper.position.shader position
       @transform position
 
       ###
@@ -91,6 +93,7 @@ class Grid extends Primitive
   unmake: () ->
     @_helper.object.unmake()
     @_helper.span.unmake()
+    @_helper.position.unmake()
 
     for axis in @axes
       axis.buffer.dispose()

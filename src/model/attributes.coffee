@@ -150,6 +150,8 @@ class Data
       spec = attributes.getTrait trait
       list.push trait
 
+      continue unless spec
+
       for key, options of spec
         key = [name, key].join '.'
         @[key] =

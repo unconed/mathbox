@@ -37,6 +37,7 @@ class Line extends Mesh
 
     @object = new THREE.Mesh @geometry, @material
     @object.frustumCulled = false;
+    @object.matrixAutoUpdate = false;
 
   dispose: () ->
     @geometry.dispose()

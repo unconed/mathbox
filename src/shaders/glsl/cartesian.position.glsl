@@ -1,5 +1,5 @@
-uniform mat4 cartesianMatrix;
+uniform mat4 viewMatrix;
 
 vec4 getCartesianPosition(vec4 position) {
-  return cartesianMatrix * vec4(position.xyz, 1.0);
+  return viewMatrix * vec4(position.xyz, 1.0);
 }

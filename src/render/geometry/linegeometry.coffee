@@ -1,5 +1,14 @@
 Geometry = require('./geometry')
 
+###
+Line strips arranged in lines and rows
+
++----+ +----+ +----+ +----+
++----+ +----+ +----+ +----+
++----+ +----+ +----+ +----+
++----+ +----+ +----+ +----+
+###
+
 class LineGeometry extends Geometry
 
   shaderAttributes: () ->

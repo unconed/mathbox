@@ -1,6 +1,7 @@
 class Geometry extends THREE.BufferGeometry
   constructor: () ->
     THREE.BufferGeometry.call @
+    @dynamic = false
 
   _emitter: (name) ->
     attribute = @attributes[name]

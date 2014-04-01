@@ -7,25 +7,24 @@ class Cartesian extends View
 
     types = @_attributes.types
     @uniforms =
-      cartesianMatrix:          @_attributes.make types.mat4()
-#      inverseCartesianMatrix:   @_attributes.make types.mat4()
+      viewMatrix:          @_attributes.make types.mat4()
 
-    @cartesianMatrix          = @uniforms.cartesianMatrix.value
-#    @inverseCartesianMatrix   = @uniforms.inverseCartesianMatrix.value
-    @rotationMatrix           = new THREE.Matrix4()
-#    @q                   = new THREE.Quaternion()
+    @viewMatrix          = @uniforms.viewMatrix.value
+    @rotationMatrix      = new THREE.Matrix4()
+
+    @scale               = new THREE.Vector3(1, 1, 1)
 
   unmake: () ->
     super
 
-    delete @cartesianMatrix
-#    delete @inverseCartesianMatrix
+    delete @viewMatrix
     delete @rotationMatrix
-#    delete @q
+    delete @positionMatrix
+    delete @scale
 
-  change: (changed, touched) ->
+  change: (changed, touched, first) ->
 
-    return unless touched['object'] or touched['view']
+    return unless touched['object'] or touched['view'] or first
 
     o = @_get 'object.position'
     s = @_get 'object.scale'
@@ -43,14 +42,14 @@ class Cartesian extends View
     sz = s.z
 
     # Forward transform
-    @cartesianMatrix.set(
+    @viewMatrix.set(
       2*sx/dx, 0, 0, -(2*x+dx)*sx/dx,
       0, 2*sy/dy, 0, -(2*y+dy)*sy/dy,
       0, 0, 2*sz/dz, -(2*z+dz)*sz/dz,
       0, 0, 0, 1 #,
     )
-    @rotationMatrix.makeRotationFromQuaternion q
-    @cartesianMatrix.multiplyMatrices @rotationMatrix, @cartesianMatrix
+    @rotationMatrix.compose o, q, @scale
+    @viewMatrix.multiplyMatrices @rotationMatrix, @viewMatrix
 
     ###
     # Backward transform
@@ -69,7 +68,7 @@ class Cartesian extends View
       type: 'range'
 
   to: (vector) ->
-    vector.applyMatrix4 @cartesianMatrix
+    vector.applyMatrix4 @viewMatrix
 
   transform: (shader) ->
     shader.call 'cartesian.position', @uniforms

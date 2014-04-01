@@ -1,4 +1,5 @@
-exports.Ticks = require('./ticks')
+exports.Ticks = require './ticks'
+exports.Ease  = require './ease'
 
 exports.setDimension = (vec, dimension) ->
 

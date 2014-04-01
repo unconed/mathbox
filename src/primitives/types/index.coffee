@@ -9,6 +9,7 @@ Classes =
   ticks:      require './render/ticks'
 
   cartesian:  require './view/cartesian'
+  polar:      require './view/polar'
   view:       require './view/view'
 
   array:      require './data/array'

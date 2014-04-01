@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 _Array = require '../data/array'
 
 class Curve extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'curve']
+  @traits: ['node', 'object', 'style', 'line', 'curve', 'position']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
@@ -37,9 +37,11 @@ class Curve extends Primitive
 
     # Build transform chain
     position = @_shaders.shader()
+    @_helper.position.make()
 
     # Fetch position and transform to view
     @array.shader position
+    @_helper.position.shader position
     @transform position
 
     # Prepare bound uniforms
@@ -63,6 +65,7 @@ class Curve extends Primitive
   unmake: () ->
     @unbind()
     @_helper.object.unmake()
+    @_helper.position.unmake()
 
     @array = null
 

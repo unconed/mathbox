@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util = require '../../../util'
 
 class Axis extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow']
+  @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
@@ -20,8 +20,12 @@ class Axis extends Primitive
     @axisStep       = positionUniforms.axisStep.value
 
     # Build transform chain
+    @_helper.position.make()
+
     position = @_shaders.shader()
     position.call 'axis.position', positionUniforms
+    @_helper.position.shader position
+
     @transform position
 
     # Prepare bound uniforms
@@ -55,6 +59,7 @@ class Axis extends Primitive
   unmake: () ->
     @_helper.object.unmake()
     @_helper.span.unmake()
+    @_helper.position.unmake()
 
   change: (changed, touched, init) ->
     @rebuild() if changed['axis.detail']?

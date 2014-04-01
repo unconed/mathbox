@@ -132,6 +132,9 @@ class Model
     s = s.replace /^\s+/, ''
     s = s.replace /\s+$/, ''
 
+    # Universal selector *
+    return @nodes if s == '*'
+
     # Check for simple #id, .class or type selector
     id    = s.match /^#([A-Za-z0-9_]+)$/
     return        @ids[id[1]] || [] if id
