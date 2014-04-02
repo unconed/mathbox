@@ -41,30 +41,31 @@ class Buffer extends Renderable
   generate: () ->
     data  = @data
     i = 0
+    limit = @samples * @channels
 
     switch @channels
 
       when 1 then (x) ->
         data[i++] = x
-        true
+        limit - i > 0
 
       when 2 then (x, y) ->
         data[i++] = x
         data[i++] = y
-        true
+        limit - i > 0
 
       when 3 then (x, y, z) ->
         data[i++] = x
         data[i++] = y
         data[i++] = z
-        true
+        limit - i > 0
 
       when 4 then (x, y, z, w) ->
         data[i++] = x
         data[i++] = y
         data[i++] = z
         data[i++] = w
-        true
+        limit - i > 0
 
 
 module.exports = Buffer

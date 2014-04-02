@@ -14,8 +14,9 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute
 "sample.2d.4": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return texture2D(dataTexture, uv);\n}\n",
 "style.clip": "varying float vClip;\n\nvoid clipStyle() {\n  if (vClip < 0.0) discard;\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvoid setStyleColor() {\n\tgl_FragColor = vec4(styleColor, styleOpacity);\n}\n",
+"style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "// External\nvec3 getPosition(vec2 xy);\n\nvec3 getSurfacePosition() {\n  return getPosition(position.xy);\n}\n",
-"surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  up     = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  down   = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = down - up;\n  vec3 n = cross(dx, dy);\n  if (length(n) > 0.0) {\n    return normalize(cross(dx, dy));\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal = getSurfaceNormal(left, center, right, up, down);\n  \n  return center;\n}\n",
+"surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\nvarying float amp;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(0.0, 2.0, 0.0, 1.0)).xyz - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
 "ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec2 xy) {\n\n  const float epsilon = 0.0001;\n  float line = xy.x - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xy.y, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
 "view.position": "vec3 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0)).xyz;\n}"};
 
@@ -7317,7 +7318,7 @@ Surface = (function(_super) {
       width: width,
       height: height,
       position: position,
-      shaded: false
+      shaded: shaded
     });
     this.clip();
     return this._helper.object.make([this.surface]);
@@ -7508,27 +7509,28 @@ Buffer = (function(_super) {
   Buffer.prototype.iterate = function() {};
 
   Buffer.prototype.generate = function() {
-    var data, i;
+    var data, i, limit;
     data = this.data;
     i = 0;
+    limit = this.samples * this.channels;
     switch (this.channels) {
       case 1:
         return function(x) {
           data[i++] = x;
-          return true;
+          return limit - i > 0;
         };
       case 2:
         return function(x, y) {
           data[i++] = x;
           data[i++] = y;
-          return true;
+          return limit - i > 0;
         };
       case 3:
         return function(x, y, z) {
           data[i++] = x;
           data[i++] = y;
           data[i++] = z;
-          return true;
+          return limit - i > 0;
         };
       case 4:
         return function(x, y, z, w) {
@@ -7536,7 +7538,7 @@ Buffer = (function(_super) {
           data[i++] = y;
           data[i++] = z;
           data[i++] = w;
-          return true;
+          return limit - i > 0;
         };
     }
   };
@@ -8462,10 +8464,11 @@ Surface = (function(_super) {
   __extends(Surface, _super);
 
   function Surface(gl, shaders, options) {
-    var f, factory, position, uniforms, v, _ref;
+    var f, factory, position, shaded, uniforms, v, _ref, _ref1;
     Surface.__super__.constructor.call(this, gl, shaders);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
+    shaded = (_ref1 = options.shaded) != null ? _ref1 : true;
     this.geometry = new SurfaceGeometry({
       width: options.width || 2,
       height: options.height || 2,
@@ -8477,11 +8480,21 @@ Surface = (function(_super) {
       v["import"](position);
     }
     v.split();
-    v.call('surface.position', uniforms);
+    if (!shaded) {
+      v.call('surface.position', uniforms);
+    }
+    if (shaded) {
+      v.call('surface.position.normal', uniforms, '_shade_');
+    }
     v.pass();
     v.call('project.position');
     f = factory.fragment;
-    f.call('style.color', uniforms);
+    if (!shaded) {
+      f.call('style.color', uniforms);
+    }
+    if (shaded) {
+      f.call('style.color.shaded', uniforms, '_shade_');
+    }
     this.material = new THREE.ShaderMaterial(factory.build({
       side: THREE.DoubleSide,
       defaultAttributeValues: null

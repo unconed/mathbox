@@ -15,8 +15,9 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(2.3, 1, 2);
+    three.camera.position.set(-3.5, 1.4, -2.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+    three.renderer.setClearColor(new THREE.Color(0x505050), 1.0);
 
     time = 0
     three.on('update', function () {
@@ -24,7 +25,7 @@
     });
 
     mathbox.cartesian({
-      range: [[-1, 1], [0, 1], [-1, 1]],
+      range: [[-3, 3], [0, 1], [-3, 3]],
       scale: [2, 1, 2],
     });
 
@@ -54,13 +55,13 @@
       height: 128,
       axes: [1, 3],
       expression: function (x, y, i, j, emit) {
-        return emit(x, .5 + .5 * (Math.sin(x + time) * Math.sin(y + time)), y);
+        return emit(x, .25 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);
       },
       dimensions: 3,
     });
     mathbox.surface({
       points: '#sampler',
-      color: 'blue',
+      color: 0x3090FF,
       width: 0.01,
     });
 

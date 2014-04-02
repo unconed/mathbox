@@ -10,27 +10,32 @@ void getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out ve
   center =                  getPosition(xy);
   left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;
   right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;
-  up     = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;
-  down   = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;
+  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;
+  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;
 }
 
 vec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {
   vec3 dx = right - left;
-  vec3 dy = down - up;
-  vec3 n = cross(dx, dy);
+  vec3 dy = up    - down;
+  vec3 n = cross(dy, dx);
   if (length(n) > 0.0) {
-    return normalize(cross(dx, dy));
+    return normalize(n);
   }
   return vec3(0.0, 1.0, 0.0);
 }
 
 varying vec3 vNormal;
+varying vec3 vLight;
+varying vec3 vPosition;
+varying float amp;
 
 vec3 getSurfacePositionNormal() {
   vec3 left, center, right, up, down;
 
   getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);
-  vNormal = getSurfaceNormal(left, center, right, up, down);
+  vNormal   = getSurfaceNormal(left, center, right, up, down);
+  vLight    = normalize((viewMatrix * vec4(0.0, 2.0, 0.0, 1.0)).xyz - center);
+  vPosition = -center;
   
   return center;
 }

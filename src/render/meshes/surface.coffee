@@ -7,6 +7,7 @@ class Surface extends Base
 
     uniforms = options.uniforms ? {}
     position = options.position
+    shaded   = options.shaded ? true
 
     @geometry = new SurfaceGeometry
       width:    options.width    || 2
@@ -18,12 +19,14 @@ class Surface extends Base
     v = factory.vertex
     v.import position if position
     v.split()
-    v  .call 'surface.position', uniforms
+    v  .call 'surface.position', uniforms if !shaded
+    v  .call 'surface.position.normal', uniforms, '_shade_' if shaded
     v.pass()
     v.call 'project.position'
 
     f = factory.fragment
-    f.call 'style.color', uniforms
+    f.call 'style.color', uniforms if !shaded
+    f.call 'style.color.shaded', uniforms, '_shade_' if shaded
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide

@@ -72,7 +72,7 @@ class Surface extends Primitive
               width:  width
               height: height
               position: position
-              shaded: false
+              shaded: shaded
 
     @clip()
 
