@@ -85,10 +85,12 @@ class Primitive
     previous = @node
     while previous
       parent   = previous.parent
+      break if !parent
       previous = parent.children[previous.index - 1]
       previous = parent if !previous
       return previous.primitive if previous?.primitive instanceof klass
 
+    throw "Could not locate attached data source on #{key} `#{@node.id}`"
     null
 
 

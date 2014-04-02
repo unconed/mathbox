@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Vector</title>
+  <script src="../build/mathbox-bundle.js"></script>
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'mathbox', 'stats'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(-3.5, 1.4, -2.3);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+    three.renderer.setClearColor(new THREE.Color(0x505050), 1.0);
+
+    time = 0
+    three.on('update', function () {
+      time = three.Time.now
+    });
+
+    mathbox.cartesian({
+      range: [[-3, 3], [0, 1], [-3, 3]],
+      scale: [2, 1, 2],
+    });
+
+    mathbox.axis({
+      id: 'axis1',
+      axis: 1,
+    });
+    mathbox.axis({
+      id: 'axis2',
+      axis: 2,
+    });
+    mathbox.axis({
+      id: 'axis3',
+      axis: 3,
+    });
+
+    mathbox.grid({
+      id: 'legrid',
+      width: 0.005,
+      opacity: 0.5,
+      axes: [1, 3],
+    });
+
+    mathbox.area({
+      id: 'sampler',
+      width: 64,
+      height: 64,
+      axes: [1, 3],
+      expression: function (x, y, i, j, emit) {
+               emit(x, 0, y);
+        return emit(x, .25 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);
+      },
+      dimensions: 3,
+    });
+    mathbox.vector({
+      points: '#sampler',
+      color: 0x3090FF,
+      width: 0.01,
+    });
+
+  </script>
+</body>
+</html>

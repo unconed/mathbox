@@ -8,6 +8,7 @@ Classes =
   grid:       require './visible/grid'
   surface:    require './visible/surface'
   ticks:      require './visible/ticks'
+  vector:     require './visible/vector'
 
   cartesian:  require './view/cartesian'
   polar:      require './view/polar'

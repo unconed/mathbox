@@ -52,6 +52,9 @@ Traits =
   axis:
     detail:      Types.number(1)
 
+  vector:
+    points:      Types.select(Types.object())
+    colors:      Types.select(Types.object())
   curve:
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())
