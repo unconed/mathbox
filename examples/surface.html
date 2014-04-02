@@ -51,8 +51,8 @@
 
     mathbox.area({
       id: 'sampler',
-      width: 128,
-      height: 128,
+      width: 64,
+      height: 64,
       axes: [1, 3],
       expression: function (x, y, i, j, emit) {
         return emit(x, .25 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);
@@ -60,6 +60,7 @@
       dimensions: 3,
     });
     mathbox.surface({
+      second: false,
       points: '#sampler',
       color: 0x3090FF,
       width: 0.01,

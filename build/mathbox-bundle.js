@@ -44652,6 +44652,7 @@ THREE.Bootstrap.registerPlugin('fill', {
         [ three.element, document.documentElement ].filter(is).map(set);
     }
 
+    three.canvas.style.display = 'block'
   },
 
   uninstall: function (three) {
@@ -44665,6 +44666,8 @@ THREE.Bootstrap.registerPlugin('fill', {
 
       this.applied.map(set);
     }
+
+    three.canvas.style.display = ''
   }
 
 });
@@ -50793,6 +50796,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute
 "style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "// External\nvec3 getPosition(vec2 xy);\n\nvec3 getSurfacePosition() {\n  return getPosition(position.xy);\n}\n",
 "surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\nvarying float amp;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(0.0, 2.0, 0.0, 1.0)).xyz - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
+"swizzle.2d.yx": "vec2 swizzle2Dyx(vec2 xy) {\n  return xy.yx;\n}\n",
 "ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec2 xy) {\n\n  const float epsilon = 0.0001;\n  float line = xy.x - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xy.y, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
 "view.position": "vec3 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0)).xyz;\n}"};
 
@@ -57775,7 +57779,7 @@ Curve = (function(_super) {
 
   function Curve(model, attributes, factory, shaders, helper) {
     Curve.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
-    this.resolution = this.line = this.array = this.resizeHandler = this.rebuildHandler = null;
+    this.line = this.array = this.resizeHandler = this.rebuildHandler = null;
   }
 
   Curve.prototype.bind = function() {
@@ -58022,11 +58026,11 @@ Matrix = require('../data/matrix');
 Surface = (function(_super) {
   __extends(Surface, _super);
 
-  Surface.traits = ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position'];
+  Surface.traits = ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position', 'grid'];
 
   function Surface(model, attributes, factory, shaders, helper) {
     Surface.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
-    this.resolution = this.line = this.array = this.resizeHandler = this.rebuildHandler = null;
+    this.line1 = this.line2 = this.surface = this.matrix = this.resizeHandler = this.rebuildHandler = null;
   }
 
   Surface.prototype.bind = function() {
@@ -58067,13 +58071,17 @@ Surface = (function(_super) {
   };
 
   Surface.prototype.make = function() {
-    var height, lineUniforms, position, shaded, styleUniforms, surfaceUniforms, width;
+    var debug, first, height, lineUniforms, objects, position, second, shaded, styleUniforms, surfaceUniforms, transpose, width;
     this.bind();
     position = this._shaders.shader();
+    transpose = this._shaders.shader().call('swizzle.2d.yx');
     this._helper.position.make();
     this.matrix.shader(position);
+    this.matrix.shader(transpose);
     this._helper.position.shader(position);
+    this._helper.position.shader(transpose);
     this.transform(position);
+    this.transform(transpose);
     styleUniforms = this._helper.style.uniforms();
     lineUniforms = this._helper.line.uniforms();
     surfaceUniforms = this._helper.surface.uniforms();
@@ -58081,14 +58089,31 @@ Surface = (function(_super) {
     height = this.matrix.height;
     console.log('surface::make', width, height);
     shaded = this._get('mesh.shaded');
-
-    /*
-    @line = @_factory.make 'line',
-              uniforms: @_helper.object.merge lineUniforms, styleUniforms
-              samples:  width
-              ribbons:  height
-              position: position
-     */
+    first = this._get('grid.first');
+    second = this._get('grid.second');
+    objects = [];
+    debug = this._factory.make('debug', {
+      map: this.matrix.buffer.texture.textureObject
+    });
+    objects.push(debug);
+    if (first) {
+      this.line1 = this._factory.make('line', {
+        uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
+        samples: width,
+        ribbons: height,
+        position: position
+      });
+      objects.push(this.line1);
+    }
+    if (second) {
+      this.line2 = this._factory.make('line', {
+        uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
+        samples: height,
+        ribbons: width,
+        position: transpose
+      });
+      objects.push(this.line2);
+    }
     this.surface = this._factory.make('surface', {
       uniforms: this._helper.object.merge(surfaceUniforms, styleUniforms),
       width: width,
@@ -58096,15 +58121,16 @@ Surface = (function(_super) {
       position: position,
       shaded: shaded
     });
+    objects.push(this.surface);
     this.clip();
-    return this._helper.object.make([this.surface]);
+    return this._helper.object.make(objects);
   };
 
   Surface.prototype.unmake = function() {
     this.unbind();
     this._helper.object.unmake();
     this._helper.position.unmake();
-    this.array = null;
+    this.matrix = null;
     return this._unherit();
   };
 
@@ -59119,11 +59145,11 @@ module.exports = Base;
 
 
 },{"../renderable":67}],63:[function(require,module,exports){
-var Debug, Renderable,
+var Base, Debug,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Renderable = require('../renderable');
+Base = require('./base');
 
 Debug = (function(_super) {
   __extends(Debug, _super);
@@ -59134,7 +59160,9 @@ Debug = (function(_super) {
     this.material = new THREE.MeshBasicMaterial({
       map: options.map
     });
+    this.material.side = THREE.DoubleSide;
     this.object = new THREE.Mesh(this.geometry, this.material);
+    this.object.position.y += 1;
     this.object.frustumCulled = false;
   }
 
@@ -59147,12 +59175,12 @@ Debug = (function(_super) {
 
   return Debug;
 
-})(Renderable);
+})(Base);
 
 module.exports = Debug;
 
 
-},{"../renderable":67}],64:[function(require,module,exports){
+},{"./base":62}],64:[function(require,module,exports){
 exports.Surface = require('./surface');
 
 exports.Line = require('./line');

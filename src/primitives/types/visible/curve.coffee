@@ -7,7 +7,7 @@ class Curve extends Primitive
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
 
-    @resolution = @line = @array = @resizeHandler = @rebuildHandler = null
+    @line = @array = @resizeHandler = @rebuildHandler = null
 
   bind: () ->
     unbind() if @resizeHandler

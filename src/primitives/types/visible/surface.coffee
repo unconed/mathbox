@@ -2,12 +2,12 @@ Primitive = require '../../primitive'
 Matrix = require '../data/matrix'
 
 class Surface extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position']
+  @traits: ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position', 'grid']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
 
-    @resolution = @line = @array = @resizeHandler = @rebuildHandler = null
+    @line1 = @line2 = @surface = @matrix = @resizeHandler = @rebuildHandler = null
 
   bind: () ->
     unbind() if @resizeHandler
@@ -38,13 +38,17 @@ class Surface extends Primitive
     @bind()
 
     # Build transform chain
-    position = @_shaders.shader()
+    position  = @_shaders.shader()
+    transpose = @_shaders.shader().call 'swizzle.2d.yx'
     @_helper.position.make()
 
     # Fetch position and transform to view
     @matrix.shader position
+    @matrix.shader transpose
     @_helper.position.shader position
+    @_helper.position.shader transpose
     @transform position
+    @transform transpose
 
     # Prepare bound uniforms
     styleUniforms = @_helper.style.uniforms()
@@ -58,14 +62,30 @@ class Surface extends Primitive
     console.log 'surface::make', width, height
 
     shaded = @_get 'mesh.shaded'
+    first  = @_get 'grid.first'
+    second = @_get 'grid.second'
 
-    ###
-    @line = @_factory.make 'line',
-              uniforms: @_helper.object.merge lineUniforms, styleUniforms
-              samples:  width
-              ribbons:  height
-              position: position
-    ###
+    objects = []
+
+    debug = @_factory.make 'debug',
+             map: @matrix.buffer.texture.textureObject
+    objects.push debug
+
+    if first
+      @line1 = @_factory.make 'line',
+                uniforms: @_helper.object.merge lineUniforms, styleUniforms
+                samples:  width
+                ribbons:  height
+                position: position
+      objects.push @line1
+
+    if second
+      @line2 = @_factory.make 'line',
+                uniforms: @_helper.object.merge lineUniforms, styleUniforms
+                samples:  height
+                ribbons:  width
+                position: transpose
+      objects.push @line2
 
     @surface = @_factory.make 'surface',
               uniforms: @_helper.object.merge surfaceUniforms, styleUniforms
@@ -73,17 +93,18 @@ class Surface extends Primitive
               height: height
               position: position
               shaded: shaded
+      objects.push @surface
 
     @clip()
 
-    @_helper.object.make [@surface]
+    @_helper.object.make objects
 
   unmake: () ->
     @unbind()
     @_helper.object.unmake()
     @_helper.position.unmake()
 
-    @array = null
+    @matrix = null
 
     @_unherit()
 
