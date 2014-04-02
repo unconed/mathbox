@@ -58408,7 +58408,7 @@ LineBuffer = (function(_super) {
     var callback, i, limit, output;
     callback = this.callback;
     output = this.generate();
-    limit = this.samples * this.channels;
+    limit = this.samples;
     i = 0;
     while (callback(i++, output) && i <= limit) {
       true;

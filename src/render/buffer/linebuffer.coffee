@@ -24,7 +24,7 @@ class LineBuffer extends Buffer
   iterate: () ->
     callback = @callback
     output = @generate()
-    limit = @samples * @channels
+    limit = @samples
 
     i = 0
     while callback(i++, output) && i <= limit
