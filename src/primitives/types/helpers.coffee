@@ -3,18 +3,48 @@ View = require './view/view'
 
 helpers =
 
+  bind:
+    make: (map) ->
+      @_helper.bind.unmake() if @handlers.rebuild
+
+      @bind = {}
+
+      # Monitor array for reallocation / resize
+      @handlers.resize  = (event) => @clip()
+      @handlers.rebuild = (event) => @rebuild()
+
+      # Fetch attached objects and bind
+      for key, klass of map
+        name = key.split(/\./g).pop()
+        data = @_attached key, klass
+
+        data.on 'resize',  @handlers.resize
+        data.on 'rebuild', @handlers.rebuild
+
+        @bind[name] = data
+
+    unmake: () ->
+      # Unbind from attached objects
+      for key, data of @bind
+        data.off 'resize',  @handlers.resize
+        data.off 'rebuild', @handlers.rebuild
+
+      delete @handlers.resize
+      delete @handlers.rebuild
+      delete @bind
+
   span:
     make: () ->
       # Look up nearest view to inherit from
       # Monitor size changes
       @span = @_inherit View
-      @spanHandler = (event) => @change {}, {}, true
-      @span.on 'range', @spanHandler
+      @handlers.span = (event) => @change {}, {}, true
+      @span.on 'range', @handlers.span
 
     unmake: () ->
-      @span.off 'resize', @spanHandler
+      @span.off 'resize', @handlers.span
       delete @span
-      delete @spanHandler
+      delete @handlers.span
 
     get: (prefix, dimension) ->
       # Return literal range
@@ -88,7 +118,7 @@ helpers =
       @node.off 'change:object', @handlers.position
 
       delete @objectMatrix
-      delete @handler.position
+      delete @handlers.position
 
     shader: (shader) ->
       shader.call 'object.position',

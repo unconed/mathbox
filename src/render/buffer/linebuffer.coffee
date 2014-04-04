@@ -30,7 +30,7 @@ class LineBuffer extends Buffer
     while callback(i++, output) && i <= limit
       true
 
-    i - 1
+    i
 
   write: (samples = @samples) ->
     @texture.write @data, 0, @index, samples, 1

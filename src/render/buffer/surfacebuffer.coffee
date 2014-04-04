@@ -39,7 +39,7 @@ class SurfaceBuffer extends Buffer
         i = 0
         j++
 
-    k - 1
+    k
 
   write: (samples = @samples) ->
     width = @width

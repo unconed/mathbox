@@ -55,7 +55,7 @@ class Primitive
 
   _change: (changed) ->
 
-  # Attribute inheritance
+  # Find parent with certain class
 
   _inherit: (klass) ->
 

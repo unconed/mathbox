@@ -7,11 +7,21 @@ void getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out ve
   vec2 deltaX = vec2(1.0, 0.0);
   vec2 deltaY = vec2(0.0, 1.0);
 
+  /*
+  // high quality, 5 tap
   center =                  getPosition(xy);
   left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;
   right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;
   down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;
   up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;
+  */
+  
+  // low quality, 3 tap
+  center =                  getPosition(xy);
+  left   =                  center;
+  down   =                  center;
+  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : (2.0 * center - getPosition(xy - deltaX));
+  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : (2.0 * center - getPosition(xy - deltaY));
 }
 
 vec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {

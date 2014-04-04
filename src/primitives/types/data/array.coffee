@@ -14,6 +14,16 @@ class _Array extends Data
   shader: (shader) ->
     @buffer.shader shader
 
+  getDimensions: () ->
+    width:  @space
+    height: @history
+    depth:  1
+
+  getActive: () ->
+    width: @length
+    height: @history
+    depth: 1
+
   make: () ->
     super
 

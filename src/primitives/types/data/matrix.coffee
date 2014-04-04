@@ -14,6 +14,16 @@ class Matrix extends Data
   shader: (shader) ->
     @buffer.shader shader
 
+  getDimensions: () ->
+    width:  @spaceWidth
+    height: @spaceHeight
+    depth:  @history
+
+  getActive: () ->
+    width:  @width
+    height: @height
+    depth:  @history
+
   make: () ->
     super
 

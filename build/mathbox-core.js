@@ -16,7 +16,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvoid setStyleColor() {\n\tgl_FragColor = vec4(styleColor, styleOpacity);\n}\n",
 "style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "// External\nvec3 getPosition(vec2 xy);\n\nvec3 getSurfacePosition() {\n  return getPosition(position.xy);\n}\n",
-"surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\nvarying float amp;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(0.0, 2.0, 0.0, 1.0)).xyz - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
+"surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xy);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : (2.0 * center - getPosition(xy - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : (2.0 * center - getPosition(xy - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\nvarying float amp;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(0.0, 2.0, 0.0, 1.0)).xyz - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
 "swizzle.2d.yx": "vec2 swizzle2Dyx(vec2 xy) {\n  return xy.yx;\n}\n",
 "ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec2 xy) {\n\n  const float epsilon = 0.0001;\n  float line = xy.x - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xy.y, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
 "view.position": "vec3 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0)).xyz;\n}"};
@@ -5489,6 +5489,22 @@ _Array = (function(_super) {
     return this.buffer.shader(shader);
   };
 
+  _Array.prototype.getDimensions = function() {
+    return {
+      width: this.space,
+      height: this.history,
+      depth: 1
+    };
+  };
+
+  _Array.prototype.getActive = function() {
+    return {
+      width: this.length,
+      height: this.history,
+      depth: 1
+    };
+  };
+
   _Array.prototype.make = function() {
     var channels, data, history, length, _ref;
     _Array.__super__.make.apply(this, arguments);
@@ -5611,6 +5627,22 @@ Data = (function(_super) {
 
   Data.prototype.update = function() {};
 
+  Data.prototype.getDimensions = function() {
+    return {
+      width: 0,
+      height: 0,
+      depth: 0
+    };
+  };
+
+  Data.prototype.getActive = function() {
+    return {
+      width: 0,
+      height: 0,
+      depth: 0
+    };
+  };
+
   Data.prototype.make = function() {
     this.handler = (function(_this) {
       return function() {
@@ -5700,6 +5732,22 @@ Matrix = (function(_super) {
 
   Matrix.prototype.shader = function(shader) {
     return this.buffer.shader(shader);
+  };
+
+  Matrix.prototype.getDimensions = function() {
+    return {
+      width: this.spaceWidth,
+      height: this.spaceHeight,
+      depth: this.history
+    };
+  };
+
+  Matrix.prototype.getActive = function() {
+    return {
+      width: this.width,
+      height: this.height,
+      depth: this.history
+    };
   };
 
   Matrix.prototype.make = function() {
@@ -5864,20 +5912,61 @@ Util = require('../../util');
 View = require('./view/view');
 
 helpers = {
+  bind: {
+    make: function(map) {
+      var data, key, klass, name, _results;
+      if (this.handlers.rebuild) {
+        this._helper.bind.unmake();
+      }
+      this.bind = {};
+      this.handlers.resize = (function(_this) {
+        return function(event) {
+          return _this.clip();
+        };
+      })(this);
+      this.handlers.rebuild = (function(_this) {
+        return function(event) {
+          return _this.rebuild();
+        };
+      })(this);
+      _results = [];
+      for (key in map) {
+        klass = map[key];
+        name = key.split(/\./g).pop();
+        data = this._attached(key, klass);
+        data.on('resize', this.handlers.resize);
+        data.on('rebuild', this.handlers.rebuild);
+        _results.push(this.bind[name] = data);
+      }
+      return _results;
+    },
+    unmake: function() {
+      var data, key, _ref;
+      _ref = this.bind;
+      for (key in _ref) {
+        data = _ref[key];
+        data.off('resize', this.handlers.resize);
+        data.off('rebuild', this.handlers.rebuild);
+      }
+      delete this.handlers.resize;
+      delete this.handlers.rebuild;
+      return delete this.bind;
+    }
+  },
   span: {
     make: function() {
       this.span = this._inherit(View);
-      this.spanHandler = (function(_this) {
+      this.handlers.span = (function(_this) {
         return function(event) {
           return _this.change({}, {}, true);
         };
       })(this);
-      return this.span.on('range', this.spanHandler);
+      return this.span.on('range', this.handlers.span);
     },
     unmake: function() {
-      this.span.off('resize', this.spanHandler);
+      this.span.off('resize', this.handlers.span);
       delete this.span;
-      return delete this.spanHandler;
+      return delete this.handlers.span;
     },
     get: function(prefix, dimension) {
       var range;
@@ -5962,7 +6051,7 @@ helpers = {
     unmake: function() {
       this.node.off('change:object', this.handlers.position);
       delete this.objectMatrix;
-      return delete this.handler.position;
+      return delete this.handlers.position;
     },
     shader: function(shader) {
       return shader.call('object.position', {
@@ -6169,6 +6258,7 @@ Traits = {
     width: Types.number(.01)
   },
   mesh: {
+    solid: Types.bool(true),
     shaded: Types.bool(true)
   },
   arrow: {
@@ -6994,71 +7084,49 @@ module.exports = Axis;
 
 
 },{"../../../util":79,"../../primitive":28}],44:[function(require,module,exports){
-var Curve, Primitive, _Array,
+var Curve, Data, Primitive,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = require('../../primitive');
 
-_Array = require('../data/array');
+Data = require('../data/data');
 
 Curve = (function(_super) {
   __extends(Curve, _super);
 
-  Curve.traits = ['node', 'object', 'style', 'line', 'curve', 'position'];
+  Curve.traits = ['node', 'object', 'style', 'line', 'curve', 'position', 'bind'];
 
   function Curve(model, attributes, factory, shaders, helper) {
     Curve.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
-    this.line = this.array = this.resizeHandler = this.rebuildHandler = null;
+    this.line = null;
   }
 
-  Curve.prototype.bind = function() {
-    if (this.resizeHandler) {
-      unbind();
-    }
-    this.array = this._attached('curve.points', _Array);
-    this.resizeHandler = (function(_this) {
-      return function(event) {
-        return _this.clip();
-      };
-    })(this);
-    this.rebuildHandler = (function(_this) {
-      return function(event) {
-        return _this.rebuild();
-      };
-    })(this);
-    this.array.on('resize', this.resizeHandler);
-    return this.array.on('rebuild', this.rebuildHandler);
-  };
-
-  Curve.prototype.unbind = function() {
-    this.array.off('resize', this.resizeHandler);
-    this.array.off('rebuild', this.rebuildHandler);
-    this.resizeHandler = null;
-    return this.rebuildHandler = null;
-  };
-
   Curve.prototype.clip = function() {
-    var n;
-    if (!(this.line && this.array)) {
+    var dims, samples;
+    if (!(this.line && this.bind.points)) {
       return;
     }
-    n = this.array.length;
-    return this.line.geometry.clip(0, n - 1);
+    dims = this.bind.points.getActive();
+    samples = dims.width;
+    return this.line.geometry.clip(0, samples - 1);
   };
 
   Curve.prototype.make = function() {
-    var history, lineUniforms, position, samples, styleUniforms;
-    this.bind();
+    var dims, history, lineUniforms, position, samples, styleUniforms;
+    this._helper.bind.make({
+      'curve.points': Data
+    });
     position = this._shaders.shader();
     this._helper.position.make();
-    this.array.shader(position);
+    this.bind.points.shader(position);
     this._helper.position.shader(position);
     this.transform(position);
     styleUniforms = this._helper.style.uniforms();
     lineUniforms = this._helper.line.uniforms();
-    samples = this.array.space;
-    history = this.array.history;
+    dims = this.bind.points.getDimensions();
+    samples = dims.width;
+    history = dims.height * dims.depth;
     this.line = this._factory.make('line', {
       uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
       samples: samples,
@@ -7070,11 +7138,9 @@ Curve = (function(_super) {
   };
 
   Curve.prototype.unmake = function() {
-    this.unbind();
+    this._helper.bind.unmake();
     this._helper.object.unmake();
-    this._helper.position.unmake();
-    this.array = null;
-    return this._unherit();
+    return this._helper.position.unmake();
   };
 
   Curve.prototype.change = function(changed, touched, init) {
@@ -7090,7 +7156,7 @@ Curve = (function(_super) {
 module.exports = Curve;
 
 
-},{"../../primitive":28,"../data/array":30}],45:[function(require,module,exports){
+},{"../../primitive":28,"../data/data":31}],45:[function(require,module,exports){
 var Grid, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7245,90 +7311,73 @@ module.exports = Grid;
 
 
 },{"../../../util":79,"../../primitive":28}],46:[function(require,module,exports){
-var Matrix, Primitive, Surface,
+var Data, Primitive, Surface,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = require('../../primitive');
 
-Matrix = require('../data/matrix');
+Data = require('../data/data');
 
 Surface = (function(_super) {
   __extends(Surface, _super);
 
-  Surface.traits = ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position', 'grid'];
+  Surface.traits = ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position', 'grid', 'bind'];
 
   function Surface(model, attributes, factory, shaders, helper) {
     Surface.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
-    this.line1 = this.line2 = this.surface = this.matrix = this.resizeHandler = this.rebuildHandler = null;
+    this.line1 = this.line2 = this.surface = null;
   }
 
-  Surface.prototype.bind = function() {
-    if (this.resizeHandler) {
-      unbind();
-    }
-    this.matrix = this._attached('surface.points', Matrix);
-    this.resizeHandler = (function(_this) {
-      return function(event) {
-        return _this.clip();
-      };
-    })(this);
-    this.rebuildHandler = (function(_this) {
-      return function(event) {
-        return _this.rebuild();
-      };
-    })(this);
-    this.matrix.on('resize', this.resizeHandler);
-    return this.matrix.on('rebuild', this.rebuildHandler);
-  };
-
-  Surface.prototype.unbind = function() {
-    this.matrix.off('resize', this.resizeHandler);
-    this.matrix.off('rebuild', this.rebuildHandler);
-    this.resizeHandler = null;
-    return this.rebuildHandler = null;
-  };
-
   Surface.prototype.clip = function() {
-    var h, w;
-    if (!(this.line && this.array)) {
+    var dims, h, w;
+    if (!(this.surface && this.bind.points)) {
       return;
     }
-    w = this.matrix.width;
-    h = this.matrix.height;
-    console.log('surface::clip', w, h);
-    return this.surface.geometry.clip(0, Math.floor((w - 1) * (h - 1)));
+    dims = this.bind.points.getActive();
+    w = dims.width;
+    h = dims.height;
+    return this.surface.geometry.clip(0, Math.round((w - 1) * (h - 1)));
   };
 
   Surface.prototype.make = function() {
-    var debug, first, height, lineUniforms, objects, position, second, shaded, styleUniforms, surfaceUniforms, transpose, width;
-    this.bind();
+    var dims, first, height, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, transpose, types, width, wireUniforms;
+    this._helper.bind.make({
+      'surface.points': Data
+    });
     position = this._shaders.shader();
-    transpose = this._shaders.shader().call('swizzle.2d.yx');
     this._helper.position.make();
-    this.matrix.shader(position);
-    this.matrix.shader(transpose);
+    this.bind.points.shader(position);
     this._helper.position.shader(position);
-    this._helper.position.shader(transpose);
     this.transform(position);
-    this.transform(transpose);
+    transpose = this._shaders.shader();
+    transpose.call('swizzle.2d.yx');
+    transpose.concat(position);
     styleUniforms = this._helper.style.uniforms();
+    wireUniforms = this._helper.style.uniforms();
     lineUniforms = this._helper.line.uniforms();
     surfaceUniforms = this._helper.surface.uniforms();
-    width = this.matrix.width;
-    height = this.matrix.height;
-    console.log('surface::make', width, height);
+    types = this._attributes.types;
+    wireUniforms.styleColor = this._attributes.make(types.color());
+    this.wireColor = wireUniforms.styleColor.value;
+    this.wireScratch = new THREE.Color;
+    dims = this.bind.points.getDimensions();
+    width = dims.width;
+    height = dims.height * dims.depth;
     shaded = this._get('mesh.shaded');
+    solid = this._get('mesh.solid');
     first = this._get('grid.first');
     second = this._get('grid.second');
     objects = [];
-    debug = this._factory.make('debug', {
-      map: this.matrix.buffer.texture.textureObject
-    });
-    objects.push(debug);
+
+    /*
+    debug = @_factory.make 'debug',
+             map: @bind.points.buffer.texture.textureObject
+    objects.push debug
+     */
     if (first) {
       this.line1 = this._factory.make('line', {
-        uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
+        uniforms: this._helper.object.merge(lineUniforms, styleUniforms, wireUniforms),
         samples: width,
         ribbons: height,
         position: position
@@ -7337,36 +7386,50 @@ Surface = (function(_super) {
     }
     if (second) {
       this.line2 = this._factory.make('line', {
-        uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
+        uniforms: this._helper.object.merge(lineUniforms, styleUniforms, wireUniforms),
         samples: height,
         ribbons: width,
         position: transpose
       });
       objects.push(this.line2);
     }
-    this.surface = this._factory.make('surface', {
-      uniforms: this._helper.object.merge(surfaceUniforms, styleUniforms),
-      width: width,
-      height: height,
-      position: position,
-      shaded: shaded
-    });
-    objects.push(this.surface);
+    if (solid) {
+      this.surface = this._factory.make('surface', {
+        uniforms: this._helper.object.merge(surfaceUniforms, styleUniforms),
+        width: width,
+        height: height,
+        position: position,
+        shaded: shaded
+      });
+      objects.push(this.surface);
+    }
     this.clip();
     return this._helper.object.make(objects);
   };
 
   Surface.prototype.unmake = function() {
-    this.unbind();
+    this._helper.bind.unmake();
     this._helper.object.unmake();
-    this._helper.position.unmake();
-    this.matrix = null;
-    return this._unherit();
+    return this._helper.position.unmake();
   };
 
   Surface.prototype.change = function(changed, touched, init) {
-    if ((changed['surface.points'] != null) || changed['mesh.shaded']) {
-      return this.rebuild();
+    var c, color, solid;
+    if ((changed['surface.points'] != null) || changed['mesh.shaded'] || changed['mesh.solid'] || touched['grid']) {
+      this.rebuild();
+    }
+    if (changed['style.color'] || changed['mesh.solid'] || init) {
+      solid = this._get('mesh.solid');
+      color = this._get('style.color');
+      this.wireColor.copy(color);
+      if (solid) {
+        c = this.wireScratch;
+        c.setRGB(color.x, color.y, color.z);
+        c.convertGammaToLinear().multiplyScalar(.5).convertLinearToGamma();
+        this.wireColor.x = c.r;
+        this.wireColor.y = c.g;
+        return this.wireColor.z = c.b;
+      }
     }
   };
 
@@ -7377,7 +7440,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../primitive":28,"../data/matrix":33}],47:[function(require,module,exports){
+},{"../../primitive":28,"../data/data":31}],47:[function(require,module,exports){
 var Primitive, Ticks, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7769,7 +7832,7 @@ LineBuffer = (function(_super) {
     while (callback(i++, output) && i <= limit) {
       true;
     }
-    return i - 1;
+    return i;
   };
 
   LineBuffer.prototype.write = function(samples) {
@@ -7851,7 +7914,7 @@ SurfaceBuffer = (function(_super) {
         j++;
       }
     }
-    return k - 1;
+    return k;
   };
 
   SurfaceBuffer.prototype.write = function(samples) {

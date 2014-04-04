@@ -12,6 +12,16 @@ class Data extends Primitive
   shader: () ->
   update: () ->
 
+  getDimensions: () ->
+    width: 0
+    height: 0
+    depth: 0
+
+  getActive: () ->
+    width: 0
+    height: 0
+    depth: 0
+
   make: () ->
     @handler = () => @update()
     @node.root.model.on  'update', @handler

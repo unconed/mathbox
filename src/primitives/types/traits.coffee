@@ -19,6 +19,7 @@ Traits =
   line:
     width:       Types.number(.01)
   mesh:
+    solid:       Types.bool(true)
     shaded:      Types.bool(true)
   arrow:
     size:        Types.number(.07)
