@@ -13,14 +13,16 @@ class Data extends Primitive
   update: () ->
 
   getDimensions: () ->
-    width: 0
-    height: 0
-    depth: 0
+    elements: 1
+    width:    0
+    height:   0
+    depth:    0
 
   getActive: () ->
-    width: 0
-    height: 0
-    depth: 0
+    elements: 1
+    width:    0
+    height:   0
+    depth:    0
 
   make: () ->
     @handler = () => @update()

@@ -68,6 +68,7 @@ Traits =
     expression:  Types.nullable(Types.func())
     live:        Types.bool(true)
     dimensions:  Types.number(3)
+    items:       Types.number(1)
   array:
     length:      Types.number(1)
     history:     Types.number(1)

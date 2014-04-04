@@ -8,14 +8,14 @@ class DataBuffer extends Buffer
   build: () ->
     super
 
-    @data    = new Float32Array @samples * @channels
-    @texture = new Texture @gl, @samples, 1, @channels
+    @data    = new Float32Array @samples * @channels * @items
+    @texture = new Texture @gl, @samples * @items, 1, @channels
 
     @dataPointer = @uniforms.dataPointer.value
     @_adopt @texture.uniforms
 
-  write: (samples = @samples) ->
-    @texture.write @data, 0, 0, samples, 1
+  write: (n = @samples * @items) ->
+    @texture.write @data, 0, 0, n, 1
     @dataPointer.set .5, .5
 
 module.exports = DataBuffer

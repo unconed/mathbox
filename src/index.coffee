@@ -22,10 +22,11 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:
     init: true
 
-  listen: ['ready', 'update'],
+  listen: ['ready', 'update', 'post'],
 
   install: (three) ->
     inited = false
+    @first = true
 
     three.MathBox =
       init: (options) =>
@@ -64,6 +65,23 @@ THREE.Bootstrap.registerPlugin 'mathbox',
 
   update: (event, three) ->
     @context?.update()
+
+  post: () ->
+    if @first
+      fmt = (x) ->
+        out = []
+        while x >= 1000
+          out.unshift x % 1000
+          x = Math.floor(x / 1000)
+        out.unshift x
+        out.join ','
+
+      @first = false
+      info = three.renderer.info.render
+      console.log(fmt(info.faces) + ' faces  ',
+                  fmt(info.vertices) + ' vertices  ',
+                  fmt(info.calls) + ' calls');
+
 
 ###
 ###

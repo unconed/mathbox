@@ -15,14 +15,16 @@ class _Array extends Data
     @buffer.shader shader
 
   getDimensions: () ->
+    items:  @items
     width:  @space
     height: @history
     depth:  1
 
   getActive: () ->
-    width: @length
+    items:  @items
+    width:  @length
     height: @history
-    depth: 1
+    depth:  1
 
   make: () ->
     super
@@ -30,8 +32,10 @@ class _Array extends Data
     length   = @_get 'array.length'
     history  = @_get 'array.history'
     channels = @_get 'data.dimensions'
+    items    = @_get 'data.items'
 
-    @space = Math.max @space, length
+    @space    = Math.max @space, length
+    @items    = items
     @channels = channels
     @history  = history
 
@@ -39,18 +43,19 @@ class _Array extends Data
     data = @_get 'data.data'
     if data?
       if data[0]?.length
-        @space = Math.max @space, data.length
+        @space = Math.max @space, data.length / items
       else
-        @space = Math.max @space, Math.floor data.length / channels
+        @space = Math.max @space, Math.floor data.length / channels / items
 
     @length = @space
 
     # Create linebuffer
     if @space > 0
       @buffer = @_factory.make 'linebuffer',
+                items:    @items
                 length:   @space
                 history:  @history
-                channels: channels
+                channels: @channels
 
     # Notify of buffer reallocation
     @trigger
@@ -84,9 +89,9 @@ class _Array extends Data
 
     if data?
       if data[0]?.length
-        @length = data.length
+        @length = data.length / @items
       else
-        @length = Math.floor data.length / @channels
+        @length = Math.floor data.length / @channels / @items
 
       if @length > @space
         @space = Math.min @length, @space * 2

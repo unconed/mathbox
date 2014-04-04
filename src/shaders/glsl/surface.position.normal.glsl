@@ -44,7 +44,7 @@ vec3 getSurfacePositionNormal() {
 
   getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);
   vNormal   = getSurfaceNormal(left, center, right, up, down);
-  vLight    = normalize((viewMatrix * vec4(0.0, 2.0, 0.0, 1.0)).xyz - center);
+  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 1.0, 0.0)).xyz);// - center);
   vPosition = -center;
   
   return center;

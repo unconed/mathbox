@@ -13,8 +13,8 @@ class LineBuffer extends Buffer
   build: () ->
     super
 
-    @data    = new Float32Array @samples * @channels
-    @texture = new Texture @gl, @samples, @history, @channels
+    @data    = new Float32Array @samples * @channels * @items
+    @texture = new Texture @gl, @samples * @items, @history, @channels
     @index   = 0
 
     @dataPointer = @uniforms.dataPointer.value
@@ -27,19 +27,19 @@ class LineBuffer extends Buffer
     limit = @samples
 
     i = 0
-    while callback(i++, output) && i <= limit
+    while callback(i++, output) != false && i <= limit
       true
 
     i
 
-  write: (samples = @samples) ->
-    @texture.write @data, 0, @index, samples, 1
+  write: (n = @samples) ->
+    @texture.write @data, 0, @index, n * @items, 1
     @dataPointer.set .5, @index + .5
     @index = (@index + 1) % @history
 
   copy2D: (data) ->
     c = Math.min data[0].length, @channels
-    n = Math.min data.length,    @samples
+    n = Math.min data.length,    @samples * @items
 
     o = 0
     data = @data
@@ -47,6 +47,6 @@ class LineBuffer extends Buffer
       d = data[k]
       d[o++] = (v[i] ? 0) for i in [0...c]
 
-    @write Math.floor o / @channels
+    @write Math.floor o / @channels / @items
 
 module.exports = LineBuffer

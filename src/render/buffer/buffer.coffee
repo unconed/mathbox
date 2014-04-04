@@ -4,6 +4,7 @@ class Buffer extends Renderable
   @iterationLimit: 0xFFFF
 
   constructor: (gl, shaders, options) ->
+    @items    ?= options.items    || 1
     @samples  ?= options.samples  || 1
     @channels ?= options.channels || 4
 
@@ -31,17 +32,17 @@ class Buffer extends Renderable
     n
 
   copy: (data) ->
-    n    = Math.min data.length, @samples * @channels
+    n    = Math.min data.length, @samples * @channels * @items
     d    = @data
     d[i] = data[i] for i in [0...n]
-    @write Math.floor n / @channels
+    @write Math.floor n / @channels / @items
 
   write: () ->
   iterate: () ->
   generate: () ->
     data  = @data
     i = 0
-    limit = @samples * @channels
+    limit = @samples * @channels * @items
 
     switch @channels
 

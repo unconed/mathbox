@@ -50797,9 +50797,9 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute
 "sample.2d.4": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return texture2D(dataTexture, uv);\n}\n",
 "style.clip": "varying float vClip;\n\nvoid clipStyle() {\n  if (vClip < 0.0) discard;\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvoid setStyleColor() {\n\tgl_FragColor = vec4(styleColor, styleOpacity);\n}\n",
-"style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
+"style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .8 + .04) + .2 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "// External\nvec3 getPosition(vec2 xy);\n\nvec3 getSurfacePosition() {\n  return getPosition(position.xy);\n}\n",
-"surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xy);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : (2.0 * center - getPosition(xy - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : (2.0 * center - getPosition(xy - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\nvarying float amp;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(0.0, 2.0, 0.0, 1.0)).xyz - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
+"surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xy);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : (2.0 * center - getPosition(xy - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : (2.0 * center - getPosition(xy - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\nvarying float amp;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 1.0, 0.0)).xyz);// - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
 "swizzle.2d.yx": "vec2 swizzle2Dyx(vec2 xy) {\n  return xy.yx;\n}\n",
 "ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec2 xy) {\n\n  const float epsilon = 0.0001;\n  float line = xy.x - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xy.y, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
 "view.position": "vec3 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0)).xyz;\n}"};
@@ -55368,10 +55368,11 @@ THREE.Bootstrap.registerPlugin('mathbox', {
   defaults: {
     init: true
   },
-  listen: ['ready', 'update'],
+  listen: ['ready', 'update', 'post'],
   install: function(three) {
     var inited;
     inited = false;
+    this.first = true;
     return three.MathBox = {
       init: (function(_this) {
         return function(options) {
@@ -55419,6 +55420,24 @@ THREE.Bootstrap.registerPlugin('mathbox', {
   update: function(event, three) {
     var _ref;
     return (_ref = this.context) != null ? _ref.update() : void 0;
+  },
+  post: function() {
+    var fmt, info;
+    if (this.first) {
+      fmt = function(x) {
+        var out;
+        out = [];
+        while (x >= 1000) {
+          out.unshift(x % 1000);
+          x = Math.floor(x / 1000);
+        }
+        out.unshift(x);
+        return out.join(',');
+      };
+      this.first = false;
+      info = three.renderer.info.render;
+      return console.log(fmt(info.faces) + ' faces  ', fmt(info.vertices) + ' vertices  ', fmt(info.calls) + ' calls');
+    }
   }
 });
 
@@ -56274,6 +56293,7 @@ _Array = (function(_super) {
 
   _Array.prototype.getDimensions = function() {
     return {
+      items: this.items,
       width: this.space,
       height: this.history,
       depth: 1
@@ -56282,6 +56302,7 @@ _Array = (function(_super) {
 
   _Array.prototype.getActive = function() {
     return {
+      items: this.items,
       width: this.length,
       height: this.history,
       depth: 1
@@ -56289,28 +56310,31 @@ _Array = (function(_super) {
   };
 
   _Array.prototype.make = function() {
-    var channels, data, history, length, _ref;
+    var channels, data, history, items, length, _ref;
     _Array.__super__.make.apply(this, arguments);
     length = this._get('array.length');
     history = this._get('array.history');
     channels = this._get('data.dimensions');
+    items = this._get('data.items');
     this.space = Math.max(this.space, length);
+    this.items = items;
     this.channels = channels;
     this.history = history;
     data = this._get('data.data');
     if (data != null) {
       if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        this.space = Math.max(this.space, data.length);
+        this.space = Math.max(this.space, data.length / items);
       } else {
-        this.space = Math.max(this.space, Math.floor(data.length / channels));
+        this.space = Math.max(this.space, Math.floor(data.length / channels / items));
       }
     }
     this.length = this.space;
     if (this.space > 0) {
       this.buffer = this._factory.make('linebuffer', {
+        items: this.items,
         length: this.space,
         history: this.history,
-        channels: channels
+        channels: this.channels
       });
     }
     return this.trigger({
@@ -56355,9 +56379,9 @@ _Array = (function(_super) {
     length = this.length;
     if (data != null) {
       if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        this.length = data.length;
+        this.length = data.length / this.items;
       } else {
-        this.length = Math.floor(data.length / this.channels);
+        this.length = Math.floor(data.length / this.channels / this.items);
       }
       if (this.length > this.space) {
         this.space = Math.min(this.length, this.space * 2);
@@ -56412,6 +56436,7 @@ Data = (function(_super) {
 
   Data.prototype.getDimensions = function() {
     return {
+      elements: 1,
       width: 0,
       height: 0,
       depth: 0
@@ -56420,6 +56445,7 @@ Data = (function(_super) {
 
   Data.prototype.getActive = function() {
     return {
+      elements: 1,
       width: 0,
       height: 0,
       depth: 0
@@ -56519,6 +56545,7 @@ Matrix = (function(_super) {
 
   Matrix.prototype.getDimensions = function() {
     return {
+      items: this.items,
       width: this.spaceWidth,
       height: this.spaceHeight,
       depth: this.history
@@ -56527,6 +56554,7 @@ Matrix = (function(_super) {
 
   Matrix.prototype.getActive = function() {
     return {
+      items: this.items,
       width: this.width,
       height: this.height,
       depth: this.history
@@ -56534,25 +56562,27 @@ Matrix = (function(_super) {
   };
 
   Matrix.prototype.make = function() {
-    var channels, data, height, history, width, _ref, _ref1;
+    var channels, data, height, history, items, width, _ref, _ref1;
     Matrix.__super__.make.apply(this, arguments);
     width = this._get('matrix.width');
     height = this._get('matrix.height');
     history = this._get('matrix.history');
     channels = this._get('data.dimensions');
+    items = this._get('data.items');
+    this.items = items;
     this.channels = channels;
     this.history = history;
     data = this._get('data.data');
     if (data != null) {
       if ((_ref = data[0]) != null ? _ref.length : void 0) {
         if ((_ref1 = data[0][0]) != null ? _ref1.length : void 0) {
-          this.spaceWidth = Math.max(this.spaceWidth, data[0].length);
+          this.spaceWidth = Math.max(this.spaceWidth, data[0].length / this.items);
         } else {
-          this.spaceWidth = Math.max(this.spaceWidth, data[0].length / this.channels);
+          this.spaceWidth = Math.max(this.spaceWidth, data[0].length / this.channels / this.items);
         }
         this.spaceHeight = Math.max(this.spaceHeight, data.length);
       } else {
-        this.spaceHeight = Math.max(this.spaceHeight, Math.floor(data.length / this.spaceWidth));
+        this.spaceHeight = Math.max(this.spaceHeight, Math.floor(data.length / this.channels / this.items / this.spaceWidth));
       }
     }
     this.width = this.spaceWidth = Math.max(this.spaceWidth, width);
@@ -56562,7 +56592,8 @@ Matrix = (function(_super) {
         width: this.spaceWidth,
         height: this.spaceHeight,
         history: history,
-        channels: channels
+        channels: channels,
+        items: items
       });
     }
     return this.trigger({
@@ -56593,7 +56624,7 @@ Matrix = (function(_super) {
   };
 
   Matrix.prototype.update = function() {
-    var channels, data, h, height, length, method, oldHeight, oldWidth, w, width, _ref, _ref1;
+    var channels, data, h, height, items, length, method, oldHeight, oldWidth, w, width, _ref, _ref1;
     if (!this.buffer) {
       return;
     }
@@ -56609,11 +56640,12 @@ Matrix = (function(_super) {
     width = this.spaceWidth;
     height = this.spaceHeight;
     channels = this.channels;
+    items = this.items;
     if (data != null) {
       w = h = 0;
       method = 'copy';
       if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        w = data[0].length;
+        w = data[0].length / items;
         h = data.length;
         if (!((_ref1 = data[0][0]) != null ? _ref1.length : void 0)) {
           w /= channels;
@@ -56623,7 +56655,7 @@ Matrix = (function(_super) {
         }
       } else {
         w = width;
-        h = data.length / channels / width;
+        h = data.length / channels / items / width;
         method = 'copy';
       }
       if (w > width || h > height) {
@@ -57096,7 +57128,8 @@ Traits = {
     data: Types.nullable(Types.object()),
     expression: Types.nullable(Types.func()),
     live: Types.bool(true),
-    dimensions: Types.number(3)
+    dimensions: Types.number(3),
+    items: Types.number(1)
   },
   array: {
     length: Types.number(1),
@@ -58322,88 +58355,75 @@ module.exports = Ticks;
 
 
 },{"../../../util":79,"../../primitive":28}],48:[function(require,module,exports){
-var Primitive, Vector, _Array,
+var Data, Primitive, Vector,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = require('../../primitive');
 
-_Array = require('../data/array');
+Data = require('../data/data');
 
 Vector = (function(_super) {
   __extends(Vector, _super);
 
-  Vector.traits = ['node', 'object', 'style', 'line', 'vector', 'position'];
+  Vector.traits = ['node', 'object', 'style', 'line', 'vector', 'arrow', 'position', 'bind'];
 
   function Vector(model, attributes, factory, shaders, helper) {
     Vector.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
     this.line = this.array = this.resizeHandler = this.rebuildHandler = null;
   }
 
-  Vector.prototype.bind = function() {
-    if (this.resizeHandler) {
-      unbind();
-    }
-    this.array = this._attached('vector.points', _Array);
-    this.resizeHandler = (function(_this) {
-      return function(event) {
-        return _this.clip();
-      };
-    })(this);
-    this.rebuildHandler = (function(_this) {
-      return function(event) {
-        return _this.rebuild();
-      };
-    })(this);
-    this.array.on('resize', this.resizeHandler);
-    return this.array.on('rebuild', this.rebuildHandler);
-  };
-
-  Vector.prototype.unbind = function() {
-    this.array.off('resize', this.resizeHandler);
-    this.array.off('rebuild', this.rebuildHandler);
-    this.resizeHandler = null;
-    return this.rebuildHandler = null;
-  };
-
   Vector.prototype.clip = function() {
-    var n;
-    if (!(this.line && this.array)) {
+    var dims, ribbons, strips;
+    if (!(this.line && this.bind.points)) {
       return;
     }
-    n = this.array.length;
-    return this.line.geometry.clip(0, n - 1);
+    dims = this.bind.points.getActive();
+    ribbons = Math.floor(dims.width);
+    strips = dims.height * dims.depth;
+    return this.line.geometry.clip(0, ribbons * strips);
   };
 
   Vector.prototype.make = function() {
-    var history, lineUniforms, position, samples, styleUniforms;
-    this.bind();
+    var arrowUniforms, dims, lineUniforms, position, ribbons, strips, styleUniforms;
+    this._helper.bind.make({
+      'vector.points': Data
+    });
     position = this._shaders.shader();
     this._helper.position.make();
-    this.array.shader(position);
+    this.bind.points.shader(position);
     this._helper.position.shader(position);
     this.transform(position);
     styleUniforms = this._helper.style.uniforms();
     lineUniforms = this._helper.line.uniforms();
-    samples = Math.floor(this.array.space / 2);
-    history = this.array.history;
+    arrowUniforms = this._helper.arrow.uniforms();
+    lineUniforms.clipRange = arrowUniforms.arrowSize;
+    dims = this.bind.points.getDimensions();
+    ribbons = Math.floor(dims.width);
+    strips = dims.height * dims.depth;
     this.line = this._factory.make('line', {
       uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
       samples: 2,
-      ribbons: samples,
-      strips: history,
+      ribbons: ribbons,
+      strips: strips,
+      position: position,
+      clip: true
+    });
+    this.arrow = this._factory.make('arrow', {
+      uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+      samples: 2,
+      ribbons: ribbons,
+      strips: strips,
       position: position
     });
     this.clip();
-    return this._helper.object.make([this.line]);
+    return this._helper.object.make([this.line, this.arrow]);
   };
 
   Vector.prototype.unmake = function() {
-    this.unbind();
+    this._helper.bind.unmake();
     this._helper.object.unmake();
-    this._helper.position.unmake();
-    this.array = null;
-    return this._unherit();
+    return this._helper.position.unmake();
   };
 
   Vector.prototype.change = function(changed, touched, init) {
@@ -58419,7 +58439,7 @@ Vector = (function(_super) {
 module.exports = Vector;
 
 
-},{"../../primitive":28,"../data/array":30}],49:[function(require,module,exports){
+},{"../../primitive":28,"../data/data":31}],49:[function(require,module,exports){
 var Buffer, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58432,6 +58452,9 @@ Buffer = (function(_super) {
   Buffer.iterationLimit = 0xFFFF;
 
   function Buffer(gl, shaders, options) {
+    if (this.items == null) {
+      this.items = options.items || 1;
+    }
     if (this.samples == null) {
       this.samples = options.samples || 1;
     }
@@ -58472,12 +58495,12 @@ Buffer = (function(_super) {
 
   Buffer.prototype.copy = function(data) {
     var d, i, n, _i;
-    n = Math.min(data.length, this.samples * this.channels);
+    n = Math.min(data.length, this.samples * this.channels * this.items);
     d = this.data;
     for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
       d[i] = data[i];
     }
-    return this.write(Math.floor(n / this.channels));
+    return this.write(Math.floor(n / this.channels / this.items));
   };
 
   Buffer.prototype.write = function() {};
@@ -58488,7 +58511,7 @@ Buffer = (function(_super) {
     var data, i, limit;
     data = this.data;
     i = 0;
-    limit = this.samples * this.channels;
+    limit = this.samples * this.channels * this.items;
     switch (this.channels) {
       case 1:
         return function(x) {
@@ -58544,17 +58567,17 @@ DataBuffer = (function(_super) {
 
   DataBuffer.prototype.build = function() {
     DataBuffer.__super__.build.apply(this, arguments);
-    this.data = new Float32Array(this.samples * this.channels);
-    this.texture = new Texture(this.gl, this.samples, 1, this.channels);
+    this.data = new Float32Array(this.samples * this.channels * this.items);
+    this.texture = new Texture(this.gl, this.samples * this.items, 1, this.channels);
     this.dataPointer = this.uniforms.dataPointer.value;
     return this._adopt(this.texture.uniforms);
   };
 
-  DataBuffer.prototype.write = function(samples) {
-    if (samples == null) {
-      samples = this.samples;
+  DataBuffer.prototype.write = function(n) {
+    if (n == null) {
+      n = this.samples * this.items;
     }
-    this.texture.write(this.data, 0, 0, samples, 1);
+    this.texture.write(this.data, 0, 0, n, 1);
     return this.dataPointer.set(.5, .5);
   };
 
@@ -58599,8 +58622,8 @@ LineBuffer = (function(_super) {
 
   LineBuffer.prototype.build = function() {
     LineBuffer.__super__.build.apply(this, arguments);
-    this.data = new Float32Array(this.samples * this.channels);
-    this.texture = new Texture(this.gl, this.samples, this.history, this.channels);
+    this.data = new Float32Array(this.samples * this.channels * this.items);
+    this.texture = new Texture(this.gl, this.samples * this.items, this.history, this.channels);
     this.index = 0;
     this.dataPointer = this.uniforms.dataPointer.value;
     return this._adopt(this.texture.uniforms);
@@ -58612,17 +58635,17 @@ LineBuffer = (function(_super) {
     output = this.generate();
     limit = this.samples;
     i = 0;
-    while (callback(i++, output) && i <= limit) {
+    while (callback(i++, output) !== false && i <= limit) {
       true;
     }
     return i;
   };
 
-  LineBuffer.prototype.write = function(samples) {
-    if (samples == null) {
-      samples = this.samples;
+  LineBuffer.prototype.write = function(n) {
+    if (n == null) {
+      n = this.samples;
     }
-    this.texture.write(this.data, 0, this.index, samples, 1);
+    this.texture.write(this.data, 0, this.index, n * this.items, 1);
     this.dataPointer.set(.5, this.index + .5);
     return this.index = (this.index + 1) % this.history;
   };
@@ -58630,7 +58653,7 @@ LineBuffer = (function(_super) {
   LineBuffer.prototype.copy2D = function(data) {
     var c, d, i, k, n, o, _i, _j, _ref;
     c = Math.min(data[0].length, this.channels);
-    n = Math.min(data.length, this.samples);
+    n = Math.min(data.length, this.samples * this.items);
     o = 0;
     data = this.data;
     for (k = _i = 0; 0 <= n ? _i < n : _i > n; k = 0 <= n ? ++_i : --_i) {
@@ -58639,7 +58662,7 @@ LineBuffer = (function(_super) {
         d[o++] = (_ref = v[i]) != null ? _ref : 0;
       }
     }
-    return this.write(Math.floor(o / this.channels));
+    return this.write(Math.floor(o / this.channels / this.items));
   };
 
   return LineBuffer;
@@ -58673,8 +58696,8 @@ SurfaceBuffer = (function(_super) {
 
   SurfaceBuffer.prototype.build = function() {
     SurfaceBuffer.__super__.build.apply(this, arguments);
-    this.data = new Float32Array(this.samples * this.channels);
-    this.texture = new Texture(this.gl, this.width, this.height * this.history, this.channels);
+    this.data = new Float32Array(this.samples * this.items * this.channels);
+    this.texture = new Texture(this.gl, this.width * this.items, this.height * this.history, this.channels);
     this.index = 0;
     this.dataPointer = this.uniforms.dataPointer.value;
     return this._adopt(this.texture.uniforms);
@@ -58689,7 +58712,8 @@ SurfaceBuffer = (function(_super) {
     i = j = k = 0;
     while (++k <= limit) {
       repeat = callback(i, j, output);
-      if (!repeat) {
+      if (repeat === false) {
+        k++;
         break;
       }
       if (++i === n) {
@@ -58697,16 +58721,16 @@ SurfaceBuffer = (function(_super) {
         j++;
       }
     }
-    return k;
+    return k - 1;
   };
 
-  SurfaceBuffer.prototype.write = function(samples) {
+  SurfaceBuffer.prototype.write = function(n) {
     var height, width;
-    if (samples == null) {
-      samples = this.samples;
+    if (n == null) {
+      n = this.samples;
     }
-    width = this.width;
-    height = Math.ceil(samples / width);
+    width = this.width * this.items;
+    height = Math.ceil(n / this.width);
     this.texture.write(this.data, 0, this.index, width, height);
     this.dataPointer.set(.5, this.index + .5);
     return this.index = (this.index + 1) % this.history;
@@ -58714,7 +58738,7 @@ SurfaceBuffer = (function(_super) {
 
   SurfaceBuffer.prototype.copy2D = function(data) {
     var d, h, i, k, o, w, _i, _j, _ref;
-    w = Math.min(data[0].length, this.width * this.channels);
+    w = Math.min(data[0].length, this.width * this.channels * this.items);
     h = Math.min(data.length, this.height);
     o = 0;
     data = this.data;
@@ -58724,13 +58748,13 @@ SurfaceBuffer = (function(_super) {
         d[o++] = (_ref = d[i]) != null ? _ref : 0;
       }
     }
-    return this.write(Math.floor(o / this.channels));
+    return this.write(Math.floor(o / this.channels / this.items));
   };
 
   SurfaceBuffer.prototype.copy3D = function(data) {
     var c, d, h, i, j, k, o, v, w, _i, _j, _k, _ref;
     c = Math.min(data[0][0].length, this.channels);
-    w = Math.min(data[0].length, this.width);
+    w = Math.min(data[0].length, this.width * this.items);
     h = Math.min(data.length, this.height);
     o = 0;
     data = this.data;
@@ -58743,7 +58767,7 @@ SurfaceBuffer = (function(_super) {
         }
       }
     }
-    return this.write(Math.floor(n / this.channels));
+    return this.write(Math.floor(n / this.channels / this.items));
   };
 
   return SurfaceBuffer;

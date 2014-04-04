@@ -15,11 +15,13 @@ class Matrix extends Data
     @buffer.shader shader
 
   getDimensions: () ->
+    items:  @items
     width:  @spaceWidth
     height: @spaceHeight
     depth:  @history
 
   getActive: () ->
+    items:  @items
     width:  @width
     height: @height
     depth:  @history
@@ -31,7 +33,9 @@ class Matrix extends Data
     height   = @_get 'matrix.height'
     history  = @_get 'matrix.history'
     channels = @_get 'data.dimensions'
+    items    = @_get 'data.items'
 
+    @items    = items
     @channels = channels
     @history  = history
 
@@ -40,12 +44,13 @@ class Matrix extends Data
     if data?
       if data[0]?.length
         if data[0][0]?.length
-          @spaceWidth = Math.max @spaceWidth, data[0].length
+          @spaceWidth = Math.max @spaceWidth, data[0].length / @items
         else
-          @spaceWidth = Math.max @spaceWidth, data[0].length / @channels
+          @spaceWidth = Math.max @spaceWidth, data[0].length / @channels / @items
+
         @spaceHeight = Math.max @spaceHeight, data.length
       else
-        @spaceHeight = Math.max @spaceHeight, Math.floor data.length / @spaceWidth
+        @spaceHeight = Math.max @spaceHeight, Math.floor data.length / @channels / @items / @spaceWidth
 
     @width  = @spaceWidth  = Math.max @spaceWidth, width
     @height = @spaceHeight = Math.max @spaceHeight, height
@@ -57,6 +62,7 @@ class Matrix extends Data
                 height:   @spaceHeight
                 history:  history
                 channels: channels
+                items:    items
 
     # Notify of buffer reallocation
     @trigger
@@ -92,6 +98,7 @@ class Matrix extends Data
     width    = @spaceWidth
     height   = @spaceHeight
     channels = @channels
+    items    = @items
 
     if data?
 
@@ -100,7 +107,7 @@ class Matrix extends Data
 
       # Autosize width/height based on data layout
       if data[0]?.length
-        w = data[0].length
+        w = data[0].length / items
         h = data.length
 
         if !data[0][0]?.length
@@ -110,7 +117,7 @@ class Matrix extends Data
           method = 'copy2D'
       else
         w = width
-        h = data.length / channels / width
+        h = data.length / channels / items / width
         method = 'copy'
 
       # Enlarge if needed
