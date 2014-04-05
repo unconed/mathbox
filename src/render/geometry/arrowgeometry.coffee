@@ -38,7 +38,7 @@ class ArrowGeometry extends Geometry
 
     @addAttribute 'index',    Uint16Array,  triangles * 3, 1
     @addAttribute 'position', Float32Array, points,        3
-    @addAttribute 'arrow',    Float32Array, points,        3
+    @addAttribute 'arrow',    Float32Array, points,        4
 
     index    = @_emitter 'index'
     position = @_emitter 'position'
@@ -72,21 +72,25 @@ class ArrowGeometry extends Geometry
     y = 0
     for i in [0...ribbons]
 
+      base = 0
       x = anchor
       for j in [0...strips]
 
         position x, y, 0
-        arrow    0, 0, 0
+        arrow    0, 0, 0, base
 
         for k in [0...sides]
 
           position x, y, 0
-          arrow.apply null, circle[k]
+
+          c = circle[k]
+          arrow c[0], c[1], c[2], base
 
         position x, y, 0
-        arrow    0, 0, 1
+        arrow    0, 0, 1, base
 
         x += samples
+        base += samples
       y++
 
     @clip 0, arrows

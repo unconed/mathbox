@@ -1,17 +1,18 @@
 uniform float arrowSize;
-attribute vec3 arrow;
+attribute vec4 arrow;
 
 // External
 vec3 getPosition(vec2 xy);
 
-void getArrowGeometry(vec2 xy, out vec3 left, out vec3 right) {
+void getArrowGeometry(vec2 xy, float far, out vec3 left, out vec3 right, out vec3 start) {
   vec2 delta = vec2(1.0, 0.0);
 
   right = getPosition(xy);
   left  = getPosition(xy - delta);
+  start = getPosition(vec2(far, xy.y));
 }
 
-mat4 getArrowMatrix(float size, vec3 left, vec3 right) {
+mat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {
   
   vec3 diff = left - right;
   float l = length(diff);
@@ -28,11 +29,13 @@ mat4 getArrowMatrix(float size, vec3 left, vec3 right) {
   vec3 b = cross(n, t);
   
   // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x
-  float mini = max(0.0, (3.0 - l / size) * .333);
+  diff = right - start;
+  l = length(diff);
+  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);
   float scale = 1.0 - mini * mini * mini;
   
   // Size to 2.5:1 ratio
-//  size *= scale;
+  size *= scale;
   float sbt = size / 2.5;
 
   // Anchor at end position
@@ -43,10 +46,10 @@ mat4 getArrowMatrix(float size, vec3 left, vec3 right) {
 }
 
 vec3 getArrowPosition() {
-  vec3 left, right;
-
-  getArrowGeometry(position.xy, left, right);
-  mat4 matrix = getArrowMatrix(arrowSize, left, right);
-  return (matrix * vec4(arrow, 1.0)).xyz;
+  vec3 left, right, start;
+  
+  getArrowGeometry(position.xy, arrow.w, left, right, start);
+  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);
+  return (matrix * vec4(arrow.xyz, 1.0)).xyz;
 
 }

@@ -1,6 +1,4 @@
 class MathBox extends THREE.Object3D
-  constructor: () ->
-    THREE.Object3D.apply @
 
 class Scene
   constructor: (@scene) ->

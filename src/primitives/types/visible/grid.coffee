@@ -54,12 +54,6 @@ class Grid extends Primitive
       @_helper.position.shader position
       @transform position
 
-      ###
-      debug = @_factory.make 'debug',
-               map: buffer.texture.textureObject
-      @_render debug
-      ###
-
       # Prepare bound uniforms
       styleUniforms = @_helper.style.uniforms()
       lineUniforms  = @_helper.line.uniforms()

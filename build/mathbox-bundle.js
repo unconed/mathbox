@@ -50782,11 +50782,11 @@ module.exports = through;
 require=
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute vec3 arrow;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getArrowGeometry(vec2 xy, out vec3 left, out vec3 right) {\n  vec2 delta = vec2(1.0, 0.0);\n\n  right = getPosition(xy);\n  left  = getPosition(xy - delta);\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  float mini = max(0.0, (3.0 - l / size) * .333);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n//  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right;\n\n  getArrowGeometry(position.xy, left, right);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right);\n  return (matrix * vec4(arrow, 1.0)).xyz;\n\n}\n",
+window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute vec4 arrow;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getArrowGeometry(vec2 xy, float far, out vec3 left, out vec3 right, out vec3 start) {\n  vec2 delta = vec2(1.0, 0.0);\n\n  right = getPosition(xy);\n  left  = getPosition(xy - delta);\n  start = getPosition(vec2(far, xy.y));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff);\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position.xy, arrow.w, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
 "axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec2 uv) {\n  return axisStep * uv.x + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
 "grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec2 uv) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(uv.y, 0.0)).x;\n  vec4 offAxis = gridStep * uv.x + gridPosition;\n  return onAxis + offAxis;\n}\n",
-"line.clip": "uniform float clipRange;\nattribute vec2 strip;\n\nvarying float vClip;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec2 xy = vec2(strip.y, position.y);\n  vec3 end = getPosition(xy);\n  \n  // Clip end\n  float d = length(pos - end);\n  vClip = d / clipRange - 1.0;\n\n  // Passthrough position\n  return pos;\n}",
+"line.clip": "uniform float clipRange;\nattribute vec2 strip;\n\nvarying float vClip;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec2 xyE = vec2(strip.y, position.y);\n  vec3 end = getPosition(xyE);\n\n  // Sample start of line strip\n  vec2 xyS   = vec2(strip.x, position.y);\n  vec3 start = getPosition(xyS);\n  \n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(diff);\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  // Clip end\n  float d = length(pos - end);\n  vClip = d / range - 1.0;\n\n  // Passthrough position\n  return pos;\n}",
 "line.position": "uniform float lineWidth;\nattribute vec2 line;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getLineGeometry(vec2 xy, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec2 delta = vec2(1.0, 0.0);\n\n  center =                 getPosition(xy);\n  left   = (edge > -0.5) ? getPosition(xy - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xy + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position.xy, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
@@ -56277,7 +56277,7 @@ Data = require('./data');
 _Array = (function(_super) {
   __extends(_Array, _super);
 
-  _Array.traits = ['node', 'data', _Array];
+  _Array.traits = ['node', 'data', 'array'];
 
   function _Array(model, attributes, factory, shaders, helper) {
     _Array.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
@@ -58023,12 +58023,6 @@ Grid = (function(_super) {
         p.call('grid.position', positionUniforms);
         _this._helper.position.shader(position);
         _this.transform(position);
-
-        /*
-        debug = @_factory.make 'debug',
-                 map: buffer.texture.textureObject
-        @_render debug
-         */
         styleUniforms = _this._helper.style.uniforms();
         lineUniforms = _this._helper.line.uniforms();
         quads = samples - 1;
@@ -58902,7 +58896,7 @@ ArrowGeometry = (function(_super) {
   };
 
   function ArrowGeometry(options) {
-    var a, anchor, angle, arrow, arrows, b, back, base, circle, i, index, j, k, points, position, ribbons, samples, sides, strips, tip, triangles, x, y, _i, _j, _k, _l, _m, _n, _o;
+    var a, anchor, angle, arrow, arrows, b, back, base, c, circle, i, index, j, k, points, position, ribbons, samples, sides, strips, tip, triangles, x, y, _i, _j, _k, _l, _m, _n, _o;
     ArrowGeometry.__super__.constructor.call(this, options);
     this.sides = sides = +options.sides || 12;
     this.samples = samples = +options.samples || 2;
@@ -58914,7 +58908,7 @@ ArrowGeometry = (function(_super) {
     triangles = (sides * 2) * strips * ribbons;
     this.addAttribute('index', Uint16Array, triangles * 3, 1);
     this.addAttribute('position', Float32Array, points, 3);
-    this.addAttribute('arrow', Float32Array, points, 3);
+    this.addAttribute('arrow', Float32Array, points, 4);
     index = this._emitter('index');
     position = this._emitter('position');
     arrow = this._emitter('arrow');
@@ -58943,17 +58937,20 @@ ArrowGeometry = (function(_super) {
     }
     y = 0;
     for (i = _m = 0; 0 <= ribbons ? _m < ribbons : _m > ribbons; i = 0 <= ribbons ? ++_m : --_m) {
+      base = 0;
       x = anchor;
       for (j = _n = 0; 0 <= strips ? _n < strips : _n > strips; j = 0 <= strips ? ++_n : --_n) {
         position(x, y, 0);
-        arrow(0, 0, 0);
+        arrow(0, 0, 0, base);
         for (k = _o = 0; 0 <= sides ? _o < sides : _o > sides; k = 0 <= sides ? ++_o : --_o) {
           position(x, y, 0);
-          arrow.apply(null, circle[k]);
+          c = circle[k];
+          arrow(c[0], c[1], c[2], base);
         }
         position(x, y, 0);
-        arrow(0, 0, 1);
+        arrow(0, 0, 1, base);
         x += samples;
+        base += samples;
       }
       y++;
     }
@@ -59571,7 +59568,7 @@ MathBox = (function(_super) {
   __extends(MathBox, _super);
 
   function MathBox() {
-    THREE.Object3D.apply(this);
+    return MathBox.__super__.constructor.apply(this, arguments);
   }
 
   return MathBox;

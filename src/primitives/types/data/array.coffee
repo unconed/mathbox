@@ -1,7 +1,7 @@
 Data = require './data'
 
 class _Array extends Data
-  @traits: ['node', 'data', _Array]
+  @traits: ['node', 'data', 'array']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
