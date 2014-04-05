@@ -23,7 +23,7 @@ class Line extends Base
     v  .call 'line.position', uniforms
     v.pass()
     v.call 'line.clip', uniforms, '_clip_' if clip
-    v.call 'project.position'
+    v.call 'project.position', uniforms
 
     f = factory.fragment
     f.call 'style.clip', {}, '_clip_' if clip

@@ -22,7 +22,7 @@ class Surface extends Base
     v  .call 'surface.position', uniforms if !shaded
     v  .call 'surface.position.normal', uniforms, '_shade_' if shaded
     v.pass()
-    v.call 'project.position'
+    v.call 'project.position', uniforms
 
     f = factory.fragment
     f.call 'style.color', uniforms if !shaded

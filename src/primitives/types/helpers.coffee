@@ -77,6 +77,7 @@ helpers =
     uniforms: () ->
       styleColor:   @node.attributes['style.color']
       styleOpacity: @node.attributes['style.opacity']
+      styleZBias:   @node.attributes['style.zBias']
 
   arrow:
     # Return bound arrow style uniforms

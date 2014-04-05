@@ -44,9 +44,12 @@ class Surface extends Primitive
     surfaceUniforms  = @_helper.surface.uniforms()
 
     # Darken wireframe if needed for contrast
+    # Auto z-bias wireframe over surface
     types = @_attributes.types
     wireUniforms.styleColor = @_attributes.make types.color()
+    wireUniforms.styleZBias = @_attributes.make types.number(0)
     @wireColor = wireUniforms.styleColor.value
+    @wireZBias = wireUniforms.styleZBias
     @wireScratch = new THREE.Color
 
     # Make line and surface renderables
@@ -108,6 +111,10 @@ class Surface extends Primitive
                   changed['mesh.shaded'] or
                   changed['mesh.solid'] or
                   touched['grid']
+
+    if changed['style.zBias'] or
+       init
+      @wireZBias.value = @_get('style.zBias') + 5
 
     if changed['style.color'] or
        changed['mesh.solid'] or

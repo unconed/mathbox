@@ -20,7 +20,7 @@ class Arrow extends Base
     v = factory.vertex
     v.import position if position
     v.call 'arrow.position', uniforms
-    v.call 'project.position'
+    v.call 'project.position', uniforms
 
     f = factory.fragment
     f.call 'style.color', uniforms

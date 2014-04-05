@@ -50790,7 +50790,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute
 "line.position": "uniform float lineWidth;\nattribute vec2 line;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getLineGeometry(vec2 xy, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec2 delta = vec2(1.0, 0.0);\n\n  center =                 getPosition(xy);\n  left   = (edge > -0.5) ? getPosition(xy - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xy + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position.xy, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"project.position": "void setPosition(vec3 position) {\n  gl_Position = projectionMatrix * vec4(position, 1.0);\n}\n",
+"project.position": "uniform float styleZBias;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  pos.z *= (1.0 - styleZBias / 32768.0);\n  gl_Position = pos;\n}\n",
 "sample.2d.1": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).x, 0.0, 0.0, 1.0);\n}\n",
 "sample.2d.2": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).xw, 0.0, 1.0);\n}\n",
 "sample.2d.3": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).xyz, 1.0);\n}\n",
@@ -56815,7 +56815,8 @@ helpers = {
     uniforms: function() {
       return {
         styleColor: this.node.attributes['style.color'],
-        styleOpacity: this.node.attributes['style.opacity']
+        styleOpacity: this.node.attributes['style.opacity'],
+        styleZBias: this.node.attributes['style.zBias']
       };
     }
   },
@@ -57067,7 +57068,8 @@ Traits = {
   },
   style: {
     opacity: Types.number(1),
-    color: Types.color()
+    color: Types.color(),
+    zBias: Types.number(0)
   },
   line: {
     width: Types.number(.01)
@@ -58169,7 +58171,9 @@ Surface = (function(_super) {
     surfaceUniforms = this._helper.surface.uniforms();
     types = this._attributes.types;
     wireUniforms.styleColor = this._attributes.make(types.color());
+    wireUniforms.styleZBias = this._attributes.make(types.number(0));
     this.wireColor = wireUniforms.styleColor.value;
+    this.wireZBias = wireUniforms.styleZBias;
     this.wireScratch = new THREE.Color;
     dims = this.bind.points.getDimensions();
     width = dims.width;
@@ -58227,6 +58231,9 @@ Surface = (function(_super) {
     var c, color, solid;
     if ((changed['surface.points'] != null) || changed['mesh.shaded'] || changed['mesh.solid'] || touched['grid']) {
       this.rebuild();
+    }
+    if (changed['style.zBias'] || init) {
+      this.wireZBias.value = this._get('style.zBias') + 5;
     }
     if (changed['style.color'] || changed['mesh.solid'] || init) {
       solid = this._get('mesh.solid');
@@ -59283,7 +59290,7 @@ Arrow = (function(_super) {
       v["import"](position);
     }
     v.call('arrow.position', uniforms);
-    v.call('project.position');
+    v.call('project.position', uniforms);
     f = factory.fragment;
     f.call('style.color', uniforms);
     this.material = new THREE.ShaderMaterial(factory.build({
@@ -59420,7 +59427,7 @@ Line = (function(_super) {
     if (clip) {
       v.call('line.clip', uniforms, '_clip_');
     }
-    v.call('project.position');
+    v.call('project.position', uniforms);
     f = factory.fragment;
     if (clip) {
       f.call('style.clip', {}, '_clip_');
@@ -59486,7 +59493,7 @@ Surface = (function(_super) {
       v.call('surface.position.normal', uniforms, '_shade_');
     }
     v.pass();
-    v.call('project.position');
+    v.call('project.position', uniforms);
     f = factory.fragment;
     if (!shaded) {
       f.call('style.color', uniforms);

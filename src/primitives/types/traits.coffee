@@ -15,6 +15,7 @@ Traits =
   style:
     opacity:     Types.number(1)
     color:       Types.color()
+    zBias:       Types.number(0)
 
   line:
     width:       Types.number(.01)
