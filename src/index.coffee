@@ -71,7 +71,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
       fmt = (x) ->
         out = []
         while x >= 1000
-          out.unshift x % 1000
+          out.unshift ("000" + (x % 1000)).slice(-3)
           x = Math.floor(x / 1000)
         out.unshift x
         out.join ','

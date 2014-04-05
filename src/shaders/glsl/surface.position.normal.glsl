@@ -37,7 +37,6 @@ vec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {
 varying vec3 vNormal;
 varying vec3 vLight;
 varying vec3 vPosition;
-varying float amp;
 
 vec3 getSurfacePositionNormal() {
   vec3 left, center, right, up, down;
