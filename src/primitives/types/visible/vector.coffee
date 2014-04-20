@@ -15,7 +15,7 @@ class Vector extends Primitive
     ribbons = Math.floor dims.width
     strips = dims.height * dims.depth
 
-    @line.geometry.clip 0, ribbons * strips
+    @line.geometry.clip 0, ribbons * strips * @detail
 
   make: () ->
     # Bind to attached data sources
@@ -29,14 +29,17 @@ class Vector extends Primitive
     # Vector subdivision
     detail  = @_get 'vector.detail'
     samples = detail + 1
+    @detail = detail
     @resolution = 1 / detail
 
     # Fetch position
     if detail > 1
-      vectorUniforms =
-        subdivideStride: @_attributes.make types.number @resolution
-
       # Subdivide vector if needed
+      types = @_attributes.types
+      vectorUniforms =
+        subdivideStride: @_attributes.make types.number 1 / samples
+        subdivideScale:  @_attributes.make types.number samples / detail
+
       position.callback()
       @bind.points.shader position
       position.join()
@@ -56,8 +59,8 @@ class Vector extends Primitive
 
     # Make line renderable
     dims    = @bind.points.getDimensions()
-    ribbons = Math.floor dims.width
-    strips  = dims.height * dims.depth
+    strips  = Math.floor dims.width
+    ribbons = dims.height * dims.depth
 
     # Clip start/end for terminating arrow
     start   = @_get 'arrow.start'
