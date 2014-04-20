@@ -12,6 +12,7 @@ Classes =
 
   cartesian:  require './view/cartesian'
   polar:      require './view/polar'
+  spherical:  require './view/spherical'
   view:       require './view/view'
 
   array:      require './data/array'

@@ -40,6 +40,9 @@ Traits =
     bend:        Types.number(1)
     helix:       Types.number(0)
 
+  spherical:
+    bend:        Types.number(1)
+
   interval:
     axis:        Types.number(1)
   area:

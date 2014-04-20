@@ -1,8 +1,8 @@
 View = require './view'
 Util = require '../../../util'
 
-class Polar extends View
-  @traits: ['node', 'object', 'view', 'polar']
+class Spherical extends View
+  @traits: ['node', 'object', 'view', 'spherical']
 
   make: () ->
     super
@@ -14,17 +14,19 @@ class Polar extends View
 
     types = @_attributes.types
     @uniforms =
-      polarBend:   @node.attributes['polar.bend']
-      polarHelix:  @node.attributes['polar.helix']
-      polarFocus:  @_attributes.make types.number()
-      polarAspect: @_attributes.make types.number()
-      viewMatrix:  @_attributes.make types.mat4()
+      sphericalBend:    @node.attributes['spherical.bend']
+      sphericalFocus:   @_attributes.make types.number()
+      sphericalAspectX: @_attributes.make types.number()
+      sphericalAspectY: @_attributes.make types.number()
+      sphericalScaleY:  @_attributes.make types.number()
+      viewMatrix:       @_attributes.make types.mat4()
 
     @viewMatrix          = @uniforms.viewMatrix.value
     @rotationMatrix      = new THREE.Matrix4()
     @positionMatrix      = new THREE.Matrix4()
 
-    @aspect = 1
+    @aspectX = 1
+    @aspectY = 1
     @scale               = new THREE.Vector3(1, 1, 1)
 
   unmake: () ->
@@ -39,9 +41,7 @@ class Polar extends View
 
     return unless touched['object'] or touched['view'] or touched['polar'] or init
 
-    @helix = helix = @_get 'polar.helix'
-    @bend  = bend  = @_get 'polar.bend'
-
+    @bend  = bend  = @_get 'spherical.bend'
     @focus = focus = if bend > 0 then 1 / bend - 1 else 0
 
     o = @_get 'object.position'
@@ -61,9 +61,11 @@ class Polar extends View
 
     # Watch for negative scales.
     idx = if dx > 0 then 1 else -1
+    idy = if dy > 0 then 1 else -1
 
     # Recenter viewport on origin the more it's bent
     if bend > 0
+      # Y axis
       y1 = y
       y2 = y + dy
 
@@ -78,22 +80,48 @@ class Polar extends View
       y = min
       dy = max - min
 
-    # Adjust viewport range for polar transform.
-    # As the viewport goes polar, the X-range is interpolated to the Y-range instead,
-    # creating a perfectly circular viewport.
-    ady = Math.abs dy
-    fdx = dx + (ady * idx - dx) * bend
-    sdx = fdx / sx
-    sdy = dy  / sy
-    @aspect = aspect = Math.abs (sdx / sdy)
+      z1 = z
+      z2 = z + dz
 
-    @uniforms.polarFocus.value  = focus
-    @uniforms.polarAspect.value = aspect
+      # Z axis
+      abs = Math.max Math.abs(z1), Math.abs(z2) * Util.Ease.cosine(bend)
+
+      min = Math.min z1, z2
+      max = Math.max z1, z2
+
+      min = Math.min min, -abs
+      max = Math.max max, abs
+
+      z = min
+      dz = max - min
+
+    # Adjust viewport range for spherical transform.
+    # As the viewport goes spherical, the X/Y-ranges are interpolated to the Z-range,
+    # creating a perfectly spherical viewport.
+    adz = Math.abs dz
+    fdx = dx + (adz * idx - dx) * bend
+    fdy = dy + (adz * idy - dy) * bend
+    sdx = fdx / sx
+    sdy = fdy / sy
+    sdz = dz  / sz
+    @aspectX = aspectX = Math.abs (sdx / sdz)
+    @aspectY = aspectY = Math.abs (sdy / sdz / aspectX)
+
+    # Scale Y coordinates before transforming, but cap at aspectY/alpha to prevent from poking through the poles mid-transform.
+    # See shaders/glsl/spherical.position.glsl
+    aspectZ = dy / dx * sx / sy * 2 # Factor of 2 due to the fact that in the Y direction we only go 180º from pole to pole.
+    @scaleY = scaleY = Math.min(aspectY / bend, 1 + (aspectZ - 1) * bend);
+
+    @uniforms.sphericalBend.value    = bend
+    @uniforms.sphericalFocus.value   = focus
+    @uniforms.sphericalAspectX.value = aspectX
+    @uniforms.sphericalAspectY.value = aspectY
+    @uniforms.sphericalScaleY.value  = scaleY
 
     # Forward transform
     @viewMatrix.set(
       2*sx/fdx, 0, 0, -(2*x+dx)*sx/dx,
-      0, 2*sy/dy, 0,  -(2*y+dy)*sy/dy,
+      0, 2*sy/fdy, 0, -(2*y+dy)*sy/dy,
       0, 0, 2*sz/dz,  -(2*z+dz)*sz/dz,
       0, 0, 0, 1 #,
     )
@@ -104,7 +132,7 @@ class Polar extends View
     # Backward transform
     @inverseViewMatrix.set(
       fdx/(2*sx), 0, 0, (x+dx/2),
-      0, dy/(2*sy), 0, (y+dy/2),
+      0, fdy/(2*sy), 0, (y+dy/2),
       0, 0, dz/(2*sz), (z+dz/2),
       0, 0, 0, 1 #,
     )
@@ -118,20 +146,20 @@ class Polar extends View
 
   to: (vector) ->
     if @bend > 0.0001
-      radius = @focus + vector.y * aspect
+      radius = @focus + vector.z * @aspectX
       x      = vector.x * @bend
+      y      = vector.y * @bend / @aspectY * @scaleY
 
-      # Separate folds of complex plane into helix
-      vector.z += vector.x * @helix * @bend
-
-      # Apply polar warp
-      vector.x = Math.sin(x) * radius
-      vector.y = (Math.cos(x) * radius - focus) / aspect
+      # Apply spherical warp
+      c = Math.cos(y) * radius
+      vector.x = Math.sin(x) * c
+      vector.x = Math.sin(y) * radius * aspectY
+      vector.z = (Math.cos(x) * c - focus) / aspectX
 
     vector.applyMatrix4 @viewMatrix
 
   transform: (shader) ->
-    shader.call 'polar.position', @uniforms
+    shader.call 'spherical.position', @uniforms
     @parent?.transform shader
 
   axis: (dimension) ->
@@ -139,10 +167,10 @@ class Polar extends View
     min = range.x
     max = range.y
 
-    # Correct Y extents during polar warp.
-    if dimension == 2 && @bend > 0
+    # Correct Z extents during polar warp.
+    if dimension == 3 && @bend > 0
       max = Math.max Math.abs(max), Math.abs(min)
-      min = Math.max -@focus / @aspect + .001, min
+      min = Math.max -@focus / @aspectX + .001, min
 
     return new THREE.Vector2 min, max
 
@@ -152,4 +180,4 @@ class Polar extends View
   },
   ###
 
-module.exports = Polar
+module.exports = Spherical

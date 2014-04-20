@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Curved Vector</title>
+  <title>MathBox - Spherical Vectors</title>
   <script src="../build/mathbox-bundle.js"></script>
 </head>
 <body>
@@ -23,9 +23,9 @@
       time = three.Time.now / 4
     });
 
-    mathbox.polar({
+    mathbox.spherical({
       bend: 1,
-      range: [[-π, π], [0, 1], [-1, 1]],
+      range: [[-π, π], [-π/2, π/2], [0, 1]],
       scale: [2, 1, 1],
     });
 
@@ -68,26 +68,52 @@
       baseX: 2,
     });
 
-    mathbox.interval({
-      length: 512,
-      axis: 1,
+    mathbox.area({
+      width: 32,
+      height: 16,
+      axes: [1, 2],
       items: 2,
-      expression: function (x, i, emit) {
-        var y = x * 10.0 + i;
+      expression: function (x, y, i, j, emit) {
 
         var a = (Math.sin(x * 31.718 - time) * Math.sin(y * 21.131 + time));
         var b = (Math.sin(x * 27.41 + time) * Math.sin(y * 11.91 + 5 * Math.cos(x * 4.1) + time));
+        var c = (Math.sin(x * 26.718 - time) * Math.sin(y * 17.131 - x + time));
 
-        emit(x, 1, 0);
-        emit(x + a, 1 + b, 0);
+        emit(x, y, 1);
+        emit(x + a, y + b, 1 + c);
       },
       dimensions: 3,
     });
     mathbox.vector({
-      color: 0x30808F,
+      color: 0x3090FF,
       width: 0.005,
       size: 0.04,
-      detail: 16,
+      detail: 12,
+    });
+
+    mathbox.area({
+      width: 32,
+      height: 16,
+      axes: [1, 2],
+      items: 2,
+      expression: function (x, y, i, j, emit) {
+
+        t = time + 10;
+
+        var a = (Math.sin(x * 31.718 - t) * Math.sin(y * 21.131 + time));
+        var b = (Math.sin(x * 27.41 + t) * Math.sin(y * 11.91 + 5 * Math.cos(x * 4.1) + time));
+        var c = (Math.sin(x * 26.718 - t) * Math.sin(y * 17.131 - x + time));
+
+        emit(x, y, 1);
+        emit(x + a, y + b, 1 + c);
+      },
+      dimensions: 3,
+    });
+    mathbox.vector({
+      color: 0x70BFFF,
+      width: 0.005,
+      size: 0.04,
+      detail: 12,
     });
 
   </script>
