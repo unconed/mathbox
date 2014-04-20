@@ -29,45 +29,6 @@
       scale: [2, 1, 1],
     });
 
-    mathbox.axis({
-      id: 'axis1',
-      detail: 30,
-      position: [0, .5, 0],
-    });
-    mathbox.ticks({
-      id: 'ticks',
-      classes: ['foo', 'bar'],
-      divide: 10,
-      unit: π,
-      base: 2,
-      position: [0, .5, 0],
-    });
-
-    mathbox.axis({
-      id: 'axis2',
-      axis: 2,
-    });
-    mathbox.axis({
-      id: 'axis3',
-      axis: 2,
-      position: [π/2, 0, 0],
-    });
-    mathbox.axis({
-      id: 'axis4',
-      axis: 2,
-      position: [-π/2, 0, 0],
-    });
-
-    mathbox.grid({
-      id: 'legrid',
-      divideX: 20,
-      detailX: 48,
-      width: 0.005,
-      opacity: 0.5,
-      unitX: π,
-      baseX: 2,
-    });
-
     mathbox.area({
       width: 32,
       height: 16,

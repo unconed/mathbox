@@ -59046,7 +59046,8 @@ Texture = (function() {
     var gl;
     gl = this.gl;
     this.texture = gl.createTexture();
-    this.type = [null, gl.LUMINANCE, gl.LUMINANCE_ALPHA, gl.RGB, gl.RGBA][this.channels];
+    this.format = [null, gl.LUMINANCE, gl.LUMINANCE_ALPHA, gl.RGB, gl.RGBA][this.channels];
+    this.format3 = [null, THREE.LuminanceFormat, THREE.LuminanceAlphaFormat, THREE.RGBFormat, THREE.RGBAFormat][this.channels];
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -59054,10 +59055,13 @@ Texture = (function() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     this.data = new Float32Array(this.n);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, this.type, this.width, this.height, 0, this.type, gl.FLOAT, this.data);
+    gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.width, this.height, 0, this.format, gl.FLOAT, this.data);
     this.textureObject = new THREE.Texture(new Image(), new THREE.UVMapping(), THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.NearestFilter, THREE.NearestFilter);
     this.textureObject.__webglInit = true;
     this.textureObject.__webglTexture = this.texture;
+    this.textureObject.format = this.format3;
+    this.textureObject.type = THREE.FloatType;
+    this.textureObject.unpackAlignment = 1;
     return this.uniforms = {
       dataResolution: {
         type: 'v2',
@@ -59075,7 +59079,7 @@ Texture = (function() {
     gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    return gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, w, h, this.type, gl.FLOAT, data);
+    return gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, w, h, this.format, gl.FLOAT, data);
   };
 
   Texture.prototype.dispose = function() {

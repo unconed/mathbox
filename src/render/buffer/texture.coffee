@@ -8,7 +8,8 @@ class Texture
 
     # Make GL texture
     @texture = gl.createTexture()
-    @type = [null, gl.LUMINANCE, gl.LUMINANCE_ALPHA, gl.RGB, gl.RGBA][@channels]
+    @format  = [null, gl.LUMINANCE, gl.LUMINANCE_ALPHA, gl.RGB, gl.RGBA][@channels]
+    @format3 = [null, THREE.LuminanceFormat, THREE.LuminanceAlphaFormat, THREE.RGBFormat, THREE.RGBAFormat][@channels]
 
     gl.bindTexture   gl.TEXTURE_2D, @texture
     gl.texParameteri gl.TEXTURE_2D, gl.TEXTURE_WRAP_S,     gl.CLAMP_TO_EDGE
@@ -19,7 +20,7 @@ class Texture
     # Attach empty data
     @data = new Float32Array @n
     gl.pixelStorei gl.UNPACK_ALIGNMENT, 1
-    gl.texImage2D  gl.TEXTURE_2D, 0, @type, @width, @height, 0, @type, gl.FLOAT, @data
+    gl.texImage2D  gl.TEXTURE_2D, 0, @format, @width, @height, 0, @format, gl.FLOAT, @data
 
     # Make wrapper texture object.
     @textureObject = new THREE.Texture(
@@ -33,6 +34,9 @@ class Texture
     # Pre-init texture to trick WebGLRenderer
     @textureObject.__webglInit = true;
     @textureObject.__webglTexture = @texture;
+    @textureObject.format = @format3
+    @textureObject.type   = THREE.FloatType
+    @textureObject.unpackAlignment = 1
 
     # Create uniforms
     @uniforms =
@@ -49,7 +53,7 @@ class Texture
     # Write to rectangle
     gl.bindTexture gl.TEXTURE_2D, @texture
     gl.pixelStorei gl.UNPACK_ALIGNMENT, 1
-    gl.texSubImage2D gl.TEXTURE_2D, 0, x, y, w, h, @type, gl.FLOAT, data
+    gl.texSubImage2D gl.TEXTURE_2D, 0, x, y, w, h, @format, gl.FLOAT, data
 
   dispose: () ->
     throw 'Texture::dispose not yet implemented'
