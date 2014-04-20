@@ -82,7 +82,20 @@ helpers =
   arrow:
     # Return bound arrow style uniforms
     uniforms: () ->
-      arrowSize:   @node.attributes['arrow.size']
+      start   = @_get 'arrow.start'
+      end     = @_get 'arrow.end'
+      types   = @_attributes.types
+
+      space = @_attributes.make types.number 1 / (start + end)
+      style = @_attributes.make types.vec2 +start, +end
+      size  = @node.attributes['arrow.size']
+
+      clipStyle:  style
+      clipRange:  size
+      clipSpace:  space
+
+      arrowSpace: space
+      arrowSize:  size
 
   line:
     # Return bound line style uniforms

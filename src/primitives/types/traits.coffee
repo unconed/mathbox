@@ -24,6 +24,9 @@ Traits =
     shaded:      Types.bool(true)
   arrow:
     size:        Types.number(.07)
+    start:       Types.bool(false)
+    end:         Types.bool(true)
+    anchor:      Types.nullable(Types.number(0))
   ticks:
     size:        Types.number(.05)
 
@@ -57,6 +60,7 @@ Traits =
   vector:
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())
+    detail:      Types.number(1)
   curve:
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())

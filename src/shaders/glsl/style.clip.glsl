@@ -1,5 +1,5 @@
-varying float vClip;
+varying vec2 vClip;
 
 void clipStyle() {
-  if (vClip < 0.0) discard;
+  if (vClip.x < 0.0 || vClip.y < 0.0) discard;
 }

@@ -32,7 +32,6 @@ class LineGeometry extends Geometry
     @samples  = samples = +options.samples || 2
     @strips   = strips  = +options.strips  || 1
     @ribbons  = ribbons = +options.ribbons || 1
-    @anchor   = anchor  = +options.anchor  || samples - 1
     @segments = segments = samples - 1
 
     points    = samples  * strips * ribbons * 2
@@ -71,7 +70,7 @@ class LineGeometry extends Geometry
       for j in [0...strips]
 
         start = x
-        end   = x + anchor
+        end   = x + segments
 
         for k in [0...samples]
           edge = if k == 0 then -1 else if k == segments then 1 else 0

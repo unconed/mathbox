@@ -10,10 +10,10 @@ class Line extends Base
     clip     = options.clip
 
     @geometry = new LineGeometry
-      samples: options.samples || 2
-      strips:  options.strips  || 1
-      ribbons: options.ribbons || 1
-      anchor:  options.anchor  || options.samples - 1
+      samples: options.samples
+      strips:  options.strips
+      ribbons: options.ribbons
+      anchor:  options.anchor
 
     factory = shaders.material()
 

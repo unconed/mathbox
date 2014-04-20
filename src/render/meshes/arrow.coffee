@@ -9,11 +9,12 @@ class Arrow extends Base
     position = options.position
 
     @geometry = new ArrowGeometry
-      sides:   options.sides   || 12
-      samples: options.samples || 2
-      strips:  options.strips  || 1
-      ribbons: options.ribbons || 1
-      anchor:  options.anchor  || options.samples - 1
+      sides:   options.sides
+      samples: options.samples
+      strips:  options.strips
+      ribbons: options.ribbons
+      anchor:  options.anchor
+      flip:    options.flip
 
     factory = shaders.material()
 

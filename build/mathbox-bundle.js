@@ -48775,7 +48775,7 @@ Snippet = (function() {
   };
 
   Snippet.prototype.bind = function(uniforms, namespace) {
-    var a, def, e, name, redef, u, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
+    var a, def, e, exist, name, redef, u, x, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3;
     this.namespace = namespace;
     if (this.namespace == null) {
       this.namespace = Snippet.namespace();
@@ -48786,6 +48786,12 @@ Snippet = (function() {
     this.uniforms = {};
     this.externals = {};
     this.attributes = {};
+    exist = {};
+    x = (function(_this) {
+      return function(def) {
+        return exist[def.name] = true;
+      };
+    })(this);
     u = (function(_this) {
       return function(def, name) {
         return _this.uniforms[_this.namespace + (name != null ? name : def.name)] = def;
@@ -48811,21 +48817,28 @@ Snippet = (function() {
     _ref = this._signatures.uniform;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       def = _ref[_i];
-      u(redef(def));
+      x(def);
     }
-    _ref1 = this._signatures.external;
+    _ref1 = this._signatures.uniform;
     for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
       def = _ref1[_j];
-      e(def);
+      u(redef(def));
     }
-    _ref2 = this._signatures.attribute;
+    _ref2 = this._signatures.external;
     for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
       def = _ref2[_k];
+      e(def);
+    }
+    _ref3 = this._signatures.attribute;
+    for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+      def = _ref3[_l];
       a(redef(def));
     }
     for (name in uniforms) {
       def = uniforms[name];
-      u(def, name);
+      if (exist[name]) {
+        u(def, name);
+      }
     }
     return null;
   };
@@ -50782,11 +50795,11 @@ module.exports = through;
 require=
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute vec4 arrow;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getArrowGeometry(vec2 xy, float far, out vec3 left, out vec3 right, out vec3 start) {\n  vec2 delta = vec2(1.0, 0.0);\n\n  right = getPosition(xy);\n  left  = getPosition(xy - delta);\n  start = getPosition(vec2(far, xy.y));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff);\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position.xy, arrow.w, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
+window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getArrowGeometry(vec2 xy, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xy);\n  left  = getPosition(vec2(near, xy.y));\n  start = getPosition(vec2(far, xy.y));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position.xy, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
 "axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec2 uv) {\n  return axisStep * uv.x + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
 "grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec2 uv) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(uv.y, 0.0)).x;\n  vec4 offAxis = gridStep * uv.x + gridPosition;\n  return onAxis + offAxis;\n}\n",
-"line.clip": "uniform float clipRange;\nattribute vec2 strip;\n\nvarying float vClip;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec2 xyE = vec2(strip.y, position.y);\n  vec3 end = getPosition(xyE);\n\n  // Sample start of line strip\n  vec2 xyS   = vec2(strip.x, position.y);\n  vec3 start = getPosition(xyS);\n  \n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(diff);\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  // Clip end\n  float d = length(pos - end);\n  vClip = d / range - 1.0;\n\n  // Passthrough position\n  return pos;\n}",
+"line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nattribute vec2 strip;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec2 xyE = vec2(strip.y, position.y);\n  vec3 end = getPosition(xyE);\n\n  // Sample start of line strip\n  vec2 xyS   = vec2(strip.x, position.y);\n  vec3 start = getPosition(xyS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(diff) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n\n  // Passthrough position\n  return pos;\n}",
 "line.position": "uniform float lineWidth;\nattribute vec2 line;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getLineGeometry(vec2 xy, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec2 delta = vec2(1.0, 0.0);\n\n  center =                 getPosition(xy);\n  left   = (edge > -0.5) ? getPosition(xy - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xy + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position.xy, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
@@ -50795,13 +50808,14 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nattribute
 "sample.2d.2": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).xw, 0.0, 1.0);\n}\n",
 "sample.2d.3": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).xyz, 1.0);\n}\n",
 "sample.2d.4": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return texture2D(dataTexture, uv);\n}\n",
-"style.clip": "varying float vClip;\n\nvoid clipStyle() {\n  if (vClip < 0.0) discard;\n}\n",
+"style.clip": "varying vec2 vClip;\n\nvoid clipStyle() {\n  if (vClip.x < 0.0 || vClip.y < 0.0) discard;\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvoid setStyleColor() {\n\tgl_FragColor = vec4(styleColor, styleOpacity);\n}\n",
 "style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .8 + .04) + .2 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "// External\nvec3 getPosition(vec2 xy);\n\nvec3 getSurfacePosition() {\n  return getPosition(position.xy);\n}\n",
 "surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xy);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : (2.0 * center - getPosition(xy - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : (2.0 * center - getPosition(xy - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 1.0, 0.0)).xyz);// - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
 "swizzle.2d.yx": "vec2 swizzle2Dyx(vec2 xy) {\n  return xy.yx;\n}\n",
 "ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec2 xy) {\n\n  const float epsilon = 0.0001;\n  float line = xy.x - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xy.y, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
+"vector.subdivide": "uniform float subdivideStride;\n\n// External\nvec4 sampleData(vec2 xy);\n\nvec4 lerpXData(vec2 xy) {\n  float x = xy.x * subdivideStride;\n  float f = fract(x);\n  float i = x - f;\n\n  vec2 xy1 = vec2(i, xy.y);\n  vec2 xy2 = vec2(i + 1.0, xy.y);\n  \n  vec4 a = sampleData(uv1);\n  vec4 b = sampleData(uv2);\n\n  return mix(a, b, f);\n}\n",
 "view.position": "vec3 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0)).xyz;\n}"};
 
 },{}],2:[function(require,module,exports){
@@ -56822,8 +56836,19 @@ helpers = {
   },
   arrow: {
     uniforms: function() {
+      var end, size, space, start, style, types;
+      start = this._get('arrow.start');
+      end = this._get('arrow.end');
+      types = this._attributes.types;
+      space = this._attributes.make(types.number(1 / (start + end)));
+      style = this._attributes.make(types.vec2(+start, +end));
+      size = this.node.attributes['arrow.size'];
       return {
-        arrowSize: this.node.attributes['arrow.size']
+        clipStyle: style,
+        clipRange: size,
+        clipSpace: space,
+        arrowSpace: space,
+        arrowSize: size
       };
     }
   },
@@ -57079,7 +57104,10 @@ Traits = {
     shaded: Types.bool(true)
   },
   arrow: {
-    size: Types.number(.07)
+    size: Types.number(.07),
+    start: Types.bool(false),
+    end: Types.bool(true),
+    anchor: Types.nullable(Types.number(0))
   },
   ticks: {
     size: Types.number(.05)
@@ -57116,7 +57144,8 @@ Traits = {
   },
   vector: {
     points: Types.select(Types.object()),
-    colors: Types.select(Types.object())
+    colors: Types.select(Types.object()),
+    detail: Types.number(1)
   },
   curve: {
     points: Types.select(Types.object()),
@@ -57834,11 +57863,11 @@ Axis = (function(_super) {
 
   function Axis(model, attributes, factory, shaders, helper) {
     Axis.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
-    this.axisPosition = this.axisStep = this.resolution = this.line = null;
+    this.axisPosition = this.axisStep = this.resolution = this.line = this.arrows = null;
   }
 
   Axis.prototype.make = function() {
-    var arrowUniforms, detail, lineUniforms, position, positionUniforms, samples, styleUniforms, types;
+    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, styleUniforms, types;
     types = this._attributes.types;
     positionUniforms = {
       axisPosition: this._attributes.make(types.vec4()),
@@ -57854,22 +57883,34 @@ Axis = (function(_super) {
     styleUniforms = this._helper.style.uniforms();
     lineUniforms = this._helper.line.uniforms();
     arrowUniforms = this._helper.arrow.uniforms();
-    lineUniforms.clipRange = arrowUniforms.arrowSize;
     detail = this._get('axis.detail');
     samples = detail + 1;
     this.resolution = 1 / detail;
+    start = this._get('arrow.start');
+    end = this._get('arrow.end');
     this.line = this._factory.make('line', {
-      uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
+      uniforms: this._helper.object.merge(arrowUniforms, lineUniforms, styleUniforms),
       samples: samples,
       position: position,
-      clip: true
+      clip: start || end
     });
-    this.arrow = this._factory.make('arrow', {
-      uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
-      samples: samples,
-      position: position
-    });
-    this._helper.object.make([this.line, this.arrow]);
+    this.arrows = [];
+    if (start) {
+      this.arrows.push(this._factory.make('arrow', {
+        uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+        flip: true,
+        samples: samples,
+        position: position
+      }));
+    }
+    if (end) {
+      this.arrows.push(this._factory.make('arrow', {
+        uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+        samples: samples,
+        position: position
+      }));
+    }
+    this._helper.object.make(this.arrows.concat([this.line]));
     return this._helper.span.make();
   };
 
@@ -58371,7 +58412,7 @@ Vector = (function(_super) {
 
   function Vector(model, attributes, factory, shaders, helper) {
     Vector.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
-    this.line = this.array = this.resizeHandler = this.rebuildHandler = null;
+    this.resolution = this.line = this.arrows = null;
   }
 
   Vector.prototype.clip = function() {
@@ -58386,39 +58427,66 @@ Vector = (function(_super) {
   };
 
   Vector.prototype.make = function() {
-    var arrowUniforms, dims, lineUniforms, position, ribbons, strips, styleUniforms;
+    var arrowUniforms, detail, dims, end, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, vectorUniforms;
     this._helper.bind.make({
       'vector.points': Data
     });
     position = this._shaders.shader();
     this._helper.position.make();
-    this.bind.points.shader(position);
+    detail = this._get('vector.detail');
+    samples = detail + 1;
+    this.resolution = 1 / detail;
+    if (detail > 1) {
+      vectorUniforms = {
+        subdivideStride: this._attributes.make(types.number(this.resolution))
+      };
+      position.callback();
+      this.bind.points.shader(position);
+      position.join();
+      position.call('vector.subdivide', vectorUniforms);
+    } else {
+      this.bind.points.shader(position);
+    }
     this._helper.position.shader(position);
     this.transform(position);
     styleUniforms = this._helper.style.uniforms();
     lineUniforms = this._helper.line.uniforms();
     arrowUniforms = this._helper.arrow.uniforms();
-    lineUniforms.clipRange = arrowUniforms.arrowSize;
     dims = this.bind.points.getDimensions();
     ribbons = Math.floor(dims.width);
     strips = dims.height * dims.depth;
+    start = this._get('arrow.start');
+    end = this._get('arrow.end');
     this.line = this._factory.make('line', {
-      uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
-      samples: 2,
+      uniforms: this._helper.object.merge(arrowUniforms, lineUniforms, styleUniforms),
+      samples: samples,
       ribbons: ribbons,
       strips: strips,
       position: position,
-      clip: true
+      clip: start || end
     });
-    this.arrow = this._factory.make('arrow', {
-      uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
-      samples: 2,
-      ribbons: ribbons,
-      strips: strips,
-      position: position
-    });
+    this.arrows = [];
+    if (start) {
+      this.arrows.push(this._factory.make('arrow', {
+        uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+        flip: true,
+        samples: samples,
+        ribbons: ribbons,
+        strips: strips,
+        position: position
+      }));
+    }
+    if (end) {
+      this.arrows.push(this._factory.make('arrow', {
+        uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+        samples: samples,
+        ribbons: ribbons,
+        strips: strips,
+        position: position
+      }));
+    }
     this.clip();
-    return this._helper.object.make([this.line, this.arrow]);
+    return this._helper.object.make(this.arrows.concat([this.line]));
   };
 
   Vector.prototype.unmake = function() {
@@ -58428,7 +58496,7 @@ Vector = (function(_super) {
   };
 
   Vector.prototype.change = function(changed, touched, init) {
-    if (changed['vector.points'] != null) {
+    if ((changed['vector.points'] != null) || (changed['vector.start'] != null) || (changed['vector.end'] != null) || (changed['vector.detail'] != null)) {
       return this.rebuild();
     }
   };
@@ -58889,6 +58957,10 @@ ArrowGeometry = (function(_super) {
       arrow: {
         type: 'v3',
         value: null
+      },
+      attach: {
+        type: 'v2',
+        value: null
       }
     };
   };
@@ -58903,22 +58975,25 @@ ArrowGeometry = (function(_super) {
   };
 
   function ArrowGeometry(options) {
-    var a, anchor, angle, arrow, arrows, b, back, base, c, circle, i, index, j, k, points, position, ribbons, samples, sides, strips, tip, triangles, x, y, _i, _j, _k, _l, _m, _n, _o;
+    var a, anchor, angle, arrow, arrows, attach, b, back, base, c, circle, end, far, flip, i, index, j, k, near, points, position, ribbons, samples, sides, step, strips, tip, triangles, x, y, _i, _j, _k, _l, _m, _n, _o, _ref, _ref1;
     ArrowGeometry.__super__.constructor.call(this, options);
     this.sides = sides = +options.sides || 12;
     this.samples = samples = +options.samples || 2;
     this.strips = strips = +options.strips || 1;
     this.ribbons = ribbons = +options.ribbons || 1;
-    this.anchor = anchor = +options.anchor || samples - 1;
+    this.flip = flip = (_ref = options.flip) != null ? _ref : false;
+    this.anchor = anchor = (_ref1 = options.anchor) != null ? _ref1 : flip ? 0 : samples - 1;
     arrows = strips * ribbons;
     points = (sides + 2) * strips * ribbons;
     triangles = (sides * 2) * strips * ribbons;
     this.addAttribute('index', Uint16Array, triangles * 3, 1);
     this.addAttribute('position', Float32Array, points, 3);
-    this.addAttribute('arrow', Float32Array, points, 4);
+    this.addAttribute('arrow', Float32Array, points, 3);
+    this.addAttribute('attach', Float32Array, points, 2);
     index = this._emitter('index');
     position = this._emitter('position');
     arrow = this._emitter('arrow');
+    attach = this._emitter('attach');
     circle = [];
     for (k = _i = 0; 0 <= sides ? _i < sides : _i > sides; k = 0 <= sides ? ++_i : --_i) {
       angle = k / sides * τ;
@@ -58943,21 +59018,28 @@ ArrowGeometry = (function(_super) {
       }
     }
     y = 0;
+    step = flip ? 1 : -1;
+    end = flip ? samples - 1 : 0;
     for (i = _m = 0; 0 <= ribbons ? _m < ribbons : _m > ribbons; i = 0 <= ribbons ? ++_m : --_m) {
-      base = 0;
+      far = end;
+      near = anchor + step;
       x = anchor;
       for (j = _n = 0; 0 <= strips ? _n < strips : _n > strips; j = 0 <= strips ? ++_n : --_n) {
         position(x, y, 0);
-        arrow(0, 0, 0, base);
+        arrow(0, 0, 0);
+        attach(near, far);
         for (k = _o = 0; 0 <= sides ? _o < sides : _o > sides; k = 0 <= sides ? ++_o : --_o) {
           position(x, y, 0);
           c = circle[k];
-          arrow(c[0], c[1], c[2], base);
+          arrow(c[0], c[1], c[2]);
+          attach(near, far);
         }
         position(x, y, 0);
-        arrow(0, 0, 1, base);
+        arrow(0, 0, 1);
+        attach(near, far);
         x += samples;
-        base += samples;
+        near += samples;
+        far += samples;
       }
       y++;
     }
@@ -59078,12 +59160,11 @@ LineGeometry = (function(_super) {
   };
 
   function LineGeometry(options) {
-    var anchor, base, edge, end, i, index, j, k, line, points, position, quads, ribbons, samples, segments, start, strip, strips, triangles, x, y, _i, _j, _k, _l, _m, _n;
+    var base, edge, end, i, index, j, k, line, points, position, quads, ribbons, samples, segments, start, strip, strips, triangles, x, y, _i, _j, _k, _l, _m, _n;
     LineGeometry.__super__.constructor.call(this, options);
     this.samples = samples = +options.samples || 2;
     this.strips = strips = +options.strips || 1;
     this.ribbons = ribbons = +options.ribbons || 1;
-    this.anchor = anchor = +options.anchor || samples - 1;
     this.segments = segments = samples - 1;
     points = samples * strips * ribbons * 2;
     quads = segments * strips * ribbons;
@@ -59116,7 +59197,7 @@ LineGeometry = (function(_super) {
       x = 0;
       for (j = _m = 0; 0 <= strips ? _m < strips : _m > strips; j = 0 <= strips ? ++_m : --_m) {
         start = x;
-        end = x + anchor;
+        end = x + segments;
         for (k = _n = 0; 0 <= samples ? _n < samples : _n > samples; k = 0 <= samples ? ++_n : --_n) {
           edge = k === 0 ? -1 : k === segments ? 1 : 0;
           position(x, y, 0);
@@ -59278,11 +59359,12 @@ Arrow = (function(_super) {
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
     this.geometry = new ArrowGeometry({
-      sides: options.sides || 12,
-      samples: options.samples || 2,
-      strips: options.strips || 1,
-      ribbons: options.ribbons || 1,
-      anchor: options.anchor || options.samples - 1
+      sides: options.sides,
+      samples: options.samples,
+      strips: options.strips,
+      ribbons: options.ribbons,
+      anchor: options.anchor,
+      flip: options.flip
     });
     factory = shaders.material();
     v = factory.vertex;
@@ -59411,10 +59493,10 @@ Line = (function(_super) {
     position = options.position;
     clip = options.clip;
     this.geometry = new LineGeometry({
-      samples: options.samples || 2,
-      strips: options.strips || 1,
-      ribbons: options.ribbons || 1,
-      anchor: options.anchor || options.samples - 1
+      samples: options.samples,
+      strips: options.strips,
+      ribbons: options.ribbons,
+      anchor: options.anchor
     });
     factory = shaders.material();
     v = factory.vertex;

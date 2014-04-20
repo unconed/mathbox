@@ -7,7 +7,7 @@ class Axis extends Primitive
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
 
-    @axisPosition = @axisStep = @resolution = @line = null
+    @axisPosition = @axisStep = @resolution = @line = @arrows = null
 
   make: () ->
     # Prepare position shader
@@ -33,27 +33,39 @@ class Axis extends Primitive
     lineUniforms  = @_helper.line.uniforms()
     arrowUniforms = @_helper.arrow.uniforms()
 
-    lineUniforms.clipRange = arrowUniforms.arrowSize
-
     # Make line renderable
-    detail = @_get 'axis.detail'
+    detail  = @_get 'axis.detail'
     samples = detail + 1
     @resolution = 1 / detail
 
-    @line = @_factory.make 'line',
-              uniforms: @_helper.object.merge lineUniforms, styleUniforms
-              samples:  samples
-              position: position
-              clip:     true
+    # Clip start/end for terminating arrow
+    start   = @_get 'arrow.start'
+    end     = @_get 'arrow.end'
 
-    # Make arrow renderable
-    @arrow = @_factory.make 'arrow',
-              uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+    @line = @_factory.make 'line',
+              uniforms: @_helper.object.merge arrowUniforms, lineUniforms, styleUniforms
               samples:  samples
               position: position
+              clip:     start or end
+
+    # Make arrow renderables
+    @arrows = []
+
+    if start
+      @arrows.push @_factory.make 'arrow',
+                uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+                flip:     true
+                samples:  samples
+                position: position
+
+    if end
+      @arrows.push @_factory.make 'arrow',
+                uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+                samples:  samples
+                position: position
 
     # Object and span traits
-    @_helper.object.make [@line, @arrow]
+    @_helper.object.make @arrows.concat [@line]
     @_helper.span.make()
 
   unmake: () ->

@@ -7,7 +7,7 @@ class Vector extends Primitive
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
 
-    @line = @array = @resizeHandler = @rebuildHandler = null
+    @resolution = @line = @arrows = null
 
   clip: () ->
     return unless @line and @bind.points
@@ -26,8 +26,26 @@ class Vector extends Primitive
     position = @_shaders.shader()
     @_helper.position.make()
 
-    # Fetch position and transform to view
-    @bind.points.shader position
+    # Vector subdivision
+    detail  = @_get 'vector.detail'
+    samples = detail + 1
+    @resolution = 1 / detail
+
+    # Fetch position
+    if detail > 1
+      vectorUniforms =
+        subdivideStride: @_attributes.make types.number @resolution
+
+      # Subdivide vector if needed
+      position.callback()
+      @bind.points.shader position
+      position.join()
+      position.call 'vector.subdivide', vectorUniforms
+
+    else
+      @bind.points.shader position
+
+    # Transform position to view
     @_helper.position.shader position
     @transform position
 
@@ -36,33 +54,46 @@ class Vector extends Primitive
     lineUniforms  = @_helper.line.uniforms()
     arrowUniforms = @_helper.arrow.uniforms()
 
-    lineUniforms.clipRange = arrowUniforms.arrowSize
-
     # Make line renderable
-    dims = @bind.points.getDimensions()
+    dims    = @bind.points.getDimensions()
     ribbons = Math.floor dims.width
-    strips = dims.height * dims.depth
+    strips  = dims.height * dims.depth
+
+    # Clip start/end for terminating arrow
+    start   = @_get 'arrow.start'
+    end     = @_get 'arrow.end'
 
     @line = @_factory.make 'line',
-              uniforms: @_helper.object.merge lineUniforms, styleUniforms
-              samples:  2
+              uniforms: @_helper.object.merge arrowUniforms, lineUniforms, styleUniforms
+              samples:  samples
               ribbons:  ribbons
               strips:   strips
               position: position
-              clip: true
+              clip:     start or end
 
-    # Make arrow renderable
-    @arrow = @_factory.make 'arrow',
-              uniforms: @_helper.object.merge arrowUniforms, styleUniforms
-              samples:  2
-              ribbons:  ribbons
-              strips:   strips
-              position: position
+    # Make arrow renderables
+    @arrows = []
 
+    if start
+      @arrows.push @_factory.make 'arrow',
+                uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+                flip:     true
+                samples:  samples
+                ribbons:  ribbons
+                strips:   strips
+                position: position
+
+    if end
+      @arrows.push @_factory.make 'arrow',
+                uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+                samples:  samples
+                ribbons:  ribbons
+                strips:   strips
+                position: position
 
     @clip()
 
-    @_helper.object.make [@line, @arrow]
+    @_helper.object.make @arrows.concat [@line]
 
   unmake: () ->
     @_helper.bind.unmake()
@@ -70,6 +101,9 @@ class Vector extends Primitive
     @_helper.position.unmake()
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['vector.points']?
+    @rebuild() if changed['vector.points']? or
+                  changed['vector.start']?  or
+                  changed['vector.end']?    or
+                  changed['vector.detail']?
 
 module.exports = Vector
