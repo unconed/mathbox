@@ -54,8 +54,9 @@ class Surface extends Primitive
 
     # Make line and surface renderables
     dims = @bind.points.getDimensions()
-    width = dims.width
-    height = dims.height * dims.depth
+    width  = dims.width
+    height = dims.height
+    depth  = dims.depth
 
     #console.log 'surface::make', width, height
 
@@ -76,7 +77,7 @@ class Surface extends Primitive
       @line1 = @_factory.make 'line',
                 uniforms: @_helper.object.merge lineUniforms, styleUniforms, wireUniforms
                 samples:  width
-                ribbons:  height
+                ribbons:  height * depth
                 position: position
       objects.push @line1
 
@@ -84,6 +85,7 @@ class Surface extends Primitive
       @line2 = @_factory.make 'line',
                 uniforms: @_helper.object.merge lineUniforms, styleUniforms, wireUniforms
                 samples:  height
+                strips:   depth
                 ribbons:  width
                 position: transpose
       objects.push @line2
@@ -91,10 +93,11 @@ class Surface extends Primitive
     if solid
       @surface = @_factory.make 'surface',
                 uniforms: @_helper.object.merge surfaceUniforms, styleUniforms
-                width:  width
-                height: height
+                width:    width
+                height:   height
+                surfaces: depth
                 position: position
-                shaded: shaded
+                shaded:   shaded
       objects.push @surface
 
     @clip()
