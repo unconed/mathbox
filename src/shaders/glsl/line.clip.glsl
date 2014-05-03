@@ -1,22 +1,24 @@
 uniform float clipRange;
 uniform vec2  clipStyle;
 uniform float clipSpace;
+
 attribute vec2 strip;
+//attribute vec2 position4;
 
 varying vec2 vClip;
 
 // External
-vec3 getPosition(vec2 xy);
+vec3 getPosition(vec4 xyzi);
 
 vec3 clipPosition(vec3 pos) {
 
   // Sample end of line strip
-  vec2 xyE = vec2(strip.y, position.y);
-  vec3 end = getPosition(xyE);
+  vec4 xyziE = vec4(position4.xyz, strip.y);
+  vec3 end = getPosition(xyziE);
 
   // Sample start of line strip
-  vec2 xyS   = vec2(strip.x, position.y);
-  vec3 start = getPosition(xyS);
+  vec4 xyziS   = vec4(position4.xyz, strip.x);
+  vec3 start = getPosition(xyziS);
 
   // Measure length and adjust clip range
   vec3 diff = end - start;

@@ -1,4 +1,4 @@
-Primitive = require('../primitive')
+Primitive = require '../primitive'
 
 class Group extends Primitive
   @model = Primitive.Group

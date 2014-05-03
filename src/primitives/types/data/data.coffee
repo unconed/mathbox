@@ -1,28 +1,7 @@
-Primitive = require '../../primitive'
+Source = require '../source'
 
-class Data extends Primitive
+class Data extends Source
   @traits: ['node', 'data']
-
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
-
-  callback: (callback) ->
-    callback ? () ->
-
-  shader: () ->
-  update: () ->
-
-  getDimensions: () ->
-    elements: 1
-    width:    0
-    height:   0
-    depth:    0
-
-  getActive: () ->
-    elements: 1
-    width:    0
-    height:   0
-    depth:    0
 
   make: () ->
     @handler = () => @update()

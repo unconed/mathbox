@@ -31,6 +31,7 @@ class Surface extends Base
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
       defaultAttributeValues: null
+      index0AttributeName: "position4"
 
     window.material = @material
 

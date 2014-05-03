@@ -12,6 +12,7 @@ class Matrix extends Data
     @filled = false
 
   shader: (shader) ->
+    shader.call 'map.2d.xyzi', @sampleUniforms
     @buffer.shader shader
 
   getDimensions: () ->
@@ -55,6 +56,12 @@ class Matrix extends Data
     @width  = @spaceWidth  = Math.max @spaceWidth, width
     @height = @spaceHeight = Math.max @spaceHeight, height
 
+    # Prepare sampling uniforms
+    types = @_attributes.types
+    @sampleUniforms =
+      textureItems:  @_attributes.make types.number items
+      textureHeight: @_attributes.make types.number height
+
     # Create surfacebuffer
     if @spaceWidth * @spaceHeight > 0
       @buffer = @_factory.make 'surfacebuffer',
@@ -66,7 +73,7 @@ class Matrix extends Data
 
     # Notify of buffer reallocation
     @trigger
-      event: 'rebuild'
+      type: 'rebuild'
 
   unmake: () ->
     super

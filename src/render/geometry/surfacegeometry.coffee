@@ -43,12 +43,12 @@ class SurfaceGeometry extends Geometry
     quads     = segmentsX * segmentsY * surfaces
     triangles = quads * 2
 
-    @addAttribute 'index',    Uint16Array,  triangles * 3, 1
-    @addAttribute 'position', Float32Array, points,        3
-    @addAttribute 'surface',  Float32Array, points,        2
+    @addAttribute 'index',     Uint16Array,  triangles * 3, 1
+    @addAttribute 'position4', Float32Array, points,        4
+    @addAttribute 'surface',   Float32Array, points,        2
 
     index    = @_emitter 'index'
-    position = @_emitter 'position'
+    position = @_emitter 'position4'
     surface  = @_emitter 'surface'
 
     base = 0
@@ -79,13 +79,13 @@ class SurfaceGeometry extends Geometry
         for k in [0...width]
           edgeX = if k == 0 then -1 else if k == segmentsX then 1 else 0
 
-          position x, y + z, 0
+          position x, y, z, 0
 
           surface edgeX, edgeY
 
           x++
         y++
-      z += height
+      z++
 
     @clip 0, quads
 

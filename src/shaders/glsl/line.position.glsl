@@ -1,15 +1,17 @@
 uniform float lineWidth;
+
 attribute vec2 line;
+attribute vec4 position4;
 
 // External
-vec3 getPosition(vec2 xy);
+vec3 getPosition(vec4 xyzi);
 
-void getLineGeometry(vec2 xy, float edge, out vec3 left, out vec3 center, out vec3 right) {
-  vec2 delta = vec2(1.0, 0.0);
+void getLineGeometry(vec4 xyzi, float edge, out vec3 left, out vec3 center, out vec3 right) {
+  vec4 delta = vec4(0.0, 0.0, 0.0, 1.0);
 
-  center =                 getPosition(xy);
-  left   = (edge > -0.5) ? getPosition(xy - delta) : center;
-  right  = (edge < 0.5)  ? getPosition(xy + delta) : center;
+  center =                 getPosition(xyzi);
+  left   = (edge > -0.5) ? getPosition(xyzi - delta) : center;
+  right  = (edge < 0.5)  ? getPosition(xyzi + delta) : center;
 }
 
 vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {
@@ -72,7 +74,7 @@ vec3 getLinePosition() {
   float edge = line.x;
   float offset = line.y;
 
-  getLineGeometry(position.xy, edge, left, center, right);
+  getLineGeometry(position4, edge, left, center, right);
   join = getLineJoin(edge, left, center, right);
   return center + join * offset * lineWidth;
 }

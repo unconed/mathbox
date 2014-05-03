@@ -12,46 +12,53 @@ Line strips arranged in columns and rows
 
 class LineGeometry extends Geometry
 
-  shaderAttributes: () ->
-    line:
-      type: 'v2'
-      value: null
-    strip:
-      type: 'v2'
-      value: null
+  clip: (samples, strips, ribbons, layers) ->
+    @geometryClip.set strips, ribbons, layers, samples
 
-  clip: (start, end) ->
+    segments = Math.max 0, samples - 1
+
+    dims  = [ layers,  ribbons,  strips,  segments]
+    maxs  = [@layers, @ribbons, @strips, @segments]
+    quads = @_reduce dims, maxs
+
     @offsets = [
-      start: start * 6
-      count: (end - start) * 6
+      start: 0
+      count: quads * 6
     ]
 
   constructor: (options) ->
     super options
 
+    @geometryClip = new THREE.Vector4
+    @uniforms =
+      geometryClip:
+        type: 'v4'
+        value: @geometryClip
+
     @samples  = samples = +options.samples || 2
     @strips   = strips  = +options.strips  || 1
     @ribbons  = ribbons = +options.ribbons || 1
-    @segments = segments = samples - 1
+    @layers   = layers  = +options.layers  || 1
+    @segments = segments  = samples - 1
 
-    points    = samples  * strips * ribbons * 2
-    quads     = segments * strips * ribbons
+    points    = samples  * strips * ribbons * layers * 2
+    quads     = segments * strips * ribbons * layers
     triangles = quads    * 2
 
-    @addAttribute 'index',    Uint16Array,  triangles * 3, 1
-    @addAttribute 'position', Float32Array, points,        3
-    @addAttribute 'line',     Float32Array, points,        2
-    @addAttribute 'strip',    Float32Array, points,        2
+    @addAttribute 'index',     Uint16Array,  triangles * 3, 1
+    @addAttribute 'position4', Float32Array, points,        4
+    @addAttribute 'line',      Float32Array, points,        2
+    @addAttribute 'strip',     Float32Array, points,        2
 
     index    = @_emitter 'index'
-    position = @_emitter 'position'
+    position = @_emitter 'position4'
     line     = @_emitter 'line'
     strip    = @_emitter 'strip'
 
     base = 0
-    for i in [0...ribbons]
+    for i in [0...ribbons * layers]
       for j in [0...strips]
-        for k in [0...segments] # note ..
+        for k in [0...segments] # note implied - 1
           index base
           index base + 1
           index base + 2
@@ -63,32 +70,23 @@ class LineGeometry extends Geometry
           base += 2
         base += 2
 
-    y = 0
-    for i in [0...ribbons]
+    for z in [0...layers]
+      for y in [0...ribbons]
+        for x in [0...strips]
 
-      x = 0
-      for j in [0...strips]
+          for k in [0...samples]
+            edge = if k == 0 then -1 else if k == segments then 1 else 0
 
-        start = x
-        end   = x + segments
+            position x, y, z, k
+            position x, y, z, k
 
-        for k in [0...samples]
-          edge = if k == 0 then -1 else if k == segments then 1 else 0
+            line edge,  1
+            line edge, -1
 
-          position x, y, 0
-          position x, y, 0
+            strip 0, segments
+            strip 0, segments
 
-          line edge, 1
-          line edge, -1
-
-          strip start, end
-          strip start, end
-
-          x++
-        #
-      y++
-
-    @clip 0, quads
+    @clip samples, strips, ribbons, layers
 
     return
 

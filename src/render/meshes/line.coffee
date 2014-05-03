@@ -13,25 +13,30 @@ class Line extends Base
       samples: options.samples
       strips:  options.strips
       ribbons: options.ribbons
+      layers:  options.layers
       anchor:  options.anchor
+
+    @_adopt uniforms
+    @_adopt @geometry.uniforms
 
     factory = shaders.material()
 
     v = factory.vertex
     v.import position if position
     v.split()
-    v  .call 'line.position', uniforms
+    v  .call 'line.position',  @uniforms
     v.pass()
-    v.call 'line.clip', uniforms, '_clip_' if clip
-    v.call 'project.position', uniforms
+    v.call 'line.clip',        @uniforms, '_clip_' if clip
+    v.call 'project.position', @uniforms
 
     f = factory.fragment
-    f.call 'style.clip', {}, '_clip_' if clip
-    f.call 'style.color', uniforms
+    f.call 'style.clip',       @uniforms, '_clip_' if clip
+    f.call 'style.color',      @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
       defaultAttributeValues: null
+      index0AttributeName: "position4"
 
     window.material = @material
 

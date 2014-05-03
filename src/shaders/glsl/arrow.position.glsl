@@ -1,15 +1,17 @@
 uniform float arrowSize;
 uniform float arrowSpace;
+
+attribute vec4 position4;
 attribute vec3 arrow;
 attribute vec2 attach;
 
 // External
-vec3 getPosition(vec2 xy);
+vec3 getPosition(vec4 xyzi);
 
-void getArrowGeometry(vec2 xy, float near, float far, out vec3 left, out vec3 right, out vec3 start) {
-  right = getPosition(xy);
-  left  = getPosition(vec2(near, xy.y));
-  start = getPosition(vec2(far, xy.y));
+void getArrowGeometry(vec4 xyzi, float near, float far, out vec3 left, out vec3 right, out vec3 start) {
+  right = getPosition(xyzi);
+  left  = getPosition(vec4(xyzi.xyz, near));
+  start = getPosition(vec4(xyzi.xyz, far));
 }
 
 mat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {
@@ -48,7 +50,7 @@ mat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {
 vec3 getArrowPosition() {
   vec3 left, right, start;
   
-  getArrowGeometry(position.xy, attach.x, attach.y, left, right, start);
+  getArrowGeometry(position4, attach.x, attach.y, left, right, start);
   mat4 matrix = getArrowMatrix(arrowSize, left, right, start);
   return (matrix * vec4(arrow.xyz, 1.0)).xyz;
 

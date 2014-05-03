@@ -10,24 +10,24 @@ helpers =
       @bind = {}
 
       # Monitor array for reallocation / resize
-      @handlers.resize  = (event) => @clip()
+      @handlers.resize  = (event) => @resize()
       @handlers.rebuild = (event) => @rebuild()
 
       # Fetch attached objects and bind
       for key, klass of map
         name = key.split(/\./g).pop()
-        data = @_attached key, klass
+        source = @_attached key, klass
 
-        data.on 'resize',  @handlers.resize
-        data.on 'rebuild', @handlers.rebuild
+        source.on 'resize',  @handlers.resize
+        source.on 'rebuild', @handlers.rebuild
 
-        @bind[name] = data
+        @bind[name] = source
 
     unmake: () ->
       # Unbind from attached objects
-      for key, data of @bind
-        data.off 'resize',  @handlers.resize
-        data.off 'rebuild', @handlers.rebuild
+      for key, source of @bind
+        source.off 'resize',  @handlers.resize
+        source.off 'rebuild', @handlers.rebuild
 
       delete @handlers.resize
       delete @handlers.rebuild
@@ -42,7 +42,7 @@ helpers =
       @span.on 'range', @handlers.span
 
     unmake: () ->
-      @span.off 'resize', @handlers.span
+      @span.off 'range', @handlers.span
       delete @span
       delete @handlers.span
 

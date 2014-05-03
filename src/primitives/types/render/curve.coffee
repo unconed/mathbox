@@ -1,5 +1,5 @@
 Primitive = require '../../primitive'
-Data      = require '../data/data'
+Source = require '../source'
 
 class Curve extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'curve', 'position', 'bind']
@@ -9,19 +9,20 @@ class Curve extends Primitive
 
     @line = null
 
-  clip: () ->
+  resize: () ->
     return unless @line and @bind.points
 
     dims = @bind.points.getActive()
-    samples = dims.width
-    #history = dims.height * dims.depth
+    samples = dims.width * dims.items
+    ribbons = dims.height
+    layers  = dims.depth
 
     @line.geometry.clip 0, samples - 1
 
   make: () ->
     # Bind to attached data sources
     @_helper.bind.make
-      'curve.points': Data
+      'curve.points': Source
 
     # Build transform chain
     position = @_shaders.shader()
@@ -39,15 +40,17 @@ class Curve extends Primitive
     # Make line renderable
     dims = @bind.points.getDimensions()
     samples = dims.width
-    history = dims.height * dims.depth
+    ribbons = dims.height
+    layers  = dims.depth
 
     @line = @_factory.make 'line',
               uniforms: @_helper.object.merge lineUniforms, styleUniforms
               samples:  samples
-              ribbons:  history
+              ribbons:  ribbons
+              layers:   layers
               position: position
 
-    @clip()
+    @resize()
 
     @_helper.object.make [@line]
 

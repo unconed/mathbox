@@ -12,6 +12,7 @@ class _Array extends Data
     @filled = false
 
   shader: (shader) ->
+    shader.call 'map.2d.xyzi', @sampleUniforms
     @buffer.shader shader
 
   getDimensions: () ->
@@ -49,6 +50,12 @@ class _Array extends Data
 
     @length = @space
 
+    # Prepare sampling uniforms
+    types = @_attributes.types
+    @sampleUniforms =
+      textureItems:  @_attributes.make types.number items
+      textureHeight: @_attributes.make types.number 1
+
     # Create linebuffer
     if @space > 0
       @buffer = @_factory.make 'linebuffer',
@@ -59,7 +66,7 @@ class _Array extends Data
 
     # Notify of buffer reallocation
     @trigger
-      event: 'rebuild'
+      type: 'rebuild'
 
   unmake: () ->
     super
@@ -110,7 +117,7 @@ class _Array extends Data
 
     if length != @length
       @trigger
-        event: 'resize'
+        type: 'resize'
 
     @filled = true
 

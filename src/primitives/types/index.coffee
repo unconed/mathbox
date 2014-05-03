@@ -3,12 +3,12 @@ Node = Model.Node
 Group = Model.Group
 
 Classes =
-  axis:       require './visible/axis'
-  curve:      require './visible/curve'
-  grid:       require './visible/grid'
-  surface:    require './visible/surface'
-  ticks:      require './visible/ticks'
-  vector:     require './visible/vector'
+  axis:       require './render/axis'
+  curve:      require './render/curve'
+  grid:       require './render/grid'
+  surface:    require './render/surface'
+  ticks:      require './render/ticks'
+  vector:     require './render/vector'
 
   cartesian:  require './view/cartesian'
   polar:      require './view/polar'

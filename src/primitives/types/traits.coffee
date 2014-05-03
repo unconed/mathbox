@@ -63,7 +63,6 @@ Traits =
   vector:
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())
-    detail:      Types.number(1)
   curve:
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())
@@ -84,5 +83,13 @@ Traits =
     width:       Types.number(1)
     height:      Types.number(1)
     history:     Types.number(1)
+
+  transform:
+    source:      Types.select(Types.object())
+  lerp:
+    items:       Types.nullable(Types.number())
+    width:       Types.nullable(Types.number())
+    height:      Types.nullable(Types.number())
+    depth:       Types.nullable(Types.number())
 
 module.exports = Traits

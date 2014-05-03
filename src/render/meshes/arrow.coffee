@@ -16,18 +16,22 @@ class Arrow extends Base
       anchor:  options.anchor
       flip:    options.flip
 
+    @_adopt uniforms
+    @_adopt @geometry.uniforms
+
     factory = shaders.material()
 
     v = factory.vertex
     v.import position if position
-    v.call 'arrow.position', uniforms
-    v.call 'project.position', uniforms
+    v.call 'arrow.position',   @uniforms
+    v.call 'project.position', @uniforms
 
     f = factory.fragment
-    f.call 'style.color', uniforms
+    f.call 'style.color',      @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       defaultAttributeValues: null
+      index0AttributeName: "position4"
 
     window.material = @material
 

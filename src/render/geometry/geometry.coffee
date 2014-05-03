@@ -3,6 +3,17 @@ class Geometry extends THREE.BufferGeometry
     THREE.BufferGeometry.call @
 #    @dynamic = false
 
+  _reduce: (dims, maxs) ->
+    broken = false
+    for dim, i in dims
+      max = maxs[i]
+      if broken
+        dims[i] = max
+      else if dim < max
+        broken = true
+
+    quads = dims.reduce (a, b) -> a * b
+
   _emitter: (name) ->
     attribute = @attributes[name]
     dimensions = attribute.itemSize

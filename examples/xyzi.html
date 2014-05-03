@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - XYZI Test</title>
+  <script src="../build/mathbox-bundle.js"></script>
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'mathbox'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(2.3, 1, 2);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    time = 0
+    three.on('update', function () {
+      time = three.Time.now
+    });
+
+    mathbox.cartesian({
+      id: 'cartesian',
+      range: [[-1, 1], [-1, 1], [-1, 1]],
+      scale: [1, 1, 1],
+    });
+
+    mathbox.interval({
+      id: 'sampler',
+      length: 32,
+      expression: function (x, i, emit) {
+        var d = Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time + x * x * 10000)*.05;
+
+        d *= (i%2)*2-1;
+
+        emit(x, 0);
+        emit(x, d);
+
+        return i < 22 + Math.sin(time) * 10
+      },
+      items: 2,
+      dimensions: 2,
+    });
+    mathbox.vector({
+      color: 'blue',
+      width: 0.02,
+      size: 0.1,
+    });
+    mathbox.vector({
+      start: false,
+      end:   false,
+      color: 'gray',
+      width: 0.01,
+      size:  0.1,
+    });
+  </script>
+</body>
+</html>

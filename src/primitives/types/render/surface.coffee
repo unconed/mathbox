@@ -1,5 +1,5 @@
 Primitive = require '../../primitive'
-Data = require '../data/data'
+Source = require '../source'
 
 class Surface extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position', 'grid', 'bind']
@@ -9,7 +9,7 @@ class Surface extends Primitive
 
     @line1 = @line2 = @surface = null
 
-  clip: () ->
+  resize: () ->
     return unless @surface and @bind.points
 
     dims = @bind.points.getActive()
@@ -21,7 +21,7 @@ class Surface extends Primitive
   make: () ->
     # Bind to attached data sources
     @_helper.bind.make
-      'surface.points': Data
+      'surface.points': Source
 
     # Build transform chain
     position  = @_shaders.shader()
@@ -100,7 +100,7 @@ class Surface extends Primitive
                 shaded:   shaded
       objects.push @surface
 
-    @clip()
+    @resize()
 
     @_helper.object.make objects
 
