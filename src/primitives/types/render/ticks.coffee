@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util = require '../../../util'
 
 class Ticks extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position']
+  @traits: ['node', 'object', 'style', 'stroke', 'ticks', 'interval', 'span', 'scale', 'position']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper

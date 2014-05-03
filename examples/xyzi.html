@@ -25,30 +25,28 @@
 
     mathbox.cartesian({
       id: 'cartesian',
-      range: [[-1, 1], [-1, 1], [-1, 1]],
-      scale: [1, 1, 1],
+      range: [[-2, 2], [-1, 1], [-1, 1]],
+      scale: [2, 1, 1],
     });
 
     mathbox.interval({
       id: 'sampler',
-      length: 32,
+      length: 48,
       expression: function (x, i, emit) {
-        var d = Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time + x * x * 10000)*.05;
-
-        d *= (i%2)*2-1;
+        var d = Math.sin((x + time) * 4);
 
         emit(x, 0);
-        emit(x, d);
-
-        return i < 32 + Math.sin(time) * 30
+        emit(x, d * .5);
       },
       items: 2,
       dimensions: 2,
     });
-    mathbox.vector({
+    mathbox.line({
       color: 'blue',
-      width: 0.02,
+      width: 0.01,
       size: 0.1,
+      start: true,
+      end: true,
     });
     /*
     mathbox.vector({

@@ -12,13 +12,16 @@ Cones to attach as arrowheads on line strips
 
 class ArrowGeometry extends Geometry
 
-  clip: (strips, ribbons, layers) ->
+  clip: (samples, strips, ribbons, layers) ->
     @geometryClip.set strips, ribbons, layers, @samples
 
-    dims  = [ layers,  ribbons,  strips]
-    maxs  = [@layers, @ribbons, @strips]
+    if samples > @anchor
+      dims  = [ layers,  ribbons,  strips]
+      maxs  = [@layers, @ribbons, @strips]
 
-    quads = @sides * @_reduce dims, maxs
+      quads = @sides * @_reduce dims, maxs
+    else
+      quads = 0
 
     @offsets = [
       start: 0

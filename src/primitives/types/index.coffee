@@ -4,11 +4,10 @@ Group = Model.Group
 
 Classes =
   axis:       require './render/axis'
-  curve:      require './render/curve'
+  line:       require './render/line'
   grid:       require './render/grid'
   surface:    require './render/surface'
   ticks:      require './render/ticks'
-  vector:     require './render/vector'
 
   cartesian:  require './view/cartesian'
   polar:      require './view/polar'

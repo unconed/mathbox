@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util = require '../../../util'
 
 class Axis extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
+  @traits: ['node', 'object', 'style', 'stroke', 'axis', 'span', 'interval', 'arrow', 'position']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper

@@ -17,7 +17,7 @@ Traits =
     color:       Types.color()
     zBias:       Types.number(0)
 
-  line:
+  stroke:
     width:       Types.number(.01)
   mesh:
     solid:       Types.bool(true)
@@ -60,10 +60,7 @@ Traits =
   axis:
     detail:      Types.number(1)
 
-  vector:
-    points:      Types.select(Types.object())
-    colors:      Types.select(Types.object())
-  curve:
+  line:
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())
   surface:

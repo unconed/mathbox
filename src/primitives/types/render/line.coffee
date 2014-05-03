@@ -1,8 +1,8 @@
 Primitive = require '../../primitive'
 Source = require '../source'
 
-class Vector extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'vector', 'arrow', 'position', 'bind']
+class Line extends Primitive
+  @traits: ['node', 'object', 'style', 'stroke', 'line', 'arrow', 'position', 'bind']
 
   constructor: (model, attributes, factory, shaders, helper) ->
     super model, attributes, factory, shaders, helper
@@ -24,12 +24,12 @@ class Vector extends Primitive
       ribbons = dims.height * dims.depth
 
     @line.geometry.clip samples, strips, ribbons, 1
-    arrow.geometry.clip strips, ribbons, 1 for arrow in @arrows
+    arrow.geometry.clip samples, strips, ribbons, 1 for arrow in @arrows
 
   make: () ->
     # Bind to attached data sources
     @_helper.bind.make
-      'vector.points': Source
+      'line.points': Source
 
     # Build transform chain
     position = @_shaders.shader()
@@ -47,7 +47,7 @@ class Vector extends Primitive
       strips  = 1
       ribbons = dims.height * dims.depth
 
-    # Vector subdivision
+    # Line subdivision
     detail  = samples - 1
     @detail = detail
 
@@ -59,9 +59,9 @@ class Vector extends Primitive
     @transform position
 
     # Prepare bound uniforms
-    styleUniforms = @_helper.style.uniforms()
-    lineUniforms  = @_helper.line.uniforms()
-    arrowUniforms = @_helper.arrow.uniforms()
+    styleUniforms  = @_helper.style.uniforms()
+    strokeUniforms = @_helper.stroke.uniforms()
+    arrowUniforms  = @_helper.arrow.uniforms()
 
     # Clip start/end for terminating arrow
     start   = @_get 'arrow.start'
@@ -69,7 +69,7 @@ class Vector extends Primitive
 
     # Make line renderable
     @line = @_factory.make 'line',
-              uniforms: @_helper.object.merge arrowUniforms, lineUniforms, styleUniforms
+              uniforms: @_helper.object.merge arrowUniforms, strokeUniforms, styleUniforms
               samples:  samples
               ribbons:  ribbons
               strips:   strips
@@ -106,9 +106,8 @@ class Vector extends Primitive
     @_helper.position.unmake()
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['vector.points']? or
-                  changed['vector.start']?  or
-                  changed['vector.end']?    or
-                  changed['vector.detail']?
+    @rebuild() if changed['curve.points']? or
+                  changed['arrow.start']?  or
+                  changed['arrow.end']?
 
-module.exports = Vector
+module.exports = Line

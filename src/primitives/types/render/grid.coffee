@@ -2,7 +2,7 @@ Primitive = require('../../primitive')
 Util = require '../../../util'
 
 class Grid extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'grid', 'area', 'position',
+  @traits: ['node', 'object', 'style', 'stroke', 'grid', 'area', 'position',
             'axis:x.axis',   'axis:y.axis',
             'scale:x.scale', 'scale:y.scale',
             'span:x.span',   'span:y.span']

@@ -97,10 +97,10 @@ helpers =
       arrowSpace: space
       arrowSize:  size
 
-  line:
-    # Return bound line style uniforms
+  stroke:
+    # Return bound stroke style uniforms
     uniforms: () ->
-      lineWidth:   @node.attributes['line.width']
+      strokeWidth:   @node.attributes['stroke.width']
 
   surface:
     # Return bound line style uniforms
