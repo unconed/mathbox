@@ -56380,8 +56380,8 @@ Area = (function(_super) {
     dimensions = this._get('area.axes');
     rangeX = this._helper.span.get('x.', dimensions.x);
     rangeY = this._helper.span.get('y.', dimensions.y);
-    inverseX = 1 / Math.max(1, this.width - 1);
-    inverseY = 1 / Math.max(1, this.height - 1);
+    inverseX = 1 / Math.max(1, this._get('matrix.width') - 1);
+    inverseY = 1 / Math.max(1, this._get('matrix.height') - 1);
     aX = rangeX.x;
     bX = (rangeX.y - rangeX.x) * inverseX;
     aY = rangeY.x;
@@ -56616,7 +56616,7 @@ Interval = (function(_super) {
     var a, b, dimension, inverse, range;
     dimension = this._get('interval.axis');
     range = this._helper.span.get('', dimension);
-    inverse = 1 / Math.max(1, this.length - 1);
+    inverse = 1 / Math.max(1, this._get('array.length') - 1);
     a = range.x;
     b = (range.y - range.x) * inverse;
     return function(i, emit) {
@@ -59269,7 +59269,10 @@ Texture = (function() {
   };
 
   Texture.prototype.dispose = function() {
-    throw 'Texture::dispose not yet implemented';
+    this.gl.deleteTexture(this.texture);
+    this.textureObject.__webglInit = false;
+    this.textureObject.__webglTexture = null;
+    return this.textureObject = this.texture = null;
   };
 
   return Texture;
@@ -59414,6 +59417,7 @@ ArrowGeometry = (function(_super) {
       }
     }
     this.clip(samples, strips, ribbons, layers);
+    this._ping();
     return;
   }
 
@@ -59425,16 +59429,32 @@ module.exports = ArrowGeometry;
 
 
 },{"./geometry":60}],60:[function(require,module,exports){
-var Geometry,
+var Geometry, tick,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+tick = function() {
+  var now;
+  now = +(new Date);
+  return function(label) {
+    var delta;
+    delta = +new Date() - now;
+    console.log(label, delta + " ms");
+    return delta;
+  };
+};
 
 Geometry = (function(_super) {
   __extends(Geometry, _super);
 
   function Geometry() {
     THREE.BufferGeometry.call(this);
+    this.tock = tick();
   }
+
+  Geometry.prototype._ping = function() {
+    return this.tock(this.constructor.name);
+  };
 
   Geometry.prototype._reduce = function(dims, maxs) {
     var broken, dim, i, max, quads, _i, _len;
@@ -59596,6 +59616,7 @@ LineGeometry = (function(_super) {
       }
     }
     this.clip(samples, strips, ribbons, layers);
+    this._ping();
     return;
   }
 
@@ -59701,6 +59722,7 @@ SurfaceGeometry = (function(_super) {
       z++;
     }
     this.clip(0, quads);
+    this._ping();
     return;
   }
 

@@ -89,6 +89,8 @@ class SurfaceGeometry extends Geometry
 
     @clip 0, quads
 
+    @_ping()
+
     return
 
 module.exports = SurfaceGeometry

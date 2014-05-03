@@ -88,6 +88,8 @@ class LineGeometry extends Geometry
 
     @clip samples, strips, ribbons, layers
 
+    @_ping()
+
     return
 
 module.exports = LineGeometry

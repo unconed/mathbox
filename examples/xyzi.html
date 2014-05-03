@@ -40,7 +40,7 @@
         emit(x, 0);
         emit(x, d);
 
-        return i < 22 + Math.sin(time) * 10
+        return i < 32 + Math.sin(time) * 30
       },
       items: 2,
       dimensions: 2,
@@ -50,13 +50,16 @@
       width: 0.02,
       size: 0.1,
     });
+    /*
     mathbox.vector({
       start: false,
       end:   false,
       color: 'gray',
       width: 0.01,
       size:  0.1,
+      zBias: 1,
     });
+    */
   </script>
 </body>
 </html>

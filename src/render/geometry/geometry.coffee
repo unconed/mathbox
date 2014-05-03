@@ -1,7 +1,17 @@
+tick = () ->
+  now = +new Date
+  return (label) ->
+    delta = +new Date() - now
+    console.log label, delta + " ms"
+    delta
+
 class Geometry extends THREE.BufferGeometry
   constructor: () ->
     THREE.BufferGeometry.call @
-#    @dynamic = false
+    @tock = tick()
+
+  _ping: () ->
+    @tock @constructor.name
 
   _reduce: (dims, maxs) ->
     broken = false
@@ -41,5 +51,6 @@ class Geometry extends THREE.BufferGeometry
       array[offset++] = d
 
     [null, one, two, three, four][dimensions]
+
 
 module.exports = Geometry

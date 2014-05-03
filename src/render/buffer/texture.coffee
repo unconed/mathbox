@@ -32,10 +32,10 @@ class Texture
       THREE.NearestFilter)
 
     # Pre-init texture to trick WebGLRenderer
-    @textureObject.__webglInit = true;
-    @textureObject.__webglTexture = @texture;
-    @textureObject.format = @format3
-    @textureObject.type   = THREE.FloatType
+    @textureObject.__webglInit     = true
+    @textureObject.__webglTexture  = @texture
+    @textureObject.format          = @format3
+    @textureObject.type            = THREE.FloatType
     @textureObject.unpackAlignment = 1
 
     # Create uniforms
@@ -48,7 +48,7 @@ class Texture
         value: @textureObject
 
   write: (data, x, y, w, h) ->
-    gl = @gl;
+    gl = @gl
 
     # Write to rectangle
     gl.bindTexture gl.TEXTURE_2D, @texture
@@ -56,6 +56,10 @@ class Texture
     gl.texSubImage2D gl.TEXTURE_2D, 0, x, y, w, h, @format, gl.FLOAT, data
 
   dispose: () ->
-    throw 'Texture::dispose not yet implemented'
+    @gl.deleteTexture @texture
+
+    @textureObject.__webglInit    = false
+    @textureObject.__webglTexture = null
+    @textureObject = @texture = null
 
 module.exports = Texture
