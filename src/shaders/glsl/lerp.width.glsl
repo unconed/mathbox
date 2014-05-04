@@ -1,28 +1,18 @@
-uniform float widthStride;
-uniform float widthOut;
-uniform float widthIn;
-uniform float widthIn1;
-uniform float widthRatio;
+uniform float sampleRatio;
 
 // External
-vec4 sampleData(vec2 xy);
+vec4 sampleData(vec4 xyzi);
 
-vec4 lerpWidth(vec2 xy) {
-  float x = xy.x * itemsOut;
+vec4 lerpWidth(vec4 xyzi) {
+  float x = xyzi.x * sampleRatio;
   float i = floor(x);
   float f = x - i;
-
-  float x2 = f * itemsRatio;
-  float i2 = min(itemsIn1, floor(x2));
-  float f2 = i2 - x2;
-
-  float i3 = i * itemsIn + i2;
     
-  vec2 xy1 = vec2(i3, xy.y);
-  vec2 xy2 = vec2(i3 + 1.0, xy.y);
+  vec4 xyzi1 = vec4(i, xyzi.yzw);
+  vec4 xyzi2 = vec4(i + 1.0, xyzi.yzw);
   
-  vec4 a = sampleData(xy1);
-  vec4 b = sampleData(xy2);
+  vec4 a = sampleData(xyzi1);
+  vec4 b = sampleData(xyzi2);
 
-  return mix(a, b, f2);
+  return mix(a, b, f);
 }

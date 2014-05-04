@@ -1,6 +1,7 @@
 uniform float clipRange;
 uniform vec2  clipStyle;
 uniform float clipSpace;
+uniform float strokeWidth;
 
 attribute vec2 strip;
 //attribute vec2 position4;
@@ -22,7 +23,7 @@ vec3 clipPosition(vec3 pos) {
 
   // Measure length and adjust clip range
   vec3 diff = end - start;
-  float l = length(diff) * clipSpace;
+  float l = length(vec2(length(diff), strokeWidth)) * clipSpace;
   float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);
   float scale = 1.0 - mini * mini * mini;
   float range = clipRange * scale;

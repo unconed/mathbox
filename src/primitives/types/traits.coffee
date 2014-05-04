@@ -70,6 +70,7 @@ Traits =
   data:
     data:        Types.nullable(Types.object())
     expression:  Types.nullable(Types.func())
+    source:      Types.nullable(Types.select(Types.object()))
     live:        Types.bool(true)
     dimensions:  Types.number(3)
     items:       Types.number(1)

@@ -25,15 +25,14 @@
 
     mathbox.cartesian({
       id: 'cartesian',
-      range: [[-2, 2], [-1, 1], [-1, 1]],
-      scale: [2, 1, 1],
+      range: [[-6, 6], [-1, 1], [-1, 1]],
+      scale: [6, 1, 1],
     });
 
     mathbox.interval({
-      id: 'sampler',
-      length: 48,
+      length: 128,
       expression: function (x, i, emit) {
-        var d = Math.sin((x + time) * 4);
+        var d = Math.sin((x + time) * 2);
 
         emit(x, 0);
         emit(x, d * .5);
@@ -42,22 +41,13 @@
       dimensions: 2,
     });
     mathbox.line({
-      color: 'blue',
+      color: 0x3090FF,
       width: 0.01,
       size: 0.1,
       start: true,
       end: true,
     });
-    /*
-    mathbox.vector({
-      start: false,
-      end:   false,
-      color: 'gray',
-      width: 0.01,
-      size:  0.1,
-      zBias: 1,
-    });
-    */
+
   </script>
 </body>
 </html>

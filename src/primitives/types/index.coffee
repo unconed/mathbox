@@ -20,6 +20,8 @@ Classes =
   matrix:     require './data/matrix'
   area:       require './data/area'
 
+  lerp:       require './transform/lerp'
+
   group:      require './group'
   root:       require './root'
 

@@ -23,6 +23,8 @@ helpers =
 
         @bind[name] = source
 
+      null
+
     unmake: () ->
       # Unbind from attached objects
       for key, source of @bind
