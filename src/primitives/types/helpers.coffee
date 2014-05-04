@@ -1,6 +1,14 @@
 Util = require '../../util'
 View = require './view/view'
 
+###
+
+This is the general dumping ground for trait behavior
+
+Helpers are auto-attached to primitives that have the right trait as bound instance method
+
+###
+
 helpers =
 
   bind:
@@ -99,15 +107,14 @@ helpers =
       arrowSpace: space
       arrowSize:  size
 
-  stroke:
+  line:
     # Return bound stroke style uniforms
     uniforms: () ->
-      strokeWidth:   @node.attributes['stroke.width']
+      lineWidth:   @node.attributes['line.width']
 
   surface:
-    # Return bound line style uniforms
+    # Return bound surface style uniforms
     uniforms: () -> {}
-#      surfaceWat:   @node.attributes['line.width']
 
   position:
     make: () ->
@@ -139,6 +146,8 @@ helpers =
     shader: (shader) ->
       shader.call 'object.position',
         objectMatrix: @objectMatrix
+
+      @transform shader
 
   object:
 

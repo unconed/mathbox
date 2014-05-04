@@ -15,9 +15,8 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(-3.5, 1.4, -2.3);
+    three.camera.position.set(2.85, 3.84, -1.8);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-//    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
     time = 0
     three.on('update', function () {
@@ -25,7 +24,7 @@
     });
 
     mathbox.cartesian({
-      range: [[-3, 3], [0, 1], [-3, 3]],
+      range: [[-3, 3], [-.5, 1], [-3, 3]],
       scale: [2, 1, 2],
     });
 
@@ -47,18 +46,36 @@
 
     mathbox.area({
       id: 'sampler',
-      width: 64,
-      height: 64,
+      width: 33,
+      height: 33,
       axes: [1, 3],
       expression: function (x, y, i, j, emit) {
-        emit(x, .25 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);
-        emit(x, .25 + .25 * (Math.sin(x * 1.31 + time * 1.13) * Math.sin(y * 1.46 - time * .94)) + .5, y);
-        emit(x, .25 + .25 * (Math.sin(x * 1.25 + Math.sin(y + time) - time * 1.34) * Math.sin(y * 1.17 - time * .79)) + 1, y);
+        emit(x, .75 + .5 * (Math.sin(x + time) * Math.sin(y + time)), y);
+        emit(x, .5 + .5 * (Math.sin(x * 1.25 + Math.sin(y + time) - time * 1.34) * Math.sin(y * 1.17 - time * .79)), y);
       },
-      items: 3,
+      items: 2,
       dimensions: 3,
     });
+    mathbox.transpose({
+      order: 'wxyz',
+    });
+    mathbox.lerp({
+      height: 65,
+    });
     mathbox.surface({
+      first: false,
+      color: 0x3090FF,
+      width: 0.005,
+    });
+    mathbox.transpose({
+      source: '#sampler',
+      order: 'wyxz',
+    });
+    mathbox.lerp({
+      height: 65,
+    });
+    mathbox.surface({
+      first: false,
       color: 0x3090FF,
       width: 0.005,
     });

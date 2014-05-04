@@ -1,4 +1,4 @@
-uniform float strokeWidth;
+uniform float lineWidth;
 
 attribute vec2 line;
 attribute vec4 position4;
@@ -7,7 +7,7 @@ attribute vec4 position4;
 vec3 getPosition(vec4 xyzw);
 
 void getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {
-  vec4 delta = vec4(0.0, 0.0, 0.0, 1.0);
+  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);
 
   center =                 getPosition(xyzw);
   left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;
@@ -76,5 +76,5 @@ vec3 getLinePosition() {
 
   getLineGeometry(position4, edge, left, center, right);
   join = getLineJoin(edge, left, center, right);
-  return center + join * offset * strokeWidth;
+  return center + join * offset * lineWidth;
 }

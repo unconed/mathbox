@@ -10,8 +10,8 @@ vec3 getPosition(vec4 xyzw);
 
 void getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {
   right = getPosition(xyzw);
-  left  = getPosition(vec4(xyzw.xyz, near));
-  start = getPosition(vec4(xyzw.xyz, far));
+  left  = getPosition(vec4(near, xyzw.yzw));
+  start = getPosition(vec4(far, xyzw.yzw));
 }
 
 mat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {

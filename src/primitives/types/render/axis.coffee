@@ -1,8 +1,8 @@
 Primitive = require '../../primitive'
-Util = require '../../../util'
+Util      = require '../../../util'
 
 class Axis extends Primitive
-  @traits: ['node', 'object', 'style', 'stroke', 'axis', 'span', 'interval', 'arrow', 'position']
+  @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
 
   constructor: (model, attributes, renderables, shaders, helpers) ->
     super model, attributes, renderables, shaders, helpers
@@ -26,12 +26,10 @@ class Axis extends Primitive
     position.call 'axis.position', positionUniforms
     @_helpers.position.shader position
 
-    @transform position
-
     # Prepare bound uniforms
-    styleUniforms  = @_helpers.style.uniforms()
-    strokeUniforms = @_helpers.stroke.uniforms()
-    arrowUniforms  = @_helpers.arrow.uniforms()
+    styleUniforms = @_helpers.style.uniforms()
+    lineUniforms  = @_helpers.line.uniforms()
+    arrowUniforms = @_helpers.arrow.uniforms()
 
     # Make line renderable
     detail  = @_get 'axis.detail'
@@ -43,7 +41,7 @@ class Axis extends Primitive
     end     = @_get 'arrow.end'
 
     @line = @_renderables.make 'line',
-              uniforms: @_helpers.object.merge arrowUniforms, strokeUniforms, styleUniforms
+              uniforms: @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
               samples:  samples
               position: position
               clip:     start or end

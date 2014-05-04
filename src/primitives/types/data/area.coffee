@@ -5,10 +5,14 @@ class Area extends Matrix
 
   callback: (callback) ->
     dimensions = @_get 'area.axes'
+    width      = @_get 'matrix.width'
+    height     = @_get 'matrix.height'
+
     rangeX     = @_helpers.span.get 'x.', dimensions.x
     rangeY     = @_helpers.span.get 'y.', dimensions.y
-    inverseX  = 1 / Math.max 1, @_get('matrix.width')  - 1
-    inverseY  = 1 / Math.max 1, @_get('matrix.height') - 1
+
+    inverseX  = 1 / Math.max 1, width - 1
+    inverseY  = 1 / Math.max 1, height - 1
 
     aX = rangeX.x
     bX = (rangeX.y - rangeX.x) * inverseX

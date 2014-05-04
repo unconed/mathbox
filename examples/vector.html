@@ -8,14 +8,14 @@
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'stats'],
+      plugins: ['core', 'controls'],
       controls: {
         klass: THREE.OrbitControls
       },
     });
     three = mathbox.three;
 
-    three.camera.position.set(-3.5, 1.4, -2.3);
+    three.camera.position.set(3.5, 1.4, -2.3);
     three.renderer.setClearColor(new THREE.Color(0x505050), 1.0);
 
     time = 0
@@ -61,10 +61,27 @@
       },
       dimensions: 3,
     });
-    mathbox.line({
+    mathbox.vector({
       color: 0xA0D0FF,
       width: 0.005,
       size: 0.04,
+      start: false,
+      end: true,
+    });
+
+    mathbox.area({
+      id: 'sampler',
+      width: 64,
+      height: 64,
+      axes: [1, 3],
+      expression: function (x, y, i, j, emit) {
+        emit(x, .5 + .5 * (Math.sin(x + time) * Math.sin(y + time)), y);
+      },
+      dimensions: 3,
+    });
+    mathbox.surface({
+      color: 0x3090FF,
+      width: 0.005,
     });
 
   </script>

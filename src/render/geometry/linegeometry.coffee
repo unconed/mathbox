@@ -15,7 +15,7 @@ class LineGeometry extends Geometry
   clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
     segments = Math.max 0, samples - 1
 
-    @geometryClip.set strips, ribbons, layers, segments
+    @geometryClip.set segments, strips, ribbons, layers
 
     dims  = [ layers,  ribbons,  strips,  segments]
     maxs  = [@layers, @ribbons, @strips, @segments]
@@ -70,15 +70,15 @@ class LineGeometry extends Geometry
           base += 2
         base += 2
 
-    for z in [0...layers]
-      for y in [0...ribbons]
-        for x in [0...strips]
+    for l in [0...layers]
+      for z in [0...ribbons]
+        for y in [0...strips]
 
-          for k in [0...samples]
-            edge = if k == 0 then -1 else if k == segments then 1 else 0
+          for x in [0...samples]
+            edge = if x == 0 then -1 else if x == segments then 1 else 0
 
-            position x, y, z, k
-            position x, y, z, k
+            position x, y, z, l
+            position x, y, z, l
 
             line edge,  1
             line edge, -1

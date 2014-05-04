@@ -1,8 +1,8 @@
-Primitive = require('../../primitive')
-Util = require '../../../util'
+Primitive = require '../../primitive'
+Util      = require '../../../util'
 
 class Grid extends Primitive
-  @traits: ['node', 'object', 'style', 'stroke', 'grid', 'area', 'position',
+  @traits: ['node', 'object', 'style', 'line', 'grid', 'area', 'position',
             'axis:x.axis',   'axis:y.axis',
             'scale:x.scale', 'scale:y.scale',
             'span:x.span',   'span:y.span']
@@ -16,14 +16,13 @@ class Grid extends Primitive
 
     axis = (first, second) =>
       # Prepare data buffer of tick positions
-      detail     = @_get first  + 'axis.detail'
+      detail     = @_get first + 'axis.detail'
       samples    = detail + 1
       resolution = 1 / detail
 
-      ribbons = @_helpers.scale.divide second
-
+      strips = @_helpers.scale.divide second
       buffer = @_renderables.make 'databuffer',
-               samples:  ribbons
+               samples:  strips
                channels: 1
 
       # Prepare position shader
@@ -52,20 +51,18 @@ class Grid extends Primitive
 
       # Apply view transform
       @_helpers.position.shader position
-      @transform position
 
       # Prepare bound uniforms
-      styleUniforms  = @_helpers.style.uniforms()
-      strokeUniforms = @_helpers.stroke.uniforms()
+      styleUniforms = @_helpers.style.uniforms()
+      lineUniforms  = @_helpers.line.uniforms()
 
       # Make line renderable
       quads = samples - 1
 
       line = @_renderables.make 'line',
-                uniforms: @_helpers.object.merge strokeUniforms, styleUniforms
+                uniforms: @_helpers.object.merge lineUniforms, styleUniforms
                 samples:  samples
-                strips:   1
-                ribbons:  ribbons
+                strips:   strips
                 position: position
 
       # Store axis object for manipulation later

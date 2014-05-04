@@ -1,8 +1,8 @@
 Primitive = require '../../primitive'
-Util = require '../../../util'
+Util      = require '../../../util'
 
 class Ticks extends Primitive
-  @traits: ['node', 'object', 'style', 'stroke', 'ticks', 'interval', 'span', 'scale', 'position']
+  @traits: ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position']
 
   constructor: (model, attributes, renderables, shaders, helpers) ->
     super model, attributes, renderables, shaders, helpers
@@ -36,7 +36,6 @@ class Ticks extends Primitive
     # Collect view transform as callback
     p  .callback();
     @_helpers.position.shader position
-    @transform position
     p  .join()
     p.next()
 
@@ -50,12 +49,12 @@ class Ticks extends Primitive
     p.call 'ticks.position', positionUniforms
 
     # Prepare bound uniforms
-    styleUniforms  = @_helpers.style.uniforms()
-    strokeUniforms = @_helpers.stroke.uniforms()
+    styleUniforms = @_helpers.style.uniforms()
+    lineUniforms  = @_helpers.line.uniforms()
 
     # Make line renderable
     @line = @_renderables.make 'line',
-              uniforms: @_helpers.object.merge strokeUniforms, styleUniforms
+              uniforms: @_helpers.object.merge lineUniforms, styleUniforms
               samples:  2
               strips:   samples
               position: position

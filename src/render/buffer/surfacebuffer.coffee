@@ -31,16 +31,16 @@ class SurfaceBuffer extends Buffer
     limit = @samples
 
     i = j = k = 0
-    while ++k <= limit
+    while k < limit
+      k++
       repeat = callback(i, j, output)
-      if repeat == false
-        k++
-        break
       if ++i == n
         i = 0
         j++
+      if repeat == false
+        break
 
-    k - 1
+    k
 
   write: (n = @samples) ->
     width = @width * @items

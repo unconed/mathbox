@@ -7,9 +7,10 @@ class Matrix extends Data
     super model, attributes, renderables, shaders, helpers
 
     @buffer = null
+    @filled = false
+
     @spaceWidth  = 0
     @spaceHeight = 0
-    @filled = false
 
   shader: (shader) ->
     shader.call 'map.2d.xyzw', @sampleUniforms

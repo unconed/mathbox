@@ -9,4 +9,4 @@ Classes =
   linebuffer: require('./buffer').LineBuffer
   surfacebuffer: require('./buffer').SurfaceBuffer
 
-exports.Classes = Classes
+module.exports = Classes

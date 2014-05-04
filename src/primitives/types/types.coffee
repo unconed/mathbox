@@ -157,4 +157,23 @@ Types =
 
       return
 
+  transpose: (order) ->
+    swizzle = Types.swizzle order
+
+    make: () -> swizzle.make()
+    validate: (value) ->
+      value = "" + value
+      unique = (value.indexOf(letter) == i for letter, i in value)
+      if unique.indexOf(false) < 0
+        return swizzle.validate value
+
+  swizzle: (order = 'xyzw') ->
+
+    make: () -> order
+    validate: (value) ->
+      value = "" + value
+      if value.match /^[xyzw]{1,4}$/
+        return value
+
+
 module.exports = Types

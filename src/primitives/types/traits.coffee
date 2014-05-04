@@ -17,7 +17,7 @@ Traits =
     color:       Types.color()
     zBias:       Types.number(0)
 
-  stroke:
+  line:
     width:       Types.number(.01)
   mesh:
     solid:       Types.bool(true)
@@ -25,7 +25,7 @@ Traits =
   arrow:
     size:        Types.number(.07)
     start:       Types.bool(false)
-    end:         Types.bool(true)
+    end:         Types.bool(false)
   ticks:
     size:        Types.number(.05)
 
@@ -59,10 +59,7 @@ Traits =
   axis:
     detail:      Types.number(1)
 
-  line:
-    points:      Types.select(Types.object())
-    colors:      Types.select(Types.object())
-  surface:
+  geometry:
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())
 
@@ -88,5 +85,9 @@ Traits =
     width:       Types.nullable(Types.number())
     height:      Types.nullable(Types.number())
     depth:       Types.nullable(Types.number())
+  swizzle:
+    order:       Types.swizzle()
+  transpose:
+    order:       Types.transpose()
 
 module.exports = Traits

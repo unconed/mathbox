@@ -1,7 +1,8 @@
 Primitive = require '../../primitive'
 Source    = require '../source'
+Util      = require '../../../util'
 
-class Line extends Primitive
+class Vector extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
 
   constructor: (model, attributes, renderables, shaders, helpers) ->
@@ -13,10 +14,10 @@ class Line extends Primitive
     return unless @line and @bind.points
     dims = @bind.points.getActive()
 
-    samples = dims.width
-    strips  = dims.height
-    ribbons = dims.depth
-    layers  = dims.items
+    samples = dims.items
+    strips  = dims.width
+    ribbons = dims.height
+    layers  = dims.depth
 
     @line.geometry.clip samples, strips, ribbons, layers
     arrow.geometry.clip samples, strips, ribbons, layers for arrow in @arrows
@@ -30,7 +31,8 @@ class Line extends Primitive
     position = @_shaders.shader()
     @_helpers.position.make()
 
-    # Fetch position
+    # Fetch position (swizzle x into items)
+    position.call Util.GLSL.swizzleVec4 'yzwx'
     @bind.points.shader position
 
     # Transform position to view
@@ -47,17 +49,17 @@ class Line extends Primitive
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
-    samples = dims.width
-    strips  = dims.height
-    ribbons = dims.depth
-    layers  = dims.items
+    samples = dims.items
+    strips  = dims.width
+    ribbons = dims.height
+    layers  = dims.depth
 
     # Make line renderable
     @line = @_renderables.make 'line',
               uniforms: @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
               samples:  samples
-              strips:   strips
               ribbons:  ribbons
+              strips:   strips
               layers:   layers
               position: position
               clip:     start or end
@@ -70,18 +72,16 @@ class Line extends Primitive
                 uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
                 flip:     true
                 samples:  samples
-                strips:   strips
                 ribbons:  ribbons
-                layers:   layers
+                strips:   strips
                 position: position
 
     if end
       @arrows.push @_renderables.make 'arrow',
                 uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
                 samples:  samples
-                strips:   strips
                 ribbons:  ribbons
-                layers:   layers
+                strips:   strips
                 position: position
 
     @resize()
@@ -100,4 +100,4 @@ class Line extends Primitive
                   changed['arrow.start']?     or
                   changed['arrow.end']?
 
-module.exports = Line
+module.exports = Vector

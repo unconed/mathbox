@@ -28,10 +28,12 @@
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
+
     mathbox.axis({
       id: 'axis1',
       detail: 30,
     });
+
     mathbox.axis({
       id: 'axis2',
       axis: 2,
@@ -41,19 +43,21 @@
       classes: ['foo', 'bar'],
       divide: 10,
     });
-    mathbox.interval({
-      id: 'sampler',
-      length: 128,
-      expression: function (x, i, emit) {
-        return emit(x, Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time + x * x * 10000)*.05);
-      },
-      dimensions: 2,
-    });
+
     mathbox.grid({
-      id: 'legrid',
       divideX: 20,
       width: 0.005,
       opacity: 0.5,
+    });
+
+
+    mathbox.interval({
+      id: 'sampler',
+      length: 64,
+      expression: function (x, i, emit) {
+        emit(x, Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time + x * x * 10000)*.05);
+      },
+      dimensions: 2,
     });
     mathbox.line({
       points: '#sampler',

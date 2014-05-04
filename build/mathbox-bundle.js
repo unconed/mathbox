@@ -50829,16 +50829,16 @@ module.exports = through;
 require=
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw);\n  left  = getPosition(vec4(xyzw.xyz, near));\n  start = getPosition(vec4(xyzw.xyz, far));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
-"axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw) {\n  return axisStep * xyzw.w + axisPosition;\n}\n",
+window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw);\n  left  = getPosition(vec4(near, xyzw.yzw));\n  start = getPosition(vec4(far, xyzw.yzw));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
+"axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw) {\n  return axisStep * xyzw.x + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
-"grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzw) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzw.y, 0.0)).x;\n  vec4 offAxis = gridStep * xyzw.w + gridPosition;\n  return onAxis + offAxis;\n}\n",
+"grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzw) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzw.y, 0.0)).x;\n  vec4 offAxis = gridStep * xyzw.x + gridPosition;\n  return onAxis + offAxis;\n}\n",
 "lerp.depth": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpDepth(vec4 xyzw) {\n  float x = xyzw.z * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xy, i, xyzw.w);\n  vec4 xyzw2 = vec4(xyzw.xy, i + 1.0, xyzw.w);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.height": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpHeight(vec4 xyzw) {\n  float x = xyzw.y * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.items": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpItems(vec4 xyzw) {\n  float x = xyzw.w * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.width": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpWidth(vec4 xyzw) {\n  float x = xyzw.x * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
-"line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float strokeWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(position4.xyz, strip.y);\n  vec3 end = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS   = vec4(position4.xyz, strip.x);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), strokeWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n\n  // Passthrough position\n  return pos;\n}",
-"line.position": "uniform float strokeWidth;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(0.0, 0.0, 0.0, 1.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position4, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * strokeWidth;\n}\n",
+"line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float lineWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, position4.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, position4.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n\n  // Passthrough position\n  return pos;\n}",
+"line.position": "uniform float lineWidth;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position4, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
 "map.2d.xyzw": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 map2Dxyzw(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
@@ -50850,10 +50850,10 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "spherical.position": "uniform float sphericalBend;\nuniform float sphericalFocus;\nuniform float sphericalAspectX;\nuniform float sphericalAspectY;\nuniform float sphericalScaleY;\n\nuniform mat4 viewMatrix;\n\nvec4 getSphericalPosition(vec4 position) {\n  if (sphericalBend > 0.0001) {\n\n    vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);\n    float radius = sphericalFocus + xyz.z;\n    float cosine = cos(xyz.y) * radius;\n\n    return viewMatrix * vec4(\n      sin(xyz.x) * cosine,\n      sin(xyz.y) * radius * sphericalAspectY,\n      (cos(xyz.x) * cosine - sphericalFocus) / sphericalAspectX,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "style.clip": "varying vec2 vClip;\n\nvoid clipStyle() {\n  if (vClip.x < 0.0 || vClip.y < 0.0) discard;\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvoid setStyleColor() {\n\tgl_FragColor = vec4(styleColor, styleOpacity);\n}\n",
-"style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .95 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
+"style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getSurfacePosition() {\n  return getPosition(position4);\n}\n",
-"surface.position.normal": "attribute vec4 position4;\nattribute vec2 surface;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec4 deltaX = vec4(1.0, 0.0, 0.0, 0.0);\n  vec4 deltaY = vec4(0.0, 1.0, 0.0, 0.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xyzw);\n  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xyzw);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : (2.0 * center - getPosition(xyzw - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : (2.0 * center - getPosition(xyzw - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position4, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 1.0, 0.0)).xyz);// - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
-"ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec4 xyzw) {\n\n  const float epsilon = 0.0001;\n  float line = xyzw.w - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xyzw.x, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
+"surface.position.normal": "attribute vec4 position4;\nattribute vec2 surface;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec4 deltaX = vec4(1.0, 0.0, 0.0, 0.0);\n  vec4 deltaY = vec4(0.0, 1.0, 0.0, 0.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xyzw);\n  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xyzw);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : (2.0 * center - getPosition(xyzw - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : (2.0 * center - getPosition(xyzw - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position4, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);// - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
+"ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec4 xyzw) {\n\n  const float epsilon = 0.0001;\n  float line = xyzw.x - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xyzw.y, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
 "view.position": "vec3 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0)).xyz;\n}"};
 
 },{}],2:[function(require,module,exports){
@@ -55383,7 +55383,7 @@ Context = (function() {
 module.exports = Context;
 
 
-},{"./model":23,"./primitives":28,"./render":65,"./shaders":76,"./stage":81}],20:[function(require,module,exports){
+},{"./model":23,"./primitives":28,"./render":69,"./shaders":79,"./stage":84}],20:[function(require,module,exports){
 var Context, mathBox;
 
 mathBox = function(options) {
@@ -56267,7 +56267,7 @@ exports.Primitive = require('./primitive');
 exports.Types = require('./types');
 
 
-},{"./factory":27,"./primitive":29,"./types":37}],29:[function(require,module,exports){
+},{"./factory":27,"./primitive":29,"./types":38}],29:[function(require,module,exports){
 var Model, Primitive;
 
 Model = require('../model');
@@ -56395,6 +56395,33 @@ module.exports = Primitive;
 
 
 },{"../model":23}],30:[function(require,module,exports){
+var Classes;
+
+Classes = {
+  axis: require('./render/axis'),
+  grid: require('./render/grid'),
+  line: require('./render/line'),
+  surface: require('./render/surface'),
+  ticks: require('./render/ticks'),
+  vector: require('./render/vector'),
+  cartesian: require('./view/cartesian'),
+  polar: require('./view/polar'),
+  spherical: require('./view/spherical'),
+  view: require('./view/view'),
+  array: require('./data/array'),
+  interval: require('./data/interval'),
+  matrix: require('./data/matrix'),
+  area: require('./data/area'),
+  lerp: require('./transform/lerp'),
+  transpose: require('./transform/transpose'),
+  group: require('./group'),
+  root: require('./root')
+};
+
+module.exports = Classes;
+
+
+},{"./data/area":31,"./data/array":32,"./data/interval":34,"./data/matrix":35,"./group":36,"./render/axis":39,"./render/grid":40,"./render/line":41,"./render/surface":42,"./render/ticks":43,"./render/vector":44,"./root":45,"./transform/lerp":48,"./transform/transpose":50,"./view/cartesian":52,"./view/polar":53,"./view/spherical":54,"./view/view":55}],31:[function(require,module,exports){
 var Area, Matrix,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56411,12 +56438,14 @@ Area = (function(_super) {
   Area.traits = ['node', 'data', 'matrix', 'span:x.span', 'span:y.span', 'area'];
 
   Area.prototype.callback = function(callback) {
-    var aX, aY, bX, bY, dimensions, inverseX, inverseY, rangeX, rangeY;
+    var aX, aY, bX, bY, dimensions, height, inverseX, inverseY, rangeX, rangeY, width;
     dimensions = this._get('area.axes');
+    width = this._get('matrix.width');
+    height = this._get('matrix.height');
     rangeX = this._helpers.span.get('x.', dimensions.x);
     rangeY = this._helpers.span.get('y.', dimensions.y);
-    inverseX = 1 / Math.max(1, this._get('matrix.width') - 1);
-    inverseY = 1 / Math.max(1, this._get('matrix.height') - 1);
+    inverseX = 1 / Math.max(1, width - 1);
+    inverseY = 1 / Math.max(1, height - 1);
     aX = rangeX.x;
     bX = (rangeX.y - rangeX.x) * inverseX;
     aY = rangeY.x;
@@ -56446,7 +56475,7 @@ Area = (function(_super) {
 module.exports = Area;
 
 
-},{"./matrix":34}],31:[function(require,module,exports){
+},{"./matrix":35}],32:[function(require,module,exports){
 var Data, _Array,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56595,7 +56624,7 @@ _Array = (function(_super) {
 module.exports = _Array;
 
 
-},{"./data":32}],32:[function(require,module,exports){
+},{"./data":33}],33:[function(require,module,exports){
 var Data, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56631,7 +56660,7 @@ Data = (function(_super) {
 module.exports = Data;
 
 
-},{"../source":44}],33:[function(require,module,exports){
+},{"../source":46}],34:[function(require,module,exports){
 var Interval, _Array,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56648,10 +56677,11 @@ Interval = (function(_super) {
   Interval.traits = ['node', 'data', 'array', 'span', 'interval'];
 
   Interval.prototype.callback = function(callback) {
-    var a, b, dimension, inverse, range;
+    var a, b, dimension, inverse, length, range;
     dimension = this._get('interval.axis');
+    length = this._get('array.length');
     range = this._helpers.span.get('', dimension);
-    inverse = 1 / Math.max(1, this._get('array.length') - 1);
+    inverse = 1 / Math.max(1, length - 1);
     a = range.x;
     b = (range.y - range.x) * inverse;
     return function(i, emit) {
@@ -56678,7 +56708,7 @@ Interval = (function(_super) {
 module.exports = Interval;
 
 
-},{"./array":31}],34:[function(require,module,exports){
+},{"./array":32}],35:[function(require,module,exports){
 var Data, Matrix,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56693,9 +56723,9 @@ Matrix = (function(_super) {
   function Matrix(model, attributes, renderables, shaders, helpers) {
     Matrix.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
     this.buffer = null;
+    this.filled = false;
     this.spaceWidth = 0;
     this.spaceHeight = 0;
-    this.filled = false;
   }
 
   Matrix.prototype.shader = function(shader) {
@@ -56851,7 +56881,7 @@ Matrix = (function(_super) {
 module.exports = Matrix;
 
 
-},{"./data":32}],35:[function(require,module,exports){
+},{"./data":33}],36:[function(require,module,exports){
 var Group, Primitive,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56884,12 +56914,20 @@ Group = (function(_super) {
 module.exports = Group;
 
 
-},{"../primitive":29}],36:[function(require,module,exports){
+},{"../primitive":29}],37:[function(require,module,exports){
 var Util, View, helpers;
 
 Util = require('../../util');
 
 View = require('./view/view');
+
+
+/*
+
+This is the general dumping ground for trait behavior
+
+Helpers are auto-attached to primitives that have the right trait as bound instance method
+ */
 
 helpers = {
   bind: {
@@ -57002,10 +57040,10 @@ helpers = {
       };
     }
   },
-  stroke: {
+  line: {
     uniforms: function() {
       return {
-        strokeWidth: this.node.attributes['stroke.width']
+        lineWidth: this.node.attributes['line.width']
       };
     }
   },
@@ -57045,9 +57083,10 @@ helpers = {
       return delete this.handlers.position;
     },
     shader: function(shader) {
-      return shader.call('object.position', {
+      shader.call('object.position', {
         objectMatrix: this.objectMatrix
       });
+      return this.transform(shader);
     }
   },
   object: {
@@ -57162,8 +57201,8 @@ module.exports = function(object, traits) {
 };
 
 
-},{"../../util":84,"./view/view":52}],37:[function(require,module,exports){
-var Classes, Group, Model, Node;
+},{"../../util":87,"./view/view":55}],38:[function(require,module,exports){
+var Group, Model, Node;
 
 Model = require('../../model');
 
@@ -57171,26 +57210,7 @@ Node = Model.Node;
 
 Group = Model.Group;
 
-Classes = {
-  axis: require('./render/axis'),
-  line: require('./render/line'),
-  grid: require('./render/grid'),
-  surface: require('./render/surface'),
-  ticks: require('./render/ticks'),
-  cartesian: require('./view/cartesian'),
-  polar: require('./view/polar'),
-  spherical: require('./view/spherical'),
-  view: require('./view/view'),
-  array: require('./data/array'),
-  interval: require('./data/interval'),
-  matrix: require('./data/matrix'),
-  area: require('./data/area'),
-  lerp: require('./transform/lerp'),
-  group: require('./group'),
-  root: require('./root')
-};
-
-exports.Classes = Classes;
+exports.Classes = require('./classes');
 
 exports.Types = require('./types');
 
@@ -57199,7 +57219,7 @@ exports.Traits = require('./traits');
 exports.Helpers = require('./helpers');
 
 
-},{"../../model":23,"./data/area":30,"./data/array":31,"./data/interval":33,"./data/matrix":34,"./group":35,"./helpers":36,"./render/axis":38,"./render/grid":39,"./render/line":40,"./render/surface":41,"./render/ticks":42,"./root":43,"./traits":45,"./transform/lerp":46,"./types":48,"./view/cartesian":49,"./view/polar":50,"./view/spherical":51,"./view/view":52}],38:[function(require,module,exports){
+},{"../../model":23,"./classes":30,"./helpers":37,"./traits":47,"./types":51}],39:[function(require,module,exports){
 var Axis, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57211,7 +57231,7 @@ Util = require('../../../util');
 Axis = (function(_super) {
   __extends(Axis, _super);
 
-  Axis.traits = ['node', 'object', 'style', 'stroke', 'axis', 'span', 'interval', 'arrow', 'position'];
+  Axis.traits = ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position'];
 
   function Axis(model, attributes, renderables, shaders, helpers) {
     Axis.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
@@ -57219,7 +57239,7 @@ Axis = (function(_super) {
   }
 
   Axis.prototype.make = function() {
-    var arrowUniforms, detail, end, position, positionUniforms, samples, start, strokeUniforms, styleUniforms, types;
+    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, styleUniforms, types;
     types = this._attributes.types;
     positionUniforms = {
       axisPosition: this._attributes.make(types.vec4()),
@@ -57231,9 +57251,8 @@ Axis = (function(_super) {
     position = this._shaders.shader();
     position.call('axis.position', positionUniforms);
     this._helpers.position.shader(position);
-    this.transform(position);
     styleUniforms = this._helpers.style.uniforms();
-    strokeUniforms = this._helpers.stroke.uniforms();
+    lineUniforms = this._helpers.line.uniforms();
     arrowUniforms = this._helpers.arrow.uniforms();
     detail = this._get('axis.detail');
     samples = detail + 1;
@@ -57241,7 +57260,7 @@ Axis = (function(_super) {
     start = this._get('arrow.start');
     end = this._get('arrow.end');
     this.line = this._renderables.make('line', {
-      uniforms: this._helpers.object.merge(arrowUniforms, strokeUniforms, styleUniforms),
+      uniforms: this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms),
       samples: samples,
       position: position,
       clip: start || end
@@ -57294,7 +57313,7 @@ Axis = (function(_super) {
 module.exports = Axis;
 
 
-},{"../../../util":84,"../../primitive":29}],39:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":29}],40:[function(require,module,exports){
 var Grid, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57306,7 +57325,7 @@ Util = require('../../../util');
 Grid = (function(_super) {
   __extends(Grid, _super);
 
-  Grid.traits = ['node', 'object', 'style', 'stroke', 'grid', 'area', 'position', 'axis:x.axis', 'axis:y.axis', 'scale:x.scale', 'scale:y.scale', 'span:x.span', 'span:y.span'];
+  Grid.traits = ['node', 'object', 'style', 'line', 'grid', 'area', 'position', 'axis:x.axis', 'axis:y.axis', 'scale:x.scale', 'scale:y.scale', 'span:x.span', 'span:y.span'];
 
   function Grid(model, attributes, renderables, shaders, helpers) {
     Grid.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
@@ -57317,13 +57336,13 @@ Grid = (function(_super) {
     var axis, first, lines, second;
     axis = (function(_this) {
       return function(first, second) {
-        var buffer, detail, line, p, position, positionUniforms, quads, resolution, ribbons, samples, strokeUniforms, styleUniforms, types, values;
+        var buffer, detail, line, lineUniforms, p, position, positionUniforms, quads, resolution, samples, strips, styleUniforms, types, values;
         detail = _this._get(first + 'axis.detail');
         samples = detail + 1;
         resolution = 1 / detail;
-        ribbons = _this._helpers.scale.divide(second);
+        strips = _this._helpers.scale.divide(second);
         buffer = _this._renderables.make('databuffer', {
-          samples: ribbons,
+          samples: strips,
           channels: 1
         });
         types = _this._attributes.types;
@@ -57344,15 +57363,13 @@ Grid = (function(_super) {
         p.join();
         p.call('grid.position', positionUniforms);
         _this._helpers.position.shader(position);
-        _this.transform(position);
         styleUniforms = _this._helpers.style.uniforms();
-        strokeUniforms = _this._helpers.stroke.uniforms();
+        lineUniforms = _this._helpers.line.uniforms();
         quads = samples - 1;
         line = _this._renderables.make('line', {
-          uniforms: _this._helpers.object.merge(strokeUniforms, styleUniforms),
+          uniforms: _this._helpers.object.merge(lineUniforms, styleUniforms),
           samples: samples,
-          strips: 1,
-          ribbons: ribbons,
+          strips: strips,
           position: position
         });
         return {
@@ -57444,7 +57461,7 @@ Grid = (function(_super) {
 module.exports = Grid;
 
 
-},{"../../../util":84,"../../primitive":29}],40:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":29}],41:[function(require,module,exports){
 var Line, Primitive, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57456,11 +57473,11 @@ Source = require('../source');
 Line = (function(_super) {
   __extends(Line, _super);
 
-  Line.traits = ['node', 'object', 'style', 'stroke', 'line', 'arrow', 'position', 'bind'];
+  Line.traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind'];
 
   function Line(model, attributes, renderables, shaders, helpers) {
     Line.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
-    this.detail = this.line = this.arrows = null;
+    this.line = this.arrows = null;
   }
 
   Line.prototype.resize = function() {
@@ -57469,17 +57486,10 @@ Line = (function(_super) {
       return;
     }
     dims = this.bind.points.getActive();
-    if (dims.items > 1) {
-      samples = dims.items;
-      strips = Math.floor(dims.width);
-      ribbons = dims.height;
-      layers = dims.depth;
-    } else {
-      samples = dims.width;
-      strips = 1;
-      ribbons = dims.height;
-      layers = dims.depth;
-    }
+    samples = dims.width;
+    strips = dims.height;
+    ribbons = dims.depth;
+    layers = dims.items;
     this.line.geometry.clip(samples, strips, ribbons, layers);
     _ref = this.arrows;
     _results = [];
@@ -57491,37 +57501,30 @@ Line = (function(_super) {
   };
 
   Line.prototype.make = function() {
-    var arrowUniforms, detail, dims, end, position, ribbons, samples, start, strips, strokeUniforms, styleUniforms;
+    var arrowUniforms, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms;
     this._helpers.bind.make({
-      'line.points': Source
+      'geometry.points': Source
     });
     position = this._shaders.shader();
     this._helpers.position.make();
-    dims = this.bind.points.getDimensions();
-    if (dims.items > 1) {
-      samples = dims.items;
-      strips = Math.floor(dims.width);
-      ribbons = dims.height * dims.depth;
-    } else {
-      samples = dims.width;
-      strips = 1;
-      ribbons = dims.height * dims.depth;
-    }
-    detail = samples - 1;
-    this.detail = detail;
     this.bind.points.shader(position);
     this._helpers.position.shader(position);
-    this.transform(position);
     styleUniforms = this._helpers.style.uniforms();
-    strokeUniforms = this._helpers.stroke.uniforms();
+    lineUniforms = this._helpers.line.uniforms();
     arrowUniforms = this._helpers.arrow.uniforms();
     start = this._get('arrow.start');
     end = this._get('arrow.end');
+    dims = this.bind.points.getDimensions();
+    samples = dims.width;
+    strips = dims.height;
+    ribbons = dims.depth;
+    layers = dims.items;
     this.line = this._renderables.make('line', {
-      uniforms: this._helpers.object.merge(arrowUniforms, strokeUniforms, styleUniforms),
+      uniforms: this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms),
       samples: samples,
-      ribbons: ribbons,
       strips: strips,
+      ribbons: ribbons,
+      layers: layers,
       position: position,
       clip: start || end
     });
@@ -57531,8 +57534,9 @@ Line = (function(_super) {
         uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
         flip: true,
         samples: samples,
-        ribbons: ribbons,
         strips: strips,
+        ribbons: ribbons,
+        layers: layers,
         position: position
       }));
     }
@@ -57540,8 +57544,9 @@ Line = (function(_super) {
       this.arrows.push(this._renderables.make('arrow', {
         uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
         samples: samples,
-        ribbons: ribbons,
         strips: strips,
+        ribbons: ribbons,
+        layers: layers,
         position: position
       }));
     }
@@ -57553,11 +57558,11 @@ Line = (function(_super) {
     this._helpers.bind.unmake();
     this._helpers.object.unmake();
     this._helpers.position.unmake();
-    return this.detail = this.line = this.arrows = null;
+    return this.line = this.arrows = null;
   };
 
   Line.prototype.change = function(changed, touched, init) {
-    if ((changed['line.points'] != null) || (changed['arrow.start'] != null) || (changed['arrow.end'] != null)) {
+    if ((changed['geometry.points'] != null) || (changed['arrow.start'] != null) || (changed['arrow.end'] != null)) {
       return this.rebuild();
     }
   };
@@ -57569,7 +57574,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../../primitive":29,"../source":44}],41:[function(require,module,exports){
+},{"../../primitive":29,"../source":46}],42:[function(require,module,exports){
 var Primitive, Source, Surface, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57583,7 +57588,7 @@ Util = require('../../../util');
 Surface = (function(_super) {
   __extends(Surface, _super);
 
-  Surface.traits = ['node', 'object', 'style', 'stroke', 'mesh', 'surface', 'position', 'grid', 'bind'];
+  Surface.traits = ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind'];
 
   function Surface(model, attributes, renderables, shaders, helpers) {
     Surface.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
@@ -57604,24 +57609,21 @@ Surface = (function(_super) {
   };
 
   Surface.prototype.make = function() {
-    var depth, dims, first, height, layers, objects, position, second, shaded, solid, strokeUniforms, styleUniforms, surfaceUniforms, types, width, wireUniforms, wireXY, wireYX;
+    var depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, types, width, wireUniforms, wireXY, wireYX;
     this._helpers.bind.make({
-      'surface.points': Source
+      'geometry.points': Source
     });
     position = this._shaders.shader();
     this._helpers.position.make();
     this.bind.points.shader(position);
     this._helpers.position.shader(position);
-    this.transform(position);
-    wireXY = this._shaders.shader();
-    wireXY.call(Util.GLSL.swizzleVec4('wxyz'));
-    wireXY.concat(position);
+    wireXY = position;
     wireYX = this._shaders.shader();
-    wireYX.call(Util.GLSL.swizzleVec4('xwyz'));
+    wireYX.call(Util.GLSL.swizzleVec4('yxzw'));
     wireYX.concat(position);
     styleUniforms = this._helpers.style.uniforms();
     wireUniforms = this._helpers.style.uniforms();
-    strokeUniforms = this._helpers.stroke.uniforms();
+    lineUniforms = this._helpers.line.uniforms();
     surfaceUniforms = this._helpers.surface.uniforms();
     types = this._attributes.types;
     wireUniforms.styleColor = this._attributes.make(types.color());
@@ -57639,15 +57641,9 @@ Surface = (function(_super) {
     first = this._get('grid.first');
     second = this._get('grid.second');
     objects = [];
-
-    /*
-    debug = @_renderables.make 'debug',
-             map: @bind.points.buffer.texture.textureObject
-    objects.push debug
-     */
     if (first) {
       this.line1 = this._renderables.make('line', {
-        uniforms: this._helpers.object.merge(strokeUniforms, styleUniforms, wireUniforms),
+        uniforms: this._helpers.object.merge(lineUniforms, styleUniforms, wireUniforms),
         samples: width,
         strips: height,
         ribbons: depth,
@@ -57658,7 +57654,7 @@ Surface = (function(_super) {
     }
     if (second) {
       this.line2 = this._renderables.make('line', {
-        uniforms: this._helpers.object.merge(strokeUniforms, styleUniforms, wireUniforms),
+        uniforms: this._helpers.object.merge(lineUniforms, styleUniforms, wireUniforms),
         samples: height,
         strips: width,
         ribbons: depth,
@@ -57705,7 +57701,7 @@ Surface = (function(_super) {
       if (solid) {
         c = this.wireScratch;
         c.setRGB(color.x, color.y, color.z);
-        c.convertGammaToLinear().multiplyScalar(.5).convertLinearToGamma();
+        c.convertGammaToLinear().multiplyScalar(.75).convertLinearToGamma();
         this.wireColor.x = c.r;
         this.wireColor.y = c.g;
         return this.wireColor.z = c.b;
@@ -57720,7 +57716,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../../util":84,"../../primitive":29,"../source":44}],42:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":29,"../source":46}],43:[function(require,module,exports){
 var Primitive, Ticks, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57732,7 +57728,7 @@ Util = require('../../../util');
 Ticks = (function(_super) {
   __extends(Ticks, _super);
 
-  Ticks.traits = ['node', 'object', 'style', 'stroke', 'ticks', 'interval', 'span', 'scale', 'position'];
+  Ticks.traits = ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position'];
 
   function Ticks(model, attributes, renderables, shaders, helpers) {
     Ticks.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
@@ -57740,7 +57736,7 @@ Ticks = (function(_super) {
   }
 
   Ticks.prototype.make = function() {
-    var p, position, positionUniforms, samples, strokeUniforms, styleUniforms, types;
+    var lineUniforms, p, position, positionUniforms, samples, styleUniforms, types;
     this.resolution = samples = this._helpers.scale.divide('');
     this.buffer = this._renderables.make('databuffer', {
       samples: samples,
@@ -57759,7 +57755,6 @@ Ticks = (function(_super) {
     p.split();
     p.callback();
     this._helpers.position.shader(position);
-    this.transform(position);
     p.join();
     p.next();
     p.callback();
@@ -57768,9 +57763,9 @@ Ticks = (function(_super) {
     p.join();
     p.call('ticks.position', positionUniforms);
     styleUniforms = this._helpers.style.uniforms();
-    strokeUniforms = this._helpers.stroke.uniforms();
+    lineUniforms = this._helpers.line.uniforms();
     this.line = this._renderables.make('line', {
-      uniforms: this._helpers.object.merge(strokeUniforms, styleUniforms),
+      uniforms: this._helpers.object.merge(lineUniforms, styleUniforms),
       samples: 2,
       strips: samples,
       position: position
@@ -57817,7 +57812,121 @@ Ticks = (function(_super) {
 module.exports = Ticks;
 
 
-},{"../../../util":84,"../../primitive":29}],43:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":29}],44:[function(require,module,exports){
+var Primitive, Source, Util, Vector,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Primitive = require('../../primitive');
+
+Source = require('../source');
+
+Util = require('../../../util');
+
+Vector = (function(_super) {
+  __extends(Vector, _super);
+
+  Vector.traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind'];
+
+  function Vector(model, attributes, renderables, shaders, helpers) {
+    Vector.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+    this.line = this.arrows = null;
+  }
+
+  Vector.prototype.resize = function() {
+    var arrow, dims, layers, ribbons, samples, strips, _i, _len, _ref, _results;
+    if (!(this.line && this.bind.points)) {
+      return;
+    }
+    dims = this.bind.points.getActive();
+    samples = dims.items;
+    strips = dims.width;
+    ribbons = dims.height;
+    layers = dims.depth;
+    this.line.geometry.clip(samples, strips, ribbons, layers);
+    _ref = this.arrows;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      arrow = _ref[_i];
+      _results.push(arrow.geometry.clip(samples, strips, ribbons, layers));
+    }
+    return _results;
+  };
+
+  Vector.prototype.make = function() {
+    var arrowUniforms, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms;
+    this._helpers.bind.make({
+      'geometry.points': Source
+    });
+    position = this._shaders.shader();
+    this._helpers.position.make();
+    position.call(Util.GLSL.swizzleVec4('yzwx'));
+    this.bind.points.shader(position);
+    this._helpers.position.shader(position);
+    styleUniforms = this._helpers.style.uniforms();
+    lineUniforms = this._helpers.line.uniforms();
+    arrowUniforms = this._helpers.arrow.uniforms();
+    start = this._get('arrow.start');
+    end = this._get('arrow.end');
+    dims = this.bind.points.getDimensions();
+    samples = dims.items;
+    strips = dims.width;
+    ribbons = dims.height;
+    layers = dims.depth;
+    this.line = this._renderables.make('line', {
+      uniforms: this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms),
+      samples: samples,
+      ribbons: ribbons,
+      strips: strips,
+      layers: layers,
+      position: position,
+      clip: start || end
+    });
+    this.arrows = [];
+    if (start) {
+      this.arrows.push(this._renderables.make('arrow', {
+        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
+        flip: true,
+        samples: samples,
+        ribbons: ribbons,
+        strips: strips,
+        position: position
+      }));
+    }
+    if (end) {
+      this.arrows.push(this._renderables.make('arrow', {
+        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
+        samples: samples,
+        ribbons: ribbons,
+        strips: strips,
+        position: position
+      }));
+    }
+    this.resize();
+    return this._helpers.object.make(this.arrows.concat([this.line]));
+  };
+
+  Vector.prototype.unmake = function() {
+    this._helpers.bind.unmake();
+    this._helpers.object.unmake();
+    this._helpers.position.unmake();
+    return this.line = this.arrows = null;
+  };
+
+  Vector.prototype.change = function(changed, touched, init) {
+    if ((changed['geometry.points'] != null) || (changed['arrow.start'] != null) || (changed['arrow.end'] != null)) {
+      return this.rebuild();
+    }
+  };
+
+  return Vector;
+
+})(Primitive);
+
+module.exports = Vector;
+
+
+},{"../../../util":87,"../../primitive":29,"../source":46}],45:[function(require,module,exports){
 var Group, Root,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57843,7 +57952,7 @@ Root = (function(_super) {
 module.exports = Root;
 
 
-},{"./group":35}],44:[function(require,module,exports){
+},{"./group":36}],46:[function(require,module,exports){
 var Primitive, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57892,7 +58001,7 @@ Source = (function(_super) {
 module.exports = Source;
 
 
-},{"../Primitive":26}],45:[function(require,module,exports){
+},{"../Primitive":26}],47:[function(require,module,exports){
 var Traits, Types;
 
 Types = require('./types');
@@ -57914,7 +58023,7 @@ Traits = {
     color: Types.color(),
     zBias: Types.number(0)
   },
-  stroke: {
+  line: {
     width: Types.number(.01)
   },
   mesh: {
@@ -57924,7 +58033,7 @@ Traits = {
   arrow: {
     size: Types.number(.07),
     start: Types.bool(false),
-    end: Types.bool(true)
+    end: Types.bool(false)
   },
   ticks: {
     size: Types.number(.05)
@@ -57962,11 +58071,7 @@ Traits = {
   axis: {
     detail: Types.number(1)
   },
-  line: {
-    points: Types.select(Types.object()),
-    colors: Types.select(Types.object())
-  },
-  surface: {
+  geometry: {
     points: Types.select(Types.object()),
     colors: Types.select(Types.object())
   },
@@ -57995,13 +58100,19 @@ Traits = {
     width: Types.nullable(Types.number()),
     height: Types.nullable(Types.number()),
     depth: Types.nullable(Types.number())
+  },
+  swizzle: {
+    order: Types.swizzle()
+  },
+  transpose: {
+    order: Types.transpose()
   }
 };
 
 module.exports = Traits;
 
 
-},{"./types":48}],46:[function(require,module,exports){
+},{"./types":51}],48:[function(require,module,exports){
 var Lerp, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58083,7 +58194,7 @@ Lerp = (function(_super) {
 module.exports = Lerp;
 
 
-},{"./transform":47}],47:[function(require,module,exports){
+},{"./transform":49}],49:[function(require,module,exports){
 var Source, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58123,7 +58234,87 @@ Transform = (function(_super) {
 module.exports = Transform;
 
 
-},{"../source":44}],48:[function(require,module,exports){
+},{"../source":46}],50:[function(require,module,exports){
+var Transform, Transpose, Util, labels, letters,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Transform = require('./transform');
+
+Util = require('../../../util');
+
+letters = 'xyzw'.split('');
+
+labels = {
+  x: 'width',
+  y: 'height',
+  z: 'depth',
+  w: 'items'
+};
+
+Transpose = (function(_super) {
+  __extends(Transpose, _super);
+
+  Transpose.traits = ['node', 'bind', 'transform', 'transpose'];
+
+  function Transpose(model, attributes, renderables, shaders, helpers) {
+    Transpose.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  }
+
+  Transpose.prototype.shader = function(shader) {
+    shader.call(this.swizzler);
+    return this.bind.source.shader(shader);
+  };
+
+  Transpose.prototype.getDimensions = function() {
+    return this._remap(this.transpose, this.bind.source.getDimensions());
+  };
+
+  Transpose.prototype.getActive = function() {
+    return this._remap(this.transpose, this.bind.source.getActive());
+  };
+
+  Transpose.prototype._remap = function(transpose, dims) {
+    var dst, i, letter, out, src, _i, _len, _ref;
+    out = {};
+    for (i = _i = 0, _len = letters.length; _i < _len; i = ++_i) {
+      letter = letters[i];
+      dst = labels[letter];
+      src = labels[transpose[i]];
+      out[dst] = (_ref = dims[src]) != null ? _ref : 1;
+    }
+    return out;
+  };
+
+  Transpose.prototype.make = function() {
+    var order;
+    Transpose.__super__.make.apply(this, arguments);
+    order = this._get('transpose.order');
+    this.transpose = order.split('');
+    this.swizzler = Util.GLSL.invertSwizzleVec4(order);
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Transpose.prototype.unmake = function() {
+    return Transpose.__super__.unmake.apply(this, arguments);
+  };
+
+  Transpose.prototype.change = function(changed, touched, init) {
+    if (touched['transpose']) {
+      return this.rebuild();
+    }
+  };
+
+  return Transpose;
+
+})(Transform);
+
+module.exports = Transpose;
+
+
+},{"../../../util":87,"./transform":49}],51:[function(require,module,exports){
 var Types;
 
 Types = {
@@ -58508,13 +58699,54 @@ Types = {
         }
       }
     };
+  },
+  transpose: function(order) {
+    var swizzle;
+    swizzle = Types.swizzle(order);
+    return {
+      make: function() {
+        return swizzle.make();
+      },
+      validate: function(value) {
+        var i, letter, unique;
+        value = "" + value;
+        unique = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (i = _i = 0, _len = value.length; _i < _len; i = ++_i) {
+            letter = value[i];
+            _results.push(value.indexOf(letter) === i);
+          }
+          return _results;
+        })();
+        if (unique.indexOf(false) < 0) {
+          return swizzle.validate(value);
+        }
+      }
+    };
+  },
+  swizzle: function(order) {
+    if (order == null) {
+      order = 'xyzw';
+    }
+    return {
+      make: function() {
+        return order;
+      },
+      validate: function(value) {
+        value = "" + value;
+        if (value.match(/^[xyzw]{1,4}$/)) {
+          return value;
+        }
+      }
+    };
   }
 };
 
 module.exports = Types;
 
 
-},{}],49:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 var Cartesian, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58611,7 +58843,7 @@ Cartesian = (function(_super) {
 module.exports = Cartesian;
 
 
-},{"./view":52}],50:[function(require,module,exports){
+},{"./view":55}],53:[function(require,module,exports){
 var Polar, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58765,7 +58997,7 @@ Polar = (function(_super) {
 module.exports = Polar;
 
 
-},{"../../../util":84,"./view":52}],51:[function(require,module,exports){
+},{"../../../util":87,"./view":55}],54:[function(require,module,exports){
 var Spherical, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58940,7 +59172,7 @@ Spherical = (function(_super) {
 module.exports = Spherical;
 
 
-},{"../../../util":84,"./view":52}],52:[function(require,module,exports){
+},{"../../../util":87,"./view":55}],55:[function(require,module,exports){
 var Group, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58969,7 +59201,7 @@ View = (function(_super) {
 module.exports = View;
 
 
-},{"../group":35}],53:[function(require,module,exports){
+},{"../group":36}],56:[function(require,module,exports){
 var Buffer, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59079,7 +59311,7 @@ Buffer = (function(_super) {
 module.exports = Buffer;
 
 
-},{"../renderable":72}],54:[function(require,module,exports){
+},{"../renderable":76}],57:[function(require,module,exports){
 var Buffer, DataBuffer, Texture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59118,7 +59350,7 @@ DataBuffer = (function(_super) {
 module.exports = DataBuffer;
 
 
-},{"./buffer":53,"./texture":58}],55:[function(require,module,exports){
+},{"./buffer":56,"./texture":61}],58:[function(require,module,exports){
 exports.Texture = require('./texture');
 
 exports.Buffer = require('./buffer');
@@ -59130,7 +59362,7 @@ exports.LineBuffer = require('./linebuffer');
 exports.SurfaceBuffer = require('./surfacebuffer');
 
 
-},{"./buffer":53,"./databuffer":54,"./linebuffer":56,"./surfacebuffer":57,"./texture":58}],56:[function(require,module,exports){
+},{"./buffer":56,"./databuffer":57,"./linebuffer":59,"./surfacebuffer":60,"./texture":61}],59:[function(require,module,exports){
 var Buffer, LineBuffer, Texture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59165,10 +59397,10 @@ LineBuffer = (function(_super) {
     output = this.generate();
     limit = this.samples;
     i = 0;
-    while (callback(i++, output) !== false && i <= limit) {
+    while (i < limit && callback(i++, output) !== false) {
       true;
     }
-    return i - 1;
+    return i;
   };
 
   LineBuffer.prototype.write = function(n) {
@@ -59202,7 +59434,7 @@ LineBuffer = (function(_super) {
 module.exports = LineBuffer;
 
 
-},{"./buffer":53,"./texture":58}],57:[function(require,module,exports){
+},{"./buffer":56,"./texture":61}],60:[function(require,module,exports){
 var Buffer, SurfaceBuffer, Texture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59240,18 +59472,18 @@ SurfaceBuffer = (function(_super) {
     n = this.width;
     limit = this.samples;
     i = j = k = 0;
-    while (++k <= limit) {
+    while (k < limit) {
+      k++;
       repeat = callback(i, j, output);
-      if (repeat === false) {
-        k++;
-        break;
-      }
       if (++i === n) {
         i = 0;
         j++;
       }
+      if (repeat === false) {
+        break;
+      }
     }
-    return k - 1;
+    return k;
   };
 
   SurfaceBuffer.prototype.write = function(n) {
@@ -59307,7 +59539,7 @@ SurfaceBuffer = (function(_super) {
 module.exports = SurfaceBuffer;
 
 
-},{"./buffer":53,"./texture":58}],58:[function(require,module,exports){
+},{"./buffer":56,"./texture":61}],61:[function(require,module,exports){
 var Texture;
 
 Texture = (function() {
@@ -59374,7 +59606,23 @@ Texture = (function() {
 module.exports = Texture;
 
 
-},{}],59:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
+var Classes;
+
+Classes = {
+  line: require('./meshes').Line,
+  surface: require('./meshes').Surface,
+  arrow: require('./meshes').Arrow,
+  debug: require('./meshes').Debug,
+  databuffer: require('./buffer').DataBuffer,
+  linebuffer: require('./buffer').LineBuffer,
+  surfacebuffer: require('./buffer').SurfaceBuffer
+};
+
+module.exports = Classes;
+
+
+},{"./buffer":58,"./meshes":73}],63:[function(require,module,exports){
 var Factory;
 
 Factory = (function() {
@@ -59399,7 +59647,7 @@ Factory = (function() {
 module.exports = Factory;
 
 
-},{}],60:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 var ArrowGeometry, Geometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59435,7 +59683,7 @@ ArrowGeometry = (function(_super) {
       layers = this.layers;
     }
     segments = Math.max(0, samples - 1);
-    this.geometryClip.set(strips, ribbons, layers, segments);
+    this.geometryClip.set(segments, strips, ribbons, layers);
     if (samples > this.anchor) {
       dims = [layers, ribbons, strips];
       maxs = [this.layers, this.ribbons, this.strips];
@@ -59452,7 +59700,7 @@ ArrowGeometry = (function(_super) {
   };
 
   function ArrowGeometry(options) {
-    var a, anchor, angle, arrow, arrows, attach, b, back, base, c, circle, end, far, flip, i, index, j, k, layers, near, points, position, ribbons, samples, sides, step, strips, tip, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _p, _ref, _ref1, _ref2;
+    var a, anchor, angle, arrow, arrows, attach, b, back, base, c, circle, far, flip, i, index, j, k, l, layers, near, points, position, ribbons, samples, sides, step, strips, tip, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _p, _ref, _ref1, _ref2;
     ArrowGeometry.__super__.constructor.call(this, options);
     this.geometryClip = new THREE.Vector4;
     this.uniforms = {
@@ -59503,23 +59751,22 @@ ArrowGeometry = (function(_super) {
       }
     }
     step = flip ? 1 : -1;
-    end = flip ? samples - 1 : 0;
-    for (z = _m = 0; 0 <= layers ? _m < layers : _m > layers; z = 0 <= layers ? ++_m : --_m) {
-      for (y = _n = 0; 0 <= ribbons ? _n < ribbons : _n > ribbons; y = 0 <= ribbons ? ++_n : --_n) {
-        far = end;
-        near = anchor + step;
-        i = anchor;
-        for (x = _o = 0; 0 <= strips ? _o < strips : _o > strips; x = 0 <= strips ? ++_o : --_o) {
-          position(x, y, z, i);
+    far = flip ? samples - 1 : 0;
+    near = anchor + step;
+    x = anchor;
+    for (l = _m = 0; 0 <= layers ? _m < layers : _m > layers; l = 0 <= layers ? ++_m : --_m) {
+      for (z = _n = 0; 0 <= ribbons ? _n < ribbons : _n > ribbons; z = 0 <= ribbons ? ++_n : --_n) {
+        for (y = _o = 0; 0 <= strips ? _o < strips : _o > strips; y = 0 <= strips ? ++_o : --_o) {
+          position(x, y, z, l);
           arrow(0, 0, 0);
           attach(near, far);
           for (k = _p = 0; 0 <= sides ? _p < sides : _p > sides; k = 0 <= sides ? ++_p : --_p) {
-            position(x, y, z, i);
+            position(x, y, z, l);
             c = circle[k];
             arrow(c[0], c[1], c[2]);
             attach(near, far);
           }
-          position(x, y, z, i);
+          position(x, y, z, l);
           arrow(0, 0, 1);
           attach(near, far);
         }
@@ -59537,7 +59784,7 @@ ArrowGeometry = (function(_super) {
 module.exports = ArrowGeometry;
 
 
-},{"./geometry":61}],61:[function(require,module,exports){
+},{"./geometry":65}],65:[function(require,module,exports){
 var Geometry, tick,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59622,7 +59869,7 @@ Geometry = (function(_super) {
 module.exports = Geometry;
 
 
-},{}],62:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 exports.Geometry = require('./geometry');
 
 exports.LineGeometry = require('./linegeometry');
@@ -59632,7 +59879,7 @@ exports.SurfaceGeometry = require('./surfacegeometry');
 exports.ArrowGeometry = require('./arrowgeometry');
 
 
-},{"./arrowgeometry":60,"./geometry":61,"./linegeometry":63,"./surfacegeometry":64}],63:[function(require,module,exports){
+},{"./arrowgeometry":64,"./geometry":65,"./linegeometry":67,"./surfacegeometry":68}],67:[function(require,module,exports){
 var Geometry, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59668,7 +59915,7 @@ LineGeometry = (function(_super) {
       layers = this.layers;
     }
     segments = Math.max(0, samples - 1);
-    this.geometryClip.set(strips, ribbons, layers, segments);
+    this.geometryClip.set(segments, strips, ribbons, layers);
     dims = [layers, ribbons, strips, segments];
     maxs = [this.layers, this.ribbons, this.strips, this.segments];
     quads = this._reduce(dims, maxs);
@@ -59681,7 +59928,7 @@ LineGeometry = (function(_super) {
   };
 
   function LineGeometry(options) {
-    var base, edge, i, index, j, k, layers, line, points, position, quads, ribbons, samples, segments, strip, strips, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
+    var base, edge, i, index, j, k, l, layers, line, points, position, quads, ribbons, samples, segments, strip, strips, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
     LineGeometry.__super__.constructor.call(this, options);
     this.geometryClip = new THREE.Vector4;
     this.uniforms = {
@@ -59721,13 +59968,13 @@ LineGeometry = (function(_super) {
         base += 2;
       }
     }
-    for (z = _l = 0; 0 <= layers ? _l < layers : _l > layers; z = 0 <= layers ? ++_l : --_l) {
-      for (y = _m = 0; 0 <= ribbons ? _m < ribbons : _m > ribbons; y = 0 <= ribbons ? ++_m : --_m) {
-        for (x = _n = 0; 0 <= strips ? _n < strips : _n > strips; x = 0 <= strips ? ++_n : --_n) {
-          for (k = _o = 0; 0 <= samples ? _o < samples : _o > samples; k = 0 <= samples ? ++_o : --_o) {
-            edge = k === 0 ? -1 : k === segments ? 1 : 0;
-            position(x, y, z, k);
-            position(x, y, z, k);
+    for (l = _l = 0; 0 <= layers ? _l < layers : _l > layers; l = 0 <= layers ? ++_l : --_l) {
+      for (z = _m = 0; 0 <= ribbons ? _m < ribbons : _m > ribbons; z = 0 <= ribbons ? ++_m : --_m) {
+        for (y = _n = 0; 0 <= strips ? _n < strips : _n > strips; y = 0 <= strips ? ++_n : --_n) {
+          for (x = _o = 0; 0 <= samples ? _o < samples : _o > samples; x = 0 <= samples ? ++_o : --_o) {
+            edge = x === 0 ? -1 : x === segments ? 1 : 0;
+            position(x, y, z, l);
+            position(x, y, z, l);
             line(edge, 1);
             line(edge, -1);
             strip(0, segments);
@@ -59748,7 +59995,7 @@ LineGeometry = (function(_super) {
 module.exports = LineGeometry;
 
 
-},{"./geometry":61}],64:[function(require,module,exports){
+},{"./geometry":65}],68:[function(require,module,exports){
 var Geometry, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59804,7 +60051,7 @@ SurfaceGeometry = (function(_super) {
   };
 
   function SurfaceGeometry(options) {
-    var base, edgeX, edgeY, height, i, index, j, k, layers, points, position, quads, segmentsX, segmentsY, surface, surfaces, triangles, width, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
+    var base, edgeX, edgeY, height, i, index, j, k, l, layers, points, position, quads, segmentsX, segmentsY, surface, surfaces, triangles, width, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
     SurfaceGeometry.__super__.constructor.call(this, options);
     this.geometryClip = new THREE.Vector4;
     this.uniforms = {
@@ -59844,13 +60091,13 @@ SurfaceGeometry = (function(_super) {
       }
       base += width;
     }
-    for (k = _l = 0; 0 <= layers ? _l < layers : _l > layers; k = 0 <= layers ? ++_l : --_l) {
+    for (l = _l = 0; 0 <= layers ? _l < layers : _l > layers; l = 0 <= layers ? ++_l : --_l) {
       for (z = _m = 0; 0 <= surfaces ? _m < surfaces : _m > surfaces; z = 0 <= surfaces ? ++_m : --_m) {
         for (y = _n = 0; 0 <= height ? _n < height : _n > height; y = 0 <= height ? ++_n : --_n) {
           edgeY = y === 0 ? -1 : y === segmentsY ? 1 : 0;
           for (x = _o = 0; 0 <= width ? _o < width : _o > width; x = 0 <= width ? ++_o : --_o) {
             edgeX = x === 0 ? -1 : x === segmentsX ? 1 : 0;
-            position(x, y, z, k);
+            position(x, y, z, l);
             surface(edgeX, edgeY);
           }
         }
@@ -59868,21 +60115,17 @@ SurfaceGeometry = (function(_super) {
 module.exports = SurfaceGeometry;
 
 
-},{"./geometry":61}],65:[function(require,module,exports){
-var Types;
-
-Types = require('./types');
-
+},{"./geometry":65}],69:[function(require,module,exports){
 exports.Scene = require('./scene');
 
 exports.Factory = require('./factory');
 
 exports.Renderable = require('./scene');
 
-exports.Classes = Types.Classes;
+exports.Classes = require('./classes');
 
 
-},{"./factory":59,"./scene":73,"./types":74}],66:[function(require,module,exports){
+},{"./classes":62,"./factory":63,"./scene":77}],70:[function(require,module,exports){
 var Arrow, ArrowGeometry, Base,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59904,6 +60147,7 @@ Arrow = (function(_super) {
       samples: options.samples,
       strips: options.strips,
       ribbons: options.ribbons,
+      layers: options.layers,
       anchor: options.anchor,
       flip: options.flip
     });
@@ -59942,7 +60186,7 @@ Arrow = (function(_super) {
 module.exports = Arrow;
 
 
-},{"../geometry":62,"./base":67}],67:[function(require,module,exports){
+},{"../geometry":66,"./base":71}],71:[function(require,module,exports){
 var Base, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59972,7 +60216,7 @@ Base = (function(_super) {
 module.exports = Base;
 
 
-},{"../renderable":72}],68:[function(require,module,exports){
+},{"../renderable":76}],72:[function(require,module,exports){
 var Base, Debug,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60008,7 +60252,7 @@ Debug = (function(_super) {
 module.exports = Debug;
 
 
-},{"./base":67}],69:[function(require,module,exports){
+},{"./base":71}],73:[function(require,module,exports){
 exports.Surface = require('./surface');
 
 exports.Line = require('./line');
@@ -60018,7 +60262,7 @@ exports.Arrow = require('./arrow');
 exports.Debug = require('./debug');
 
 
-},{"./arrow":66,"./debug":68,"./line":70,"./surface":71}],70:[function(require,module,exports){
+},{"./arrow":70,"./debug":72,"./line":74,"./surface":75}],74:[function(require,module,exports){
 var Base, Line, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60087,7 +60331,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../geometry":62,"./base":67}],71:[function(require,module,exports){
+},{"../geometry":66,"./base":71}],75:[function(require,module,exports){
 var Base, Surface, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60157,7 +60401,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../geometry":62,"./base":67}],72:[function(require,module,exports){
+},{"../geometry":66,"./base":71}],76:[function(require,module,exports){
 var Renderable;
 
 Renderable = (function() {
@@ -60198,7 +60442,7 @@ Renderable = (function() {
 module.exports = Renderable;
 
 
-},{}],73:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 var MathBox, Scene,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60243,23 +60487,7 @@ Scene = (function() {
 module.exports = Scene;
 
 
-},{}],74:[function(require,module,exports){
-var Classes;
-
-Classes = {
-  line: require('./meshes').Line,
-  surface: require('./meshes').Surface,
-  arrow: require('./meshes').Arrow,
-  debug: require('./meshes').Debug,
-  databuffer: require('./buffer').DataBuffer,
-  linebuffer: require('./buffer').LineBuffer,
-  surfacebuffer: require('./buffer').SurfaceBuffer
-};
-
-exports.Classes = Classes;
-
-
-},{"./buffer":55,"./meshes":69}],75:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 var Factory;
 
 Factory = function(snippets) {
@@ -60269,13 +60497,13 @@ Factory = function(snippets) {
 module.exports = Factory;
 
 
-},{}],76:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Snippets = MathBox.Shaders;
 
 
-},{"./factory":75}],77:[function(require,module,exports){
+},{"./factory":78}],80:[function(require,module,exports){
 var Animator;
 
 Animator = (function() {
@@ -60292,7 +60520,7 @@ Animator = (function() {
 module.exports = Animator;
 
 
-},{}],78:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 var API;
 
 API = (function() {
@@ -60367,7 +60595,7 @@ API = (function() {
 module.exports = API;
 
 
-},{}],79:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 var Controller;
 
 Controller = (function() {
@@ -60423,7 +60651,7 @@ Controller = (function() {
 module.exports = Controller;
 
 
-},{}],80:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 var Director;
 
 Director = (function() {
@@ -60439,7 +60667,7 @@ Director = (function() {
 module.exports = Director;
 
 
-},{}],81:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 exports.Animator = require('./animator');
 
 exports.API = require('./api');
@@ -60449,7 +60677,7 @@ exports.Controller = require('./controller');
 exports.Director = require('./director');
 
 
-},{"./animator":77,"./api":78,"./controller":79,"./director":80}],82:[function(require,module,exports){
+},{"./animator":80,"./api":81,"./controller":82,"./director":83}],85:[function(require,module,exports){
 var ease;
 
 ease = {
@@ -60461,13 +60689,33 @@ ease = {
 module.exports = ease;
 
 
-},{}],83:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 exports.swizzleVec4 = function(order) {
-  return "vec4 swizzle(vec4 xyzw) { return xyzw." + order + "; }\n";
+  return "vec4 swizzle(vec4 xyzw) {\n  return xyzw." + order + ";\n}";
+};
+
+exports.invertSwizzleVec4 = function(order) {
+  var i, index, j, letter, letters, mask, src, swizzler, _i, _len;
+  letters = 'xyzw'.split('');
+  index = {
+    x: 0,
+    y: 1,
+    z: 2,
+    w: 3
+  };
+  swizzler = ['0.0', '0.0', '0.0', '0.0'];
+  for (i = _i = 0, _len = order.length; _i < _len; i = ++_i) {
+    letter = order[i];
+    src = letters[i];
+    j = index[letter];
+    swizzler[j] = "xyzw." + src;
+  }
+  mask = swizzler.join(', ');
+  return "vec4 invertSwizzle(vec4 xyzw) {\n  return vec4(" + mask + ");\n}";
 };
 
 
-},{}],84:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 exports.Ticks = require('./ticks');
 
 exports.Ease = require('./ease');
@@ -60493,7 +60741,7 @@ exports.setDimensionNormal = function(vec, dimension) {
 };
 
 
-},{"./ease":82,"./glsl":83,"./ticks":85}],85:[function(require,module,exports){
+},{"./ease":85,"./glsl":86,"./ticks":88}],88:[function(require,module,exports){
 
 /*
  Generate equally spaced ticks in a range at sensible positions.

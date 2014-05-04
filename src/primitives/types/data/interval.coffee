@@ -5,8 +5,11 @@ class Interval extends _Array
 
   callback: (callback) ->
     dimension = @_get 'interval.axis'
+    length    = @_get 'array.length'
+
     range     = @_helpers.span.get '', dimension
-    inverse   = 1 / Math.max 1, @_get('array.length') - 1
+
+    inverse   = 1 / Math.max 1, length - 1
 
     a = range.x
     b = (range.y - range.x) * inverse

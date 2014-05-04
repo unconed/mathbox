@@ -13,6 +13,7 @@ class Arrow extends Base
       samples: options.samples
       strips:  options.strips
       ribbons: options.ribbons
+      layers:  options.layers
       anchor:  options.anchor
       flip:    options.flip
 

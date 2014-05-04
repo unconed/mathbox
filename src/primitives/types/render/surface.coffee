@@ -3,7 +3,7 @@ Source    = require '../source'
 Util      = require '../../../util'
 
 class Surface extends Primitive
-  @traits: ['node', 'object', 'style', 'stroke', 'mesh', 'surface', 'position', 'grid', 'bind']
+  @traits: ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind']
 
   constructor: (model, attributes, renderables, shaders, helpers) ->
     super model, attributes, renderables, shaders, helpers
@@ -24,7 +24,7 @@ class Surface extends Primitive
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make
-      'surface.points': Source
+      'geometry.points': Source
 
     # Build transform chain
     position  = @_shaders.shader()
@@ -33,23 +33,18 @@ class Surface extends Primitive
     # Fetch position and transform to view
     @bind.points.shader position
     @_helpers.position.shader position
-    @transform position
 
-    # Swizzled samplers for XY / YX wires
-    # Lines go across (w, x, y, z). Map to resp (x, y, z, w) and (y, x, z, w).
-    # Ignore line's x because strips == 1.
-    wireXY = @_shaders.shader()
-    wireXY.call Util.GLSL.swizzleVec4 'wxyz'
-    wireXY.concat position
+    # Samplers for XY / YX wires
+    wireXY = position
 
     wireYX = @_shaders.shader()
-    wireYX.call Util.GLSL.swizzleVec4 'xwyz'
+    wireYX.call Util.GLSL.swizzleVec4 'yxzw'
     wireYX.concat position
 
     # Prepare bound uniforms
     styleUniforms   = @_helpers.style.uniforms()
     wireUniforms    = @_helpers.style.uniforms()
-    strokeUniforms  = @_helpers.stroke.uniforms()
+    lineUniforms    = @_helpers.line.uniforms()
     surfaceUniforms = @_helpers.surface.uniforms()
 
     # Darken wireframe if needed for contrast
@@ -61,15 +56,14 @@ class Surface extends Primitive
     @wireZBias = wireUniforms.styleZBias
     @wireScratch = new THREE.Color
 
-    # Make line and surface renderables
+    # Fetch geometry dimensions
     dims   = @bind.points.getDimensions()
     width  = dims.width
     height = dims.height
     depth  = dims.depth
     layers = dims.items
 
-    #console.log 'surface::make', width, height
-
+    # Get display properties
     shaded = @_get 'mesh.shaded'
     solid  = @_get 'mesh.solid'
     first  = @_get 'grid.first'
@@ -77,15 +71,10 @@ class Surface extends Primitive
 
     objects = []
 
-    ###
-    debug = @_renderables.make 'debug',
-             map: @bind.points.buffer.texture.textureObject
-    objects.push debug
-    ###
-
+    # Make line and surface renderables
     if first
       @line1 = @_renderables.make 'line',
-                uniforms: @_helpers.object.merge strokeUniforms, styleUniforms, wireUniforms
+                uniforms: @_helpers.object.merge lineUniforms, styleUniforms, wireUniforms
                 samples:  width
                 strips:   height
                 ribbons:  depth
@@ -95,7 +84,7 @@ class Surface extends Primitive
 
     if second
       @line2 = @_renderables.make 'line',
-                uniforms: @_helpers.object.merge strokeUniforms, styleUniforms, wireUniforms
+                uniforms: @_helpers.object.merge lineUniforms, styleUniforms, wireUniforms
                 samples:  height
                 strips:   width
                 ribbons:  depth
@@ -148,7 +137,7 @@ class Surface extends Primitive
         c.setRGB color.x, color.y, color.z
         c
           .convertGammaToLinear()
-          .multiplyScalar(.5)
+          .multiplyScalar(.75)
           .convertLinearToGamma()
         @wireColor.x = c.r
         @wireColor.y = c.g

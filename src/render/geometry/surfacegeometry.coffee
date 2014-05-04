@@ -79,7 +79,7 @@ class SurfaceGeometry extends Geometry
         base++
       base += width
 
-    for k in [0...layers]
+    for l in [0...layers]
       for z in [0...surfaces]
         for y in [0...height]
           edgeY = if y == 0 then -1 else if y == segmentsY then 1 else 0
@@ -87,7 +87,7 @@ class SurfaceGeometry extends Geometry
           for x in [0...width]
             edgeX = if x == 0 then -1 else if x == segmentsX then 1 else 0
 
-            position x, y, z, k
+            position x, y, z, l
 
             surface edgeX, edgeY
 

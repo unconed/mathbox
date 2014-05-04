@@ -15,7 +15,7 @@ class ArrowGeometry extends Geometry
   clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
     segments = Math.max 0, samples - 1
 
-    @geometryClip.set strips, ribbons, layers, segments
+    @geometryClip.set segments, strips, ribbons, layers
 
     if samples > @anchor
       dims  = [ layers,  ribbons,  strips]
@@ -87,30 +87,28 @@ class ArrowGeometry extends Geometry
         base += sides + 1
 
     step = if flip then 1           else -1
-    end  = if flip then samples - 1 else 0
+    far  = if flip then samples - 1 else 0
+    near = anchor + step
+    x    = anchor
 
-    for z in [0...layers]
-      for y in [0...ribbons]
+    for l in [0...layers]
+      for z in [0...ribbons]
 
-        far  = end
-        near = anchor + step
-        i    = anchor
+        for y in [0...strips]
 
-        for x in [0...strips]
-
-          position x, y, z, i
+          position x, y, z, l
           arrow    0, 0, 0
           attach   near, far
 
           for k in [0...sides]
 
-            position x, y, z, i
+            position x, y, z, l
 
             c = circle[k]
             arrow  c[0], c[1], c[2]
             attach near, far
 
-          position x, y, z, i
+          position x, y, z, l
           arrow    0, 0, 1
           attach   near, far
 
