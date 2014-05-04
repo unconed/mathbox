@@ -4,8 +4,8 @@ Source = require '../source'
 class Line extends Primitive
   @traits: ['node', 'object', 'style', 'stroke', 'line', 'arrow', 'position', 'bind']
 
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helpers) ->
+    super model, attributes, renderables, shaders, helpers
 
     @detail = @line = @arrows = null
 
@@ -16,27 +16,29 @@ class Line extends Primitive
     if dims.items > 1
       samples = dims.items
       strips  = Math.floor dims.width
-      ribbons = dims.height * dims.depth
+      ribbons = dims.height
+      layers  = dims.depth
 
     else
       samples = dims.width
       strips  = 1
-      ribbons = dims.height * dims.depth
+      ribbons = dims.height
+      layers  = dims.depth
 
-    @line.geometry.clip samples, strips, ribbons, 1
-    arrow.geometry.clip samples, strips, ribbons, 1 for arrow in @arrows
+    @line.geometry.clip samples, strips, ribbons, layers
+    arrow.geometry.clip samples, strips, ribbons, layers for arrow in @arrows
 
   make: () ->
     # Bind to attached data sources
-    @_helper.bind.make
+    @_helpers.bind.make
       'line.points': Source
 
     # Build transform chain
     position = @_shaders.shader()
-    @_helper.position.make()
+    @_helpers.position.make()
 
     # Fetch geometry dimensions
-    dims    = @bind.points.getDimensions()
+    dims = @bind.points.getDimensions()
     if dims.items > 1
       samples = dims.items
       strips  = Math.floor dims.width
@@ -55,21 +57,21 @@ class Line extends Primitive
     @bind.points.shader position
 
     # Transform position to view
-    @_helper.position.shader position
+    @_helpers.position.shader position
     @transform position
 
     # Prepare bound uniforms
-    styleUniforms  = @_helper.style.uniforms()
-    strokeUniforms = @_helper.stroke.uniforms()
-    arrowUniforms  = @_helper.arrow.uniforms()
+    styleUniforms  = @_helpers.style.uniforms()
+    strokeUniforms = @_helpers.stroke.uniforms()
+    arrowUniforms  = @_helpers.arrow.uniforms()
 
     # Clip start/end for terminating arrow
     start   = @_get 'arrow.start'
     end     = @_get 'arrow.end'
 
     # Make line renderable
-    @line = @_factory.make 'line',
-              uniforms: @_helper.object.merge arrowUniforms, strokeUniforms, styleUniforms
+    @line = @_renderables.make 'line',
+              uniforms: @_helpers.object.merge arrowUniforms, strokeUniforms, styleUniforms
               samples:  samples
               ribbons:  ribbons
               strips:   strips
@@ -80,8 +82,8 @@ class Line extends Primitive
     @arrows = []
 
     if start
-      @arrows.push @_factory.make 'arrow',
-                uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+      @arrows.push @_renderables.make 'arrow',
+                uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
                 flip:     true
                 samples:  samples
                 ribbons:  ribbons
@@ -89,8 +91,8 @@ class Line extends Primitive
                 position: position
 
     if end
-      @arrows.push @_factory.make 'arrow',
-                uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+      @arrows.push @_renderables.make 'arrow',
+                uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
                 samples:  samples
                 ribbons:  ribbons
                 strips:   strips
@@ -98,16 +100,18 @@ class Line extends Primitive
 
     @resize()
 
-    @_helper.object.make @arrows.concat [@line]
+    @_helpers.object.make @arrows.concat [@line]
 
   unmake: () ->
-    @_helper.bind.unmake()
-    @_helper.object.unmake()
-    @_helper.position.unmake()
+    @_helpers.bind.unmake()
+    @_helpers.object.unmake()
+    @_helpers.position.unmake()
+
+    @detail = @line = @arrows = null
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['curve.points']? or
-                  changed['arrow.start']?  or
+    @rebuild() if changed['line.points']? or
+                  changed['arrow.start']? or
                   changed['arrow.end']?
 
 module.exports = Line

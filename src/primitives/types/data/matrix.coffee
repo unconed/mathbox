@@ -3,8 +3,8 @@ Data = require './data'
 class Matrix extends Data
   @traits: ['node', 'data', 'matrix']
 
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helpers) ->
+    super model, attributes, renderables, shaders, helpers
 
     @buffer = null
     @spaceWidth  = 0
@@ -12,7 +12,7 @@ class Matrix extends Data
     @filled = false
 
   shader: (shader) ->
-    shader.call 'map.2d.xyzi', @sampleUniforms
+    shader.call 'map.2d.xyzw', @sampleUniforms
     @buffer.shader shader
 
   getDimensions: () ->
@@ -64,7 +64,7 @@ class Matrix extends Data
 
     # Create surfacebuffer
     if @spaceWidth * @spaceHeight > 0
-      @buffer = @_factory.make 'surfacebuffer',
+      @buffer = @_renderables.make 'surfacebuffer',
                 width:    @spaceWidth
                 height:   @spaceHeight
                 history:  history

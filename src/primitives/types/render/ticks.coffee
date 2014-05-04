@@ -4,17 +4,17 @@ Util = require '../../../util'
 class Ticks extends Primitive
   @traits: ['node', 'object', 'style', 'stroke', 'ticks', 'interval', 'span', 'scale', 'position']
 
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helpers) ->
+    super model, attributes, renderables, shaders, helpers
 
     @tickAxis = @tickNormal = @resolution = @line = null
 
   make: () ->
 
     # Prepare data buffer of tick positions
-    @resolution = samples = @_helper.scale.divide ''
+    @resolution = samples = @_helpers.scale.divide ''
 
-    @buffer = @_factory.make 'databuffer',
+    @buffer = @_renderables.make 'databuffer',
               samples:  samples
               channels: 1
 
@@ -29,13 +29,13 @@ class Ticks extends Primitive
     @tickNormal = positionUniforms.tickNormal.value
 
     # Build transform chain
-    @_helper.position.make()
+    @_helpers.position.make()
     p = position = @_shaders.shader()
     p.split()
 
     # Collect view transform as callback
     p  .callback();
-    @_helper.position.shader position
+    @_helpers.position.shader position
     @transform position
     p  .join()
     p.next()
@@ -50,33 +50,31 @@ class Ticks extends Primitive
     p.call 'ticks.position', positionUniforms
 
     # Prepare bound uniforms
-    styleUniforms = @_helper.style.uniforms()
-    lineUniforms  = @_helper.line.uniforms()
+    styleUniforms  = @_helpers.style.uniforms()
+    strokeUniforms = @_helpers.stroke.uniforms()
 
     # Make line renderable
-    @line = @_factory.make 'line',
-              uniforms: @_helper.object.merge lineUniforms, styleUniforms
+    @line = @_renderables.make 'line',
+              uniforms: @_helpers.object.merge strokeUniforms, styleUniforms
               samples:  2
-              strips:   1
-              ribbons:  samples
+              strips:   samples
               position: position
 
     ###
-    @debug = @_factory.make 'debug',
+    @debug = @_renderables.make 'debug',
              map: @buffer.texture.textureObject
     @_render @debug
     ###
 
-    @_helper.object.make [@line]
-    @_helper.span.make()
-
+    @_helpers.object.make [@line]
+    @_helpers.span.make()
 
   unmake: () ->
-    @tickAxis = @tickNormal = null
+    @line = @tickAxis = @tickNormal = null
 
-    @_helper.object.unmake()
-    @_helper.span.unmake()
-    @_helper.position.unmake()
+    @_helpers.object.unmake()
+    @_helpers.span.unmake()
+    @_helpers.position.unmake()
 
   change: (changed, touched, init) ->
     @rebuild() if changed['scale.divide']
@@ -89,18 +87,18 @@ class Ticks extends Primitive
 
       # Fetch range along axis
       dimension = @_get 'interval.axis'
-      range     = @_helper.span.get '', dimension
+      range     = @_helpers.span.get '', dimension
 
       # Calculate scale along axis
       min   = range.x
       max   = range.y
-      ticks = @_helper.scale.generate '', @buffer, min, max
+      ticks = @_helpers.scale.generate '', @buffer, min, max
 
       Util.setDimension       @tickAxis,   dimension
       Util.setDimensionNormal @tickNormal, dimension
 
       # Clip to number of ticks
       n = ticks.length
-      @line.geometry.clip 0, n
+      @line.geometry.clip 2, n
 
 module.exports = Ticks

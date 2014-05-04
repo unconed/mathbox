@@ -1,18 +1,18 @@
 uniform float sampleRatio;
 
 // External
-vec4 sampleData(vec4 xyzi);
+vec4 sampleData(vec4 xyzw);
 
-vec4 lerpHeight(vec4 xyzi) {
-  float x = xyzi.y * sampleRatio;
+vec4 lerpHeight(vec4 xyzw) {
+  float x = xyzw.y * sampleRatio;
   float i = floor(x);
   float f = x - i;
     
-  vec4 xyzi1 = vec4(xyzi.x, i, xyzi.zw);
-  vec4 xyzi2 = vec4(xyzi.x, i + 1.0, xyzi.zw);
+  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);
+  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);
   
-  vec4 a = sampleData(xyzi1);
-  vec4 b = sampleData(xyzi2);
+  vec4 a = sampleData(xyzw1);
+  vec4 b = sampleData(xyzw2);
 
   return mix(a, b, f);
 }

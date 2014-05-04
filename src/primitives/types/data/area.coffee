@@ -5,8 +5,8 @@ class Area extends Matrix
 
   callback: (callback) ->
     dimensions = @_get 'area.axes'
-    rangeX     = @_helper.span.get 'x.', dimensions.x
-    rangeY     = @_helper.span.get 'y.', dimensions.y
+    rangeX     = @_helpers.span.get 'x.', dimensions.x
+    rangeY     = @_helpers.span.get 'y.', dimensions.y
     inverseX  = 1 / Math.max 1, @_get('matrix.width')  - 1
     inverseY  = 1 / Math.max 1, @_get('matrix.height') - 1
 
@@ -23,10 +23,10 @@ class Area extends Matrix
 
   make: () ->
     super
-    @_helper.span.make()
+    @_helpers.span.make()
 
   unmake: () ->
     super
-    @_helper.span.unmake()
+    @_helpers.span.unmake()
 
 module.exports = Area

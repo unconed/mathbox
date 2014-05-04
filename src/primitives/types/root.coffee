@@ -1,8 +1,8 @@
 Group = require './group'
 
 class Root extends Group
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helper) ->
+    super model, attributes, renderables, shaders, helper
 
     @visible = true
 

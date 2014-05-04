@@ -1,5 +1,6 @@
 exports.Ticks = require './ticks'
 exports.Ease  = require './ease'
+exports.GLSL  = require './glsl'
 
 exports.setDimension = (vec, dimension) ->
 

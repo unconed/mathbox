@@ -8,7 +8,7 @@
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'mathbox', 'stats'],
+      plugins: ['core', 'controls', 'stats'],
       controls: {
         klass: THREE.OrbitControls
       },
@@ -61,24 +61,12 @@
       },
       dimensions: 3,
     });
-    mathbox.vector({
+    mathbox.line({
       color: 0xA0D0FF,
       width: 0.005,
       size: 0.04,
     });
 
-    mathbox.area({
-      width: 64,
-      height: 64,
-      axes: [1, 3],
-      expression: function (x, y, i, j, emit) {
-        emit(x, .5 + .5 * (Math.sin(x * .718 - time) * Math.sin(y * 1.131 + time)), y);
-      },
-      dimensions: 3,
-    });
-    mathbox.surface({
-      color: 0x3090FF,
-    });
   </script>
 </body>
 </html>

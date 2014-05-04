@@ -5,7 +5,7 @@ helpers =
 
   bind:
     make: (map) ->
-      @_helper.bind.unmake() if @handlers.rebuild
+      @_helpers.bind.unmake() if @handlers.rebuild
 
       @bind = {}
 
@@ -195,10 +195,10 @@ helpers =
       @parent.on 'visible', @handlers.visible
 
       @handlers.visible()
-      @_helper.object.render object for object in @objects
+      @_helpers.object.render object for object in @objects
 
     unmake: () ->
-      @_helper.object.unrender object for object in @objects
+      @_helpers.object.unrender object for object in @objects
       delete @visible
 
       @node.off   'change:object', @handlers.refresh

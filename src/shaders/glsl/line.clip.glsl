@@ -9,17 +9,17 @@ attribute vec2 strip;
 varying vec2 vClip;
 
 // External
-vec3 getPosition(vec4 xyzi);
+vec3 getPosition(vec4 xyzw);
 
 vec3 clipPosition(vec3 pos) {
 
   // Sample end of line strip
-  vec4 xyziE = vec4(position4.xyz, strip.y);
-  vec3 end = getPosition(xyziE);
+  vec4 xyzwE = vec4(position4.xyz, strip.y);
+  vec3 end = getPosition(xyzwE);
 
   // Sample start of line strip
-  vec4 xyziS   = vec4(position4.xyz, strip.x);
-  vec3 start = getPosition(xyziS);
+  vec4 xyzwS   = vec4(position4.xyz, strip.x);
+  vec3 start = getPosition(xyzwS);
 
   // Measure length and adjust clip range
   vec3 diff = end - start;

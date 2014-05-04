@@ -1,11 +1,12 @@
 Primitive = require '../../primitive'
-Source = require '../source'
+Source    = require '../source'
+Util      = require '../../../util'
 
 class Surface extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position', 'grid', 'bind']
+  @traits: ['node', 'object', 'style', 'stroke', 'mesh', 'surface', 'position', 'grid', 'bind']
 
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helpers) ->
+    super model, attributes, renderables, shaders, helpers
 
     @line1 = @line2 = @surface = null
 
@@ -13,35 +14,43 @@ class Surface extends Primitive
     return unless @surface and @bind.points
 
     dims = @bind.points.getActive()
-    w = dims.width
-    h = dims.height
-    #console.log 'surface::clip', w, h
-    @surface.geometry.clip 0, Math.round((w - 1) * (h - 1))
+    width  = dims.width
+    height = dims.height
+    depth  = dims.depth
+
+    @surface.geometry.clip width, height, depth
+    @surface.geometry.clip width, height, depth
 
   make: () ->
     # Bind to attached data sources
-    @_helper.bind.make
+    @_helpers.bind.make
       'surface.points': Source
 
     # Build transform chain
     position  = @_shaders.shader()
-    @_helper.position.make()
+    @_helpers.position.make()
 
     # Fetch position and transform to view
     @bind.points.shader position
-    @_helper.position.shader position
+    @_helpers.position.shader position
     @transform position
 
-    # Prepare transposed sampler for YX wires
-    transpose = @_shaders.shader()
-    transpose.call 'swizzle.2d.yx'
-    transpose.concat position
+    # Swizzled samplers for XY / YX wires
+    # Lines go across (w, x, y, z). Map to resp (x, y, z, w) and (y, x, z, w).
+    # Ignore line's x because strips == 1.
+    wireXY = @_shaders.shader()
+    wireXY.call Util.GLSL.swizzleVec4 'wxyz'
+    wireXY.concat position
+
+    wireYX = @_shaders.shader()
+    wireYX.call Util.GLSL.swizzleVec4 'xwyz'
+    wireYX.concat position
 
     # Prepare bound uniforms
-    styleUniforms = @_helper.style.uniforms()
-    wireUniforms = @_helper.style.uniforms()
-    lineUniforms  = @_helper.line.uniforms()
-    surfaceUniforms  = @_helper.surface.uniforms()
+    styleUniforms   = @_helpers.style.uniforms()
+    wireUniforms    = @_helpers.style.uniforms()
+    strokeUniforms  = @_helpers.stroke.uniforms()
+    surfaceUniforms = @_helpers.surface.uniforms()
 
     # Darken wireframe if needed for contrast
     # Auto z-bias wireframe over surface
@@ -53,10 +62,11 @@ class Surface extends Primitive
     @wireScratch = new THREE.Color
 
     # Make line and surface renderables
-    dims = @bind.points.getDimensions()
+    dims   = @bind.points.getDimensions()
     width  = dims.width
     height = dims.height
     depth  = dims.depth
+    layers = dims.items
 
     #console.log 'surface::make', width, height
 
@@ -68,46 +78,52 @@ class Surface extends Primitive
     objects = []
 
     ###
-    debug = @_factory.make 'debug',
+    debug = @_renderables.make 'debug',
              map: @bind.points.buffer.texture.textureObject
     objects.push debug
     ###
 
     if first
-      @line1 = @_factory.make 'line',
-                uniforms: @_helper.object.merge lineUniforms, styleUniforms, wireUniforms
+      @line1 = @_renderables.make 'line',
+                uniforms: @_helpers.object.merge strokeUniforms, styleUniforms, wireUniforms
                 samples:  width
-                ribbons:  height * depth
-                position: position
+                strips:   height
+                ribbons:  depth
+                layers:   layers
+                position: wireXY
       objects.push @line1
 
     if second
-      @line2 = @_factory.make 'line',
-                uniforms: @_helper.object.merge lineUniforms, styleUniforms, wireUniforms
+      @line2 = @_renderables.make 'line',
+                uniforms: @_helpers.object.merge strokeUniforms, styleUniforms, wireUniforms
                 samples:  height
-                strips:   depth
-                ribbons:  width
-                position: transpose
+                strips:   width
+                ribbons:  depth
+                layers:   layers
+                position: wireYX
       objects.push @line2
 
     if solid
-      @surface = @_factory.make 'surface',
-                uniforms: @_helper.object.merge surfaceUniforms, styleUniforms
+      @surface = @_renderables.make 'surface',
+                uniforms: @_helpers.object.merge surfaceUniforms, styleUniforms
                 width:    width
                 height:   height
                 surfaces: depth
+                layers:   layers
                 position: position
                 shaded:   shaded
       objects.push @surface
 
     @resize()
 
-    @_helper.object.make objects
+    @_helpers.object.make objects
 
   unmake: () ->
-    @_helper.bind.unmake()
-    @_helper.object.unmake()
-    @_helper.position.unmake()
+    @_helpers.bind.unmake()
+    @_helpers.object.unmake()
+    @_helpers.position.unmake()
+
+    @line1 = @line2 = @surface = null
 
   change: (changed, touched, init) ->
     @rebuild() if changed['surface.points']? or

@@ -6,12 +6,12 @@ vec4 sampleData(vec2 xy);
 
 vec3 transformPosition(vec4 value);
 
-vec3 getTickPosition(vec2 xy) {
+vec3 getTickPosition(vec4 xyzw) {
 
   const float epsilon = 0.0001;
-  float line = xy.x - .5;
+  float line = xyzw.w - .5;
 
-  vec4 center = tickAxis * sampleData(vec2(xy.y, 0.0));
+  vec4 center = tickAxis * sampleData(vec2(xyzw.x, 0.0));
   vec4 edge   = tickNormal * epsilon;
 
   vec4 a = center;

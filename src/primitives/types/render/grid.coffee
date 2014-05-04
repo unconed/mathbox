@@ -7,22 +7,22 @@ class Grid extends Primitive
             'scale:x.scale', 'scale:y.scale',
             'span:x.span',   'span:y.span']
 
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helpers) ->
+    super model, attributes, renderables, shaders, helpers
 
-    @axes        = []
+    @axes = null
 
   make: () ->
 
     axis = (first, second) =>
       # Prepare data buffer of tick positions
-      detail   = @_get first  + 'axis.detail'
-      samples = detail + 1
+      detail     = @_get first  + 'axis.detail'
+      samples    = detail + 1
       resolution = 1 / detail
 
-      ribbons = @_helper.scale.divide second
+      ribbons = @_helpers.scale.divide second
 
-      buffer = @_factory.make 'databuffer',
+      buffer = @_renderables.make 'databuffer',
                samples:  ribbons
                channels: 1
 
@@ -40,7 +40,7 @@ class Grid extends Primitive
 
       # Build transform chain
       p = position = @_shaders.shader()
-      @_helper.position.make()
+      @_helpers.position.make()
 
       # Collect buffer sampler as callback
       p.callback()
@@ -51,50 +51,50 @@ class Grid extends Primitive
       p.call 'grid.position', positionUniforms
 
       # Apply view transform
-      @_helper.position.shader position
+      @_helpers.position.shader position
       @transform position
 
       # Prepare bound uniforms
-      styleUniforms = @_helper.style.uniforms()
-      lineUniforms  = @_helper.line.uniforms()
+      styleUniforms  = @_helpers.style.uniforms()
+      strokeUniforms = @_helpers.stroke.uniforms()
 
       # Make line renderable
       quads = samples - 1
 
-      line = @_factory.make 'line',
-                uniforms: @_helper.object.merge lineUniforms, styleUniforms
+      line = @_renderables.make 'line',
+                uniforms: @_helpers.object.merge strokeUniforms, styleUniforms
                 samples:  samples
                 strips:   1
                 ribbons:  ribbons
                 position: position
 
       # Store axis object for manipulation later
-      {first, second, quads, resolution, line, buffer, values}
+      {first, second, quads, resolution, samples, line, buffer, values}
 
     # Generate both line sets
     first  = @_get 'grid.first'
     second = @_get 'grid.second'
 
+    @axes = []
     first  && @axes.push axis 'x.', 'y.'
     second && @axes.push axis 'y.', 'x.'
 
     # Register lines
     lines = (axis.line for axis in @axes)
-    @_helper.object.make lines
-    @_helper.span.make()
-
+    @_helpers.object.make lines
+    @_helpers.span.make()
 
   unmake: () ->
-    @_helper.object.unmake()
-    @_helper.span.unmake()
-    @_helper.position.unmake()
+    @_helpers.object.unmake()
+    @_helpers.span.unmake()
+    @_helpers.position.unmake()
 
     for axis in @axes
       axis.buffer.dispose()
       @_unrender axis.line
       axis.line.dispose()
 
-    @axes = []
+    @axes = null
 
   change: (changed, touched, init) ->
 
@@ -104,7 +104,7 @@ class Grid extends Primitive
                   changed['grid.second']
 
     axis = (x, y, range1, range2, axis) =>
-      {first, second, quads, resolution, line, buffer, values} = axis
+      {first, second, quads, resolution, samples, line, buffer, values} = axis
 
       # Set line steps along first axis
       min    = range1.x
@@ -115,12 +115,12 @@ class Grid extends Primitive
       # Calculate scale along second axis
       min    = range2.x
       max    = range2.y
-      ticks  = @_helper.scale.generate second, buffer, min, max
+      ticks  = @_helpers.scale.generate second, buffer, min, max
       Util.setDimension values.gridAxis, y
 
       # Clip to number of ticks
       n = ticks.length
-      line.geometry.clip 0, n * quads
+      line.geometry.clip samples, 1, n
 
     if touched['x']    or
        touched['y']    or
@@ -131,8 +131,8 @@ class Grid extends Primitive
 
       # Fetch grid range in both dimensions
       axes   = @_get 'area.axes'
-      range1 = @_helper.span.get 'x.', axes.x
-      range2 = @_helper.span.get 'y.', axes.y
+      range1 = @_helpers.span.get 'x.', axes.x
+      range2 = @_helpers.span.get 'y.', axes.y
 
       # Update both line sets
       first  = @_get 'grid.first'

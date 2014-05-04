@@ -1,7 +1,8 @@
 mathBox = (options) ->
   options ?= {}
-  options.plugins ?= ['core', 'mathbox']
+
   three = THREE.Bootstrap options
+  three.install 'mathbox' if !three.mathbox?
   three.mathbox
 
 window.π = Math.PI

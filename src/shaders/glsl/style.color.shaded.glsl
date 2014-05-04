@@ -22,5 +22,5 @@ void setStyleColor() {
 	float cosineHalf = max(0.0, side * dot(normal, halfLight));
 	float specular = pow(cosineHalf, 16.0);
 	
-	gl_FragColor = vec4(sqrt(color * (diffuse * .8 + .04) + .2 * color2 * specular), styleOpacity);
+	gl_FragColor = vec4(sqrt(color * (diffuse * .95 + .05) + .25 * color2 * specular), styleOpacity);
 }

@@ -3,8 +3,8 @@ Primitive = require '../Primitive'
 class Source extends Primitive
   @traits: ['node', 'data']
 
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helpers) ->
+    super model, attributes, renderables, shaders, helpers
 
   callback: (callback) ->
     callback ? () ->

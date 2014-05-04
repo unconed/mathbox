@@ -13,6 +13,7 @@ class Surface extends Base
       width:    options.width    || 2
       height:   options.height   || 2
       surfaces: options.surfaces || 1
+      layers:   options.layers   || 1
 
     factory = shaders.material()
 

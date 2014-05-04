@@ -5,10 +5,10 @@ class Group extends Primitive
   @traits = ['node', 'object']
 
   make: () ->
-    @_helper.object.make()
+    @_helpers.object.make()
 
   unmake: () ->
-    @_helper.object.unmake()
+    @_helpers.object.unmake()
 
 
 module.exports = Group

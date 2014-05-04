@@ -7,11 +7,11 @@ class Transform extends Source
     super
 
     # Bind to attached data sources
-    @_helper.bind.make
+    @_helpers.bind.make
       'transform.source': Source
 
   unmake: () ->
-    @_helper.bind.unmake()
+    @_helpers.bind.unmake()
 
   resize: () ->
     @trigger

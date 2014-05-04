@@ -44130,6 +44130,9 @@ THREE.Binder = {
         // Store bind for removal later
         var bind = { target: target, name: name, callback: callback };
         object.__binds.push(bind);
+
+        // Return callback
+        return callback;
       }
       else {
         throw "Cannot bind '" + key + "' in " + this.__name;
@@ -44489,6 +44492,7 @@ THREE.Bootstrap.registerPlugin('bind', {
 
   install: function (three) {
     this.three = three;
+    this.hot   = false;
 
     var globals = {
       'three': three,
@@ -44500,6 +44504,7 @@ THREE.Bootstrap.registerPlugin('bind', {
 
     three.bind('install:bind', this);
     three.bind('uninstall:unbind', this);
+    three.bind('ready', this);
   },
 
   uninstall: function (three) {
@@ -44509,12 +44514,25 @@ THREE.Bootstrap.registerPlugin('bind', {
     delete three.unbind;
   },
 
+  ready: function (event, three) {
+    this.hot = true;
+  },
+
   bind: function (event, three) {
     var plugin = event.plugin;
     var listen = plugin.listen;
+
+    event = { type: 'ready' };
+    var hot = this.hot;
+
     listen && listen.forEach(function (key) {
-      three.bind(key, plugin);
+      var handler = three.bind(key, plugin);
+
+      if (hot && key.match(/^ready(:|$)/)) {
+        handler(event, three);
+      }
     });
+
   },
 
   unbind: function (event, three) {
@@ -44652,7 +44670,9 @@ THREE.Bootstrap.registerPlugin('fill', {
         [ three.element, document.documentElement ].filter(is).map(set);
     }
 
-    three.canvas.style.display = 'block'
+    if (three.canvas) {
+      three.canvas.style.display = 'block'
+    }
   },
 
   uninstall: function (three) {
@@ -44667,7 +44687,9 @@ THREE.Bootstrap.registerPlugin('fill', {
       this.applied.map(set);
     }
 
-    three.canvas.style.display = ''
+    if (three.canvas) {
+      three.canvas.style.display = ''
+    }
   }
 
 });
@@ -46356,18 +46378,22 @@ exports.cache = require('./cache');
   Takes:
     - Hash of snippets: named library
     - (name) -> getter: dynamic lookup
-    - nothing:          no library, pass source code instead of snippet names
+    - nothing:          no library, only pass in inline source code
+  
+  If 'name' contains any of "{;(" it is assumed to be direct GLSL code.
  */
 var library;
 
 library = function(language, snippets, load) {
+  var callback, inline;
+  callback = null;
   if (snippets != null) {
     if (typeof snippets === 'function') {
-      return function(name) {
+      callback = function(name) {
         return load(language, name, snippets(name));
       };
     } else if (typeof snippets === 'object') {
-      return function(name) {
+      callback = function(name) {
         if (snippets[name] == null) {
           throw "Unknown snippet `" + name + "`";
         }
@@ -46375,8 +46401,14 @@ library = function(language, snippets, load) {
       };
     }
   }
-  return function(name) {
+  inline = function(name) {
     return load(language, '', name);
+  };
+  return function(name) {
+    if ((callback == null) || name.match(/[{;(]/)) {
+      return inline(name);
+    }
+    return callback(name);
   };
 };
 
@@ -50797,17 +50829,17 @@ module.exports = through;
 require=
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzi);\n\nvoid getArrowGeometry(vec4 xyzi, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzi);\n  left  = getPosition(vec4(xyzi.xyz, near));\n  start = getPosition(vec4(xyzi.xyz, far));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
-"axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzi) {\n  return axisStep * xyzi.w + axisPosition;\n}\n",
+window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw);\n  left  = getPosition(vec4(xyzw.xyz, near));\n  start = getPosition(vec4(xyzw.xyz, far));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
+"axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw) {\n  return axisStep * xyzw.w + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
-"grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzi) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzi.w, 0.0)).x;\n  vec4 offAxis = gridStep * xyzi.y + gridPosition;\n  return onAxis + offAxis;\n}\n",
-"lerp.depth": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzi);\n\nvec4 lerpDepth(vec4 xyzi) {\n  float x = xyzi.z * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzi1 = vec4(xyzi.xy, i, xyzi.w);\n  vec4 xyzi2 = vec4(xyzi.xy, i + 1.0, xyzi.w);\n  \n  vec4 a = sampleData(xyzi1);\n  vec4 b = sampleData(xyzi2);\n\n  return mix(a, b, f);\n}\n",
-"lerp.height": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzi);\n\nvec4 lerpHeight(vec4 xyzi) {\n  float x = xyzi.y * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzi1 = vec4(xyzi.x, i, xyzi.zw);\n  vec4 xyzi2 = vec4(xyzi.x, i + 1.0, xyzi.zw);\n  \n  vec4 a = sampleData(xyzi1);\n  vec4 b = sampleData(xyzi2);\n\n  return mix(a, b, f);\n}\n",
-"lerp.items": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzi);\n\nvec4 lerpItems(vec4 xyzi) {\n  float x = xyzi.w * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzi1 = vec4(xyzi.xyz, i);\n  vec4 xyzi2 = vec4(xyzi.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzi1);\n  vec4 b = sampleData(xyzi2);\n\n  return mix(a, b, f);\n}\n",
-"lerp.width": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzi);\n\nvec4 lerpWidth(vec4 xyzi) {\n  float x = xyzi.x * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzi1 = vec4(i, xyzi.yzw);\n  vec4 xyzi2 = vec4(i + 1.0, xyzi.yzw);\n  \n  vec4 a = sampleData(xyzi1);\n  vec4 b = sampleData(xyzi2);\n\n  return mix(a, b, f);\n}\n",
-"line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float strokeWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec4 xyzi);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyziE = vec4(position4.xyz, strip.y);\n  vec3 end = getPosition(xyziE);\n\n  // Sample start of line strip\n  vec4 xyziS   = vec4(position4.xyz, strip.x);\n  vec3 start = getPosition(xyziS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), strokeWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n\n  // Passthrough position\n  return pos;\n}",
-"line.position": "uniform float strokeWidth;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzi);\n\nvoid getLineGeometry(vec4 xyzi, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(0.0, 0.0, 0.0, 1.0);\n\n  center =                 getPosition(xyzi);\n  left   = (edge > -0.5) ? getPosition(xyzi - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzi + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position4, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * strokeWidth;\n}\n",
-"map.2d.xyzi": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 map2Dxyzi(vec4 xyzi) {\n  \n  float x = xyzi.x;\n  float y = xyzi.y;\n  float z = xyzi.z;\n  float i = xyzi.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
+"grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzw) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzw.y, 0.0)).x;\n  vec4 offAxis = gridStep * xyzw.w + gridPosition;\n  return onAxis + offAxis;\n}\n",
+"lerp.depth": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpDepth(vec4 xyzw) {\n  float x = xyzw.z * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xy, i, xyzw.w);\n  vec4 xyzw2 = vec4(xyzw.xy, i + 1.0, xyzw.w);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
+"lerp.height": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpHeight(vec4 xyzw) {\n  float x = xyzw.y * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
+"lerp.items": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpItems(vec4 xyzw) {\n  float x = xyzw.w * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
+"lerp.width": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpWidth(vec4 xyzw) {\n  float x = xyzw.x * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
+"line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float strokeWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(position4.xyz, strip.y);\n  vec3 end = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS   = vec4(position4.xyz, strip.x);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), strokeWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n\n  // Passthrough position\n  return pos;\n}",
+"line.position": "uniform float strokeWidth;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(0.0, 0.0, 0.0, 1.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position4, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * strokeWidth;\n}\n",
+"map.2d.xyzw": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 map2Dxyzw(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "project.position": "uniform float styleZBias;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  pos.z *= (1.0 - styleZBias / 32768.0);\n  gl_Position = pos;\n}\n",
@@ -50818,11 +50850,10 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "spherical.position": "uniform float sphericalBend;\nuniform float sphericalFocus;\nuniform float sphericalAspectX;\nuniform float sphericalAspectY;\nuniform float sphericalScaleY;\n\nuniform mat4 viewMatrix;\n\nvec4 getSphericalPosition(vec4 position) {\n  if (sphericalBend > 0.0001) {\n\n    vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);\n    float radius = sphericalFocus + xyz.z;\n    float cosine = cos(xyz.y) * radius;\n\n    return viewMatrix * vec4(\n      sin(xyz.x) * cosine,\n      sin(xyz.y) * radius * sphericalAspectY,\n      (cos(xyz.x) * cosine - sphericalFocus) / sphericalAspectX,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "style.clip": "varying vec2 vClip;\n\nvoid clipStyle() {\n  if (vClip.x < 0.0 || vClip.y < 0.0) discard;\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvoid setStyleColor() {\n\tgl_FragColor = vec4(styleColor, styleOpacity);\n}\n",
-"style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .8 + .04) + .2 * color2 * specular), styleOpacity);\n}\n",
-"surface.position": "// External\nvec3 getPosition(vec2 xy);\n\nvec3 getSurfacePosition() {\n  return getPosition(position.xy);\n}\n",
-"surface.position.normal": "attribute vec2 surface;\n\n// External\nvec3 getPosition(vec2 xy);\n\nvoid getSurfaceGeometry(vec2 xy, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec2 deltaX = vec2(1.0, 0.0);\n  vec2 deltaY = vec2(0.0, 1.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xy);\n  left   = (edgeX > -0.5) ? getPosition(xy - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xy - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xy);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xy + deltaX) : (2.0 * center - getPosition(xy - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xy + deltaY) : (2.0 * center - getPosition(xy - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position.xy, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 1.0, 0.0)).xyz);// - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
-"swizzle.2d.yx": "vec2 swizzle2Dyx(vec2 xy) {\n  return xy.yx;\n}\n",
-"ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec2 xy) {\n\n  const float epsilon = 0.0001;\n  float line = xy.x - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xy.y, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
+"style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid setStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\tgl_FragColor = vec4(sqrt(color * (diffuse * .95 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
+"surface.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getSurfacePosition() {\n  return getPosition(position4);\n}\n",
+"surface.position.normal": "attribute vec4 position4;\nattribute vec2 surface;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec4 deltaX = vec4(1.0, 0.0, 0.0, 0.0);\n  vec4 deltaY = vec4(0.0, 1.0, 0.0, 0.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xyzw);\n  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xyzw);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : (2.0 * center - getPosition(xyzw - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : (2.0 * center - getPosition(xyzw - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position4, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 1.0, 0.0)).xyz);// - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
+"ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec4 xyzw) {\n\n  const float epsilon = 0.0001;\n  float line = xyzw.w - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xyzw.x, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
 "view.position": "vec3 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0)).xyz;\n}"};
 
 },{}],2:[function(require,module,exports){
@@ -55360,10 +55391,10 @@ mathBox = function(options) {
   if (options == null) {
     options = {};
   }
-  if (options.plugins == null) {
-    options.plugins = ['core', 'mathbox'];
-  }
   three = THREE.Bootstrap(options);
+  if (three.mathbox == null) {
+    three.install('mathbox');
+  }
   return three.mathbox;
 };
 
@@ -56072,10 +56103,10 @@ Primitive = (function() {
 
   Primitive.traits = [];
 
-  function Primitive(node, _attributes, _factory, _shaders, _helpers) {
+  function Primitive(node, _attributes, _renderables, _shaders, _helpers) {
     this.node = node;
     this._attributes = _attributes;
-    this._factory = _factory;
+    this._renderables = _renderables;
     this._shaders = _shaders;
     this.node.primitive = this;
     this.node.on('change', (function(_this) {
@@ -56096,7 +56127,7 @@ Primitive = (function() {
       };
     })(this));
     this._get = this.node.get.bind(this.node);
-    this._helper = _helpers(this, this.node.traits);
+    this._helpers = _helpers(this, this.node.traits);
     this.handlers = {};
   }
 
@@ -56250,10 +56281,10 @@ Primitive = (function() {
 
   Primitive.traits = [];
 
-  function Primitive(node, _attributes, _factory, _shaders, _helpers) {
+  function Primitive(node, _attributes, _renderables, _shaders, _helpers) {
     this.node = node;
     this._attributes = _attributes;
-    this._factory = _factory;
+    this._renderables = _renderables;
     this._shaders = _shaders;
     this.node.primitive = this;
     this.node.on('change', (function(_this) {
@@ -56274,7 +56305,7 @@ Primitive = (function() {
       };
     })(this));
     this._get = this.node.get.bind(this.node);
-    this._helper = _helpers(this, this.node.traits);
+    this._helpers = _helpers(this, this.node.traits);
     this.handlers = {};
   }
 
@@ -56382,8 +56413,8 @@ Area = (function(_super) {
   Area.prototype.callback = function(callback) {
     var aX, aY, bX, bY, dimensions, inverseX, inverseY, rangeX, rangeY;
     dimensions = this._get('area.axes');
-    rangeX = this._helper.span.get('x.', dimensions.x);
-    rangeY = this._helper.span.get('y.', dimensions.y);
+    rangeX = this._helpers.span.get('x.', dimensions.x);
+    rangeY = this._helpers.span.get('y.', dimensions.y);
     inverseX = 1 / Math.max(1, this._get('matrix.width') - 1);
     inverseY = 1 / Math.max(1, this._get('matrix.height') - 1);
     aX = rangeX.x;
@@ -56400,12 +56431,12 @@ Area = (function(_super) {
 
   Area.prototype.make = function() {
     Area.__super__.make.apply(this, arguments);
-    return this._helper.span.make();
+    return this._helpers.span.make();
   };
 
   Area.prototype.unmake = function() {
     Area.__super__.unmake.apply(this, arguments);
-    return this._helper.span.unmake();
+    return this._helpers.span.unmake();
   };
 
   return Area;
@@ -56427,8 +56458,8 @@ _Array = (function(_super) {
 
   _Array.traits = ['node', 'data', 'array'];
 
-  function _Array(model, attributes, factory, shaders, helper) {
-    _Array.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function _Array(model, attributes, renderables, shaders, helpers) {
+    _Array.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
     this.buffer = null;
     this.space = 0;
     this.length = 0;
@@ -56436,7 +56467,7 @@ _Array = (function(_super) {
   }
 
   _Array.prototype.shader = function(shader) {
-    shader.call('map.2d.xyzi', this.sampleUniforms);
+    shader.call('map.2d.xyzw', this.sampleUniforms);
     return this.buffer.shader(shader);
   };
 
@@ -56484,7 +56515,7 @@ _Array = (function(_super) {
       textureHeight: this._attributes.make(types.number(1))
     };
     if (this.space > 0) {
-      this.buffer = this._factory.make('linebuffer', {
+      this.buffer = this._renderables.make('linebuffer', {
         items: this.items,
         length: this.space,
         history: this.history,
@@ -56619,7 +56650,7 @@ Interval = (function(_super) {
   Interval.prototype.callback = function(callback) {
     var a, b, dimension, inverse, range;
     dimension = this._get('interval.axis');
-    range = this._helper.span.get('', dimension);
+    range = this._helpers.span.get('', dimension);
     inverse = 1 / Math.max(1, this._get('array.length') - 1);
     a = range.x;
     b = (range.y - range.x) * inverse;
@@ -56632,12 +56663,12 @@ Interval = (function(_super) {
 
   Interval.prototype.make = function() {
     Interval.__super__.make.apply(this, arguments);
-    return this._helper.span.make();
+    return this._helpers.span.make();
   };
 
   Interval.prototype.unmake = function() {
     Interval.__super__.unmake.apply(this, arguments);
-    return this._helper.span.unmake();
+    return this._helpers.span.unmake();
   };
 
   return Interval;
@@ -56659,8 +56690,8 @@ Matrix = (function(_super) {
 
   Matrix.traits = ['node', 'data', 'matrix'];
 
-  function Matrix(model, attributes, factory, shaders, helper) {
-    Matrix.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function Matrix(model, attributes, renderables, shaders, helpers) {
+    Matrix.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
     this.buffer = null;
     this.spaceWidth = 0;
     this.spaceHeight = 0;
@@ -56668,7 +56699,7 @@ Matrix = (function(_super) {
   }
 
   Matrix.prototype.shader = function(shader) {
-    shader.call('map.2d.xyzi', this.sampleUniforms);
+    shader.call('map.2d.xyzw', this.sampleUniforms);
     return this.buffer.shader(shader);
   };
 
@@ -56722,7 +56753,7 @@ Matrix = (function(_super) {
       textureHeight: this._attributes.make(types.number(height))
     };
     if (this.spaceWidth * this.spaceHeight > 0) {
-      this.buffer = this._factory.make('surfacebuffer', {
+      this.buffer = this._renderables.make('surfacebuffer', {
         width: this.spaceWidth,
         height: this.spaceHeight,
         history: history,
@@ -56839,11 +56870,11 @@ Group = (function(_super) {
   Group.traits = ['node', 'object'];
 
   Group.prototype.make = function() {
-    return this._helper.object.make();
+    return this._helpers.object.make();
   };
 
   Group.prototype.unmake = function() {
-    return this._helper.object.unmake();
+    return this._helpers.object.unmake();
   };
 
   return Group;
@@ -56865,7 +56896,7 @@ helpers = {
     make: function(map) {
       var key, klass, name, source;
       if (this.handlers.rebuild) {
-        this._helper.bind.unmake();
+        this._helpers.bind.unmake();
       }
       this.bind = {};
       this.handlers.resize = (function(_this) {
@@ -57092,7 +57123,7 @@ helpers = {
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         object = _ref[_i];
-        _results.push(this._helper.object.render(object));
+        _results.push(this._helpers.object.render(object));
       }
       return _results;
     },
@@ -57101,7 +57132,7 @@ helpers = {
       _ref = this.objects;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         object = _ref[_i];
-        this._helper.object.unrender(object);
+        this._helpers.object.unrender(object);
       }
       delete this.visible;
       this.node.off('change:object', this.handlers.refresh);
@@ -57131,7 +57162,7 @@ module.exports = function(object, traits) {
 };
 
 
-},{"../../util":83,"./view/view":52}],37:[function(require,module,exports){
+},{"../../util":84,"./view/view":52}],37:[function(require,module,exports){
 var Classes, Group, Model, Node;
 
 Model = require('../../model');
@@ -57182,13 +57213,13 @@ Axis = (function(_super) {
 
   Axis.traits = ['node', 'object', 'style', 'stroke', 'axis', 'span', 'interval', 'arrow', 'position'];
 
-  function Axis(model, attributes, factory, shaders, helper) {
-    Axis.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function Axis(model, attributes, renderables, shaders, helpers) {
+    Axis.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
     this.axisPosition = this.axisStep = this.resolution = this.line = this.arrows = null;
   }
 
   Axis.prototype.make = function() {
-    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, styleUniforms, types;
+    var arrowUniforms, detail, end, position, positionUniforms, samples, start, strokeUniforms, styleUniforms, types;
     types = this._attributes.types;
     positionUniforms = {
       axisPosition: this._attributes.make(types.vec4()),
@@ -57196,49 +57227,49 @@ Axis = (function(_super) {
     };
     this.axisPosition = positionUniforms.axisPosition.value;
     this.axisStep = positionUniforms.axisStep.value;
-    this._helper.position.make();
+    this._helpers.position.make();
     position = this._shaders.shader();
     position.call('axis.position', positionUniforms);
-    this._helper.position.shader(position);
+    this._helpers.position.shader(position);
     this.transform(position);
-    styleUniforms = this._helper.style.uniforms();
-    lineUniforms = this._helper.line.uniforms();
-    arrowUniforms = this._helper.arrow.uniforms();
+    styleUniforms = this._helpers.style.uniforms();
+    strokeUniforms = this._helpers.stroke.uniforms();
+    arrowUniforms = this._helpers.arrow.uniforms();
     detail = this._get('axis.detail');
     samples = detail + 1;
     this.resolution = 1 / detail;
     start = this._get('arrow.start');
     end = this._get('arrow.end');
-    this.line = this._factory.make('line', {
-      uniforms: this._helper.object.merge(arrowUniforms, lineUniforms, styleUniforms),
+    this.line = this._renderables.make('line', {
+      uniforms: this._helpers.object.merge(arrowUniforms, strokeUniforms, styleUniforms),
       samples: samples,
       position: position,
       clip: start || end
     });
     this.arrows = [];
     if (start) {
-      this.arrows.push(this._factory.make('arrow', {
-        uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+      this.arrows.push(this._renderables.make('arrow', {
+        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
         flip: true,
         samples: samples,
         position: position
       }));
     }
     if (end) {
-      this.arrows.push(this._factory.make('arrow', {
-        uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+      this.arrows.push(this._renderables.make('arrow', {
+        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
         samples: samples,
         position: position
       }));
     }
-    this._helper.object.make(this.arrows.concat([this.line]));
-    return this._helper.span.make();
+    this._helpers.object.make(this.arrows.concat([this.line]));
+    return this._helpers.span.make();
   };
 
   Axis.prototype.unmake = function() {
-    this._helper.object.unmake();
-    this._helper.span.unmake();
-    return this._helper.position.unmake();
+    this._helpers.object.unmake();
+    this._helpers.span.unmake();
+    return this._helpers.position.unmake();
   };
 
   Axis.prototype.change = function(changed, touched, init) {
@@ -57248,7 +57279,7 @@ Axis = (function(_super) {
     }
     if (touched['interval'] || touched['span'] || touched['view'] || init) {
       dimension = this._get('interval.axis');
-      range = this._helper.span.get('', dimension);
+      range = this._helpers.span.get('', dimension);
       min = range.x;
       max = range.y;
       Util.setDimension(this.axisPosition, dimension).multiplyScalar(min);
@@ -57263,7 +57294,7 @@ Axis = (function(_super) {
 module.exports = Axis;
 
 
-},{"../../../util":83,"../../primitive":29}],39:[function(require,module,exports){
+},{"../../../util":84,"../../primitive":29}],39:[function(require,module,exports){
 var Grid, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57277,21 +57308,21 @@ Grid = (function(_super) {
 
   Grid.traits = ['node', 'object', 'style', 'stroke', 'grid', 'area', 'position', 'axis:x.axis', 'axis:y.axis', 'scale:x.scale', 'scale:y.scale', 'span:x.span', 'span:y.span'];
 
-  function Grid(model, attributes, factory, shaders, helper) {
-    Grid.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
-    this.axes = [];
+  function Grid(model, attributes, renderables, shaders, helpers) {
+    Grid.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+    this.axes = null;
   }
 
   Grid.prototype.make = function() {
     var axis, first, lines, second;
     axis = (function(_this) {
       return function(first, second) {
-        var buffer, detail, line, lineUniforms, p, position, positionUniforms, quads, resolution, ribbons, samples, styleUniforms, types, values;
+        var buffer, detail, line, p, position, positionUniforms, quads, resolution, ribbons, samples, strokeUniforms, styleUniforms, types, values;
         detail = _this._get(first + 'axis.detail');
         samples = detail + 1;
         resolution = 1 / detail;
-        ribbons = _this._helper.scale.divide(second);
-        buffer = _this._factory.make('databuffer', {
+        ribbons = _this._helpers.scale.divide(second);
+        buffer = _this._renderables.make('databuffer', {
           samples: ribbons,
           channels: 1
         });
@@ -57307,18 +57338,18 @@ Grid = (function(_super) {
           gridAxis: positionUniforms.gridAxis.value
         };
         p = position = _this._shaders.shader();
-        _this._helper.position.make();
+        _this._helpers.position.make();
         p.callback();
         buffer.shader(p);
         p.join();
         p.call('grid.position', positionUniforms);
-        _this._helper.position.shader(position);
+        _this._helpers.position.shader(position);
         _this.transform(position);
-        styleUniforms = _this._helper.style.uniforms();
-        lineUniforms = _this._helper.line.uniforms();
+        styleUniforms = _this._helpers.style.uniforms();
+        strokeUniforms = _this._helpers.stroke.uniforms();
         quads = samples - 1;
-        line = _this._factory.make('line', {
-          uniforms: _this._helper.object.merge(lineUniforms, styleUniforms),
+        line = _this._renderables.make('line', {
+          uniforms: _this._helpers.object.merge(strokeUniforms, styleUniforms),
           samples: samples,
           strips: 1,
           ribbons: ribbons,
@@ -57329,6 +57360,7 @@ Grid = (function(_super) {
           second: second,
           quads: quads,
           resolution: resolution,
+          samples: samples,
           line: line,
           buffer: buffer,
           values: values
@@ -57337,6 +57369,7 @@ Grid = (function(_super) {
     })(this);
     first = this._get('grid.first');
     second = this._get('grid.second');
+    this.axes = [];
     first && this.axes.push(axis('x.', 'y.'));
     second && this.axes.push(axis('y.', 'x.'));
     lines = (function() {
@@ -57349,15 +57382,15 @@ Grid = (function(_super) {
       }
       return _results;
     }).call(this);
-    this._helper.object.make(lines);
-    return this._helper.span.make();
+    this._helpers.object.make(lines);
+    return this._helpers.span.make();
   };
 
   Grid.prototype.unmake = function() {
     var axis, _i, _len, _ref;
-    this._helper.object.unmake();
-    this._helper.span.unmake();
-    this._helper.position.unmake();
+    this._helpers.object.unmake();
+    this._helpers.span.unmake();
+    this._helpers.position.unmake();
     _ref = this.axes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       axis = _ref[_i];
@@ -57365,7 +57398,7 @@ Grid = (function(_super) {
       this._unrender(axis.line);
       axis.line.dispose();
     }
-    return this.axes = [];
+    return this.axes = null;
   };
 
   Grid.prototype.change = function(changed, touched, init) {
@@ -57375,24 +57408,24 @@ Grid = (function(_super) {
     }
     axis = (function(_this) {
       return function(x, y, range1, range2, axis) {
-        var buffer, first, line, max, min, n, quads, resolution, second, ticks, values;
-        first = axis.first, second = axis.second, quads = axis.quads, resolution = axis.resolution, line = axis.line, buffer = axis.buffer, values = axis.values;
+        var buffer, first, line, max, min, n, quads, resolution, samples, second, ticks, values;
+        first = axis.first, second = axis.second, quads = axis.quads, resolution = axis.resolution, samples = axis.samples, line = axis.line, buffer = axis.buffer, values = axis.values;
         min = range1.x;
         max = range1.y;
         Util.setDimension(values.gridPosition, x).multiplyScalar(min);
         Util.setDimension(values.gridStep, x).multiplyScalar((max - min) * resolution);
         min = range2.x;
         max = range2.y;
-        ticks = _this._helper.scale.generate(second, buffer, min, max);
+        ticks = _this._helpers.scale.generate(second, buffer, min, max);
         Util.setDimension(values.gridAxis, y);
         n = ticks.length;
-        return line.geometry.clip(0, n * quads);
+        return line.geometry.clip(samples, 1, n);
       };
     })(this);
     if (touched['x'] || touched['y'] || touched['area'] || touched['grid'] || touched['view'] || init) {
       axes = this._get('area.axes');
-      range1 = this._helper.span.get('x.', axes.x);
-      range2 = this._helper.span.get('y.', axes.y);
+      range1 = this._helpers.span.get('x.', axes.x);
+      range2 = this._helpers.span.get('y.', axes.y);
       first = this._get('grid.first');
       second = this._get('grid.second');
       if (first) {
@@ -57411,7 +57444,7 @@ Grid = (function(_super) {
 module.exports = Grid;
 
 
-},{"../../../util":83,"../../primitive":29}],40:[function(require,module,exports){
+},{"../../../util":84,"../../primitive":29}],40:[function(require,module,exports){
 var Line, Primitive, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57425,13 +57458,13 @@ Line = (function(_super) {
 
   Line.traits = ['node', 'object', 'style', 'stroke', 'line', 'arrow', 'position', 'bind'];
 
-  function Line(model, attributes, factory, shaders, helper) {
-    Line.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function Line(model, attributes, renderables, shaders, helpers) {
+    Line.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
     this.detail = this.line = this.arrows = null;
   }
 
   Line.prototype.resize = function() {
-    var arrow, dims, ribbons, samples, strips, _i, _len, _ref, _results;
+    var arrow, dims, layers, ribbons, samples, strips, _i, _len, _ref, _results;
     if (!(this.line && this.bind.points)) {
       return;
     }
@@ -57439,29 +57472,31 @@ Line = (function(_super) {
     if (dims.items > 1) {
       samples = dims.items;
       strips = Math.floor(dims.width);
-      ribbons = dims.height * dims.depth;
+      ribbons = dims.height;
+      layers = dims.depth;
     } else {
       samples = dims.width;
       strips = 1;
-      ribbons = dims.height * dims.depth;
+      ribbons = dims.height;
+      layers = dims.depth;
     }
-    this.line.geometry.clip(samples, strips, ribbons, 1);
+    this.line.geometry.clip(samples, strips, ribbons, layers);
     _ref = this.arrows;
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       arrow = _ref[_i];
-      _results.push(arrow.geometry.clip(samples, strips, ribbons, 1));
+      _results.push(arrow.geometry.clip(samples, strips, ribbons, layers));
     }
     return _results;
   };
 
   Line.prototype.make = function() {
     var arrowUniforms, detail, dims, end, position, ribbons, samples, start, strips, strokeUniforms, styleUniforms;
-    this._helper.bind.make({
+    this._helpers.bind.make({
       'line.points': Source
     });
     position = this._shaders.shader();
-    this._helper.position.make();
+    this._helpers.position.make();
     dims = this.bind.points.getDimensions();
     if (dims.items > 1) {
       samples = dims.items;
@@ -57475,15 +57510,15 @@ Line = (function(_super) {
     detail = samples - 1;
     this.detail = detail;
     this.bind.points.shader(position);
-    this._helper.position.shader(position);
+    this._helpers.position.shader(position);
     this.transform(position);
-    styleUniforms = this._helper.style.uniforms();
-    strokeUniforms = this._helper.stroke.uniforms();
-    arrowUniforms = this._helper.arrow.uniforms();
+    styleUniforms = this._helpers.style.uniforms();
+    strokeUniforms = this._helpers.stroke.uniforms();
+    arrowUniforms = this._helpers.arrow.uniforms();
     start = this._get('arrow.start');
     end = this._get('arrow.end');
-    this.line = this._factory.make('line', {
-      uniforms: this._helper.object.merge(arrowUniforms, strokeUniforms, styleUniforms),
+    this.line = this._renderables.make('line', {
+      uniforms: this._helpers.object.merge(arrowUniforms, strokeUniforms, styleUniforms),
       samples: samples,
       ribbons: ribbons,
       strips: strips,
@@ -57492,8 +57527,8 @@ Line = (function(_super) {
     });
     this.arrows = [];
     if (start) {
-      this.arrows.push(this._factory.make('arrow', {
-        uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+      this.arrows.push(this._renderables.make('arrow', {
+        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
         flip: true,
         samples: samples,
         ribbons: ribbons,
@@ -57502,8 +57537,8 @@ Line = (function(_super) {
       }));
     }
     if (end) {
-      this.arrows.push(this._factory.make('arrow', {
-        uniforms: this._helper.object.merge(arrowUniforms, styleUniforms),
+      this.arrows.push(this._renderables.make('arrow', {
+        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
         samples: samples,
         ribbons: ribbons,
         strips: strips,
@@ -57511,17 +57546,18 @@ Line = (function(_super) {
       }));
     }
     this.resize();
-    return this._helper.object.make(this.arrows.concat([this.line]));
+    return this._helpers.object.make(this.arrows.concat([this.line]));
   };
 
   Line.prototype.unmake = function() {
-    this._helper.bind.unmake();
-    this._helper.object.unmake();
-    return this._helper.position.unmake();
+    this._helpers.bind.unmake();
+    this._helpers.object.unmake();
+    this._helpers.position.unmake();
+    return this.detail = this.line = this.arrows = null;
   };
 
   Line.prototype.change = function(changed, touched, init) {
-    if ((changed['curve.points'] != null) || (changed['arrow.start'] != null) || (changed['arrow.end'] != null)) {
+    if ((changed['line.points'] != null) || (changed['arrow.start'] != null) || (changed['arrow.end'] != null)) {
       return this.rebuild();
     }
   };
@@ -57534,7 +57570,7 @@ module.exports = Line;
 
 
 },{"../../primitive":29,"../source":44}],41:[function(require,module,exports){
-var Primitive, Source, Surface,
+var Primitive, Source, Surface, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -57542,44 +57578,51 @@ Primitive = require('../../primitive');
 
 Source = require('../source');
 
+Util = require('../../../util');
+
 Surface = (function(_super) {
   __extends(Surface, _super);
 
-  Surface.traits = ['node', 'object', 'style', 'line', 'mesh', 'surface', 'position', 'grid', 'bind'];
+  Surface.traits = ['node', 'object', 'style', 'stroke', 'mesh', 'surface', 'position', 'grid', 'bind'];
 
-  function Surface(model, attributes, factory, shaders, helper) {
-    Surface.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function Surface(model, attributes, renderables, shaders, helpers) {
+    Surface.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
     this.line1 = this.line2 = this.surface = null;
   }
 
   Surface.prototype.resize = function() {
-    var dims, h, w;
+    var depth, dims, height, width;
     if (!(this.surface && this.bind.points)) {
       return;
     }
     dims = this.bind.points.getActive();
-    w = dims.width;
-    h = dims.height;
-    return this.surface.geometry.clip(0, Math.round((w - 1) * (h - 1)));
+    width = dims.width;
+    height = dims.height;
+    depth = dims.depth;
+    this.surface.geometry.clip(width, height, depth);
+    return this.surface.geometry.clip(width, height, depth);
   };
 
   Surface.prototype.make = function() {
-    var depth, dims, first, height, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, transpose, types, width, wireUniforms;
-    this._helper.bind.make({
+    var depth, dims, first, height, layers, objects, position, second, shaded, solid, strokeUniforms, styleUniforms, surfaceUniforms, types, width, wireUniforms, wireXY, wireYX;
+    this._helpers.bind.make({
       'surface.points': Source
     });
     position = this._shaders.shader();
-    this._helper.position.make();
+    this._helpers.position.make();
     this.bind.points.shader(position);
-    this._helper.position.shader(position);
+    this._helpers.position.shader(position);
     this.transform(position);
-    transpose = this._shaders.shader();
-    transpose.call('swizzle.2d.yx');
-    transpose.concat(position);
-    styleUniforms = this._helper.style.uniforms();
-    wireUniforms = this._helper.style.uniforms();
-    lineUniforms = this._helper.line.uniforms();
-    surfaceUniforms = this._helper.surface.uniforms();
+    wireXY = this._shaders.shader();
+    wireXY.call(Util.GLSL.swizzleVec4('wxyz'));
+    wireXY.concat(position);
+    wireYX = this._shaders.shader();
+    wireYX.call(Util.GLSL.swizzleVec4('xwyz'));
+    wireYX.concat(position);
+    styleUniforms = this._helpers.style.uniforms();
+    wireUniforms = this._helpers.style.uniforms();
+    strokeUniforms = this._helpers.stroke.uniforms();
+    surfaceUniforms = this._helpers.surface.uniforms();
     types = this._attributes.types;
     wireUniforms.styleColor = this._attributes.make(types.color());
     wireUniforms.styleZBias = this._attributes.make(types.number(0));
@@ -57590,6 +57633,7 @@ Surface = (function(_super) {
     width = dims.width;
     height = dims.height;
     depth = dims.depth;
+    layers = dims.items;
     shaded = this._get('mesh.shaded');
     solid = this._get('mesh.solid');
     first = this._get('grid.first');
@@ -57597,48 +57641,53 @@ Surface = (function(_super) {
     objects = [];
 
     /*
-    debug = @_factory.make 'debug',
+    debug = @_renderables.make 'debug',
              map: @bind.points.buffer.texture.textureObject
     objects.push debug
      */
     if (first) {
-      this.line1 = this._factory.make('line', {
-        uniforms: this._helper.object.merge(lineUniforms, styleUniforms, wireUniforms),
+      this.line1 = this._renderables.make('line', {
+        uniforms: this._helpers.object.merge(strokeUniforms, styleUniforms, wireUniforms),
         samples: width,
-        ribbons: height * depth,
-        position: position
+        strips: height,
+        ribbons: depth,
+        layers: layers,
+        position: wireXY
       });
       objects.push(this.line1);
     }
     if (second) {
-      this.line2 = this._factory.make('line', {
-        uniforms: this._helper.object.merge(lineUniforms, styleUniforms, wireUniforms),
+      this.line2 = this._renderables.make('line', {
+        uniforms: this._helpers.object.merge(strokeUniforms, styleUniforms, wireUniforms),
         samples: height,
-        strips: depth,
-        ribbons: width,
-        position: transpose
+        strips: width,
+        ribbons: depth,
+        layers: layers,
+        position: wireYX
       });
       objects.push(this.line2);
     }
     if (solid) {
-      this.surface = this._factory.make('surface', {
-        uniforms: this._helper.object.merge(surfaceUniforms, styleUniforms),
+      this.surface = this._renderables.make('surface', {
+        uniforms: this._helpers.object.merge(surfaceUniforms, styleUniforms),
         width: width,
         height: height,
         surfaces: depth,
+        layers: layers,
         position: position,
         shaded: shaded
       });
       objects.push(this.surface);
     }
     this.resize();
-    return this._helper.object.make(objects);
+    return this._helpers.object.make(objects);
   };
 
   Surface.prototype.unmake = function() {
-    this._helper.bind.unmake();
-    this._helper.object.unmake();
-    return this._helper.position.unmake();
+    this._helpers.bind.unmake();
+    this._helpers.object.unmake();
+    this._helpers.position.unmake();
+    return this.line1 = this.line2 = this.surface = null;
   };
 
   Surface.prototype.change = function(changed, touched, init) {
@@ -57671,7 +57720,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../primitive":29,"../source":44}],42:[function(require,module,exports){
+},{"../../../util":84,"../../primitive":29,"../source":44}],42:[function(require,module,exports){
 var Primitive, Ticks, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57685,15 +57734,15 @@ Ticks = (function(_super) {
 
   Ticks.traits = ['node', 'object', 'style', 'stroke', 'ticks', 'interval', 'span', 'scale', 'position'];
 
-  function Ticks(model, attributes, factory, shaders, helper) {
-    Ticks.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function Ticks(model, attributes, renderables, shaders, helpers) {
+    Ticks.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
     this.tickAxis = this.tickNormal = this.resolution = this.line = null;
   }
 
   Ticks.prototype.make = function() {
-    var lineUniforms, p, position, positionUniforms, samples, styleUniforms, types;
-    this.resolution = samples = this._helper.scale.divide('');
-    this.buffer = this._factory.make('databuffer', {
+    var p, position, positionUniforms, samples, strokeUniforms, styleUniforms, types;
+    this.resolution = samples = this._helpers.scale.divide('');
+    this.buffer = this._renderables.make('databuffer', {
       samples: samples,
       channels: 1
     });
@@ -57705,11 +57754,11 @@ Ticks = (function(_super) {
     };
     this.tickAxis = positionUniforms.tickAxis.value;
     this.tickNormal = positionUniforms.tickNormal.value;
-    this._helper.position.make();
+    this._helpers.position.make();
     p = position = this._shaders.shader();
     p.split();
     p.callback();
-    this._helper.position.shader(position);
+    this._helpers.position.shader(position);
     this.transform(position);
     p.join();
     p.next();
@@ -57718,30 +57767,29 @@ Ticks = (function(_super) {
     p.join();
     p.join();
     p.call('ticks.position', positionUniforms);
-    styleUniforms = this._helper.style.uniforms();
-    lineUniforms = this._helper.line.uniforms();
-    this.line = this._factory.make('line', {
-      uniforms: this._helper.object.merge(lineUniforms, styleUniforms),
+    styleUniforms = this._helpers.style.uniforms();
+    strokeUniforms = this._helpers.stroke.uniforms();
+    this.line = this._renderables.make('line', {
+      uniforms: this._helpers.object.merge(strokeUniforms, styleUniforms),
       samples: 2,
-      strips: 1,
-      ribbons: samples,
+      strips: samples,
       position: position
     });
 
     /*
-    @debug = @_factory.make 'debug',
+    @debug = @_renderables.make 'debug',
              map: @buffer.texture.textureObject
     @_render @debug
      */
-    this._helper.object.make([this.line]);
-    return this._helper.span.make();
+    this._helpers.object.make([this.line]);
+    return this._helpers.span.make();
   };
 
   Ticks.prototype.unmake = function() {
-    this.tickAxis = this.tickNormal = null;
-    this._helper.object.unmake();
-    this._helper.span.unmake();
-    return this._helper.position.unmake();
+    this.line = this.tickAxis = this.tickNormal = null;
+    this._helpers.object.unmake();
+    this._helpers.span.unmake();
+    return this._helpers.position.unmake();
   };
 
   Ticks.prototype.change = function(changed, touched, init) {
@@ -57751,14 +57799,14 @@ Ticks = (function(_super) {
     }
     if (touched['view'] || touched['interval'] || touched['span'] || touched['scale'] || init) {
       dimension = this._get('interval.axis');
-      range = this._helper.span.get('', dimension);
+      range = this._helpers.span.get('', dimension);
       min = range.x;
       max = range.y;
-      ticks = this._helper.scale.generate('', this.buffer, min, max);
+      ticks = this._helpers.scale.generate('', this.buffer, min, max);
       Util.setDimension(this.tickAxis, dimension);
       Util.setDimensionNormal(this.tickNormal, dimension);
       n = ticks.length;
-      return this.line.geometry.clip(0, n);
+      return this.line.geometry.clip(2, n);
     }
   };
 
@@ -57769,7 +57817,7 @@ Ticks = (function(_super) {
 module.exports = Ticks;
 
 
-},{"../../../util":83,"../../primitive":29}],43:[function(require,module,exports){
+},{"../../../util":84,"../../primitive":29}],43:[function(require,module,exports){
 var Group, Root,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57779,8 +57827,8 @@ Group = require('./group');
 Root = (function(_super) {
   __extends(Root, _super);
 
-  function Root(model, attributes, factory, shaders, helper) {
-    Root.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function Root(model, attributes, renderables, shaders, helper) {
+    Root.__super__.constructor.call(this, model, attributes, renderables, shaders, helper);
     this.visible = true;
   }
 
@@ -57807,8 +57855,8 @@ Source = (function(_super) {
 
   Source.traits = ['node', 'data'];
 
-  function Source(model, attributes, factory, shaders, helper) {
-    Source.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function Source(model, attributes, renderables, shaders, helpers) {
+    Source.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
   }
 
   Source.prototype.callback = function(callback) {
@@ -57876,8 +57924,7 @@ Traits = {
   arrow: {
     size: Types.number(.07),
     start: Types.bool(false),
-    end: Types.bool(true),
-    anchor: Types.nullable(Types.number(0))
+    end: Types.bool(true)
   },
   ticks: {
     size: Types.number(.05)
@@ -57966,8 +58013,8 @@ Lerp = (function(_super) {
 
   Lerp.traits = ['node', 'bind', 'transform', 'lerp'];
 
-  function Lerp(model, attributes, factory, shaders, helper) {
-    Lerp.__super__.constructor.call(this, model, attributes, factory, shaders, helper);
+  function Lerp(model, attributes, renderables, shaders, helpers) {
+    Lerp.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
   }
 
   Lerp.prototype.shader = function(shader) {
@@ -58054,13 +58101,13 @@ Transform = (function(_super) {
 
   Transform.prototype.make = function() {
     Transform.__super__.make.apply(this, arguments);
-    return this._helper.bind.make({
+    return this._helpers.bind.make({
       'transform.source': Source
     });
   };
 
   Transform.prototype.unmake = function() {
-    return this._helper.bind.unmake();
+    return this._helpers.bind.unmake();
   };
 
   Transform.prototype.resize = function() {
@@ -58718,7 +58765,7 @@ Polar = (function(_super) {
 module.exports = Polar;
 
 
-},{"../../../util":83,"./view":52}],51:[function(require,module,exports){
+},{"../../../util":84,"./view":52}],51:[function(require,module,exports){
 var Spherical, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58893,7 +58940,7 @@ Spherical = (function(_super) {
 module.exports = Spherical;
 
 
-},{"../../../util":83,"./view":52}],52:[function(require,module,exports){
+},{"../../../util":84,"./view":52}],52:[function(require,module,exports){
 var Group, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59374,8 +59421,21 @@ ArrowGeometry = (function(_super) {
   __extends(ArrowGeometry, _super);
 
   ArrowGeometry.prototype.clip = function(samples, strips, ribbons, layers) {
-    var dims, maxs, quads;
-    this.geometryClip.set(strips, ribbons, layers, this.samples);
+    var dims, maxs, quads, segments;
+    if (samples == null) {
+      samples = this.samples;
+    }
+    if (strips == null) {
+      strips = this.strips;
+    }
+    if (ribbons == null) {
+      ribbons = this.ribbons;
+    }
+    if (layers == null) {
+      layers = this.layers;
+    }
+    segments = Math.max(0, samples - 1);
+    this.geometryClip.set(strips, ribbons, layers, segments);
     if (samples > this.anchor) {
       dims = [layers, ribbons, strips];
       maxs = [this.layers, this.ribbons, this.strips];
@@ -59465,7 +59525,7 @@ ArrowGeometry = (function(_super) {
         }
       }
     }
-    this.clip(samples, strips, ribbons, layers);
+    this.clip();
     this._ping();
     return;
   }
@@ -59595,8 +59655,20 @@ LineGeometry = (function(_super) {
 
   LineGeometry.prototype.clip = function(samples, strips, ribbons, layers) {
     var dims, maxs, quads, segments;
-    this.geometryClip.set(strips, ribbons, layers, samples);
+    if (samples == null) {
+      samples = this.samples;
+    }
+    if (strips == null) {
+      strips = this.strips;
+    }
+    if (ribbons == null) {
+      ribbons = this.ribbons;
+    }
+    if (layers == null) {
+      layers = this.layers;
+    }
     segments = Math.max(0, samples - 1);
+    this.geometryClip.set(strips, ribbons, layers, segments);
     dims = [layers, ribbons, strips, segments];
     maxs = [this.layers, this.ribbons, this.strips, this.segments];
     quads = this._reduce(dims, maxs);
@@ -59664,7 +59736,7 @@ LineGeometry = (function(_super) {
         }
       }
     }
-    this.clip(samples, strips, ribbons, layers);
+    this.clip();
     this._ping();
     return;
   }
@@ -59703,34 +59775,52 @@ Grid Surface
 SurfaceGeometry = (function(_super) {
   __extends(SurfaceGeometry, _super);
 
-  SurfaceGeometry.prototype.shaderAttributes = function() {
-    return {
-      surface: {
-        type: 'v2',
-        value: null
-      }
-    };
-  };
-
-  SurfaceGeometry.prototype.clip = function(start, end) {
+  SurfaceGeometry.prototype.clip = function(width, height, surfaces, layers) {
+    var dims, maxs, quads, segmentsX, segmentsY;
+    if (width == null) {
+      width = this.width;
+    }
+    if (height == null) {
+      height = this.height;
+    }
+    if (surfaces == null) {
+      surfaces = this.surfaces;
+    }
+    if (layers == null) {
+      layers = this.layers;
+    }
+    segmentsX = Math.max(0, width - 1);
+    segmentsY = Math.max(0, height - 1);
+    this.geometryClip.set(segmentsX, segmentsY, surfaces, layers);
+    dims = [layers, surfaces, segmentsY, segmentsX];
+    maxs = [this.layers, this.surfaces, this.segmentsY, this.segmentsX];
+    quads = this._reduce(dims, maxs);
     return this.offsets = [
       {
-        start: start * 6,
-        count: (end - start) * 6
+        start: 0,
+        count: quads * 6
       }
     ];
   };
 
   function SurfaceGeometry(options) {
-    var base, edgeX, edgeY, height, i, index, j, k, points, position, quads, segmentsX, segmentsY, surface, surfaces, triangles, width, x, y, z, _i, _j, _k, _l, _m, _n;
+    var base, edgeX, edgeY, height, i, index, j, k, layers, points, position, quads, segmentsX, segmentsY, surface, surfaces, triangles, width, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
     SurfaceGeometry.__super__.constructor.call(this, options);
+    this.geometryClip = new THREE.Vector4;
+    this.uniforms = {
+      geometryClip: {
+        type: 'v4',
+        value: this.geometryClip
+      }
+    };
     this.width = width = +options.width || 2;
     this.height = height = +options.height || 2;
     this.surfaces = surfaces = +options.surfaces || 1;
+    this.layers = layers = +options.layers || 1;
     this.segmentsX = segmentsX = width - 1;
     this.segmentsY = segmentsY = height - 1;
-    points = width * height * surfaces;
-    quads = segmentsX * segmentsY * surfaces;
+    points = width * height * surfaces * layers;
+    quads = segmentsX * segmentsY * surfaces * layers;
     triangles = quads * 2;
     this.addAttribute('index', Uint16Array, triangles * 3, 1);
     this.addAttribute('position4', Float32Array, points, 4);
@@ -59739,7 +59829,7 @@ SurfaceGeometry = (function(_super) {
     position = this._emitter('position4');
     surface = this._emitter('surface');
     base = 0;
-    for (i = _i = 0; 0 <= surfaces ? _i < surfaces : _i > surfaces; i = 0 <= surfaces ? ++_i : --_i) {
+    for (i = _i = 0, _ref = surfaces * layers; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
       for (j = _j = 0; 0 <= segmentsY ? _j < segmentsY : _j > segmentsY; j = 0 <= segmentsY ? ++_j : --_j) {
         for (k = _k = 0; 0 <= segmentsX ? _k < segmentsX : _k > segmentsX; k = 0 <= segmentsX ? ++_k : --_k) {
           index(base);
@@ -59754,23 +59844,19 @@ SurfaceGeometry = (function(_super) {
       }
       base += width;
     }
-    z = 0;
-    for (i = _l = 0; 0 <= surfaces ? _l < surfaces : _l > surfaces; i = 0 <= surfaces ? ++_l : --_l) {
-      y = 0;
-      for (j = _m = 0; 0 <= height ? _m < height : _m > height; j = 0 <= height ? ++_m : --_m) {
-        edgeY = j === 0 ? -1 : j === segmentsY ? 1 : 0;
-        x = 0;
-        for (k = _n = 0; 0 <= width ? _n < width : _n > width; k = 0 <= width ? ++_n : --_n) {
-          edgeX = k === 0 ? -1 : k === segmentsX ? 1 : 0;
-          position(x, y, z, 0);
-          surface(edgeX, edgeY);
-          x++;
+    for (k = _l = 0; 0 <= layers ? _l < layers : _l > layers; k = 0 <= layers ? ++_l : --_l) {
+      for (z = _m = 0; 0 <= surfaces ? _m < surfaces : _m > surfaces; z = 0 <= surfaces ? ++_m : --_m) {
+        for (y = _n = 0; 0 <= height ? _n < height : _n > height; y = 0 <= height ? ++_n : --_n) {
+          edgeY = y === 0 ? -1 : y === segmentsY ? 1 : 0;
+          for (x = _o = 0; 0 <= width ? _o < width : _o > width; x = 0 <= width ? ++_o : --_o) {
+            edgeX = x === 0 ? -1 : x === segmentsX ? 1 : 0;
+            position(x, y, z, k);
+            surface(edgeX, edgeY);
+          }
         }
-        y++;
       }
-      z++;
     }
-    this.clip(0, quads);
+    this.clip();
     this._ping();
     return;
   }
@@ -60022,7 +60108,8 @@ Surface = (function(_super) {
     this.geometry = new SurfaceGeometry({
       width: options.width || 2,
       height: options.height || 2,
-      surfaces: options.surfaces || 1
+      surfaces: options.surfaces || 1,
+      layers: options.layers || 1
     });
     factory = shaders.material();
     v = factory.vertex;
@@ -60375,9 +60462,17 @@ module.exports = ease;
 
 
 },{}],83:[function(require,module,exports){
+exports.swizzleVec4 = function(order) {
+  return "vec4 swizzle(vec4 xyzw) { return xyzw." + order + "; }\n";
+};
+
+
+},{}],84:[function(require,module,exports){
 exports.Ticks = require('./ticks');
 
 exports.Ease = require('./ease');
+
+exports.GLSL = require('./glsl');
 
 exports.setDimension = function(vec, dimension) {
   var w, x, y, z;
@@ -60398,7 +60493,7 @@ exports.setDimensionNormal = function(vec, dimension) {
 };
 
 
-},{"./ease":82,"./ticks":84}],84:[function(require,module,exports){
+},{"./ease":82,"./glsl":83,"./ticks":85}],85:[function(require,module,exports){
 
 /*
  Generate equally spaced ticks in a range at sensible positions.

@@ -5,7 +5,7 @@ class Interval extends _Array
 
   callback: (callback) ->
     dimension = @_get 'interval.axis'
-    range     = @_helper.span.get '', dimension
+    range     = @_helpers.span.get '', dimension
     inverse   = 1 / Math.max 1, @_get('array.length') - 1
 
     a = range.x
@@ -17,10 +17,10 @@ class Interval extends _Array
 
   make: () ->
     super
-    @_helper.span.make()
+    @_helpers.span.make()
 
   unmake: () ->
     super
-    @_helper.span.unmake()
+    @_helpers.span.unmake()
 
 module.exports = Interval

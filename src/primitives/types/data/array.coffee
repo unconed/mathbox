@@ -3,8 +3,8 @@ Data = require './data'
 class _Array extends Data
   @traits: ['node', 'data', 'array']
 
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helpers) ->
+    super model, attributes, renderables, shaders, helpers
 
     @buffer = null
     @space  = 0
@@ -12,7 +12,7 @@ class _Array extends Data
     @filled = false
 
   shader: (shader) ->
-    shader.call 'map.2d.xyzi', @sampleUniforms
+    shader.call 'map.2d.xyzw', @sampleUniforms
     @buffer.shader shader
 
   getDimensions: () ->
@@ -58,7 +58,7 @@ class _Array extends Data
 
     # Create linebuffer
     if @space > 0
-      @buffer = @_factory.make 'linebuffer',
+      @buffer = @_renderables.make 'linebuffer',
                 items:    @items
                 length:   @space
                 history:  @history

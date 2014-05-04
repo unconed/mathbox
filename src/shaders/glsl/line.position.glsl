@@ -4,14 +4,14 @@ attribute vec2 line;
 attribute vec4 position4;
 
 // External
-vec3 getPosition(vec4 xyzi);
+vec3 getPosition(vec4 xyzw);
 
-void getLineGeometry(vec4 xyzi, float edge, out vec3 left, out vec3 center, out vec3 right) {
+void getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {
   vec4 delta = vec4(0.0, 0.0, 0.0, 1.0);
 
-  center =                 getPosition(xyzi);
-  left   = (edge > -0.5) ? getPosition(xyzi - delta) : center;
-  right  = (edge < 0.5)  ? getPosition(xyzi + delta) : center;
+  center =                 getPosition(xyzw);
+  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;
+  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;
 }
 
 vec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {

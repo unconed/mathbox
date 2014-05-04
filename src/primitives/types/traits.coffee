@@ -26,7 +26,6 @@ Traits =
     size:        Types.number(.07)
     start:       Types.bool(false)
     end:         Types.bool(true)
-    anchor:      Types.nullable(Types.number(0))
   ticks:
     size:        Types.number(.05)
 

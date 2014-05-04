@@ -4,8 +4,8 @@ Util = require '../../../util'
 class Axis extends Primitive
   @traits: ['node', 'object', 'style', 'stroke', 'axis', 'span', 'interval', 'arrow', 'position']
 
-  constructor: (model, attributes, factory, shaders, helper) ->
-    super model, attributes, factory, shaders, helper
+  constructor: (model, attributes, renderables, shaders, helpers) ->
+    super model, attributes, renderables, shaders, helpers
 
     @axisPosition = @axisStep = @resolution = @line = @arrows = null
 
@@ -20,18 +20,18 @@ class Axis extends Primitive
     @axisStep       = positionUniforms.axisStep.value
 
     # Build transform chain
-    @_helper.position.make()
+    @_helpers.position.make()
 
     position = @_shaders.shader()
     position.call 'axis.position', positionUniforms
-    @_helper.position.shader position
+    @_helpers.position.shader position
 
     @transform position
 
     # Prepare bound uniforms
-    styleUniforms = @_helper.style.uniforms()
-    lineUniforms  = @_helper.line.uniforms()
-    arrowUniforms = @_helper.arrow.uniforms()
+    styleUniforms  = @_helpers.style.uniforms()
+    strokeUniforms = @_helpers.stroke.uniforms()
+    arrowUniforms  = @_helpers.arrow.uniforms()
 
     # Make line renderable
     detail  = @_get 'axis.detail'
@@ -42,8 +42,8 @@ class Axis extends Primitive
     start   = @_get 'arrow.start'
     end     = @_get 'arrow.end'
 
-    @line = @_factory.make 'line',
-              uniforms: @_helper.object.merge arrowUniforms, lineUniforms, styleUniforms
+    @line = @_renderables.make 'line',
+              uniforms: @_helpers.object.merge arrowUniforms, strokeUniforms, styleUniforms
               samples:  samples
               position: position
               clip:     start or end
@@ -52,26 +52,26 @@ class Axis extends Primitive
     @arrows = []
 
     if start
-      @arrows.push @_factory.make 'arrow',
-                uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+      @arrows.push @_renderables.make 'arrow',
+                uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
                 flip:     true
                 samples:  samples
                 position: position
 
     if end
-      @arrows.push @_factory.make 'arrow',
-                uniforms: @_helper.object.merge arrowUniforms, styleUniforms
+      @arrows.push @_renderables.make 'arrow',
+                uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
                 samples:  samples
                 position: position
 
     # Object and span traits
-    @_helper.object.make @arrows.concat [@line]
-    @_helper.span.make()
+    @_helpers.object.make @arrows.concat [@line]
+    @_helpers.span.make()
 
   unmake: () ->
-    @_helper.object.unmake()
-    @_helper.span.unmake()
-    @_helper.position.unmake()
+    @_helpers.object.unmake()
+    @_helpers.span.unmake()
+    @_helpers.position.unmake()
 
   change: (changed, touched, init) ->
     @rebuild() if changed['axis.detail']?
@@ -82,7 +82,7 @@ class Axis extends Primitive
        init
 
       dimension = @_get 'interval.axis'
-      range = @_helper.span.get '', dimension
+      range = @_helpers.span.get '', dimension
 
       min = range.x
       max = range.y

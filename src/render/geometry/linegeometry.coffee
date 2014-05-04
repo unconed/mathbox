@@ -12,10 +12,10 @@ Line strips arranged in columns and rows
 
 class LineGeometry extends Geometry
 
-  clip: (samples, strips, ribbons, layers) ->
-    @geometryClip.set strips, ribbons, layers, samples
-
+  clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
     segments = Math.max 0, samples - 1
+
+    @geometryClip.set strips, ribbons, layers, segments
 
     dims  = [ layers,  ribbons,  strips,  segments]
     maxs  = [@layers, @ribbons, @strips, @segments]
@@ -86,7 +86,7 @@ class LineGeometry extends Geometry
             strip 0, segments
             strip 0, segments
 
-    @clip samples, strips, ribbons, layers
+    @clip()
 
     @_ping()
 

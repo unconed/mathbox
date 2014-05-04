@@ -8,7 +8,7 @@
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'mathbox'],
+      plugins: ['core', 'controls'],
       controls: {
         klass: THREE.OrbitControls
       },
@@ -55,7 +55,7 @@
       width: 0.005,
       opacity: 0.5,
     });
-    mathbox.curve({
+    mathbox.line({
       points: '#sampler',
       color: 'blue',
       width: 0.01,

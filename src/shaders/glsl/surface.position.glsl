@@ -1,6 +1,8 @@
+attribute vec4 position4;
+
 // External
-vec3 getPosition(vec2 xy);
+vec3 getPosition(vec4 xyzw);
 
 vec3 getSurfacePosition() {
-  return getPosition(position.xy);
+  return getPosition(position4);
 }
