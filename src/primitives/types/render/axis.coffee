@@ -31,7 +31,7 @@ class Axis extends Primitive
     lineUniforms  = @_helpers.line.uniforms()
     arrowUniforms = @_helpers.arrow.uniforms()
 
-    # Make line renderable
+    # Line geometry
     detail  = @_get 'axis.detail'
     samples = detail + 1
     @resolution = 1 / detail
@@ -40,25 +40,28 @@ class Axis extends Primitive
     start   = @_get 'arrow.start'
     end     = @_get 'arrow.end'
 
+    # Make line renderable
+    uniforms = @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
     @line = @_renderables.make 'line',
-              uniforms: @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
+              uniforms: uniforms
               samples:  samples
               position: position
               clip:     start or end
 
     # Make arrow renderables
     @arrows = []
+    uniforms = @_helpers.object.merge arrowUniforms, styleUniforms
 
     if start
       @arrows.push @_renderables.make 'arrow',
-                uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
+                uniforms: uniforms
                 flip:     true
                 samples:  samples
                 position: position
 
     if end
       @arrows.push @_renderables.make 'arrow',
-                uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
+                uniforms: uniforms
                 samples:  samples
                 position: position
 

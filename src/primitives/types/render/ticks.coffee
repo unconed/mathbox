@@ -51,19 +51,14 @@ class Ticks extends Primitive
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
     lineUniforms  = @_helpers.line.uniforms()
+    uniforms      = @_helpers.object.merge lineUniforms, styleUniforms
 
     # Make line renderable
     @line = @_renderables.make 'line',
-              uniforms: @_helpers.object.merge lineUniforms, styleUniforms
+              uniforms: uniforms
               samples:  2
               strips:   samples
               position: position
-
-    ###
-    @debug = @_renderables.make 'debug',
-             map: @buffer.texture.textureObject
-    @_render @debug
-    ###
 
     @_helpers.object.make [@line]
     @_helpers.span.make()

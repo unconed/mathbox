@@ -72,9 +72,10 @@ class Surface extends Primitive
     objects = []
 
     # Make line and surface renderables
+    uniforms = @_helpers.object.merge lineUniforms, styleUniforms, wireUniforms
     if first
       @line1 = @_renderables.make 'line',
-                uniforms: @_helpers.object.merge lineUniforms, styleUniforms, wireUniforms
+                uniforms: uniforms
                 samples:  width
                 strips:   height
                 ribbons:  depth
@@ -84,7 +85,7 @@ class Surface extends Primitive
 
     if second
       @line2 = @_renderables.make 'line',
-                uniforms: @_helpers.object.merge lineUniforms, styleUniforms, wireUniforms
+                uniforms: uniforms
                 samples:  height
                 strips:   width
                 ribbons:  depth
@@ -93,8 +94,9 @@ class Surface extends Primitive
       objects.push @line2
 
     if solid
+      uniforms = @_helpers.object.merge surfaceUniforms, styleUniforms
       @surface = @_renderables.make 'surface',
-                uniforms: @_helpers.object.merge surfaceUniforms, styleUniforms
+                uniforms: uniforms
                 width:    width
                 height:   height
                 surfaces: depth

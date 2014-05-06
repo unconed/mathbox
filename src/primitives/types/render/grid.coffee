@@ -55,18 +55,17 @@ class Grid extends Primitive
       # Prepare bound uniforms
       styleUniforms = @_helpers.style.uniforms()
       lineUniforms  = @_helpers.line.uniforms()
+      uniforms      = @_helpers.object.merge lineUniforms, styleUniforms
 
       # Make line renderable
-      quads = samples - 1
-
       line = @_renderables.make 'line',
-                uniforms: @_helpers.object.merge lineUniforms, styleUniforms
+                uniforms: uniforms
                 samples:  samples
                 strips:   strips
                 position: position
 
       # Store axis object for manipulation later
-      {first, second, quads, resolution, samples, line, buffer, values}
+      {first, second, resolution, samples, line, buffer, values}
 
     # Generate both line sets
     first  = @_get 'grid.first'
@@ -101,7 +100,7 @@ class Grid extends Primitive
                   changed['grid.second']
 
     axis = (x, y, range1, range2, axis) =>
-      {first, second, quads, resolution, samples, line, buffer, values} = axis
+      {first, second, resolution, samples, line, buffer, values} = axis
 
       # Set line steps along first axis
       min    = range1.x

@@ -57239,7 +57239,7 @@ Axis = (function(_super) {
   }
 
   Axis.prototype.make = function() {
-    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, styleUniforms, types;
+    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, styleUniforms, types, uniforms;
     types = this._attributes.types;
     positionUniforms = {
       axisPosition: this._attributes.make(types.vec4()),
@@ -57259,16 +57259,18 @@ Axis = (function(_super) {
     this.resolution = 1 / detail;
     start = this._get('arrow.start');
     end = this._get('arrow.end');
+    uniforms = this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms);
     this.line = this._renderables.make('line', {
-      uniforms: this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms),
+      uniforms: uniforms,
       samples: samples,
       position: position,
       clip: start || end
     });
     this.arrows = [];
+    uniforms = this._helpers.object.merge(arrowUniforms, styleUniforms);
     if (start) {
       this.arrows.push(this._renderables.make('arrow', {
-        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
+        uniforms: uniforms,
         flip: true,
         samples: samples,
         position: position
@@ -57276,7 +57278,7 @@ Axis = (function(_super) {
     }
     if (end) {
       this.arrows.push(this._renderables.make('arrow', {
-        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
+        uniforms: uniforms,
         samples: samples,
         position: position
       }));
@@ -57336,7 +57338,7 @@ Grid = (function(_super) {
     var axis, first, lines, second;
     axis = (function(_this) {
       return function(first, second) {
-        var buffer, detail, line, lineUniforms, p, position, positionUniforms, quads, resolution, samples, strips, styleUniforms, types, values;
+        var buffer, detail, line, lineUniforms, p, position, positionUniforms, resolution, samples, strips, styleUniforms, types, uniforms, values;
         detail = _this._get(first + 'axis.detail');
         samples = detail + 1;
         resolution = 1 / detail;
@@ -57365,9 +57367,9 @@ Grid = (function(_super) {
         _this._helpers.position.shader(position);
         styleUniforms = _this._helpers.style.uniforms();
         lineUniforms = _this._helpers.line.uniforms();
-        quads = samples - 1;
+        uniforms = _this._helpers.object.merge(lineUniforms, styleUniforms);
         line = _this._renderables.make('line', {
-          uniforms: _this._helpers.object.merge(lineUniforms, styleUniforms),
+          uniforms: uniforms,
           samples: samples,
           strips: strips,
           position: position
@@ -57375,7 +57377,6 @@ Grid = (function(_super) {
         return {
           first: first,
           second: second,
-          quads: quads,
           resolution: resolution,
           samples: samples,
           line: line,
@@ -57425,8 +57426,8 @@ Grid = (function(_super) {
     }
     axis = (function(_this) {
       return function(x, y, range1, range2, axis) {
-        var buffer, first, line, max, min, n, quads, resolution, samples, second, ticks, values;
-        first = axis.first, second = axis.second, quads = axis.quads, resolution = axis.resolution, samples = axis.samples, line = axis.line, buffer = axis.buffer, values = axis.values;
+        var buffer, first, line, max, min, n, resolution, samples, second, ticks, values;
+        first = axis.first, second = axis.second, resolution = axis.resolution, samples = axis.samples, line = axis.line, buffer = axis.buffer, values = axis.values;
         min = range1.x;
         max = range1.y;
         Util.setDimension(values.gridPosition, x).multiplyScalar(min);
@@ -57501,7 +57502,7 @@ Line = (function(_super) {
   };
 
   Line.prototype.make = function() {
-    var arrowUniforms, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms;
+    var arrowUniforms, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, uniforms;
     this._helpers.bind.make({
       'geometry.points': Source
     });
@@ -57519,8 +57520,9 @@ Line = (function(_super) {
     strips = dims.height;
     ribbons = dims.depth;
     layers = dims.items;
+    uniforms = this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms);
     this.line = this._renderables.make('line', {
-      uniforms: this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms),
+      uniforms: uniforms,
       samples: samples,
       strips: strips,
       ribbons: ribbons,
@@ -57529,9 +57531,10 @@ Line = (function(_super) {
       clip: start || end
     });
     this.arrows = [];
+    uniforms = this._helpers.object.merge(arrowUniforms, styleUniforms);
     if (start) {
       this.arrows.push(this._renderables.make('arrow', {
-        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
+        uniforms: uniforms,
         flip: true,
         samples: samples,
         strips: strips,
@@ -57542,7 +57545,7 @@ Line = (function(_super) {
     }
     if (end) {
       this.arrows.push(this._renderables.make('arrow', {
-        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
+        uniforms: uniforms,
         samples: samples,
         strips: strips,
         ribbons: ribbons,
@@ -57609,7 +57612,7 @@ Surface = (function(_super) {
   };
 
   Surface.prototype.make = function() {
-    var depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, types, width, wireUniforms, wireXY, wireYX;
+    var depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, types, uniforms, width, wireUniforms, wireXY, wireYX;
     this._helpers.bind.make({
       'geometry.points': Source
     });
@@ -57641,9 +57644,10 @@ Surface = (function(_super) {
     first = this._get('grid.first');
     second = this._get('grid.second');
     objects = [];
+    uniforms = this._helpers.object.merge(lineUniforms, styleUniforms, wireUniforms);
     if (first) {
       this.line1 = this._renderables.make('line', {
-        uniforms: this._helpers.object.merge(lineUniforms, styleUniforms, wireUniforms),
+        uniforms: uniforms,
         samples: width,
         strips: height,
         ribbons: depth,
@@ -57654,7 +57658,7 @@ Surface = (function(_super) {
     }
     if (second) {
       this.line2 = this._renderables.make('line', {
-        uniforms: this._helpers.object.merge(lineUniforms, styleUniforms, wireUniforms),
+        uniforms: uniforms,
         samples: height,
         strips: width,
         ribbons: depth,
@@ -57664,8 +57668,9 @@ Surface = (function(_super) {
       objects.push(this.line2);
     }
     if (solid) {
+      uniforms = this._helpers.object.merge(surfaceUniforms, styleUniforms);
       this.surface = this._renderables.make('surface', {
-        uniforms: this._helpers.object.merge(surfaceUniforms, styleUniforms),
+        uniforms: uniforms,
         width: width,
         height: height,
         surfaces: depth,
@@ -57736,7 +57741,7 @@ Ticks = (function(_super) {
   }
 
   Ticks.prototype.make = function() {
-    var lineUniforms, p, position, positionUniforms, samples, styleUniforms, types;
+    var lineUniforms, p, position, positionUniforms, samples, styleUniforms, types, uniforms;
     this.resolution = samples = this._helpers.scale.divide('');
     this.buffer = this._renderables.make('databuffer', {
       samples: samples,
@@ -57764,18 +57769,13 @@ Ticks = (function(_super) {
     p.call('ticks.position', positionUniforms);
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
+    uniforms = this._helpers.object.merge(lineUniforms, styleUniforms);
     this.line = this._renderables.make('line', {
-      uniforms: this._helpers.object.merge(lineUniforms, styleUniforms),
+      uniforms: uniforms,
       samples: 2,
       strips: samples,
       position: position
     });
-
-    /*
-    @debug = @_renderables.make 'debug',
-             map: @buffer.texture.textureObject
-    @_render @debug
-     */
     this._helpers.object.make([this.line]);
     return this._helpers.span.make();
   };
@@ -57854,7 +57854,7 @@ Vector = (function(_super) {
   };
 
   Vector.prototype.make = function() {
-    var arrowUniforms, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms;
+    var arrowUniforms, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, uniforms;
     this._helpers.bind.make({
       'geometry.points': Source
     });
@@ -57873,8 +57873,9 @@ Vector = (function(_super) {
     strips = dims.width;
     ribbons = dims.height;
     layers = dims.depth;
+    uniforms = this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms);
     this.line = this._renderables.make('line', {
-      uniforms: this._helpers.object.merge(arrowUniforms, lineUniforms, styleUniforms),
+      uniforms: uniforms,
       samples: samples,
       ribbons: ribbons,
       strips: strips,
@@ -57883,9 +57884,10 @@ Vector = (function(_super) {
       clip: start || end
     });
     this.arrows = [];
+    uniforms = this._helpers.object.merge(arrowUniforms, styleUniforms);
     if (start) {
       this.arrows.push(this._renderables.make('arrow', {
-        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
+        uniforms: uniforms,
         flip: true,
         samples: samples,
         ribbons: ribbons,
@@ -57895,7 +57897,7 @@ Vector = (function(_super) {
     }
     if (end) {
       this.arrows.push(this._renderables.make('arrow', {
-        uniforms: this._helpers.object.merge(arrowUniforms, styleUniforms),
+        uniforms: uniforms,
         samples: samples,
         ribbons: ribbons,
         strips: strips,

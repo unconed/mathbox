@@ -53,8 +53,9 @@ class Line extends Primitive
     layers  = dims.items
 
     # Make line renderable
+    uniforms = @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
     @line = @_renderables.make 'line',
-              uniforms: @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
+              uniforms: uniforms
               samples:  samples
               strips:   strips
               ribbons:  ribbons
@@ -64,10 +65,11 @@ class Line extends Primitive
 
     # Make arrow renderables
     @arrows = []
+    uniforms = @_helpers.object.merge arrowUniforms, styleUniforms
 
     if start
       @arrows.push @_renderables.make 'arrow',
-                uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
+                uniforms: uniforms
                 flip:     true
                 samples:  samples
                 strips:   strips
@@ -77,7 +79,7 @@ class Line extends Primitive
 
     if end
       @arrows.push @_renderables.make 'arrow',
-                uniforms: @_helpers.object.merge arrowUniforms, styleUniforms
+                uniforms: uniforms
                 samples:  samples
                 strips:   strips
                 ribbons:  ribbons
