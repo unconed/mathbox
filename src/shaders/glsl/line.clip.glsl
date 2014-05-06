@@ -11,7 +11,7 @@ varying vec2 vClip;
 // External
 vec3 getPosition(vec4 xyzw);
 
-vec3 clipPosition(vec3 pos) {
+void clipPosition(vec3 pos) {
 
   // Sample end of line strip
   vec4 xyzwE = vec4(strip.y, position4.yzw);
@@ -41,7 +41,4 @@ vec3 clipPosition(vec3 pos) {
     float d = length(pos - start);
     vClip.y = d / range - 1.0;
   }
-
-  // Passthrough position
-  return pos;
 }

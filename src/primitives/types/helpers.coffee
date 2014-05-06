@@ -5,7 +5,7 @@ View = require './view/view'
 
 This is the general dumping ground for trait behavior
 
-Helpers are auto-attached to primitives that have the right trait as bound instance method
+Helpers are auto-attached to primitives that have the matching trait
 
 ###
 

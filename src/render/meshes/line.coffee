@@ -24,14 +24,17 @@ class Line extends Base
     v = factory.vertex
     v.import position if position
     v.split()
-    v  .call 'line.position',  @uniforms
+    v  .call 'line.position',    @uniforms
     v.pass()
-    v.call 'line.clip',        @uniforms, '_clip_' if clip
-    v.call 'project.position', @uniforms
+    v.fan()
+    v  .call 'line.clip',        @uniforms, '_clip_' if clip
+    v.next()
+    v  .call 'project.position', @uniforms
+    v.join()
 
     f = factory.fragment
-    f.call 'style.clip',       @uniforms, '_clip_' if clip
-    f.call 'style.color',      @uniforms
+    f.call 'style.clip',         @uniforms, '_clip_' if clip
+    f.call 'style.color',        @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide

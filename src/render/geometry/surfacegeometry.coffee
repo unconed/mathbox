@@ -18,22 +18,6 @@ Grid Surface
 
 class SurfaceGeometry extends Geometry
 
-  clip: (width = @width, height = @height, surfaces = @surfaces, layers = @layers) ->
-
-    segmentsX = Math.max 0, width  - 1
-    segmentsY = Math.max 0, height - 1
-
-    @geometryClip.set segmentsX, segmentsY, surfaces, layers
-
-    dims  = [ layers,  surfaces,  segmentsY,  segmentsX]
-    maxs  = [@layers, @surfaces, @segmentsY, @segmentsX]
-    quads = @_reduce dims, maxs
-
-    @offsets = [
-      start: 0
-      count: quads * 6
-    ]
-
   constructor: (options) ->
     super options
 
@@ -96,5 +80,21 @@ class SurfaceGeometry extends Geometry
     @_ping()
 
     return
+
+  clip: (width = @width, height = @height, surfaces = @surfaces, layers = @layers) ->
+
+    segmentsX = Math.max 0, width  - 1
+    segmentsY = Math.max 0, height - 1
+
+    @geometryClip.set segmentsX, segmentsY, surfaces, layers
+
+    dims  = [ layers,  surfaces,  segmentsY,  segmentsX]
+    maxs  = [@layers, @surfaces, @segmentsY, @segmentsX]
+    quads = @_reduce dims, maxs
+
+    @offsets = [
+      start: 0
+      count: quads * 6
+    ]
 
 module.exports = SurfaceGeometry

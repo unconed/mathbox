@@ -12,20 +12,6 @@ Line strips arranged in columns and rows
 
 class LineGeometry extends Geometry
 
-  clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
-    segments = Math.max 0, samples - 1
-
-    @geometryClip.set segments, strips, ribbons, layers
-
-    dims  = [ layers,  ribbons,  strips,  segments]
-    maxs  = [@layers, @ribbons, @strips, @segments]
-    quads = @_reduce dims, maxs
-
-    @offsets = [
-      start: 0
-      count: quads * 6
-    ]
-
   constructor: (options) ->
     super options
 
@@ -91,5 +77,19 @@ class LineGeometry extends Geometry
     @_ping()
 
     return
+
+  clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
+    segments = Math.max 0, samples - 1
+
+    @geometryClip.set segments, strips, ribbons, layers
+
+    dims  = [ layers,  ribbons,  strips,  segments]
+    maxs  = [@layers, @ribbons, @strips, @segments]
+    quads = @_reduce dims, maxs
+
+    @offsets = [
+      start: 0
+      count: quads * 6
+    ]
 
 module.exports = LineGeometry

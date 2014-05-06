@@ -12,24 +12,6 @@ Cones to attach as arrowheads on line strips
 
 class ArrowGeometry extends Geometry
 
-  clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
-    segments = Math.max 0, samples - 1
-
-    @geometryClip.set segments, strips, ribbons, layers
-
-    if samples > @anchor
-      dims  = [ layers,  ribbons,  strips]
-      maxs  = [@layers, @ribbons, @strips]
-
-      quads = @sides * @_reduce dims, maxs
-    else
-      quads = 0
-
-    @offsets = [
-      start: 0
-      count: quads * 6
-    ]
-
   constructor: (options) ->
     super options
 
@@ -117,5 +99,23 @@ class ArrowGeometry extends Geometry
     @_ping()
 
     return
+
+  clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
+    segments = Math.max 0, samples - 1
+
+    @geometryClip.set segments, strips, ribbons, layers
+
+    if samples > @anchor
+      dims  = [ layers,  ribbons,  strips]
+      maxs  = [@layers, @ribbons, @strips]
+
+      quads = @sides * @_reduce dims, maxs
+    else
+      quads = 0
+
+    @offsets = [
+      start: 0
+      count: quads * 6
+    ]
 
 module.exports = ArrowGeometry

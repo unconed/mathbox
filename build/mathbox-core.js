@@ -7,7 +7,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "lerp.height": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpHeight(vec4 xyzw) {\n  float x = xyzw.y * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.items": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpItems(vec4 xyzw) {\n  float x = xyzw.w * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.width": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpWidth(vec4 xyzw) {\n  float x = xyzw.x * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
-"line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float lineWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, position4.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, position4.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n\n  // Passthrough position\n  return pos;\n}",
+"line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float lineWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, position4.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, position4.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n}",
 "line.position": "uniform float lineWidth;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position4, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
 "map.2d.xyzw": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 map2Dxyzw(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
@@ -6096,7 +6096,7 @@ View = require('./view/view');
 
 This is the general dumping ground for trait behavior
 
-Helpers are auto-attached to primitives that have the right trait as bound instance method
+Helpers are auto-attached to primitives that have the matching trait
  */
 
 helpers = {
@@ -8840,37 +8840,6 @@ Cones to attach as arrowheads on line strips
 ArrowGeometry = (function(_super) {
   __extends(ArrowGeometry, _super);
 
-  ArrowGeometry.prototype.clip = function(samples, strips, ribbons, layers) {
-    var dims, maxs, quads, segments;
-    if (samples == null) {
-      samples = this.samples;
-    }
-    if (strips == null) {
-      strips = this.strips;
-    }
-    if (ribbons == null) {
-      ribbons = this.ribbons;
-    }
-    if (layers == null) {
-      layers = this.layers;
-    }
-    segments = Math.max(0, samples - 1);
-    this.geometryClip.set(segments, strips, ribbons, layers);
-    if (samples > this.anchor) {
-      dims = [layers, ribbons, strips];
-      maxs = [this.layers, this.ribbons, this.strips];
-      quads = this.sides * this._reduce(dims, maxs);
-    } else {
-      quads = 0;
-    }
-    return this.offsets = [
-      {
-        start: 0,
-        count: quads * 6
-      }
-    ];
-  };
-
   function ArrowGeometry(options) {
     var a, anchor, angle, arrow, arrows, attach, b, back, base, c, circle, far, flip, i, index, j, k, l, layers, near, points, position, ribbons, samples, sides, step, strips, tip, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _p, _ref, _ref1, _ref2;
     ArrowGeometry.__super__.constructor.call(this, options);
@@ -8948,6 +8917,37 @@ ArrowGeometry = (function(_super) {
     this._ping();
     return;
   }
+
+  ArrowGeometry.prototype.clip = function(samples, strips, ribbons, layers) {
+    var dims, maxs, quads, segments;
+    if (samples == null) {
+      samples = this.samples;
+    }
+    if (strips == null) {
+      strips = this.strips;
+    }
+    if (ribbons == null) {
+      ribbons = this.ribbons;
+    }
+    if (layers == null) {
+      layers = this.layers;
+    }
+    segments = Math.max(0, samples - 1);
+    this.geometryClip.set(segments, strips, ribbons, layers);
+    if (samples > this.anchor) {
+      dims = [layers, ribbons, strips];
+      maxs = [this.layers, this.ribbons, this.strips];
+      quads = this.sides * this._reduce(dims, maxs);
+    } else {
+      quads = 0;
+    }
+    return this.offsets = [
+      {
+        start: 0,
+        count: quads * 6
+      }
+    ];
+  };
 
   return ArrowGeometry;
 
@@ -9072,33 +9072,6 @@ Line strips arranged in columns and rows
 LineGeometry = (function(_super) {
   __extends(LineGeometry, _super);
 
-  LineGeometry.prototype.clip = function(samples, strips, ribbons, layers) {
-    var dims, maxs, quads, segments;
-    if (samples == null) {
-      samples = this.samples;
-    }
-    if (strips == null) {
-      strips = this.strips;
-    }
-    if (ribbons == null) {
-      ribbons = this.ribbons;
-    }
-    if (layers == null) {
-      layers = this.layers;
-    }
-    segments = Math.max(0, samples - 1);
-    this.geometryClip.set(segments, strips, ribbons, layers);
-    dims = [layers, ribbons, strips, segments];
-    maxs = [this.layers, this.ribbons, this.strips, this.segments];
-    quads = this._reduce(dims, maxs);
-    return this.offsets = [
-      {
-        start: 0,
-        count: quads * 6
-      }
-    ];
-  };
-
   function LineGeometry(options) {
     var base, edge, i, index, j, k, l, layers, line, points, position, quads, ribbons, samples, segments, strip, strips, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
     LineGeometry.__super__.constructor.call(this, options);
@@ -9160,6 +9133,33 @@ LineGeometry = (function(_super) {
     return;
   }
 
+  LineGeometry.prototype.clip = function(samples, strips, ribbons, layers) {
+    var dims, maxs, quads, segments;
+    if (samples == null) {
+      samples = this.samples;
+    }
+    if (strips == null) {
+      strips = this.strips;
+    }
+    if (ribbons == null) {
+      ribbons = this.ribbons;
+    }
+    if (layers == null) {
+      layers = this.layers;
+    }
+    segments = Math.max(0, samples - 1);
+    this.geometryClip.set(segments, strips, ribbons, layers);
+    dims = [layers, ribbons, strips, segments];
+    maxs = [this.layers, this.ribbons, this.strips, this.segments];
+    quads = this._reduce(dims, maxs);
+    return this.offsets = [
+      {
+        start: 0,
+        count: quads * 6
+      }
+    ];
+  };
+
   return LineGeometry;
 
 })(Geometry);
@@ -9193,34 +9193,6 @@ Grid Surface
 
 SurfaceGeometry = (function(_super) {
   __extends(SurfaceGeometry, _super);
-
-  SurfaceGeometry.prototype.clip = function(width, height, surfaces, layers) {
-    var dims, maxs, quads, segmentsX, segmentsY;
-    if (width == null) {
-      width = this.width;
-    }
-    if (height == null) {
-      height = this.height;
-    }
-    if (surfaces == null) {
-      surfaces = this.surfaces;
-    }
-    if (layers == null) {
-      layers = this.layers;
-    }
-    segmentsX = Math.max(0, width - 1);
-    segmentsY = Math.max(0, height - 1);
-    this.geometryClip.set(segmentsX, segmentsY, surfaces, layers);
-    dims = [layers, surfaces, segmentsY, segmentsX];
-    maxs = [this.layers, this.surfaces, this.segmentsY, this.segmentsX];
-    quads = this._reduce(dims, maxs);
-    return this.offsets = [
-      {
-        start: 0,
-        count: quads * 6
-      }
-    ];
-  };
 
   function SurfaceGeometry(options) {
     var base, edgeX, edgeY, height, i, index, j, k, l, layers, points, position, quads, segmentsX, segmentsY, surface, surfaces, triangles, width, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
@@ -9279,6 +9251,34 @@ SurfaceGeometry = (function(_super) {
     this._ping();
     return;
   }
+
+  SurfaceGeometry.prototype.clip = function(width, height, surfaces, layers) {
+    var dims, maxs, quads, segmentsX, segmentsY;
+    if (width == null) {
+      width = this.width;
+    }
+    if (height == null) {
+      height = this.height;
+    }
+    if (surfaces == null) {
+      surfaces = this.surfaces;
+    }
+    if (layers == null) {
+      layers = this.layers;
+    }
+    segmentsX = Math.max(0, width - 1);
+    segmentsY = Math.max(0, height - 1);
+    this.geometryClip.set(segmentsX, segmentsY, surfaces, layers);
+    dims = [layers, surfaces, segmentsY, segmentsX];
+    maxs = [this.layers, this.surfaces, this.segmentsY, this.segmentsX];
+    quads = this._reduce(dims, maxs);
+    return this.offsets = [
+      {
+        start: 0,
+        count: quads * 6
+      }
+    ];
+  };
 
   return SurfaceGeometry;
 
@@ -9469,10 +9469,13 @@ Line = (function(_super) {
     v.split();
     v.call('line.position', this.uniforms);
     v.pass();
+    v.fan();
     if (clip) {
       v.call('line.clip', this.uniforms, '_clip_');
     }
+    v.next();
     v.call('project.position', this.uniforms);
+    v.join();
     f = factory.fragment;
     if (clip) {
       f.call('style.clip', this.uniforms, '_clip_');
