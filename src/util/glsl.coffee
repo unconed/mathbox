@@ -1,3 +1,12 @@
+# Flip sampling component
+exports.flipVec2 = (channel) ->
+  """
+  vec2 flip(vec2 uv) {
+    uv.#{channel} = -uv.#{channel};
+    return uv;
+  }
+  """
+
 # Apply 4-component vector swizzle
 exports.swizzleVec4 = (order) ->
   """

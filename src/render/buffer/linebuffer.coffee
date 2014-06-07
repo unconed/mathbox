@@ -1,5 +1,6 @@
-Buffer = require('./buffer')
-Texture = require('./texture')
+Buffer  = require './buffer'
+Texture = require './texture'
+Util    = require '../../util'
 
 class LineBuffer extends Buffer
   constructor: (gl, shaders, options) ->
@@ -9,6 +10,10 @@ class LineBuffer extends Buffer
 
     @samples = @length
     super gl, shaders, options
+
+  shader: (shader) ->
+    shader.call Util.GLSL.flipVec2 'y'
+    super shader
 
   build: () ->
     super

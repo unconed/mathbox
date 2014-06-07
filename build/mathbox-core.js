@@ -8603,13 +8603,15 @@ exports.SurfaceBuffer = require('./surfacebuffer');
 
 
 },{"./buffer":56,"./databuffer":57,"./linebuffer":59,"./surfacebuffer":60,"./texture":61}],59:[function(require,module,exports){
-var Buffer, LineBuffer, Texture,
+var Buffer, LineBuffer, Texture, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Buffer = require('./buffer');
 
 Texture = require('./texture');
+
+Util = require('../../util');
 
 LineBuffer = (function(_super) {
   __extends(LineBuffer, _super);
@@ -8621,6 +8623,11 @@ LineBuffer = (function(_super) {
     this.samples = this.length;
     LineBuffer.__super__.constructor.call(this, gl, shaders, options);
   }
+
+  LineBuffer.prototype.shader = function(shader) {
+    shader.call(Util.GLSL.flipVec2('y'));
+    return LineBuffer.__super__.shader.call(this, shader);
+  };
 
   LineBuffer.prototype.build = function() {
     LineBuffer.__super__.build.apply(this, arguments);
@@ -8674,7 +8681,7 @@ LineBuffer = (function(_super) {
 module.exports = LineBuffer;
 
 
-},{"./buffer":56,"./texture":61}],60:[function(require,module,exports){
+},{"../../util":87,"./buffer":56,"./texture":61}],60:[function(require,module,exports){
 var Buffer, SurfaceBuffer, Texture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9933,6 +9940,10 @@ module.exports = ease;
 
 
 },{}],86:[function(require,module,exports){
+exports.flipVec2 = function(channel) {
+  return "vec2 flip(vec2 uv) {\n  uv." + channel + " = -uv." + channel + ";\n  return uv;\n}";
+};
+
 exports.swizzleVec4 = function(order) {
   return "vec4 swizzle(vec4 xyzw) {\n  return xyzw." + order + ";\n}";
 };
