@@ -50866,13 +50866,11 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "view.position": "vec3 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0)).xyz;\n}"};
 
 },{}],2:[function(require,module,exports){
-/**
+/*!
  * The buffer module from node.js, for the browser.
  *
- * Author:   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * License:  MIT
- *
- * `npm install buffer`
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
  */
 
 var base64 = require('base64-js')
@@ -50889,17 +50887,14 @@ Buffer.poolSize = 8192
  *   === false   Use Object implementation (compatible down to IE6)
  */
 Buffer._useTypedArrays = (function () {
-   // Detect if browser supports Typed Arrays. Supported browsers are IE 10+,
-   // Firefox 4+, Chrome 7+, Safari 5.1+, Opera 11.6+, iOS 4.2+.
-  if (typeof Uint8Array !== 'function' || typeof ArrayBuffer !== 'function')
-    return false
-
-  // Does the browser support adding properties to `Uint8Array` instances? If
-  // not, then that's the same as no `Uint8Array` support. We need to be able to
-  // add all the node Buffer API methods.
-  // Bug in Firefox 4-29, now fixed: https://bugzilla.mozilla.org/show_bug.cgi?id=695438
+  // Detect if browser supports Typed Arrays. Supported browsers are IE 10+, Firefox 4+,
+  // Chrome 7+, Safari 5.1+, Opera 11.6+, iOS 4.2+. If the browser does not support adding
+  // properties to `Uint8Array` instances, then that's the same as no `Uint8Array` support
+  // because we need to be able to add all the node Buffer API methods. This is an issue
+  // in Firefox 4-29. Now fixed: https://bugzilla.mozilla.org/show_bug.cgi?id=695438
   try {
-    var arr = new Uint8Array(0)
+    var buf = new ArrayBuffer(0)
+    var arr = new Uint8Array(buf)
     arr.foo = function () { return 42 }
     return 42 === arr.foo() &&
         typeof arr.subarray === 'function' // Chrome 9-10 lack `subarray`
@@ -50942,14 +50937,14 @@ function Buffer (subject, encoding, noZero) {
   else if (type === 'string')
     length = Buffer.byteLength(subject, encoding)
   else if (type === 'object')
-    length = coerce(subject.length) // Assume object is an array
+    length = coerce(subject.length) // assume that object is array-like
   else
     throw new Error('First argument needs to be a number, array or string.')
 
   var buf
   if (Buffer._useTypedArrays) {
     // Preferred: Return an augmented `Uint8Array` instance for best performance
-    buf = augment(new Uint8Array(length))
+    buf = Buffer._augment(new Uint8Array(length))
   } else {
     // Fallback: Return THIS instance of Buffer (created by `new`)
     buf = this
@@ -50958,9 +50953,8 @@ function Buffer (subject, encoding, noZero) {
   }
 
   var i
-  if (Buffer._useTypedArrays && typeof Uint8Array === 'function' &&
-      subject instanceof Uint8Array) {
-    // Speed optimization -- use set if we're copying from a Uint8Array
+  if (Buffer._useTypedArrays && typeof subject.byteLength === 'number') {
+    // Speed optimization -- use set if we're copying from a typed array
     buf._set(subject)
   } else if (isArrayish(subject)) {
     // Treat array-ish objects as a byte array
@@ -51257,9 +51251,14 @@ Buffer.prototype.copy = function (target, target_start, start, end) {
   if (target.length - target_start < end - start)
     end = target.length - target_start + start
 
-  // copy!
-  for (var i = 0; i < end - start; i++)
-    target[i + target_start] = this[i + start]
+  var len = end - start
+
+  if (len < 100 || !Buffer._useTypedArrays) {
+    for (var i = 0; i < len; i++)
+      target[i + target_start] = this[i + start]
+  } else {
+    target._set(this.subarray(start, start + len), target_start)
+  }
 }
 
 function _base64Slice (buf, start, end) {
@@ -51328,7 +51327,7 @@ Buffer.prototype.slice = function (start, end) {
   end = clamp(end, len, len)
 
   if (Buffer._useTypedArrays) {
-    return augment(this.subarray(start, end))
+    return Buffer._augment(this.subarray(start, end))
   } else {
     var sliceLen = end - start
     var newBuf = new Buffer(sliceLen, undefined, true)
@@ -51771,7 +51770,7 @@ Buffer.prototype.inspect = function () {
  * Added in Node 0.12. Only available in browsers that support ArrayBuffer.
  */
 Buffer.prototype.toArrayBuffer = function () {
-  if (typeof Uint8Array === 'function') {
+  if (typeof Uint8Array !== 'undefined') {
     if (Buffer._useTypedArrays) {
       return (new Buffer(this)).buffer
     } else {
@@ -51796,9 +51795,9 @@ function stringtrim (str) {
 var BP = Buffer.prototype
 
 /**
- * Augment the Uint8Array *instance* (not the class!) with Buffer methods
+ * Augment a Uint8Array *instance* (not the Uint8Array class!) with Buffer methods
  */
-function augment (arr) {
+Buffer._augment = function (arr) {
   arr._isBuffer = true
 
   // save reference to original Uint8Array get/set methods before overwriting
@@ -52334,7 +52333,10 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      console.trace();
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
     }
   }
 
@@ -52558,6 +52560,16 @@ process.browser = true;
 process.env = {};
 process.argv = [];
 
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
 }
@@ -52772,7 +52784,60 @@ Stream.prototype.pipe = function(dest, options) {
 };
 
 },{"./duplex.js":8,"./passthrough.js":11,"./readable.js":12,"./transform.js":13,"./writable.js":14,"events":5,"inherits":6}],10:[function(require,module,exports){
-module.exports=require(7)
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
 },{}],11:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -53752,8 +53817,8 @@ function indexOf (xs, x) {
   return -1;
 }
 
-}).call(this,require("/Users/steven/Projects/JS/mathbox2/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"./index.js":9,"/Users/steven/Projects/JS/mathbox2/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":7,"buffer":2,"events":5,"inherits":6,"process/browser.js":10,"string_decoder":15}],13:[function(require,module,exports){
+}).call(this,require("+xKvab"))
+},{"+xKvab":7,"./index.js":9,"buffer":2,"events":5,"inherits":6,"process/browser.js":10,"string_decoder":15}],13:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -54836,6 +54901,10 @@ function valid_attr(fn, lhs, cmp, rhs) {
       return attr == rhs
     }
 
+    if(attr === void 0 || attr === null) {
+      return false
+    }
+
     return checkattr[cmp.charAt(0)](attr, rhs)
   }
 }
@@ -55011,8 +55080,8 @@ function through (write, end, opts) {
 }
 
 
-}).call(this,require("/Users/steven/Projects/JS/mathbox2/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/Users/steven/Projects/JS/mathbox2/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":7,"stream":9}],18:[function(require,module,exports){
+}).call(this,require("+xKvab"))
+},{"+xKvab":7,"stream":9}],18:[function(require,module,exports){
 module.exports = tokenize
 
 var through = require('through')
@@ -57422,7 +57491,6 @@ Grid = (function(_super) {
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       axis = _ref[_i];
       axis.buffer.dispose();
-      this._unrender(axis.line);
       axis.line.dispose();
     }
     return this.axes = null;
@@ -59061,7 +59129,7 @@ Spherical = (function(_super) {
 
   Spherical.prototype.change = function(changed, touched, init) {
     var abs, adz, aspectX, aspectY, aspectZ, bend, dx, dy, dz, fdx, fdy, focus, idx, idy, max, min, o, q, r, s, scaleY, sdx, sdy, sdz, sx, sy, sz, x, y, y1, y2, z, z1, z2;
-    if (!(touched['object'] || touched['view'] || touched['polar'] || init)) {
+    if (!(touched['object'] || touched['view'] || touched['spherical'] || init)) {
       return;
     }
     this.bend = bend = this._get('spherical.bend');
@@ -59424,14 +59492,14 @@ LineBuffer = (function(_super) {
   };
 
   LineBuffer.prototype.copy2D = function(data) {
-    var c, d, i, k, n, o, _i, _j, _ref;
-    c = Math.min(data[0].length, this.channels);
-    n = Math.min(data.length, this.samples * this.items);
+    var channels, d, i, k, o, samples, _i, _j, _ref;
+    channels = Math.min(data[0].length, this.channels);
+    samples = Math.min(data.length, this.samples * this.items);
     o = 0;
     data = this.data;
-    for (k = _i = 0; 0 <= n ? _i < n : _i > n; k = 0 <= n ? ++_i : --_i) {
+    for (k = _i = 0; 0 <= samples ? _i < samples : _i > samples; k = 0 <= samples ? ++_i : --_i) {
       d = data[k];
-      for (i = _j = 0; 0 <= c ? _j < c : _j > c; i = 0 <= c ? ++_j : --_j) {
+      for (i = _j = 0; 0 <= channels ? _j < channels : _j > channels; i = 0 <= channels ? ++_j : --_j) {
         d[o++] = (_ref = v[i]) != null ? _ref : 0;
       }
     }
@@ -59510,14 +59578,14 @@ SurfaceBuffer = (function(_super) {
   };
 
   SurfaceBuffer.prototype.copy2D = function(data) {
-    var d, h, i, k, o, w, _i, _j, _ref;
-    w = Math.min(data[0].length, this.width * this.channels * this.items);
-    h = Math.min(data.length, this.height);
+    var d, height, i, k, o, width, _i, _j, _ref;
+    width = Math.min(data[0].length, this.width * this.channels * this.items);
+    height = Math.min(data.length, this.height);
     o = 0;
     data = this.data;
-    for (k = _i = 0; 0 <= h ? _i < h : _i > h; k = 0 <= h ? ++_i : --_i) {
+    for (k = _i = 0; 0 <= height ? _i < height : _i > height; k = 0 <= height ? ++_i : --_i) {
       d = data[k];
-      for (i = _j = 0; 0 <= w ? _j < w : _j > w; i = 0 <= w ? ++_j : --_j) {
+      for (i = _j = 0; 0 <= width ? _j < width : _j > width; i = 0 <= width ? ++_j : --_j) {
         d[o++] = (_ref = d[i]) != null ? _ref : 0;
       }
     }
@@ -59525,17 +59593,17 @@ SurfaceBuffer = (function(_super) {
   };
 
   SurfaceBuffer.prototype.copy3D = function(data) {
-    var c, d, h, i, j, k, o, v, w, _i, _j, _k, _ref;
-    c = Math.min(data[0][0].length, this.channels);
-    w = Math.min(data[0].length, this.width * this.items);
-    h = Math.min(data.length, this.height);
+    var channels, d, height, i, j, k, o, v, width, _i, _j, _k, _ref;
+    channels = Math.min(data[0][0].length, this.channels);
+    width = Math.min(data[0].length, this.width * this.items);
+    height = Math.min(data.length, this.height);
     o = 0;
     data = this.data;
-    for (k = _i = 0; 0 <= h ? _i < h : _i > h; k = 0 <= h ? ++_i : --_i) {
+    for (k = _i = 0; 0 <= height ? _i < height : _i > height; k = 0 <= height ? ++_i : --_i) {
       d = data[k];
-      for (j = _j = 0; 0 <= w ? _j < w : _j > w; j = 0 <= w ? ++_j : --_j) {
+      for (j = _j = 0; 0 <= width ? _j < width : _j > width; j = 0 <= width ? ++_j : --_j) {
         v = d[j];
-        for (i = _k = 0; 0 <= c ? _k < c : _k > c; i = 0 <= c ? ++_k : --_k) {
+        for (i = _k = 0; 0 <= channels ? _k < channels : _k > channels; i = 0 <= channels ? ++_k : --_k) {
           d[o++] = (_ref = v[i]) != null ? _ref : 0;
         }
       }

@@ -5,7 +5,7 @@
   <title>MathBox - Spherical Vectors</title>
   <script src="../build/mathbox-bundle.js"></script>
 </head>
-<body>
+<body style="cursor: move">
   <script>
     mathbox = mathBox({
       plugins: ['core', 'controls'],
@@ -18,16 +18,16 @@
     three.camera.position.set(.8, 1, 1.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    start = time = 0
+    start = time = 5
 
     three.on('update', function () {
       start = start || three.Time.now;
-      time = (three.Time.now - start + 3) / 7;
+      //time = (three.Time.now - start + 3) / 7;
     });
 
     mathbox.spherical({
       bend: 1,
-      range: [[-π, π], [-π/2, π/2], [0, 1]],
+      range: [[-π, π], [-π/2, π/2], [0, 2]],
       scale: [2, 1, 1],
     });
 
