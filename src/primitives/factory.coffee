@@ -1,5 +1,5 @@
 class Factory
-  constructor: (definitions, @attributes, @renderables, @shaders) ->
+  constructor: (definitions, @context) ->
     @classes = definitions.Classes
     @helpers = definitions.Helpers
 
@@ -19,8 +19,8 @@ class Factory
 
     modelKlass   = klass.model
 
-    model        = new modelKlass options, type, klass.traits, @attributes
-    controller   = new klass model, @attributes, @renderables, @shaders, @helpers
+    model        = new modelKlass options, type, klass.traits, @context.attributes
+    controller   = new klass model, @context, @helpers
     model
 
 module.exports = Factory

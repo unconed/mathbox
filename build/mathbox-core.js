@@ -4590,7 +4590,7 @@ Context = (function() {
     this.scene = new Render.Scene(scene);
     this.renderables = new Render.Factory(gl, Render.Classes, this.shaders);
     this.attributes = new Model.Attributes(Primitives.Types);
-    this.primitives = new Primitives.Factory(Primitives.Types, this.attributes, this.renderables, this.shaders);
+    this.primitives = new Primitives.Factory(Primitives.Types, this);
     this.root = this.primitives.make('root');
     this.model = new Model.Model(this.root);
     this.controller = new Stage.Controller(this.model, this.scene, this.primitives);
@@ -5342,11 +5342,12 @@ Primitive = (function() {
 
   Primitive.traits = [];
 
-  function Primitive(node, _attributes, _renderables, _shaders, _helpers) {
+  function Primitive(node, _context, helpers) {
     this.node = node;
-    this._attributes = _attributes;
-    this._renderables = _renderables;
-    this._shaders = _shaders;
+    this._context = _context;
+    this._attributes = this._context.attributes;
+    this._renderables = this._context.renderables;
+    this._shaders = this._context.shaders;
     this.node.primitive = this;
     this.node.on('change', (function(_this) {
       return function(event) {
@@ -5366,7 +5367,7 @@ Primitive = (function() {
       };
     })(this));
     this._get = this.node.get.bind(this.node);
-    this._helpers = _helpers(this, this.node.traits);
+    this._helpers = helpers(this, this.node.traits);
     this.handlers = {};
   }
 
@@ -5459,10 +5460,8 @@ module.exports = Primitive;
 var Factory;
 
 Factory = (function() {
-  function Factory(definitions, attributes, renderables, shaders) {
-    this.attributes = attributes;
-    this.renderables = renderables;
-    this.shaders = shaders;
+  function Factory(definitions, context) {
+    this.context = context;
     this.classes = definitions.Classes;
     this.helpers = definitions.Helpers;
   }
@@ -5486,8 +5485,8 @@ Factory = (function() {
       throw "Unknown primitive class `" + type + "`";
     }
     modelKlass = klass.model;
-    model = new modelKlass(options, type, klass.traits, this.attributes);
-    controller = new klass(model, this.attributes, this.renderables, this.shaders, this.helpers);
+    model = new modelKlass(options, type, klass.traits, this.context.attributes);
+    controller = new klass(model, this.context, this.helpers);
     return model;
   };
 
@@ -5520,11 +5519,12 @@ Primitive = (function() {
 
   Primitive.traits = [];
 
-  function Primitive(node, _attributes, _renderables, _shaders, _helpers) {
+  function Primitive(node, _context, helpers) {
     this.node = node;
-    this._attributes = _attributes;
-    this._renderables = _renderables;
-    this._shaders = _shaders;
+    this._context = _context;
+    this._attributes = this._context.attributes;
+    this._renderables = this._context.renderables;
+    this._shaders = this._context.shaders;
     this.node.primitive = this;
     this.node.on('change', (function(_this) {
       return function(event) {
@@ -5544,7 +5544,7 @@ Primitive = (function() {
       };
     })(this));
     this._get = this.node.get.bind(this.node);
-    this._helpers = _helpers(this, this.node.traits);
+    this._helpers = helpers(this, this.node.traits);
     this.handlers = {};
   }
 
@@ -5726,8 +5726,8 @@ _Array = (function(_super) {
 
   _Array.traits = ['node', 'data', 'array'];
 
-  function _Array(model, attributes, renderables, shaders, helpers) {
-    _Array.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function _Array(model, context, helpers) {
+    _Array.__super__.constructor.call(this, model, context, helpers);
     this.buffer = null;
     this.space = 0;
     this.length = 0;
@@ -5959,8 +5959,8 @@ Matrix = (function(_super) {
 
   Matrix.traits = ['node', 'data', 'matrix'];
 
-  function Matrix(model, attributes, renderables, shaders, helpers) {
-    Matrix.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Matrix(model, context, helpers) {
+    Matrix.__super__.constructor.call(this, model, context, helpers);
     this.buffer = null;
     this.filled = false;
     this.spaceWidth = 0;
@@ -6472,8 +6472,8 @@ Axis = (function(_super) {
 
   Axis.traits = ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position'];
 
-  function Axis(model, attributes, renderables, shaders, helpers) {
-    Axis.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Axis(model, context, helpers) {
+    Axis.__super__.constructor.call(this, model, context, helpers);
     this.axisPosition = this.axisStep = this.resolution = this.line = this.arrows = null;
   }
 
@@ -6568,8 +6568,8 @@ Grid = (function(_super) {
 
   Grid.traits = ['node', 'object', 'style', 'line', 'grid', 'area', 'position', 'axis:x.axis', 'axis:y.axis', 'scale:x.scale', 'scale:y.scale', 'span:x.span', 'span:y.span'];
 
-  function Grid(model, attributes, renderables, shaders, helpers) {
-    Grid.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Grid(model, context, helpers) {
+    Grid.__super__.constructor.call(this, model, context, helpers);
     this.axes = null;
   }
 
@@ -6714,8 +6714,8 @@ Line = (function(_super) {
 
   Line.traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind'];
 
-  function Line(model, attributes, renderables, shaders, helpers) {
-    Line.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Line(model, context, helpers) {
+    Line.__super__.constructor.call(this, model, context, helpers);
     this.line = this.arrows = null;
   }
 
@@ -6831,8 +6831,8 @@ Surface = (function(_super) {
 
   Surface.traits = ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind'];
 
-  function Surface(model, attributes, renderables, shaders, helpers) {
-    Surface.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Surface(model, context, helpers) {
+    Surface.__super__.constructor.call(this, model, context, helpers);
     this.line1 = this.line2 = this.surface = null;
   }
 
@@ -6973,8 +6973,8 @@ Ticks = (function(_super) {
 
   Ticks.traits = ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position'];
 
-  function Ticks(model, attributes, renderables, shaders, helpers) {
-    Ticks.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Ticks(model, context, helpers) {
+    Ticks.__super__.constructor.call(this, model, context, helpers);
     this.tickAxis = this.tickNormal = this.resolution = this.line = null;
   }
 
@@ -7066,8 +7066,8 @@ Vector = (function(_super) {
 
   Vector.traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind'];
 
-  function Vector(model, attributes, renderables, shaders, helpers) {
-    Vector.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Vector(model, context, helpers) {
+    Vector.__super__.constructor.call(this, model, context, helpers);
     this.line = this.arrows = null;
   }
 
@@ -7176,8 +7176,8 @@ Group = require('./group');
 Root = (function(_super) {
   __extends(Root, _super);
 
-  function Root(model, attributes, renderables, shaders, helper) {
-    Root.__super__.constructor.call(this, model, attributes, renderables, shaders, helper);
+  function Root(model, context, helpers) {
+    Root.__super__.constructor.call(this, model, context, helpers);
     this.visible = true;
   }
 
@@ -7204,8 +7204,8 @@ Source = (function(_super) {
 
   Source.traits = ['node', 'data'];
 
-  function Source(model, attributes, renderables, shaders, helpers) {
-    Source.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Source(model, context, helpers) {
+    Source.__super__.constructor.call(this, model, context, helpers);
   }
 
   Source.prototype.callback = function(callback) {
@@ -7362,11 +7362,11 @@ Transform = require('./transform');
 Lerp = (function(_super) {
   __extends(Lerp, _super);
 
-  Lerp.traits = ['node', 'bind', 'transform', 'lerp'];
-
-  function Lerp(model, attributes, renderables, shaders, helpers) {
-    Lerp.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Lerp() {
+    return Lerp.__super__.constructor.apply(this, arguments);
   }
+
+  Lerp.traits = ['node', 'bind', 'transform', 'lerp'];
 
   Lerp.prototype.shader = function(shader) {
     return shader.concat(this.transform);
@@ -7495,11 +7495,11 @@ labels = {
 Transpose = (function(_super) {
   __extends(Transpose, _super);
 
-  Transpose.traits = ['node', 'bind', 'transform', 'transpose'];
-
-  function Transpose(model, attributes, renderables, shaders, helpers) {
-    Transpose.__super__.constructor.call(this, model, attributes, renderables, shaders, helpers);
+  function Transpose() {
+    return Transpose.__super__.constructor.apply(this, arguments);
   }
+
+  Transpose.traits = ['node', 'bind', 'transform', 'transpose'];
 
   Transpose.prototype.shader = function(shader) {
     shader.call(this.swizzler);

@@ -7,8 +7,8 @@ class Grid extends Primitive
             'scale:x.scale', 'scale:y.scale',
             'span:x.span',   'span:y.span']
 
-  constructor: (model, attributes, renderables, shaders, helpers) ->
-    super model, attributes, renderables, shaders, helpers
+  constructor: (model, context, helpers) ->
+    super model, context, helpers
 
     @axes = null
 

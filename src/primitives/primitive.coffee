@@ -7,7 +7,11 @@ class Primitive
   @model = @Node
   @traits = []
 
-  constructor: (@node, @_attributes, @_renderables, @_shaders, _helpers) ->
+  constructor: (@node, @_context, helpers) ->
+    @_attributes  = @_context.attributes
+    @_renderables = @_context.renderables
+    @_shaders     = @_context.shaders
+
     @node.primitive = @
 
     @node.on 'change', (event) =>
@@ -20,7 +24,7 @@ class Primitive
       @_removed()
 
     @_get = @node.get.bind @node
-    @_helpers = _helpers @, @node.traits
+    @_helpers = helpers @, @node.traits
     @handlers = {}
 
   # Construction of renderables

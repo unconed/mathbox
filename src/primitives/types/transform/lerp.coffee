@@ -3,9 +3,6 @@ Transform = require './transform'
 class Lerp extends Transform
   @traits: ['node', 'bind', 'transform', 'lerp']
 
-  constructor: (model, attributes, renderables, shaders, helpers) ->
-    super model, attributes, renderables, shaders, helpers
-
   shader: (shader) ->
     shader.concat @transform
 

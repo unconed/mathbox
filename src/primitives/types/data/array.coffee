@@ -3,8 +3,8 @@ Data = require './data'
 class _Array extends Data
   @traits: ['node', 'data', 'array']
 
-  constructor: (model, attributes, renderables, shaders, helpers) ->
-    super model, attributes, renderables, shaders, helpers
+  constructor: (model, context, helpers) ->
+    super model, context, helpers
 
     @buffer = null
     @space  = 0

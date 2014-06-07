@@ -13,7 +13,7 @@ class Context
     @renderables = new Render.Factory     gl, Render.Classes, @shaders
 
     @attributes  = new Model.Attributes   Primitives.Types
-    @primitives  = new Primitives.Factory Primitives.Types, @attributes, @renderables, @shaders
+    @primitives  = new Primitives.Factory Primitives.Types, @
 
     @root        = @primitives.make 'root'
 

@@ -4,8 +4,8 @@ Util      = require '../../../util'
 class Axis extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
 
-  constructor: (model, attributes, renderables, shaders, helpers) ->
-    super model, attributes, renderables, shaders, helpers
+  constructor: (model, context, helpers) ->
+    super model, context, helpers
 
     @axisPosition = @axisStep = @resolution = @line = @arrows = null
 

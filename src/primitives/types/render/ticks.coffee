@@ -4,8 +4,8 @@ Util      = require '../../../util'
 class Ticks extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position']
 
-  constructor: (model, attributes, renderables, shaders, helpers) ->
-    super model, attributes, renderables, shaders, helpers
+  constructor: (model, context, helpers) ->
+    super model, context, helpers
 
     @tickAxis = @tickNormal = @resolution = @line = null
 

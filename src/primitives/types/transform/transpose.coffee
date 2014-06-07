@@ -11,9 +11,6 @@ labels =
 class Transpose extends Transform
   @traits: ['node', 'bind', 'transform', 'transpose']
 
-  constructor: (model, attributes, renderables, shaders, helpers) ->
-    super model, attributes, renderables, shaders, helpers
-
   shader: (shader) ->
     shader.call @swizzler
     @bind.source.shader shader

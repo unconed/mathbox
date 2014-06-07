@@ -5,8 +5,8 @@ Util      = require '../../../util'
 class Surface extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind']
 
-  constructor: (model, attributes, renderables, shaders, helpers) ->
-    super model, attributes, renderables, shaders, helpers
+  constructor: (model, context, helpers) ->
+    super model, context, helpers
 
     @line1 = @line2 = @surface = null
 
