@@ -1,6 +1,4 @@
 Model = require '../../model'
-Node  = Model.Node
-Group = Model.Group
 
 exports.Classes = require './classes'
 exports.Types   = require './types'

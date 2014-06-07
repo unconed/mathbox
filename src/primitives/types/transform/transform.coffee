@@ -1,4 +1,4 @@
-Source = require '../source'
+Source = require '../base/source'
 
 class Transform extends Source
   @traits: ['node', 'transform']

@@ -55461,7 +55461,7 @@ Context = (function() {
 module.exports = Context;
 
 
-},{"./model":23,"./primitives":28,"./render":69,"./shaders":79,"./stage":84}],20:[function(require,module,exports){
+},{"./model":23,"./primitives":27,"./render":69,"./shaders":79,"./stage":84}],20:[function(require,module,exports){
 var Context, mathBox;
 
 mathBox = function(options) {
@@ -56168,134 +56168,6 @@ module.exports = Node;
 
 
 },{}],26:[function(require,module,exports){
-var Model, Primitive;
-
-Model = require('../model');
-
-Primitive = (function() {
-  Primitive.Node = Model.Node;
-
-  Primitive.Group = Model.Group;
-
-  Primitive.model = Primitive.Node;
-
-  Primitive.traits = [];
-
-  function Primitive(node, _context, helpers) {
-    this.node = node;
-    this._context = _context;
-    this._attributes = this._context.attributes;
-    this._renderables = this._context.renderables;
-    this._shaders = this._context.shaders;
-    this.node.primitive = this;
-    this.node.on('change', (function(_this) {
-      return function(event) {
-        if (_this.root) {
-          return _this.change(event.changed, event.touched);
-        }
-      };
-    })(this));
-    this.node.on('added', (function(_this) {
-      return function(event) {
-        return _this._added();
-      };
-    })(this));
-    this.node.on('removed', (function(_this) {
-      return function(event) {
-        return _this._removed();
-      };
-    })(this));
-    this._get = this.node.get.bind(this.node);
-    this._helpers = helpers(this, this.node.traits);
-    this.handlers = {};
-  }
-
-  Primitive.prototype.rebuild = function() {
-    if (this.root) {
-      this.unmake();
-      this.make();
-      return this.change({}, {}, true);
-    }
-  };
-
-  Primitive.prototype.make = function() {};
-
-  Primitive.prototype.unmake = function() {};
-
-  Primitive.prototype.transform = function(shader) {
-    var _ref;
-    return (_ref = this.parent) != null ? _ref.transform(shader) : void 0;
-  };
-
-  Primitive.prototype._added = function() {
-    this.root = this.node.root;
-    this.parent = this.node.parent.primitive;
-    this.make();
-    return this.change({}, {}, true);
-  };
-
-  Primitive.prototype._removed = function() {
-    this.root = null;
-    this.parent = null;
-    return this.parents = null;
-  };
-
-  Primitive.prototype._change = function(changed) {};
-
-  Primitive.prototype._inherit = function(klass) {
-    if (this instanceof klass) {
-      return this;
-    }
-    if (this.parent != null) {
-      return this.parent._inherit(klass);
-    } else {
-      return null;
-    }
-  };
-
-  Primitive.prototype._attached = function(key, klass) {
-    var node, object, parent, previous;
-    object = this._get(key);
-    if (typeof object === 'string') {
-      node = this.root.model.select(object)[0];
-      if (node && node.primitive instanceof klass) {
-        return node.primitive;
-      }
-    }
-    if (typeof object === 'object') {
-      node = object;
-      if (node && node.primitive instanceof klass) {
-        return node.primitive;
-      }
-    }
-    previous = this.node;
-    while (previous) {
-      parent = previous.parent;
-      if (!parent) {
-        break;
-      }
-      previous = parent.children[previous.index - 1];
-      if (!previous) {
-        previous = parent;
-      }
-      if ((previous != null ? previous.primitive : void 0) instanceof klass) {
-        return previous.primitive;
-      }
-    }
-    throw "Could not locate attached data source on " + key + " `" + this.node.id + "`";
-    return null;
-  };
-
-  return Primitive;
-
-})();
-
-THREE.Binder.apply(Primitive.prototype);
-
-module.exports = Primitive;
-
-
-},{"../model":23}],27:[function(require,module,exports){
 var Factory;
 
 Factory = (function() {
@@ -56336,7 +56208,7 @@ Factory = (function() {
 module.exports = Factory;
 
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Primitive = require('./primitive');
@@ -56344,7 +56216,7 @@ exports.Primitive = require('./primitive');
 exports.Types = require('./types');
 
 
-},{"./factory":27,"./primitive":29,"./types":38}],29:[function(require,module,exports){
+},{"./factory":26,"./primitive":28,"./types":40}],28:[function(require,module,exports){
 var Model, Primitive;
 
 Model = require('../model');
@@ -56472,7 +56344,149 @@ THREE.Binder.apply(Primitive.prototype);
 module.exports = Primitive;
 
 
-},{"../model":23}],30:[function(require,module,exports){
+},{"../model":23}],29:[function(require,module,exports){
+var Group, Parent,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Parent = require('./parent');
+
+Group = (function(_super) {
+  __extends(Group, _super);
+
+  function Group() {
+    return Group.__super__.constructor.apply(this, arguments);
+  }
+
+  Group.traits = ['node', 'object', 'position'];
+
+  Group.prototype.make = function() {
+    this._helpers.object.make();
+    return this._helpers.position.make();
+  };
+
+  Group.prototype.unmake = function() {
+    this._helpers.object.unmake();
+    return this._helpers.position.unmake();
+  };
+
+  Group.prototype.transform = function(shader) {
+    return this._helpers.position.shader(shader, true);
+  };
+
+  return Group;
+
+})(Parent);
+
+module.exports = Group;
+
+
+},{"./parent":30}],30:[function(require,module,exports){
+var Parent, Primitive,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Primitive = require('../../primitive');
+
+Parent = (function(_super) {
+  __extends(Parent, _super);
+
+  Parent.model = Primitive.Group;
+
+  Parent.traits = ['node'];
+
+  function Parent(model, context, helpers) {
+    Parent.__super__.constructor.call(this, model, context, helpers);
+    this.visible = true;
+  }
+
+  Parent.prototype.make = function() {};
+
+  Parent.prototype.unmake = function() {};
+
+  return Parent;
+
+})(Primitive);
+
+module.exports = Parent;
+
+
+},{"../../primitive":28}],31:[function(require,module,exports){
+var Parent, Root,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Parent = require('./parent');
+
+Root = (function(_super) {
+  __extends(Root, _super);
+
+  function Root(model, context, helpers) {
+    Root.__super__.constructor.call(this, model, context, helpers);
+    this.visible = true;
+  }
+
+  Root.prototype.transform = function(shader) {
+    return shader.call('view.position');
+  };
+
+  return Root;
+
+})(Parent);
+
+module.exports = Root;
+
+
+},{"./parent":30}],32:[function(require,module,exports){
+var Primitive, Source,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Primitive = require('../../primitive');
+
+Source = (function(_super) {
+  __extends(Source, _super);
+
+  Source.traits = ['node', 'data'];
+
+  function Source(model, context, helpers) {
+    Source.__super__.constructor.call(this, model, context, helpers);
+  }
+
+  Source.prototype.callback = function(callback) {
+    return callback != null ? callback : function() {};
+  };
+
+  Source.prototype.shader = function() {};
+
+  Source.prototype.update = function() {};
+
+  Source.prototype.getDimensions = function() {
+    return {
+      items: 1,
+      width: 0,
+      height: 0,
+      depth: 0
+    };
+  };
+
+  Source.prototype.getActive = function() {
+    return {
+      items: 1,
+      width: 0,
+      height: 0,
+      depth: 0
+    };
+  };
+
+  return Source;
+
+})(Primitive);
+
+module.exports = Source;
+
+
+},{"../../primitive":28}],33:[function(require,module,exports){
 var Classes;
 
 Classes = {
@@ -56492,14 +56506,14 @@ Classes = {
   area: require('./data/area'),
   lerp: require('./transform/lerp'),
   transpose: require('./transform/transpose'),
-  group: require('./group'),
-  root: require('./root')
+  group: require('./base/group'),
+  root: require('./base/root')
 };
 
 module.exports = Classes;
 
 
-},{"./data/area":31,"./data/array":32,"./data/interval":34,"./data/matrix":35,"./group":36,"./render/axis":39,"./render/grid":40,"./render/line":41,"./render/surface":42,"./render/ticks":43,"./render/vector":44,"./root":45,"./transform/lerp":48,"./transform/transpose":50,"./view/cartesian":52,"./view/polar":53,"./view/spherical":54,"./view/view":55}],31:[function(require,module,exports){
+},{"./base/group":29,"./base/root":31,"./data/area":34,"./data/array":35,"./data/interval":37,"./data/matrix":38,"./render/axis":41,"./render/grid":42,"./render/line":43,"./render/surface":44,"./render/ticks":45,"./render/vector":46,"./transform/lerp":48,"./transform/transpose":50,"./view/cartesian":52,"./view/polar":53,"./view/spherical":54,"./view/view":55}],34:[function(require,module,exports){
 var Area, Matrix,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56553,7 +56567,7 @@ Area = (function(_super) {
 module.exports = Area;
 
 
-},{"./matrix":35}],32:[function(require,module,exports){
+},{"./matrix":38}],35:[function(require,module,exports){
 var Array_, Data,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56702,12 +56716,12 @@ Array_ = (function(_super) {
 module.exports = Array_;
 
 
-},{"./data":33}],33:[function(require,module,exports){
+},{"./data":36}],36:[function(require,module,exports){
 var Data, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Source = require('../source');
+Source = require('../base/source');
 
 Data = (function(_super) {
   __extends(Data, _super);
@@ -56738,7 +56752,7 @@ Data = (function(_super) {
 module.exports = Data;
 
 
-},{"../source":46}],34:[function(require,module,exports){
+},{"../base/source":32}],37:[function(require,module,exports){
 var Interval, _Array,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56786,7 +56800,7 @@ Interval = (function(_super) {
 module.exports = Interval;
 
 
-},{"./array":32}],35:[function(require,module,exports){
+},{"./array":35}],38:[function(require,module,exports){
 var Data, Matrix,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56959,46 +56973,7 @@ Matrix = (function(_super) {
 module.exports = Matrix;
 
 
-},{"./data":33}],36:[function(require,module,exports){
-var Group, Primitive,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Primitive = require('../primitive');
-
-Group = (function(_super) {
-  __extends(Group, _super);
-
-  function Group() {
-    return Group.__super__.constructor.apply(this, arguments);
-  }
-
-  Group.model = Primitive.Group;
-
-  Group.traits = ['node', 'object', 'position'];
-
-  Group.prototype.make = function() {
-    this._helpers.object.make();
-    return this._helpers.position.make();
-  };
-
-  Group.prototype.unmake = function() {
-    this._helpers.object.unmake();
-    return this._helpers.position.unmake();
-  };
-
-  Group.prototype.transform = function(shader) {
-    return this._helpers.position.shader(shader, true);
-  };
-
-  return Group;
-
-})(Primitive);
-
-module.exports = Group;
-
-
-},{"../primitive":29}],37:[function(require,module,exports){
+},{"./data":36}],39:[function(require,module,exports){
 var Util, View, helpers;
 
 Util = require('../../util');
@@ -57287,14 +57262,10 @@ module.exports = function(object, traits) {
 };
 
 
-},{"../../util":87,"./view/view":55}],38:[function(require,module,exports){
-var Group, Model, Node;
+},{"../../util":87,"./view/view":55}],40:[function(require,module,exports){
+var Model;
 
 Model = require('../../model');
-
-Node = Model.Node;
-
-Group = Model.Group;
 
 exports.Classes = require('./classes');
 
@@ -57305,7 +57276,7 @@ exports.Traits = require('./traits');
 exports.Helpers = require('./helpers');
 
 
-},{"../../model":23,"./classes":30,"./helpers":37,"./traits":47,"./types":51}],39:[function(require,module,exports){
+},{"../../model":23,"./classes":33,"./helpers":39,"./traits":47,"./types":51}],41:[function(require,module,exports){
 var Axis, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57401,7 +57372,7 @@ Axis = (function(_super) {
 module.exports = Axis;
 
 
-},{"../../../util":87,"../../primitive":29}],40:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":28}],42:[function(require,module,exports){
 var Grid, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57547,14 +57518,14 @@ Grid = (function(_super) {
 module.exports = Grid;
 
 
-},{"../../../util":87,"../../primitive":29}],41:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":28}],43:[function(require,module,exports){
 var Line, Primitive, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = require('../../primitive');
 
-Source = require('../source');
+Source = require('../base/source');
 
 Line = (function(_super) {
   __extends(Line, _super);
@@ -57662,14 +57633,14 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../../primitive":29,"../source":46}],42:[function(require,module,exports){
+},{"../../primitive":28,"../base/source":32}],44:[function(require,module,exports){
 var Primitive, Source, Surface, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = require('../../primitive');
 
-Source = require('../source');
+Source = require('../base/source');
 
 Util = require('../../../util');
 
@@ -57806,7 +57777,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../../util":87,"../../primitive":29,"../source":46}],43:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":28,"../base/source":32}],45:[function(require,module,exports){
 var Primitive, Ticks, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57897,14 +57868,14 @@ Ticks = (function(_super) {
 module.exports = Ticks;
 
 
-},{"../../../util":87,"../../primitive":29}],44:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":28}],46:[function(require,module,exports){
 var Primitive, Source, Util, Vector,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = require('../../primitive');
 
-Source = require('../source');
+Source = require('../base/source');
 
 Util = require('../../../util');
 
@@ -58013,82 +57984,7 @@ Vector = (function(_super) {
 module.exports = Vector;
 
 
-},{"../../../util":87,"../../primitive":29,"../source":46}],45:[function(require,module,exports){
-var Group, Root,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Group = require('./group');
-
-Root = (function(_super) {
-  __extends(Root, _super);
-
-  function Root(model, context, helpers) {
-    Root.__super__.constructor.call(this, model, context, helpers);
-    this.visible = true;
-  }
-
-  Root.prototype.transform = function(shader) {
-    return shader.call('view.position');
-  };
-
-  return Root;
-
-})(Group);
-
-module.exports = Root;
-
-
-},{"./group":36}],46:[function(require,module,exports){
-var Primitive, Source,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Primitive = require('../Primitive');
-
-Source = (function(_super) {
-  __extends(Source, _super);
-
-  Source.traits = ['node', 'data'];
-
-  function Source(model, context, helpers) {
-    Source.__super__.constructor.call(this, model, context, helpers);
-  }
-
-  Source.prototype.callback = function(callback) {
-    return callback != null ? callback : function() {};
-  };
-
-  Source.prototype.shader = function() {};
-
-  Source.prototype.update = function() {};
-
-  Source.prototype.getDimensions = function() {
-    return {
-      items: 1,
-      width: 0,
-      height: 0,
-      depth: 0
-    };
-  };
-
-  Source.prototype.getActive = function() {
-    return {
-      items: 1,
-      width: 0,
-      height: 0,
-      depth: 0
-    };
-  };
-
-  return Source;
-
-})(Primitive);
-
-module.exports = Source;
-
-
-},{"../Primitive":26}],47:[function(require,module,exports){
+},{"../../../util":87,"../../primitive":28,"../base/source":32}],47:[function(require,module,exports){
 var Traits, Types;
 
 Types = require('./types');
@@ -58286,7 +58182,7 @@ var Source, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Source = require('../source');
+Source = require('../base/source');
 
 Transform = (function(_super) {
   __extends(Transform, _super);
@@ -58321,7 +58217,7 @@ Transform = (function(_super) {
 module.exports = Transform;
 
 
-},{"../source":46}],50:[function(require,module,exports){
+},{"../base/source":32}],50:[function(require,module,exports){
 var Transform, Transpose, Util, labels, letters,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59260,11 +59156,11 @@ module.exports = Spherical;
 
 
 },{"../../../util":87,"./view":55}],55:[function(require,module,exports){
-var Group, View,
+var Parent, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Group = require('../group');
+Parent = require('../base/parent');
 
 View = (function(_super) {
   __extends(View, _super);
@@ -59283,12 +59179,12 @@ View = (function(_super) {
 
   return View;
 
-})(Group);
+})(Parent);
 
 module.exports = View;
 
 
-},{"../group":36}],56:[function(require,module,exports){
+},{"../base/parent":30}],56:[function(require,module,exports){
 var Buffer, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };

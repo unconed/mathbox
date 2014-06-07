@@ -1,5 +1,5 @@
 Primitive = require '../../primitive'
-Source    = require '../source'
+Source    = require '../base/source'
 Util      = require '../../../util'
 
 class Vector extends Primitive

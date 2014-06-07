@@ -1,7 +1,6 @@
-Primitive = require '../primitive'
+Parent = require './parent'
 
-class Group extends Primitive
-  @model = Primitive.Group
+class Group extends Parent
   @traits = ['node', 'object', 'position']
 
   make: () ->

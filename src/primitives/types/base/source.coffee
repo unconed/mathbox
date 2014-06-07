@@ -1,4 +1,4 @@
-Primitive = require '../Primitive'
+Primitive = require '../../primitive'
 
 class Source extends Primitive
   @traits: ['node', 'data']

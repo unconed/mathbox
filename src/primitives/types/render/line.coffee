@@ -1,5 +1,5 @@
 Primitive = require '../../primitive'
-Source    = require '../source'
+Source    = require '../base/source'
 
 class Line extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']

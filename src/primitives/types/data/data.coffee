@@ -1,4 +1,4 @@
-Source = require '../source'
+Source = require '../base/source'
 
 class Data extends Source
   @traits: ['node', 'data']

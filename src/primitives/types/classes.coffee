@@ -20,7 +20,7 @@ Classes =
   lerp:       require './transform/lerp'
   transpose:  require './transform/transpose'
 
-  group:      require './group'
-  root:       require './root'
+  group:      require './base/group'
+  root:       require './base/root'
 
 module.exports = Classes

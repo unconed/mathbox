@@ -1,6 +1,6 @@
-Group = require('../group')
+Parent = require '../base/parent'
 
-class View extends Group
+class View extends Parent
   @traits: ['node', 'object', 'view']
 
   axis: (dimension) ->
