@@ -3,7 +3,7 @@ View = require './view/view'
 
 ###
 
-This is the general dumping ground for trait behavior
+This is the general dumping ground for trait behavior.
 
 Helpers are auto-attached to primitives that have the matching trait
 
@@ -143,11 +143,11 @@ helpers =
       delete @objectMatrix
       delete @handlers.position
 
-    shader: (shader) ->
+    shader: (shader, inline) ->
       shader.call 'object.position',
         objectMatrix: @objectMatrix
 
-      @transform shader
+      @transform shader unless inline
 
   object:
 

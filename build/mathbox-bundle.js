@@ -56554,31 +56554,31 @@ module.exports = Area;
 
 
 },{"./matrix":35}],32:[function(require,module,exports){
-var Data, _Array,
+var Array_, Data,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Data = require('./data');
 
-_Array = (function(_super) {
-  __extends(_Array, _super);
+Array_ = (function(_super) {
+  __extends(Array_, _super);
 
-  _Array.traits = ['node', 'data', 'array'];
+  Array_.traits = ['node', 'data', 'array'];
 
-  function _Array(model, context, helpers) {
-    _Array.__super__.constructor.call(this, model, context, helpers);
+  function Array_(model, context, helpers) {
+    Array_.__super__.constructor.call(this, model, context, helpers);
     this.buffer = null;
     this.space = 0;
     this.length = 0;
     this.filled = false;
   }
 
-  _Array.prototype.shader = function(shader) {
+  Array_.prototype.shader = function(shader) {
     shader.call('map.2d.xyzw', this.sampleUniforms);
     return this.buffer.shader(shader);
   };
 
-  _Array.prototype.getDimensions = function() {
+  Array_.prototype.getDimensions = function() {
     return {
       items: this.items,
       width: this.space,
@@ -56587,7 +56587,7 @@ _Array = (function(_super) {
     };
   };
 
-  _Array.prototype.getActive = function() {
+  Array_.prototype.getActive = function() {
     return {
       items: this.items,
       width: this.length,
@@ -56596,9 +56596,9 @@ _Array = (function(_super) {
     };
   };
 
-  _Array.prototype.make = function() {
+  Array_.prototype.make = function() {
     var channels, data, history, items, length, types, _ref;
-    _Array.__super__.make.apply(this, arguments);
+    Array_.__super__.make.apply(this, arguments);
     length = this._get('array.length');
     history = this._get('array.history');
     channels = this._get('data.dimensions');
@@ -56634,15 +56634,15 @@ _Array = (function(_super) {
     });
   };
 
-  _Array.prototype.unmake = function() {
-    _Array.__super__.unmake.apply(this, arguments);
+  Array_.prototype.unmake = function() {
+    Array_.__super__.unmake.apply(this, arguments);
     if (this.buffer) {
       this.buffer.dispose();
       return this.buffer = null;
     }
   };
 
-  _Array.prototype.change = function(changed, touched, init) {
+  Array_.prototype.change = function(changed, touched, init) {
     var callback;
     if (touched['array'] || changed['data.dimensions']) {
       this.rebuild();
@@ -56656,7 +56656,7 @@ _Array = (function(_super) {
     }
   };
 
-  _Array.prototype.update = function() {
+  Array_.prototype.update = function() {
     var data, length, _ref;
     if (!this.buffer) {
       return;
@@ -56695,11 +56695,11 @@ _Array = (function(_super) {
     return this.filled = true;
   };
 
-  return _Array;
+  return Array_;
 
 })(Data);
 
-module.exports = _Array;
+module.exports = Array_;
 
 
 },{"./data":33}],33:[function(require,module,exports){
@@ -56975,14 +56975,20 @@ Group = (function(_super) {
 
   Group.model = Primitive.Group;
 
-  Group.traits = ['node', 'object'];
+  Group.traits = ['node', 'object', 'position'];
 
   Group.prototype.make = function() {
-    return this._helpers.object.make();
+    this._helpers.object.make();
+    return this._helpers.position.make();
   };
 
   Group.prototype.unmake = function() {
-    return this._helpers.object.unmake();
+    this._helpers.object.unmake();
+    return this._helpers.position.unmake();
+  };
+
+  Group.prototype.transform = function(shader) {
+    return this._helpers.position.shader(shader, true);
   };
 
   return Group;
@@ -57002,7 +57008,7 @@ View = require('./view/view');
 
 /*
 
-This is the general dumping ground for trait behavior
+This is the general dumping ground for trait behavior.
 
 Helpers are auto-attached to primitives that have the matching trait
  */
@@ -57160,11 +57166,13 @@ helpers = {
       delete this.objectMatrix;
       return delete this.handlers.position;
     },
-    shader: function(shader) {
+    shader: function(shader, inline) {
       shader.call('object.position', {
         objectMatrix: this.objectMatrix
       });
-      return this.transform(shader);
+      if (!inline) {
+        return this.transform(shader);
+      }
     }
   },
   object: {
@@ -59537,7 +59545,6 @@ SurfaceBuffer = (function(_super) {
     this.width = options.width || 1;
     this.height = options.height || 1;
     this.history = options.history || 1;
-    this.channels = options.channels || 4;
     this.samples = this.width * this.height;
     SurfaceBuffer.__super__.constructor.call(this, gl, shaders, options);
   }

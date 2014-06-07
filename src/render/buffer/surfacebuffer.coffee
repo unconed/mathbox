@@ -7,7 +7,6 @@ class SurfaceBuffer extends Buffer
     @width    = options.width    || 1
     @height   = options.height   || 1
     @history  = options.history  || 1
-    @channels = options.channels || 4
 
     @samples = @width * @height
     super gl, shaders, options

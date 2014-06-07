@@ -1,6 +1,6 @@
 Data = require './data'
 
-class _Array extends Data
+class Array_ extends Data
   @traits: ['node', 'data', 'array']
 
   constructor: (model, context, helpers) ->
@@ -122,4 +122,4 @@ class _Array extends Data
     @filled = true
 
 
-module.exports = _Array
+module.exports = Array_
