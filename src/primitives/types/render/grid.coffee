@@ -87,7 +87,6 @@ class Grid extends Primitive
 
     for axis in @axes
       axis.buffer.dispose()
-      @_unrender axis.line
       axis.line.dispose()
 
     @axes = null

@@ -38,14 +38,14 @@ class LineBuffer extends Buffer
     @index = (@index + 1) % @history
 
   copy2D: (data) ->
-    c = Math.min data[0].length, @channels
-    n = Math.min data.length,    @samples * @items
+    channels = Math.min data[0].length, @channels
+    samples  = Math.min data.length,    @samples * @items
 
     o = 0
     data = @data
-    for k in [0...n]
+    for k in [0...samples]
       d = data[k]
-      d[o++] = (v[i] ? 0) for i in [0...c]
+      d[o++] = (v[i] ? 0) for i in [0...channels]
 
     @write Math.floor o / @channels / @items
 

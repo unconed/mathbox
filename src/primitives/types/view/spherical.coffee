@@ -39,7 +39,7 @@ class Spherical extends View
 
   change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or touched['polar'] or init
+    return unless touched['object'] or touched['view'] or touched['spherical'] or init
 
     @bend  = bend  = @_get 'spherical.bend'
     @focus = focus = if bend > 0 then 1 / bend - 1 else 0
