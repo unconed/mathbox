@@ -33,7 +33,7 @@ class Line extends Base
     v.join()
 
     f = factory.fragment
-    f.call 'style.clip',         @uniforms, '_clip_' if clip
+    f.call 'fragment.clip',      @uniforms, '_clip_' if clip
     f.call 'style.color',        @uniforms
     f.call 'fragment.color',     @uniforms
 

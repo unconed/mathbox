@@ -20,7 +20,7 @@
 
     time = 0
     three.on('update', function () {
-      time = three.Time.now / 4
+      time = three.Time.frames / 200
     });
 
     mathbox.cartesian({
