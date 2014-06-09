@@ -23,7 +23,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:
     init: true
 
-  listen: ['ready', 'update', 'post'],
+  listen: ['ready', 'update', 'post', 'size'],
 
   install: (three) ->
     inited = false
@@ -43,6 +43,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
         three.mathbox = @context.api
 
         @context.init()
+        @context.resize three.Size
 
       destroy: () =>
         return if !inited
@@ -63,6 +64,9 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   ready: (event, three) ->
     if @options.init
       three.MathBox.init()
+
+  resize: (event, three) ->
+    @context?.resize three.Size
 
   update: (event, three) ->
     @context?.update()

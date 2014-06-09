@@ -1,7 +1,7 @@
 Model = require '../model'
 
 class Primitive
-  @Node = Model.Node
+  @Node  = Model.Node
   @Group = Model.Group
 
   @model = @Node
@@ -11,6 +11,7 @@ class Primitive
     @_attributes  = @_context.attributes
     @_renderables = @_context.renderables
     @_shaders     = @_context.shaders
+    @_types       = @_attributes.types
 
     @node.primitive = @
 
@@ -44,8 +45,9 @@ class Primitive
 
   # Add/removal callback
   _added: () ->
-    @root    = @node.root
-    @parent  = @node.parent.primitive
+    @rootNode = @node.root
+    @parent   = @node.parent.primitive
+    @root     = @rootNode.primitive
 
     @make()
     @change {}, {}, true
@@ -78,7 +80,7 @@ class Primitive
     object    = @_get key
 
     if typeof object == 'string'
-      node = @root.model.select(object)[0]
+      node = @rootNode.model.select(object)[0]
       return node.primitive if node and node.primitive instanceof klass
 
     if typeof object == 'object'

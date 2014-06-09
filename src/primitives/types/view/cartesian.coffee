@@ -5,9 +5,8 @@ class Cartesian extends View
   make: () ->
     super
 
-    types = @_attributes.types
     @uniforms =
-      viewMatrix:          @_attributes.make types.mat4()
+      viewMatrix:          @_attributes.make @_types.mat4()
 
     @viewMatrix          = @uniforms.viewMatrix.value
     @rotationMatrix      = new THREE.Matrix4()

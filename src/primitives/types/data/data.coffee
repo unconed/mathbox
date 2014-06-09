@@ -5,10 +5,10 @@ class Data extends Source
 
   make: () ->
     @handler = () => @update()
-    @node.root.model.on  'update', @handler
+    @root.on  'update', @handler
 
   unmake: () ->
-    @node.root.model.off 'update', @handler
+    @root.off 'update', @handler
 
 
 

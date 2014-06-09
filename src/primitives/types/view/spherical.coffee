@@ -7,19 +7,18 @@ class Spherical extends View
   make: () ->
     super
 
-    types = @_attributes.types
     positionUniforms =
-      axisPosition:   @_attributes.make types.vec4()
-      axisStep:       @_attributes.make types.vec4()
+      axisPosition:   @_attributes.make @_types.vec4()
+      axisStep:       @_attributes.make @_types.vec4()
 
     types = @_attributes.types
     @uniforms =
       sphericalBend:    @node.attributes['spherical.bend']
-      sphericalFocus:   @_attributes.make types.number()
-      sphericalAspectX: @_attributes.make types.number()
-      sphericalAspectY: @_attributes.make types.number()
-      sphericalScaleY:  @_attributes.make types.number()
-      viewMatrix:       @_attributes.make types.mat4()
+      sphericalFocus:   @_attributes.make @_types.number()
+      sphericalAspectX: @_attributes.make @_types.number()
+      sphericalAspectY: @_attributes.make @_types.number()
+      sphericalScaleY:  @_attributes.make @_types.number()
+      viewMatrix:       @_attributes.make @_types.mat4()
 
     @viewMatrix          = @uniforms.viewMatrix.value
     @rotationMatrix      = new THREE.Matrix4()

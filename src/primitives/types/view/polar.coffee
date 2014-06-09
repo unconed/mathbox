@@ -7,10 +7,9 @@ class Polar extends View
   make: () ->
     super
 
-    types = @_attributes.types
     positionUniforms =
-      axisPosition:   @_attributes.make types.vec4()
-      axisStep:       @_attributes.make types.vec4()
+      axisPosition:   @_attributes.make @_types.vec4()
+      axisStep:       @_attributes.make @_types.vec4()
 
     types = @_attributes.types
     @uniforms =

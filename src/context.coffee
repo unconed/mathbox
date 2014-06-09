@@ -7,24 +7,28 @@ Primitives = require './primitives'
 class Context
   constructor: (gl, scene, camera, script = []) ->
 
+    # Rendering factory
     @shaders     = new Shaders.Factory    Shaders.Snippets
-
-    @scene       = new Render.Scene       scene
     @renderables = new Render.Factory     gl, Render.Classes, @shaders
+    @scene       = new Render.Scene       scene
 
+    # Primitives factory
     @attributes  = new Model.Attributes   Primitives.Types
     @primitives  = new Primitives.Factory Primitives.Types, @
 
+    # Document model
     @root        = @primitives.make 'root'
-
     @model       = new Model.Model        @root
 
-    @controller  = new Stage.Controller   @model, @scene, @primitives
+    # Scene controllers
+    @controller  = new Stage.Controller   @model, @primitives
     @animator    = new Stage.Animator     @model
     @director    = new Stage.Director     @controller, @animator, script
 
+    # Public API
     @api         = new Stage.API          @controller, @animator, @director
 
+    # Debug
     window.model = @model
     window.root  = @model.root
 
@@ -34,9 +38,13 @@ class Context
   destroy: () ->
     @scene.unject()
 
+  resize: (size) ->
+    @root.primitive.resize size
+
   update: () ->
     @animator  .update()
     @attributes.digest()
-    @model     .update()
+
+    @root.primitive.update()
 
 module.exports = Context

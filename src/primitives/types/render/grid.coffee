@@ -7,8 +7,8 @@ class Grid extends Primitive
             'scale:x.scale', 'scale:y.scale',
             'span:x.span',   'span:y.span']
 
-  constructor: (model, context, helpers) ->
-    super model, context, helpers
+  constructor: (node, context, helpers) ->
+    super node, context, helpers
 
     @axes = null
 
@@ -26,11 +26,10 @@ class Grid extends Primitive
                channels: 1
 
       # Prepare position shader
-      types = @_attributes.types
       positionUniforms =
-        gridPosition:  @_attributes.make types.vec4()
-        gridStep:      @_attributes.make types.vec4()
-        gridAxis:      @_attributes.make types.vec4()
+        gridPosition:  @_attributes.make @_types.vec4()
+        gridStep:      @_attributes.make @_types.vec4()
+        gridAxis:      @_attributes.make @_types.vec4()
 
       values =
         gridPosition: positionUniforms.gridPosition.value

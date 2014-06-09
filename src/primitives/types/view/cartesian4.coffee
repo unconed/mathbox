@@ -5,12 +5,11 @@ class Cartesian4 extends View
 ###
   make: () ->
 
-    types = @_attributes.types
     uniforms =
-      viewOffset:          @_attributes.make types.vec4()
-      viewMatrix:          @_attributes.make types.mat4()
-      inverseViewMatrix:   @_attributes.make types.mat4()
-      worldOffset:         @_attributes.make types.vec4()
+      viewOffset:          @_attributes.make @_types.vec4()
+      viewMatrix:          @_attributes.make @_types.mat4()
+      inverseViewMatrix:   @_attributes.make @_types.mat4()
+      worldOffset:         @_attributes.make @_types.vec4()
 
     @viewOffset          = uniforms.viewOffset.value
     @viewMatrix          = uniforms.viewMatrix.value

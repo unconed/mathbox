@@ -3,8 +3,8 @@ Data = require './data'
 class Matrix extends Data
   @traits: ['node', 'data', 'matrix']
 
-  constructor: (model, context, helpers) ->
-    super model, context, helpers
+  constructor: (node, context, helpers) ->
+    super node, context, helpers
 
     @buffer = null
     @filled = false
@@ -58,10 +58,9 @@ class Matrix extends Data
     @height = @spaceHeight = Math.max @spaceHeight, height
 
     # Prepare sampling uniforms
-    types = @_attributes.types
     @sampleUniforms =
-      textureItems:  @_attributes.make types.number items
-      textureHeight: @_attributes.make types.number height
+      textureItems:  @_attributes.make @_types.number items
+      textureHeight: @_attributes.make @_types.number height
 
     # Create surfacebuffer
     if @spaceWidth * @spaceHeight > 0

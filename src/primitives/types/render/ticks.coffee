@@ -4,8 +4,8 @@ Util      = require '../../../util'
 class Ticks extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position']
 
-  constructor: (model, context, helpers) ->
-    super model, context, helpers
+  constructor: (node, context, helpers) ->
+    super node, context, helpers
 
     @tickAxis = @tickNormal = @resolution = @line = null
 
@@ -19,11 +19,10 @@ class Ticks extends Primitive
               channels: 1
 
     # Prepare position shader
-    types = @_attributes.types
     positionUniforms =
       tickSize:    @node.attributes['ticks.size']
-      tickAxis:    @_attributes.make types.vec4()
-      tickNormal:  @_attributes.make types.vec4()
+      tickAxis:    @_attributes.make @_types.vec4()
+      tickNormal:  @_attributes.make @_types.vec4()
 
     @tickAxis   = positionUniforms.tickAxis.value
     @tickNormal = positionUniforms.tickNormal.value

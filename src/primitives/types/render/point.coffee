@@ -3,10 +3,10 @@ Source    = require '../base/source'
 Util      = require '../../../util'
 
 class Point extends Primitive
-  @traits: ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind']
+  @traits: ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind', 'render']
 
-  constructor: (model, context, helpers) ->
-    super model, context, helpers
+  constructor: (node, context, helpers) ->
+    super node, context, helpers
 
     @point = null
 
@@ -26,6 +26,9 @@ class Point extends Primitive
     @_helpers.bind.make
       'geometry.points': Source
 
+    # Prepare render helper
+    @_helpers.render.make()
+
     # Build transform chain
     position = @_shaders.shader()
     @_helpers.position.make()
@@ -42,11 +45,12 @@ class Point extends Primitive
     items  = dims.items
 
     # Prepare bound uniforms
-    styleUniforms = @_helpers.style.uniforms()
-    pointUniforms = @_helpers.point.uniforms()
+    styleUniforms  = @_helpers.style.uniforms()
+    pointUniforms  = @_helpers.point.uniforms()
+    renderUniforms = @_helpers.render.uniforms()
 
     # Make sprite renderable
-    uniforms = @_helpers.object.merge pointUniforms, styleUniforms
+    uniforms = @_helpers.object.merge renderUniforms, pointUniforms, styleUniforms
     @point = @_renderables.make 'sprite',
               uniforms: uniforms
               width:    width
@@ -61,6 +65,7 @@ class Point extends Primitive
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.render.unmake()
     @_helpers.object.unmake()
     @_helpers.position.unmake()
 

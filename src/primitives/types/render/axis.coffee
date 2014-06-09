@@ -4,17 +4,16 @@ Util      = require '../../../util'
 class Axis extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
 
-  constructor: (model, context, helpers) ->
-    super model, context, helpers
+  constructor: (node, context, helpers) ->
+    super node, context, helpers
 
     @axisPosition = @axisStep = @resolution = @line = @arrows = null
 
   make: () ->
     # Prepare position shader
-    types = @_attributes.types
     positionUniforms =
-      axisPosition:   @_attributes.make types.vec4()
-      axisStep:       @_attributes.make types.vec4()
+      axisPosition:   @_attributes.make @_types.vec4()
+      axisStep:       @_attributes.make @_types.vec4()
 
     @axisPosition   = positionUniforms.axisPosition.value
     @axisStep       = positionUniforms.axisStep.value

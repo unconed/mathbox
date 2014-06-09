@@ -10,23 +10,29 @@ class Node
     @parent = parent
     @root = parent.root
 
+    # Notify of child addition
     event =
-      type: 'added'
+      type: 'add'
       object: @
       parent: @parent
+    @root.trigger event if @root != @
 
+    # Notify of own addition
+    event.type = 'added'
     @trigger event
-    @root.model.trigger event if @root != @
 
   _removed: () ->
     @root = @parent = null
 
+    # Notify of child removal
     event =
-      type: 'removed'
+      type: 'remove'
       object: @
+    @root.trigger event if @root != @
 
+    # Notify of own removal
+    event.type = 'removed'
     @trigger event
-    @root.model.trigger event if @root != @
 
 THREE.Binder.apply Node::
 

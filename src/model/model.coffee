@@ -30,9 +30,9 @@ class Model
       object = event.object
       dispose object
 
-    # Triggered by node addition/removal
-    @on 'added',   add
-    @on 'removed', remove
+    # Triggered by child addition/removal
+    @root.on 'add',    add
+    @root.on 'remove', remove
 
     adopt = (object) =>
       addNode object
@@ -147,10 +147,6 @@ class Model
 
     # Otherwise iterate over everything
     @filter @nodes, s
-
-  # Notify primitives of update
-  update: () ->
-    @trigger @event
 
   getRoot: () ->
     @root

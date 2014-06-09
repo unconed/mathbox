@@ -25,8 +25,8 @@ class Sprite extends Base
     v.call 'project.position', @uniforms
 
     f = factory.fragment
-    f.call 'style.color',     @uniforms
-    f.call 'fragment.round',  @uniforms
+    f.call 'style.color',      @uniforms
+    f.call 'fragment.round',   @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
@@ -38,6 +38,10 @@ class Sprite extends Base
     @object = new THREE.Mesh @geometry, @material
     @object.frustumCulled = false;
     @object.matrixAutoUpdate = false;
+
+  show: (transparent) ->
+    @object.visible = true
+    @object.material.transparent = true
 
   dispose: () ->
     @geometry.dispose()

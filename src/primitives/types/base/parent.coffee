@@ -4,8 +4,8 @@ class Parent extends Primitive
   @model = Primitive.Group
   @traits = ['node']
 
-  constructor: (model, context, helpers) ->
-    super model, context, helpers
+  constructor: (node, context, helpers) ->
+    super node, context, helpers
 
     @visible = true
 

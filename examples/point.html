@@ -46,8 +46,8 @@
 
     mathbox.area({
       id: 'sampler',
-      width: 5,
-      height: 5,
+      width: 32,
+      height: 32,
       axes: [1, 3],
       expression: function (x, y, i, j, emit) {
         emit(x, .25 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);

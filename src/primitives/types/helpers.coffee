@@ -11,6 +11,23 @@ Helpers are auto-attached to primitives that have the matching trait
 
 helpers =
 
+  render:
+    make: () ->
+      @render =
+        scale: scale = @_attributes.make @_types.number 0
+
+      @handlers.renderResize = (event) => scale.value = @root.size.renderHeight / 2
+      @handlers.renderResize()
+
+      @root.on 'resize',  @handlers.renderResize
+
+    unmake: () ->
+      @root.off 'resize', @handlers.renderResize
+      delete @handlers.renderResize
+
+    uniforms: () ->
+      renderScale: @render.scale
+
   bind:
     make: (map) ->
       @_helpers.bind.unmake() if @handlers.rebuild
@@ -18,16 +35,16 @@ helpers =
       @bind = {}
 
       # Monitor array for reallocation / resize
-      @handlers.resize  = (event) => @resize()
-      @handlers.rebuild = (event) => @rebuild()
+      @handlers.bindResize  = (event) => @resize()
+      @handlers.bindRebuild = (event) => @rebuild()
 
       # Fetch attached objects and bind
       for key, klass of map
         name = key.split(/\./g).pop()
         source = @_attached key, klass
 
-        source.on 'resize',  @handlers.resize
-        source.on 'rebuild', @handlers.rebuild
+        source.on 'resize',  @handlers.bindResize
+        source.on 'rebuild', @handlers.bindRebuild
 
         @bind[name] = source
 
@@ -36,11 +53,11 @@ helpers =
     unmake: () ->
       # Unbind from attached objects
       for key, source of @bind
-        source.off 'resize',  @handlers.resize
-        source.off 'rebuild', @handlers.rebuild
+        source.off 'resize',  @handlers.bindResize
+        source.off 'rebuild', @handlers.bindRebuild
 
-      delete @handlers.resize
-      delete @handlers.rebuild
+      delete @handlers.bindResize
+      delete @handlers.bindRebuild
       delete @bind
 
   span:
@@ -94,10 +111,9 @@ helpers =
     uniforms: () ->
       start   = @_get 'arrow.start'
       end     = @_get 'arrow.end'
-      types   = @_attributes.types
 
-      space = @_attributes.make types.number 1 / (start + end)
-      style = @_attributes.make types.vec2 +start, +end
+      space = @_attributes.make @_types.number 1 / (start + end)
+      style = @_attributes.make @_types.vec2 +start, +end
       size  = @node.attributes['arrow.size']
 
       clipStyle:  style

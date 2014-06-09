@@ -50595,7 +50595,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw) {\n  return axisStep * xyzw.x + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
 "fragment.color": "void setFragmentColor(vec4 color) {\n\tgl_FragColor = color;\n}",
-"fragment.round": "uniform float pointSize;\nvarying vec2 vSprite;\n\nvoid setFragmentColor(vec4 color) {\n  float c = dot(vSprite, vSprite);\n  if (c > 1.0) {\n    discard;\n  }\n\n  float alpha = min(1.0, .25 * pointSize * (1.0 - c));\n\tgl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n",
+"fragment.round": "varying vec2 vSprite;\nvarying float vPixelSize;\n\nvoid setFragmentColor(vec4 color) {\n  float c = dot(vSprite, vSprite);\n  if (c > 1.0) {\n    discard;\n  }\n  float alpha = min(1.0, vPixelSize * (1.0 - c));\n\tgl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n",
 "grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzw) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzw.y, 0.0)).x;\n  vec4 offAxis = gridStep * xyzw.x + gridPosition;\n  return onAxis + offAxis;\n}\n",
 "lerp.depth": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpDepth(vec4 xyzw) {\n  float x = xyzw.z * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xy, i, xyzw.w);\n  vec4 xyzw2 = vec4(xyzw.xy, i + 1.0, xyzw.w);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.height": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpHeight(vec4 xyzw) {\n  float x = xyzw.y * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
@@ -50612,7 +50612,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "sample.2d.3": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).xyz, 1.0);\n}\n",
 "sample.2d.4": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return texture2D(dataTexture, uv);\n}\n",
 "spherical.position": "uniform float sphericalBend;\nuniform float sphericalFocus;\nuniform float sphericalAspectX;\nuniform float sphericalAspectY;\nuniform float sphericalScaleY;\n\nuniform mat4 viewMatrix;\n\nvec4 getSphericalPosition(vec4 position) {\n  if (sphericalBend > 0.0001) {\n\n    vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);\n    float radius = sphericalFocus + xyz.z;\n    float cosine = cos(xyz.y) * radius;\n\n    return viewMatrix * vec4(\n      sin(xyz.x) * cosine,\n      sin(xyz.y) * radius * sphericalAspectY,\n      (cos(xyz.x) * cosine - sphericalFocus) / sphericalAspectX,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"sprite.position": "uniform float pointSize;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getPointPosition() {\n  vSprite = sprite;\n  return getPosition(position4) + vec3(sprite * pointSize, 0.0);\n}\n",
+"sprite.position": "uniform float pointSize;\nuniform float renderScale;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getPointPosition() {\n  vec3 center = getPosition(position4);\n\n  float pixelSize = renderScale * pointSize / -center.z;\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * pointSize * padFactor, 0.0);\n}\n",
 "style.clip": "varying vec2 vClip;\n\nvoid clipStyle() {\n  if (vClip.x < 0.0 || vClip.y < 0.0) discard;\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvec4 getStyleColor() {\n\treturn vec4(styleColor, styleOpacity);\n}\n",
 "style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec4 getStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\treturn = vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
@@ -55182,13 +55182,13 @@ Context = (function() {
       script = [];
     }
     this.shaders = new Shaders.Factory(Shaders.Snippets);
-    this.scene = new Render.Scene(scene);
     this.renderables = new Render.Factory(gl, Render.Classes, this.shaders);
+    this.scene = new Render.Scene(scene);
     this.attributes = new Model.Attributes(Primitives.Types);
     this.primitives = new Primitives.Factory(Primitives.Types, this);
     this.root = this.primitives.make('root');
     this.model = new Model.Model(this.root);
-    this.controller = new Stage.Controller(this.model, this.scene, this.primitives);
+    this.controller = new Stage.Controller(this.model, this.primitives);
     this.animator = new Stage.Animator(this.model);
     this.director = new Stage.Director(this.controller, this.animator, script);
     this.api = new Stage.API(this.controller, this.animator, this.director);
@@ -55204,10 +55204,14 @@ Context = (function() {
     return this.scene.unject();
   };
 
+  Context.prototype.resize = function(size) {
+    return this.root.primitive.resize(size);
+  };
+
   Context.prototype.update = function() {
     this.animator.update();
     this.attributes.digest();
-    return this.model.update();
+    return this.root.primitive.update();
   };
 
   return Context;
@@ -55254,7 +55258,7 @@ THREE.Bootstrap.registerPlugin('mathbox', {
   defaults: {
     init: true
   },
-  listen: ['ready', 'update', 'post'],
+  listen: ['ready', 'update', 'post', 'size'],
   install: function(three) {
     var inited;
     inited = false;
@@ -55273,7 +55277,8 @@ THREE.Bootstrap.registerPlugin('mathbox', {
           _this.context = new Context(three.renderer.context, scene, camera, script);
           _this.context.api.three = three;
           three.mathbox = _this.context.api;
-          return _this.context.init();
+          _this.context.init();
+          return _this.context.resize(three.Size);
         };
       })(this),
       destroy: (function(_this) {
@@ -55302,6 +55307,10 @@ THREE.Bootstrap.registerPlugin('mathbox', {
     if (this.options.init) {
       return three.MathBox.init();
     }
+  },
+  resize: function(event, three) {
+    var _ref;
+    return (_ref = this.context) != null ? _ref.resize(three.Size) : void 0;
   },
   update: function(event, three) {
     var _ref;
@@ -55673,8 +55682,8 @@ Model = (function() {
         return dispose(object);
       };
     })(this);
-    this.on('added', add);
-    this.on('removed', remove);
+    this.root.on('add', add);
+    this.root.on('remove', remove);
     adopt = (function(_this) {
       return function(object) {
         addNode(object);
@@ -55854,10 +55863,6 @@ Model = (function() {
     return this.filter(this.nodes, s);
   };
 
-  Model.prototype.update = function() {
-    return this.trigger(this.event);
-  };
-
   Model.prototype.getRoot = function() {
     return this.root;
   };
@@ -55891,27 +55896,29 @@ Node = (function() {
     this.parent = parent;
     this.root = parent.root;
     event = {
-      type: 'added',
+      type: 'add',
       object: this,
       parent: this.parent
     };
-    this.trigger(event);
     if (this.root !== this) {
-      return this.root.model.trigger(event);
+      this.root.trigger(event);
     }
+    event.type = 'added';
+    return this.trigger(event);
   };
 
   Node.prototype._removed = function() {
     var event;
     this.root = this.parent = null;
     event = {
-      type: 'removed',
+      type: 'remove',
       object: this
     };
-    this.trigger(event);
     if (this.root !== this) {
-      return this.root.model.trigger(event);
+      this.root.trigger(event);
     }
+    event.type = 'removed';
+    return this.trigger(event);
   };
 
   return Node;
@@ -55992,6 +55999,7 @@ Primitive = (function() {
     this._attributes = this._context.attributes;
     this._renderables = this._context.renderables;
     this._shaders = this._context.shaders;
+    this._types = this._attributes.types;
     this.node.primitive = this;
     this.node.on('change', (function(_this) {
       return function(event) {
@@ -56033,8 +56041,9 @@ Primitive = (function() {
   };
 
   Primitive.prototype._added = function() {
-    this.root = this.node.root;
+    this.rootNode = this.node.root;
     this.parent = this.node.parent.primitive;
+    this.root = this.rootNode.primitive;
     this.make();
     return this.change({}, {}, true);
   };
@@ -56062,7 +56071,7 @@ Primitive = (function() {
     var node, object, parent, previous;
     object = this._get(key);
     if (typeof object === 'string') {
-      node = this.root.model.select(object)[0];
+      node = this.rootNode.model.select(object)[0];
       if (node && node.primitive instanceof klass) {
         return node.primitive;
       }
@@ -56151,8 +56160,8 @@ Parent = (function(_super) {
 
   Parent.traits = ['node'];
 
-  function Parent(model, context, helpers) {
-    Parent.__super__.constructor.call(this, model, context, helpers);
+  function Parent(node, context, helpers) {
+    Parent.__super__.constructor.call(this, node, context, helpers);
     this.visible = true;
   }
 
@@ -56177,10 +56186,48 @@ Parent = require('./parent');
 Root = (function(_super) {
   __extends(Root, _super);
 
-  function Root(model, context, helpers) {
-    Root.__super__.constructor.call(this, model, context, helpers);
+  function Root(node, context, helpers) {
+    var added, removed, render, scene, unrender;
+    Root.__super__.constructor.call(this, node, context, helpers);
     this.visible = true;
+    this.size = null;
+    scene = context.scene;
+    render = (function(_this) {
+      return function(event) {
+        return scene.add(event.renderable.object);
+      };
+    })(this);
+    unrender = (function(_this) {
+      return function(event) {
+        return scene.remove(event.renderable.object);
+      };
+    })(this);
+    added = function(event) {
+      event.object.primitive.on('render', render);
+      return event.object.primitive.on('unrender', unrender);
+    };
+    removed = function(event) {
+      event.object.primitive.off('render', render);
+      return event.object.primitive.off('unrender', unrender);
+    };
+    this.node.on('add', added);
+    this.node.on('remove', removed);
+    this.event = {
+      type: 'update'
+    };
   }
+
+  Root.prototype.resize = function(size) {
+    this.size = size;
+    return this.trigger({
+      type: 'resize',
+      size: size
+    });
+  };
+
+  Root.prototype.update = function() {
+    return this.trigger(this.event);
+  };
 
   Root.prototype.transform = function(shader) {
     return shader.call('view.position');
@@ -56205,8 +56252,8 @@ Source = (function(_super) {
 
   Source.traits = ['node', 'data'];
 
-  function Source(model, context, helpers) {
-    Source.__super__.constructor.call(this, model, context, helpers);
+  function Source(node, context, helpers) {
+    Source.__super__.constructor.call(this, node, context, helpers);
   }
 
   Source.prototype.callback = function(callback) {
@@ -56336,8 +56383,8 @@ Array_ = (function(_super) {
 
   Array_.traits = ['node', 'data', 'array'];
 
-  function Array_(model, context, helpers) {
-    Array_.__super__.constructor.call(this, model, context, helpers);
+  function Array_(node, context, helpers) {
+    Array_.__super__.constructor.call(this, node, context, helpers);
     this.buffer = null;
     this.space = 0;
     this.length = 0;
@@ -56368,7 +56415,7 @@ Array_ = (function(_super) {
   };
 
   Array_.prototype.make = function() {
-    var channels, data, history, items, length, types, _ref;
+    var channels, data, history, items, length, _ref;
     Array_.__super__.make.apply(this, arguments);
     length = this._get('array.length');
     history = this._get('array.history');
@@ -56387,10 +56434,9 @@ Array_ = (function(_super) {
       }
     }
     this.length = this.space;
-    types = this._attributes.types;
     this.sampleUniforms = {
-      textureItems: this._attributes.make(types.number(items)),
-      textureHeight: this._attributes.make(types.number(1))
+      textureItems: this._attributes.make(this._types.number(items)),
+      textureHeight: this._attributes.make(this._types.number(1))
     };
     if (this.space > 0) {
       this.buffer = this._renderables.make('linebuffer', {
@@ -56495,11 +56541,11 @@ Data = (function(_super) {
         return _this.update();
       };
     })(this);
-    return this.node.root.model.on('update', this.handler);
+    return this.root.on('update', this.handler);
   };
 
   Data.prototype.unmake = function() {
-    return this.node.root.model.off('update', this.handler);
+    return this.root.off('update', this.handler);
   };
 
   return Data;
@@ -56569,8 +56615,8 @@ Matrix = (function(_super) {
 
   Matrix.traits = ['node', 'data', 'matrix'];
 
-  function Matrix(model, context, helpers) {
-    Matrix.__super__.constructor.call(this, model, context, helpers);
+  function Matrix(node, context, helpers) {
+    Matrix.__super__.constructor.call(this, node, context, helpers);
     this.buffer = null;
     this.filled = false;
     this.spaceWidth = 0;
@@ -56601,7 +56647,7 @@ Matrix = (function(_super) {
   };
 
   Matrix.prototype.make = function() {
-    var channels, data, height, history, items, types, width, _ref, _ref1;
+    var channels, data, height, history, items, width, _ref, _ref1;
     Matrix.__super__.make.apply(this, arguments);
     width = this._get('matrix.width');
     height = this._get('matrix.height');
@@ -56626,10 +56672,9 @@ Matrix = (function(_super) {
     }
     this.width = this.spaceWidth = Math.max(this.spaceWidth, width);
     this.height = this.spaceHeight = Math.max(this.spaceHeight, height);
-    types = this._attributes.types;
     this.sampleUniforms = {
-      textureItems: this._attributes.make(types.number(items)),
-      textureHeight: this._attributes.make(types.number(height))
+      textureItems: this._attributes.make(this._types.number(items)),
+      textureHeight: this._attributes.make(this._types.number(height))
     };
     if (this.spaceWidth * this.spaceHeight > 0) {
       this.buffer = this._renderables.make('surfacebuffer', {
@@ -56746,6 +56791,30 @@ Helpers are auto-attached to primitives that have the matching trait
  */
 
 helpers = {
+  render: {
+    make: function() {
+      var scale;
+      this.render = {
+        scale: scale = this._attributes.make(this._types.number(0))
+      };
+      this.handlers.renderResize = (function(_this) {
+        return function(event) {
+          return scale.value = _this.root.size.renderHeight / 2;
+        };
+      })(this);
+      this.handlers.renderResize();
+      return this.root.on('resize', this.handlers.renderResize);
+    },
+    unmake: function() {
+      this.root.off('resize', this.handlers.renderResize);
+      return delete this.handlers.renderResize;
+    },
+    uniforms: function() {
+      return {
+        renderScale: this.render.scale
+      };
+    }
+  },
   bind: {
     make: function(map) {
       var key, klass, name, source;
@@ -56753,12 +56822,12 @@ helpers = {
         this._helpers.bind.unmake();
       }
       this.bind = {};
-      this.handlers.resize = (function(_this) {
+      this.handlers.bindResize = (function(_this) {
         return function(event) {
           return _this.resize();
         };
       })(this);
-      this.handlers.rebuild = (function(_this) {
+      this.handlers.bindRebuild = (function(_this) {
         return function(event) {
           return _this.rebuild();
         };
@@ -56767,8 +56836,8 @@ helpers = {
         klass = map[key];
         name = key.split(/\./g).pop();
         source = this._attached(key, klass);
-        source.on('resize', this.handlers.resize);
-        source.on('rebuild', this.handlers.rebuild);
+        source.on('resize', this.handlers.bindResize);
+        source.on('rebuild', this.handlers.bindRebuild);
         this.bind[name] = source;
       }
       return null;
@@ -56778,11 +56847,11 @@ helpers = {
       _ref = this.bind;
       for (key in _ref) {
         source = _ref[key];
-        source.off('resize', this.handlers.resize);
-        source.off('rebuild', this.handlers.rebuild);
+        source.off('resize', this.handlers.bindResize);
+        source.off('rebuild', this.handlers.bindRebuild);
       }
-      delete this.handlers.resize;
-      delete this.handlers.rebuild;
+      delete this.handlers.bindResize;
+      delete this.handlers.bindRebuild;
       return delete this.bind;
     }
   },
@@ -56840,12 +56909,11 @@ helpers = {
   },
   arrow: {
     uniforms: function() {
-      var end, size, space, start, style, types;
+      var end, size, space, start, style;
       start = this._get('arrow.start');
       end = this._get('arrow.end');
-      types = this._attributes.types;
-      space = this._attributes.make(types.number(1 / (start + end)));
-      style = this._attributes.make(types.vec2(+start, +end));
+      space = this._attributes.make(this._types.number(1 / (start + end)));
+      style = this._attributes.make(this._types.vec2(+start, +end));
       size = this.node.attributes['arrow.size'];
       return {
         clipStyle: style,
@@ -57054,17 +57122,16 @@ Axis = (function(_super) {
 
   Axis.traits = ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position'];
 
-  function Axis(model, context, helpers) {
-    Axis.__super__.constructor.call(this, model, context, helpers);
+  function Axis(node, context, helpers) {
+    Axis.__super__.constructor.call(this, node, context, helpers);
     this.axisPosition = this.axisStep = this.resolution = this.line = this.arrows = null;
   }
 
   Axis.prototype.make = function() {
-    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, styleUniforms, types, uniforms;
-    types = this._attributes.types;
+    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, styleUniforms, uniforms;
     positionUniforms = {
-      axisPosition: this._attributes.make(types.vec4()),
-      axisStep: this._attributes.make(types.vec4())
+      axisPosition: this._attributes.make(this._types.vec4()),
+      axisStep: this._attributes.make(this._types.vec4())
     };
     this.axisPosition = positionUniforms.axisPosition.value;
     this.axisStep = positionUniforms.axisStep.value;
@@ -57150,8 +57217,8 @@ Grid = (function(_super) {
 
   Grid.traits = ['node', 'object', 'style', 'line', 'grid', 'area', 'position', 'axis:x.axis', 'axis:y.axis', 'scale:x.scale', 'scale:y.scale', 'span:x.span', 'span:y.span'];
 
-  function Grid(model, context, helpers) {
-    Grid.__super__.constructor.call(this, model, context, helpers);
+  function Grid(node, context, helpers) {
+    Grid.__super__.constructor.call(this, node, context, helpers);
     this.axes = null;
   }
 
@@ -57159,7 +57226,7 @@ Grid = (function(_super) {
     var axis, first, lines, second;
     axis = (function(_this) {
       return function(first, second) {
-        var buffer, detail, line, lineUniforms, p, position, positionUniforms, resolution, samples, strips, styleUniforms, types, uniforms, values;
+        var buffer, detail, line, lineUniforms, p, position, positionUniforms, resolution, samples, strips, styleUniforms, uniforms, values;
         detail = _this._get(first + 'axis.detail');
         samples = detail + 1;
         resolution = 1 / detail;
@@ -57168,11 +57235,10 @@ Grid = (function(_super) {
           samples: strips,
           channels: 1
         });
-        types = _this._attributes.types;
         positionUniforms = {
-          gridPosition: _this._attributes.make(types.vec4()),
-          gridStep: _this._attributes.make(types.vec4()),
-          gridAxis: _this._attributes.make(types.vec4())
+          gridPosition: _this._attributes.make(_this._types.vec4()),
+          gridStep: _this._attributes.make(_this._types.vec4()),
+          gridAxis: _this._attributes.make(_this._types.vec4())
         };
         values = {
           gridPosition: positionUniforms.gridPosition.value,
@@ -57296,8 +57362,8 @@ Line = (function(_super) {
 
   Line.traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind'];
 
-  function Line(model, context, helpers) {
-    Line.__super__.constructor.call(this, model, context, helpers);
+  function Line(node, context, helpers) {
+    Line.__super__.constructor.call(this, node, context, helpers);
     this.line = this.arrows = null;
   }
 
@@ -57411,10 +57477,10 @@ Util = require('../../../util');
 Point = (function(_super) {
   __extends(Point, _super);
 
-  Point.traits = ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind'];
+  Point.traits = ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind', 'render'];
 
-  function Point(model, context, helpers) {
-    Point.__super__.constructor.call(this, model, context, helpers);
+  function Point(node, context, helpers) {
+    Point.__super__.constructor.call(this, node, context, helpers);
     this.point = null;
   }
 
@@ -57432,10 +57498,11 @@ Point = (function(_super) {
   };
 
   Point.prototype.make = function() {
-    var depth, dims, height, items, pointUniforms, position, styleUniforms, uniforms, width;
+    var depth, dims, height, items, pointUniforms, position, renderUniforms, styleUniforms, uniforms, width;
     this._helpers.bind.make({
       'geometry.points': Source
     });
+    this._helpers.render.make();
     position = this._shaders.shader();
     this._helpers.position.make();
     this.bind.points.shader(position);
@@ -57447,7 +57514,8 @@ Point = (function(_super) {
     items = dims.items;
     styleUniforms = this._helpers.style.uniforms();
     pointUniforms = this._helpers.point.uniforms();
-    uniforms = this._helpers.object.merge(pointUniforms, styleUniforms);
+    renderUniforms = this._helpers.render.uniforms();
+    uniforms = this._helpers.object.merge(renderUniforms, pointUniforms, styleUniforms);
     this.point = this._renderables.make('sprite', {
       uniforms: uniforms,
       width: width,
@@ -57462,6 +57530,7 @@ Point = (function(_super) {
 
   Point.prototype.unmake = function() {
     this._helpers.bind.unmake();
+    this._helpers.render.unmake();
     this._helpers.object.unmake();
     this._helpers.position.unmake();
     return this.point = null;
@@ -57496,8 +57565,8 @@ Surface = (function(_super) {
 
   Surface.traits = ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind'];
 
-  function Surface(model, context, helpers) {
-    Surface.__super__.constructor.call(this, model, context, helpers);
+  function Surface(node, context, helpers) {
+    Surface.__super__.constructor.call(this, node, context, helpers);
     this.line1 = this.line2 = this.surface = null;
   }
 
@@ -57523,7 +57592,7 @@ Surface = (function(_super) {
   };
 
   Surface.prototype.make = function() {
-    var depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, types, uniforms, width, wireUniforms, wireXY, wireYX;
+    var depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, uniforms, width, wireUniforms, wireXY, wireYX;
     this._helpers.bind.make({
       'geometry.points': Source
     });
@@ -57539,9 +57608,8 @@ Surface = (function(_super) {
     wireUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
     surfaceUniforms = this._helpers.surface.uniforms();
-    types = this._attributes.types;
-    wireUniforms.styleColor = this._attributes.make(types.color());
-    wireUniforms.styleZBias = this._attributes.make(types.number(0));
+    wireUniforms.styleColor = this._attributes.make(this._types.color());
+    wireUniforms.styleZBias = this._attributes.make(this._types.number(0));
     this.wireColor = wireUniforms.styleColor.value;
     this.wireZBias = wireUniforms.styleZBias;
     this.wireScratch = new THREE.Color;
@@ -57646,23 +57714,22 @@ Ticks = (function(_super) {
 
   Ticks.traits = ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position'];
 
-  function Ticks(model, context, helpers) {
-    Ticks.__super__.constructor.call(this, model, context, helpers);
+  function Ticks(node, context, helpers) {
+    Ticks.__super__.constructor.call(this, node, context, helpers);
     this.tickAxis = this.tickNormal = this.resolution = this.line = null;
   }
 
   Ticks.prototype.make = function() {
-    var lineUniforms, p, position, positionUniforms, samples, styleUniforms, types, uniforms;
+    var lineUniforms, p, position, positionUniforms, samples, styleUniforms, uniforms;
     this.resolution = samples = this._helpers.scale.divide('');
     this.buffer = this._renderables.make('databuffer', {
       samples: samples,
       channels: 1
     });
-    types = this._attributes.types;
     positionUniforms = {
       tickSize: this.node.attributes['ticks.size'],
-      tickAxis: this._attributes.make(types.vec4()),
-      tickNormal: this._attributes.make(types.vec4())
+      tickAxis: this._attributes.make(this._types.vec4()),
+      tickNormal: this._attributes.make(this._types.vec4())
     };
     this.tickAxis = positionUniforms.tickAxis.value;
     this.tickNormal = positionUniforms.tickNormal.value;
@@ -57739,8 +57806,8 @@ Vector = (function(_super) {
 
   Vector.traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind'];
 
-  function Vector(model, context, helpers) {
-    Vector.__super__.constructor.call(this, model, context, helpers);
+  function Vector(node, context, helpers) {
+    Vector.__super__.constructor.call(this, node, context, helpers);
     this.line = this.arrows = null;
   }
 
@@ -57993,7 +58060,7 @@ Lerp = (function(_super) {
   };
 
   Lerp.prototype.make = function() {
-    var dims, id, key, size, transform, types, uniforms, _ref;
+    var dims, id, key, size, transform, uniforms, _ref;
     Lerp.__super__.make.apply(this, arguments);
     transform = this._shaders.shader();
     this.bind.source.shader(transform);
@@ -58004,9 +58071,8 @@ Lerp = (function(_super) {
       size = (_ref = this._get(id)) != null ? _ref : dims[key];
       this.resample[key] = size / dims[key];
       if (size !== dims[key]) {
-        types = this._attributes.types;
         uniforms = {
-          sampleRatio: this._attributes.make(types.number((dims[key] - 1) / (size - 1)))
+          sampleRatio: this._attributes.make(this._types.number((dims[key] - 1) / (size - 1)))
         };
         transform = this._shaders.shader()["import"](transform);
         transform.call(id, uniforms);
@@ -58602,11 +58668,9 @@ Cartesian = (function(_super) {
   }
 
   Cartesian.prototype.make = function() {
-    var types;
     Cartesian.__super__.make.apply(this, arguments);
-    types = this._attributes.types;
     this.uniforms = {
-      viewMatrix: this._attributes.make(types.mat4())
+      viewMatrix: this._attributes.make(this._types.mat4())
     };
     this.viewMatrix = this.uniforms.viewMatrix.value;
     this.rotationMatrix = new THREE.Matrix4();
@@ -58705,10 +58769,9 @@ Polar = (function(_super) {
   Polar.prototype.make = function() {
     var positionUniforms, types;
     Polar.__super__.make.apply(this, arguments);
-    types = this._attributes.types;
     positionUniforms = {
-      axisPosition: this._attributes.make(types.vec4()),
-      axisStep: this._attributes.make(types.vec4())
+      axisPosition: this._attributes.make(this._types.vec4()),
+      axisStep: this._attributes.make(this._types.vec4())
     };
     types = this._attributes.types;
     this.uniforms = {
@@ -58859,19 +58922,18 @@ Spherical = (function(_super) {
   Spherical.prototype.make = function() {
     var positionUniforms, types;
     Spherical.__super__.make.apply(this, arguments);
-    types = this._attributes.types;
     positionUniforms = {
-      axisPosition: this._attributes.make(types.vec4()),
-      axisStep: this._attributes.make(types.vec4())
+      axisPosition: this._attributes.make(this._types.vec4()),
+      axisStep: this._attributes.make(this._types.vec4())
     };
     types = this._attributes.types;
     this.uniforms = {
       sphericalBend: this.node.attributes['spherical.bend'],
-      sphericalFocus: this._attributes.make(types.number()),
-      sphericalAspectX: this._attributes.make(types.number()),
-      sphericalAspectY: this._attributes.make(types.number()),
-      sphericalScaleY: this._attributes.make(types.number()),
-      viewMatrix: this._attributes.make(types.mat4())
+      sphericalFocus: this._attributes.make(this._types.number()),
+      sphericalAspectX: this._attributes.make(this._types.number()),
+      sphericalAspectY: this._attributes.make(this._types.number()),
+      sphericalScaleY: this._attributes.make(this._types.number()),
+      viewMatrix: this._attributes.make(this._types.mat4())
     };
     this.viewMatrix = this.uniforms.viewMatrix.value;
     this.rotationMatrix = new THREE.Matrix4();
@@ -60352,6 +60414,11 @@ Sprite = (function(_super) {
     this.object.matrixAutoUpdate = false;
   }
 
+  Sprite.prototype.show = function(transparent) {
+    this.object.visible = true;
+    return this.object.material.transparent = true;
+  };
+
   Sprite.prototype.dispose = function() {
     this.geometry.dispose();
     this.material.dispose();
@@ -60637,20 +60704,9 @@ module.exports = API;
 var Controller;
 
 Controller = (function() {
-  function Controller(model, scene, factory) {
+  function Controller(model, factory) {
     this.model = model;
-    this.scene = scene;
     this.factory = factory;
-    this.render = (function(_this) {
-      return function(event) {
-        return _this.scene.add(event.renderable.object);
-      };
-    })(this);
-    this.unrender = (function(_this) {
-      return function(event) {
-        return _this.scene.remove(event.renderable.object);
-      };
-    })(this);
   }
 
   Controller.prototype.getRoot = function() {
@@ -60669,17 +60725,13 @@ Controller = (function() {
     if (target == null) {
       target = this.model.getRoot();
     }
-    node.primitive.on('render', this.render);
-    node.primitive.on('unrender', this.unrender);
     return target.add(node);
   };
 
   Controller.prototype.remove = function(node) {
     var target;
     target = node.parent || this.model.getRoot();
-    target.remove(node);
-    node.primitive.off('render', this.render);
-    return node.primitive.off('unrender', this.unrender);
+    return target.remove(node);
   };
 
   return Controller;

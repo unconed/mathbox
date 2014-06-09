@@ -38,9 +38,8 @@ class Lerp extends Transform
       @resample[key] = size / dims[key]
 
       if size != dims[key]
-        types = @_attributes.types
         uniforms =
-          sampleRatio: @_attributes.make types.number (dims[key] - 1) / (size - 1)
+          sampleRatio: @_attributes.make @_types.number (dims[key] - 1) / (size - 1)
 
         transform = @_shaders.shader().import transform
         transform.call id, uniforms

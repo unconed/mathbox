@@ -5,8 +5,8 @@ Util      = require '../../../util'
 class Surface extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind']
 
-  constructor: (model, context, helpers) ->
-    super model, context, helpers
+  constructor: (node, context, helpers) ->
+    super node, context, helpers
 
     @line1 = @line2 = @surface = null
 
@@ -51,9 +51,8 @@ class Surface extends Primitive
 
     # Darken wireframe if needed for contrast
     # Auto z-bias wireframe over surface
-    types = @_attributes.types
-    wireUniforms.styleColor = @_attributes.make types.color()
-    wireUniforms.styleZBias = @_attributes.make types.number(0)
+    wireUniforms.styleColor = @_attributes.make @_types.color()
+    wireUniforms.styleZBias = @_attributes.make @_types.number(0)
     @wireColor = wireUniforms.styleColor.value
     @wireZBias = wireUniforms.styleZBias
     @wireScratch = new THREE.Color

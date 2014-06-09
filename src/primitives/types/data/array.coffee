@@ -3,8 +3,8 @@ Data = require './data'
 class Array_ extends Data
   @traits: ['node', 'data', 'array']
 
-  constructor: (model, context, helpers) ->
-    super model, context, helpers
+  constructor: (node, context, helpers) ->
+    super node, context, helpers
 
     @buffer = null
     @space  = 0
@@ -51,10 +51,9 @@ class Array_ extends Data
     @length = @space
 
     # Prepare sampling uniforms
-    types = @_attributes.types
     @sampleUniforms =
-      textureItems:  @_attributes.make types.number items
-      textureHeight: @_attributes.make types.number 1
+      textureItems:  @_attributes.make @_types.number items
+      textureHeight: @_attributes.make @_types.number 1
 
     # Create linebuffer
     if @space > 0
