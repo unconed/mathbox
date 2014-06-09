@@ -1,4 +1,4 @@
-Geometry = require('./geometry')
+Geometry = require './geometry'
 
 ###
 Grid Surface

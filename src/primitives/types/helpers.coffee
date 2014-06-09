@@ -107,6 +107,11 @@ helpers =
       arrowSpace: space
       arrowSize:  size
 
+  point:
+    # Return bound point style uniforms
+    uniforms: () ->
+      pointSize:   @node.attributes['point.size']
+
   line:
     # Return bound stroke style uniforms
     uniforms: () ->

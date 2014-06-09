@@ -47,7 +47,7 @@ class SurfaceBuffer extends Buffer
 
     @texture.write @data, 0, @index * @height, width, height
     @dataPointer.set .5, @index * @height + .5
-    @index = (@index + 1) % @history
+    @index = (@index + @history - 1) % @history
 
   copy2D: (data) ->
     width  = Math.min data[0].length, @width * @channels * @items

@@ -12,7 +12,6 @@ class LineBuffer extends Buffer
     super gl, shaders, options
 
   shader: (shader) ->
-    shader.call Util.GLSL.flipVec2 'y'
     super shader
 
   build: () ->
@@ -40,7 +39,7 @@ class LineBuffer extends Buffer
   write: (n = @samples) ->
     @texture.write @data, 0, @index, n * @items, 1
     @dataPointer.set .5, @index + .5
-    @index = (@index + 1) % @history
+    @index = (@index + @history - 1) % @history
 
   copy2D: (data) ->
     channels = Math.min data[0].length, @channels

@@ -35,6 +35,7 @@ class Line extends Base
     f = factory.fragment
     f.call 'style.clip',         @uniforms, '_clip_' if clip
     f.call 'style.color',        @uniforms
+    f.call 'fragment.color',     @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide

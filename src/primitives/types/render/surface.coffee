@@ -17,9 +17,11 @@ class Surface extends Primitive
     width  = dims.width
     height = dims.height
     depth  = dims.depth
+    layers = dims.items
 
-    @surface.geometry.clip width, height, depth
-    @surface.geometry.clip width, height, depth
+    @surface.geometry.clip width, height, depth, layers if @surface
+    @line1  .geometry.clip width, height, depth, layers if @line1
+    @line2  .geometry.clip height, width, depth, layers if @line2
 
   make: () ->
     # Bind to attached data sources
@@ -27,7 +29,7 @@ class Surface extends Primitive
       'geometry.points': Source
 
     # Build transform chain
-    position  = @_shaders.shader()
+    position = @_shaders.shader()
     @_helpers.position.make()
 
     # Fetch position and transform to view
@@ -117,7 +119,7 @@ class Surface extends Primitive
     @line1 = @line2 = @surface = null
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['surface.points']? or
+    @rebuild() if changed['geometry.points']? or
                   changed['mesh.shaded'] or
                   changed['mesh.solid'] or
                   touched['grid']

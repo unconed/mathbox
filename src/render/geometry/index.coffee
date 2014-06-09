@@ -1,4 +1,5 @@
 exports.Geometry        = require './geometry'
+exports.SpriteGeometry  = require './spritegeometry'
 exports.LineGeometry    = require './linegeometry'
 exports.SurfaceGeometry = require './surfacegeometry'
 exports.ArrowGeometry   = require './arrowgeometry'

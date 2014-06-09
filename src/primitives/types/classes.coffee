@@ -2,6 +2,7 @@ Classes =
   axis:       require './render/axis'
   grid:       require './render/grid'
   line:       require './render/line'
+  point:      require './render/point'
   surface:    require './render/surface'
   ticks:      require './render/ticks'
   vector:     require './render/vector'

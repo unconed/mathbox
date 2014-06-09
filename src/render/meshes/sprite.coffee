@@ -1,19 +1,18 @@
 Base            = require './base'
-SurfaceGeometry = require('../geometry').SurfaceGeometry
+SpriteGeometry  = require('../geometry').SpriteGeometry
 
-class Surface extends Base
+class Sprite extends Base
   constructor: (gl, shaders, options) ->
     super gl, shaders
 
     uniforms = options.uniforms ? {}
     position = options.position
-    shaded   = options.shaded ? true
 
-    @geometry = new SurfaceGeometry
-      width:    options.width
-      height:   options.height
-      surfaces: options.surfaces
-      layers:   options.layers
+    @geometry = new SpriteGeometry
+      items:  options.items
+      width:  options.width
+      height: options.height
+      depth:  options.depth
 
     @_adopt uniforms
     @_adopt @geometry.uniforms
@@ -22,16 +21,12 @@ class Surface extends Base
 
     v = factory.vertex
     v.import position if position
-    v.split()
-    v  .call 'surface.position',        @uniforms if !shaded
-    v  .call 'surface.position.normal', @uniforms, '_shade_' if shaded
-    v.pass()
-    v.call 'project.position',   @uniforms
+    v.call 'sprite.position',  @uniforms
+    v.call 'project.position', @uniforms
 
     f = factory.fragment
-    f.call 'style.color',        @uniforms if !shaded
-    f.call 'style.color.shaded', @uniforms, '_shade_' if shaded
-    f.call 'fragment.color',     @uniforms
+    f.call 'style.color',     @uniforms
+    f.call 'fragment.round',  @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
@@ -50,4 +45,4 @@ class Surface extends Base
     @object = @geometry = @material = null
     super
 
-module.exports = Surface
+module.exports = Sprite

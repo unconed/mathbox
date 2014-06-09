@@ -1,3 +1,5 @@
+debug = false
+
 tick = () ->
   now = +new Date
   return (label) ->
@@ -8,10 +10,12 @@ tick = () ->
 class Geometry extends THREE.BufferGeometry
   constructor: () ->
     THREE.BufferGeometry.call @
-    @tock = tick()
+    @uniforms = {}
+
+    @tock = tick() if debug
 
   _ping: () ->
-    @tock @constructor.name
+    @tock @constructor.name if debug
 
   _reduce: (dims, maxs) ->
     broken = false

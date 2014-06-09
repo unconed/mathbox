@@ -1,4 +1,4 @@
-Geometry = require('./geometry')
+Geometry = require './geometry'
 
 ###
 Line strips arranged in columns and rows

@@ -17,6 +17,8 @@ Traits =
     color:       Types.color()
     zBias:       Types.number(0)
 
+  point:
+    size:        Types.number(.01)
   line:
     width:       Types.number(.01)
   mesh:

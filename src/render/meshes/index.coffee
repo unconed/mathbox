@@ -1,4 +1,5 @@
-exports.Surface = require('./surface')
+exports.Sprite  = require('./sprite')
 exports.Line    = require('./line')
+exports.Surface = require('./surface')
 exports.Arrow   = require('./arrow')
 exports.Debug   = require('./debug')

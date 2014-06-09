@@ -29,6 +29,7 @@ class Arrow extends Base
 
     f = factory.fragment
     f.call 'style.color',      @uniforms
+    f.call 'fragment.color',   @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       defaultAttributeValues: null

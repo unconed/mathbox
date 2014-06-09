@@ -1,4 +1,5 @@
 Classes =
+  sprite: require('./meshes').Sprite
   line: require('./meshes').Line
   surface: require('./meshes').Surface
   arrow: require('./meshes').Arrow
