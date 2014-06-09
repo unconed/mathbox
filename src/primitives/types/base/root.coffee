@@ -12,16 +12,16 @@ class Root extends Parent
     render   = (event) => scene.add    event.renderable.object
     unrender = (event) => scene.remove event.renderable.object
 
-    added = (event) ->
+    add = (event) ->
       event.object.primitive.on  'render',   render
       event.object.primitive.on  'unrender', unrender
 
-    removed = (event) ->
+    remove = (event) ->
       event.object.primitive.off 'render',   render
       event.object.primitive.off 'unrender', unrender
 
-    @node.on 'add',    added
-    @node.on 'remove', removed
+    @node.on 'add',    add
+    @node.on 'remove', remove
 
     @event =
       type: 'update'
