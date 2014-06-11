@@ -1,3 +1,4 @@
+# Global constructor
 mathBox = (options) ->
   options ?= {}
 
@@ -5,20 +6,23 @@ mathBox = (options) ->
   three.install 'mathbox' if !three.mathbox?
   three.mathbox
 
+# Just because
 window.π = Math.PI
 window.τ = π * 2
 
+# Namespace
 window.MathBox = exports
 window.mathBox = exports.mathBox = mathBox
 exports.version = '2'
 
+# Inject Shaders
 require '../build/shaders'
 
-###
-###
-
+# Load context and export namespace
 Context = require './context'
+exports[k] = v for k, v of Context.Namespace
 
+# Threestrap Plugin
 THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:
     init: true

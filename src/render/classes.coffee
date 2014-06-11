@@ -7,7 +7,7 @@ Classes =
   debug: require('./meshes').Debug
 
   databuffer: require('./buffer').DataBuffer
-  linebuffer: require('./buffer').LineBuffer
-  surfacebuffer: require('./buffer').SurfaceBuffer
+  arraybuffer: require('./buffer').ArrayBuffer
+  matrixbuffer: require('./buffer').MatrixBuffer
 
 module.exports = Classes

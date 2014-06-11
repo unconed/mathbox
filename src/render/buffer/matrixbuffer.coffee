@@ -1,7 +1,7 @@
 Buffer = require('./buffer')
 Texture = require('./texture')
 
-class SurfaceBuffer extends Buffer
+class MatrixBuffer extends Buffer
   constructor: (gl, shaders, options) ->
     @callback = options.callback || ->
     @width    = options.width    || 1
@@ -17,10 +17,13 @@ class SurfaceBuffer extends Buffer
     @data    = new Float32Array @samples * @items * @channels
     @texture = new Texture @gl, @width * @items, @height * @history, @channels
     @index   = 0
+    @filled  = 0
 
     @dataPointer = @uniforms.dataPointer.value
 
     @_adopt @texture.uniforms
+
+  getFilled: () -> @filled
 
   iterate: () ->
     callback = @callback
@@ -48,6 +51,7 @@ class SurfaceBuffer extends Buffer
     @texture.write @data, 0, @index * @height, width, height
     @dataPointer.set .5, @index * @height + .5
     @index = (@index + @history - 1) % @history
+    @filled = Math.min @history, @filled + 1
 
   copy2D: (data) ->
     width  = Math.min data[0].length, @width * @channels * @items
@@ -77,4 +81,4 @@ class SurfaceBuffer extends Buffer
     @write Math.floor n / @channels / @items
 
 
-module.exports = SurfaceBuffer
+module.exports = MatrixBuffer

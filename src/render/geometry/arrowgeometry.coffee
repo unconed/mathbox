@@ -30,8 +30,8 @@ class ArrowGeometry extends Geometry
     @anchor   = anchor  =  options.anchor  ? if flip then 0 else samples - 1
 
     arrows    = strips * ribbons * layers
-    points    = (sides + 2) * strips * ribbons * layers
-    triangles = (sides * 2) * strips * ribbons * layers
+    points    = (sides + 2) * arrows
+    triangles = (sides * 2) * arrows
 
     @addAttribute 'index',     Uint16Array,  triangles * 3, 1
     @addAttribute 'position4', Float32Array, points,        4
@@ -49,24 +49,23 @@ class ArrowGeometry extends Geometry
       circle.push [Math.cos(angle), Math.sin(angle), 1] 
 
     base = 0
-    for i in [0...ribbons * layers]
-      for j in [0...strips]
-        tip = base++
-        back = tip + sides + 1
+    for i in [0...arrows]
+      tip = base++
+      back = tip + sides + 1
 
-        for k in [0...sides]
-          a = base + k % sides
-          b = base + (k + 1) % sides
+      for k in [0...sides]
+        a = base + k % sides
+        b = base + (k + 1) % sides
 
-          index tip
-          index a
-          index b
+        index tip
+        index a
+        index b
 
-          index b
-          index a
-          index back
+        index b
+        index a
+        index back
 
-        base += sides + 1
+      base += sides + 1
 
     step = if flip then 1           else -1
     far  = if flip then samples - 1 else 0

@@ -114,7 +114,7 @@ class Grid extends Primitive
 
       # Clip to number of ticks
       n = ticks.length
-      line.geometry.clip samples, 1, n
+      line.geometry.clip samples, n, 1, 1
 
     if touched['x']    or
        touched['y']    or

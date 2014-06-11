@@ -13,12 +13,13 @@ class Model
     @event = type: 'update'
 
     # Prepare CSSauron
-    @language = cssauron
-      tag:      'type'
-      id:       'id'
-      class:    "classes.join(' ')"
-      parent:   'parent'
-      children: 'children'
+    @language =
+      cssauron
+        tag:      'type'
+        id:       'id'
+        class:    "classes.join(' ')"
+        parent:   'parent'
+        children: 'children'
 
     # Track object lifecycle
     add = (event) =>

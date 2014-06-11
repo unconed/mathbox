@@ -24,7 +24,7 @@ class Array_ extends Data
   getActive: () ->
     items:  @items
     width:  @length
-    height: @history
+    height: @buffer.getFilled()
     depth:  1
 
   make: () ->
@@ -55,9 +55,9 @@ class Array_ extends Data
       textureItems:  @_attributes.make @_types.number items
       textureHeight: @_attributes.make @_types.number 1
 
-    # Create linebuffer
+    # Create arraybuffer
     if @space > 0
-      @buffer = @_renderables.make 'linebuffer',
+      @buffer = @_renderables.make 'arraybuffer',
                 items:    @items
                 length:   @space
                 history:  @history
@@ -91,30 +91,39 @@ class Array_ extends Data
 
     data = @_get 'data.data'
 
-    length = @length
+    length   = @length
+    channels = @channels
+    items    = @items
+
+    filled   = @buffer.getFilled()
 
     if data?
-      if data[0]?.length
-        @length = data.length / @items
-      else
-        @length = Math.floor data.length / @channels / @items
+      l = 0
 
-      if @length > @space
-        @space = Math.min @length, @space * 2
+      if data[0]?.length
+        l = data.length / items
+      else
+        l = Math.floor data.length / channels / items
+
+      if l > @space
+        @space = Math.min l, @space * 2
         @rebuild()
-#      if @length < @space * .1
+#      if length < @space * .1
 #        @space = @length
 #        @rebuild()
 
-      if data[0].length
+      if data[0]?.length
         @buffer.copy2D data
       else
         @buffer.copy data
 
+      @length = l
+
     else
       @length = @buffer.update()
 
-    if length != @length
+    if length != @length or
+       filled != @buffer.getFilled()
       @trigger
         type: 'resize'
 

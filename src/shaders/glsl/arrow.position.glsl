@@ -38,11 +38,11 @@ mat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {
   
   // Size to 2.5:1 ratio
   size *= scale;
-  float sbt = size / 2.5;
+  float sizeNB = size / 2.5;
 
   // Anchor at end position
-  return mat4(vec4(n * sbt,  0),
-              vec4(b * sbt,  0),
+  return mat4(vec4(n * sizeNB,  0),
+              vec4(b * sizeNB,  0),
               vec4(t * size, 0),
               vec4(right,  1.0));
 }

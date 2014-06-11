@@ -1,7 +1,8 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw);\n  left  = getPosition(vec4(near, xyzw.yzw));\n  start = getPosition(vec4(far, xyzw.yzw));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sbt = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sbt,  0),\n              vec4(b * sbt,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
+window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw);\n  left  = getPosition(vec4(near, xyzw.yzw));\n  start = getPosition(vec4(far, xyzw.yzw));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sizeNB = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sizeNB,  0),\n              vec4(b * sizeNB,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
 "axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw) {\n  return axisStep * xyzw.x + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
+"fragment.clip": "varying vec2 vClip;\n\nvoid clipFragment() {\n  if (vClip.x < 0.0 || vClip.y < 0.0) discard;\n}\n",
 "fragment.color": "void setFragmentColor(vec4 color) {\n\tgl_FragColor = color;\n}",
 "fragment.round": "varying vec2 vSprite;\nvarying float vPixelSize;\n\nvoid setFragmentColor(vec4 color) {\n  float c = dot(vSprite, vSprite);\n  if (c > 1.0) {\n    discard;\n  }\n  float alpha = min(1.0, vPixelSize * (1.0 - c));\n\tgl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n",
 "grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzw) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzw.y, 0.0)).x;\n  vec4 offAxis = gridStep * xyzw.x + gridPosition;\n  return onAxis + offAxis;\n}\n",
@@ -10,7 +11,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "lerp.items": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpItems(vec4 xyzw) {\n  float x = xyzw.w * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.width": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpWidth(vec4 xyzw) {\n  float x = xyzw.x * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float lineWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, position4.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, position4.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n}",
-"line.position": "uniform float lineWidth;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  getLineGeometry(position4, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
+"line.position": "uniform float lineWidth;\nuniform vec4 geometryClip;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 p = min(geometryClip, position4);\n  getLineGeometry(p, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  return center + join * offset * lineWidth;\n}\n",
 "map.2d.xyzw": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 map2Dxyzw(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
@@ -20,8 +21,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "sample.2d.3": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).xyz, 1.0);\n}\n",
 "sample.2d.4": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return texture2D(dataTexture, uv);\n}\n",
 "spherical.position": "uniform float sphericalBend;\nuniform float sphericalFocus;\nuniform float sphericalAspectX;\nuniform float sphericalAspectY;\nuniform float sphericalScaleY;\n\nuniform mat4 viewMatrix;\n\nvec4 getSphericalPosition(vec4 position) {\n  if (sphericalBend > 0.0001) {\n\n    vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);\n    float radius = sphericalFocus + xyz.z;\n    float cosine = cos(xyz.y) * radius;\n\n    return viewMatrix * vec4(\n      sin(xyz.x) * cosine,\n      sin(xyz.y) * radius * sphericalAspectY,\n      (cos(xyz.x) * cosine - sphericalFocus) / sphericalAspectX,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"sprite.position": "uniform float pointSize;\nuniform float renderScale;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getSpritePosition() {\n  vec3 center = getPosition(position4);\n\n  float pixelSize = renderScale * pointSize / -center.z;\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * pointSize * padFactor, 0.0);\n}\n",
-"style.clip": "varying vec2 vClip;\n\nvoid clipStyle() {\n  if (vClip.x < 0.0 || vClip.y < 0.0) discard;\n}\n",
+"sprite.position": "uniform float pointSize;\nuniform float renderScale;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getPointPosition() {\n  vec3 center = getPosition(position4);\n\n  float pixelSize = renderScale * pointSize / -center.z;\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * pointSize * padFactor, 0.0);\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvec4 getStyleColor() {\n\treturn vec4(styleColor, styleOpacity);\n}\n",
 "style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec4 getStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\treturn = vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getSurfacePosition() {\n  return getPosition(position4);\n}\n",
@@ -4572,7 +4572,7 @@ function tokenize() {
 }
 
 },{"through":17}],19:[function(require,module,exports){
-var Context, Model, Primitives, Render, Shaders, Stage;
+var Context, Model, Primitives, Render, Shaders, Stage, Util;
 
 Model = require('./model');
 
@@ -4584,7 +4584,18 @@ Shaders = require('./shaders');
 
 Primitives = require('./primitives');
 
+Util = require('./util');
+
 Context = (function() {
+  Context.Namespace = {
+    Model: Model,
+    Stage: Stage,
+    Render: Render,
+    Shaders: Shaders,
+    Primitives: Primitives,
+    Util: Util
+  };
+
   function Context(gl, scene, camera, script) {
     if (script == null) {
       script = [];
@@ -4629,8 +4640,8 @@ Context = (function() {
 module.exports = Context;
 
 
-},{"./model":23,"./primitives":27,"./render":71,"./shaders":82,"./stage":87}],20:[function(require,module,exports){
-var Context, mathBox;
+},{"./model":23,"./primitives":27,"./render":71,"./shaders":82,"./stage":87,"./util":90}],20:[function(require,module,exports){
+var Context, k, mathBox, v, _ref;
 
 mathBox = function(options) {
   var three;
@@ -4656,11 +4667,13 @@ exports.version = '2';
 
 require('../build/shaders');
 
-
-/*
- */
-
 Context = require('./context');
+
+_ref = Context.Namespace;
+for (k in _ref) {
+  v = _ref[k];
+  exports[k] = v;
+}
 
 THREE.Bootstrap.registerPlugin('mathbox', {
   defaults: {
@@ -4702,8 +4715,8 @@ THREE.Bootstrap.registerPlugin('mathbox', {
         };
       })(this),
       object: function() {
-        var _ref;
-        return (_ref = this.context) != null ? _ref.scene.getRoot() : void 0;
+        var _ref1;
+        return (_ref1 = this.context) != null ? _ref1.scene.getRoot() : void 0;
       }
     };
   },
@@ -4717,12 +4730,12 @@ THREE.Bootstrap.registerPlugin('mathbox', {
     }
   },
   resize: function(event, three) {
-    var _ref;
-    return (_ref = this.context) != null ? _ref.resize(three.Size) : void 0;
+    var _ref1;
+    return (_ref1 = this.context) != null ? _ref1.resize(three.Size) : void 0;
   },
   update: function(event, three) {
-    var _ref;
-    return (_ref = this.context) != null ? _ref.update() : void 0;
+    var _ref1;
+    return (_ref1 = this.context) != null ? _ref1.update() : void 0;
   },
   post: function() {
     var fmt, info;
@@ -5817,7 +5830,7 @@ Array_ = (function(_super) {
     return {
       items: this.items,
       width: this.length,
-      height: this.history,
+      height: this.buffer.getFilled(),
       depth: 1
     };
   };
@@ -5847,7 +5860,7 @@ Array_ = (function(_super) {
       textureHeight: this._attributes.make(this._types.number(1))
     };
     if (this.space > 0) {
-      this.buffer = this._renderables.make('linebuffer', {
+      this.buffer = this._renderables.make('arraybuffer', {
         items: this.items,
         length: this.space,
         history: this.history,
@@ -5882,7 +5895,7 @@ Array_ = (function(_super) {
   };
 
   Array_.prototype.update = function() {
-    var data, length, _ref;
+    var channels, data, filled, items, l, length, _ref, _ref1;
     if (!this.buffer) {
       return;
     }
@@ -5894,25 +5907,30 @@ Array_ = (function(_super) {
     }
     data = this._get('data.data');
     length = this.length;
+    channels = this.channels;
+    items = this.items;
+    filled = this.buffer.getFilled();
     if (data != null) {
+      l = 0;
       if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        this.length = data.length / this.items;
+        l = data.length / items;
       } else {
-        this.length = Math.floor(data.length / this.channels / this.items);
+        l = Math.floor(data.length / channels / items);
       }
-      if (this.length > this.space) {
-        this.space = Math.min(this.length, this.space * 2);
+      if (l > this.space) {
+        this.space = Math.min(l, this.space * 2);
         this.rebuild();
       }
-      if (data[0].length) {
+      if ((_ref1 = data[0]) != null ? _ref1.length : void 0) {
         this.buffer.copy2D(data);
       } else {
         this.buffer.copy(data);
       }
+      this.length = l;
     } else {
       this.length = this.buffer.update();
     }
-    if (length !== this.length) {
+    if (length !== this.length || filled !== this.buffer.getFilled()) {
       this.trigger({
         type: 'resize'
       });
@@ -6050,7 +6068,7 @@ Matrix = (function(_super) {
       items: this.items,
       width: this.width,
       height: this.height,
-      depth: this.history
+      depth: this.buffer.getFilled()
     };
   };
 
@@ -6085,7 +6103,7 @@ Matrix = (function(_super) {
       textureHeight: this._attributes.make(this._types.number(height))
     };
     if (this.spaceWidth * this.spaceHeight > 0) {
-      this.buffer = this._renderables.make('surfacebuffer', {
+      this.buffer = this._renderables.make('matrixbuffer', {
         width: this.spaceWidth,
         height: this.spaceHeight,
         history: history,
@@ -6121,7 +6139,7 @@ Matrix = (function(_super) {
   };
 
   Matrix.prototype.update = function() {
-    var channels, data, h, height, items, length, method, oldHeight, oldWidth, w, width, _ref, _ref1;
+    var channels, data, filled, h, height, items, length, method, oldHeight, oldWidth, w, width, _ref, _ref1;
     if (!this.buffer) {
       return;
     }
@@ -6138,6 +6156,7 @@ Matrix = (function(_super) {
     height = this.spaceHeight;
     channels = this.channels;
     items = this.items;
+    filled = this.buffer.getFilled();
     if (data != null) {
       w = h = 0;
       method = 'copy';
@@ -6731,7 +6750,7 @@ Grid = (function(_super) {
         ticks = _this._helpers.scale.generate(second, buffer, min, max);
         Util.setDimension(values.gridAxis, y);
         n = ticks.length;
-        return line.geometry.clip(samples, 1, n);
+        return line.geometry.clip(samples, n, 1, 1);
       };
     })(this);
     if (touched['x'] || touched['y'] || touched['area'] || touched['grid'] || touched['view'] || init) {
@@ -8513,6 +8532,90 @@ module.exports = View;
 
 
 },{"../base/parent":30}],57:[function(require,module,exports){
+var ArrayBuffer_, Buffer, Texture, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Buffer = require('./buffer');
+
+Texture = require('./texture');
+
+Util = require('../../util');
+
+ArrayBuffer_ = (function(_super) {
+  __extends(ArrayBuffer_, _super);
+
+  function ArrayBuffer_(gl, shaders, options) {
+    this.callback = options.callback || function() {};
+    this.length = options.length || 1;
+    this.history = options.history || 1;
+    this.samples = this.length;
+    ArrayBuffer_.__super__.constructor.call(this, gl, shaders, options);
+  }
+
+  ArrayBuffer_.prototype.shader = function(shader) {
+    return ArrayBuffer_.__super__.shader.call(this, shader);
+  };
+
+  ArrayBuffer_.prototype.build = function() {
+    ArrayBuffer_.__super__.build.apply(this, arguments);
+    this.data = new Float32Array(this.samples * this.channels * this.items);
+    this.texture = new Texture(this.gl, this.samples * this.items, this.history, this.channels);
+    this.index = 0;
+    this.filled = 0;
+    this.dataPointer = this.uniforms.dataPointer.value;
+    return this._adopt(this.texture.uniforms);
+  };
+
+  ArrayBuffer_.prototype.getFilled = function() {
+    return this.filled;
+  };
+
+  ArrayBuffer_.prototype.iterate = function() {
+    var callback, i, limit, output;
+    callback = this.callback;
+    output = this.generate();
+    limit = this.samples;
+    i = 0;
+    while (i < limit && callback(i++, output) !== false) {
+      true;
+    }
+    return i;
+  };
+
+  ArrayBuffer_.prototype.write = function(n) {
+    if (n == null) {
+      n = this.samples;
+    }
+    this.texture.write(this.data, 0, this.index, n * this.items, 1);
+    this.dataPointer.set(.5, this.index + .5);
+    this.index = (this.index + this.history - 1) % this.history;
+    return this.filled = Math.min(this.history, this.filled + 1);
+  };
+
+  ArrayBuffer_.prototype.copy2D = function(data) {
+    var channels, d, i, k, o, samples, _i, _j, _ref;
+    channels = Math.min(data[0].length, this.channels);
+    samples = Math.min(data.length, this.samples * this.items);
+    o = 0;
+    data = this.data;
+    for (k = _i = 0; 0 <= samples ? _i < samples : _i > samples; k = 0 <= samples ? ++_i : --_i) {
+      d = data[k];
+      for (i = _j = 0; 0 <= channels ? _j < channels : _j > channels; i = 0 <= channels ? ++_j : --_j) {
+        d[o++] = (_ref = v[i]) != null ? _ref : 0;
+      }
+    }
+    return this.write(Math.floor(o / this.channels / this.items));
+  };
+
+  return ArrayBuffer_;
+
+})(Buffer);
+
+module.exports = ArrayBuffer_;
+
+
+},{"../../util":90,"./buffer":58,"./texture":62}],58:[function(require,module,exports){
 var Buffer, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8622,7 +8725,7 @@ Buffer = (function(_super) {
 module.exports = Buffer;
 
 
-},{"../renderable":79}],58:[function(require,module,exports){
+},{"../renderable":79}],59:[function(require,module,exports){
 var Buffer, DataBuffer, Texture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8661,20 +8764,20 @@ DataBuffer = (function(_super) {
 module.exports = DataBuffer;
 
 
-},{"./buffer":57,"./texture":62}],59:[function(require,module,exports){
+},{"./buffer":58,"./texture":62}],60:[function(require,module,exports){
 exports.Texture = require('./texture');
 
 exports.Buffer = require('./buffer');
 
 exports.DataBuffer = require('./databuffer');
 
-exports.LineBuffer = require('./linebuffer');
+exports.ArrayBuffer = require('./arraybuffer');
 
-exports.SurfaceBuffer = require('./surfacebuffer');
+exports.MatrixBuffer = require('./matrixbuffer');
 
 
-},{"./buffer":57,"./databuffer":58,"./linebuffer":60,"./surfacebuffer":61,"./texture":62}],60:[function(require,module,exports){
-var Buffer, LineBuffer, Texture, Util,
+},{"./arraybuffer":57,"./buffer":58,"./databuffer":59,"./matrixbuffer":61,"./texture":62}],61:[function(require,module,exports){
+var Buffer, MatrixBuffer, Texture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -8682,106 +8785,33 @@ Buffer = require('./buffer');
 
 Texture = require('./texture');
 
-Util = require('../../util');
+MatrixBuffer = (function(_super) {
+  __extends(MatrixBuffer, _super);
 
-LineBuffer = (function(_super) {
-  __extends(LineBuffer, _super);
-
-  function LineBuffer(gl, shaders, options) {
-    this.callback = options.callback || function() {};
-    this.length = options.length || 1;
-    this.history = options.history || 1;
-    this.samples = this.length;
-    LineBuffer.__super__.constructor.call(this, gl, shaders, options);
-  }
-
-  LineBuffer.prototype.shader = function(shader) {
-    return LineBuffer.__super__.shader.call(this, shader);
-  };
-
-  LineBuffer.prototype.build = function() {
-    LineBuffer.__super__.build.apply(this, arguments);
-    this.data = new Float32Array(this.samples * this.channels * this.items);
-    this.texture = new Texture(this.gl, this.samples * this.items, this.history, this.channels);
-    this.index = 0;
-    this.dataPointer = this.uniforms.dataPointer.value;
-    return this._adopt(this.texture.uniforms);
-  };
-
-  LineBuffer.prototype.iterate = function() {
-    var callback, i, limit, output;
-    callback = this.callback;
-    output = this.generate();
-    limit = this.samples;
-    i = 0;
-    while (i < limit && callback(i++, output) !== false) {
-      true;
-    }
-    return i;
-  };
-
-  LineBuffer.prototype.write = function(n) {
-    if (n == null) {
-      n = this.samples;
-    }
-    this.texture.write(this.data, 0, this.index, n * this.items, 1);
-    this.dataPointer.set(.5, this.index + .5);
-    return this.index = (this.index + this.history - 1) % this.history;
-  };
-
-  LineBuffer.prototype.copy2D = function(data) {
-    var channels, d, i, k, o, samples, _i, _j, _ref;
-    channels = Math.min(data[0].length, this.channels);
-    samples = Math.min(data.length, this.samples * this.items);
-    o = 0;
-    data = this.data;
-    for (k = _i = 0; 0 <= samples ? _i < samples : _i > samples; k = 0 <= samples ? ++_i : --_i) {
-      d = data[k];
-      for (i = _j = 0; 0 <= channels ? _j < channels : _j > channels; i = 0 <= channels ? ++_j : --_j) {
-        d[o++] = (_ref = v[i]) != null ? _ref : 0;
-      }
-    }
-    return this.write(Math.floor(o / this.channels / this.items));
-  };
-
-  return LineBuffer;
-
-})(Buffer);
-
-module.exports = LineBuffer;
-
-
-},{"../../util":90,"./buffer":57,"./texture":62}],61:[function(require,module,exports){
-var Buffer, SurfaceBuffer, Texture,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Buffer = require('./buffer');
-
-Texture = require('./texture');
-
-SurfaceBuffer = (function(_super) {
-  __extends(SurfaceBuffer, _super);
-
-  function SurfaceBuffer(gl, shaders, options) {
+  function MatrixBuffer(gl, shaders, options) {
     this.callback = options.callback || function() {};
     this.width = options.width || 1;
     this.height = options.height || 1;
     this.history = options.history || 1;
     this.samples = this.width * this.height;
-    SurfaceBuffer.__super__.constructor.call(this, gl, shaders, options);
+    MatrixBuffer.__super__.constructor.call(this, gl, shaders, options);
   }
 
-  SurfaceBuffer.prototype.build = function() {
-    SurfaceBuffer.__super__.build.apply(this, arguments);
+  MatrixBuffer.prototype.build = function() {
+    MatrixBuffer.__super__.build.apply(this, arguments);
     this.data = new Float32Array(this.samples * this.items * this.channels);
     this.texture = new Texture(this.gl, this.width * this.items, this.height * this.history, this.channels);
     this.index = 0;
+    this.filled = 0;
     this.dataPointer = this.uniforms.dataPointer.value;
     return this._adopt(this.texture.uniforms);
   };
 
-  SurfaceBuffer.prototype.iterate = function() {
+  MatrixBuffer.prototype.getFilled = function() {
+    return this.filled;
+  };
+
+  MatrixBuffer.prototype.iterate = function() {
     var callback, i, j, k, limit, n, output, repeat;
     callback = this.callback;
     output = this.generate();
@@ -8802,7 +8832,7 @@ SurfaceBuffer = (function(_super) {
     return k;
   };
 
-  SurfaceBuffer.prototype.write = function(n) {
+  MatrixBuffer.prototype.write = function(n) {
     var height, width;
     if (n == null) {
       n = this.samples;
@@ -8811,10 +8841,11 @@ SurfaceBuffer = (function(_super) {
     height = Math.ceil(n / this.width);
     this.texture.write(this.data, 0, this.index * this.height, width, height);
     this.dataPointer.set(.5, this.index * this.height + .5);
-    return this.index = (this.index + this.history - 1) % this.history;
+    this.index = (this.index + this.history - 1) % this.history;
+    return this.filled = Math.min(this.history, this.filled + 1);
   };
 
-  SurfaceBuffer.prototype.copy2D = function(data) {
+  MatrixBuffer.prototype.copy2D = function(data) {
     var d, height, i, k, o, width, _i, _j, _ref;
     width = Math.min(data[0].length, this.width * this.channels * this.items);
     height = Math.min(data.length, this.height);
@@ -8829,7 +8860,7 @@ SurfaceBuffer = (function(_super) {
     return this.write(Math.floor(o / this.channels / this.items));
   };
 
-  SurfaceBuffer.prototype.copy3D = function(data) {
+  MatrixBuffer.prototype.copy3D = function(data) {
     var channels, d, height, i, j, k, o, v, width, _i, _j, _k, _ref;
     channels = Math.min(data[0][0].length, this.channels);
     width = Math.min(data[0].length, this.width * this.items);
@@ -8848,14 +8879,14 @@ SurfaceBuffer = (function(_super) {
     return this.write(Math.floor(n / this.channels / this.items));
   };
 
-  return SurfaceBuffer;
+  return MatrixBuffer;
 
 })(Buffer);
 
-module.exports = SurfaceBuffer;
+module.exports = MatrixBuffer;
 
 
-},{"./buffer":57,"./texture":62}],62:[function(require,module,exports){
+},{"./buffer":58,"./texture":62}],62:[function(require,module,exports){
 var Texture;
 
 Texture = (function() {
@@ -8932,14 +8963,14 @@ Classes = {
   arrow: require('./meshes').Arrow,
   debug: require('./meshes').Debug,
   databuffer: require('./buffer').DataBuffer,
-  linebuffer: require('./buffer').LineBuffer,
-  surfacebuffer: require('./buffer').SurfaceBuffer
+  arraybuffer: require('./buffer').ArrayBuffer,
+  matrixbuffer: require('./buffer').MatrixBuffer
 };
 
 module.exports = Classes;
 
 
-},{"./buffer":59,"./meshes":75}],64:[function(require,module,exports){
+},{"./buffer":60,"./meshes":75}],64:[function(require,module,exports){
 var Factory;
 
 Factory = (function() {
@@ -8953,8 +8984,8 @@ Factory = (function() {
     return Object.keys(this.classes);
   };
 
-  Factory.prototype.make = function(type, options, uniforms) {
-    return new this.classes[type](this.gl, this.shaders, options, uniforms);
+  Factory.prototype.make = function(type, options) {
+    return new this.classes[type](this.gl, this.shaders, options);
   };
 
   return Factory;
@@ -8986,7 +9017,7 @@ ArrowGeometry = (function(_super) {
   __extends(ArrowGeometry, _super);
 
   function ArrowGeometry(options) {
-    var a, anchor, angle, arrow, arrows, attach, b, back, base, c, circle, far, flip, i, index, j, k, l, layers, near, points, position, ribbons, samples, sides, step, strips, tip, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _p, _ref, _ref1, _ref2;
+    var a, anchor, angle, arrow, arrows, attach, b, back, base, c, circle, far, flip, i, index, k, l, layers, near, points, position, ribbons, samples, sides, step, strips, tip, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref, _ref1;
     ArrowGeometry.__super__.constructor.call(this, options);
     this.geometryClip = new THREE.Vector4;
     this.uniforms = {
@@ -9003,8 +9034,8 @@ ArrowGeometry = (function(_super) {
     this.flip = flip = (_ref = options.flip) != null ? _ref : false;
     this.anchor = anchor = (_ref1 = options.anchor) != null ? _ref1 : flip ? 0 : samples - 1;
     arrows = strips * ribbons * layers;
-    points = (sides + 2) * strips * ribbons * layers;
-    triangles = (sides * 2) * strips * ribbons * layers;
+    points = (sides + 2) * arrows;
+    triangles = (sides * 2) * arrows;
     this.addAttribute('index', Uint16Array, triangles * 3, 1);
     this.addAttribute('position4', Float32Array, points, 4);
     this.addAttribute('arrow', Float32Array, points, 3);
@@ -9019,34 +9050,32 @@ ArrowGeometry = (function(_super) {
       circle.push([Math.cos(angle), Math.sin(angle), 1]);
     }
     base = 0;
-    for (i = _j = 0, _ref2 = ribbons * layers; 0 <= _ref2 ? _j < _ref2 : _j > _ref2; i = 0 <= _ref2 ? ++_j : --_j) {
-      for (j = _k = 0; 0 <= strips ? _k < strips : _k > strips; j = 0 <= strips ? ++_k : --_k) {
-        tip = base++;
-        back = tip + sides + 1;
-        for (k = _l = 0; 0 <= sides ? _l < sides : _l > sides; k = 0 <= sides ? ++_l : --_l) {
-          a = base + k % sides;
-          b = base + (k + 1) % sides;
-          index(tip);
-          index(a);
-          index(b);
-          index(b);
-          index(a);
-          index(back);
-        }
-        base += sides + 1;
+    for (i = _j = 0; 0 <= arrows ? _j < arrows : _j > arrows; i = 0 <= arrows ? ++_j : --_j) {
+      tip = base++;
+      back = tip + sides + 1;
+      for (k = _k = 0; 0 <= sides ? _k < sides : _k > sides; k = 0 <= sides ? ++_k : --_k) {
+        a = base + k % sides;
+        b = base + (k + 1) % sides;
+        index(tip);
+        index(a);
+        index(b);
+        index(b);
+        index(a);
+        index(back);
       }
+      base += sides + 1;
     }
     step = flip ? 1 : -1;
     far = flip ? samples - 1 : 0;
     near = anchor + step;
     x = anchor;
-    for (l = _m = 0; 0 <= layers ? _m < layers : _m > layers; l = 0 <= layers ? ++_m : --_m) {
-      for (z = _n = 0; 0 <= ribbons ? _n < ribbons : _n > ribbons; z = 0 <= ribbons ? ++_n : --_n) {
-        for (y = _o = 0; 0 <= strips ? _o < strips : _o > strips; y = 0 <= strips ? ++_o : --_o) {
+    for (l = _l = 0; 0 <= layers ? _l < layers : _l > layers; l = 0 <= layers ? ++_l : --_l) {
+      for (z = _m = 0; 0 <= ribbons ? _m < ribbons : _m > ribbons; z = 0 <= ribbons ? ++_m : --_m) {
+        for (y = _n = 0; 0 <= strips ? _n < strips : _n > strips; y = 0 <= strips ? ++_n : --_n) {
           position(x, y, z, l);
           arrow(0, 0, 0);
           attach(near, far);
-          for (k = _p = 0; 0 <= sides ? _p < sides : _p > sides; k = 0 <= sides ? ++_p : --_p) {
+          for (k = _o = 0; 0 <= sides ? _o < sides : _o > sides; k = 0 <= sides ? ++_o : --_o) {
             position(x, y, z, l);
             c = circle[k];
             arrow(c[0], c[1], c[2]);
@@ -9137,15 +9166,16 @@ Geometry = (function(_super) {
   };
 
   Geometry.prototype._reduce = function(dims, maxs) {
-    var broken, dim, i, max, quads, _i, _len;
-    broken = false;
+    var dim, i, max, multiple, quads, _i, _len;
+    multiple = false;
     for (i = _i = 0, _len = dims.length; _i < _len; i = ++_i) {
       dim = dims[i];
       max = maxs[i];
-      if (broken) {
+      if (multiple) {
         dims[i] = max;
-      } else if (dim < max) {
-        broken = true;
+      }
+      if (dim > 1) {
+        multiple = true;
       }
     }
     return quads = dims.reduce(function(a, b) {
@@ -9301,8 +9331,8 @@ LineGeometry = (function(_super) {
     if (layers == null) {
       layers = this.layers;
     }
-    segments = Math.max(0, samples - 1);
-    this.geometryClip.set(segments, strips, ribbons, layers);
+    segments = samples - 1;
+    this.geometryClip.set(segments, strips - 1, ribbons - 1, layers - 1);
     dims = [layers, ribbons, strips, segments];
     maxs = [this.layers, this.ribbons, this.strips, this.segments];
     quads = this._reduce(dims, maxs);
@@ -9747,7 +9777,7 @@ Line = (function(_super) {
     v.join();
     f = factory.fragment;
     if (clip) {
-      f.call('style.clip', this.uniforms, '_clip_');
+      f.call('fragment.clip', this.uniforms, '_clip_');
     }
     f.call('style.color', this.uniforms);
     f.call('fragment.color', this.uniforms);

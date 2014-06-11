@@ -2,7 +2,7 @@ Buffer  = require './buffer'
 Texture = require './texture'
 Util    = require '../../util'
 
-class LineBuffer extends Buffer
+class ArrayBuffer_ extends Buffer
   constructor: (gl, shaders, options) ->
     @callback = options.callback || ->
     @length   = options.length   || 1
@@ -20,10 +20,13 @@ class LineBuffer extends Buffer
     @data    = new Float32Array @samples * @channels * @items
     @texture = new Texture @gl, @samples * @items, @history, @channels
     @index   = 0
+    @filled  = 0
 
     @dataPointer = @uniforms.dataPointer.value
 
     @_adopt @texture.uniforms
+
+  getFilled: () -> @filled
 
   iterate: () ->
     callback = @callback
@@ -40,6 +43,7 @@ class LineBuffer extends Buffer
     @texture.write @data, 0, @index, n * @items, 1
     @dataPointer.set .5, @index + .5
     @index = (@index + @history - 1) % @history
+    @filled = Math.min @history, @filled + 1
 
   copy2D: (data) ->
     channels = Math.min data[0].length, @channels
@@ -53,4 +57,4 @@ class LineBuffer extends Buffer
 
     @write Math.floor o / @channels / @items
 
-module.exports = LineBuffer
+module.exports = ArrayBuffer_

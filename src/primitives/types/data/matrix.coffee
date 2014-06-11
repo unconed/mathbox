@@ -26,7 +26,7 @@ class Matrix extends Data
     items:  @items
     width:  @width
     height: @height
-    depth:  @history
+    depth:  @buffer.getFilled()
 
   make: () ->
     super
@@ -62,9 +62,9 @@ class Matrix extends Data
       textureItems:  @_attributes.make @_types.number items
       textureHeight: @_attributes.make @_types.number height
 
-    # Create surfacebuffer
+    # Create matrix buffer
     if @spaceWidth * @spaceHeight > 0
-      @buffer = @_renderables.make 'surfacebuffer',
+      @buffer = @_renderables.make 'matrixbuffer',
                 width:    @spaceWidth
                 height:   @spaceHeight
                 history:  history
@@ -106,6 +106,8 @@ class Matrix extends Data
     height   = @spaceHeight
     channels = @channels
     items    = @items
+
+    filled   = @buffer.getFilled()
 
     if data?
 

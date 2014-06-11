@@ -32,7 +32,7 @@ class SurfaceGeometry extends Geometry
     @surfaces = surfaces = +options.surfaces || 1
     @layers   = layers   = +options.layers   || 1
 
-    @segmentsX = segmentsX = width - 1
+    @segmentsX = segmentsX = width  - 1
     @segmentsY = segmentsY = height - 1
 
     points    = width     * height    * surfaces * layers

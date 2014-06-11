@@ -1,4 +1,5 @@
 uniform float lineWidth;
+uniform vec4 geometryClip;
 
 attribute vec2 line;
 attribute vec4 position4;
@@ -74,7 +75,8 @@ vec3 getLinePosition() {
   float edge = line.x;
   float offset = line.y;
 
-  getLineGeometry(position4, edge, left, center, right);
+  vec4 p = min(geometryClip, position4);
+  getLineGeometry(p, edge, left, center, right);
   join = getLineJoin(edge, left, center, right);
   return center + join * offset * lineWidth;
 }

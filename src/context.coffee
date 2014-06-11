@@ -3,8 +3,19 @@ Stage      = require './stage'
 Render     = require './render'
 Shaders    = require './shaders'
 Primitives = require './primitives'
+Util       = require './util'
 
 class Context
+  # Export for tinkering
+  @Namespace =
+    Model:      Model
+    Stage:      Stage
+    Render:     Render
+    Shaders:    Shaders
+    Primitives: Primitives
+    Util:       Util
+
+  # Public interface
   constructor: (gl, scene, camera, script = []) ->
 
     # Rendering factory

@@ -79,9 +79,9 @@ class LineGeometry extends Geometry
     return
 
   clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
-    segments = Math.max 0, samples - 1
+    segments = samples - 1
 
-    @geometryClip.set segments, strips, ribbons, layers
+    @geometryClip.set segments, strips - 1, ribbons - 1, layers - 1
 
     dims  = [ layers,  ribbons,  strips,  segments]
     maxs  = [@layers, @ribbons, @strips, @segments]

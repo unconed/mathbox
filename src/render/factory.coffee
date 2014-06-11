@@ -4,7 +4,7 @@ class Factory
   getTypes: () ->
     Object.keys @classes
 
-  make: (type, options, uniforms) ->
-    new @classes[type] @gl, @shaders, options, uniforms
+  make: (type, options) ->
+    new @classes[type] @gl, @shaders, options
 
 module.exports = Factory

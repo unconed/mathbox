@@ -18,13 +18,13 @@ class Geometry extends THREE.BufferGeometry
     @tock @constructor.name if debug
 
   _reduce: (dims, maxs) ->
-    broken = false
+    multiple = false
     for dim, i in dims
       max = maxs[i]
-      if broken
+      if multiple
         dims[i] = max
-      else if dim < max
-        broken = true
+      if dim > 1
+        multiple = true
 
     quads = dims.reduce (a, b) -> a * b
 
