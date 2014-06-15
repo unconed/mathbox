@@ -76,6 +76,7 @@ class Vector extends Primitive
                 samples:  samples
                 ribbons:  ribbons
                 strips:   strips
+                layers:   layers
                 position: position
 
     if end
@@ -84,6 +85,7 @@ class Vector extends Primitive
                 samples:  samples
                 ribbons:  ribbons
                 strips:   strips
+                layers:   layers
                 position: position
 
     @resize()

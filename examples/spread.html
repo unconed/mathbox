@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Spread</title>
+  <script src="../build/mathbox-bundle.js"></script>
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(2.3, 1, 2);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    time = 0
+    three.on('update', function () {
+      time = three.Time.now
+    });
+
+    mathbox.cartesian({
+      id: 'cartesian',
+      range: [[-6, 6], [-1, 1], [-1, 1]],
+      scale: [6, 1, 1],
+    });
+
+    mathbox.interval({
+      length: 16,
+      expression: function (x, i, emit) {
+        var d = Math.sin((x + time));
+
+        emit(0);
+        emit(.5 + d * .5);
+      },
+      items: 2,
+      dimensions: 1,
+    });
+    mathbox.swizzle({
+      order: 'yx',
+    });
+    mathbox.spread({
+      axis: 1,
+      vector: [.1, 0, 0, 0],
+    });
+    mathbox.vector({
+      color: 0x3090FF,
+      width: 0.01,
+      size: 0.1,
+      start: true,
+      end: true,
+    });
+
+  </script>
+</body>
+</html>

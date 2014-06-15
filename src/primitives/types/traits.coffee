@@ -32,7 +32,7 @@ Traits =
     size:        Types.number(.05)
 
   view:
-    dimensions:  Types.number(3)
+    dimensions:  Types.int(3)
     range:       Types.array(Types.vec2(-1, 1), 4)
   span:
     range:       Types.nullable(Types.vec2(-1, 1))
@@ -45,7 +45,7 @@ Traits =
     bend:        Types.number(1)
 
   interval:
-    axis:        Types.number(1)
+    axis:        Types.int(1)
   area:
     axes:        Types.vec2(1, 2)
 
@@ -59,7 +59,7 @@ Traits =
     first:       Types.bool(true)
     second:      Types.bool(true)
   axis:
-    detail:      Types.number(1)
+    detail:      Types.int(1)
 
   geometry:
     points:      Types.select(Types.object())
@@ -70,15 +70,15 @@ Traits =
     expression:  Types.nullable(Types.func())
     source:      Types.nullable(Types.select(Types.object()))
     live:        Types.bool(true)
-    dimensions:  Types.number(3)
-    items:       Types.number(1)
+    dimensions:  Types.int(3)
+    items:       Types.int(1)
   array:
-    length:      Types.number(1)
-    history:     Types.number(1)
+    length:      Types.int(1)
+    history:     Types.int(1)
   matrix:
-    width:       Types.number(1)
-    height:      Types.number(1)
-    history:     Types.number(1)
+    width:       Types.int(1)
+    height:      Types.int(1)
+    history:     Types.int(1)
 
   transform:
     source:      Types.select(Types.object())
@@ -87,9 +87,18 @@ Traits =
     width:       Types.nullable(Types.number())
     height:      Types.nullable(Types.number())
     depth:       Types.nullable(Types.number())
+  spread:
+    axis:        Types.int(1)
+    vector:      Types.vec4(1, 0, 0, 0)
+    anchor:      Types.number(0)
   swizzle:
     order:       Types.swizzle()
   transpose:
     order:       Types.transpose()
+  repeat:
+    items:       Types.number(1)
+    width:       Types.number(1)
+    height:      Types.number(1)
+    depth:       Types.number(1)
 
 module.exports = Traits

@@ -147,7 +147,8 @@ class Matrix extends Data
       @height = length / @width
 
     if oldWidth  != @width or
-       oldHeight != @height
+       oldHeight != @height or
+       filled != @buffer.getFilled()
       @trigger
         type: 'resize'
 

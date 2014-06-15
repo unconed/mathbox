@@ -20,6 +20,9 @@ Classes =
 
   lerp:       require './transform/lerp'
   transpose:  require './transform/transpose'
+  swizzle:    require './transform/swizzle'
+  spread:     require './transform/spread'
+  repeat:     require './transform/repeat'
 
   group:      require './base/group'
   root:       require './base/root'

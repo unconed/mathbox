@@ -38,6 +38,7 @@ class Primitive
 
   make:   () ->
   unmake: () ->
+  change: (changed, touched, init) ->
 
   # Transform pipeline
   transform: (shader) ->

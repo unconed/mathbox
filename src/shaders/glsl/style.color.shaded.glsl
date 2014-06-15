@@ -22,5 +22,5 @@ vec4 getStyleColor() {
 	float cosineHalf = max(0.0, side * dot(normal, halfLight));
 	float specular = pow(cosineHalf, 16.0);
 	
-	return = vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);
+	return vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);
 }

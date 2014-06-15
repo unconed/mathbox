@@ -40,6 +40,12 @@ Types =
     validate: (value) ->
       !!value
 
+  int: (value = 0) ->
+    uniform: () -> 'i'
+    make: () -> +Math.round(value)
+    validate: (value) ->
+      +Math.round(value) || 0
+
   number: (value = 0) ->
     uniform: () -> 'f'
     make: () -> +value
