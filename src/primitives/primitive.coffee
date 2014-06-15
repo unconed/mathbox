@@ -44,6 +44,9 @@ class Primitive
   transform: (shader) ->
     @parent?.transform shader
 
+  present: (shader) ->
+    @parent?.present shader
+
   # Add/removal callback
   _added: () ->
     @rootNode = @node.root

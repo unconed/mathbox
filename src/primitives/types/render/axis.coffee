@@ -82,7 +82,7 @@ class Axis extends Primitive
        init
 
       dimension = @_get 'interval.axis'
-      range = @_helpers.span.get '', dimension
+      range = @_helpers.span.get '', Math.round(dimension)
 
       min = range.x
       max = range.y

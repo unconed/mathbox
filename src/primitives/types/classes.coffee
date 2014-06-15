@@ -23,6 +23,8 @@ Classes =
   swizzle:    require './transform/swizzle'
   spread:     require './transform/spread'
   repeat:     require './transform/repeat'
+  split:      require './transform/split'
+  join:       require './transform/join'
 
   group:      require './base/group'
   root:       require './base/root'

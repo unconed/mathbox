@@ -21,6 +21,7 @@ Traits =
     size:        Types.number(.01)
   line:
     width:       Types.number(.01)
+    depth:       Types.number(.5)
   mesh:
     solid:       Types.bool(true)
     shaded:      Types.bool(true)
@@ -72,6 +73,8 @@ Traits =
     live:        Types.bool(true)
     dimensions:  Types.int(3)
     items:       Types.int(1)
+  sampler:
+    centered:    Types.bool(false)
   array:
     length:      Types.int(1)
     history:     Types.int(1)
@@ -88,9 +91,25 @@ Traits =
     height:      Types.nullable(Types.number())
     depth:       Types.nullable(Types.number())
   spread:
-    axis:        Types.int(1)
-    vector:      Types.vec4(1, 0, 0, 0)
+    items:       Types.nullable(Types.vec4())
+    width:       Types.nullable(Types.vec4())
+    height:      Types.nullable(Types.vec4())
+    depth:       Types.nullable(Types.vec4())
     anchor:      Types.number(0)
+  split:
+    order:       Types.transpose()
+    items:       Types.nullable(Types.number())
+    width:       Types.nullable(Types.number())
+    height:      Types.nullable(Types.number())
+    depth:       Types.nullable(Types.number())
+    overlap:     Types.int(0)
+  join:
+    order:       Types.transpose()
+    items:       Types.nullable(Types.number())
+    width:       Types.nullable(Types.number())
+    height:      Types.nullable(Types.number())
+    depth:       Types.nullable(Types.number())
+    overlap:     Types.int(0)
   swizzle:
     order:       Types.swizzle()
   transpose:

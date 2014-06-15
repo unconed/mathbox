@@ -129,9 +129,10 @@ helpers =
       pointSize:   @node.attributes['point.size']
 
   line:
-    # Return bound stroke style uniforms
+    # Return bound line style uniforms
     uniforms: () ->
       lineWidth:   @node.attributes['line.width']
+      lineDepth:   @node.attributes['line.depth']
 
   surface:
     # Return bound surface style uniforms
@@ -169,6 +170,7 @@ helpers =
         objectMatrix: @objectMatrix
 
       @transform shader unless inline
+      @present   shader unless inline
 
   object:
 

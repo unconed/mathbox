@@ -35,7 +35,7 @@ class Root extends Parent
   update: () ->
     @trigger @event
 
-  transform: (shader) ->
+  present: (shader) ->
     shader.call 'view.position'
 
 module.exports = Root

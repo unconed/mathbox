@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Spread</title>
+  <title>MathBox - Split</title>
   <script src="../../build/mathbox-bundle.js"></script>
 </head>
 <body>
@@ -32,12 +32,14 @@
     mathbox.interval({
       length: 16,
       expression: function (x, i, emit) {
-        var d = Math.sin((x + time));
+        var d = Math.sin(x + time);
 
-        emit(0);
+        emit(.5);
         emit(.5 + d * .5);
+        emit(.5 + d);
+        emit(.5 + d * 1.5);
       },
-      items: 2,
+      items: 4,
       dimensions: 1,
     });
     mathbox.swizzle({
@@ -46,10 +48,12 @@
     mathbox.spread({
       width: [.1, 0, 0, 0],
     });
+    mathbox.split({
+      items: 3,
+      overlap: 1,
+    });
     mathbox.vector({
       color: 0x3090FF,
-      width: 0.01,
-      size: 0.1,
       start: true,
       end: true,
     });

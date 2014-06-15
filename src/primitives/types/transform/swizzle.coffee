@@ -6,14 +6,14 @@ class Swizzle extends Transform
 
   shader: (shader) ->
     @bind.source.shader shader
-    shader.call @swizzler
+    shader.call @swizzler if @swizzler
 
   make: () ->
     super
 
     # Swizzling order
     order = @_get 'swizzle.order'
-    @swizzler = Util.GLSL.swizzleVec4 order
+    @swizzler = Util.GLSL.swizzleVec4 order if order != 'xyzw'
 
     # Notify of reallocation
     @trigger
@@ -21,6 +21,7 @@ class Swizzle extends Transform
 
   unmake: () ->
     super
+    @swizzler = null
 
   change: (changed, touched, init) ->
     @rebuild() if touched['swizzle']

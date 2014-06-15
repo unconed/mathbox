@@ -125,8 +125,8 @@ class Grid extends Primitive
 
       # Fetch grid range in both dimensions
       axes   = @_get 'area.axes'
-      range1 = @_helpers.span.get 'x.', axes.x
-      range2 = @_helpers.span.get 'y.', axes.y
+      range1 = @_helpers.span.get 'x.', Math.round(axes.x)
+      range2 = @_helpers.span.get 'y.', Math.round(axes.y)
 
       # Update both line sets
       first  = @_get 'grid.first'

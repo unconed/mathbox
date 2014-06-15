@@ -12,7 +12,7 @@ class Transpose extends Transform
   @traits: ['node', 'bind', 'transform', 'transpose']
 
   shader: (shader) ->
-    shader.call @swizzler
+    shader.call @swizzler if @swizzler
     @bind.source.shader shader
 
   getDimensions: () ->
@@ -39,7 +39,7 @@ class Transpose extends Transform
     # Transposition order
     order = @_get 'transpose.order'
     @transpose = order.split ''
-    @swizzler  = Util.GLSL.invertSwizzleVec4 order
+    @swizzler  = Util.GLSL.invertSwizzleVec4 order if order != 'xyzw'
 
     # Notify of reallocation
     @trigger
@@ -47,6 +47,7 @@ class Transpose extends Transform
 
   unmake: () ->
     super
+    @swizzler = null
 
   change: (changed, touched, init) ->
     @rebuild() if touched['transpose']
