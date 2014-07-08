@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Axis</title>
+  <title>MathBox - World</title>
   <script src="../../build/mathbox-bundle.js"></script>
 </head>
 <body>
@@ -18,19 +18,24 @@
     three.camera.position.set(2.3, 1, 2);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    mathbox.cartesian({
-      range: [[-2, 2], [-1, 1], [-1, 1]],
-      scale: [2, 1, 1],
+    view = mathbox.cartesian({
+      range: [[-1, 1], [-1, 1], [-1, 1]],
+      scale: [1, 1, 1],
+      rotation: [.866, 0, 0, -.5]
     });
-    mathbox.axis({
-      detail: 20,
+
+    view.world({
+      position: [2, 0, 0],
+      rotation: [.866, 0, -.5, 0]
+    }).grid({
+      width: 0.005,
     });
-    mathbox.axis({
-      axis: 2,
-    });
-    mathbox.ticks({
-      classes: ['foo', 'bar'],
-      divide: 10,
+
+    view.world({
+      position: [-2, 0, 0],
+      rotation: [.866, 0, .5, 0],
+    }).grid({
+      width: 0.005,
     });
   </script>
 </body>

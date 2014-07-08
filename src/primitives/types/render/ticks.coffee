@@ -87,8 +87,8 @@ class Ticks extends Primitive
       max   = range.y
       ticks = @_helpers.scale.generate '', @buffer, min, max
 
-      Util.setDimension       @tickAxis,   dimension
-      Util.setDimensionNormal @tickNormal, dimension
+      Util.Axis.setDimension       @tickAxis,   dimension
+      Util.Axis.setDimensionNormal @tickNormal, dimension
 
       # Clip to number of ticks
       n = ticks.length

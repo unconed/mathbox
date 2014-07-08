@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Hopf Fibration</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(2.3, 1, 2);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    time = 0
+    three.on('update', function () {
+      time = three.Time.now
+    });
+
+    mathbox.stereographic4({
+      range: [[-1, 1], [-1, 1], [-1, 1], [-1, 1]],
+      scale: [1, 1, 1, 1],
+    });
+
+    mathbox.axis({
+      axis: 1,
+      detail: 31,
+      position: [0, 0, 0, 1],
+    });
+
+    mathbox.axis({
+      axis: 2,
+      detail: 31,
+      position: [0, 0, 0, 1],
+    });
+
+    mathbox.axis({
+      axis: 3,
+      detail: 31,
+      position: [0, 0, 0, 1],
+    });
+
+    mathbox.axis({
+      axis: 4,
+      detail: 31,
+      position: [0, 0, 0, 1],
+    });
+
+    mathbox.area({
+      rangeX: [-π, π],
+      rangeY: [-1, 1],
+      width: 32,
+      height: 8,
+      expression: function (x, y, i, j, emit) {
+        θ = π / 2 * (
+              Math.cos(time * .31 + Math.cos(time * .481 - Math.sin(time * .318)) + Math.sin(time * 1.179))
+            + Math.cos(time * .61 - Math.sin(time * .305 - Math.cos(time * .573)) + Math.cos(time * 0.962))
+          )
+        ϕ = time + Math.sin(time * .51 - Math.cos(time * .527 + Math.sin(time * .113)) + Math.sin(time * 1.224))
+
+        ξ1 = ϕ + y / 2
+        ξ2 = x
+        η  = θ
+
+        sum  = ξ1 + ξ2
+        diff = ξ1 - ξ2
+
+        s = Math.sin(η)
+        c = Math.cos(η)
+
+        x = Math.cos(sum)  * s
+        y = Math.sin(sum)  * s
+        z = Math.cos(diff) * c
+        w = Math.sin(diff) * c
+
+        emit(x, y, z, w);
+      },
+      dimensions: 4,
+    });
+    mathbox.line({
+      color: 0x3080FF,
+      width: 0.01,
+    });
+    mathbox.point({
+      color: 0xc02050,
+      size: 0.02,
+    });
+
+  </script>
+</body>
+</html>

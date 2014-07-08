@@ -3,8 +3,8 @@ mathBox = (options) ->
   options ?= {}
 
   three = THREE.Bootstrap options
-  three.install 'mathbox' if !three.mathbox?
-  three.mathbox
+  three.install 'mathbox' if !three.MathBox?
+  three.mathbox ? three
 
 # Just because
 window.π = Math.PI
@@ -15,14 +15,14 @@ window.MathBox = exports
 window.mathBox = exports.mathBox = mathBox
 exports.version = '2'
 
-# Inject Shaders
+# Inject shaders
 require '../build/shaders'
 
 # Load context and export namespace
 Context = require './context'
 exports[k] = v for k, v of Context.Namespace
 
-# Threestrap Plugin
+# Threestrap plugin
 THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:
     init: true
@@ -59,7 +59,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
         delete @context.api.three
         delete @context
 
-      object: () -> @context?.scene.getRoot()
+      object: () => @context?.scene.root
 
   uninstall: (three) ->
     three.MathBox.destroy()

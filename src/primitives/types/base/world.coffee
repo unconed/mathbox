@@ -13,5 +13,6 @@ class World extends Parent
 
   present: (shader) ->
     @_helpers.position.shader shader, true
+    @parent?.present shader
 
-module.exports = Group
+module.exports = World

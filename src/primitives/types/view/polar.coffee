@@ -7,10 +7,6 @@ class Polar extends View
   make: () ->
     super
 
-    positionUniforms =
-      axisPosition:   @_attributes.make @_types.vec4()
-      axisStep:       @_attributes.make @_types.vec4()
-
     types = @_attributes.types
     @uniforms =
       polarBend:   @node.attributes['polar.bend']
@@ -62,20 +58,7 @@ class Polar extends View
     idx = if dx > 0 then 1 else -1
 
     # Recenter viewport on origin the more it's bent
-    if bend > 0
-      y1 = y
-      y2 = y + dy
-
-      abs = Math.max Math.abs(y1), Math.abs(y2) * Util.Ease.cosine(bend)
-
-      min = Math.min y1, y2
-      max = Math.max y1, y2
-
-      min = Math.min min, -abs
-      max = Math.max max, abs
-
-      y = min
-      dy = max - min
+    [y, dy] = Util.Axis.recenterAxis y, dy, bend
 
     # Adjust viewport range for polar transform.
     # As the viewport goes polar, the X-range is interpolated to the Y-range instead,

@@ -7,10 +7,6 @@ class Spherical extends View
   make: () ->
     super
 
-    positionUniforms =
-      axisPosition:   @_attributes.make @_types.vec4()
-      axisStep:       @_attributes.make @_types.vec4()
-
     types = @_attributes.types
     @uniforms =
       sphericalBend:    @node.attributes['spherical.bend']
@@ -58,41 +54,13 @@ class Spherical extends View
     sy = s.y
     sz = s.z
 
+    # Recenter viewport on origin the more it's bent
+    [y, dy] = Util.Axis.recenterAxis y, dy, bend
+    [z, dz] = Util.Axis.recenterAxis z, dz, bend
+
     # Watch for negative scales.
     idx = if dx > 0 then 1 else -1
     idy = if dy > 0 then 1 else -1
-
-    # Recenter viewport on origin the more it's bent
-    if bend > 0
-      # Y axis
-      y1 = y
-      y2 = y + dy
-
-      abs = Math.max Math.abs(y1), Math.abs(y2) * Util.Ease.cosine(bend)
-
-      min = Math.min y1, y2
-      max = Math.max y1, y2
-
-      min = Math.min min, -abs
-      max = Math.max max, abs
-
-      y = min
-      dy = max - min
-
-      z1 = z
-      z2 = z + dz
-
-      # Z axis
-      abs = Math.max Math.abs(z1), Math.abs(z2) * Util.Ease.cosine(bend)
-
-      min = Math.min z1, z2
-      max = Math.max z1, z2
-
-      min = Math.min min, -abs
-      max = Math.max max, abs
-
-      z = min
-      dz = max - min
 
     # Adjust viewport range for spherical transform.
     # As the viewport goes spherical, the X/Y-ranges are interpolated to the Z-range,

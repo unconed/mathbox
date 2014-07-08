@@ -14,7 +14,7 @@ class API
     node = @_controller.make type, options
 
     # Backwards compatibility: push root leafs into first group if present
-    target = @target ? @_controller.getRoot()
+    target = @_target ? @_controller.getRoot()
     if !node.children &&
        target == @_controller.getRoot()
       target = (object for object in target.children when object.children?)[0] || target

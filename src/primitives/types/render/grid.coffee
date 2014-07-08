@@ -103,14 +103,14 @@ class Grid extends Primitive
       # Set line steps along first axis
       min    = range1.x
       max    = range1.y
-      Util.setDimension(values.gridPosition, x).multiplyScalar(min)
-      Util.setDimension(values.gridStep,     x).multiplyScalar((max - min) * resolution)
+      Util.Axis.setDimension(values.gridPosition, x).multiplyScalar(min)
+      Util.Axis.setDimension(values.gridStep,     x).multiplyScalar((max - min) * resolution)
 
       # Calculate scale along second axis
       min    = range2.x
       max    = range2.y
       ticks  = @_helpers.scale.generate second, buffer, min, max
-      Util.setDimension values.gridAxis, y
+      Util.Axis.setDimension values.gridAxis, y
 
       # Clip to number of ticks
       n = ticks.length

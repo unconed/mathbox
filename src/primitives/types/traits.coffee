@@ -33,16 +33,22 @@ Traits =
     size:        Types.number(.05)
 
   view:
-    dimensions:  Types.int(3)
     range:       Types.array(Types.vec2(-1, 1), 4)
+  view4:
+    projection:  Types.mat4(1, 0, 0, .577,
+                            0, 1, 0, .577,
+                            0, 0, 1, .577,
+                            0, 0, 0, 0)
   span:
     range:       Types.nullable(Types.vec2(-1, 1))
+
 
   polar:
     bend:        Types.number(1)
     helix:       Types.number(0)
-
   spherical:
+    bend:        Types.number(1)
+  stereographic:
     bend:        Types.number(1)
 
   interval:

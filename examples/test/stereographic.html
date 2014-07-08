@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Stereographic</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(0, 0, 10);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    time = 0
+    q1 = new THREE.Quaternion();
+    q2 = new THREE.Quaternion();
+    three.on('update', function () {
+      time = three.Time.now
+
+      q1.x = Math.cos(time * .123);
+      q1.y = Math.cos(time * .224 - 1);
+      q1.z = Math.cos(time * .161 + 1);
+      q1.w = Math.cos(time * .193 + 2);
+      q1.normalize();
+
+      q2.slerp(q1, .05);
+
+      spherical._target.set('rotation', q2);
+    });
+
+    stereo = mathbox.stereographic({
+      scale: [2, 2, 2],
+      bend: 1,
+    });
+
+    spherical = stereo.spherical({
+      range: [[-π, π], [-π/2, π/2], [-1, 1]],
+    });
+
+    spherical.grid({
+      detailX: 128,
+      detailY: 128,
+      unitX: π,
+      unitY: π,
+      divideX: 20,
+      divideY: 20,
+      position: [0, 0, 1]
+    });
+
+  </script>
+</body>
+</html>

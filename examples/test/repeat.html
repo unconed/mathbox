@@ -15,7 +15,7 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(-6, 3, 5.5);
+    three.camera.position.set(6, 3, -7);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     time = 0
@@ -25,7 +25,7 @@
 
     mathbox.polar({
       bend: 1/128,
-      range: [[-π, π], [-2, 2], [-π, π]],
+      range: [[-π, π], [-1, 2], [-1, 1]],
       scale: [2, 1, 2],
     });
     mathbox.grid({
@@ -33,18 +33,19 @@
       unitX: π,
       unitY: π,
       opacity: .5,
-      detailX: 10,
+      detailX: 60,
+      rangeX: [-20*π, 20*π],
     });
 
     mathbox.interval({
       length: 32,
-      centered: true,
+      centered: false,
       expression: function (x, i, emit) {
-        var d = Math.sin(x + time) * .7 * 2;
-        var q = Math.cos(x - time * .917) * .35 * 2
+        var a = Math.sin(x + time) * .7 * 2;
+        var b = Math.cos(x - time * .917) * .35 * 2
 
-        emit(.5 + q);
-        emit(.5 + d);
+        emit(a);
+        emit(b);
       },
       items: 2,
       dimensions: 1,
@@ -52,24 +53,31 @@
     mathbox.swizzle({
       order: 'yx',
     });
-    mathbox.lerp({
-      items: 3,
-    });
     mathbox.repeat({
-      height: 15,
-      depth: 15,
+      height: 20,
+      depth: 11,
     });
     mathbox.spread({
-      width: [π/32, 0, 0, 0],
+      id: 'spread',
+      width: [π/31, 0, 0, 0],
       height: [π, 0, 0, 0],
-      depth: [0, 0, π/9, 0],
+      depth: [0, 0, 1/10, 0],
+      anchor: 0,
     });
     mathbox.transpose({
       order: 'zwxy'
     });
     mathbox.surface({
       color: 0x3090FF,
-      position: [0, 3, 0],
+      position: [0, 2, 0],
+    });
+    mathbox.transpose({
+      source: '#spread',
+      order: 'wxzy',
+    });
+    mathbox.surface({
+      color: 0x3090FF,
+      position: [0, 2, 0],
     });
 
   </script>

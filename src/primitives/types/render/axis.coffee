@@ -87,8 +87,8 @@ class Axis extends Primitive
       min = range.x
       max = range.y
 
-      Util.setDimension(@axisPosition, dimension).multiplyScalar(min)
-      Util.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
+      Util.Axis.setDimension(@axisPosition, dimension).multiplyScalar(min)
+      Util.Axis.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
 
 
 module.exports = Axis

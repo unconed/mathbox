@@ -1,15 +1,20 @@
 View = require('./view')
+Util = require '../../../util'
 
-class Cartesian extends View
+class Stereographic extends View
+  @traits: ['node', 'object', 'view', 'stereographic']
 
   make: () ->
     super
 
+    types = @_attributes.types
     @uniforms =
-      viewMatrix:          @_attributes.make @_types.mat4()
+      stereoBend:     @node.attributes['stereographic.bend']
+      viewMatrix:     @_attributes.make @_types.mat4()
 
     @viewMatrix          = @uniforms.viewMatrix.value
     @rotationMatrix      = new THREE.Matrix4()
+    @positionMatrix      = new THREE.Matrix4()
 
     @scale               = new THREE.Vector3(1, 1, 1)
 
@@ -23,7 +28,9 @@ class Cartesian extends View
 
   change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or init
+    return unless touched['object'] or touched['view'] or touched['stereographic'] or init
+
+    @bend = bend = @_get 'stereographic.bend'
 
     o = @_get 'object.position'
     s = @_get 'object.scale'
@@ -39,6 +46,11 @@ class Cartesian extends View
     sx = s.x
     sy = s.y
     sz = s.z
+
+    # Recenter viewport on projection point the more it's bent
+    [z, dz] = Util.Axis.recenterAxis z, dz, bend, 1
+
+    @uniforms.stereoBend.value    = bend
 
     # Forward transform
     @viewMatrix.set(
@@ -57,8 +69,15 @@ class Cartesian extends View
     vector.applyMatrix4 @viewMatrix
 
   transform: (shader) ->
-    shader.call 'cartesian.position', @uniforms
+    shader.call 'stereographic.position', @uniforms
     @parent?.transform shader
+
+  axis: (dimension) ->
+    range = @_get('view.range')[dimension - 1]
+    min = range.x
+    max = range.y
+
+    return new THREE.Vector2 min, max
 
   ###
   from: (vector) ->
@@ -66,4 +85,4 @@ class Cartesian extends View
   },
   ###
 
-module.exports = Cartesian
+module.exports = Stereographic

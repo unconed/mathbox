@@ -141,6 +141,7 @@ helpers =
   position:
     make: () ->
       @objectMatrix = @_attributes.make @_attributes.types.mat4()
+      @object4D     = @_attributes.make @_attributes.types.vec2()
 
       @handlers.position = (event) =>
         changed = event.changed
@@ -155,6 +156,7 @@ helpers =
         q = @_get 'object.rotation'
 
         @objectMatrix.value.compose o, q, s
+        @object4D    .value.set o.w, s.w
 
       @node.on  'change:object', @handlers.position
       recalc()
@@ -168,6 +170,7 @@ helpers =
     shader: (shader, inline) ->
       shader.call 'object.position',
         objectMatrix: @objectMatrix
+        object4D:     @object4D
 
       @transform shader unless inline
       @present   shader unless inline

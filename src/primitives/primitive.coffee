@@ -28,6 +28,8 @@ class Primitive
     @_helpers = helpers @, @node.traits
     @handlers = {}
 
+    @root = @rootNode = @parent = null
+
   # Construction of renderables
 
   rebuild: () ->
@@ -57,9 +59,11 @@ class Primitive
     @change {}, {}, true
 
   _removed: () ->
-    @root    = null
-    @parent  = null
-    @parents = null
+    @unmake()
+
+    @root     = null
+    @rootNode = null
+    @parent   = null
 
   # Attribute changes
 

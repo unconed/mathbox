@@ -1,12 +1,15 @@
 View = require('./view')
+Util = require '../../../util'
 
-class Cartesian4 extends View
-  @traits: ['node', 'object', 'view', 'view4']
+class Stereographic4 extends View
+  @traits: ['node', 'object', 'view', 'view4', 'stereographic']
 
   make: () ->
     super
 
     @uniforms =
+      stereoBend:          @node.attributes['stereographic.bend']
+      projectionMatrix:    @node.attributes['view4.projection']
       viewMatrix:          @_attributes.make @_types.mat4()
       basisScale:          @_attributes.make @_types.vec4()
       basisOffset:         @_attributes.make @_types.vec4()
@@ -31,6 +34,8 @@ class Cartesian4 extends View
 
     return unless touched['object'] or touched['view'] or init
 
+    @bend = bend = @_get 'stereographic.bend'
+
     o = @_get 'object.position'
     s = @_get 'object.scale'
     q = @_get 'object.rotation'
@@ -49,6 +54,11 @@ class Cartesian4 extends View
     sz = s.z
     sw = s.w
 
+    # Recenter viewport on projection point the more it's bent
+    [w, dw] = Util.Axis.recenterAxis w, dw, bend, 1
+
+    @uniforms.stereoBend.value    = bend
+
     # 4D -> 3D transform
     @basisScale .set 2*sx/dx, 2*sy/dy, 2*sz/dz, 2*sw/dw
     @basisOffset.set -(2*x+dx)*sx/dx, -(2*y+dy)*sy/dy, -(2*z+dz)*sz/dz, -(2*w+dw)*sw/dw
@@ -65,13 +75,7 @@ class Cartesian4 extends View
     @v3.applyMatrix4 @viewMatrix
 
   transform: (shader) ->
-    shader.call 'cartesian4.position', @uniforms
+    shader.call 'stereographic4.position', @uniforms
     @parent?.transform shader
 
-  ###
-  from: (vector) ->
-    this.inverse.multiplyVector3(vector);
-  },
-  ###
-
-module.exports = Cartesian4
+module.exports = Stereographic4
