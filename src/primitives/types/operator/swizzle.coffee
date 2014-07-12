@@ -1,8 +1,8 @@
-Transform = require './transform'
-Util      = require '../../../util'
+Operator = require './operator'
+Util     = require '../../../util'
 
-class Swizzle extends Transform
-  @traits: ['node', 'bind', 'transform', 'swizzle']
+class Swizzle extends Operator
+  @traits: ['node', 'bind', 'operator', 'swizzle']
 
   shader: (shader) ->
     @bind.source.shader shader

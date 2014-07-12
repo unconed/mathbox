@@ -2,7 +2,7 @@
 window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw);\n  left  = getPosition(vec4(near, xyzw.yzw));\n  start = getPosition(vec4(far, xyzw.yzw));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sizeNB = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sizeNB,  0),\n              vec4(b * sizeNB,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
 "axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw) {\n  return axisStep * xyzw.x + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
-"cartesian4.position": "uniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform mat4 projectionMatrix;\n\nvec4 getCartesian4Position(vec4 position) {\n  vec4 pos4 = position * basisScale - basisOffset;\n  vec3 pos3 = (projectionMatrix * pos4).xyz;\n  return viewMatrix * vec4(pos3, 1.0);\n}\n",
+"cartesian4.position": "uniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getCartesian4Position(vec4 position) {\n  vec4 pos4 = position * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n",
 "fragment.clip": "varying vec2 vClip;\n\nvoid clipFragment() {\n  if (vClip.x < 0.0 || vClip.y < 0.0) discard;\n}\n",
 "fragment.color": "void setFragmentColor(vec4 color) {\n\tgl_FragColor = color;\n}",
 "fragment.round": "varying vec2 vSprite;\nvarying float vPixelSize;\n\nvoid setFragmentColor(vec4 color) {\n  float c = dot(vSprite, vSprite);\n  if (c > 1.0) {\n    discard;\n  }\n  float alpha = min(1.0, vPixelSize * (1.0 - c));\n\tgl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n",
@@ -15,9 +15,11 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "line.clip": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float lineWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClip;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid clipPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, position4.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, position4.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClip = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClip.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClip.y = d / range - 1.0;\n  }\n}",
 "line.position": "uniform float lineWidth;\nuniform float lineDepth;\nuniform vec4 geometryClip;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 p = min(geometryClip, position4);\n  getLineGeometry(p, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  \n  float width = lineWidth;\n  if (lineDepth < 1.0) {\n    width /= mix(1.0/max(0.001, -center.z), 1.0, lineDepth);\n  }\n  \n  return center + join * offset * width;\n}\n",
 "map.2d.xyzw": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 map2Dxyzw(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
-"object.position": "uniform mat4 objectMatrix;\nuniform vec2 object4D;\n\nvec4 getObjectPosition(vec4 position) {\n  vec3 xyz = (objectMatrix * vec4(position.xyz, 1.0)).xyz;\n  return vec4(xyz, position.w * object4D.y + object4D.x);\n}\n",
+"object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
+"object4.position": "uniform mat4 objectMatrix;\nuniform vec2 object4D;\n\nvec4 getObject4Position(vec4 position) {\n  vec3 xyz = (objectMatrix * vec4(position.xyz, 1.0)).xyz;\n  return vec4(xyz, position.w * object4D.y + object4D.x);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "project.position": "uniform float styleZBias;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  pos.z *= (1.0 - styleZBias / 32768.0);\n  gl_Position = pos;\n}\n",
+"project4.position": "uniform mat4 projectionMatrix;\n\nvec4 getProject4Position(vec4 position) {\n  vec3 pos3 = (projectionMatrix * position).xyz;\n  return vec4(pos3, 1.0);\n}\n",
 "repeat.position": "uniform vec4 repeatModulus;\n\nvec4 getRepeatXYZW(vec4 xyzw) {\n  return mod(xyzw, repeatModulus);\n}\n",
 "sample.2d.1": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).x, 0.0, 0.0, 0.0);\n}\n",
 "sample.2d.2": "uniform sampler2D dataTexture;\nuniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec4 sampleData(vec2 xy) {\n  vec2 uv = fract((xy + dataPointer) * dataResolution);\n  return vec4(texture2D(dataTexture, uv).xw, 0.0, 0.0);\n}\n",
@@ -28,7 +30,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "spread.position": "uniform vec4 spreadOffset;\nuniform mat4 spreadMatrix;\n\n// External\nvec4 getValue(vec4 xyzw);\n\nvec4 getSpreadValue(vec4 xyzw) {\n  vec4 sample = getValue(xyzw);\n  return sample + spreadMatrix * (spreadOffset + xyzw);\n}\n",
 "sprite.position": "uniform float pointSize;\nuniform float renderScale;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getPointPosition() {\n  vec3 center = getPosition(position4);\n\n  float pixelSize = renderScale * pointSize / -center.z;\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * pointSize * padFactor, 0.0);\n}\n",
 "stereographic.position": "uniform float stereoBend;\n\nuniform mat4 viewMatrix;\n\nvec4 getStereoPosition(vec4 position) {\n  if (stereoBend > 0.0001) {\n\n    vec3 pos = position.xyz;\n    float r = length(pos);\n    float z = r + pos.z;\n    vec3 project = vec3(pos.xy / z, r);\n    \n    vec3 lerped = mix(pos, project, stereoBend);\n\n    return viewMatrix * vec4(lerped, 1.0);\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"stereographic4.position": "uniform float stereoBend;\nuniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform mat4 projectionMatrix;\n\nvec4 getStereographic4Position(vec4 position) {\n  \n  vec4 stereo;\n  if (stereoBend > 0.0001) {\n\n    float r = length(position);\n    float w = r + position.w;\n    vec4 project = vec4(position.xyz / w, r);\n    \n    stereo = mix(position, project, stereoBend);\n  }\n  else {\n    stereo = position;\n  }\n\n  vec4 pos4 = stereo * basisScale - basisOffset;\n  vec3 pos3 = (projectionMatrix * pos4).xyz;\n  return viewMatrix * vec4(pos3, 1.0);\n}\n",
+"stereographic4.position": "uniform float stereoBend;\nuniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getStereographic4Position(vec4 position) {\n  \n  vec4 transformed;\n  if (stereoBend > 0.0001) {\n\n    float r = length(position);\n    float w = r + position.w;\n    vec4 project = vec4(position.xyz / w, r);\n    \n    transformed = mix(position, project, stereoBend);\n  }\n  else {\n    transformed = position;\n  }\n\n  vec4 pos4 = transformed * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvec4 getStyleColor() {\n\treturn vec4(styleColor, styleOpacity);\n}\n",
 "style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec4 getStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\treturn vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getSurfacePosition() {\n  return getPosition(position4);\n}\n",
@@ -4647,7 +4649,7 @@ Context = (function() {
 module.exports = Context;
 
 
-},{"./model":23,"./primitives":27,"./render":80,"./shaders":91,"./stage":96,"./util":100}],20:[function(require,module,exports){
+},{"./model":23,"./primitives":27,"./render":82,"./shaders":93,"./stage":98,"./util":102}],20:[function(require,module,exports){
 var Context, k, mathBox, v, _ref;
 
 mathBox = function(options) {
@@ -4775,10 +4777,10 @@ THREE.Bootstrap.registerPlugin('mathbox', {
 
 /*
  Custom attribute model
- - Organizes attributes by trait/namespace so the usage in code is organized
- - Provides shorthand aliases to access via simpler flat namespace API
+ - Organizes attributes by trait
+ - Provides shorthand aliases to access via flat namespace API
  - Values are stored in three.js uniform-style objects by reference
- - Type validators/setters avoid copying value objects on write
+ - Type validators and setters avoid copying value objects on write
  - Coalesces update notifications per object and per trait
  
   Actual type and trait definitions are injected from Primitives
@@ -4836,7 +4838,7 @@ Attributes = (function() {
 
 Data = (function() {
   function Data(object, traits, attributes) {
-    var change, changed, define, digest, dirty, event, from, get, getNS, key, list, makers, mapFrom, mapTo, name, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _len, _ref;
+    var change, changed, define, digest, dirty, event, from, get, getNS, key, list, makers, mapFrom, mapTo, name, ns, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _len, _ref;
     if (traits == null) {
       traits = [];
     }
@@ -4868,6 +4870,9 @@ Data = (function() {
       return function(key, value, ignore) {
         var replace;
         key = to(key);
+        if (validators[key] == null) {
+          throw "wat";
+        }
         if (validators[key] == null) {
           return console.warn("Setting unknown property `" + key + "`");
         }
@@ -4980,10 +4985,8 @@ Data = (function() {
     values = {};
     for (_i = 0, _len = traits.length; _i < _len; _i++) {
       trait = traits[_i];
-      _ref = trait.split(':'), trait = _ref[0], name = _ref[1];
-      if (name == null) {
-        name = trait;
-      }
+      _ref = trait.split(':'), trait = _ref[0], ns = _ref[1];
+      name = ns ? [ns, trait].join('.') : trait;
       spec = attributes.getTrait(trait);
       list.push(trait);
       if (!spec) {
@@ -5575,7 +5578,8 @@ Group = (function(_super) {
   };
 
   Group.prototype.transform = function(shader) {
-    return this._helpers.position.shader(shader, true);
+    this._helpers.position.shader(shader, true);
+    return Group.__super__.transform.apply(this, arguments);
   };
 
   return Group;
@@ -5779,23 +5783,23 @@ Classes = {
   ticks: require('./render/ticks'),
   vector: require('./render/vector'),
   cartesian: require('./view/cartesian'),
+  cartesian4: require('./view/cartesian4'),
   polar: require('./view/polar'),
   spherical: require('./view/spherical'),
   stereographic: require('./view/stereographic'),
-  view: require('./view/view'),
-  cartesian4: require('./view/cartesian4'),
   stereographic4: require('./view/stereographic4'),
+  project4: require('./transform/project4'),
   array: require('./data/array'),
   interval: require('./data/interval'),
   matrix: require('./data/matrix'),
   area: require('./data/area'),
-  lerp: require('./transform/lerp'),
-  transpose: require('./transform/transpose'),
-  swizzle: require('./transform/swizzle'),
-  spread: require('./transform/spread'),
-  repeat: require('./transform/repeat'),
-  split: require('./transform/split'),
-  join: require('./transform/join'),
+  lerp: require('./operator/lerp'),
+  transpose: require('./operator/transpose'),
+  swizzle: require('./operator/swizzle'),
+  spread: require('./operator/spread'),
+  repeat: require('./operator/repeat'),
+  split: require('./operator/split'),
+  join: require('./operator/join'),
   world: require('./base/world'),
   group: require('./base/group'),
   root: require('./base/root')
@@ -5804,7 +5808,7 @@ Classes = {
 module.exports = Classes;
 
 
-},{"./base/group":29,"./base/root":31,"./base/world":33,"./data/area":35,"./data/array":36,"./data/interval":38,"./data/matrix":39,"./render/axis":42,"./render/grid":43,"./render/line":44,"./render/point":45,"./render/surface":46,"./render/ticks":47,"./render/vector":48,"./transform/join":50,"./transform/lerp":51,"./transform/repeat":52,"./transform/split":53,"./transform/spread":54,"./transform/swizzle":55,"./transform/transpose":57,"./view/cartesian":59,"./view/cartesian4":60,"./view/polar":61,"./view/spherical":62,"./view/stereographic":63,"./view/stereographic4":64,"./view/view":65}],35:[function(require,module,exports){
+},{"./base/group":29,"./base/root":31,"./base/world":33,"./data/area":35,"./data/array":36,"./data/interval":38,"./data/matrix":39,"./operator/join":42,"./operator/lerp":43,"./operator/repeat":45,"./operator/split":46,"./operator/spread":47,"./operator/swizzle":48,"./operator/transpose":49,"./render/axis":50,"./render/grid":51,"./render/line":52,"./render/point":53,"./render/surface":54,"./render/ticks":55,"./render/vector":56,"./transform/project4":58,"./view/cartesian":61,"./view/cartesian4":62,"./view/polar":63,"./view/spherical":64,"./view/stereographic":65,"./view/stereographic4":66}],35:[function(require,module,exports){
 var Area, Matrix,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -5818,25 +5822,29 @@ Area = (function(_super) {
     return Area.__super__.constructor.apply(this, arguments);
   }
 
-  Area.traits = ['node', 'data', 'matrix', 'span:x.span', 'span:y.span', 'area', 'sampler'];
+  Area.traits = ['node', 'data', 'matrix', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y'];
 
   Area.prototype.callback = function(callback) {
-    var aX, aY, bX, bY, centered, dimensions, height, inverseX, inverseY, rangeX, rangeY, width;
+    var aX, aY, bX, bY, centeredX, centeredY, dimensions, height, inverseX, inverseY, rangeX, rangeY, width;
     dimensions = this._get('area.axes');
     width = this._get('matrix.width');
     height = this._get('matrix.height');
-    centered = this._get('sampler.centered');
+    centeredX = this._get('x.sampler.centered');
+    centeredY = this._get('y.sampler.centered');
     rangeX = this._helpers.span.get('x.', dimensions.x);
     rangeY = this._helpers.span.get('y.', dimensions.y);
     aX = rangeX.x;
     aY = rangeY.x;
-    if (centered) {
+    if (centeredX) {
       inverseX = 1 / Math.max(1, width);
-      inverseY = 1 / Math.max(1, height);
       aX += inverseX / 2;
-      aY += inverseY / 2;
     } else {
       inverseX = 1 / Math.max(1, width - 1);
+    }
+    if (centeredY) {
+      inverseY = 1 / Math.max(1, height);
+      aY += inverseY / 2;
+    } else {
       inverseY = 1 / Math.max(1, height - 1);
     }
     bX = (rangeX.y - rangeX.x) * inverseX;
@@ -6365,28 +6373,37 @@ helpers = {
   span: {
     make: function() {
       this.span = this._inherit(View);
-      this.handlers.span = (function(_this) {
-        return function(event) {
-          return _this.change({}, {}, true);
-        };
-      })(this);
-      return this.span.on('range', this.handlers.span);
+      if (this.span != null) {
+        this.handlers.span = (function(_this) {
+          return function(event) {
+            return _this.change({}, {}, true);
+          };
+        })(this);
+        return this.span.on('range', this.handlers.span);
+      }
     },
     unmake: function() {
-      this.span.off('range', this.handlers.span);
-      delete this.span;
-      return delete this.handlers.span;
+      if (this.span != null) {
+        this.span.off('range', this.handlers.span);
+        delete this.handlers.span;
+      }
+      return delete this.span;
     },
-    get: function(prefix, dimension) {
-      var range;
-      range = this._get(prefix + 'span.range');
-      if (range != null) {
-        return range;
-      }
-      if (this.span) {
-        return this.span.axis(dimension);
-      }
-    }
+    get: (function() {
+      var def;
+      def = new THREE.Vector2(-1, 1);
+      return function(prefix, dimension) {
+        var range;
+        range = this._get(prefix + 'span.range');
+        if (range != null) {
+          return range;
+        }
+        if (this.span != null) {
+          return this.span.axis(dimension);
+        }
+        return def;
+      };
+    })()
   },
   scale: {
     divide: function(prefix) {
@@ -6453,18 +6470,13 @@ helpers = {
   },
   position: {
     make: function() {
-      var recalc;
+      var dims, recalc, _ref, _ref1;
+      this.position = this._inherit(View);
+      dims = this.dimensions = (_ref = (_ref1 = this.position) != null ? _ref1.dimensions() : void 0) != null ? _ref : 3;
       this.objectMatrix = this._attributes.make(this._attributes.types.mat4());
-      this.object4D = this._attributes.make(this._attributes.types.vec2());
-      this.handlers.position = (function(_this) {
-        return function(event) {
-          var changed;
-          changed = event.changed;
-          if (changed['object.position'] || changed['object.rotation'] || changed['object.scale']) {
-            return recalc();
-          }
-        };
-      })(this);
+      if (dims === 4) {
+        this.object4D = this._attributes.make(this._attributes.types.vec2());
+      }
       recalc = (function(_this) {
         return function() {
           var o, q, s;
@@ -6472,7 +6484,18 @@ helpers = {
           s = _this._get('object.scale');
           q = _this._get('object.rotation');
           _this.objectMatrix.value.compose(o, q, s);
-          return _this.object4D.value.set(o.w, s.w);
+          if (dims === 4) {
+            return _this.object4D.value.set(o.w, s.w);
+          }
+        };
+      })(this);
+      this.handlers.position = (function(_this) {
+        return function(event) {
+          var changed;
+          changed = event.changed;
+          if (changed['object.position'] || changed['object.rotation'] || changed['object.scale']) {
+            return recalc();
+          }
         };
       })(this);
       this.node.on('change:object', this.handlers.position);
@@ -6484,7 +6507,16 @@ helpers = {
       return delete this.handlers.position;
     },
     shader: function(shader, inline) {
-      shader.call('object.position', {
+      var id;
+      id = (function() {
+        switch (this.dimensions) {
+          case 4:
+            return 'object4.position';
+          default:
+            return 'object.position';
+        }
+      }).call(this);
+      shader.call(id, {
         objectMatrix: this.objectMatrix,
         object4D: this.object4D
       });
@@ -6608,7 +6640,7 @@ module.exports = function(object, traits) {
 };
 
 
-},{"../../util":100,"./view/view":65}],41:[function(require,module,exports){
+},{"../../util":102,"./view/view":67}],41:[function(require,module,exports){
 var Model;
 
 Model = require('../../model');
@@ -6622,7 +6654,687 @@ exports.Traits = require('./traits');
 exports.Helpers = require('./helpers');
 
 
-},{"../../model":23,"./classes":34,"./helpers":40,"./traits":49,"./types":58}],42:[function(require,module,exports){
+},{"../../model":23,"./classes":34,"./helpers":40,"./traits":57,"./types":60}],42:[function(require,module,exports){
+var Join, Operator,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Operator = require('./operator');
+
+Join = (function(_super) {
+  __extends(Join, _super);
+
+  function Join() {
+    return Join.__super__.constructor.apply(this, arguments);
+  }
+
+  Join.traits = ['node', 'bind', 'operator', 'join'];
+
+  Join.prototype.shader = function(shader) {
+    return shader.concat(this.transform);
+  };
+
+  Join.prototype.getDimensions = function() {
+    return this._resample(this.bind.source.getDimensions());
+  };
+
+  Join.prototype.getActive = function() {
+    return this._resample(this.bind.source.getActive());
+  };
+
+  Join.prototype._resample = function(dims) {
+    var r;
+    r = this.resample;
+    return {
+      items: r.items * dims.items,
+      width: r.width * dims.width,
+      height: r.height * dims.height,
+      depth: r.depth * dims.depth
+    };
+  };
+
+  Join.prototype.make = function() {
+    var transform, uniforms;
+    Join.__super__.make.apply(this, arguments);
+    transform = this._shaders.shader();
+    this.split = {
+      width: 1,
+      height: 1,
+      depth: 1,
+      items: 1
+    };
+    this.resample = {
+      width: 1,
+      height: 1,
+      depth: 1,
+      items: 1
+    };
+    uniforms = {
+      splitModulus: this._attributes.make(this._types.vec4()),
+      splitScale: this._attributes.make(this._types.vec4()),
+      splitDimensions: this._attributes.make(this._types.vec4())
+    };
+    this.splitModulus = uniforms.splitModulus;
+    this.splitScale = uniforms.splitScale;
+    this.splitDimension = uniforms.splitDimension;
+    transform.call('split.position', uniforms);
+    this.bind.source.shader(transform);
+    this.transform = transform;
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Join.prototype.unmake = function() {
+    return Join.__super__.unmake.apply(this, arguments);
+  };
+
+  Join.prototype.resize = function() {
+    this.change({}, {}, true);
+    return Join.__super__.resize.apply(this, arguments);
+  };
+
+  Join.prototype.change = function(changed, touched, init) {
+    var dims, id, key, resample, split;
+    if (touched['repeat'] || init) {
+      split = this.split;
+      resample = this.resample;
+      dims = this.bind.source.getDimensions();
+      for (key in dims) {
+        id = "split." + key;
+        split[key] = this._get(id);
+      }
+      this.splitScale.value.set(1 / split.items, 1 / split.width, 1 / split.height, 1);
+      this.splitModulus.value.set(split.items, split.width, split.height, 1);
+      this.splitDimensions.value.set(dims.width, dims.height, dims.depth, dims.items);
+      this.resample.items = 1 / split.items;
+      this.resample.width = split.items / split.width;
+      this.resample.height = split.width / split.height;
+      this.resample.depth = split.height / 1;
+      return this.trigger({
+        event: 'rebuild'
+      });
+    }
+  };
+
+  return Join;
+
+})(Operator);
+
+module.exports = Join;
+
+
+},{"./operator":44}],43:[function(require,module,exports){
+var Lerp, Operator,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Operator = require('./operator');
+
+Lerp = (function(_super) {
+  __extends(Lerp, _super);
+
+  function Lerp() {
+    return Lerp.__super__.constructor.apply(this, arguments);
+  }
+
+  Lerp.traits = ['node', 'bind', 'operator', 'lerp'];
+
+  Lerp.prototype.shader = function(shader) {
+    return shader.concat(this.transform);
+  };
+
+  Lerp.prototype.getDimensions = function() {
+    return this._resample(this.bind.source.getDimensions());
+  };
+
+  Lerp.prototype.getActive = function() {
+    return this._resample(this.bind.source.getActive());
+  };
+
+  Lerp.prototype._resample = function(dims) {
+    var r;
+    r = this.resample;
+    return {
+      items: r.items * dims.items,
+      width: r.width * dims.width,
+      height: r.height * dims.height,
+      depth: r.depth * dims.depth
+    };
+  };
+
+  Lerp.prototype.make = function() {
+    var dims, id, key, size, transform, uniforms, _ref;
+    Lerp.__super__.make.apply(this, arguments);
+    transform = this._shaders.shader();
+    this.bind.source.shader(transform);
+    this.resample = {};
+    dims = this.bind.source.getDimensions();
+    for (key in dims) {
+      id = "lerp." + key;
+      size = (_ref = this._get(id)) != null ? _ref : dims[key];
+      this.resample[key] = size / dims[key];
+      if (size !== dims[key]) {
+        uniforms = {
+          sampleRatio: this._attributes.make(this._types.number((dims[key] - 1) / (size - 1)))
+        };
+        transform = this._shaders.shader()["import"](transform);
+        transform.call(id, uniforms);
+      }
+    }
+    this.transform = transform;
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Lerp.prototype.unmake = function() {
+    return Lerp.__super__.unmake.apply(this, arguments);
+  };
+
+  Lerp.prototype.change = function(changed, touched, init) {
+    if (touched['lerp']) {
+      return this.rebuild();
+    }
+  };
+
+  return Lerp;
+
+})(Operator);
+
+module.exports = Lerp;
+
+
+},{"./operator":44}],44:[function(require,module,exports){
+var Operator, Source,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Source = require('../base/source');
+
+Operator = (function(_super) {
+  __extends(Operator, _super);
+
+  function Operator() {
+    return Operator.__super__.constructor.apply(this, arguments);
+  }
+
+  Operator.traits = ['node', 'operator'];
+
+  Operator.prototype.getDimensions = function() {
+    return this.bind.source.getDimensions();
+  };
+
+  Operator.prototype.getActive = function() {
+    return this.bind.source.getActive();
+  };
+
+  Operator.prototype.make = function() {
+    Operator.__super__.make.apply(this, arguments);
+    return this._helpers.bind.make({
+      'operator.source': Source
+    });
+  };
+
+  Operator.prototype.unmake = function() {
+    return this._helpers.bind.unmake();
+  };
+
+  Operator.prototype.resize = function() {
+    return this.trigger({
+      type: 'resize'
+    });
+  };
+
+  return Operator;
+
+})(Source);
+
+module.exports = Operator;
+
+
+},{"../base/source":32}],45:[function(require,module,exports){
+var Operator, Repeat,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Operator = require('./operator');
+
+Repeat = (function(_super) {
+  __extends(Repeat, _super);
+
+  function Repeat() {
+    return Repeat.__super__.constructor.apply(this, arguments);
+  }
+
+  Repeat.traits = ['node', 'bind', 'operator', 'repeat'];
+
+  Repeat.prototype.shader = function(shader) {
+    return shader.concat(this.transform);
+  };
+
+  Repeat.prototype.getDimensions = function() {
+    return this._resample(this.bind.source.getDimensions());
+  };
+
+  Repeat.prototype.getActive = function() {
+    return this._resample(this.bind.source.getActive());
+  };
+
+  Repeat.prototype._resample = function(dims) {
+    var r;
+    r = this.resample;
+    return {
+      items: r.items * dims.items,
+      width: r.width * dims.width,
+      height: r.height * dims.height,
+      depth: r.depth * dims.depth
+    };
+  };
+
+  Repeat.prototype.make = function() {
+    var transform, uniforms;
+    Repeat.__super__.make.apply(this, arguments);
+    transform = this._shaders.shader();
+    this.resample = {};
+    uniforms = {
+      repeatModulus: this._attributes.make(this._types.vec4())
+    };
+    this.repeatModulus = uniforms.repeatModulus;
+    transform.call('repeat.position', uniforms);
+    this.bind.source.shader(transform);
+    this.transform = transform;
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Repeat.prototype.unmake = function() {
+    return Repeat.__super__.unmake.apply(this, arguments);
+  };
+
+  Repeat.prototype.resize = function() {
+    this.change({}, {}, true);
+    return Repeat.__super__.resize.apply(this, arguments);
+  };
+
+  Repeat.prototype.change = function(changed, touched, init) {
+    var dims, id, key;
+    if (touched['repeat'] || init) {
+      dims = this.bind.source.getDimensions();
+      for (key in dims) {
+        id = "repeat." + key;
+        this.resample[key] = this._get(id);
+      }
+      this.repeatModulus.value.set(dims.width, dims.height, dims.depth, dims.items);
+      return this.trigger({
+        event: 'rebuild'
+      });
+    }
+  };
+
+  return Repeat;
+
+})(Operator);
+
+module.exports = Repeat;
+
+
+},{"./operator":44}],46:[function(require,module,exports){
+var Operator, Split,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Operator = require('./operator');
+
+Split = (function(_super) {
+  __extends(Split, _super);
+
+  function Split() {
+    return Split.__super__.constructor.apply(this, arguments);
+  }
+
+  Split.traits = ['node', 'bind', 'operator', 'split'];
+
+  Split.prototype.shader = function(shader) {
+    return shader.concat(this.transform);
+  };
+
+  Split.prototype.getDimensions = function() {
+    return this._resample(this.bind.source.getDimensions());
+  };
+
+  Split.prototype.getActive = function() {
+    return this._resample(this.bind.source.getActive());
+  };
+
+  Split.prototype._resample = function(dims) {
+    var split, step;
+    step = this.step;
+    split = this.split;
+    return {
+      items: split.items,
+      width: dims.width * Math.floor((dims.items - step.overlap) / step.items),
+      height: r.height,
+      depth: r.depth * dims.depth
+    };
+  };
+
+  Split.prototype.make = function() {
+    var transform, uniforms;
+    Split.__super__.make.apply(this, arguments);
+    transform = this._shaders.shader();
+    this.step = {
+      width: 1,
+      height: 1,
+      depth: 1,
+      items: 1
+    };
+    this.split = {
+      width: 1,
+      height: 1,
+      depth: 1,
+      items: 1
+    };
+    this.resample = {
+      width: 1,
+      height: 1,
+      depth: 1,
+      items: 1
+    };
+    uniforms = {
+      splitModulus: this._attributes.make(this._types.vec4()),
+      splitScale: this._attributes.make(this._types.vec4()),
+      splitDimensions: this._attributes.make(this._types.vec4())
+    };
+    this.splitModulus = uniforms.splitModulus;
+    this.splitScale = uniforms.splitScale;
+    this.splitDimensions = uniforms.splitDimensions;
+    transform.call('split.position', uniforms);
+    this.bind.source.shader(transform);
+    this.transform = transform;
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Split.prototype.unmake = function() {
+    return Split.__super__.unmake.apply(this, arguments);
+  };
+
+  Split.prototype.resize = function() {
+    this.change({}, {}, true);
+    return Split.__super__.resize.apply(this, arguments);
+  };
+
+  Split.prototype.change = function(changed, touched, init) {
+    var dims, id, key, overlap, resample, split, step;
+    if (touched['split'] || init) {
+      step = this.step;
+      split = this.split;
+      resample = this.resample;
+      overlap = this._get('split.overlap');
+      dims = this.bind.source.getDimensions();
+      for (key in dims) {
+        id = "split." + key;
+        split[key] = this._get(id);
+        step[key] = split[key] ? split[key] - overlap : null;
+      }
+      if (split.items) {
+        this.splitScale.value.x = 1 / split.items;
+        this.splitModulus.value.x = split.items;
+        this.splitDimensions.value.x = step.width;
+      }
+      this.splitScale.value.set(1, 1, 1, 1);
+      this.splitModulus.value.set(split.items, split.width, split.height, 1);
+      this.splitDimensions.value.x = step.width;
+      return this.trigger({
+        event: 'rebuild'
+      });
+    }
+  };
+
+  return Split;
+
+})(Operator);
+
+module.exports = Split;
+
+
+},{"./operator":44}],47:[function(require,module,exports){
+var Operator, Spread,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Operator = require('./operator');
+
+Spread = (function(_super) {
+  __extends(Spread, _super);
+
+  function Spread() {
+    return Spread.__super__.constructor.apply(this, arguments);
+  }
+
+  Spread.traits = ['node', 'bind', 'operator', 'spread'];
+
+  Spread.prototype.shader = function(shader) {
+    return shader.concat(this.transform);
+  };
+
+  Spread.prototype.make = function() {
+    var transform, uniforms;
+    Spread.__super__.make.apply(this, arguments);
+    uniforms = {
+      spreadMatrix: this._attributes.make(this._types.mat4()),
+      spreadOffset: this._attributes.make(this._types.vec4())
+    };
+    this.spreadMatrix = uniforms.spreadMatrix;
+    this.spreadOffset = uniforms.spreadOffset;
+    transform = this._shaders.shader();
+    transform.callback();
+    this.bind.source.shader(transform);
+    transform.join();
+    transform.call('spread.position', uniforms);
+    this.transform = transform;
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Spread.prototype.unmake = function() {
+    return Spread.__super__.unmake.apply(this, arguments);
+  };
+
+  Spread.prototype.resize = function() {
+    this.change({}, {}, true);
+    return Spread.__super__.resize.apply(this, arguments);
+  };
+
+  Spread.prototype.change = function(changed, touched, init) {
+    var anchor, d, dims, els, factor, i, id, k, key, matrix, offset, order, spread, v, _i, _ref, _ref1, _results;
+    if (changed['spread'] || init) {
+      if (this.bind.source) {
+        anchor = this._get('spread.anchor');
+        dims = this.bind.source.getActive();
+        matrix = this.spreadMatrix.value;
+        els = matrix.elements;
+        order = {
+          width: 0,
+          height: 1,
+          depth: 2,
+          items: 3
+        };
+        _results = [];
+        for (key in dims) {
+          i = order[key];
+          id = "spread." + key;
+          spread = this._get(id);
+          factor = 0;
+          if (spread != null) {
+            d = (_ref = dims[key]) != null ? _ref : 1;
+            offset = -(d - 1) * (.5 - anchor * .5);
+          } else {
+            offset = 0;
+          }
+          for (k = _i = 0; _i < 4; k = ++_i) {
+            v = (_ref1 = spread != null ? spread.getComponent(k) : void 0) != null ? _ref1 : 0;
+            els[i * 4 + k] = v * 2;
+          }
+          _results.push(this.spreadOffset.value.setComponent(i, offset));
+        }
+        return _results;
+      }
+    }
+  };
+
+  return Spread;
+
+})(Operator);
+
+module.exports = Spread;
+
+
+},{"./operator":44}],48:[function(require,module,exports){
+var Operator, Swizzle, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Operator = require('./operator');
+
+Util = require('../../../util');
+
+Swizzle = (function(_super) {
+  __extends(Swizzle, _super);
+
+  function Swizzle() {
+    return Swizzle.__super__.constructor.apply(this, arguments);
+  }
+
+  Swizzle.traits = ['node', 'bind', 'operator', 'swizzle'];
+
+  Swizzle.prototype.shader = function(shader) {
+    this.bind.source.shader(shader);
+    if (this.swizzler) {
+      return shader.call(this.swizzler);
+    }
+  };
+
+  Swizzle.prototype.make = function() {
+    var order;
+    Swizzle.__super__.make.apply(this, arguments);
+    order = this._get('swizzle.order');
+    if (order !== 'xyzw') {
+      this.swizzler = Util.GLSL.swizzleVec4(order);
+    }
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Swizzle.prototype.unmake = function() {
+    Swizzle.__super__.unmake.apply(this, arguments);
+    return this.swizzler = null;
+  };
+
+  Swizzle.prototype.change = function(changed, touched, init) {
+    if (touched['swizzle']) {
+      return this.rebuild();
+    }
+  };
+
+  return Swizzle;
+
+})(Operator);
+
+module.exports = Swizzle;
+
+
+},{"../../../util":102,"./operator":44}],49:[function(require,module,exports){
+var Operator, Transpose, Util, labels, letters,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Operator = require('./operator');
+
+Util = require('../../../util');
+
+letters = 'xyzw'.split('');
+
+labels = {
+  x: 'width',
+  y: 'height',
+  z: 'depth',
+  w: 'items'
+};
+
+Transpose = (function(_super) {
+  __extends(Transpose, _super);
+
+  function Transpose() {
+    return Transpose.__super__.constructor.apply(this, arguments);
+  }
+
+  Transpose.traits = ['node', 'bind', 'operator', 'transpose'];
+
+  Transpose.prototype.shader = function(shader) {
+    if (this.swizzler) {
+      shader.call(this.swizzler);
+    }
+    return this.bind.source.shader(shader);
+  };
+
+  Transpose.prototype.getDimensions = function() {
+    return this._remap(this.transpose, this.bind.source.getDimensions());
+  };
+
+  Transpose.prototype.getActive = function() {
+    return this._remap(this.transpose, this.bind.source.getActive());
+  };
+
+  Transpose.prototype._remap = function(transpose, dims) {
+    var dst, i, letter, out, src, _i, _len, _ref;
+    out = {};
+    for (i = _i = 0, _len = letters.length; _i < _len; i = ++_i) {
+      letter = letters[i];
+      dst = labels[letter];
+      src = labels[transpose[i]];
+      out[dst] = (_ref = dims[src]) != null ? _ref : 1;
+    }
+    return out;
+  };
+
+  Transpose.prototype.make = function() {
+    var order;
+    Transpose.__super__.make.apply(this, arguments);
+    order = this._get('transpose.order');
+    this.transpose = order.split('');
+    if (order !== 'xyzw') {
+      this.swizzler = Util.GLSL.invertSwizzleVec4(order);
+    }
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Transpose.prototype.unmake = function() {
+    Transpose.__super__.unmake.apply(this, arguments);
+    return this.swizzler = null;
+  };
+
+  Transpose.prototype.change = function(changed, touched, init) {
+    if (touched['transpose']) {
+      return this.rebuild();
+    }
+  };
+
+  return Transpose;
+
+})(Operator);
+
+module.exports = Transpose;
+
+
+},{"../../../util":102,"./operator":44}],50:[function(require,module,exports){
 var Axis, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -6717,7 +7429,7 @@ Axis = (function(_super) {
 module.exports = Axis;
 
 
-},{"../../../util":100,"../../primitive":28}],43:[function(require,module,exports){
+},{"../../../util":102,"../../primitive":28}],51:[function(require,module,exports){
 var Grid, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -6729,7 +7441,7 @@ Util = require('../../../util');
 Grid = (function(_super) {
   __extends(Grid, _super);
 
-  Grid.traits = ['node', 'object', 'style', 'line', 'grid', 'area', 'position', 'axis:x.axis', 'axis:y.axis', 'scale:x.scale', 'scale:y.scale', 'span:x.span', 'span:y.span'];
+  Grid.traits = ['node', 'object', 'style', 'line', 'grid', 'area', 'position', 'axis:x', 'axis:y', 'scale:x', 'scale:y', 'span:x', 'span:y'];
 
   function Grid(node, context, helpers) {
     Grid.__super__.constructor.call(this, node, context, helpers);
@@ -6862,7 +7574,7 @@ Grid = (function(_super) {
 module.exports = Grid;
 
 
-},{"../../../util":100,"../../primitive":28}],44:[function(require,module,exports){
+},{"../../../util":102,"../../primitive":28}],52:[function(require,module,exports){
 var Line, Primitive, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -6977,7 +7689,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../../primitive":28,"../base/source":32}],45:[function(require,module,exports){
+},{"../../primitive":28,"../base/source":32}],53:[function(require,module,exports){
 var Point, Primitive, Source, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7063,7 +7775,7 @@ Point = (function(_super) {
 module.exports = Point;
 
 
-},{"../../../util":100,"../../primitive":28,"../base/source":32}],46:[function(require,module,exports){
+},{"../../../util":102,"../../primitive":28,"../base/source":32}],54:[function(require,module,exports){
 var Primitive, Source, Surface, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7214,7 +7926,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../../util":100,"../../primitive":28,"../base/source":32}],47:[function(require,module,exports){
+},{"../../../util":102,"../../primitive":28,"../base/source":32}],55:[function(require,module,exports){
 var Primitive, Ticks, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7304,7 +8016,7 @@ Ticks = (function(_super) {
 module.exports = Ticks;
 
 
-},{"../../../util":100,"../../primitive":28}],48:[function(require,module,exports){
+},{"../../../util":102,"../../primitive":28}],56:[function(require,module,exports){
 var Primitive, Source, Util, Vector,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7422,7 +8134,7 @@ Vector = (function(_super) {
 module.exports = Vector;
 
 
-},{"../../../util":100,"../../primitive":28,"../base/source":32}],49:[function(require,module,exports){
+},{"../../../util":102,"../../primitive":28,"../base/source":32}],57:[function(require,module,exports){
 var Traits, Types;
 
 Types = require('./types');
@@ -7448,7 +8160,7 @@ Traits = {
     size: Types.number(.01)
   },
   line: {
-    width: Types.number(.01),
+    width: Types.number(.005),
     depth: Types.number(.5)
   },
   mesh: {
@@ -7466,11 +8178,11 @@ Traits = {
   view: {
     range: Types.array(Types.vec2(-1, 1), 4)
   },
-  view4: {
-    projection: Types.mat4(1, 0, 0, .577, 0, 1, 0, .577, 0, 0, 1, .577, 0, 0, 0, 0)
-  },
   span: {
     range: Types.nullable(Types.vec2(-1, 1))
+  },
+  project4: {
+    projection: Types.mat4(1, 0, 0, .577, 0, 1, 0, .577, 0, 0, 1, .577, 0, 0, 0, 0)
   },
   polar: {
     bend: Types.number(1),
@@ -7525,7 +8237,7 @@ Traits = {
     height: Types.int(1),
     history: Types.int(1)
   },
-  transform: {
+  operator: {
     source: Types.select(Types.object())
   },
   lerp: {
@@ -7574,559 +8286,61 @@ Traits = {
 module.exports = Traits;
 
 
-},{"./types":58}],50:[function(require,module,exports){
-var Join, Transform,
+},{"./types":60}],58:[function(require,module,exports){
+var Project4, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Transform = require('./transform');
 
-Join = (function(_super) {
-  __extends(Join, _super);
+Project4 = (function(_super) {
+  __extends(Project4, _super);
 
-  function Join() {
-    return Join.__super__.constructor.apply(this, arguments);
+  function Project4() {
+    return Project4.__super__.constructor.apply(this, arguments);
   }
 
-  Join.traits = ['node', 'bind', 'transform', 'join'];
+  Project4.traits = ['node', 'project4'];
 
-  Join.prototype.shader = function(shader) {
-    return shader.concat(this.transform);
-  };
-
-  Join.prototype.getDimensions = function() {
-    return this._resample(this.bind.source.getDimensions());
-  };
-
-  Join.prototype.getActive = function() {
-    return this._resample(this.bind.source.getActive());
-  };
-
-  Join.prototype._resample = function(dims) {
-    var r;
-    r = this.resample;
-    return {
-      items: r.items * dims.items,
-      width: r.width * dims.width,
-      height: r.height * dims.height,
-      depth: r.depth * dims.depth
+  Project4.prototype.make = function() {
+    return this.uniforms = {
+      projectionMatrix: this.node.attributes['project4.projection']
     };
   };
 
-  Join.prototype.make = function() {
-    var transform, uniforms;
-    Join.__super__.make.apply(this, arguments);
-    transform = this._shaders.shader();
-    this.split = {
-      width: 1,
-      height: 1,
-      depth: 1,
-      items: 1
-    };
-    this.resample = {
-      width: 1,
-      height: 1,
-      depth: 1,
-      items: 1
-    };
-    uniforms = {
-      splitModulus: this._attributes.make(this._types.vec4()),
-      splitScale: this._attributes.make(this._types.vec4()),
-      splitDimensions: this._attributes.make(this._types.vec4())
-    };
-    this.splitModulus = uniforms.splitModulus;
-    this.splitScale = uniforms.splitScale;
-    this.splitDimension = uniforms.splitDimension;
-    transform.call('split.position', uniforms);
-    this.bind.source.shader(transform);
-    this.transform = transform;
-    return this.trigger({
-      event: 'rebuild'
-    });
+  Project4.prototype.unmake = function() {
+    return delete this.uniforms;
   };
 
-  Join.prototype.unmake = function() {
-    return Join.__super__.unmake.apply(this, arguments);
-  };
+  Project4.prototype.change = function(changed, touched, init) {
+    if (!init) {
 
-  Join.prototype.resize = function() {
-    this.change({}, {}, true);
-    return Join.__super__.resize.apply(this, arguments);
-  };
-
-  Join.prototype.change = function(changed, touched, init) {
-    var dims, id, key, resample, split;
-    if (touched['repeat'] || init) {
-      split = this.split;
-      resample = this.resample;
-      dims = this.bind.source.getDimensions();
-      for (key in dims) {
-        id = "split." + key;
-        split[key] = this._get(id);
-      }
-      this.splitScale.value.set(1 / split.items, 1 / split.width, 1 / split.height, 1);
-      this.splitModulus.value.set(split.items, split.width, split.height, 1);
-      this.splitDimensions.value.set(dims.width, dims.height, dims.depth, dims.items);
-      this.resample.items = 1 / split.items;
-      this.resample.width = split.items / split.width;
-      this.resample.height = split.width / split.height;
-      this.resample.depth = split.height / 1;
-      return this.trigger({
-        event: 'rebuild'
-      });
     }
   };
 
-  return Join;
+  Project4.prototype.to = function(vector) {
+    return vector.applyMatrix4(this.projectionMatrix);
+  };
+
+  Project4.prototype.transform = function(shader) {
+    var _ref;
+    shader.call('project4.position', this.uniforms);
+    return (_ref = this.parent) != null ? _ref.transform(shader) : void 0;
+  };
+
+  return Project4;
 
 })(Transform);
 
-module.exports = Join;
+module.exports = Project4;
 
 
-},{"./transform":56}],51:[function(require,module,exports){
-var Lerp, Transform,
+},{"./transform":59}],59:[function(require,module,exports){
+var Parent, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Transform = require('./transform');
-
-Lerp = (function(_super) {
-  __extends(Lerp, _super);
-
-  function Lerp() {
-    return Lerp.__super__.constructor.apply(this, arguments);
-  }
-
-  Lerp.traits = ['node', 'bind', 'transform', 'lerp'];
-
-  Lerp.prototype.shader = function(shader) {
-    return shader.concat(this.transform);
-  };
-
-  Lerp.prototype.getDimensions = function() {
-    return this._resample(this.bind.source.getDimensions());
-  };
-
-  Lerp.prototype.getActive = function() {
-    return this._resample(this.bind.source.getActive());
-  };
-
-  Lerp.prototype._resample = function(dims) {
-    var r;
-    r = this.resample;
-    return {
-      items: r.items * dims.items,
-      width: r.width * dims.width,
-      height: r.height * dims.height,
-      depth: r.depth * dims.depth
-    };
-  };
-
-  Lerp.prototype.make = function() {
-    var dims, id, key, size, transform, uniforms, _ref;
-    Lerp.__super__.make.apply(this, arguments);
-    transform = this._shaders.shader();
-    this.bind.source.shader(transform);
-    this.resample = {};
-    dims = this.bind.source.getDimensions();
-    for (key in dims) {
-      id = "lerp." + key;
-      size = (_ref = this._get(id)) != null ? _ref : dims[key];
-      this.resample[key] = size / dims[key];
-      if (size !== dims[key]) {
-        uniforms = {
-          sampleRatio: this._attributes.make(this._types.number((dims[key] - 1) / (size - 1)))
-        };
-        transform = this._shaders.shader()["import"](transform);
-        transform.call(id, uniforms);
-      }
-    }
-    this.transform = transform;
-    return this.trigger({
-      event: 'rebuild'
-    });
-  };
-
-  Lerp.prototype.unmake = function() {
-    return Lerp.__super__.unmake.apply(this, arguments);
-  };
-
-  Lerp.prototype.change = function(changed, touched, init) {
-    if (touched['lerp']) {
-      return this.rebuild();
-    }
-  };
-
-  return Lerp;
-
-})(Transform);
-
-module.exports = Lerp;
-
-
-},{"./transform":56}],52:[function(require,module,exports){
-var Repeat, Transform,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Transform = require('./transform');
-
-Repeat = (function(_super) {
-  __extends(Repeat, _super);
-
-  function Repeat() {
-    return Repeat.__super__.constructor.apply(this, arguments);
-  }
-
-  Repeat.traits = ['node', 'bind', 'transform', 'repeat'];
-
-  Repeat.prototype.shader = function(shader) {
-    return shader.concat(this.transform);
-  };
-
-  Repeat.prototype.getDimensions = function() {
-    return this._resample(this.bind.source.getDimensions());
-  };
-
-  Repeat.prototype.getActive = function() {
-    return this._resample(this.bind.source.getActive());
-  };
-
-  Repeat.prototype._resample = function(dims) {
-    var r;
-    r = this.resample;
-    return {
-      items: r.items * dims.items,
-      width: r.width * dims.width,
-      height: r.height * dims.height,
-      depth: r.depth * dims.depth
-    };
-  };
-
-  Repeat.prototype.make = function() {
-    var transform, uniforms;
-    Repeat.__super__.make.apply(this, arguments);
-    transform = this._shaders.shader();
-    this.resample = {};
-    uniforms = {
-      repeatModulus: this._attributes.make(this._types.vec4())
-    };
-    this.repeatModulus = uniforms.repeatModulus;
-    transform.call('repeat.position', uniforms);
-    this.bind.source.shader(transform);
-    this.transform = transform;
-    return this.trigger({
-      event: 'rebuild'
-    });
-  };
-
-  Repeat.prototype.unmake = function() {
-    return Repeat.__super__.unmake.apply(this, arguments);
-  };
-
-  Repeat.prototype.resize = function() {
-    this.change({}, {}, true);
-    return Repeat.__super__.resize.apply(this, arguments);
-  };
-
-  Repeat.prototype.change = function(changed, touched, init) {
-    var dims, id, key;
-    if (touched['repeat'] || init) {
-      dims = this.bind.source.getDimensions();
-      for (key in dims) {
-        id = "repeat." + key;
-        this.resample[key] = this._get(id);
-      }
-      this.repeatModulus.value.set(dims.width, dims.height, dims.depth, dims.items);
-      return this.trigger({
-        event: 'rebuild'
-      });
-    }
-  };
-
-  return Repeat;
-
-})(Transform);
-
-module.exports = Repeat;
-
-
-},{"./transform":56}],53:[function(require,module,exports){
-var Split, Transform,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Transform = require('./transform');
-
-Split = (function(_super) {
-  __extends(Split, _super);
-
-  function Split() {
-    return Split.__super__.constructor.apply(this, arguments);
-  }
-
-  Split.traits = ['node', 'bind', 'transform', 'split'];
-
-  Split.prototype.shader = function(shader) {
-    return shader.concat(this.transform);
-  };
-
-  Split.prototype.getDimensions = function() {
-    return this._resample(this.bind.source.getDimensions());
-  };
-
-  Split.prototype.getActive = function() {
-    return this._resample(this.bind.source.getActive());
-  };
-
-  Split.prototype._resample = function(dims) {
-    var split, step;
-    step = this.step;
-    split = this.split;
-    return {
-      items: split.items,
-      width: dims.width * Math.floor((dims.items - step.overlap) / step.items),
-      height: r.height,
-      depth: r.depth * dims.depth
-    };
-  };
-
-  Split.prototype.make = function() {
-    var transform, uniforms;
-    Split.__super__.make.apply(this, arguments);
-    transform = this._shaders.shader();
-    this.step = {
-      width: 1,
-      height: 1,
-      depth: 1,
-      items: 1
-    };
-    this.split = {
-      width: 1,
-      height: 1,
-      depth: 1,
-      items: 1
-    };
-    this.resample = {
-      width: 1,
-      height: 1,
-      depth: 1,
-      items: 1
-    };
-    uniforms = {
-      splitModulus: this._attributes.make(this._types.vec4()),
-      splitScale: this._attributes.make(this._types.vec4()),
-      splitDimensions: this._attributes.make(this._types.vec4())
-    };
-    this.splitModulus = uniforms.splitModulus;
-    this.splitScale = uniforms.splitScale;
-    this.splitDimensions = uniforms.splitDimensions;
-    transform.call('split.position', uniforms);
-    this.bind.source.shader(transform);
-    this.transform = transform;
-    return this.trigger({
-      event: 'rebuild'
-    });
-  };
-
-  Split.prototype.unmake = function() {
-    return Split.__super__.unmake.apply(this, arguments);
-  };
-
-  Split.prototype.resize = function() {
-    this.change({}, {}, true);
-    return Split.__super__.resize.apply(this, arguments);
-  };
-
-  Split.prototype.change = function(changed, touched, init) {
-    var dims, id, key, overlap, resample, split, step;
-    if (touched['split'] || init) {
-      step = this.step;
-      split = this.split;
-      resample = this.resample;
-      overlap = this._get('split.overlap');
-      dims = this.bind.source.getDimensions();
-      for (key in dims) {
-        id = "split." + key;
-        split[key] = this._get(id);
-        step[key] = split[key] ? split[key] - overlap : null;
-      }
-      if (split.items) {
-        this.splitScale.value.x = 1 / split.items;
-        this.splitModulus.value.x = split.items;
-        this.splitDimensions.value.x = step.width;
-      }
-      this.splitScale.value.set(1, 1, 1, 1);
-      this.splitModulus.value.set(split.items, split.width, split.height, 1);
-      this.splitDimensions.value.x = step.width;
-      return this.trigger({
-        event: 'rebuild'
-      });
-    }
-  };
-
-  return Split;
-
-})(Transform);
-
-module.exports = Split;
-
-
-},{"./transform":56}],54:[function(require,module,exports){
-var Spread, Transform,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Transform = require('./transform');
-
-Spread = (function(_super) {
-  __extends(Spread, _super);
-
-  function Spread() {
-    return Spread.__super__.constructor.apply(this, arguments);
-  }
-
-  Spread.traits = ['node', 'bind', 'transform', 'spread'];
-
-  Spread.prototype.shader = function(shader) {
-    return shader.concat(this.transform);
-  };
-
-  Spread.prototype.make = function() {
-    var transform, uniforms;
-    Spread.__super__.make.apply(this, arguments);
-    uniforms = {
-      spreadMatrix: this._attributes.make(this._types.mat4()),
-      spreadOffset: this._attributes.make(this._types.vec4())
-    };
-    this.spreadMatrix = uniforms.spreadMatrix;
-    this.spreadOffset = uniforms.spreadOffset;
-    transform = this._shaders.shader();
-    transform.callback();
-    this.bind.source.shader(transform);
-    transform.join();
-    transform.call('spread.position', uniforms);
-    this.transform = transform;
-    return this.trigger({
-      event: 'rebuild'
-    });
-  };
-
-  Spread.prototype.unmake = function() {
-    return Spread.__super__.unmake.apply(this, arguments);
-  };
-
-  Spread.prototype.resize = function() {
-    this.change({}, {}, true);
-    return Spread.__super__.resize.apply(this, arguments);
-  };
-
-  Spread.prototype.change = function(changed, touched, init) {
-    var anchor, d, dims, els, factor, i, id, k, key, matrix, offset, order, spread, v, _i, _ref, _ref1, _results;
-    if (changed['spread'] || init) {
-      if (this.bind.source) {
-        anchor = this._get('spread.anchor');
-        dims = this.bind.source.getActive();
-        matrix = this.spreadMatrix.value;
-        els = matrix.elements;
-        order = {
-          width: 0,
-          height: 1,
-          depth: 2,
-          items: 3
-        };
-        _results = [];
-        for (key in dims) {
-          i = order[key];
-          id = "spread." + key;
-          spread = this._get(id);
-          factor = 0;
-          if (spread != null) {
-            d = (_ref = dims[key]) != null ? _ref : 1;
-            offset = -(d - 1) * (.5 - anchor * .5);
-          } else {
-            offset = 0;
-          }
-          for (k = _i = 0; _i < 4; k = ++_i) {
-            v = (_ref1 = spread != null ? spread.getComponent(k) : void 0) != null ? _ref1 : 0;
-            els[i * 4 + k] = v * 2;
-          }
-          _results.push(this.spreadOffset.value.setComponent(i, offset));
-        }
-        return _results;
-      }
-    }
-  };
-
-  return Spread;
-
-})(Transform);
-
-module.exports = Spread;
-
-
-},{"./transform":56}],55:[function(require,module,exports){
-var Swizzle, Transform, Util,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Transform = require('./transform');
-
-Util = require('../../../util');
-
-Swizzle = (function(_super) {
-  __extends(Swizzle, _super);
-
-  function Swizzle() {
-    return Swizzle.__super__.constructor.apply(this, arguments);
-  }
-
-  Swizzle.traits = ['node', 'bind', 'transform', 'swizzle'];
-
-  Swizzle.prototype.shader = function(shader) {
-    this.bind.source.shader(shader);
-    if (this.swizzler) {
-      return shader.call(this.swizzler);
-    }
-  };
-
-  Swizzle.prototype.make = function() {
-    var order;
-    Swizzle.__super__.make.apply(this, arguments);
-    order = this._get('swizzle.order');
-    if (order !== 'xyzw') {
-      this.swizzler = Util.GLSL.swizzleVec4(order);
-    }
-    return this.trigger({
-      event: 'rebuild'
-    });
-  };
-
-  Swizzle.prototype.unmake = function() {
-    Swizzle.__super__.unmake.apply(this, arguments);
-    return this.swizzler = null;
-  };
-
-  Swizzle.prototype.change = function(changed, touched, init) {
-    if (touched['swizzle']) {
-      return this.rebuild();
-    }
-  };
-
-  return Swizzle;
-
-})(Transform);
-
-module.exports = Swizzle;
-
-
-},{"../../../util":100,"./transform":56}],56:[function(require,module,exports){
-var Source, Transform,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Source = require('../base/source');
+Parent = require('../base/parent');
 
 Transform = (function(_super) {
   __extends(Transform, _super);
@@ -8135,126 +8349,18 @@ Transform = (function(_super) {
     return Transform.__super__.constructor.apply(this, arguments);
   }
 
-  Transform.traits = ['node', 'transform'];
+  Transform.traits = ['node'];
 
-  Transform.prototype.getDimensions = function() {
-    return this.bind.source.getDimensions();
-  };
-
-  Transform.prototype.getActive = function() {
-    return this.bind.source.getActive();
-  };
-
-  Transform.prototype.make = function() {
-    Transform.__super__.make.apply(this, arguments);
-    return this._helpers.bind.make({
-      'transform.source': Source
-    });
-  };
-
-  Transform.prototype.unmake = function() {
-    return this._helpers.bind.unmake();
-  };
-
-  Transform.prototype.resize = function() {
-    return this.trigger({
-      type: 'resize'
-    });
-  };
+  Transform.prototype.to = function(vector) {};
 
   return Transform;
 
-})(Source);
+})(Parent);
 
 module.exports = Transform;
 
 
-},{"../base/source":32}],57:[function(require,module,exports){
-var Transform, Transpose, Util, labels, letters,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Transform = require('./transform');
-
-Util = require('../../../util');
-
-letters = 'xyzw'.split('');
-
-labels = {
-  x: 'width',
-  y: 'height',
-  z: 'depth',
-  w: 'items'
-};
-
-Transpose = (function(_super) {
-  __extends(Transpose, _super);
-
-  function Transpose() {
-    return Transpose.__super__.constructor.apply(this, arguments);
-  }
-
-  Transpose.traits = ['node', 'bind', 'transform', 'transpose'];
-
-  Transpose.prototype.shader = function(shader) {
-    if (this.swizzler) {
-      shader.call(this.swizzler);
-    }
-    return this.bind.source.shader(shader);
-  };
-
-  Transpose.prototype.getDimensions = function() {
-    return this._remap(this.transpose, this.bind.source.getDimensions());
-  };
-
-  Transpose.prototype.getActive = function() {
-    return this._remap(this.transpose, this.bind.source.getActive());
-  };
-
-  Transpose.prototype._remap = function(transpose, dims) {
-    var dst, i, letter, out, src, _i, _len, _ref;
-    out = {};
-    for (i = _i = 0, _len = letters.length; _i < _len; i = ++_i) {
-      letter = letters[i];
-      dst = labels[letter];
-      src = labels[transpose[i]];
-      out[dst] = (_ref = dims[src]) != null ? _ref : 1;
-    }
-    return out;
-  };
-
-  Transpose.prototype.make = function() {
-    var order;
-    Transpose.__super__.make.apply(this, arguments);
-    order = this._get('transpose.order');
-    this.transpose = order.split('');
-    if (order !== 'xyzw') {
-      this.swizzler = Util.GLSL.invertSwizzleVec4(order);
-    }
-    return this.trigger({
-      event: 'rebuild'
-    });
-  };
-
-  Transpose.prototype.unmake = function() {
-    Transpose.__super__.unmake.apply(this, arguments);
-    return this.swizzler = null;
-  };
-
-  Transpose.prototype.change = function(changed, touched, init) {
-    if (touched['transpose']) {
-      return this.rebuild();
-    }
-  };
-
-  return Transpose;
-
-})(Transform);
-
-module.exports = Transpose;
-
-
-},{"../../../util":100,"./transform":56}],58:[function(require,module,exports){
+},{"../base/parent":30}],60:[function(require,module,exports){
 var Types;
 
 Types = {
@@ -8702,7 +8808,7 @@ Types = {
 module.exports = Types;
 
 
-},{}],59:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 var Cartesian, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8722,16 +8828,14 @@ Cartesian = (function(_super) {
       viewMatrix: this._attributes.make(this._types.mat4())
     };
     this.viewMatrix = this.uniforms.viewMatrix.value;
-    this.rotationMatrix = new THREE.Matrix4();
-    return this.scale = new THREE.Vector3(1, 1, 1);
+    return this.objectMatrix = new THREE.Matrix4;
   };
 
   Cartesian.prototype.unmake = function() {
     Cartesian.__super__.unmake.apply(this, arguments);
     delete this.viewMatrix;
-    delete this.rotationMatrix;
-    delete this.positionMatrix;
-    return delete this.scale;
+    delete this.objectMatrix;
+    return delete this.positionMatrix;
   };
 
   Cartesian.prototype.change = function(changed, touched, init) {
@@ -8752,9 +8856,9 @@ Cartesian = (function(_super) {
     sx = s.x;
     sy = s.y;
     sz = s.z;
-    this.viewMatrix.set(2 * sx / dx, 0, 0, -(2 * x + dx) * sx / dx, 0, 2 * sy / dy, 0, -(2 * y + dy) * sy / dy, 0, 0, 2 * sz / dz, -(2 * z + dz) * sz / dz, 0, 0, 0, 1);
-    this.rotationMatrix.compose(o, q, this.scale);
-    this.viewMatrix.multiplyMatrices(this.rotationMatrix, this.viewMatrix);
+    this.viewMatrix.set(2 / dx, 0, 0, -(2 * x + dx) / dx, 0, 2 / dy, 0, -(2 * y + dy) / dy, 0, 0, 2 / dz, -(2 * z + dz) / dz, 0, 0, 0, 1);
+    this.objectMatrix.compose(o, q, s);
+    this.viewMatrix.multiplyMatrices(this.objectMatrix, this.viewMatrix);
     return this.trigger({
       type: 'range'
     });
@@ -8784,7 +8888,7 @@ Cartesian = (function(_super) {
 module.exports = Cartesian;
 
 
-},{"./view":65}],60:[function(require,module,exports){
+},{"./view":67}],62:[function(require,module,exports){
 var Cartesian4, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8800,18 +8904,23 @@ Cartesian4 = (function(_super) {
 
   Cartesian4.traits = ['node', 'object', 'view', 'view4'];
 
+  Cartesian4.prototype.dimensions = function() {
+    return 4;
+  };
+
   Cartesian4.prototype.make = function() {
     Cartesian4.__super__.make.apply(this, arguments);
     this.uniforms = {
       viewMatrix: this._attributes.make(this._types.mat4()),
+      view4D: this._attributes.make(this._attributes.types.vec2()),
       basisScale: this._attributes.make(this._types.vec4()),
       basisOffset: this._attributes.make(this._types.vec4())
     };
     this.viewMatrix = this.uniforms.viewMatrix.value;
+    this.view4D = this.uniforms.view4D.value;
     this.basisScale = this.uniforms.basisScale.value;
     this.basisOffset = this.uniforms.basisOffset.value;
     this.rotationMatrix = new THREE.Matrix4;
-    this.scale = new THREE.Vector3(1, 1, 1);
     return this.v3 = new THREE.Vector3;
   };
 
@@ -8819,8 +8928,7 @@ Cartesian4 = (function(_super) {
     Cartesian4.__super__.unmake.apply(this, arguments);
     delete this.viewMatrix;
     delete this.rotationMatrix;
-    delete this.positionMatrix;
-    return delete this.scale;
+    return delete this.positionMatrix;
   };
 
   Cartesian4.prototype.change = function(changed, touched, init) {
@@ -8844,18 +8952,17 @@ Cartesian4 = (function(_super) {
     sy = s.y;
     sz = s.z;
     sw = s.w;
-    this.basisScale.set(2 * sx / dx, 2 * sy / dy, 2 * sz / dz, 2 * sw / dw);
-    this.basisOffset.set(-(2 * x + dx) * sx / dx, -(2 * y + dy) * sy / dy, -(2 * z + dz) * sz / dz, -(2 * w + dw) * sw / dw);
-    this.viewMatrix.compose(o, q, this.scale);
+    this.basisScale.set(2 / dx, 2 / dy, 2 / dz, 2 / dw);
+    this.basisOffset.set(-(2 * x + dx) / dx, -(2 * y + dy) / dy, -(2 * z + dz) / dz, -(2 * w + dw) / dw);
+    this.viewMatrix.compose(o, q, s);
+    this.view4D.set(o.w, s.w);
     return this.trigger({
       type: 'range'
     });
   };
 
   Cartesian4.prototype.to = function(vector) {
-    vector.applyMatrix4(this.projectionMatrix);
-    this.v3.copy(vector);
-    return this.v3.applyMatrix4(this.viewMatrix);
+    throw "TODO";
   };
 
   Cartesian4.prototype.transform = function(shader) {
@@ -8864,13 +8971,6 @@ Cartesian4 = (function(_super) {
     return (_ref = this.parent) != null ? _ref.transform(shader) : void 0;
   };
 
-
-  /*
-  from: (vector) ->
-    this.inverse.multiplyVector3(vector);
-  },
-   */
-
   return Cartesian4;
 
 })(View);
@@ -8878,7 +8978,7 @@ Cartesian4 = (function(_super) {
 module.exports = Cartesian4;
 
 
-},{"./view":65}],61:[function(require,module,exports){
+},{"./view":67}],63:[function(require,module,exports){
 var Polar, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8908,18 +9008,14 @@ Polar = (function(_super) {
       viewMatrix: this._attributes.make(types.mat4())
     };
     this.viewMatrix = this.uniforms.viewMatrix.value;
-    this.rotationMatrix = new THREE.Matrix4();
-    this.positionMatrix = new THREE.Matrix4();
-    this.aspect = 1;
-    return this.scale = new THREE.Vector3(1, 1, 1);
+    this.objectMatrix = new THREE.Matrix4();
+    return this.aspect = 1;
   };
 
   Polar.prototype.unmake = function() {
     Polar.__super__.unmake.apply(this, arguments);
     delete this.viewMatrix;
-    delete this.rotationMatrix;
-    delete this.positionMatrix;
-    return delete this.scale;
+    return delete this.objectMatrix;
   };
 
   Polar.prototype.change = function(changed, touched, init) {
@@ -8952,22 +9048,9 @@ Polar = (function(_super) {
     this.aspect = aspect = Math.abs(sdx / sdy);
     this.uniforms.polarFocus.value = focus;
     this.uniforms.polarAspect.value = aspect;
-    this.viewMatrix.set(2 * sx / fdx, 0, 0, -(2 * x + dx) * sx / dx, 0, 2 * sy / dy, 0, -(2 * y + dy) * sy / dy, 0, 0, 2 * sz / dz, -(2 * z + dz) * sz / dz, 0, 0, 0, 1);
-    this.rotationMatrix.compose(o, q, this.scale);
-    this.viewMatrix.multiplyMatrices(this.rotationMatrix, this.viewMatrix);
-
-    /*
-     * Backward transform
-    @inverseViewMatrix.set(
-      fdx/(2*sx), 0, 0, (x+dx/2),
-      0, dy/(2*sy), 0, (y+dy/2),
-      0, 0, dz/(2*sz), (z+dz/2),
-      0, 0, 0, 1 #,
-    )
-    @q.copy(q).inverse()
-    @rotationMatrix.makeRotationFromQuaternion q
-    @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
-     */
+    this.viewMatrix.set(2 / fdx, 0, 0, -(2 * x + dx) / dx, 0, 2 / dy, 0, -(2 * y + dy) / dy, 0, 0, 2 / dz, -(2 * z + dz) / dz, 0, 0, 0, 1);
+    this.objectMatrix.compose(o, q, s);
+    this.viewMatrix.multiplyMatrices(this.objectMatrix, this.viewMatrix);
     return this.trigger({
       type: 'range'
     });
@@ -9017,7 +9100,7 @@ Polar = (function(_super) {
 module.exports = Polar;
 
 
-},{"../../../util":100,"./view":65}],62:[function(require,module,exports){
+},{"../../../util":102,"./view":67}],64:[function(require,module,exports){
 var Spherical, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9048,19 +9131,15 @@ Spherical = (function(_super) {
       viewMatrix: this._attributes.make(this._types.mat4())
     };
     this.viewMatrix = this.uniforms.viewMatrix.value;
-    this.rotationMatrix = new THREE.Matrix4();
-    this.positionMatrix = new THREE.Matrix4();
+    this.objectMatrix = new THREE.Matrix4();
     this.aspectX = 1;
-    this.aspectY = 1;
-    return this.scale = new THREE.Vector3(1, 1, 1);
+    return this.aspectY = 1;
   };
 
   Spherical.prototype.unmake = function() {
     Spherical.__super__.unmake.apply(this, arguments);
     delete this.viewMatrix;
-    delete this.rotationMatrix;
-    delete this.positionMatrix;
-    return delete this.scale;
+    return delete this.objectMatrix;
   };
 
   Spherical.prototype.change = function(changed, touched, init) {
@@ -9102,22 +9181,9 @@ Spherical = (function(_super) {
     this.uniforms.sphericalAspectX.value = aspectX;
     this.uniforms.sphericalAspectY.value = aspectY;
     this.uniforms.sphericalScaleY.value = scaleY;
-    this.viewMatrix.set(2 * sx / fdx, 0, 0, -(2 * x + dx) * sx / dx, 0, 2 * sy / fdy, 0, -(2 * y + dy) * sy / dy, 0, 0, 2 * sz / dz, -(2 * z + dz) * sz / dz, 0, 0, 0, 1);
-    this.rotationMatrix.compose(o, q, this.scale);
-    this.viewMatrix.multiplyMatrices(this.rotationMatrix, this.viewMatrix);
-
-    /*
-     * Backward transform
-    @inverseViewMatrix.set(
-      fdx/(2*sx), 0, 0, (x+dx/2),
-      0, fdy/(2*sy), 0, (y+dy/2),
-      0, 0, dz/(2*sz), (z+dz/2),
-      0, 0, 0, 1 #,
-    )
-    @q.copy(q).inverse()
-    @rotationMatrix.makeRotationFromQuaternion q
-    @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
-     */
+    this.viewMatrix.set(2 / fdx, 0, 0, -(2 * x + dx) / dx, 0, 2 / fdy, 0, -(2 * y + dy) / dy, 0, 0, 2 / dz, -(2 * z + dz) / dz, 0, 0, 0, 1);
+    this.objectMatrix.compose(o, q, s);
+    this.viewMatrix.multiplyMatrices(this.objectMatrix, this.viewMatrix);
     return this.trigger({
       type: 'range'
     });
@@ -9169,7 +9235,7 @@ Spherical = (function(_super) {
 module.exports = Spherical;
 
 
-},{"../../../util":100,"./view":65}],63:[function(require,module,exports){
+},{"../../../util":102,"./view":67}],65:[function(require,module,exports){
 var Stereographic, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9196,17 +9262,13 @@ Stereographic = (function(_super) {
       viewMatrix: this._attributes.make(this._types.mat4())
     };
     this.viewMatrix = this.uniforms.viewMatrix.value;
-    this.rotationMatrix = new THREE.Matrix4();
-    this.positionMatrix = new THREE.Matrix4();
-    return this.scale = new THREE.Vector3(1, 1, 1);
+    return this.objectMatrix = new THREE.Matrix4();
   };
 
   Stereographic.prototype.unmake = function() {
     Stereographic.__super__.unmake.apply(this, arguments);
     delete this.viewMatrix;
-    delete this.rotationMatrix;
-    delete this.positionMatrix;
-    return delete this.scale;
+    return delete this.rotationMatrix;
   };
 
   Stereographic.prototype.change = function(changed, touched, init) {
@@ -9230,9 +9292,9 @@ Stereographic = (function(_super) {
     sz = s.z;
     _ref = Util.Axis.recenterAxis(z, dz, bend, 1), z = _ref[0], dz = _ref[1];
     this.uniforms.stereoBend.value = bend;
-    this.viewMatrix.set(2 * sx / dx, 0, 0, -(2 * x + dx) * sx / dx, 0, 2 * sy / dy, 0, -(2 * y + dy) * sy / dy, 0, 0, 2 * sz / dz, -(2 * z + dz) * sz / dz, 0, 0, 0, 1);
-    this.rotationMatrix.compose(o, q, this.scale);
-    this.viewMatrix.multiplyMatrices(this.rotationMatrix, this.viewMatrix);
+    this.viewMatrix.set(2 / dx, 0, 0, -(2 * x + dx) / dx, 0, 2 / dy, 0, -(2 * y + dy) / dy, 0, 0, 2 / dz, -(2 * z + dz) / dz, 0, 0, 0, 1);
+    this.objectMatrix.compose(o, q, s);
+    this.viewMatrix.multiplyMatrices(this.objectMatrix, this.viewMatrix);
     return this.trigger({
       type: 'range'
     });
@@ -9270,7 +9332,7 @@ Stereographic = (function(_super) {
 module.exports = Stereographic;
 
 
-},{"../../../util":100,"./view":65}],64:[function(require,module,exports){
+},{"../../../util":102,"./view":67}],66:[function(require,module,exports){
 var Stereographic4, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9288,29 +9350,31 @@ Stereographic4 = (function(_super) {
 
   Stereographic4.traits = ['node', 'object', 'view', 'view4', 'stereographic'];
 
+  Stereographic4.prototype.dimensions = function() {
+    return 4;
+  };
+
   Stereographic4.prototype.make = function() {
     Stereographic4.__super__.make.apply(this, arguments);
     this.uniforms = {
       stereoBend: this.node.attributes['stereographic.bend'],
-      projectionMatrix: this.node.attributes['view4.projection'],
       viewMatrix: this._attributes.make(this._types.mat4()),
+      view4D: this._attributes.make(this._types.vec2()),
       basisScale: this._attributes.make(this._types.vec4()),
       basisOffset: this._attributes.make(this._types.vec4())
     };
     this.viewMatrix = this.uniforms.viewMatrix.value;
+    this.view4D = this.uniforms.view4D.value;
     this.basisScale = this.uniforms.basisScale.value;
     this.basisOffset = this.uniforms.basisOffset.value;
-    this.rotationMatrix = new THREE.Matrix4;
-    this.scale = new THREE.Vector3(1, 1, 1);
+    this.objectMatrix = new THREE.Matrix4;
     return this.v3 = new THREE.Vector3;
   };
 
   Stereographic4.prototype.unmake = function() {
     Stereographic4.__super__.unmake.apply(this, arguments);
     delete this.viewMatrix;
-    delete this.rotationMatrix;
-    delete this.positionMatrix;
-    return delete this.scale;
+    return delete this.rotationMatrix;
   };
 
   Stereographic4.prototype.change = function(changed, touched, init) {
@@ -9337,18 +9401,17 @@ Stereographic4 = (function(_super) {
     sw = s.w;
     _ref = Util.Axis.recenterAxis(w, dw, bend, 1), w = _ref[0], dw = _ref[1];
     this.uniforms.stereoBend.value = bend;
-    this.basisScale.set(2 * sx / dx, 2 * sy / dy, 2 * sz / dz, 2 * sw / dw);
-    this.basisOffset.set(-(2 * x + dx) * sx / dx, -(2 * y + dy) * sy / dy, -(2 * z + dz) * sz / dz, -(2 * w + dw) * sw / dw);
-    this.viewMatrix.compose(o, q, this.scale);
+    this.basisScale.set(2 / dx, 2 / dy, 2 / dz, 2 / dw);
+    this.basisOffset.set(-(2 * x + dx) / dx, -(2 * y + dy) / dy, -(2 * z + dz) / dz, -(2 * w + dw) / dw);
+    this.viewMatrix.compose(o, q, s);
+    this.view4D.set(o.w, s.w);
     return this.trigger({
       type: 'range'
     });
   };
 
   Stereographic4.prototype.to = function(vector) {
-    vector.applyMatrix4(this.projectionMatrix);
-    this.v3.copy(vector);
-    return this.v3.applyMatrix4(this.viewMatrix);
+    throw "TODO";
   };
 
   Stereographic4.prototype.transform = function(shader) {
@@ -9364,7 +9427,7 @@ Stereographic4 = (function(_super) {
 module.exports = Stereographic4;
 
 
-},{"../../../util":100,"./view":65}],65:[function(require,module,exports){
+},{"../../../util":102,"./view":67}],67:[function(require,module,exports){
 var Parent, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9380,6 +9443,10 @@ View = (function(_super) {
 
   View.traits = ['node', 'object', 'view'];
 
+  View.prototype.dimensions = function() {
+    return 3;
+  };
+
   View.prototype.axis = function(dimension) {
     return this._get('view.range')[dimension - 1];
   };
@@ -9393,7 +9460,7 @@ View = (function(_super) {
 module.exports = View;
 
 
-},{"../base/parent":30}],66:[function(require,module,exports){
+},{"../base/parent":30}],68:[function(require,module,exports){
 var ArrayBuffer_, Buffer, Texture, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9477,7 +9544,7 @@ ArrayBuffer_ = (function(_super) {
 module.exports = ArrayBuffer_;
 
 
-},{"../../util":100,"./buffer":67,"./texture":71}],67:[function(require,module,exports){
+},{"../../util":102,"./buffer":69,"./texture":73}],69:[function(require,module,exports){
 var Buffer, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9587,7 +9654,7 @@ Buffer = (function(_super) {
 module.exports = Buffer;
 
 
-},{"../renderable":88}],68:[function(require,module,exports){
+},{"../renderable":90}],70:[function(require,module,exports){
 var Buffer, DataBuffer, Texture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9626,7 +9693,7 @@ DataBuffer = (function(_super) {
 module.exports = DataBuffer;
 
 
-},{"./buffer":67,"./texture":71}],69:[function(require,module,exports){
+},{"./buffer":69,"./texture":73}],71:[function(require,module,exports){
 exports.Texture = require('./texture');
 
 exports.Buffer = require('./buffer');
@@ -9638,7 +9705,7 @@ exports.ArrayBuffer = require('./arraybuffer');
 exports.MatrixBuffer = require('./matrixbuffer');
 
 
-},{"./arraybuffer":66,"./buffer":67,"./databuffer":68,"./matrixbuffer":70,"./texture":71}],70:[function(require,module,exports){
+},{"./arraybuffer":68,"./buffer":69,"./databuffer":70,"./matrixbuffer":72,"./texture":73}],72:[function(require,module,exports){
 var Buffer, MatrixBuffer, Texture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9748,7 +9815,7 @@ MatrixBuffer = (function(_super) {
 module.exports = MatrixBuffer;
 
 
-},{"./buffer":67,"./texture":71}],71:[function(require,module,exports){
+},{"./buffer":69,"./texture":73}],73:[function(require,module,exports){
 var Texture;
 
 Texture = (function() {
@@ -9815,7 +9882,7 @@ Texture = (function() {
 module.exports = Texture;
 
 
-},{}],72:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 var Classes;
 
 Classes = {
@@ -9832,7 +9899,7 @@ Classes = {
 module.exports = Classes;
 
 
-},{"./buffer":69,"./meshes":84}],73:[function(require,module,exports){
+},{"./buffer":71,"./meshes":86}],75:[function(require,module,exports){
 var Factory;
 
 Factory = (function() {
@@ -9857,7 +9924,7 @@ Factory = (function() {
 module.exports = Factory;
 
 
-},{}],74:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 var ArrowGeometry, Geometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9992,7 +10059,7 @@ ArrowGeometry = (function(_super) {
 module.exports = ArrowGeometry;
 
 
-},{"./geometry":75}],75:[function(require,module,exports){
+},{"./geometry":77}],77:[function(require,module,exports){
 var Geometry, debug, tick,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10085,7 +10152,7 @@ Geometry = (function(_super) {
 module.exports = Geometry;
 
 
-},{}],76:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 exports.Geometry = require('./geometry');
 
 exports.SpriteGeometry = require('./spritegeometry');
@@ -10097,7 +10164,7 @@ exports.SurfaceGeometry = require('./surfacegeometry');
 exports.ArrowGeometry = require('./arrowgeometry');
 
 
-},{"./arrowgeometry":74,"./geometry":75,"./linegeometry":77,"./spritegeometry":78,"./surfacegeometry":79}],77:[function(require,module,exports){
+},{"./arrowgeometry":76,"./geometry":77,"./linegeometry":79,"./spritegeometry":80,"./surfacegeometry":81}],79:[function(require,module,exports){
 var Geometry, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10213,7 +10280,7 @@ LineGeometry = (function(_super) {
 module.exports = LineGeometry;
 
 
-},{"./geometry":75}],78:[function(require,module,exports){
+},{"./geometry":77}],80:[function(require,module,exports){
 var Geometry, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10325,7 +10392,7 @@ SpriteGeometry = (function(_super) {
 module.exports = SpriteGeometry;
 
 
-},{"./geometry":75}],79:[function(require,module,exports){
+},{"./geometry":77}],81:[function(require,module,exports){
 var Geometry, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10445,7 +10512,7 @@ SurfaceGeometry = (function(_super) {
 module.exports = SurfaceGeometry;
 
 
-},{"./geometry":75}],80:[function(require,module,exports){
+},{"./geometry":77}],82:[function(require,module,exports){
 exports.Scene = require('./scene');
 
 exports.Factory = require('./factory');
@@ -10455,7 +10522,7 @@ exports.Renderable = require('./scene');
 exports.Classes = require('./classes');
 
 
-},{"./classes":72,"./factory":73,"./scene":89}],81:[function(require,module,exports){
+},{"./classes":74,"./factory":75,"./scene":91}],83:[function(require,module,exports){
 var Arrow, ArrowGeometry, Base,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10517,7 +10584,7 @@ Arrow = (function(_super) {
 module.exports = Arrow;
 
 
-},{"../geometry":76,"./base":82}],82:[function(require,module,exports){
+},{"../geometry":78,"./base":84}],84:[function(require,module,exports){
 var Base, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10547,7 +10614,7 @@ Base = (function(_super) {
 module.exports = Base;
 
 
-},{"../renderable":88}],83:[function(require,module,exports){
+},{"../renderable":90}],85:[function(require,module,exports){
 var Base, Debug,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10583,7 +10650,7 @@ Debug = (function(_super) {
 module.exports = Debug;
 
 
-},{"./base":82}],84:[function(require,module,exports){
+},{"./base":84}],86:[function(require,module,exports){
 exports.Sprite = require('./sprite');
 
 exports.Line = require('./line');
@@ -10595,7 +10662,7 @@ exports.Arrow = require('./arrow');
 exports.Debug = require('./debug');
 
 
-},{"./arrow":81,"./debug":83,"./line":85,"./sprite":86,"./surface":87}],85:[function(require,module,exports){
+},{"./arrow":83,"./debug":85,"./line":87,"./sprite":88,"./surface":89}],87:[function(require,module,exports){
 var Base, Line, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10668,7 +10735,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../geometry":76,"./base":82}],86:[function(require,module,exports){
+},{"../geometry":78,"./base":84}],88:[function(require,module,exports){
 var Base, Sprite, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10733,7 +10800,7 @@ Sprite = (function(_super) {
 module.exports = Sprite;
 
 
-},{"../geometry":76,"./base":82}],87:[function(require,module,exports){
+},{"../geometry":78,"./base":84}],89:[function(require,module,exports){
 var Base, Surface, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10806,7 +10873,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../geometry":76,"./base":82}],88:[function(require,module,exports){
+},{"../geometry":78,"./base":84}],90:[function(require,module,exports){
 var Renderable;
 
 Renderable = (function() {
@@ -10847,7 +10914,7 @@ Renderable = (function() {
 module.exports = Renderable;
 
 
-},{}],89:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 var MathBox, Scene,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10892,7 +10959,7 @@ Scene = (function() {
 module.exports = Scene;
 
 
-},{}],90:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 var Factory;
 
 Factory = function(snippets) {
@@ -10902,13 +10969,13 @@ Factory = function(snippets) {
 module.exports = Factory;
 
 
-},{}],91:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Snippets = MathBox.Shaders;
 
 
-},{"./factory":90}],92:[function(require,module,exports){
+},{"./factory":92}],94:[function(require,module,exports){
 var Animator;
 
 Animator = (function() {
@@ -10925,21 +10992,24 @@ Animator = (function() {
 module.exports = Animator;
 
 
-},{}],93:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 var API;
 
 API = (function() {
-  function API(_controller, _animator, _director, _up, _target) {
+  function API(_controller, _animator, _director, _up, _targets) {
     var type, _i, _len, _ref;
     this._controller = _controller;
     this._animator = _animator;
     this._director = _director;
     this._up = _up;
-    this._target = _target;
+    this._targets = _targets;
+    if (this._targets == null) {
+      this._targets = [this._controller.getRoot()];
+    }
     _ref = this._controller.getTypes();
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       type = _ref[_i];
-      if (type !== 'root' && type !== 'group') {
+      if (type !== 'root') {
         (function(_this) {
           return (function(type) {
             return _this[type] = function(options) {
@@ -10952,45 +11022,79 @@ API = (function() {
     this._model = this._controller.model;
   }
 
+  API.prototype.select = function(selector) {
+    return this.push(this._controller.model.select(selector));
+  };
+
   API.prototype.add = function(type, options) {
-    var node, object, target, _ref;
-    node = this._controller.make(type, options);
-    target = (_ref = this._target) != null ? _ref : this._controller.getRoot();
-    if (!node.children && target === this._controller.getRoot()) {
-      target = ((function() {
-        var _i, _len, _ref1, _results;
-        _ref1 = target.children;
-        _results = [];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          object = _ref1[_i];
-          if (object.children != null) {
-            _results.push(object);
-          }
-        }
-        return _results;
-      })())[0] || target;
+    var node, nodes, parents, target, _i, _len, _ref;
+    nodes = [];
+    _ref = this._targets;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      target = _ref[_i];
+      node = this._controller.make(type, options);
+      this._controller.add(node, target);
+      nodes.push(node);
     }
-    this._controller.add(node, target);
-    if (node.children) {
-      return this.push(node);
+    parents = (function() {
+      var _j, _len1, _results;
+      _results = [];
+      for (_j = 0, _len1 = nodes.length; _j < _len1; _j++) {
+        node = nodes[_j];
+        if (node.children != null) {
+          _results.push(node);
+        }
+      }
+      return _results;
+    })();
+    if (parents.length) {
+      return this.push(parents);
     } else {
       return this;
     }
   };
 
-  API.prototype.push = function(target) {
-    return new API(this._controller, this._animator, this._director, this, target);
+  API.prototype.set = function(key, value) {
+    var target, _i, _len, _ref;
+    _ref = this._targets;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      target = _ref[_i];
+      this._controller.set(target, key, value);
+    }
+    return this;
+  };
+
+  API.prototype.get = function() {
+    var target, _i, _len, _ref, _results;
+    _ref = this._targets;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      target = _ref[_i];
+      _results.push(this._controller.get(target));
+    }
+    return _results;
+  };
+
+  API.prototype.push = function(targets) {
+    return new API(this._controller, this._animator, this._director, this, targets);
   };
 
   API.prototype.end = function() {
+    return this.pop();
+  };
+
+  API.prototype.pop = function() {
     var _ref;
     return (_ref = this._up) != null ? _ref : this;
   };
 
   API.prototype.reset = function() {
-    return push({
-      target: void 0
-    });
+    var self;
+    self = this;
+    while (self._up != null) {
+      self = self._up;
+    }
+    return self;
   };
 
   return API;
@@ -11000,7 +11104,7 @@ API = (function() {
 module.exports = API;
 
 
-},{}],94:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 var Controller;
 
 Controller = (function() {
@@ -11019,6 +11123,14 @@ Controller = (function() {
 
   Controller.prototype.make = function(type, options) {
     return this.factory.make(type, options);
+  };
+
+  Controller.prototype.get = function(node) {
+    return node.get();
+  };
+
+  Controller.prototype.set = function(node, key, value) {
+    return node.set(key, value);
   };
 
   Controller.prototype.add = function(node, target) {
@@ -11041,7 +11153,7 @@ Controller = (function() {
 module.exports = Controller;
 
 
-},{}],95:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 var Director;
 
 Director = (function() {
@@ -11057,7 +11169,7 @@ Director = (function() {
 module.exports = Director;
 
 
-},{}],96:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 exports.Animator = require('./animator');
 
 exports.API = require('./api');
@@ -11067,7 +11179,7 @@ exports.Controller = require('./controller');
 exports.Director = require('./director');
 
 
-},{"./animator":92,"./api":93,"./controller":94,"./director":95}],97:[function(require,module,exports){
+},{"./animator":94,"./api":95,"./controller":96,"./director":97}],99:[function(require,module,exports){
 exports.setDimension = function(vec, dimension) {
   var w, x, y, z;
   x = dimension === 1 ? 1 : 0;
@@ -11111,7 +11223,7 @@ exports.recenterAxis = (function() {
 })();
 
 
-},{}],98:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 var ease;
 
 ease = {
@@ -11123,7 +11235,7 @@ ease = {
 module.exports = ease;
 
 
-},{}],99:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 var index, letters;
 
 letters = 'xyzw'.split('');
@@ -11177,7 +11289,7 @@ exports.invertSwizzleVec4 = function(order) {
 };
 
 
-},{}],100:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 exports.Ticks = require('./ticks');
 
 exports.Ease = require('./ease');
@@ -11187,7 +11299,7 @@ exports.GLSL = require('./glsl');
 exports.Axis = require('./axis');
 
 
-},{"./axis":97,"./ease":98,"./glsl":99,"./ticks":101}],101:[function(require,module,exports){
+},{"./axis":99,"./ease":100,"./glsl":101,"./ticks":103}],103:[function(require,module,exports){
 
 /*
  Generate equally spaced ticks in a range at sensible positions.

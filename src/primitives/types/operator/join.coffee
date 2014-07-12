@@ -1,7 +1,7 @@
-Transform = require './transform'
+Operator = require './operator'
 
-class Join extends Transform
-  @traits: ['node', 'bind', 'transform', 'join']
+class Join extends Operator
+  @traits: ['node', 'bind', 'operator', 'join']
 
   shader: (shader) ->
     shader.concat @transform

@@ -1,40 +1,51 @@
 class API
-  constructor: (@_controller, @_animator, @_director, @_up, @_target) ->
+  constructor: (@_controller, @_animator, @_director, @_up, @_targets) ->
+
+    @_targets ?= [@_controller.getRoot()]
 
     # Primitive factory
-    for type in @_controller.getTypes() when type !in ['root', 'group']
+    for type in @_controller.getTypes() when type !in ['root']
       do (type) =>
         @[type] = (options) => @add(type, options)
 
     # Expose model for debug
     @_model = @_controller.model
 
+  select: (selector) ->
+    @push @_controller.model.select selector
+
   add: (type, options) ->
     # Make node/primitive
-    node = @_controller.make type, options
-
-    # Backwards compatibility: push root leafs into first group if present
-    target = @_target ? @_controller.getRoot()
-    if !node.children &&
-       target == @_controller.getRoot()
-      target = (object for object in target.children when object.children?)[0] || target
 
     # Add to target
-    @_controller.add node, target
+    nodes = []
+    for target in @_targets
+      node = @_controller.make type, options
+      @_controller.add node, target
+      nodes.push node
 
     # Enter node if it is capable of children
-    if node.children
-      @push node
+    parents = (node for node in nodes when node.children?)
+    if parents.length
+      @push parents
     else @
 
-  push: (target) ->
-    new API @_controller, @_animator, @_director, @, target
+  set: (key, value) ->
+    @_controller.set target, key, value for target in @_targets
+    @
 
-  end: () ->
-    @_up ? @
+  get: () ->
+    @_controller.get target for target in @_targets
+
+  push: (targets) ->
+    new API @_controller, @_animator, @_director, @, targets
+
+  end: () -> @pop()
+  pop: () -> @_up ? @
 
   reset: () ->
-    push
-      target: undefined
+    self = @
+    self = self._up while self._up?
+    self
 
 module.exports = API

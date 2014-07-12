@@ -1,7 +1,7 @@
-Transform = require './transform'
+Operator = require './operator'
 
-class Split extends Transform
-  @traits: ['node', 'bind', 'transform', 'split']
+class Split extends Operator
+  @traits: ['node', 'bind', 'operator', 'split']
 
   shader: (shader) ->
     shader.concat @transform

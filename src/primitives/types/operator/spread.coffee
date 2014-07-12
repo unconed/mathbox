@@ -1,7 +1,7 @@
-Transform = require './transform'
+Operator = require './operator'
 
-class Spread extends Transform
-  @traits: ['node', 'bind', 'transform', 'spread']
+class Spread extends Operator
+  @traits: ['node', 'bind', 'operator', 'spread']
 
   shader: (shader) ->
     shader.concat @transform

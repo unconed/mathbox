@@ -15,7 +15,7 @@ class Context
     Primitives: Primitives
     Util:       Util
 
-  # Public interface
+  # Set up entire environment
   constructor: (gl, scene, camera, script = []) ->
 
     # Rendering factory

@@ -25,13 +25,13 @@
       //time = (three.Time.now - start + 3) / 7;
     });
 
-    mathbox.spherical({
+    view = mathbox.spherical({
       bend: 1,
       range: [[-π, π], [-π/2, π/2], [0, 2]],
       scale: [2, 1, 1],
     });
 
-    mathbox.area({
+    view.area({
       width: 32,
       height: 16,
       axes: [1, 2],
@@ -54,17 +54,17 @@
       },
       dimensions: 3,
     });
-    mathbox.lerp({
+    view.lerp({
       items: 32,
     });
-    mathbox.vector({
+    view.vector({
       color: 0x3090FF,
       width: 0.005,
       size: 0.04,
       end: true,
     });
 
-    mathbox.area({
+    view.area({
       width: 32,
       height: 16,
       axes: [1, 2],
@@ -87,10 +87,10 @@
       },
       dimensions: 3,
     });
-    mathbox.lerp({
+    view.lerp({
       items: 32,
     });
-    mathbox.vector({
+    view.vector({
       color: 0x70BFFF,
       width: 0.005,
       size: 0.04,

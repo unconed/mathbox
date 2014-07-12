@@ -23,31 +23,31 @@
       time = three.Time.frames / 200
     });
 
-    mathbox.cartesian({
+    view = mathbox.cartesian({
       range: [[-3, 3], [-.25, .75], [-3, 3]],
       scale: [2, 1, 2],
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 1,
       end: true,
     });
-    mathbox.axis({
+    view.axis({
       axis: 2,
       end: true,
     });
-    mathbox.axis({
+    view.axis({
       axis: 3,
       end: true,
     });
 
-    mathbox.grid({
+    view.grid({
       width: 0.005,
       opacity: 0.5,
       axes: [1, 3],
     });
 
-    mathbox.interval({
+    view.interval({
       length: 32,
       items: 1,
       axis: 1,
@@ -59,21 +59,21 @@
       },
       dimensions: 3,
     });
-    mathbox.transpose({
+    view.transpose({
       order: 'xwzy',
     });
-    mathbox.vector({
+    view.vector({
       color: 0x3080FF,
       width: 0.01,
       size: 0.08,
       start: true,
       end: false,
     });
-    mathbox.transpose({
+    view.transpose({
       source: 'interval',
       order: 'ywzx',
     });
-    mathbox.vector({
+    view.vector({
       color: 0x3080FF,
       opacity: .5,
       width: 0.004,

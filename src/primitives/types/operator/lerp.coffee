@@ -1,7 +1,7 @@
-Transform = require './transform'
+Operator = require './operator'
 
-class Lerp extends Transform
-  @traits: ['node', 'bind', 'transform', 'lerp']
+class Lerp extends Operator
+  @traits: ['node', 'bind', 'operator', 'lerp']
 
   shader: (shader) ->
     shader.concat @transform

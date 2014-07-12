@@ -1,0 +1,26 @@
+Source = require '../base/source'
+
+class Operator extends Source
+  @traits: ['node', 'operator']
+
+  getDimensions: () ->
+    @bind.source.getDimensions()
+
+  getActive: () ->
+    @bind.source.getActive()
+
+  make: () ->
+    super
+
+    # Bind to attached data sources
+    @_helpers.bind.make
+      'operator.source': Source
+
+  unmake: () ->
+    @_helpers.bind.unmake()
+
+  resize: () ->
+    @trigger
+      type: 'resize'
+
+module.exports = Operator

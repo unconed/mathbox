@@ -2,24 +2,24 @@ uniform float stereoBend;
 uniform vec4 basisScale;
 uniform vec4 basisOffset;
 uniform mat4 viewMatrix;
-uniform mat4 projectionMatrix;
+uniform vec2 view4D;
 
 vec4 getStereographic4Position(vec4 position) {
   
-  vec4 stereo;
+  vec4 transformed;
   if (stereoBend > 0.0001) {
 
     float r = length(position);
     float w = r + position.w;
     vec4 project = vec4(position.xyz / w, r);
     
-    stereo = mix(position, project, stereoBend);
+    transformed = mix(position, project, stereoBend);
   }
   else {
-    stereo = position;
+    transformed = position;
   }
 
-  vec4 pos4 = stereo * basisScale - basisOffset;
-  vec3 pos3 = (projectionMatrix * pos4).xyz;
-  return viewMatrix * vec4(pos3, 1.0);
+  vec4 pos4 = transformed * basisScale - basisOffset;
+  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;
+  return vec4(xyz, pos4.w * view4D.y + view4D.x);
 }

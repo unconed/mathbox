@@ -4,22 +4,24 @@ Util = require '../../../util'
 class Stereographic4 extends View
   @traits: ['node', 'object', 'view', 'view4', 'stereographic']
 
+  dimensions: () -> 4
+
   make: () ->
     super
 
     @uniforms =
       stereoBend:          @node.attributes['stereographic.bend']
-      projectionMatrix:    @node.attributes['view4.projection']
       viewMatrix:          @_attributes.make @_types.mat4()
+      view4D:              @_attributes.make @_types.vec2()
       basisScale:          @_attributes.make @_types.vec4()
       basisOffset:         @_attributes.make @_types.vec4()
 
     @viewMatrix          = @uniforms.viewMatrix.value
+    @view4D              = @uniforms.view4D.value
     @basisScale          = @uniforms.basisScale.value
     @basisOffset         = @uniforms.basisOffset.value
-    @rotationMatrix      = new THREE.Matrix4
+    @objectMatrix        = new THREE.Matrix4
 
-    @scale               = new THREE.Vector3(1, 1, 1)
     @v3                  = new THREE.Vector3
 
   unmake: () ->
@@ -27,8 +29,6 @@ class Stereographic4 extends View
 
     delete @viewMatrix
     delete @rotationMatrix
-    delete @positionMatrix
-    delete @scale
 
   change: (changed, touched, init) ->
 
@@ -59,20 +59,19 @@ class Stereographic4 extends View
 
     @uniforms.stereoBend.value    = bend
 
-    # 4D -> 3D transform
-    @basisScale .set 2*sx/dx, 2*sy/dy, 2*sz/dz, 2*sw/dw
-    @basisOffset.set -(2*x+dx)*sx/dx, -(2*y+dy)*sy/dy, -(2*z+dz)*sz/dz, -(2*w+dw)*sw/dw
+    # 4D axis adjustment
+    @basisScale .set 2/dx, 2/dy, 2/dz, 2/dw
+    @basisOffset.set -(2*x+dx)/dx, -(2*y+dy)/dy, -(2*z+dz)/dz, -(2*w+dw)/dw
 
-    # 3D placement
-    @viewMatrix.compose o, q, @scale
+    # 3D/4D placement
+    @viewMatrix.compose o, q, s
+    @view4D    .set o.w, s.w
 
     @trigger
       type: 'range'
 
   to: (vector) ->
-    vector.applyMatrix4 @projectionMatrix
-    @v3.copy vector
-    @v3.applyMatrix4 @viewMatrix
+    throw "TODO"
 
   transform: (shader) ->
     shader.call 'stereographic4.position', @uniforms

@@ -23,29 +23,29 @@
       time = three.Time.now
     });
 
-    mathbox.cartesian4({
+    view = mathbox.project4().cartesian4({
       range: [[-1, 1], [-1, 1], [-1, 1], [-1, 1]],
       scale: [1, 1, 1, 1],
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 1,
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 2,
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 3,
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 4,
     });
 
     // Native 4D
-    mathbox.area({
+    view.area({
       rangeX: [-π, π],
       rangeY: [-1, 1],
       width: 32,
@@ -76,13 +76,13 @@
       },
       dimensions: 4,
     });
-    mathbox.line({
+    view.line({
       color: 0x3080FF,
       width: 0.01,
     });
 
     // Manual 4D -> 3D
-    mathbox.area({
+    view.area({
       rangeX: [-π, π],
       rangeY: [-1, 1],
       width: 96,
@@ -114,7 +114,7 @@
       },
       dimensions: 4,
     });
-    mathbox.point({
+    view.point({
       color: 0xc02050,
       size: 0.02,
     });

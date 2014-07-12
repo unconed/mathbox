@@ -3,9 +3,9 @@ Util      = require '../../../util'
 
 class Grid extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'grid', 'area', 'position',
-            'axis:x.axis',   'axis:y.axis',
-            'scale:x.scale', 'scale:y.scale',
-            'span:x.span',   'span:y.span']
+            'axis:x',  'axis:y',
+            'scale:x', 'scale:y',
+            'span:x',  'span:y']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers

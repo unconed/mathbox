@@ -23,17 +23,17 @@
       time = three.Time.now / 4
     });
 
-    mathbox.polar({
+    view = mathbox.polar({
       bend: .25,
       range: [[-π, π], [0, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
 
-    mathbox.axis({
+    view.axis({
       detail: 30,
       position: [0, .5, 0],
     });
-    mathbox.ticks({
+    view.ticks({
       classes: ['foo', 'bar'],
       divide: 10,
       unit: π,
@@ -41,19 +41,19 @@
       position: [0, .5, 0],
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 2,
     });
-    mathbox.axis({
+    view.axis({
       axis: 2,
       position: [π/2, 0, 0],
     });
-    mathbox.axis({
+    view.axis({
       axis: 2,
       position: [-π/2, 0, 0],
     });
 
-    mathbox.interval({
+    view.interval({
       id: 'sampler',
       length: 128,
       expression: function (x, i, emit) {
@@ -61,7 +61,7 @@
       },
       dimensions: 2,
     });
-    mathbox.grid({
+    view.grid({
       divideX: 20,
       detailX: 48,
       width: 0.005,
@@ -69,7 +69,7 @@
       unitX: π,
       baseX: 2,
     });
-    mathbox.line({
+    view.line({
       points: '#sampler',
       color: 0x3090FF,
       width: 0.01,

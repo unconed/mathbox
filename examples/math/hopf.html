@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Hopf Fibration</title>
+  <title>MathBox - Hopf Fibration 4D Stereographic</title>
   <script src="../../build/mathbox-bundle.js"></script>
 </head>
 <body>
@@ -19,77 +19,92 @@
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     time = 0
+    wobble = 0
     three.on('update', function () {
       time = three.Time.now
+      wobble = Math.cos(time) * .5 + π/4
     });
 
-    mathbox.stereographic4({
-      range: [[-1, 1], [-1, 1], [-1, 1], [-1, 1]],
-      scale: [1, 1, 1, 1],
+    hopf = function (ϕ, θ, γ, emit) {
+      η  = θ / 2
+      ξ1 = ϕ
+      ξ2 = γ
+
+      sum  = ξ1 + ξ2
+      diff = ξ1 - ξ2
+
+      s = Math.sin(η)
+      c = Math.cos(η)
+
+      x = Math.cos(sum)  * s
+      y = Math.sin(sum)  * s
+      z = Math.cos(diff) * c
+      w = Math.sin(diff) * c
+
+      emit(z, y, w, x);
+    };
+
+    view = mathbox.stereographic4({
+      range: [[-4, 4], [-4, 4], [-4, 4], [-1, 1]],
+      scale: [4, 4, 4, 1],
     });
 
-    mathbox.axis({
-      axis: 1,
-      detail: 31,
-      position: [0, 0, 0, 1],
-    });
-
-    mathbox.axis({
-      axis: 2,
-      detail: 31,
-      position: [0, 0, 0, 1],
-    });
-
-    mathbox.axis({
-      axis: 3,
-      detail: 31,
-      position: [0, 0, 0, 1],
-    });
-
-    mathbox.axis({
-      axis: 4,
-      detail: 31,
-      position: [0, 0, 0, 1],
-    });
-
-    mathbox.area({
+    view.area({
       rangeX: [-π, π],
-      rangeY: [-1, 1],
-      width: 32,
-      height: 8,
+      rangeY: [-π/2, π/2],
+      width: 63,
+      height: 31,
       expression: function (x, y, i, j, emit) {
-        θ = π / 2 * (
-              Math.cos(time * .31 + Math.cos(time * .481 - Math.sin(time * .318)) + Math.sin(time * 1.179))
-            + Math.cos(time * .61 - Math.sin(time * .305 - Math.cos(time * .573)) + Math.cos(time * 0.962))
-          )
-        ϕ = time + Math.sin(time * .51 - Math.cos(time * .527 + Math.sin(time * .113)) + Math.sin(time * 1.224))
-
-        ξ1 = ϕ + y / 2
-        ξ2 = x
-        η  = θ
-
-        sum  = ξ1 + ξ2
-        diff = ξ1 - ξ2
-
-        s = Math.sin(η)
-        c = Math.cos(η)
-
-        x = Math.cos(sum)  * s
-        y = Math.sin(sum)  * s
-        z = Math.cos(diff) * c
-        w = Math.sin(diff) * c
-
-        emit(x, y, z, w);
+        ϕ = y
+        θ = wobble
+        hopf(ϕ, θ, x, emit);
       },
       dimensions: 4,
     });
-    mathbox.line({
-      color: 0x3080FF,
-      width: 0.01,
+    view.surface({
+      color: 0xffffff,
+      opacity: .5,
+      first: false,
+      second: false,
+      zBias: -40,
     });
-    mathbox.point({
-      color: 0xc02050,
-      size: 0.02,
+
+    view.area({
+      rangeX: [-π, π],
+      rangeY: [-.5, .5],
+      width: 63,
+      height: 31,
+      expression: function (x, y, i, j, emit) {
+        ϕ = y + time
+        θ = wobble
+        hopf(ϕ, θ, x, emit);
+      },
+      dimensions: 4,
+    });
+    view.surface({
+      color: 0x3080FF,
+      first: false,
+      second: false,
+      zBias: -5,
+    });
+
+    view.area({
+      rangeX: [-π, π],
+      rangeY: [-π/2, π/2],
+      width: 127,
+      height: 16,
+      centeredX: false,
+      centeredY: true,
+      expression: function (x, y, i, j, emit) {
+        ϕ = y
+        θ = wobble
+        hopf(ϕ, θ, x, emit);
+      },
+      dimensions: 4,
+    });
+    view.line({
+      color: 0x3080FF,
+      zBias: 10,
     });
 
   </script>

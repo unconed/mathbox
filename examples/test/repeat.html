@@ -23,12 +23,12 @@
       time = three.Time.now
     });
 
-    mathbox.polar({
+    view = mathbox.polar({
       bend: 1/128,
       range: [[-π, π], [-1, 2], [-1, 1]],
       scale: [2, 1, 2],
     });
-    mathbox.grid({
+    view.grid({
       axes: [1, 3],
       unitX: π,
       unitY: π,
@@ -37,7 +37,7 @@
       rangeX: [-20*π, 20*π],
     });
 
-    mathbox.interval({
+    view.interval({
       length: 32,
       centered: false,
       expression: function (x, i, emit) {
@@ -50,32 +50,32 @@
       items: 2,
       dimensions: 1,
     });
-    mathbox.swizzle({
+    view.swizzle({
       order: 'yx',
     });
-    mathbox.repeat({
+    view.repeat({
       height: 20,
       depth: 11,
     });
-    mathbox.spread({
+    view.spread({
       id: 'spread',
       width: [π/31, 0, 0, 0],
       height: [π, 0, 0, 0],
       depth: [0, 0, 1/10, 0],
       anchor: 0,
     });
-    mathbox.transpose({
+    view.transpose({
       order: 'zwxy'
     });
-    mathbox.surface({
+    view.surface({
       color: 0x3090FF,
       position: [0, 2, 0],
     });
-    mathbox.transpose({
+    view.transpose({
       source: '#spread',
       order: 'wxzy',
     });
-    mathbox.surface({
+    view.surface({
       color: 0x3090FF,
       position: [0, 2, 0],
     });

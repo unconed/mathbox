@@ -1,9 +1,9 @@
 ###
  Custom attribute model
- - Organizes attributes by trait/namespace so the usage in code is organized
- - Provides shorthand aliases to access via simpler flat namespace API
+ - Organizes attributes by trait
+ - Provides shorthand aliases to access via flat namespace API
  - Values are stored in three.js uniform-style objects by reference
- - Type validators/setters avoid copying value objects on write
+ - Type validators and setters avoid copying value objects on write
  - Coalesces update notifications per object and per trait
  
   Actual type and trait definitions are injected from Primitives
@@ -61,6 +61,7 @@ class Data
       @[key]?.value
     set = (key, value, ignore) =>
       key = to(key)
+      throw "wat" unless validators[key]?
       return console.warn "Setting unknown property `#{key}`" unless validators[key]?
 
       replace = validate key, value, @[key].value
@@ -145,8 +146,8 @@ class Data
     list   = []
     values = {}
     for trait in traits
-      [trait, name] = trait.split ':'
-      name ?= trait
+      [trait, ns] = trait.split ':'
+      name = if ns then [ns, trait].join '.' else trait
       spec = attributes.getTrait trait
       list.push trait
 

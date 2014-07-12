@@ -18,17 +18,17 @@
     three.camera.position.set(2.3, 1, 2);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    mathbox.cartesian({
+    view = mathbox.cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
-    mathbox.axis({
+    view.axis({
       detail: 20,
     });
-    mathbox.axis({
+    view.axis({
       axis: 2,
     });
-    mathbox.ticks({
+    view.ticks({
       classes: ['foo', 'bar'],
       divide: 10,
     });

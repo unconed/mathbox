@@ -10,6 +10,12 @@ class Controller
   make: (type, options) ->
     @factory.make type, options
 
+  get: (node) ->
+    node.get()
+
+  set: (node, key, value) ->
+    node.set key, value
+
   add: (node, target = @model.getRoot()) ->
     target.add node
 

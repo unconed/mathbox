@@ -16,19 +16,15 @@ class Polar extends View
       viewMatrix:  @_attributes.make types.mat4()
 
     @viewMatrix          = @uniforms.viewMatrix.value
-    @rotationMatrix      = new THREE.Matrix4()
-    @positionMatrix      = new THREE.Matrix4()
+    @objectMatrix        = new THREE.Matrix4()
 
     @aspect = 1
-    @scale               = new THREE.Vector3(1, 1, 1)
 
   unmake: () ->
     super
 
     delete @viewMatrix
-    delete @rotationMatrix
-    delete @positionMatrix
-    delete @scale
+    delete @objectMatrix
 
   change: (changed, touched, init) ->
 
@@ -74,26 +70,13 @@ class Polar extends View
 
     # Forward transform
     @viewMatrix.set(
-      2*sx/fdx, 0, 0, -(2*x+dx)*sx/dx,
-      0, 2*sy/dy, 0,  -(2*y+dy)*sy/dy,
-      0, 0, 2*sz/dz,  -(2*z+dz)*sz/dz,
+      2/fdx, 0, 0, -(2*x+dx)/dx,
+      0, 2/dy, 0,  -(2*y+dy)/dy,
+      0, 0, 2/dz,  -(2*z+dz)/dz,
       0, 0, 0, 1 #,
     )
-    @rotationMatrix.compose o, q, @scale
-    @viewMatrix.multiplyMatrices @rotationMatrix, @viewMatrix
-
-    ###
-    # Backward transform
-    @inverseViewMatrix.set(
-      fdx/(2*sx), 0, 0, (x+dx/2),
-      0, dy/(2*sy), 0, (y+dy/2),
-      0, 0, dz/(2*sz), (z+dz/2),
-      0, 0, 0, 1 #,
-    )
-    @q.copy(q).inverse()
-    @rotationMatrix.makeRotationFromQuaternion q
-    @inverseViewMatrix.multiplyMatrices @inverseViewMatrix, @rotationMatrix
-    ###
+    @objectMatrix.compose o, q, s
+    @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
 
     @trigger
       type: 'range'

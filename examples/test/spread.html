@@ -23,12 +23,12 @@
       time = three.Time.now
     });
 
-    mathbox.cartesian({
+    view = mathbox.cartesian({
       range: [[-6, 6], [-1, 1], [-1, 1]],
       scale: [6, 1, 1],
     });
 
-    mathbox.interval({
+    view.interval({
       length: 16,
       expression: function (x, i, emit) {
         var d = Math.sin((x + time));
@@ -39,13 +39,13 @@
       items: 2,
       dimensions: 1,
     });
-    mathbox.swizzle({
+    view.swizzle({
       order: 'yx',
     });
-    mathbox.spread({
+    view.spread({
       width: [.1, 0, 0, 0],
     });
-    mathbox.vector({
+    view.vector({
       color: 0x3090FF,
       width: 0.01,
       size: 0.1,

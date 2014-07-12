@@ -24,25 +24,25 @@
       time = three.Time.now
     });
 
-    mathbox.cartesian({
+    view = mathbox.cartesian({
       range: [[-3, 3], [0, 1], [-3, 3]],
       scale: [2, 1, 2],
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 1,
     });
-    mathbox.axis({
+    view.axis({
       axis: 3,
     });
 
-    mathbox.grid({
+    view.grid({
       width: 0.005,
       opacity: 0.5,
       axes: [1, 3],
     });
 
-    mathbox.area({
+    view.area({
       id: 'sampler',
       width: 64,
       height: 64,
@@ -55,7 +55,7 @@
       items: 3,
       dimensions: 3,
     });
-    mathbox.surface({
+    view.surface({
       color: 0x3090FF,
       width: 0.005,
     });

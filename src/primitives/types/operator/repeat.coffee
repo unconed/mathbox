@@ -1,7 +1,7 @@
-Transform = require './transform'
+Operator = require './operator'
 
-class Repeat extends Transform
-  @traits: ['node', 'bind', 'transform', 'repeat']
+class Repeat extends Operator
+  @traits: ['node', 'bind', 'operator', 'repeat']
 
   shader: (shader) ->
     shader.concat @transform

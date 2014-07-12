@@ -13,18 +13,13 @@ class Stereographic extends View
       viewMatrix:     @_attributes.make @_types.mat4()
 
     @viewMatrix          = @uniforms.viewMatrix.value
-    @rotationMatrix      = new THREE.Matrix4()
-    @positionMatrix      = new THREE.Matrix4()
-
-    @scale               = new THREE.Vector3(1, 1, 1)
+    @objectMatrix        = new THREE.Matrix4()
 
   unmake: () ->
     super
 
     delete @viewMatrix
     delete @rotationMatrix
-    delete @positionMatrix
-    delete @scale
 
   change: (changed, touched, init) ->
 
@@ -54,13 +49,13 @@ class Stereographic extends View
 
     # Forward transform
     @viewMatrix.set(
-      2*sx/dx, 0, 0, -(2*x+dx)*sx/dx,
-      0, 2*sy/dy, 0, -(2*y+dy)*sy/dy,
-      0, 0, 2*sz/dz, -(2*z+dz)*sz/dz,
+      2/dx, 0, 0, -(2*x+dx)/dx,
+      0, 2/dy, 0, -(2*y+dy)/dy,
+      0, 0, 2/dz, -(2*z+dz)/dz,
       0, 0, 0, 1 #,
     )
-    @rotationMatrix.compose o, q, @scale
-    @viewMatrix.multiplyMatrices @rotationMatrix, @viewMatrix
+    @objectMatrix.compose o, q, s
+    @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
 
     @trigger
       type: 'range'

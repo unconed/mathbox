@@ -65,22 +65,29 @@ helpers =
       # Look up nearest view to inherit from
       # Monitor size changes
       @span = @_inherit View
-      @handlers.span = (event) => @change {}, {}, true
-      @span.on 'range', @handlers.span
+      if @span?
+        @handlers.span = (event) => @change {}, {}, true
+        @span.on 'range', @handlers.span
 
     unmake: () ->
-      @span.off 'range', @handlers.span
+      if @span?
+        @span.off 'range', @handlers.span
+        delete @handlers.span
       delete @span
-      delete @handlers.span
 
-    get: (prefix, dimension) ->
-      # Return literal range
-      range = @_get prefix + 'span.range'
-      return range if range?
+    get: do ->
+      def = new THREE.Vector2 -1, 1
 
-      # Inherit from view
-      if @span
-        return @span.axis dimension
+      (prefix, dimension) ->
+        # Return literal range
+        range = @_get prefix + 'span.range'
+        return range if range?
+
+        # Inherit from view
+        if @span?
+          return @span.axis dimension
+
+        return def
 
   scale:
     # Divisions to allocate on scale
@@ -140,8 +147,22 @@ helpers =
 
   position:
     make: () ->
+      # Look up nearest view to inherit from
+      # Monitor size changes
+      @position   = @_inherit View
+      dims = @dimensions = @position?.dimensions() ? 3
+
       @objectMatrix = @_attributes.make @_attributes.types.mat4()
-      @object4D     = @_attributes.make @_attributes.types.vec2()
+      @object4D     = @_attributes.make @_attributes.types.vec2() if dims == 4
+
+      # Recalculate transform if P/R/S changes
+      recalc = () =>
+        o = @_get 'object.position'
+        s = @_get 'object.scale'
+        q = @_get 'object.rotation'
+
+        @objectMatrix.value.compose o, q, s
+        @object4D    .value.set o.w, s.w if dims == 4
 
       @handlers.position = (event) =>
         changed = event.changed
@@ -149,14 +170,6 @@ helpers =
            changed['object.rotation'] or
            changed['object.scale']
           recalc()
-
-      recalc = () =>
-        o = @_get 'object.position'
-        s = @_get 'object.scale'
-        q = @_get 'object.rotation'
-
-        @objectMatrix.value.compose o, q, s
-        @object4D    .value.set o.w, s.w
 
       @node.on  'change:object', @handlers.position
       recalc()
@@ -168,7 +181,11 @@ helpers =
       delete @handlers.position
 
     shader: (shader, inline) ->
-      shader.call 'object.position',
+      id = switch @dimensions
+        when 4 then 'object4.position'
+        else 'object.position'
+
+      shader.call id,
         objectMatrix: @objectMatrix
         object4D:     @object4D
 

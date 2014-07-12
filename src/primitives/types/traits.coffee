@@ -20,7 +20,7 @@ Traits =
   point:
     size:        Types.number(.01)
   line:
-    width:       Types.number(.01)
+    width:       Types.number(.005)
     depth:       Types.number(.5)
   mesh:
     solid:       Types.bool(true)
@@ -34,14 +34,14 @@ Traits =
 
   view:
     range:       Types.array(Types.vec2(-1, 1), 4)
-  view4:
+  span:
+    range:       Types.nullable(Types.vec2(-1, 1))
+
+  project4:
     projection:  Types.mat4(1, 0, 0, .577,
                             0, 1, 0, .577,
                             0, 0, 1, .577,
                             0, 0, 0, 0)
-  span:
-    range:       Types.nullable(Types.vec2(-1, 1))
-
 
   polar:
     bend:        Types.number(1)
@@ -89,7 +89,7 @@ Traits =
     height:      Types.int(1)
     history:     Types.int(1)
 
-  transform:
+  operator:
     source:      Types.select(Types.object())
   lerp:
     items:       Types.nullable(Types.number())

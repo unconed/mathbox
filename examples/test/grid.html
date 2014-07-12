@@ -18,11 +18,11 @@
     three.camera.position.set(2.3, 1, 2);
     three.renderer.setClearColor(new THREE.Color(0x505050), 1.0);
 
-    mathbox.cartesian({
+    view = mathbox.cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
-    mathbox.grid({
+    view.grid({
       divideX: 20,
       width: 0.005,
       opacity: 0.5,

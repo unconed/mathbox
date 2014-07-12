@@ -23,25 +23,25 @@
       time = three.Time.now
     });
 
-    mathbox.cartesian({
+    view = mathbox.cartesian({
       range: [[-3, 3], [0, 1], [-3, 3]],
       scale: [2, 1, 2],
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 1,
     });
-    mathbox.axis({
+    view.axis({
       axis: 3,
     });
 
-    mathbox.grid({
+    view.grid({
       width: 0.005,
       opacity: 0.5,
       axes: [1, 3],
     });
 
-    mathbox.area({
+    view.area({
       id: 'sampler',
       width: 32,
       height: 32,
@@ -50,7 +50,7 @@
         emit(x, .25 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);
       },
     });
-    mathbox.point({
+    view.point({
       color: 0x3090FF,
       size: 0.05,
     });

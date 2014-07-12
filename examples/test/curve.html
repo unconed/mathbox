@@ -23,31 +23,31 @@
       time = three.Time.now
     });
 
-    mathbox.cartesian({
+    view = mathbox.cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
 
-    mathbox.axis({
+    view.axis({
       detail: 30,
     });
 
-    mathbox.axis({
+    view.axis({
       axis: 2,
     });
-    mathbox.ticks({
+    view.ticks({
       classes: ['foo', 'bar'],
       divide: 10,
     });
 
-    mathbox.grid({
+    view.grid({
       divideX: 20,
       width: 0.005,
       opacity: 0.5,
     });
 
 
-    mathbox.interval({
+    view.interval({
       id: 'sampler',
       length: 64,
       expression: function (x, i, emit) {
@@ -55,7 +55,7 @@
       },
       dimensions: 2,
     });
-    mathbox.line({
+    view.line({
       points: '#sampler',
       color: 'blue',
       width: 0.01,

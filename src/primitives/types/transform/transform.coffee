@@ -1,26 +1,8 @@
-Source = require '../base/source'
+Parent = require '../base/parent'
 
-class Transform extends Source
-  @traits: ['node', 'transform']
+class Transform extends Parent
+  @traits: ['node']
 
-  getDimensions: () ->
-    @bind.source.getDimensions()
-
-  getActive: () ->
-    @bind.source.getActive()
-
-  make: () ->
-    super
-
-    # Bind to attached data sources
-    @_helpers.bind.make
-      'transform.source': Source
-
-  unmake: () ->
-    @_helpers.bind.unmake()
-
-  resize: () ->
-    @trigger
-      type: 'resize'
+  to: (vector) ->
 
 module.exports = Transform

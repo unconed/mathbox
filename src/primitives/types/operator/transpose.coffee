@@ -1,5 +1,5 @@
-Transform = require './transform'
-Util      = require '../../../util'
+Operator = require './operator'
+Util     = require '../../../util'
 
 letters = 'xyzw'.split('')
 labels =
@@ -8,8 +8,8 @@ labels =
   z: 'depth'
   w: 'items'
 
-class Transpose extends Transform
-  @traits: ['node', 'bind', 'transform', 'transpose']
+class Transpose extends Operator
+  @traits: ['node', 'bind', 'operator', 'transpose']
 
   shader: (shader) ->
     shader.call @swizzler if @swizzler

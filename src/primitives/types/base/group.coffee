@@ -13,5 +13,6 @@ class Group extends Parent
 
   transform: (shader) ->
     @_helpers.position.shader shader, true
+    super
 
 module.exports = Group
