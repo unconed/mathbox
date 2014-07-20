@@ -11,15 +11,15 @@ class RenderToTexture extends Renderable
     @inited = false
 
     super renderer, shaders
-    @build()
+    @build options
 
-  build: () ->
+  build: (options) ->
     @scene  = new THREE.Scene()
     @camera = new THREE.Camera()
     @childScene.inject @scene
 
     @target = new RenderTarget @gl, options.width, options.height, options.frames, options
-    @target.warmup (target) -> @renderer.setRenderTarget target
+    @target.warmup (target) => @renderer.setRenderTarget target
     @renderer.setRenderTarget null
 
   render: (camera = @camera) ->
@@ -30,5 +30,7 @@ class RenderToTexture extends Renderable
 
   dispose: () ->
     @childScene.unject()
+    @childScene = null
+    @scene = @camera = null
 
 module.exports = RenderToTexture

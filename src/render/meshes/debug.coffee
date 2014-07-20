@@ -5,12 +5,13 @@ class Debug extends Base
     super renderer, shaders
 
     @geometry = new THREE.PlaneGeometry 1, 1
-    @material = new THREE.MeshBasicMaterial({ map: options.map });
+    @material = new THREE.MeshBasicMaterial map: options.map
     @material.side = THREE.DoubleSide
 
     object = new THREE.Mesh @geometry, @material
-    object.position.y += 1;
-    object.frustumCulled = false;
+    object.position.y += 0
+    object.frustumCulled = false
+    object.__debug = true
 
     @objects = [object]
 

@@ -11,8 +11,8 @@ class Root extends Parent
     @event =
       type: 'update'
 
-  render:   (renderable) -> @_context.scene.add    object for object in renderable.objects
-  unrender: (renderable) -> @_context.scene.remove object for object in renderable.objects
+  adopt:   (renderable) -> @_context.scene.add    object for object in renderable.objects
+  unadopt: (renderable) -> @_context.scene.remove object for object in renderable.objects
 
   select: (selector) ->
     @node.model.select selector
@@ -22,6 +22,8 @@ class Root extends Parent
     @trigger
       type: 'resize'
       size: size
+
+  getSize: () -> @size
 
   update: () ->
     @trigger @event

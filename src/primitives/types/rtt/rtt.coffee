@@ -12,7 +12,6 @@ class RTT extends Root
       type: 'update'
 
   shader: (shader) ->
-    shader.call 'map.2d.xyzw', @sampleUniforms
     @rtt.shader shader
 
   update: () ->
@@ -20,26 +19,33 @@ class RTT extends Root
 
   getDimensions: () ->
     items:  1
-    width:  0
-    height: 0
-    depth:  0
+    width:  @width
+    height: @height
+    depth:  @frames
 
   getActive: () ->
     items:  1
-    width:  0
-    height: 0
-    depth:  0
+    width:  @width
+    height: @height
+    depth:  Math.min @frames, @_get 'rtt.expose'
 
   make: () ->
+    @parentRoot = @_inherit 'root'
+    @size = @parentRoot.getSize()
+
+    console.log 'rtt:make', @size
+
+    @updateHandler = (event) => @update()
+    @resizeHandler = (event) => @resize()
+
+    @parentRoot.on 'update', @updateHandler
+    @parentRoot.on 'resize', @resizeHandler
+
     return unless @size?
 
-    @updateRoot = @_inherit 'root'
-    @updateHandler = (event) => @update()
-    @updateRoot.on 'update', @updateHandler
-
-    @width  = @_get('texture.width')  ? @size.renderWidth
-    @height = @_get('texture.height') ? @size.renderHeight
-    @frames = @_get('texture.history') + 1
+    @width  = @_get('texture.width')   ? @size.renderWidth
+    @height = @_get('texture.height')  ? @size.renderHeight
+    @frames = @_get('rtt.history') + 1
 
     @scene = @_renderables.make 'scene'
     @rtt   = @_renderables.make 'rtt',
@@ -48,10 +54,21 @@ class RTT extends Root
       height: @height
       frames: @frames
 
+    @debug = @_renderables.make 'debug',
+      map: @rtt.read()
+
+    root = @_inherit 'root'
+    root.adopt @debug
+
   unmake: () ->
+    @parentRoot.off 'update', @updateHandler
+    @parentRoot.off 'resize', @resizeHandler
+
+    console.log 'rtt:unmake', @rtt
     return unless @rtt?
 
-    @updateRoot.off 'update', @updateHandler
+    root = @_inherit 'root'
+    root.unadopt @debug
 
     @rtt.dispose()
     @scene.dispose()
@@ -59,15 +76,19 @@ class RTT extends Root
     @rtt = @scene = @width = @height = @frames = null
 
   change: (changed, touched, init) ->
+    console.log 'rtt:change', changed, touched, init
+
     @rebuild if touched['texture']
+
+    console.log 'rtt:change:size?', @size
 
     if @size?
       @trigger
         type: 'resize'
         size: @size
 
-  render:   (renderable) -> @scene.add    object for object in renderable.objects
-  unrender: (renderable) -> @scene.remove object for object in renderable.objects
+  adopt:   (renderable) -> @scene.add    object for object in renderable.objects
+  unadopt: (renderable) -> @scene.remove object for object in renderable.objects
 
   resize: (size) ->
     @size = size

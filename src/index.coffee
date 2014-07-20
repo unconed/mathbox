@@ -75,6 +75,9 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   update: (event, three) ->
     @context?.update()
 
+  render: (event, three) ->
+    @context?.update()
+
   post: () ->
     if @first
       fmt = (x) ->

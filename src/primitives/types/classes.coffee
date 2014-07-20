@@ -34,4 +34,6 @@ Classes =
   group:             require './base/group'
   root:              require './base/root'
 
+  rtt:               require './rtt/rtt'
+
 module.exports = Classes

@@ -242,10 +242,10 @@ helpers =
       @objectParent?.on 'visible', @handlers.visible
 
       @handlers.visible()
-      @objectRoot.render object for object in @objects
+      @objectRoot.adopt object for object in @objects
 
     unmake: (dispose = true) ->
-      @objectRoot.unrender object for object in @objects
+      @objectRoot.unadopt object for object in @objects
       object.dispose() for object in @objects if dispose
 
       @node.off   'change:object', @handlers.refresh
