@@ -1,4 +1,4 @@
-Renderable   = require '../renderable'
+Renderable = require '../renderable'
 
 class Base extends Renderable
   show: (transparent) ->

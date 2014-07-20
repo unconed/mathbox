@@ -1,9 +1,9 @@
-Base            = require './base'
-SpriteGeometry  = require('../geometry').SpriteGeometry
+Base           = require './base'
+SpriteGeometry = require('../geometry').SpriteGeometry
 
 class Sprite extends Base
-  constructor: (gl, shaders, options) ->
-    super gl, shaders
+  constructor: (renderer, shaders, options) ->
+    super renderer, shaders
 
     uniforms = options.uniforms ? {}
     position = options.position

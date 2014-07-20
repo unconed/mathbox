@@ -1,8 +1,8 @@
-Base         = require './base'
+Base = require './base'
 
 class Debug extends Base
-  constructor: (gl, shaders, options) ->
-    super gl, shaders
+  constructor: (renderer, shaders, options) ->
+    super renderer, shaders
 
     @geometry = new THREE.PlaneGeometry 1, 1
     @material = new THREE.MeshBasicMaterial({ map: options.map });

@@ -16,19 +16,19 @@ class Context
     Util:       Util
 
   # Set up entire environment
-  constructor: (gl, scene, camera, script = []) ->
+  constructor: (renderer, scene, camera, script = []) ->
 
     # Rendering factory
     @shaders     = new Shaders.Factory    Shaders.Snippets
-    @renderables = new Render.Factory     gl, Render.Classes, @shaders
-    @scene       = new Render.Scene       scene
+    @renderables = new Render.Factory     renderer, Render.Classes, @shaders
+    @scene       = @renderables.make 'scene', scene: scene
 
     # Primitives factory
     @attributes  = new Model.Attributes   Primitives.Types
     @primitives  = new Primitives.Factory Primitives.Types, @
+    @root        = @primitives.make 'root'
 
     # Document model
-    @root        = @primitives.make 'root'
     @model       = new Model.Model        @root
 
     # Scene controllers

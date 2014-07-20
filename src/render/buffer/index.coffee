@@ -1,5 +1,7 @@
-exports.Texture = require('./texture')
+exports.Texture = require('./texture/texture')
+exports.RenderTarget = require('./texture/rendertarget')
 exports.Buffer = require('./buffer')
 exports.DataBuffer = require('./databuffer')
 exports.ArrayBuffer = require('./arraybuffer')
 exports.MatrixBuffer = require('./matrixbuffer')
+exports.RTT = require('./rtt')

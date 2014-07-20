@@ -89,6 +89,11 @@ Traits =
     height:      Types.int(1)
     history:     Types.int(1)
 
+  texture:
+    width:       Types.nullable(Types.int())
+    height:      Types.nullable(Types.int())
+    history:     Types.int(1)
+
   operator:
     source:      Types.select(Types.object())
   lerp:

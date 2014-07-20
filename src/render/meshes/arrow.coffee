@@ -2,8 +2,8 @@ Base          = require './base'
 ArrowGeometry = require('../geometry').ArrowGeometry
 
 class Arrow extends Base
-  constructor: (gl, shaders, options) ->
-    super gl, shaders
+  constructor: (renderer, shaders, options) ->
+    super renderer, shaders
 
     uniforms = options.uniforms ? {}
     position = options.position

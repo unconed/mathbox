@@ -42,7 +42,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
         camera = options?.camera || @options.camera || three.camera
         script = options?.script || @options.script
 
-        @context = new Context three.renderer.context, scene, camera, script
+        @context = new Context three.renderer, scene, camera, script
         @context.api.three = three
         three.mathbox = @context.api
 

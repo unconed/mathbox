@@ -1,36 +1,36 @@
-Parent = require './parent'
+Root = require '../base/root'
 
-class RTT extends Parent
+class RTT extends Root
+  @traits = ['node', 'root', 'texture']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @visible = true
     @size = null
-
-    scene    = context.scene
-    render   = (event) => scene.add    event.renderable.object
-    unrender = (event) => scene.remove event.renderable.object
-
-    add = (event) ->
-      event.object.primitive.on  'render',   render
-      event.object.primitive.on  'unrender', unrender
-
-    remove = (event) ->
-      event.object.primitive.off 'render',   render
-      event.object.primitive.off 'unrender', unrender
-
-    @node.on 'add',    add
-    @node.on 'remove', remove
 
     @event =
       type: 'update'
 
-  resize: (size) ->
-    @size = size
+  make: () ->
+    @scene = @_renderables.make 'scene'
+    @rtt   = @_renderables.make 'rtt',
+      scene: @scene
+
+  unmake: () ->
+
+  change: (changed, touched, init) ->
+    @rebuild if changed['texture']
+
     @trigger
       type: 'resize'
       size: size
+
+  render:   (renderable) -> @scene.add    object for object in renderable.objects
+  unrender: (renderable) -> @scene.remove object for object in renderable.objects
+
+  resize: (size) ->
+    @size = size
+    @change {}, {}, true
 
   update: () ->
     @trigger @event
@@ -38,4 +38,4 @@ class RTT extends Parent
   present: (shader) ->
     shader.call 'view.position'
 
-module.exports = Root
+module.exports = RTT

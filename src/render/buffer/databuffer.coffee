@@ -1,9 +1,9 @@
 Buffer = require('./buffer')
-Texture = require('./texture')
+Texture = require './texture/texture'
 
 class DataBuffer extends Buffer
-  constructor: (gl, shaders, options) ->
-    super gl, shaders, options
+  constructor: (renderer, shaders, options) ->
+    super renderer, shaders, options
 
   build: () ->
     super

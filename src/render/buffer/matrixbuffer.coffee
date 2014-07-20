@@ -1,5 +1,5 @@
 Buffer = require('./buffer')
-Texture = require('./texture')
+Texture = require './texture/texture'
 
 class MatrixBuffer extends Buffer
   constructor: (gl, shaders, options) ->

@@ -1,14 +1,19 @@
+Renderable = require './renderable'
+
 class MathBox extends THREE.Object3D
 
-class Scene
-  constructor: (@scene) ->
+class Scene extends Renderable
+  constructor: (gl, shaders, options) ->
+    super gl, shaders, options
     @root = new MathBox
+    @scene = options.scene if options?.scene?
 
-  inject: () ->
+  inject: (scene) ->
+    @scene = scene if scene?
     @scene.add @root
 
   unject: () ->
-    @scene.remove @root
+    @scene?.remove @root
 
   add: (object) ->
     @root.add object

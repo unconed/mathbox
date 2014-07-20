@@ -1,15 +1,15 @@
 Buffer  = require './buffer'
-Texture = require './texture'
+Texture = require './texture/texture'
 Util    = require '../../util'
 
 class ArrayBuffer_ extends Buffer
-  constructor: (gl, shaders, options) ->
+  constructor: (renderer, shaders, options) ->
     @callback = options.callback || ->
     @length   = options.length   || 1
     @history  = options.history  || 1
 
     @samples = @length
-    super gl, shaders, options
+    super renderer, shaders, options
 
   shader: (shader) ->
     super shader
