@@ -12,6 +12,7 @@ class ArrayBuffer_ extends Buffer
     super renderer, shaders, options
 
   shader: (shader) ->
+    shader.call 'map.2d.xyzw', @uniforms
     super shader
 
   build: () ->
@@ -25,6 +26,9 @@ class ArrayBuffer_ extends Buffer
     @dataPointer = @uniforms.dataPointer.value
 
     @_adopt @texture.uniforms
+    @_adopt
+      textureItems:  { type: 'f', value: @items }
+      textureHeight: { type: 'f', value: 1 }
 
   getFilled: () -> @filled
 

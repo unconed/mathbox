@@ -244,8 +244,9 @@ helpers =
       @handlers.visible()
       @objectRoot.render object for object in @objects
 
-    unmake: () ->
+    unmake: (dispose = true) ->
       @objectRoot.unrender object for object in @objects
+      object.dispose() for object in @objects if dispose
 
       @node.off   'change:object', @handlers.refresh
       @node.off   'change:style',  @handlers.refresh

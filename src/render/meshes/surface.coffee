@@ -24,13 +24,13 @@ class Surface extends Base
     v.import position if position
     v.split()
     v  .call 'surface.position',        @uniforms if !shaded
-    v  .call 'surface.position.normal', @uniforms, '_shade_' if shaded
+    v  .call 'surface.position.normal', @uniforms if  shaded
     v.pass()
     v.call 'project.position',   @uniforms
 
     f = factory.fragment
     f.call 'style.color',        @uniforms if !shaded
-    f.call 'style.color.shaded', @uniforms, '_shade_' if shaded
+    f.call 'style.color.shaded', @uniforms if  shaded
     f.call 'fragment.color',     @uniforms
 
     @material = new THREE.ShaderMaterial factory.build

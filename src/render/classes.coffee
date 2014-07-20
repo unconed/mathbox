@@ -9,7 +9,7 @@ Classes =
   databuffer: require('./buffer').DataBuffer
   arraybuffer: require('./buffer').ArrayBuffer
   matrixbuffer: require('./buffer').MatrixBuffer
-  rtt: require('./buffer').RTT
+  rtt: require('./buffer').RenderToTexture
 
   scene: require('./scene')
 

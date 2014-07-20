@@ -12,7 +12,6 @@ class Array_ extends Data
     @filled = false
 
   shader: (shader) ->
-    shader.call 'map.2d.xyzw', @sampleUniforms
     @buffer.shader shader
 
   getDimensions: () ->
@@ -49,11 +48,6 @@ class Array_ extends Data
         @space = Math.max @space, Math.floor data.length / channels / items
 
     @length = @space
-
-    # Prepare sampling uniforms
-    @sampleUniforms =
-      textureItems:  @_attributes.make @_types.number items
-      textureHeight: @_attributes.make @_types.number 1
 
     # Create arraybuffer
     if @space > 0

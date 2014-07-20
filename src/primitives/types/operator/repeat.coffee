@@ -61,7 +61,7 @@ class Repeat extends Operator
 
       @repeatModulus.value.set dims.width, dims.height, dims.depth, dims.items
 
-      # Rebuild geometry downstream
+      # Rebuild all geometry downstream (TODO: make this work better)
       @trigger
         event: 'rebuild'
 

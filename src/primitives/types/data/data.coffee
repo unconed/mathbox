@@ -4,11 +4,13 @@ class Data extends Source
   @traits: ['node', 'data', 'source']
 
   make: () ->
+    @dataRoot = @_inherit 'root'
+
     @handler = () => @update()
-    @root.on  'update', @handler
+    @dataRoot.on  'update', @handler
 
   unmake: () ->
-    @root.off 'update', @handler
+    @dataRoot.off 'update', @handler
 
 
 

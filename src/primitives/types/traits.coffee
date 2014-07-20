@@ -72,6 +72,9 @@ Traits =
     points:      Types.select(Types.object())
     colors:      Types.select(Types.object())
 
+  source:
+    hint:        Types.nullable(Types.string())
+
   data:
     data:        Types.nullable(Types.object())
     expression:  Types.nullable(Types.func())
@@ -130,5 +133,8 @@ Traits =
     width:       Types.number(1)
     height:      Types.number(1)
     depth:       Types.number(1)
+
+  root:
+    camera:      Types.nullable(Types.select(Types.object()))
 
 module.exports = Traits

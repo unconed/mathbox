@@ -13,7 +13,6 @@ class Matrix extends Data
     @spaceHeight = 0
 
   shader: (shader) ->
-    shader.call 'map.2d.xyzw', @sampleUniforms
     @buffer.shader shader
 
   getDimensions: () ->
@@ -56,11 +55,6 @@ class Matrix extends Data
 
     @width  = @spaceWidth  = Math.max @spaceWidth, width
     @height = @spaceHeight = Math.max @spaceHeight, height
-
-    # Prepare sampling uniforms
-    @sampleUniforms =
-      textureItems:  @_attributes.make @_types.number items
-      textureHeight: @_attributes.make @_types.number height
 
     # Create matrix buffer
     if @spaceWidth * @spaceHeight > 0

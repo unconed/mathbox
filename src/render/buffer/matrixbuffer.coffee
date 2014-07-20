@@ -2,14 +2,18 @@ Buffer = require('./buffer')
 Texture = require './texture/texture'
 
 class MatrixBuffer extends Buffer
-  constructor: (gl, shaders, options) ->
+  constructor: (renderer, shaders, options) ->
     @callback = options.callback || ->
     @width    = options.width    || 1
     @height   = options.height   || 1
     @history  = options.history  || 1
 
     @samples = @width * @height
-    super gl, shaders, options
+    super renderer, shaders, options
+
+  shader: (shader) ->
+    shader.call 'map.2d.xyzw', @uniforms
+    super shader
 
   build: () ->
     super
@@ -22,6 +26,9 @@ class MatrixBuffer extends Buffer
     @dataPointer = @uniforms.dataPointer.value
 
     @_adopt @texture.uniforms
+    @_adopt
+      textureItems:  { type: 'f', value: @items }
+      textureHeight: { type: 'f', value: @height }
 
   getFilled: () -> @filled
 

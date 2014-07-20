@@ -21,12 +21,12 @@ class Context
     # Rendering factory
     @shaders     = new Shaders.Factory    Shaders.Snippets
     @renderables = new Render.Factory     renderer, Render.Classes, @shaders
-    @scene       = @renderables.make 'scene', scene: scene
+    @scene       = @renderables.make      'scene', scene: scene, camera: camera
 
     # Primitives factory
     @attributes  = new Model.Attributes   Primitives.Types
     @primitives  = new Primitives.Factory Primitives.Types, @
-    @root        = @primitives.make 'root'
+    @root        = @primitives.make       'root'
 
     # Document model
     @model       = new Model.Model        @root

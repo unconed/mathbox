@@ -30,7 +30,7 @@ Classes =
   split:             require './operator/split'
   join:              require './operator/join'
 
-  world:             require './base/world'
+  present:           require './base/present'
   group:             require './base/group'
   root:              require './base/root'
 

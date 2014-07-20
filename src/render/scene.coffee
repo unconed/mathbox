@@ -21,4 +21,7 @@ class Scene extends Renderable
   remove: (object) ->
     @root.remove object
 
+  dispose: () ->
+    @unject() if @root.parent?
+
 module.exports = Scene
