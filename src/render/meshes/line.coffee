@@ -27,13 +27,13 @@ class Line extends Base
     v  .call 'line.position',    @uniforms
     v.pass()
     v.fan()
-    v  .call 'line.clip',        @uniforms, '_clip_' if clip
+    v  .call 'line.clipEnds',    @uniforms, '_clip_' if clip
     v.next()
     v  .call 'project.position', @uniforms
     v.join()
 
     f = factory.fragment
-    f.call 'fragment.clip',      @uniforms, '_clip_' if clip
+    f.call 'fragment.clipEnds',  @uniforms, '_clip_' if clip
     f.call 'style.color',        @uniforms
     f.call 'fragment.color',     @uniforms
 
