@@ -4,7 +4,7 @@ Traits =
   node:
     type:        Types.string()
     id:          Types.nullable(Types.string())
-    classes:     Types.array(Types.string())
+    classes:     Types.klass()
 
   object:
     position:    Types.vec4()

@@ -181,5 +181,13 @@ Types =
       if value.match /^[xyzw]{1,4}$/
         return value
 
+  klass: () ->
+    stringArray = Types.array(Types.string())
+
+    make: () -> stringArray.make()
+    validate: (value, target) ->
+      value = value.split ' ' if (value == "" + value)
+      value = value.filter (x) -> !!x.length
+      return validate value, target
 
 module.exports = Types
