@@ -1,5 +1,4 @@
 Primitive = require '../../primitive'
-Source    = require '../base/source'
 Util      = require '../../../util'
 
 class Surface extends Primitive
@@ -26,7 +25,7 @@ class Surface extends Primitive
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make
-      'geometry.points': Source
+      'geometry.points': 'source'
 
     # Build transform chain
     position = @_shaders.shader()

@@ -1,7 +1,7 @@
 Source = require '../base/source'
 
 class Data extends Source
-  @traits: ['node', 'data']
+  @traits: ['node', 'data', 'source']
 
   make: () ->
     @handler = () => @update()

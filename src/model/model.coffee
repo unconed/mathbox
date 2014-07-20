@@ -119,15 +119,32 @@ class Model
 
   # Querying via CSS selectors
 
+  # Filter array by selector
   filter: (nodes, selector) ->
     selector = @language selector
     node for node in nodes when selector(node)
 
-  select: (selectors) ->
-    out    = []
-    out    = out.concat @_select s for s in selectors.split /,/g
-    unique = out.filter (object, i) -> out.indexOf(object) == i
+  # Filter array by ancestry
+  ancestry: (nodes, parents) ->
+    out = []
+    for node in nodes
+      parent = node.parent
+      while parent?
+        if parent in parents
+          out.push node
+          continue
+        parent = node.parent
+    out
 
+  # Apply (scoped) selector to model
+  select: (selector, parents) ->
+    matches = []
+    matches = matches.concat @_select s for s in selector.split /,/g
+    unique = matches.filter (object, i) -> matches.indexOf(object) == i
+    unique = @ancestry unique, parents if parents?
+    return unique
+
+  # Query single selector
   _select: (s) ->
     # Trim
     s = s.replace /^\s+/, ''

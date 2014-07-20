@@ -1,7 +1,7 @@
 Operator = require './operator'
 
 class Repeat extends Operator
-  @traits: ['node', 'bind', 'operator', 'repeat']
+  @traits: ['node', 'bind', 'operator', 'source', 'repeat']
 
   shader: (shader) ->
     shader.concat @transform

@@ -1,7 +1,7 @@
 Source = require '../base/source'
 
 class Operator extends Source
-  @traits: ['node', 'operator']
+  @traits: ['node', 'operator', 'source']
 
   getDimensions: () ->
     @bind.source.getDimensions()
@@ -14,7 +14,7 @@ class Operator extends Source
 
     # Bind to attached data sources
     @_helpers.bind.make
-      'operator.source': Source
+      'operator.source': 'source'
 
   unmake: () ->
     @_helpers.bind.unmake()

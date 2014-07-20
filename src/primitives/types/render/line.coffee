@@ -1,5 +1,4 @@
 Primitive = require '../../primitive'
-Source    = require '../base/source'
 
 class Line extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
@@ -24,7 +23,7 @@ class Line extends Primitive
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make
-      'geometry.points': Source
+      'geometry.points': 'source'
 
     # Build transform chain
     position = @_shaders.shader()

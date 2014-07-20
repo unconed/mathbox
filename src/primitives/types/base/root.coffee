@@ -1,30 +1,21 @@
 Parent = require './parent'
 
 class Root extends Parent
+  @traits = ['node', 'root']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @visible = true
     @size = null
-
-    scene    = context.scene
-    render   = (event) => scene.add    event.renderable.object
-    unrender = (event) => scene.remove event.renderable.object
-
-    add = (event) ->
-      event.object.primitive.on  'render',   render
-      event.object.primitive.on  'unrender', unrender
-
-    remove = (event) ->
-      event.object.primitive.off 'render',   render
-      event.object.primitive.off 'unrender', unrender
-
-    @node.on 'add',    add
-    @node.on 'remove', remove
 
     @event =
       type: 'update'
+
+  render:   (renderable) -> @_context.scene.add    object for object in renderable.objects
+  unrender: (renderable) -> @_context.scene.remove object for object in renderable.objects
+
+  select: (selector) ->
+    @node.model.select selector
 
   resize: (size) ->
     @size = size

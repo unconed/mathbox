@@ -8,14 +8,16 @@ class Debug extends Base
     @material = new THREE.MeshBasicMaterial({ map: options.map });
     @material.side = THREE.DoubleSide
 
-    @object = new THREE.Mesh @geometry, @material
-    @object.position.y += 1;
-    @object.frustumCulled = false;
+    object = new THREE.Mesh @geometry, @material
+    object.position.y += 1;
+    object.frustumCulled = false;
+
+    @objects = [object]
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @object = @geometry = @material = null
+    @objects = @geometry = @material = null
     super
 
 module.exports = Debug

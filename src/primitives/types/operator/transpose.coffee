@@ -9,7 +9,7 @@ labels =
   w: 'items'
 
 class Transpose extends Operator
-  @traits: ['node', 'bind', 'operator', 'transpose']
+  @traits: ['node', 'bind', 'operator', 'source', 'transpose']
 
   shader: (shader) ->
     shader.call @swizzler if @swizzler

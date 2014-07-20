@@ -2,7 +2,7 @@ Operator = require './operator'
 Util     = require '../../../util'
 
 class Swizzle extends Operator
-  @traits: ['node', 'bind', 'operator', 'swizzle']
+  @traits: ['node', 'bind', 'operator', 'source', 'swizzle']
 
   shader: (shader) ->
     @bind.source.shader shader

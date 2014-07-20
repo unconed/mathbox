@@ -11,7 +11,7 @@ Helpers are auto-attached to primitives that have the matching trait
 
 helpers =
 
-  render:
+  renderScale:
     make: () ->
       @render =
         scale: scale = @_attributes.make @_types.number 0
@@ -19,10 +19,10 @@ helpers =
       @handlers.renderResize = (event) => scale.value = @root.size.renderHeight / 2
       @handlers.renderResize()
 
-      @root.on 'resize',  @handlers.renderResize
+      @objectRoot?.on 'resize',  @handlers.renderResize
 
     unmake: () ->
-      @root.off 'resize', @handlers.renderResize
+      @objectRoot?.off 'resize', @handlers.renderResize
       delete @handlers.renderResize
 
     uniforms: () ->
@@ -39,9 +39,9 @@ helpers =
       @handlers.bindRebuild = (event) => @rebuild()
 
       # Fetch attached objects and bind
-      for key, klass of map
+      for key, trait of map
         name = key.split(/\./g).pop()
-        source = @_attached key, klass
+        source = @_attached key, trait
 
         source.on 'resize',  @handlers.bindResize
         source.on 'rebuild', @handlers.bindRebuild
@@ -64,16 +64,16 @@ helpers =
     make: () ->
       # Look up nearest view to inherit from
       # Monitor size changes
-      @span = @_inherit View
-      if @span?
+      @spanView = @_inherit 'view'
+      if @spanView?
         @handlers.span = (event) => @change {}, {}, true
-        @span.on 'range', @handlers.span
+        @spanView.on 'range', @handlers.span
 
     unmake: () ->
-      if @span?
-        @span.off 'range', @handlers.span
+      if @spanView?
+        @spanView.off 'range', @handlers.span
         delete @handlers.span
-      delete @span
+      delete @spanView
 
     get: do ->
       def = new THREE.Vector2 -1, 1
@@ -84,8 +84,8 @@ helpers =
         return range if range?
 
         # Inherit from view
-        if @span?
-          return @span.axis dimension
+        if @spanView?
+          return @spanView.axis dimension
 
         return def
 
@@ -149,8 +149,8 @@ helpers =
     make: () ->
       # Look up nearest view to inherit from
       # Monitor size changes
-      @position   = @_inherit View
-      dims = @dimensions = @position?.dimensions() ? 3
+      @positionView = @_inherit 'view'
+      dims = @positionDims = @positionView?.dimensions() ? 3
 
       @objectMatrix = @_attributes.make @_attributes.types.mat4()
       @object4D     = @_attributes.make @_attributes.types.vec2() if dims == 4
@@ -178,10 +178,13 @@ helpers =
       @node.off 'change:object', @handlers.position
 
       delete @objectMatrix
+      delete @object4D
       delete @handlers.position
+      delete @positionView
+      delete @positionDims
 
     shader: (shader, inline) ->
-      id = switch @dimensions
+      id = switch @positionDims
         when 4 then 'object4.position'
         else 'object.position'
 
@@ -200,20 +203,12 @@ helpers =
       (x[k] = v for k, v of obj) for obj in arguments
       x
 
-    # Notify outside controller of renderables
-    render: (object) ->
-      @trigger
-        type: 'render'
-        renderable: object
-
-    unrender: (object) ->
-      @trigger
-        type: 'unrender'
-        renderable: object
-
-    # Track visibility
-    # Propagate a node's visibility changes to its children
+    # Pass renderables to nearest root
+    # Track visibility from parent and notify children
     make: (@objects = []) ->
+      @objectParent = @_inherit 'object'
+      @objectRoot   = @_inherit 'root'
+
       e = type: 'visible'
 
       @handlers.refresh = (event) =>
@@ -230,8 +225,8 @@ helpers =
           opacity = @_get 'style.opacity'
           visible = opacity > 0
 
-        if visible and @parent
-          visible = @parent.visible
+        if visible and @objectParent?.visible?
+          visible = @objectParent.objectVisible
 
         for o in @objects
           if visible
@@ -239,26 +234,29 @@ helpers =
           else
             o.hide()
 
-        @visible = visible
+        @objectVisible = visible
         @trigger e
 
       @node.on   'change:object', @handlers.refresh
       @node.on   'change:style',  @handlers.refresh
-      @parent.on 'visible', @handlers.visible
+      @objectParent?.on 'visible', @handlers.visible
 
       @handlers.visible()
-      @_helpers.object.render object for object in @objects
+      @objectRoot.render object for object in @objects
 
     unmake: () ->
-      @_helpers.object.unrender object for object in @objects
-      delete @visible
+      @objectRoot.unrender object for object in @objects
 
       @node.off   'change:object', @handlers.refresh
       @node.off   'change:style',  @handlers.refresh
-      @parent.off 'visible', @handlers.visible
+      @objectParent?.off 'visible', @handlers.visible
 
       delete @handlers.refresh
       delete @handlers.visible
+
+      delete @objectVisible
+      delete @objectParent
+      delete @objectRoot
 
 module.exports = (object, traits) ->
   h = {}

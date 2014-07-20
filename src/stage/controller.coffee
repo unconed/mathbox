@@ -20,7 +20,7 @@ class Controller
     target.add node
 
   remove: (node) ->
-    target = node.parent || @model.getRoot()
-    target.remove node
+    target = node.parent
+    target.remove node if target
 
 module.exports = Controller

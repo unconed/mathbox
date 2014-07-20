@@ -35,18 +35,21 @@ class Sprite extends Base
 
     window.material = @material
 
-    @object = new THREE.Mesh @geometry, @material
-    @object.frustumCulled = false;
-    @object.matrixAutoUpdate = false;
+    object = new THREE.Mesh @geometry, @material
+    object.frustumCulled = false;
+    object.matrixAutoUpdate = false;
+
+    @objects = [object]
 
   show: (transparent) ->
-    @object.visible = true
-    @object.material.transparent = true
+    for object in @objects
+      object.visible = true
+      object.material.transparent = true
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @object = @geometry = @material = null
+    @objects = @geometry = @material = null
     super
 
 module.exports = Sprite

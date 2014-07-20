@@ -1,7 +1,7 @@
 Operator = require './operator'
 
 class Lerp extends Operator
-  @traits: ['node', 'bind', 'operator', 'lerp']
+  @traits: ['node', 'bind', 'operator', 'source', 'lerp']
 
   shader: (shader) ->
     shader.concat @transform

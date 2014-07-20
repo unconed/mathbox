@@ -10,27 +10,27 @@ class Node
     @parent = parent
     @root = parent.root
 
-    # Notify of child addition
+    # Notify root listeners of child addition
     event =
       type: 'add'
       object: @
       parent: @parent
-    @root.trigger event if @root != @
+    @root.trigger event if @root
 
-    # Notify of own addition
+    # Notify self listeners of own addition
     event.type = 'added'
     @trigger event
 
   _removed: () ->
     @root = @parent = null
 
-    # Notify of child removal
+    # Notify root listeners of child removal
     event =
       type: 'remove'
       object: @
-    @root.trigger event if @root != @
+    @root.trigger event if @root
 
-    # Notify of own removal
+    # Notify self listeners of own removal
     event.type = 'removed'
     @trigger event
 

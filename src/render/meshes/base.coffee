@@ -2,10 +2,12 @@ Renderable   = require '../renderable'
 
 class Base extends Renderable
   show: (transparent) ->
-    @object.visible = true
-    @object.material.transparent = transparent
+    for object in @objects
+      object.visible = true
+      object.material.transparent = transparent
 
   hide: () ->
-    @object.visible = false
+    for object in @objects
+      object.visible = false
 
 module.exports = Base

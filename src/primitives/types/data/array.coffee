@@ -1,7 +1,7 @@
 Data = require './data'
 
 class Array_ extends Data
-  @traits: ['node', 'data', 'array']
+  @traits: ['node', 'data', 'source', 'array']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers

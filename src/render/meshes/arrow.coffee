@@ -37,14 +37,16 @@ class Arrow extends Base
 
     window.material = @material
 
-    @object = new THREE.Mesh @geometry, @material
-    @object.frustumCulled = false;
-    @object.matrixAutoUpdate = false;
+    object = new THREE.Mesh @geometry, @material
+    object.frustumCulled = false;
+    object.matrixAutoUpdate = false;
+
+    @objects = [object]
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @object = @geometry = @material = null
+    @objects = @geometry = @material = null
     super
 
 module.exports = Arrow

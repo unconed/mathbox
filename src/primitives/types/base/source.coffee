@@ -1,7 +1,7 @@
 Primitive = require '../../primitive'
 
 class Source extends Primitive
-  @traits: ['node', 'data']
+  @traits: ['node', 'data', 'source']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers

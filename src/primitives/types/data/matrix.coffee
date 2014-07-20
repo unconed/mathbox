@@ -1,7 +1,7 @@
 Data = require './data'
 
 class Matrix extends Data
-  @traits: ['node', 'data', 'matrix']
+  @traits: ['node', 'data', 'source', 'matrix']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers

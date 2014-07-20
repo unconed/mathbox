@@ -37,7 +37,7 @@ class Context
     @director    = new Stage.Director     @controller, @animator, script
 
     # Public API
-    @api         = new Stage.API          @controller, @animator, @director
+    @api         = new Stage.API          @
 
     # Debug
     window.model = @model
