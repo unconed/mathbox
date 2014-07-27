@@ -46,7 +46,8 @@ class API
     @_context.controller.set target, key, value for target in @_targets
     @
 
-  get: () ->
+  get: (selector) ->
+    return @select(selector).get() if selector
     @_context.controller.get target for target in @_targets
 
   push: (targets) ->

@@ -11,7 +11,7 @@ class Array_ extends Data
     @length = 0
     @filled = false
 
-  shader: (shader) ->
+  sourceShader: (shader) ->
     @buffer.shader shader
 
   getDimensions: () ->
@@ -51,7 +51,7 @@ class Array_ extends Data
 
     # Create arraybuffer
     if @space > 0
-      @buffer = @_renderables.make 'arraybuffer',
+      @buffer = @_renderables.make 'arrayBuffer',
                 items:    @items
                 length:   @space
                 history:  @history
@@ -75,13 +75,11 @@ class Array_ extends Data
     if changed['data.expression']? or
        init
 
-      callback = @_get 'data.expression'
-      @buffer.callback = @callback callback
+      @buffer.callback = @callback @_get 'data.expression'
 
   update: () ->
     return unless @buffer
     return unless !@filled or @_get 'data.live'
-    return unless @parent.visible
 
     data = @_get 'data.data'
 

@@ -3,7 +3,7 @@ ArrowGeometry = require('../geometry').ArrowGeometry
 
 class Arrow extends Base
   constructor: (renderer, shaders, options) ->
-    super renderer, shaders
+    super renderer, shaders, options
 
     uniforms = options.uniforms ? {}
     position = options.position
@@ -23,24 +23,23 @@ class Arrow extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    v.import position if position
-    v.call 'arrow.position',   @uniforms
-    v.call 'project.position', @uniforms
+    v.require position if position
+    v.pipe 'arrow.position',   @uniforms
+    v.pipe 'project.position', @uniforms
 
     f = factory.fragment
-    f.call 'style.color',      @uniforms
-    f.call 'fragment.color',   @uniforms
+    f.pipe 'style.color',      @uniforms
+    f.pipe 'fragment.color',   @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    window.material = @material
-
     object = new THREE.Mesh @geometry, @material
     object.frustumCulled = false;
     object.matrixAutoUpdate = false;
 
+    @_raw object
     @objects = [object]
 
   dispose: () ->

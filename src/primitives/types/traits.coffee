@@ -4,7 +4,7 @@ Traits =
   node:
     type:        Types.string()
     id:          Types.nullable(Types.string())
-    classes:     Types.klass()
+    classes:     Types.classes()
 
   object:
     position:    Types.vec4()
@@ -15,7 +15,10 @@ Traits =
   style:
     opacity:     Types.number(1)
     color:       Types.color()
-    zBias:       Types.number(0)
+    blending:    Types.blending()
+    zFactor:     Types.number(4)
+    zUnits:      Types.number(0)
+    zIndex:      Types.number(0)
 
   point:
     size:        Types.number(.01)
@@ -78,7 +81,6 @@ Traits =
   data:
     data:        Types.nullable(Types.object())
     expression:  Types.nullable(Types.func())
-    source:      Types.nullable(Types.select(Types.object()))
     live:        Types.bool(true)
     dimensions:  Types.int(3)
     items:       Types.int(1)
@@ -138,5 +140,9 @@ Traits =
 
   root:
     camera:      Types.nullable(Types.select(Types.object()))
+
+  compose:
+    source:      Types.nullable(Types.select(Types.object()))
+    alpha:       Types.bool(false)
 
 module.exports = Traits

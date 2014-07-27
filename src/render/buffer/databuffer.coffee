@@ -1,5 +1,5 @@
-Buffer = require('./buffer')
-Texture = require './texture/texture'
+Buffer      = require './buffer'
+DataTexture = require './texture/datatexture'
 
 class DataBuffer extends Buffer
   constructor: (renderer, shaders, options) ->
@@ -9,7 +9,7 @@ class DataBuffer extends Buffer
     super
 
     @data    = new Float32Array @samples * @channels * @items
-    @texture = new Texture @gl, @samples * @items, 1, @channels
+    @texture = new DataTexture  @gl, @samples * @items, 1, @channels
 
     @dataPointer = @uniforms.dataPointer.value
     @_adopt @texture.uniforms

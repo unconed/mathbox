@@ -3,7 +3,7 @@ LineGeometry = require('../geometry').LineGeometry
 
 class Line extends Base
   constructor: (renderer, shaders, options) ->
-    super renderer, shaders
+    super renderer, shaders, options
 
     uniforms = options.uniforms ? {}
     position = options.position
@@ -22,32 +22,29 @@ class Line extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    v.import position if position
+    v.require position if position
     v.split()
-    v  .call 'line.position',    @uniforms
+    v  .pipe 'line.position',    @uniforms
     v.pass()
     v.fan()
-    v  .call 'line.clipEnds',    @uniforms if clip
+    v  .pipe 'line.clipEnds',    @uniforms if clip
     v.next()
-    v  .call 'project.position', @uniforms
+    v  .pipe 'project.position', @uniforms
     v.join()
 
     f = factory.fragment
-    f.call 'fragment.clipEnds',  @uniforms if clip
-    f.call 'style.color',        @uniforms
-    f.call 'fragment.color',     @uniforms
+    f.pipe 'fragment.clipEnds',  @uniforms if clip
+    f.pipe 'style.color',        @uniforms
+    f.pipe 'fragment.color',     @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    window.material = @material
-
     object = new THREE.Mesh @geometry, @material
-    object.frustumCulled = false;
-    object.matrixAutoUpdate = false;
 
+    @_raw object
     @objects = [object]
 
   dispose: () ->

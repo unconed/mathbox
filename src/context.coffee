@@ -6,7 +6,7 @@ Primitives = require './primitives'
 Util       = require './util'
 
 class Context
-  # Export for tinkering
+  # Export for extending
   @Namespace =
     Model:      Model
     Stage:      Stage

@@ -22,7 +22,7 @@ class Axis extends Primitive
     @_helpers.position.make()
 
     position = @_shaders.shader()
-    position.call 'axis.position', positionUniforms
+    position.pipe 'axis.position', positionUniforms
     @_helpers.position.shader position
 
     # Prepare bound uniforms
@@ -40,7 +40,7 @@ class Axis extends Primitive
     end     = @_get 'arrow.end'
 
     # Make line renderable
-    uniforms = @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
+    uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms
     @line = @_renderables.make 'line',
               uniforms: uniforms
               samples:  samples
@@ -49,7 +49,7 @@ class Axis extends Primitive
 
     # Make arrow renderables
     @arrows = []
-    uniforms = @_helpers.object.merge arrowUniforms, styleUniforms
+    uniforms = Util.JS.merge arrowUniforms, styleUniforms
 
     if start
       @arrows.push @_renderables.make 'arrow',

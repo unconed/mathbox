@@ -74,7 +74,7 @@ class Stereographic4 extends View
     throw "TODO"
 
   transform: (shader) ->
-    shader.call 'stereographic4.position', @uniforms
+    shader.pipe 'stereographic4.position', @uniforms
     @parent?.transform shader
 
 module.exports = Stereographic4

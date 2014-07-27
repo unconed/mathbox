@@ -4,9 +4,9 @@ Util     = require '../../../util'
 class Swizzle extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'swizzle']
 
-  shader: (shader) ->
-    @bind.source.shader shader
-    shader.call @swizzler if @swizzler
+  sourceShader: (shader) ->
+    @bind.source.sourceShader shader
+    shader.pipe @swizzler if @swizzler
 
   make: () ->
     super

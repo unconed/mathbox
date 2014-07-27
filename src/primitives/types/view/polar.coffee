@@ -96,7 +96,7 @@ class Polar extends View
     vector.applyMatrix4 @viewMatrix
 
   transform: (shader) ->
-    shader.call 'polar.position', @uniforms
+    shader.pipe 'polar.position', @uniforms
     @parent?.transform shader
 
   axis: (dimension) ->

@@ -3,7 +3,7 @@ Operator = require './operator'
 class Join extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'join']
 
-  shader: (shader) ->
+  sourceShader: (shader) ->
     shader.concat @transform
 
   getDimensions: () ->
@@ -39,8 +39,8 @@ class Join extends Operator
     @splitScale     = uniforms.splitScale
     @splitDimension = uniforms.splitDimension
 
-    transform.call 'split.position', uniforms
-    @bind.source.shader transform
+    transform.pipe 'split.position', uniforms
+    @bind.source.sourceShader transform
 
     @transform = transform
 
@@ -52,7 +52,7 @@ class Join extends Operator
     super
 
   resize: () ->
-    @change {}, {}, true
+    @refresh()
     super
 
   change: (changed, touched, init) ->

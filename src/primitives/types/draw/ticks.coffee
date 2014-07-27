@@ -14,7 +14,7 @@ class Ticks extends Primitive
     # Prepare data buffer of tick positions
     @resolution = samples = @_helpers.scale.divide ''
 
-    @buffer = @_renderables.make 'databuffer',
+    @buffer = @_renderables.make 'dataBuffer',
               samples:  samples
               channels: 1
 
@@ -45,12 +45,12 @@ class Ticks extends Primitive
 
     # Link to tick shader
     p.join()
-    p.call 'ticks.position', positionUniforms
+    p.pipe 'ticks.position', positionUniforms
 
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
     lineUniforms  = @_helpers.line.uniforms()
-    uniforms      = @_helpers.object.merge lineUniforms, styleUniforms
+    uniforms      = Util.JS.merge lineUniforms, styleUniforms
 
     # Make line renderable
     @line = @_renderables.make 'line',

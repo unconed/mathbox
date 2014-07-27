@@ -28,13 +28,6 @@
       c = rtt[0].primitive.rtt.camera;
       c.position.set(x, 0, z);
       c.lookAt(origin);
-
-      x = Math.cos(time * .91) * 3;
-      z = Math.sin(time * .91) * 3;
-
-      c = rtt[1].primitive.rtt.camera;
-      c.position.set(x, 0, z);
-      c.lookAt(origin);
     });
 
     view = mathbox.cartesian({
@@ -58,12 +51,29 @@
       opacity: .25,
     });
 
-    view3 = view2.rtt().cartesian({
-      range: [[-2, 2], [-1, 1], [-1, 1]],
-      scale: [2, 1, 1],
-    }).grid();
-
     rtt = mathbox.select('rtt')
+
+    view.compose({
+      color: '#fff',
+      blending: THREE.MultiplyBlending,
+      zIndex: 1,
+    });
+
+    view.area({
+      width: 16,
+      height: 16,
+      rangeX: [0, 1],
+      rangeY: [0, 1],
+      expression: function (x, y, i, j, emit) {
+        emit(x, y, 0);
+      },
+    })
+    view.compose({
+      color: '#fff',
+      opacity: 1,
+      blending: THREE.NoBlending,
+      zIndex: 2,
+    });
 
   </script>
 </body>

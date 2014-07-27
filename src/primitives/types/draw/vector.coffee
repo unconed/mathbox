@@ -31,8 +31,8 @@ class Vector extends Primitive
     @_helpers.position.make()
 
     # Fetch position (swizzle x into items, inv(wxyz) = yzwx)
-    position.call Util.GLSL.swizzleVec4 'yzwx'
-    @bind.points.shader position
+    position.pipe Util.GLSL.swizzleVec4 'yzwx'
+    @bind.points.sourceShader position
 
     # Transform position to view
     @_helpers.position.shader position
@@ -54,7 +54,7 @@ class Vector extends Primitive
     layers  = dims.depth
 
     # Make line renderable
-    uniforms = @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
+    uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms
     @line = @_renderables.make 'line',
               uniforms: uniforms
               samples:  samples
@@ -66,7 +66,7 @@ class Vector extends Primitive
 
     # Make arrow renderables
     @arrows = []
-    uniforms = @_helpers.object.merge arrowUniforms, styleUniforms
+    uniforms = Util.JS.merge arrowUniforms, styleUniforms
 
     if start
       @arrows.push @_renderables.make 'arrow',

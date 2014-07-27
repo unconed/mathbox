@@ -1,19 +1,17 @@
 Base            = require './base'
-SurfaceGeometry = require('../geometry').SurfaceGeometry
+ScreenGeometry  = require('../geometry').ScreenGeometry
+Util            = require '../../util'
 
-class Surface extends Base
+class Screen extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
     uniforms = options.uniforms ? {}
-    position = options.position
-    shaded   = options.shaded ? true
+    fragment = options.fragment
 
-    @geometry = new SurfaceGeometry
+    @geometry = new ScreenGeometry
       width:    options.width
       height:   options.height
-      surfaces: options.surfaces
-      layers:   options.layers
 
     @_adopt uniforms
     @_adopt @geometry.uniforms
@@ -21,17 +19,22 @@ class Surface extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    v.require position if position
-    v.split()
-    v  .pipe 'surface.position',        @uniforms if !shaded
-    v  .pipe 'surface.position.normal', @uniforms if  shaded
-    v.pass()
-    v.pipe 'project.position',   @uniforms
+    v.pipe    'raw.position',    @uniforms
+    v.fan()
+    v  .pipe  'stpq.xyzw',       @uniforms
+    v.next()
+    v  .pipe  'screen.position', @uniforms
+    v.join()
 
     f = factory.fragment
-    f.pipe 'style.color',        @uniforms if !shaded
-    f.pipe 'style.color.shaded', @uniforms if  shaded
-    f.pipe 'fragment.color',     @uniforms
+    f.require options.fragment
+    f.fan()
+    f.  pipe  'stpq.sample.2d'
+    f.next()
+    f.  pipe  'style.color',     @uniforms
+    f.pass()
+    f.pipe    Util.GLSL.binaryOperator 'vec4', '*'
+    f.pipe    'fragment.color',  @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
@@ -49,4 +52,4 @@ class Surface extends Base
     @objects = @geometry = @material = null
     super
 
-module.exports = Surface
+module.exports = Screen

@@ -1,4 +1,5 @@
 Primitive = require '../../primitive'
+Util      = require '../../../util'
 
 class Line extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
@@ -30,7 +31,7 @@ class Line extends Primitive
     @_helpers.position.make()
 
     # Fetch position
-    @bind.points.shader position
+    @bind.points.sourceShader position
 
     # Transform position to view
     @_helpers.position.shader position
@@ -52,7 +53,7 @@ class Line extends Primitive
     layers  = dims.items
 
     # Make line renderable
-    uniforms = @_helpers.object.merge arrowUniforms, lineUniforms, styleUniforms
+    uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms
     @line = @_renderables.make 'line',
               uniforms: uniforms
               samples:  samples
@@ -64,7 +65,7 @@ class Line extends Primitive
 
     # Make arrow renderables
     @arrows = []
-    uniforms = @_helpers.object.merge arrowUniforms, styleUniforms
+    uniforms = Util.JS.merge arrowUniforms, styleUniforms
 
     if start
       @arrows.push @_renderables.make 'arrow',

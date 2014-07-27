@@ -1,16 +1,17 @@
 Classes =
-  sprite: require('./meshes').Sprite
-  line: require('./meshes').Line
-  surface: require('./meshes').Surface
-  arrow: require('./meshes').Arrow
+  sprite:          require('./meshes/sprite')
+  line:            require('./meshes/line')
+  surface:         require('./meshes/surface')
+  arrow:           require('./meshes/arrow')
+  screen:          require('./meshes/screen')
 
-  debug: require('./meshes').Debug
+  debug:           require('./meshes/debug')
 
-  databuffer: require('./buffer').DataBuffer
-  arraybuffer: require('./buffer').ArrayBuffer
-  matrixbuffer: require('./buffer').MatrixBuffer
-  rtt: require('./buffer').RenderToTexture
+  dataBuffer:      require('./buffer/databuffer')
+  arrayBuffer:     require('./buffer/arraybuffer')
+  matrixBuffer:    require('./buffer/matrixbuffer')
+  renderToTexture: require('./buffer/rendertotexture')
 
-  scene: require('./scene')
+  scene:           require('./scene')
 
 module.exports = Classes

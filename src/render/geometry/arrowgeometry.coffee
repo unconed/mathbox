@@ -16,10 +16,11 @@ class ArrowGeometry extends Geometry
     super options
 
     @geometryClip = new THREE.Vector4
-    @uniforms =
-      geometryClip:
-        type: 'v4'
-        value: @geometryClip
+
+    @uniforms ?= {}
+    @uniforms.geometryClip =
+      type: 'v4'
+      value: @geometryClip
 
     @sides    = sides   = +options.sides   || 12
     @samples  = samples = +options.samples || 2

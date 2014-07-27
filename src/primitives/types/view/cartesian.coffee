@@ -54,7 +54,7 @@ class Cartesian extends View
     vector.applyMatrix4 @viewMatrix
 
   transform: (shader) ->
-    shader.call 'cartesian.position', @uniforms
+    shader.pipe 'cartesian.position', @uniforms
     @parent?.transform shader
 
   ###

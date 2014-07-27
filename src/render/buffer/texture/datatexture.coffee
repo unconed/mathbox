@@ -1,4 +1,7 @@
-class Texture
+###
+Manually allocated GL texture for data streaming. Allows partial updates via subImage.
+###
+class DataTexture
   constructor: (@gl, @width, @height, @channels) ->
     @n = @width * @height * @channels
     @build()
@@ -62,4 +65,4 @@ class Texture
     @textureObject.__webglTexture = null
     @textureObject = @texture = null
 
-module.exports = Texture
+module.exports = DataTexture

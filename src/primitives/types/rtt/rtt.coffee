@@ -1,7 +1,7 @@
 Root = require '../base/root'
 
 class RTT extends Root
-  @traits = ['node', 'root', 'texture', 'rtt', 'source']
+  @traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -11,11 +11,15 @@ class RTT extends Root
     @event =
       type: 'update'
 
-  shader: (shader) ->
-    @rtt.shader shader
+  imageShader: (shader) ->
+    @rtt.shaderRelative shader
+
+  sourceShader: (shader) ->
+    @rtt.shaderAbsolute shader
 
   update: () ->
     @trigger @event
+    @rtt.render()
 
   getDimensions: () ->
     items:  1
@@ -33,10 +37,8 @@ class RTT extends Root
     @parentRoot = @_inherit 'root'
     @size = @parentRoot.getSize()
 
-    console.log 'rtt:make', @size
-
     @updateHandler = (event) => @update()
-    @resizeHandler = (event) => @resize()
+    @resizeHandler = (event) => @resize event.size
 
     @parentRoot.on 'update', @updateHandler
     @parentRoot.on 'resize', @resizeHandler
@@ -47,42 +49,55 @@ class RTT extends Root
     @height = @_get('texture.height')  ? @size.renderHeight
     @frames = @_get('rtt.history') + 1
 
-    @scene = @_renderables.make 'scene'
-    @rtt   = @_renderables.make 'rtt',
+    @scene ?= @_renderables.make 'scene'
+    @rtt    = @_renderables.make 'renderToTexture',
       scene:  @scene
       width:  @width
       height: @height
       frames: @frames
 
-    @debug = @_renderables.make 'debug',
+    @debug1 = @_renderables.make 'debug',
+      x: -1,
+      map: @rtt.read()
+
+    @debug2 = @_renderables.make 'debug',
+      x: 1,
       map: @rtt.read()
 
     root = @_inherit 'root'
-    root.adopt @debug
+    root.adopt @debug1
+    root.adopt @debug2
 
-  unmake: () ->
+    # Notify of buffer reallocation
+    @trigger
+      type: 'rebuild'
+
+  unmake: (rebuild) ->
     @parentRoot.off 'update', @updateHandler
     @parentRoot.off 'resize', @resizeHandler
 
-    console.log 'rtt:unmake', @rtt
     return unless @rtt?
 
     root = @_inherit 'root'
-    root.unadopt @debug
+    root.unadopt @debug1
+    root.unadopt @debug2
 
     @rtt.dispose()
-    @scene.dispose()
+    @debug1.dispose()
+    @debug2.dispose()
 
-    @rtt = @scene = @width = @height = @frames = null
+    @scene.dispose() unless rebuild
+
+    @debug1 = @debug2 = null
+
+    @rtt = @width = @height = @frames = null
 
   change: (changed, touched, init) ->
-    console.log 'rtt:change', changed, touched, init
-
-    @rebuild if touched['texture']
-
-    console.log 'rtt:change:size?', @size
+    @rebuild() if touched['texture']
 
     if @size?
+      @rtt.camera.aspect = @size.aspect if @rtt?
+      @rtt.camera.updateProjectionMatrix()
       @trigger
         type: 'resize'
         size: @size
@@ -92,11 +107,11 @@ class RTT extends Root
 
   resize: (size) ->
     @size = size
-    @change {}, { texture: true }, true
+    @change {}, { texture: true }, {}, true
 
   # End transform chain here
   transform: (shader) ->
   present: (shader) ->
-    shader.call 'view.position'
+    shader.pipe 'view.position'
 
 module.exports = RTT

@@ -33,7 +33,7 @@ class Point extends Primitive
     @_helpers.position.make()
 
     # Fetch position and transform to view
-    @bind.points.shader position
+    @bind.points.sourceShader position
     @_helpers.position.shader position
 
     # Fetch geometry dimensions
@@ -49,7 +49,7 @@ class Point extends Primitive
     renderUniforms = @_helpers.renderScale.uniforms()
 
     # Make sprite renderable
-    uniforms = @_helpers.object.merge renderUniforms, pointUniforms, styleUniforms
+    uniforms = Util.JS.merge renderUniforms, pointUniforms, styleUniforms
     @point = @_renderables.make 'sprite',
               uniforms: uniforms
               width:    width

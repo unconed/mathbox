@@ -13,7 +13,7 @@ class Node
     # Notify root listeners of child addition
     event =
       type: 'add'
-      object: @
+      node: @
       parent: @parent
     @root.trigger event if @root
 
@@ -27,7 +27,7 @@ class Node
     # Notify root listeners of child removal
     event =
       type: 'remove'
-      object: @
+      node: @
     @root.trigger event if @root
 
     # Notify self listeners of own removal

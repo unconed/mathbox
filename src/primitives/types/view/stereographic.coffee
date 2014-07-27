@@ -64,7 +64,7 @@ class Stereographic extends View
     vector.applyMatrix4 @viewMatrix
 
   transform: (shader) ->
-    shader.call 'stereographic.position', @uniforms
+    shader.pipe 'stereographic.position', @uniforms
     @parent?.transform shader
 
   axis: (dimension) ->

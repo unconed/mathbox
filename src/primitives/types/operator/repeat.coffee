@@ -3,7 +3,7 @@ Operator = require './operator'
 class Repeat extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'repeat']
 
-  shader: (shader) ->
+  sourceShader: (shader) ->
     shader.concat @transform
 
   getDimensions: () ->
@@ -34,8 +34,8 @@ class Repeat extends Operator
 
     @repeatModulus = uniforms.repeatModulus
 
-    transform.call 'repeat.position', uniforms
-    @bind.source.shader transform
+    transform.pipe 'repeat.position', uniforms
+    @bind.source.sourceShader transform
 
     @transform = transform
 
@@ -47,7 +47,7 @@ class Repeat extends Operator
     super
 
   resize: () ->
-    @change {}, {}, true
+    @refresh()
     super
 
   change: (changed, touched, init) ->

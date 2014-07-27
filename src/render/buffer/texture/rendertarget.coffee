@@ -1,10 +1,13 @@
 ###
 Virtual RenderTarget that cycles through multiple frames
 Provides easy access to past rendered frames
+@reads[] and @write contain THREE.WebGLRenderTargets whose internal pointers are rotated automatically
 ###
 class RenderTarget
-  constructor: (@gl, @width, @height, @frames, @textureOptions) ->
-    @build()
+  constructor: (@gl, @width, @height, @frames, @textureOptions = {}) ->
+    @textureOptions.minFilter ?= THREE.LinearFilter
+    @textureOptions.magFilter ?= THREE.NearestFilter
+    @textureOptions.format    ?= THREE.RGBAFormat
 
     @width  = @width  || 1
     @height = @height || 1
@@ -13,7 +16,6 @@ class RenderTarget
     @build()
 
   build: () ->
-    gl = @gl
 
     make = () => new THREE.WebGLRenderTarget @width, @height, @textureOptions
 
@@ -31,6 +33,9 @@ class RenderTarget
       dataTexture:
         type: 't'
         value: @reads[0]
+      dataTextures:
+        type: 'tv'
+        value: @reads
 
   cycle: () ->
     keys = ['__webglTexture', '__webglFramebuffer', '__webglRenderbuffer']

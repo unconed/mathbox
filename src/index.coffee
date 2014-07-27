@@ -27,7 +27,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:
     init: true
 
-  listen: ['ready', 'update', 'post', 'size'],
+  listen: ['ready', 'update', 'post', 'resize'],
 
   install: (three) ->
     inited = false

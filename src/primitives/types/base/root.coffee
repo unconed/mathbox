@@ -1,7 +1,7 @@
 Parent = require './parent'
 
 class Root extends Parent
-  @traits = ['node', 'root']
+  @traits = ['node', 'root', 'scene']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -17,6 +17,12 @@ class Root extends Parent
   select: (selector) ->
     @node.model.select selector
 
+  watch: (selector, handler) ->
+    @node.model.watch selector, handler
+
+  unwatch: (handler) ->
+    @node.model.unwatch handler
+
   resize: (size) ->
     @size = size
     @trigger
@@ -29,6 +35,6 @@ class Root extends Parent
     @trigger @event
 
   present: (shader) ->
-    shader.call 'view.position'
+    shader.pipe 'view.position'
 
 module.exports = Root

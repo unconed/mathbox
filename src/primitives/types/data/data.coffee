@@ -3,6 +3,8 @@ Source = require '../base/source'
 class Data extends Source
   @traits: ['node', 'data', 'source']
 
+  update: () ->
+
   make: () ->
     @dataRoot = @_inherit 'root'
 

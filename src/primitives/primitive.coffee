@@ -14,6 +14,7 @@ class Primitive
     @_types       = @_attributes.types
 
     @node.primitive = @
+    @traits = @node.traits
 
     # This node has been inserted/removed
     @node.on 'added', (event) =>
@@ -26,24 +27,26 @@ class Primitive
     @node.on 'change', (event) =>
       @change event.changed, event.touched if @root
 
-    # Getter / helpers
+    # Attribute getter / helpers
     @_get = @node.get.bind @node
     @_helpers = helpers @, @node.traits
     @handlers = {}
 
     @root = @parent = null
 
-  # Construction of renderables
+  # Renderables lifecycle
 
   make:   () ->
-  unmake: () ->
+  unmake: (rebuild) ->
   change: (changed, touched, init) ->
 
   rebuild: () ->
     if @root
-      @unmake()
+      @unmake true
       @make()
-      @change {}, {}, true
+      @refresh()
+
+  refresh: () -> @change {}, {}, true
 
   # Transform pipeline
   transform: (shader) ->
@@ -63,7 +66,7 @@ class Primitive
     @root     = @node.root.primitive
 
     @make()
-    @change {}, {}, true
+    @change {}, {}, {}, true
 
   _removed: () ->
     @unmake()
@@ -87,15 +90,17 @@ class Primitive
     else
       null
 
-  # Find attached data model
-  _attached: (key, trait) ->
+  # Attach to primitive by trait
+  _attach: (key, trait, watcher) ->
 
     # Explicitly bound node
     object    = @_get key
 
     if typeof object == 'string'
       node = @root.select(object)[0]
-      return node.primitive if node? and trait in node.traits
+      if node? and trait in node.traits
+        @root.watch(object, watcher)
+        return node.primitive
 
     if typeof object == 'object'
       node = object
@@ -112,7 +117,6 @@ class Primitive
 
     throw "Could not find #{trait} `#{object}` on `#{@node.id}` #{@node.type}.#{key}"
     null
-
 
 THREE.Binder.apply Primitive::
 

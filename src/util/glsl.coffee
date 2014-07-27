@@ -7,6 +7,14 @@ index =
   w: 3
 
 # Select component
+exports.binaryOperator = (type, op) ->
+  """
+  #{type} binaryOperator(#{type} a, #{type} b) {
+    return a #{op} b;
+  }
+  """
+
+# Select component
 exports.selectVec4Float = (channel) ->
   channel = letters[channel] if (channel == +channel)
 

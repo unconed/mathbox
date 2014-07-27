@@ -35,5 +35,6 @@ Classes =
   root:              require './base/root'
 
   rtt:               require './rtt/rtt'
+  compose:           require './rtt/compose'
 
 module.exports = Classes

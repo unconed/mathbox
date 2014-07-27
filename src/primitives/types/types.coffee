@@ -78,7 +78,7 @@ Types =
       if value instanceof THREE.Vector2
         target.copy value
       else if value?.constructor == Array
-        value = value.concat(defaults.slice(value.length))
+        value = value.concat defaults.slice value.length
         target.set.apply target, value
       else
         target.set x, y
@@ -93,7 +93,7 @@ Types =
       if value instanceof THREE.Vector3
         target.copy value
       else if value?.constructor == Array
-        value = value.concat(defaults.slice(value.length))
+        value = value.concat defaults.slice value.length
         target.set.apply target, value
       else
         target.set x, y, z
@@ -108,7 +108,7 @@ Types =
       if value instanceof THREE.Vector4
         target.copy value
       else if value?.constructor == Array
-        value = value.concat(defaults.slice(value.length))
+        value = value.concat defaults.slice value.length
         target.set.apply target, value
       else
         target.set x, y, z, w
@@ -124,7 +124,7 @@ Types =
       if value instanceof THREE.Matrix4
         target.copy value
       else if value?.constructor == Array
-        value = value.concat(defaults.slice(value.length))
+        value = value.concat defaults.slice value.length
         target.set.apply target, value
       else
         target.set n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44
@@ -181,13 +181,29 @@ Types =
       if value.match /^[xyzw]{1,4}$/
         return value
 
-  klass: () ->
+  classes: () ->
     stringArray = Types.array(Types.string())
 
     make: () -> stringArray.make()
     validate: (value, target) ->
       value = value.split ' ' if (value == "" + value)
       value = value.filter (x) -> !!x.length
-      return validate value, target
+      return stringArray.validate value, target
+
+  enum: (value, keys, map = {}) ->
+    values = {}
+    map[key] ?= i    for key, i in keys
+    values[i] = true for key, i of map
+    value = map[value] if !values[value]?
+
+    make: () -> value
+    validate: (value) ->
+      v = if values[value] then value else map[value]
+      return v if v?
+
+  blending: (value = 'normal') ->
+    keys = ['no', 'normal', 'add', 'subtract', 'multiply', 'custom']
+    Types.enum value, keys
+
 
 module.exports = Types

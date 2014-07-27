@@ -1,5 +1,18 @@
 cssauron = require 'cssauron'
 
+ALL   = '*'
+ID    = /^#([A-Za-z0-9_])$/
+CLASS = /^\.([A-Za-z0-9_]+)$/
+TYPE  = /^[A-Za-z0-9_]+$/
+
+###
+
+  Model that wraps a root node and its children.
+  
+  Monitors adds, removals and ID/class changes.
+  Enables CSS selectors, both querying and watching.
+
+###
 class Model
   constructor: (@root) ->
     @root.model = @
@@ -9,6 +22,7 @@ class Model
     @classes  = {}
     @types    = { root: [@root] }
     @nodes    = []
+    @watchers = []
 
     @event = type: 'update'
 
@@ -21,108 +35,110 @@ class Model
         parent:   'parent'
         children: 'children'
 
-    # Track object lifecycle
-    add = (event) =>
-      object = event.object
-      adopt object
-      update event, object, true
-
-    remove = (event) =>
-      object = event.object
-      dispose object
-
     # Triggered by child addition/removal
+    add    = (event) => adopt   event.node
+    remove = (event) => dispose event.node
+
     @root.on 'add',    add
     @root.on 'remove', remove
 
-    adopt = (object) =>
-      addNode object
-      addType object
-      object.on 'change:node', update
+    # Track node lifecycle
+    adopt = (node) =>
+      addNode node
+      addType node
+      node.on 'change:node', update
+      update event, node, true
+      inspect node, node
 
-    dispose = (object) =>
-      removeNode object
-      removeType object
-      removeID      object.id
-      removeClasses object.classes
-      object.off 'change:node', update
+    dispose = (node) =>
+      removeNode node
+      removeType node
+      removeID      node.id
+      removeClasses node.classes
+      node.off 'change:node', update
+      inspect node
+
+    inspect = (node, value) =>
+      for watcher in @watchers.slice()
+        watcher value if watcher.matcher node
 
     # Track id/class changes
-    update = (event, object, force) =>
+    update = (event, node, force) =>
       _id    = force or event.changed['node.id']
       _klass = force or event.changed['node.classes']
 
       if _id
-        id = object.get 'node.id'
-        if id != object.id
-          removeID object.id, object
-          addID    id,        object
+        id = node.get 'node.id'
+        if id != node.id
+          removeID node.id, node
+          addID    id,      node
 
       if _klass
-        classes = object.get 'node.classes'
+        classes = node.get 'node.classes'
         klass = classes.join ','
-        if klass != object.klass
-          removeClasses object.classes, object
-          addClasses    classes,        object
-          object.klass   = klass
-          object.classes = classes.slice()
+        if klass != node.klass
+          removeClasses node.classes, node
+          addClasses    classes,      node
+          node.klass   = klass
+          node.classes = classes.slice()
 
-    addID = (id, object) =>
+    addID = (id, node) =>
       if @ids[id]
         throw "Duplicate id `#{id}`"
 
-      @ids[id] = object if id
-      object.id = id
+      @ids[id] = [node] if id
+      node.id = id
 
-    removeID = (id, object) =>
+    removeID = (id, node) =>
       if id?
         delete @ids[id]
-      delete object.id
+      delete node.id
 
-    addClasses = (classes, object) =>
+    addClasses = (classes, node) =>
       if classes?
         for k in classes
           list = @classes[k] ? []
-          list.push object
+          list.push node
           @classes[k] = list
 
-    removeClasses = (classes, object) =>
+    removeClasses = (classes, node) =>
       if classes?
         for k in classes
           list = @classes[k]
-          index = list.indexOf object
+          index = list.indexOf node
           list.splice index, 1 if index >= 0
           if list.length == 0
             delete @classes[k]
 
     # Track nodes and types
-    addNode = (object) =>
-      @nodes.push object
+    addNode = (node) =>
+      @nodes.push node
 
-    removeNode = (object) =>
-      @nodes.splice @nodes.indexOf(object), 1
+    removeNode = (node) =>
+      @nodes.splice @nodes.indexOf(node), 1
 
-    # Track objects by type
-    addType = (object) =>
-      type = object.type
+    # Track nodes by type
+    addType = (node) =>
+      type = node.type
       list = @types[type] ? []
-      list.push object
+      list.push node
       @types[type] = list
 
-    removeType = (object) =>
-      type = object.type
+    removeType = (node) =>
+      type = node.type
       list = @types[type] ? []
-      index = list.indexOf object
+      index = list.indexOf node
       list.splice index, 1 if index >= 0
       if list.length == 0
         delete @types[type]
+
 
   # Querying via CSS selectors
 
   # Filter array by selector
   filter: (nodes, selector) ->
-    selector = @language selector
-    node for node in nodes when selector(node)
+    matcher = @_matcher selector
+    node for node in nodes when matcher node
 
   # Filter array by ancestry
   ancestry: (nodes, parents) ->
@@ -136,32 +152,60 @@ class Model
         parent = node.parent
     out
 
-  # Apply (scoped) selector to model
+  # Query model by (scoped) selector
   select: (selector, parents) ->
-    matches = []
-    matches = matches.concat @_select s for s in selector.split /,/g
-    unique = matches.filter (object, i) -> matches.indexOf(object) == i
-    unique = @ancestry unique, parents if parents?
-    return unique
+    matches = @_select selector
+    matches = @ancestry unique, parents if parents?
+    return matches
 
-  # Query single selector
-  _select: (s) ->
-    # Trim
+  # Watch selector with handler
+  watch: (selector, handler) ->
+    handler.unwatch = () => @unwatch handler
+    handler.matcher = @_matcher selector
+    @watchers.push handler
+
+  # Unwatch a handler
+  unwatch: (handler) ->
+    return unless handler.watcher?
+
+    @watchers.splice @watchers.indexOf(handler), 1
+    delete handler.unwatch
+    delete handler.matcher
+
+  # Check for simplified selector
+  _simplify: (s) ->
+    # Trim whitespace
     s = s.replace /^\s+/, ''
     s = s.replace /\s+$/, ''
 
-    # Universal selector *
-    return @nodes if s == '*'
+    # Look for *, #id, .class, type
+    found = all   = s == ALL
+    found = id    = s.match(ID)?[1]    if !found
+    found = klass = s.match(CLASS)?[1] if !found
+    found = type  = s.match(TYPE)?[0]  if !found
+    [all, id, klass, type]
 
-    # Check for simple #id, .class or type selector
-    id    = s.match /^#([A-Za-z0-9_]+)$/
-    return        @ids[id[1]] || [] if id
+  # Make a matcher for a single selector
+  _matcher: (s) ->
+    # Check for simple *, #id, .class or type selector
+    [all, id, klass, type] = @_simplify s
+    return ((node) -> true)                  if all
+    return ((node) -> node.id == id)         if id
+    return ((node) -> klass in node.classes) if klass
+    return ((node) -> node.type == type)     if type
 
-    klass = s.match /^\.([A-Za-z0-9_]+)$/
-    return @classes[klass[1]] || [] if klass
+    # Otherwise apply CSS filter
+    return @language s
 
-    type  = s.match /^[A-Za-z0-9_]+$/
-    return    @types[type[0]] || [] if type
+  # Query single selector
+  _select: (s) ->
+
+    # Check for simple *, #id, .class or type selector
+    [all, id, klass, type] = @_simplify s
+    return @nodes                if all
+    return @ids[id]        || [] if id
+    return @classes[klass] || [] if klass
+    return @types[type]    || [] if type
 
     # Otherwise iterate over everything
     @filter @nodes, s

@@ -1,6 +1,6 @@
-Buffer  = require './buffer'
-Texture = require './texture/texture'
-Util    = require '../../util'
+Buffer      = require './buffer'
+DataTexture = require './texture/datatexture'
+Util        = require '../../util'
 
 class ArrayBuffer_ extends Buffer
   constructor: (renderer, shaders, options) ->
@@ -12,14 +12,14 @@ class ArrayBuffer_ extends Buffer
     super renderer, shaders, options
 
   shader: (shader) ->
-    shader.call 'map.2d.xyzw', @uniforms
+    shader.pipe 'map.2d.xyzw', @uniforms
     super shader
 
   build: () ->
     super
 
     @data    = new Float32Array @samples * @channels * @items
-    @texture = new Texture @gl, @samples * @items, @history, @channels
+    @texture = new DataTexture  @gl, @samples * @items, @history, @channels
     @index   = 0
     @filled  = 0
 

@@ -21,7 +21,7 @@ class Grid extends Primitive
       resolution = 1 / detail
 
       strips = @_helpers.scale.divide second
-      buffer = @_renderables.make 'databuffer',
+      buffer = @_renderables.make 'dataBuffer',
                samples:  strips
                channels: 1
 
@@ -46,7 +46,7 @@ class Grid extends Primitive
       p.join()
 
       # Calculate grid position
-      p.call 'grid.position', positionUniforms
+      p.pipe 'grid.position', positionUniforms
 
       # Apply view transform
       @_helpers.position.shader position
@@ -54,7 +54,7 @@ class Grid extends Primitive
       # Prepare bound uniforms
       styleUniforms = @_helpers.style.uniforms()
       lineUniforms  = @_helpers.line.uniforms()
-      uniforms      = @_helpers.object.merge lineUniforms, styleUniforms
+      uniforms      = Util.JS.merge lineUniforms, styleUniforms
 
       # Make line renderable
       line = @_renderables.make 'line',

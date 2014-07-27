@@ -46,9 +46,11 @@
       width: 33,
       height: 33,
       axes: [1, 3],
-      expression: function (x, y, i, j, emit) {
-        emit(x, .75 + .5 * (Math.sin(x + time) * Math.sin(y + time)), y);
-        emit(x, .5 + .5 * (Math.sin(x * 1.25 + Math.sin(y + time) - time * 1.34) * Math.sin(y * 1.17 - time * .79)), y);
+      expression: function (x, z, i, j, emit) {
+        var y1 = .75 + .5 * (Math.sin(x + time) * Math.sin(y + time));
+        var y2 = .5 + .5 * (Math.sin(x * 1.25 + Math.sin(y + time) - time * 1.34) * Math.sin(y * 1.17 - time * .79));
+        emit(x, y1, z);
+        emit(x, y2, z);
       },
       items: 2,
       dimensions: 3,

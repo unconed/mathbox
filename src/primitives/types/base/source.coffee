@@ -9,8 +9,7 @@ class Source extends Primitive
   callback: (callback) ->
     callback ? () ->
 
-  shader: () ->
-  update: () ->
+  sourceShader: () ->
 
   getDimensions: () ->
     items:  1

@@ -3,7 +3,7 @@ Operator = require './operator'
 class Lerp extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'lerp']
 
-  shader: (shader) ->
+  sourceShader: (shader) ->
     shader.concat @transform
 
   getDimensions: () ->
@@ -24,7 +24,7 @@ class Lerp extends Operator
 
     # Build shader to resample data one dimension at a time
     transform = @_shaders.shader()
-    @bind.source.shader transform
+    @bind.source.sourceShader transform
 
     # Resampling ratios
     @resample = {}
@@ -42,7 +42,7 @@ class Lerp extends Operator
           sampleRatio: @_attributes.make @_types.number (dims[key] - 1) / (size - 1)
 
         transform = @_shaders.shader().import transform
-        transform.call id, uniforms
+        transform.pipe id, uniforms
 
     @transform = transform
 

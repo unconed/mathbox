@@ -3,7 +3,7 @@ Operator = require './operator'
 class Split extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'split']
 
-  shader: (shader) ->
+  sourceShader: (shader) ->
     shader.concat @transform
 
   getDimensions: () ->
@@ -41,8 +41,8 @@ class Split extends Operator
     @splitScale      = uniforms.splitScale
     @splitDimensions = uniforms.splitDimensions
 
-    transform.call 'split.position', uniforms
-    @bind.source.shader transform
+    transform.pipe 'split.position', uniforms
+    @bind.source.sourceShader transform
 
     @transform = transform
 
@@ -54,7 +54,7 @@ class Split extends Operator
     super
 
   resize: () ->
-    @change {}, {}, true
+    @refresh()
     super
 
   change: (changed, touched, init) ->
