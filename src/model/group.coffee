@@ -10,7 +10,7 @@ class Group extends Node
   add: (node) ->
     node.parent?.remove node
 
-    node._index @children.length
+    node._index @children.length, @
     @children.push node
     node._added @
 

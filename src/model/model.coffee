@@ -197,6 +197,7 @@ class Model
   select: (selector, parents) ->
     matches = @_select selector
     matches = @ancestry unique, parents if parents?
+    matches.sort (a, b) -> b.order - a.order
     return matches
 
   # Watch selector with handler
@@ -241,10 +242,10 @@ class Model
     return ((node) -> true)                     if all
     return ((node) -> node.id == id)            if id
     return ((node) -> node.classes.hash[klass]) if klass
-    return ((node) -> node.traits.hash[trait])  if trait
+    return ((node) -> node.traits .hash[trait]) if trait
     return ((node) -> node.type == type)        if type
 
-    # Otherwise apply CSS filter
+    # Otherwise apply CSSauron filter
     return @language s
 
   # Query single selector
@@ -252,13 +253,13 @@ class Model
 
     # Check for simple *, #id, .class or type selector
     [all, id, klass, trait, type] = @_simplify s
-    return @nodes                if all
-    return @ids[id]        || [] if id
-    return @classes[klass] || [] if klass
-    return @traits[trait]  || [] if trait
-    return @types[type]    || [] if type
+    return @nodes               if all
+    return @ids[id]        ? [] if id
+    return @classes[klass] ? [] if klass
+    return @traits[trait]  ? [] if trait
+    return @types[type]    ? [] if type
 
-    # Otherwise iterate over everything
+    # Otherwise apply CSSauron to everything
     @filter @nodes, s
 
   getRoot: () ->

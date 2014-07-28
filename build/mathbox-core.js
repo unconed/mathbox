@@ -5066,7 +5066,7 @@ Group = (function(_super) {
     if ((_ref = node.parent) != null) {
       _ref.remove(node);
     }
-    node._index(this.children.length);
+    node._index(this.children.length, this);
     this.children.push(node);
     return node._added(this);
   };
@@ -5430,6 +5430,9 @@ Model = (function() {
     if (parents != null) {
       matches = this.ancestry(unique, parents);
     }
+    matches.sort(function(a, b) {
+      return b.order - a.order;
+    });
     return matches;
   };
 
@@ -5513,22 +5516,22 @@ Model = (function() {
   };
 
   Model.prototype._select = function(s) {
-    var all, id, klass, trait, type, _ref;
+    var all, id, klass, trait, type, _ref, _ref1, _ref2, _ref3, _ref4;
     _ref = this._simplify(s), all = _ref[0], id = _ref[1], klass = _ref[2], trait = _ref[3], type = _ref[4];
     if (all) {
       return this.nodes;
     }
     if (id) {
-      return this.ids[id] || [];
+      return (_ref1 = this.ids[id]) != null ? _ref1 : [];
     }
     if (klass) {
-      return this.classes[klass] || [];
+      return (_ref2 = this.classes[klass]) != null ? _ref2 : [];
     }
     if (trait) {
-      return this.traits[trait] || [];
+      return (_ref3 = this.traits[trait]) != null ? _ref3 : [];
     }
     if (type) {
-      return this.types[type] || [];
+      return (_ref4 = this.types[type]) != null ? _ref4 : [];
     }
     return this.filter(this.nodes, s);
   };
@@ -5590,15 +5593,38 @@ Node = (function() {
     return this.trigger(event);
   };
 
-  Node.prototype._index = function(index) {
-    var _ref, _ref1;
+  Node.prototype._index = function(index, parent) {
+    var path, _ref;
+    if (parent == null) {
+      parent = this.parent;
+    }
     this.index = index;
-    this.path = index != null ? ((_ref = (_ref1 = this.parent) != null ? _ref1.path : void 0) != null ? _ref : []).concat([index]) : null;
+    this.path = path = index != null ? ((_ref = parent != null ? parent.path : void 0) != null ? _ref : []).concat([index]) : null;
+    this.order = path != null ? this._encode(path) : Infinity;
     if (this.root != null) {
       return this.trigger({
         type: 'reindex'
       });
     }
+  };
+
+  Node.prototype._encode = function(path) {
+    var a, b, f, g, index, lerp, map, _i, _len, _ref;
+    map = function(x) {
+      return 1 / (x + 1);
+    };
+    lerp = function(t) {
+      return b + (a - b) * t;
+    };
+    a = 2;
+    b = 0;
+    for (_i = 0, _len = path.length; _i < _len; _i++) {
+      index = path[_i];
+      f = map(index + 1);
+      g = map(index + 2);
+      _ref = [lerp(f), lerp(g)], a = _ref[0], b = _ref[1];
+    }
+    return a;
   };
 
   return Node;
@@ -7628,7 +7654,8 @@ helpers = {
       last = null;
       onVisible = this.handlers.objectVisible = (function(_this) {
         return function() {
-          var active, o, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
+          var active, o, order, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
+          order = _this.node.order;
           active = visible;
           if (active) {
             active = opacity > 0;
@@ -7641,14 +7668,14 @@ helpers = {
               _ref = _this.objects;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 o = _ref[_i];
-                o.show(opacity < 1 || forceTransparent, blending);
+                o.show(opacity < 1 || forceTransparent, blending, order);
                 o.polygonOffset(zFactor, zUnits);
               }
             } else {
               _ref1 = _this.objects;
               for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
                 o = _ref1[_j];
-                o.show(false, blending);
+                o.show(false, blending, order);
               }
             }
           } else {
@@ -7667,6 +7694,7 @@ helpers = {
       })(this);
       this.node.on('change:object', onChange);
       this.node.on('change:style', onChange);
+      this.node.on('reindex', onVisible);
       if ((_ref = this.objectParent) != null) {
         _ref.on('visible', onVisible);
       }
@@ -7678,7 +7706,7 @@ helpers = {
       return onVisible();
     },
     unmake: function(dispose) {
-      var object, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+      var object, onChange, onVisible, _i, _j, _len, _len1, _ref, _ref1, _ref2;
       if (dispose == null) {
         dispose = true;
       }
@@ -7694,10 +7722,13 @@ helpers = {
           object.dispose();
         }
       }
-      this.node.off('change:object', this.handlers.objectChange);
-      this.node.off('change:style', this.handlers.objectChange);
+      onChange = this.handlers.objectChange;
+      onVisible = this.handlers.objectVisible;
+      this.node.off('change:object', onChange);
+      this.node.off('change:style', onChange);
+      this.node.off('reindex', onVisible);
       if ((_ref2 = this.objectParent) != null) {
-        _ref2.off('visible', this.handlers.objectVisible);
+        _ref2.off('visible', onVisible);
       }
       delete this.handlers.objectChange;
       delete this.handlers.objectVisible;
@@ -11566,29 +11597,12 @@ Base = (function(_super) {
     var _ref;
     Base.__super__.constructor.call(this, renderer, shaders, options);
     this.zUnits = (_ref = options.zUnits) != null ? _ref : 0;
-    this.zOrder = 0;
   }
 
   Base.prototype._raw = function(object) {
     object.rotationAutoUpdate = false;
     object.frustumCulled = false;
     return object.matrixAutoUpdate = false;
-  };
-
-  Base.prototype.order = function(order) {
-    var d, object, z, _i, _len, _ref;
-    if (order) {
-      z = order + (order > 0 ? 100000 : -100000);
-    } else {
-      z = null;
-    }
-    _ref = this.objects;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      object = _ref[_i];
-      d = object.material.transparent ? -z : z;
-      object.renderDepth = d;
-    }
-    return this.zOrder = order;
   };
 
   Base.prototype.depth = function(write, test) {
@@ -11621,21 +11635,20 @@ Base = (function(_super) {
     return null;
   };
 
-  Base.prototype.show = function(transparent, blending) {
-    var m, object, _i, _len, _ref;
+  Base.prototype.show = function(transparent, blending, order) {
+    var m, object, z, _i, _len, _ref;
     if (blending > THREE.NormalBlending) {
       transparent = true;
     }
+    z = transparent ? order : -order;
     _ref = this.objects;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       object = _ref[_i];
       m = object.material;
+      object.renderDepth = z;
       object.visible = true;
       m.transparent = transparent;
       m.blending = blending;
-    }
-    if (this.zOrder) {
-      this.order(this.zOrder);
     }
     return null;
   };

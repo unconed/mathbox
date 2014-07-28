@@ -188,7 +188,8 @@ helpers =
       @present   shader unless inline
 
   object:
-
+    # Generic 3D renderable wrapper, handles the fiddly Three.js bits.
+    #
     # Pass renderables to nearest root for rendering
     # Track visibility from parent and notify children
     # Track blends / transparency for three.js materials
@@ -222,6 +223,8 @@ helpers =
 
       last = null
       onVisible = @handlers.objectVisible = () =>
+        order  = @node.order
+
         active = visible
         active = opacity > 0             if active
         active = @objectParent.isVisible if active and @objectParent?
@@ -229,10 +232,10 @@ helpers =
         if active
           if hasStyle
             for o in @objects
-              o.show opacity < 1 or forceTransparent, blending
+              o.show opacity < 1 or forceTransparent, blending, order
               o.polygonOffset zFactor, zUnits
           else
-            o.show false, blending for o in @objects
+            o.show false, blending, order for o in @objects
         else
           o.hide() for o in @objects
 
@@ -242,6 +245,7 @@ helpers =
 
       @node.on    'change:object', onChange
       @node.on    'change:style',  onChange
+      @node.on    'reindex',       onVisible
       @objectParent?.on 'visible', onVisible
 
       @objectScene.adopt object for object in @objects
@@ -252,9 +256,13 @@ helpers =
       @objectScene.unadopt object for object in @objects
       object.dispose() for object in @objects if dispose
 
-      @node.off    'change:object', @handlers.objectChange
-      @node.off    'change:style',  @handlers.objectChange
-      @objectParent?.off 'visible', @handlers.objectVisible
+      onChange  = @handlers.objectChange
+      onVisible = @handlers.objectVisible
+
+      @node.off    'change:object', onChange
+      @node.off    'change:style',  onChange
+      @node.off    'reindex',       onVisible
+      @objectParent?.off 'visible', onVisible
 
       delete @handlers.objectChange
       delete @handlers.objectVisible
