@@ -16,9 +16,10 @@ Traits =
     opacity:     Types.number(1)
     color:       Types.color()
     blending:    Types.blending()
-    zFactor:     Types.number(4)
+    zFactor:     Types.number(8)
     zUnits:      Types.number(0)
     zIndex:      Types.number(0)
+    zOrder:      Types.nullable(Types.number())
 
   point:
     size:        Types.number(.01)
@@ -144,5 +145,6 @@ Traits =
   compose:
     source:      Types.nullable(Types.select(Types.object()))
     alpha:       Types.bool(false)
+    depth:       Types.bool(false)
 
 module.exports = Traits

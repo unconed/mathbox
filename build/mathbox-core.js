@@ -3,6 +3,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw) {\n  return axisStep * xyzw.x + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
 "cartesian4.position": "uniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getCartesian4Position(vec4 position) {\n  vec4 pos4 = position * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n",
+"color.opaque": "vec4 opaqueColor(vec4 color) {\n  return vec4(color.rgb, 1.0);\n}\n",
 "fragment.clipEnds": "varying vec2 vClipEnds;\n\nvoid clipEndsFragment() {\n  if (vClipEnds.x < 0.0 || vClipEnds.y < 0.0) discard;\n}\n",
 "fragment.color": "void setFragmentColor(vec4 color) {\n\tgl_FragColor = color;\n}",
 "fragment.round": "varying vec2 vSprite;\nvarying float vPixelSize;\n\nvoid setFragmentColor(vec4 color) {\n  float c = dot(vSprite, vSprite);\n  if (c > 1.0) {\n    discard;\n  }\n  float alpha = min(1.0, vPixelSize * (1.0 - c));\n\tgl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n",
@@ -4648,6 +4649,7 @@ Context = (function() {
   Context.prototype.update = function() {
     this.animator.update();
     this.attributes.digest();
+    this.model.digest();
     return this.root.primitive.update();
   };
 
@@ -4851,7 +4853,7 @@ Attributes = (function() {
 
 Data = (function() {
   function Data(object, traits, attributes) {
-    var change, changed, define, digest, dirty, event, from, get, getNS, key, list, makers, mapFrom, mapTo, name, ns, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _len, _ref;
+    var change, changed, define, digest, dirty, event, from, get, getNS, hash, key, list, makers, mapFrom, mapTo, name, ns, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _j, _len, _len1, _ref;
     if (traits == null) {
       traits = [];
     }
@@ -5017,6 +5019,11 @@ Data = (function() {
       return list.indexOf(object) === i;
     });
     object.traits = unique;
+    hash = object.traits.hash = {};
+    for (_j = 0, _len1 = unique.length; _j < _len1; _j++) {
+      trait = unique[_j];
+      hash[trait] = true;
+    }
   }
 
   return Data;
@@ -5049,7 +5056,7 @@ Group = (function(_super) {
 
   Group.prototype.remove = function(node) {
     var child;
-    delete node.index;
+    node.index = null;
     this.children = (function() {
       var _i, _len, _ref, _results;
       _ref = this.children;
@@ -5062,7 +5069,30 @@ Group = (function(_super) {
       }
       return _results;
     }).call(this);
-    return node._removed(this);
+    node._removed(this);
+    return this._renumber();
+  };
+
+  Group.prototype.empty = function() {
+    var children, node, _i, _len, _results;
+    children = this.children.slice();
+    _results = [];
+    for (_i = 0, _len = children.length; _i < _len; _i++) {
+      node = children[_i];
+      _results.push(this.remove(node));
+    }
+    return _results;
+  };
+
+  Group.prototype._renumber = function() {
+    var i, node, _i, _len, _ref, _results;
+    _ref = this.children;
+    _results = [];
+    for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+      node = _ref[i];
+      _results.push(node.index = i);
+    }
+    return _results;
   };
 
   return Group;
@@ -5083,7 +5113,7 @@ exports.Node = require('./node');
 
 
 },{"./attributes":21,"./group":22,"./model":24,"./node":25}],24:[function(require,module,exports){
-var ALL, CLASS, ID, Model, TYPE, cssauron,
+var ALL, CLASS, ID, Model, TRAIT, TYPE, cssauron,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 cssauron = require('cssauron');
@@ -5094,6 +5124,8 @@ ID = /^#([A-Za-z0-9_])$/;
 
 CLASS = /^\.([A-Za-z0-9_]+)$/;
 
+TRAIT = /^\[([A-Za-z0-9_]+)\]$/;
+
 TYPE = /^[A-Za-z0-9_]+$/;
 
 
@@ -5103,21 +5135,24 @@ TYPE = /^[A-Za-z0-9_]+$/;
   
   Monitors adds, removals and ID/class changes.
   Enables CSS selectors, both querying and watching.
+
+  Watchers are primed differentially as changes come in,
+  and fired with digest().
  */
 
 Model = (function() {
   function Model(root) {
-    var add, addClasses, addID, addNode, addType, adopt, dispose, inspect, remove, removeClasses, removeID, removeNode, removeType, update;
+    var add, addClasses, addID, addNode, addTags, addTraits, addType, adopt, check, dispose, force, prime, remove, removeClasses, removeID, removeNode, removeTags, removeTraits, removeType, update;
     this.root = root;
     this.root.model = this;
     this.root.root = this.root;
     this.ids = {};
     this.classes = {};
-    this.types = {
-      root: [this.root]
-    };
+    this.traits = {};
+    this.types = {};
     this.nodes = [];
     this.watchers = [];
+    this.fire = false;
     this.event = {
       type: 'update'
     };
@@ -5126,7 +5161,8 @@ Model = (function() {
       id: 'id',
       "class": "classes.join(' ')",
       parent: 'parent',
-      children: 'children'
+      children: 'children',
+      attr: 'traits.hash[attr]'
     });
     add = (function(_this) {
       return function(event) {
@@ -5146,7 +5182,7 @@ Model = (function() {
         addType(node);
         node.on('change:node', update);
         update(event, node, true);
-        return inspect(node, node);
+        return force(node);
       };
     })(this);
     dispose = (function(_this) {
@@ -5156,33 +5192,74 @@ Model = (function() {
         removeID(node.id);
         removeClasses(node.classes);
         node.off('change:node', update);
-        return inspect(node);
+        return force(node);
       };
     })(this);
-    inspect = (function(_this) {
-      return function(node, value) {
-        var watcher, _i, _len, _ref, _results;
+    prime = (function(_this) {
+      return function(node) {
+        var watcher, _i, _len, _ref;
         _ref = _this.watchers.slice();
-        _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           watcher = _ref[_i];
-          if (watcher.matcher(node)) {
-            _results.push(watcher(value));
-          } else {
-            _results.push(void 0);
-          }
+          watcher.match = watcher.matcher(node);
         }
-        return _results;
+        return null;
+      };
+    })(this);
+    check = (function(_this) {
+      return function(node) {
+        var watcher, _i, _len, _ref;
+        _ref = _this.watchers.slice();
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          watcher = _ref[_i];
+          _this.fire || (_this.fire = watcher.fire || (watcher.fire = watcher.match !== watcher.matcher(node)));
+        }
+        return null;
+      };
+    })(this);
+    force = (function(_this) {
+      return function(node) {
+        var watcher, _i, _len, _ref;
+        _ref = _this.watchers.slice();
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          watcher = _ref[_i];
+          _this.fire || (_this.fire = watcher.fire || (watcher.fire = watcher.matcher(node)));
+        }
+        return null;
+      };
+    })(this);
+    this.digest = (function(_this) {
+      return function() {
+        var watcher, _i, _len, _ref;
+        if (!_this.fire) {
+          return;
+        }
+        _ref = _this.watchers.slice();
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          watcher = _ref[_i];
+          if (!watcher.fire) {
+            continue;
+          }
+          watcher.fire = false;
+          watcher.handler();
+        }
+        _this.fire = false;
+        return null;
       };
     })(this);
     update = (function(_this) {
-      return function(event, node, force) {
-        var classes, id, klass, _id, _klass;
-        _id = force || event.changed['node.id'];
-        _klass = force || event.changed['node.classes'];
+      return function(event, node, init) {
+        var classes, hash, id, klass, primed, _i, _id, _klass, _len, _ref, _ref1;
+        _id = init || event.changed['node.id'];
+        _klass = init || event.changed['node.classes'];
+        primed = false;
         if (_id) {
           id = node.get('node.id');
           if (id !== node.id) {
+            if (!init) {
+              prime(node);
+            }
+            primed = true;
             removeID(node.id, node);
             addID(id, node);
           }
@@ -5190,13 +5267,62 @@ Model = (function() {
         if (_klass) {
           classes = node.get('node.classes');
           klass = classes.join(',');
-          if (klass !== node.klass) {
+          if (klass !== ((_ref = node.classes) != null ? _ref.klass : void 0)) {
+            if (!(init || primed)) {
+              prime(node);
+            }
+            primed = true;
             removeClasses(node.classes, node);
             addClasses(classes, node);
-            node.klass = klass;
-            return node.classes = classes.slice();
+            node.classes = classes.slice();
+            node.classes.klass = klass;
+            hash = node.classes.hash = {};
+            _ref1 = node.classes;
+            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+              klass = _ref1[_i];
+              hash[klass] = true;
+            }
           }
         }
+        if (!init && primed) {
+          check(node);
+        }
+        return null;
+      };
+    })(this);
+    addTags = (function(_this) {
+      return function(sets, tags, node) {
+        var k, list, _i, _len, _ref;
+        if (tags == null) {
+          return;
+        }
+        for (_i = 0, _len = tags.length; _i < _len; _i++) {
+          k = tags[_i];
+          list = (_ref = sets[k]) != null ? _ref : [];
+          list.push(node);
+          sets[k] = list;
+        }
+        return null;
+      };
+    })(this);
+    removeTags = (function(_this) {
+      return function(sets, tags, node) {
+        var index, k, list, _i, _len;
+        if (tags == null) {
+          return;
+        }
+        for (_i = 0, _len = tags.length; _i < _len; _i++) {
+          k = tags[_i];
+          list = sets[k];
+          index = list.indexOf(node);
+          if (index >= 0) {
+            list.splice(index, 1);
+          }
+          if (list.length === 0) {
+            delete sets[k];
+          }
+        }
+        return null;
       };
     })(this);
     addID = (function(_this) {
@@ -5220,39 +5346,12 @@ Model = (function() {
     })(this);
     addClasses = (function(_this) {
       return function(classes, node) {
-        var k, list, _i, _len, _ref, _results;
-        if (classes != null) {
-          _results = [];
-          for (_i = 0, _len = classes.length; _i < _len; _i++) {
-            k = classes[_i];
-            list = (_ref = _this.classes[k]) != null ? _ref : [];
-            list.push(node);
-            _results.push(_this.classes[k] = list);
-          }
-          return _results;
-        }
+        return addTags(_this.classes, classes, node);
       };
     })(this);
     removeClasses = (function(_this) {
       return function(classes, node) {
-        var index, k, list, _i, _len, _results;
-        if (classes != null) {
-          _results = [];
-          for (_i = 0, _len = classes.length; _i < _len; _i++) {
-            k = classes[_i];
-            list = _this.classes[k];
-            index = list.indexOf(node);
-            if (index >= 0) {
-              list.splice(index, 1);
-            }
-            if (list.length === 0) {
-              _results.push(delete _this.classes[k]);
-            } else {
-              _results.push(void 0);
-            }
-          }
-          return _results;
-        }
+        return removeTags(_this.classes, classes, node);
       };
     })(this);
     addNode = (function(_this) {
@@ -5267,27 +5366,25 @@ Model = (function() {
     })(this);
     addType = (function(_this) {
       return function(node) {
-        var list, type, _ref;
-        type = node.type;
-        list = (_ref = _this.types[type]) != null ? _ref : [];
-        list.push(node);
-        return _this.types[type] = list;
+        return addTags(_this.types, [node.type], node);
       };
     })(this);
     removeType = (function(_this) {
       return function(node) {
-        var index, list, type, _ref;
-        type = node.type;
-        list = (_ref = _this.types[type]) != null ? _ref : [];
-        index = list.indexOf(node);
-        if (index >= 0) {
-          list.splice(index, 1);
-        }
-        if (list.length === 0) {
-          return delete _this.types[type];
-        }
+        return removeTags(_this.types, [node.type], node);
       };
     })(this);
+    addTraits = (function(_this) {
+      return function(node) {
+        return addTags(_this.traits, node.traits, node);
+      };
+    })(this);
+    removeTraits = (function(_this) {
+      return function(node) {
+        return removeTags(_this.traits, node.traits, node);
+      };
+    })(this);
+    adopt(this.root);
   }
 
   Model.prototype.filter = function(nodes, selector) {
@@ -5330,26 +5427,35 @@ Model = (function() {
   };
 
   Model.prototype.watch = function(selector, handler) {
+    var watcher;
     handler.unwatch = (function(_this) {
       return function() {
         return _this.unwatch(handler);
       };
     })(this);
-    handler.matcher = this._matcher(selector);
-    return this.watchers.push(handler);
+    handler.watcher = watcher = {
+      handler: handler,
+      matcher: this._matcher(selector),
+      match: false,
+      fire: false
+    };
+    this.watchers.push(watcher);
+    return this.select(selector);
   };
 
   Model.prototype.unwatch = function(handler) {
-    if (handler.watcher == null) {
+    var watcher;
+    watcher = handler.watcher;
+    if (watcher == null) {
       return;
     }
-    this.watchers.splice(this.watchers.indexOf(handler), 1);
+    this.watchers.splice(this.watchers.indexOf(watcher), 1);
     delete handler.unwatch;
-    return delete handler.matcher;
+    return delete handler.watcher;
   };
 
   Model.prototype._simplify = function(s) {
-    var all, found, id, klass, type, _ref, _ref1, _ref2;
+    var all, found, id, klass, trait, type, _ref, _ref1, _ref2, _ref3;
     s = s.replace(/^\s+/, '');
     s = s.replace(/\s+$/, '');
     found = all = s === ALL;
@@ -5360,14 +5466,17 @@ Model = (function() {
       found = klass = (_ref1 = s.match(CLASS)) != null ? _ref1[1] : void 0;
     }
     if (!found) {
-      found = type = (_ref2 = s.match(TYPE)) != null ? _ref2[0] : void 0;
+      found = trait = (_ref2 = s.match(TRAIT)) != null ? _ref2[1] : void 0;
     }
-    return [all, id, klass, type];
+    if (!found) {
+      found = type = (_ref3 = s.match(TYPE)) != null ? _ref3[0] : void 0;
+    }
+    return [all, id, klass, trait, type];
   };
 
   Model.prototype._matcher = function(s) {
-    var all, id, klass, type, _ref;
-    _ref = this._simplify(s), all = _ref[0], id = _ref[1], klass = _ref[2], type = _ref[3];
+    var all, id, klass, trait, type, _ref;
+    _ref = this._simplify(s), all = _ref[0], id = _ref[1], klass = _ref[2], trait = _ref[3], type = _ref[4];
     if (all) {
       return (function(node) {
         return true;
@@ -5380,7 +5489,12 @@ Model = (function() {
     }
     if (klass) {
       return (function(node) {
-        return __indexOf.call(node.classes, klass) >= 0;
+        return node.classes.hash[klass];
+      });
+    }
+    if (trait) {
+      return (function(node) {
+        return node.traits.hash[trait];
       });
     }
     if (type) {
@@ -5392,8 +5506,8 @@ Model = (function() {
   };
 
   Model.prototype._select = function(s) {
-    var all, id, klass, type, _ref;
-    _ref = this._simplify(s), all = _ref[0], id = _ref[1], klass = _ref[2], type = _ref[3];
+    var all, id, klass, trait, type, _ref;
+    _ref = this._simplify(s), all = _ref[0], id = _ref[1], klass = _ref[2], trait = _ref[3], type = _ref[4];
     if (all) {
       return this.nodes;
     }
@@ -5402,6 +5516,9 @@ Model = (function() {
     }
     if (klass) {
       return this.classes[klass] || [];
+    }
+    if (trait) {
+      return this.traits[trait] || [];
     }
     if (type) {
       return this.types[type] || [];
@@ -5432,8 +5549,7 @@ Node = (function() {
       traits = [];
     }
     this.attributes = attributes.apply(this, traits);
-    this.parent = null;
-    this.root = null;
+    this.parent = this.root = this.index = null;
     this.set(options, null, true);
   }
 
@@ -5634,17 +5750,17 @@ Primitive = (function() {
   };
 
   Primitive.prototype._attach = function(key, trait, watcher) {
-    var node, object, parent, previous;
+    var node, object, parent, previous, selection;
     object = this._get(key);
-    if (typeof object === 'string') {
-      node = this.root.select(object)[0];
+    if (typeof object === 'object') {
+      node = object;
       if ((node != null) && __indexOf.call(node.traits, trait) >= 0) {
-        this.root.watch(object, watcher);
         return node.primitive;
       }
     }
-    if (typeof object === 'object') {
-      node = object;
+    if (typeof object === 'string') {
+      selection = this.root.watch(object, watcher);
+      node = selection[0];
       if ((node != null) && __indexOf.call(node.traits, trait) >= 0) {
         return node.primitive;
       }
@@ -7222,7 +7338,7 @@ Helpers are auto-attached to primitives that have the matching trait
 helpers = {
   bind: {
     make: function(map) {
-      var key, name, source, trait, watcher;
+      var key, name, source, trait, watcher, watchers;
       if (this.handlers.bindRebuild) {
         this._helpers.bind.unmake();
       }
@@ -7237,27 +7353,42 @@ helpers = {
           return _this.rebuild();
         };
       })(this);
-      watcher = this.handlers.bindRebuild;
+      this.handlers.bindWatchers = watchers = [];
       for (key in map) {
         trait = map[key];
+        watcher = (function(_this) {
+          return function() {
+            return _this.rebuild();
+          };
+        })(this);
+        watchers.push(watcher);
         name = key.split(/\./g).pop();
         source = this._attach(key, trait, watcher);
-        source.on('resize', this.handlers.bindResize);
-        source.on('rebuild', this.handlers.bindRebuild);
+        if (source) {
+          source.on('resize', this.handlers.bindResize);
+          source.on('rebuild', this.handlers.bindRebuild);
+        }
         this.bind[name] = source;
       }
       return null;
     },
     unmake: function() {
-      var key, source, _base, _ref;
+      var key, source, watcher, _i, _len, _ref, _ref1;
       _ref = this.bind;
       for (key in _ref) {
         source = _ref[key];
+        if (!(source)) {
+          continue;
+        }
         source.off('resize', this.handlers.bindResize);
         source.off('rebuild', this.handlers.bindRebuild);
       }
-      if (typeof (_base = this.handlers.bindRebuild).unwatch === "function") {
-        _base.unwatch();
+      _ref1 = this.handlers.bindWatchers;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        watcher = _ref1[_i];
+        if (typeof watcher.unwatch === "function") {
+          watcher.unwatch();
+        }
       }
       delete this.handlers.bindResize;
       delete this.handlers.bindRebuild;
@@ -7426,9 +7557,12 @@ helpers = {
     }
   },
   object: {
-    make: function(objects) {
+    make: function(objects, forceTransparent) {
       var blending, e, hasStyle, last, object, onChange, onVisible, opacity, visible, zFactor, zIndex, zUnits, _i, _len, _ref, _ref1;
       this.objects = objects != null ? objects : [];
+      if (forceTransparent == null) {
+        forceTransparent = false;
+      }
       this.objectParent = this._inherit('object');
       this.objectScene = this._inherit('scene');
       e = {
@@ -7486,7 +7620,7 @@ helpers = {
             o = _ref[_i];
             if (active) {
               if (hasStyle) {
-                o.show(opacity < 1, blending);
+                o.show(opacity < 1 || forceTransparent, blending);
                 o.polygonOffset(zFactor, zUnits);
               } else {
                 o.show(false, blending);
@@ -8298,7 +8432,7 @@ Util = require('../../../util');
 Compose = (function(_super) {
   __extends(Compose, _super);
 
-  Compose.traits = ['node', 'bind', 'object', 'style'];
+  Compose.traits = ['node', 'bind', 'object', 'style', 'compose'];
 
   function Compose(node, context, helpers) {
     Compose.__super__.constructor.call(this, node, context, helpers);
@@ -8319,7 +8453,7 @@ Compose = (function(_super) {
   };
 
   Compose.prototype.make = function() {
-    var composeUniforms, fragment, resampleUniforms;
+    var alpha, composeUniforms, fragment, resampleUniforms;
     this._helpers.bind.make({
       'compose.source': 'source'
     });
@@ -8328,11 +8462,15 @@ Compose = (function(_super) {
     };
     this.remap4DScale = resampleUniforms.remap4DScale.value;
     fragment = this._shaders.shader();
+    alpha = this._get('compose.alpha');
     if (__indexOf.call(this.bind.source.traits, 'image') >= 0) {
       this.bind.source.imageShader(fragment);
     } else {
       fragment.pipe('screen.remap.4d', resampleUniforms);
       this.bind.source.sourceShader(fragment);
+    }
+    if (!alpha) {
+      fragment.call('color.opaque');
     }
     composeUniforms = this._helpers.style.uniforms();
     this.compose = this._renderables.make('screen', {
@@ -8342,7 +8480,7 @@ Compose = (function(_super) {
       uniforms: composeUniforms
     });
     this.resize();
-    return this._helpers.object.make([this.compose]);
+    return this._helpers.object.make([this.compose], true);
   };
 
   Compose.prototype.unmake = function() {
@@ -8351,8 +8489,11 @@ Compose = (function(_super) {
   };
 
   Compose.prototype.change = function(changed, touched, init) {
-    if (changed['compose.source'] != null) {
-      return this.rebuild();
+    if ((changed['compose.source'] != null) || (changed['compose.alpha'] != null)) {
+      this.rebuild();
+    }
+    if (changed['compose.depth'] || init) {
+      return this.compose.depth(false, this._get('compose.depth'));
     }
   };
 
@@ -8560,9 +8701,10 @@ Traits = {
     opacity: Types.number(1),
     color: Types.color(),
     blending: Types.blending(),
-    zFactor: Types.number(4),
+    zFactor: Types.number(8),
     zUnits: Types.number(0),
-    zIndex: Types.number(0)
+    zIndex: Types.number(0),
+    zOrder: Types.nullable(Types.number())
   },
   point: {
     size: Types.number(.01)
@@ -8704,7 +8846,8 @@ Traits = {
   },
   compose: {
     source: Types.nullable(Types.select(Types.object())),
-    alpha: Types.bool(false)
+    alpha: Types.bool(false),
+    depth: Types.bool(false)
   }
 };
 
@@ -11394,12 +11537,42 @@ Base = (function(_super) {
     var _ref;
     Base.__super__.constructor.call(this, renderer, shaders, options);
     this.zUnits = (_ref = options.zUnits) != null ? _ref : 0;
+    this.zOrder = 0;
   }
 
   Base.prototype._raw = function(object) {
     object.rotationAutoUpdate = false;
     object.frustumCulled = false;
     return object.matrixAutoUpdate = false;
+  };
+
+  Base.prototype.order = function(order) {
+    var d, object, z, _i, _len, _ref;
+    if (order) {
+      z = order + (order > 0 ? 100000 : -100000);
+    } else {
+      z = null;
+    }
+    _ref = this.objects;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      object = _ref[_i];
+      d = object.material.transparent ? -z : z;
+      object.renderDepth = d;
+    }
+    return this.zOrder = order;
+  };
+
+  Base.prototype.depth = function(write, test) {
+    var m, object, _i, _len, _ref, _results;
+    _ref = this.objects;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      object = _ref[_i];
+      m = object.material;
+      m.depthWrite = false;
+      _results.push(m.depthTest = false);
+    }
+    return _results;
   };
 
   Base.prototype.polygonOffset = function(factor, units) {
@@ -11431,6 +11604,9 @@ Base = (function(_super) {
       object.visible = true;
       m.transparent = transparent;
       m.blending = blending;
+    }
+    if (this.zOrder) {
+      this.order(this.zOrder);
     }
     return null;
   };

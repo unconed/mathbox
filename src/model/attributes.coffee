@@ -11,8 +11,8 @@
 
 class Attributes
   constructor: (definitions) ->
-    @traits = definitions.Traits
-    @types  = definitions.Types
+    @traits  = definitions.Traits
+    @types   = definitions.Types
     @pending = []
 
   make: (type) ->
@@ -163,7 +163,12 @@ class Data
         makers[key] = options.make
         validators[key] = options.validate
 
+    # Store array of traits
     unique = list.filter (object, i) -> list.indexOf(object) == i
     object.traits = unique
+
+    # And hash for CSSauron
+    hash = object.traits.hash = {}
+    hash[trait] = true for trait in unique
 
 module.exports = Attributes

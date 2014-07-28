@@ -55,6 +55,7 @@ class Context
   update: () ->
     @animator  .update()
     @attributes.digest()
+    @model     .digest()
 
     @root.primitive.update()
 

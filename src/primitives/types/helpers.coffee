@@ -18,17 +18,22 @@ helpers =
       @bind = {}
 
       # Monitor array for reallocation / resize
-      @handlers.bindResize  = (event) => @resize()
-      @handlers.bindRebuild = (event) => @rebuild()
+      @handlers.bindResize   = (event) => @resize()
+      @handlers.bindRebuild  = (event) => @rebuild()
+      @handlers.bindWatchers = watchers = []
 
-      # Fetch attached objects and bind
-      watcher = @handlers.bindRebuild
+      # Fetch attached objects and bind to them
+      # Attach watchers for DOM changes
       for key, trait of map
-        name = key.split(/\./g).pop()
+        watcher = () => @rebuild()
+        watchers.push watcher
+
+        name   = key.split(/\./g).pop()
         source = @_attach key, trait, watcher
 
-        source.on 'resize',  @handlers.bindResize
-        source.on 'rebuild', @handlers.bindRebuild
+        if source
+          source.on 'resize',  @handlers.bindResize
+          source.on 'rebuild', @handlers.bindRebuild
 
         @bind[name] = source
 
@@ -36,12 +41,12 @@ helpers =
 
     unmake: () ->
       # Unbind from attached objects
-      for key, source of @bind
+      for key, source of @bind when source
         source.off 'resize',  @handlers.bindResize
         source.off 'rebuild', @handlers.bindRebuild
 
       # Stop watching selector (if any)
-      @handlers.bindRebuild.unwatch?()
+      watcher.unwatch?() for watcher in @handlers.bindWatchers
 
       delete @handlers.bindResize
       delete @handlers.bindRebuild
@@ -187,7 +192,7 @@ helpers =
     # Pass renderables to nearest root for rendering
     # Track visibility from parent and notify children
     # Track blends / transparency for three.js materials
-    make: (@objects = []) ->
+    make: (@objects = [], forceTransparent = false) ->
       @objectParent = @_inherit 'object'
       @objectScene  = @_inherit 'scene'
 
@@ -224,7 +229,7 @@ helpers =
         for o in @objects
           if active
             if hasStyle
-              o.show opacity < 1, blending
+              o.show opacity < 1 or forceTransparent, blending
               o.polygonOffset zFactor, zUnits
             else
               o.show false, blending

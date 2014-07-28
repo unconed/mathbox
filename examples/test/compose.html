@@ -55,8 +55,6 @@
 
     view.compose({
       color: '#fff',
-      blending: THREE.MultiplyBlending,
-      zIndex: 1,
     });
 
     view.area({
@@ -67,12 +65,9 @@
       expression: function (x, y, i, j, emit) {
         emit(x, y, 0);
       },
-    })
+    });
     view.compose({
       color: '#fff',
-      opacity: 1,
-      blending: THREE.NoBlending,
-      zIndex: 2,
     });
 
   </script>

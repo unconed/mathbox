@@ -93,18 +93,19 @@ class Primitive
   # Attach to primitive by trait
   _attach: (key, trait, watcher) ->
 
-    # Explicitly bound node
-    object    = @_get key
+    object = @_get key
 
-    if typeof object == 'string'
-      node = @root.select(object)[0]
-      if node? and trait in node.traits
-        @root.watch(object, watcher)
-        return node.primitive
-
+    # Direct JS binding, no watcher.
     if typeof object == 'object'
       node = object
       return node.primitive if node? and trait in node.traits
+
+    # Selector binding
+    if typeof object == 'string'
+      selection = @root.watch object, watcher
+      node = selection[0]
+      if node? and trait in node.traits
+        return node.primitive
 
     # Implicitly associated node (scan backwards until we find one)
     previous = @node

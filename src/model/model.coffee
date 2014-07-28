@@ -1,9 +1,10 @@
 cssauron = require 'cssauron'
 
 ALL   = '*'
-ID    = /^#([A-Za-z0-9_])$/
-CLASS = /^\.([A-Za-z0-9_]+)$/
-TYPE  = /^[A-Za-z0-9_]+$/
+ID     = /^#([A-Za-z0-9_])$/
+CLASS  = /^\.([A-Za-z0-9_]+)$/
+TRAIT  = /^\[([A-Za-z0-9_]+)\]$/
+TYPE   = /^[A-Za-z0-9_]+$/
 
 ###
 
@@ -11,6 +12,9 @@ TYPE  = /^[A-Za-z0-9_]+$/
   
   Monitors adds, removals and ID/class changes.
   Enables CSS selectors, both querying and watching.
+
+  Watchers are primed differentially as changes come in,
+  and fired with digest().
 
 ###
 class Model
@@ -20,9 +24,11 @@ class Model
 
     @ids      = {}
     @classes  = {}
-    @types    = { root: [@root] }
+    @traits   = {}
+    @types    = {}
     @nodes    = []
     @watchers = []
+    @fire     = false
 
     @event = type: 'update'
 
@@ -34,6 +40,7 @@ class Model
         class:    "classes.join(' ')"
         parent:   'parent'
         children: 'children'
+        attr:     'traits.hash[attr]'
 
     # Triggered by child addition/removal
     add    = (event) => adopt   event.node
@@ -48,7 +55,7 @@ class Model
       addType node
       node.on 'change:node', update
       update event, node, true
-      inspect node, node
+      force node
 
     dispose = (node) =>
       removeNode node
@@ -56,32 +63,85 @@ class Model
       removeID      node.id
       removeClasses node.classes
       node.off 'change:node', update
-      inspect node
+      force node
 
-    inspect = (node, value) =>
+    # Watcher cycle
+    prime = (node) =>
       for watcher in @watchers.slice()
-        watcher value if watcher.matcher node
+        watcher.match = watcher.matcher node
+      null
+
+    check = (node) =>
+      for watcher in @watchers.slice()
+        @fire ||= watcher.fire ||= (watcher.match != watcher.matcher node)
+      null
+
+    force = (node) =>
+      for watcher in @watchers.slice()
+        @fire ||= watcher.fire ||= watcher.matcher node
+      null
+
+    @digest = () =>
+      return unless @fire
+      for watcher in @watchers.slice() when watcher.fire
+        watcher.fire = false
+        watcher.handler()
+      @fire = false
+      null
 
     # Track id/class changes
-    update = (event, node, force) =>
-      _id    = force or event.changed['node.id']
-      _klass = force or event.changed['node.classes']
+    update = (event, node, init) =>
+      _id    = init or event.changed['node.id']
+      _klass = init or event.changed['node.classes']
+      primed = false
 
       if _id
         id = node.get 'node.id'
         if id != node.id
+          prime node unless init
+          primed = true
+
           removeID node.id, node
           addID    id,      node
 
       if _klass
         classes = node.get 'node.classes'
-        klass = classes.join ','
-        if klass != node.klass
+        klass   = classes.join ','
+        if klass != node.classes?.klass
+          prime node unless init or primed
+          primed = true
+
           removeClasses node.classes, node
           addClasses    classes,      node
-          node.klass   = klass
-          node.classes = classes.slice()
 
+          node.classes       = classes.slice()
+          node.classes.klass = klass
+          hash = node.classes.hash = {}
+          hash[klass] = true for klass in node.classes
+
+      check node if !init and primed
+      null
+
+    # Manage lookup tables for types/classes/traits
+    addTags = (sets, tags, node) =>
+      return unless tags?
+      for k in tags
+        list = sets[k] ? []
+        list.push node
+        sets[k] = list
+      null
+
+    removeTags = (sets, tags, node) =>
+      return unless tags?
+      for k in tags
+        list = sets[k]
+        index = list.indexOf node
+        list.splice index, 1 if index >= 0
+        if list.length == 0
+          delete sets[k]
+      null
+
+    # Track IDs (live)
     addID = (id, node) =>
       if @ids[id]
         throw "Duplicate id `#{id}`"
@@ -94,46 +154,23 @@ class Model
         delete @ids[id]
       delete node.id
 
-    addClasses = (classes, node) =>
-      if classes?
-        for k in classes
-          list = @classes[k] ? []
-          list.push node
-          @classes[k] = list
+    # Track classes (live)
+    addClasses    = (classes, node) => addTags    @classes, classes, node
+    removeClasses = (classes, node) => removeTags @classes, classes, node
 
-    removeClasses = (classes, node) =>
-      if classes?
-        for k in classes
-          list = @classes[k]
-          index = list.indexOf node
-          list.splice index, 1 if index >= 0
-          if list.length == 0
-            delete @classes[k]
-
-    # Track nodes and types
-    addNode = (node) =>
-      @nodes.push node
-
-    removeNode = (node) =>
-      @nodes.splice @nodes.indexOf(node), 1
+    # Track nodes
+    addNode       = (node) => @nodes.push node
+    removeNode    = (node) => @nodes.splice @nodes.indexOf(node), 1
 
     # Track nodes by type
-    addType = (node) =>
-      type = node.type
-      list = @types[type] ? []
-      list.push node
-      @types[type] = list
+    addType       = (node) => addTags    @types, [node.type], node
+    removeType    = (node) => removeTags @types, [node.type], node
 
-    removeType = (node) =>
-      type = node.type
-      list = @types[type] ? []
-      index = list.indexOf node
-      list.splice index, 1 if index >= 0
-      if list.length == 0
-        delete @types[type]
+    # Track nodes by trait
+    addTraits     = (node) => addTags    @traits, node.traits, node
+    removeTraits  = (node) => removeTags @traits, node.traits, node
 
-
-  # Querying via CSS selectors
+    adopt @root
 
   # Filter array by selector
   filter: (nodes, selector) ->
@@ -161,16 +198,23 @@ class Model
   # Watch selector with handler
   watch: (selector, handler) ->
     handler.unwatch = () => @unwatch handler
-    handler.matcher = @_matcher selector
-    @watchers.push handler
+    handler.watcher = watcher = {
+      handler: handler
+      matcher: @_matcher selector
+      match:   false
+      fire:    false
+    }
+    @watchers.push watcher
+    @select selector
 
   # Unwatch a handler
   unwatch: (handler) ->
-    return unless handler.watcher?
+    watcher = handler.watcher
+    return unless watcher?
 
-    @watchers.splice @watchers.indexOf(handler), 1
+    @watchers.splice @watchers.indexOf(watcher), 1
     delete handler.unwatch
-    delete handler.matcher
+    delete handler.watcher
 
   # Check for simplified selector
   _simplify: (s) ->
@@ -182,17 +226,19 @@ class Model
     found = all   = s == ALL
     found = id    = s.match(ID)?[1]    if !found
     found = klass = s.match(CLASS)?[1] if !found
+    found = trait = s.match(TRAIT)?[1] if !found
     found = type  = s.match(TYPE)?[0]  if !found
-    [all, id, klass, type]
+    [all, id, klass, trait, type]
 
   # Make a matcher for a single selector
   _matcher: (s) ->
     # Check for simple *, #id, .class or type selector
-    [all, id, klass, type] = @_simplify s
-    return ((node) -> true)                  if all
-    return ((node) -> node.id == id)         if id
-    return ((node) -> klass in node.classes) if klass
-    return ((node) -> node.type == type)     if type
+    [all, id, klass, trait, type] = @_simplify s
+    return ((node) -> true)                     if all
+    return ((node) -> node.id == id)            if id
+    return ((node) -> node.classes.hash[klass]) if klass
+    return ((node) -> node.traits.hash[trait])  if trait
+    return ((node) -> node.type == type)        if type
 
     # Otherwise apply CSS filter
     return @language s
@@ -201,10 +247,11 @@ class Model
   _select: (s) ->
 
     # Check for simple *, #id, .class or type selector
-    [all, id, klass, type] = @_simplify s
+    [all, id, klass, trait, type] = @_simplify s
     return @nodes                if all
     return @ids[id]        || [] if id
     return @classes[klass] || [] if klass
+    return @traits[trait]  || [] if trait
     return @types[type]    || [] if type
 
     # Otherwise iterate over everything
