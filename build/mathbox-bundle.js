@@ -55745,6 +55745,7 @@ Data = (function() {
       trait = unique[_j];
       hash[trait] = true;
     }
+    null;
   }
 
   return Data;
@@ -55767,31 +55768,46 @@ Group = (function(_super) {
   function Group(options, type, traits, attributes) {
     Group.__super__.constructor.call(this, options, type, traits, attributes);
     this.children = [];
+    this.on('reindex', (function(_this) {
+      return function(event) {
+        var child, _i, _len, _ref, _results;
+        _ref = _this.children;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          child = _ref[_i];
+          _results.push(child.trigger(event));
+        }
+        return _results;
+      };
+    })(this));
   }
 
   Group.prototype.add = function(node) {
-    node.index = this.children.length;
+    var _ref;
+    if ((_ref = node.parent) != null) {
+      _ref.remove(node);
+    }
+    node._index(this.children.length);
     this.children.push(node);
     return node._added(this);
   };
 
   Group.prototype.remove = function(node) {
-    var child;
-    node.index = null;
-    this.children = (function() {
-      var _i, _len, _ref, _results;
-      _ref = this.children;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        child = _ref[_i];
-        if (child !== node) {
-          _results.push(child);
-        }
-      }
-      return _results;
-    }).call(this);
+    var i, index, _i, _len, _ref, _results;
+    index = this.children.indexOf(node);
+    if (index === -1) {
+      return;
+    }
+    this.children = this.children.splice(index, 1);
+    node._index(null);
     node._removed(this);
-    return this._renumber();
+    _ref = this.children.slice(index);
+    _results = [];
+    for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+      node = _ref[i];
+      _results.push(node._index(i));
+    }
+    return _results;
   };
 
   Group.prototype.empty = function() {
@@ -55801,17 +55817,6 @@ Group = (function(_super) {
     for (_i = 0, _len = children.length; _i < _len; _i++) {
       node = children[_i];
       _results.push(this.remove(node));
-    }
-    return _results;
-  };
-
-  Group.prototype._renumber = function() {
-    var i, node, _i, _len, _ref, _results;
-    _ref = this.children;
-    _results = [];
-    for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-      node = _ref[i];
-      _results.push(node.index = i);
     }
     return _results;
   };
@@ -55901,6 +55906,7 @@ Model = (function() {
       return function(node) {
         addNode(node);
         addType(node);
+        addTraits(node);
         node.on('change:node', update);
         update(event, node, true);
         return force(node);
@@ -55910,6 +55916,7 @@ Model = (function() {
       return function(node) {
         removeNode(node);
         removeType(node);
+        removeTraits(node);
         removeID(node.id);
         removeClasses(node.classes);
         node.off('change:node', update);
@@ -56270,7 +56277,7 @@ Node = (function() {
       traits = [];
     }
     this.attributes = attributes.apply(this, traits);
-    this.parent = this.root = this.index = null;
+    this.parent = this.root = this.path = this.index = null;
     this.set(options, null, true);
   }
 
@@ -56302,6 +56309,17 @@ Node = (function() {
     }
     event.type = 'removed';
     return this.trigger(event);
+  };
+
+  Node.prototype._index = function(index) {
+    var _ref, _ref1;
+    this.index = index;
+    this.path = index != null ? ((_ref = (_ref1 = this.parent) != null ? _ref1.path : void 0) != null ? _ref : []).concat([index]) : null;
+    if (this.root != null) {
+      return this.trigger({
+        type: 'reindex'
+      });
+    }
   };
 
   return Node;
@@ -56471,7 +56489,7 @@ Primitive = (function() {
   };
 
   Primitive.prototype._attach = function(key, trait, watcher) {
-    var node, object, parent, previous, selection;
+    var id, node, object, parent, previous, selection;
     object = this._get(key);
     if (typeof object === 'object') {
       node = object;
@@ -56500,7 +56518,10 @@ Primitive = (function() {
         return previous.primitive;
       }
     }
-    throw "Could not find " + trait + " `" + object + "` on `" + this.node.id + "` " + this.node.type + "." + key;
+    if (this.node.id != null) {
+      id = "#" + this.node.id;
+    }
+    throw "Could not find " + trait + " `" + object + "` on `" + this.node.type + id + "` " + key;
     return null;
   };
 
@@ -58328,7 +58349,7 @@ helpers = {
       last = null;
       onVisible = this.handlers.objectVisible = (function(_this) {
         return function() {
-          var active, o, _i, _len, _ref;
+          var active, o, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
           active = visible;
           if (active) {
             active = opacity > 0;
@@ -58336,17 +58357,25 @@ helpers = {
           if (active && (_this.objectParent != null)) {
             active = _this.objectParent.isVisible;
           }
-          _ref = _this.objects;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            o = _ref[_i];
-            if (active) {
-              if (hasStyle) {
+          if (active) {
+            if (hasStyle) {
+              _ref = _this.objects;
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                o = _ref[_i];
                 o.show(opacity < 1 || forceTransparent, blending);
                 o.polygonOffset(zFactor, zUnits);
-              } else {
-                o.show(false, blending);
               }
             } else {
+              _ref1 = _this.objects;
+              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                o = _ref1[_j];
+                o.show(false, blending);
+              }
+            }
+          } else {
+            _ref2 = _this.objects;
+            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+              o = _ref2[_k];
               o.hide();
             }
           }

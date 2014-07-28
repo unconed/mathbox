@@ -116,7 +116,8 @@ class Primitive
       previous = parent if !previous
       return previous.primitive if previous? and trait in previous.traits
 
-    throw "Could not find #{trait} `#{object}` on `#{@node.id}` #{@node.type}.#{key}"
+    id = "#" + @node.id if @node.id?
+    throw "Could not find #{trait} `#{object}` on `#{@node.type}#{id}` #{key}"
     null
 
 THREE.Binder.apply Primitive::

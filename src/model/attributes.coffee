@@ -171,4 +171,6 @@ class Data
     hash = object.traits.hash = {}
     hash[trait] = true for trait in unique
 
+    null
+
 module.exports = Attributes

@@ -226,15 +226,15 @@ helpers =
         active = opacity > 0             if active
         active = @objectParent.isVisible if active and @objectParent?
 
-        for o in @objects
-          if active
-            if hasStyle
+        if active
+          if hasStyle
+            for o in @objects
               o.show opacity < 1 or forceTransparent, blending
               o.polygonOffset zFactor, zUnits
-            else
-              o.show false, blending
           else
-            o.hide()
+            o.show false, blending for o in @objects
+        else
+          o.hide() for o in @objects
 
         @isVisible = active
         @trigger e if last != active

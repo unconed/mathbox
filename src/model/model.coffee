@@ -51,17 +51,21 @@ class Model
 
     # Track node lifecycle
     adopt = (node) =>
-      addNode node
-      addType node
+      addNode   node
+      addType   node
+      addTraits node
+
       node.on 'change:node', update
       update event, node, true
       force node
 
     dispose = (node) =>
-      removeNode node
-      removeType node
+      removeNode    node
+      removeType    node
+      removeTraits  node
       removeID      node.id
       removeClasses node.classes
+
       node.off 'change:node', update
       force node
 
