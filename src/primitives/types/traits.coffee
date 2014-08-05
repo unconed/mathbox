@@ -94,6 +94,10 @@ Traits =
     width:       Types.int(1)
     height:      Types.int(1)
     history:     Types.int(1)
+  voxel:
+    width:       Types.int(1)
+    height:      Types.int(1)
+    depth:       Types.int(1)
 
   texture:
     width:       Types.nullable(Types.int())
@@ -143,8 +147,9 @@ Traits =
     camera:      Types.nullable(Types.select(Types.object()))
 
   compose:
-    source:      Types.nullable(Types.select(Types.object()))
     alpha:       Types.bool(false)
     depth:       Types.bool(false)
+  frame:
+    frame:       Types.number(0)
 
 module.exports = Traits

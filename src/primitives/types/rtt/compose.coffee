@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Compose extends Primitive
-  @traits: ['node', 'bind', 'object', 'style', 'compose']
+  @traits: ['node', 'bind', 'object', 'operator', 'style', 'compose']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -23,7 +23,7 @@ class Compose extends Primitive
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make
-      'compose.source': 'source'
+      'operator.source': 'source'
 
     # Prepare uniforms for remapping to absolute coords on the fly
     resampleUniforms =
@@ -62,7 +62,7 @@ class Compose extends Primitive
     @_helpers.object.unmake()
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['compose.source']? or
+    @rebuild() if changed['operator.source']? or
                   changed['compose.alpha']?
 
     if changed['compose.depth'] or init

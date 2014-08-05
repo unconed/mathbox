@@ -4,7 +4,7 @@ class Repeat extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'repeat']
 
   sourceShader: (shader) ->
-    shader.concat @transform
+    shader.pipe @transform
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()

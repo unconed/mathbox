@@ -41,13 +41,17 @@ class Node
     @order = if path? then @_encode path else Infinity
     @trigger type: 'reindex' if @root?
 
-  # Compute invariant node order from path
+  # Asymptotic arithmetic encoding
+  # Computes invariant node order from path of indices
   # Goes from 1 at the root [0] of the tree, to 0 at [∞].
   _encode: (path) ->
-    map  = (x) -> 1 / (x + 1)
+    # Tune precision between deep and narrow (1) vs shallow and wide (n)
+    k    = 3
+
+    map  = (x) -> k / (x + k)
     lerp = (t) -> b + (a - b) * t
 
-    a = 2
+    a = 1 + 1 / k
     b = 0
     for index in path
       f = map index + 1

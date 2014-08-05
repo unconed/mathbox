@@ -22,6 +22,9 @@ Classes =
   matrix:            require './data/matrix'
   area:              require './data/area'
 
+  voxel:             require './data/voxel'
+  volume:            require './data/volume'
+
   lerp:              require './operator/lerp'
   transpose:         require './operator/transpose'
   swizzle:           require './operator/swizzle'

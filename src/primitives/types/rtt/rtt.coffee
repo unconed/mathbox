@@ -1,7 +1,7 @@
 Root = require '../base/root'
 
 class RTT extends Root
-  @traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image']
+  @traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image', 'frames']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -11,11 +11,14 @@ class RTT extends Root
     @event =
       type: 'update'
 
+  framesShader: (shader) ->
+    @rtt.shaderRelative shader, true
+
   imageShader: (shader) ->
     @rtt.shaderRelative shader
 
   sourceShader: (shader) ->
-    @rtt.shaderAbsolute shader
+    @rtt.shaderAbsolute shader, @expose > 1
 
   update: () ->
     @trigger @event
@@ -25,13 +28,9 @@ class RTT extends Root
     items:  1
     width:  @width
     height: @height
-    depth:  @frames
+    depth:  @expose
 
-  getActive: () ->
-    items:  1
-    width:  @width
-    height: @height
-    depth:  Math.min @frames, @_get 'rtt.expose'
+  getActive: () -> @getDimensions()
 
   make: () ->
     @parentRoot = @_inherit 'root'
@@ -45,9 +44,10 @@ class RTT extends Root
 
     return unless @size?
 
-    @width  = @_get('texture.width')   ? @size.renderWidth
-    @height = @_get('texture.height')  ? @size.renderHeight
+    @width  = @_get('texture.width')  ? @size.renderWidth
+    @height = @_get('texture.height') ? @size.renderHeight
     @frames = @_get('rtt.history') + 1
+    @expose = Math.min @frames, @_get('rtt.expose')
 
     @scene ?= @_renderables.make 'scene'
     @rtt    = @_renderables.make 'renderToTexture',
@@ -56,6 +56,7 @@ class RTT extends Root
       height: @height
       frames: @frames
 
+    ###
     @debug1 = @_renderables.make 'debug',
       x: -1,
       map: @rtt.read()
@@ -67,6 +68,7 @@ class RTT extends Root
     root = @_inherit 'root'
     root.adopt @debug1
     root.adopt @debug2
+    ###
 
     # Notify of buffer reallocation
     @trigger
@@ -78,22 +80,25 @@ class RTT extends Root
 
     return unless @rtt?
 
+    ###
     root = @_inherit 'root'
     root.unadopt @debug1
     root.unadopt @debug2
 
-    @rtt.dispose()
     @debug1.dispose()
     @debug2.dispose()
 
-    @scene.dispose() unless rebuild
-
     @debug1 = @debug2 = null
+    ###
+
+    @rtt.dispose()
+    @scene.dispose() unless rebuild
 
     @rtt = @width = @height = @frames = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['texture']
+    @rebuild() if touched['texture'] or
+                  changed['rtt.expose']
 
     if @size?
       @rtt.camera.aspect = @size.aspect if @rtt?

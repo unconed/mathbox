@@ -44,7 +44,7 @@ class RenderTarget
     copy = (a, b) ->
       b[key] = a[key] for key in keys
       null
-    add  = (i, j) -> (i + j + frames) % frames
+    add  = (i, j) -> (i + j + frames * 2) % frames
 
     copy @write, @targets[@index]
     copy @targets[add @index, -i], read for read, i in @reads

@@ -1,5 +1,6 @@
 Renderable   = require '../renderable'
 RenderTarget = require './texture/rendertarget'
+Util         = require '../../util'
 
 ###
 Render-To-Texture
@@ -7,17 +8,30 @@ Render-To-Texture
 class RenderToTexture extends Renderable
 
   constructor: (renderer, shaders, options) ->
-    @scene = options.scene ? new THREE.Scene()
+    @scene  = options.scene ? new THREE.Scene()
     @inited = false
 
     super renderer, shaders
     @build options
 
-  shaderRelative: (shader) ->
-    shader.pipe "sample.2d.raw", @uniforms
+  shaderRelative: (shader, all) ->
+    if all
+      shader.pipe "sample.2d", @uniforms
+    else
+      shader.pipe "sample.2d", @uniforms
 
-  shaderAbsolute: (shader) ->
-    shader.pipe "sample.2d.4", @uniforms
+  shaderAbsolute: (shader, all) ->
+    if all
+      shader.pipe "map.xyzw.2d"
+      shader.pipe "map.2d.data",   @uniforms
+      shader.pipe "sample.2d",     @uniforms
+    else
+      sample2DArray = Util.GLSL.sample2DArray @target.frames
+      shader.pipe "map.xyzw.2dv"
+      shader.split()
+      shader  .pipe "map.2d.data", @uniforms
+      shader.pass()
+      shader.pipe sample2DArray,   @uniforms
 
   build: (options) ->
     @camera = new THREE.PerspectiveCamera()

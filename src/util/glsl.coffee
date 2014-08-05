@@ -6,7 +6,37 @@ index =
   z: 2
   w: 3
 
-# Select component
+# Sample data texture array
+exports.sample2DArray = (textures) ->
+
+  divide = (a, b) ->
+    if a == b
+      out = """
+      return texture2D(dataTextures[#{a}], uv);
+      """
+    else
+      mid = Math.ceil a + (b - a) / 2
+      out = """
+      if (z < #{mid - .5}) {
+        #{divide(a, mid - 1)}
+      }
+      else {
+        #{divide(mid, b)}
+      }
+      """
+    out = out.replace /\n/g, "\n  "
+
+  body = divide 0, textures - 1
+
+  """
+  uniform sampler2D dataTextures[#{textures}];
+
+  vec4 sample2DArray(vec2 uv, float z) {
+    #{body}
+  }
+  """
+
+# Binary operator
 exports.binaryOperator = (type, op) ->
   """
   #{type} binaryOperator(#{type} a, #{type} b) {

@@ -4,7 +4,7 @@ class Spread extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'spread']
 
   sourceShader: (shader) ->
-    shader.concat @transform
+    shader.pipe @transform
 
   make: () ->
     super

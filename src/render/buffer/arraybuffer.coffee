@@ -12,7 +12,7 @@ class ArrayBuffer_ extends Buffer
     super renderer, shaders, options
 
   shader: (shader) ->
-    shader.pipe 'map.2d.xyzw', @uniforms
+    shader.pipe 'map.xyzw.texture', @uniforms
     super shader
 
   build: () ->

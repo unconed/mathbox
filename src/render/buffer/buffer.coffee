@@ -12,8 +12,9 @@ class Buffer extends Renderable
     @build()
 
   shader: (shader) ->
-    name = "sample.2d.#{@channels}"
-    shader.pipe name, @uniforms
+    shader.pipe "map.2d.data", @uniforms
+    shader.pipe "sample.2d", @uniforms
+    shader.pipe "sample.fill.#{@channels}" if @channels < 4
 
   build: () ->
     @uniforms =

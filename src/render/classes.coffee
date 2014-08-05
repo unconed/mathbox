@@ -10,6 +10,7 @@ Classes =
   dataBuffer:      require('./buffer/databuffer')
   arrayBuffer:     require('./buffer/arraybuffer')
   matrixBuffer:    require('./buffer/matrixbuffer')
+  voxelBuffer:     require('./buffer/voxelbuffer')
   renderToTexture: require('./buffer/rendertotexture')
 
   scene:           require('./scene')
