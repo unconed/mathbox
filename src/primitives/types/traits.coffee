@@ -102,9 +102,6 @@ Traits =
   texture:
     width:       Types.nullable(Types.int())
     height:      Types.nullable(Types.int())
-  rtt:
-    history:     Types.int(1)
-    expose:      Types.int(1)
 
   operator:
     source:      Types.select(Types.object())
@@ -146,9 +143,14 @@ Traits =
   root:
     camera:      Types.nullable(Types.select(Types.object()))
 
+  rtt:
+    history:     Types.int(1)
+    expose:      Types.int(1)
   compose:
     alpha:       Types.bool(false)
     depth:       Types.bool(false)
+  frames:
+    fragment:    Types.nullable(Types.string())
   frame:
     frame:       Types.number(0)
 

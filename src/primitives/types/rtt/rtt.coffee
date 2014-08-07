@@ -1,7 +1,7 @@
 Root = require '../base/root'
 
 class RTT extends Root
-  @traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image', 'frames']
+  @traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -11,18 +11,18 @@ class RTT extends Root
     @event =
       type: 'update'
 
-  framesShader: (shader) ->
-    @rtt.shaderRelative shader, true
-
   imageShader: (shader) ->
     @rtt.shaderRelative shader
 
   sourceShader: (shader) ->
-    @rtt.shaderAbsolute shader, @expose > 1
+    shader.pipe "map.xyzw.xyz"
+    @rtt.shaderAbsolute shader, @expose
 
   update: () ->
     @trigger @event
     @rtt.render()
+
+  getRTT: () -> @rtt
 
   getDimensions: () ->
     items:  1
@@ -56,20 +56,6 @@ class RTT extends Root
       height: @height
       frames: @frames
 
-    ###
-    @debug1 = @_renderables.make 'debug',
-      x: -1,
-      map: @rtt.read()
-
-    @debug2 = @_renderables.make 'debug',
-      x: 1,
-      map: @rtt.read()
-
-    root = @_inherit 'root'
-    root.adopt @debug1
-    root.adopt @debug2
-    ###
-
     # Notify of buffer reallocation
     @trigger
       type: 'rebuild'
@@ -79,17 +65,6 @@ class RTT extends Root
     @parentRoot.off 'resize', @resizeHandler
 
     return unless @rtt?
-
-    ###
-    root = @_inherit 'root'
-    root.unadopt @debug1
-    root.unadopt @debug2
-
-    @debug1.dispose()
-    @debug2.dispose()
-
-    @debug1 = @debug2 = null
-    ###
 
     @rtt.dispose()
     @scene.dispose() unless rebuild

@@ -46015,7 +46015,7 @@ Callback = (function(_super) {
     };
     handle = (function(_this) {
       return function(outlet, list) {
-        if (isCallback(outlet)) {
+        if (isCallback(outlet.type)) {
           return outlets.push(outlet.dupe());
         } else {
           return list.push(outlet.type);
@@ -46301,11 +46301,6 @@ Factory = (function() {
     return this.require(name, uniforms, namespace);
   };
 
-  Factory.prototype.loose = function(name, uniforms, namespace) {
-    this._loose(name, uniforms, namespace);
-    return this;
-  };
-
   Factory.prototype.split = function() {
     this._group('_combine', true);
     return this;
@@ -46399,7 +46394,8 @@ Factory = (function() {
         from.connect(to, sub.empty);
       }
     }
-    return main.end = sub.end;
+    main.end = sub.end;
+    return main.nodes = main.nodes.concat(sub.nodes);
   };
 
   Factory.prototype._isolate = function(sub, main) {
@@ -46418,7 +46414,7 @@ Factory = (function() {
       subgraph = this._subgraph(sub);
       block = new Block.Callback(subgraph);
       this._tail(sub, subgraph);
-      return this._append(block);
+      return this._insert(block);
     }
   };
 
@@ -46432,13 +46428,6 @@ Factory = (function() {
     } else {
       return this._insert(block);
     }
-  };
-
-  Factory.prototype._loose = function(name, uniforms, namespace) {
-    var snippet;
-    snippet = this.fetch(name);
-    snippet.bind(this.config, uniforms, namespace);
-    return this._insert(new Block.Call(snippet));
   };
 
   Factory.prototype._subgraph = function(sub) {
@@ -46786,257 +46775,6 @@ string_compiler = function(code, placeholders) {
     });
   };
 };
-
-
-/*
- * AST-based compiler
- * (not used)
- *
- * glsl-parser's AST is too awkward to serialize back into source code
- *
- * not implemented: do, while, for, struct, precision
- *#
-
-ast_compiler = (ast, placeholders) ->
-
-   * stream out tokens, either strings or string callbacks
-
-  tokens = []
-  buffer = ""
-  last   = ""
-  regex  = /[0-9A-Za-z_{}]/
-  indent = ''
-  block  = ''
-
-  string = (value) ->
-
-    first = value[0]
-
-    return if value == ';\n' and last == '\n'
-
-    buffer += ' ' if buffer.length and regex.test(last) and regex.test(first)
-    buffer += value
-
-    last = buffer[buffer.length - 1]
-
-  maybePlaceholder = (name) ->
-    if placeholders[name]
-      placeholder name
-    else
-      string name
-
-  placeholder = (name) ->
-    last = buffer[buffer.length - 1]
-    buffer += ' ' if buffer.length and regex.test(last)
-
-    combine()
-    tokens.push (names) -> names[name]
-
-    last = 'x'
-
-  combine = () ->
-    if buffer.length
-      tokens.push buffer
-      buffer = ""
-    tokens
-
-   * process AST nodes
-  recurse = (node) ->
-    indent += '..'
-    walk map, null, child, indent for child, i in node.children
-    indent = indent.substring 2
-
-  remap = (node, i) ->
-    indent += '..'
-    walk map, null, node, indent
-    indent = indent.substring 2
-
-  stmtlist = (node) ->
-    if node.parent
-      block += '  '
-      string '{\n'
-
-    recurse node
-
-    if node.parent
-      block = block.substring(2)
-      string block + '}'
-
-    false
-
-  stmt = (node, data) ->
-    if data in ['else']
-      string data
-    else
-      string block
-
-    recurse node
-    string ';\n'
-    false
-
-  decllist = (node, data) ->
-    if data == '='
-      for child, i in node.children
-        remap child
-        if i == 0
-          string ' = '
-      false
-    else
-      for child, i in node.children
-        if i > 0 && child.type != 'quantifier'
-          string ', '
-        remap child
-      false
-   *  else true
-
-  args = (node, data) ->
-    c = node.children
-    for child, i in c
-      if i > 0
-        string ', '
-      remap child
-    false
-
-  ifstmt = (node, data) ->
-    c = node.children
-
-    string data
-    string '('
-    remap c[0]
-    string ') '
-
-    remap c[1]
-    remap c[2] if c[2]
-
- *    string block + '\n'
-    false
-
-  call = (node, data) ->
-    c = node.children
-
-    body = false
-    for child, i in c
-      if child.type == 'stmtlist'
-        body = true
-        string ') '
-        remap child
-      else
-        if i > 1
-          string ', '
-        remap child
-        if i == 0
-          string '('
-    string ')' if !body
-    false
-
-  operator = (node, data) ->
-    c = node.children
-
-    l = c.length
-    if l == 1
-       * unary
-      string data
-      remap c[0]
-    else
-      data = ' ' + data + ' ' if data != '.'
-
-       * binary
-      for child, i in c
-        remap child
-        string data if i == 0
-    false
-
-  ident = (node, data) ->
-    maybePlaceholder data
-    true
-
-  literal = (node, data) ->
-    string data
-    true
-
-  group = (node, data) ->
-    string '('
-    recurse node
-    string ')'
-    false
-
-  quantifier = (node, data) ->
-    string '['
-    recurse node
-    string ']'
-    false
-
-   * map node in tree
-  map = (node) ->
-    n = node
-    d = node.token.data
-
-    switch node.type
-      when 'placeholder'  then false
-      when 'expr'         then true
-      when 'decl'         then true
-      when 'stmt'         then stmt         n, d
-      when 'literal'      then literal      n, d
-      when 'keyword'      then literal      n, d
-      when 'ident'        then ident        n, d
-      when 'decllist'     then decllist     n, d
-      when 'builtin'      then literal      n, d
-      when 'binary'       then operator     n, d
-      when 'return'       then literal      n, d
-      when 'call'         then call         n, d
-      when 'function'     then call         n, d
-      when 'functionargs' then args         n, d
-      when 'if'           then ifstmt       n, d
-      when 'else'         then elsestmt     n, d
-      when 'group'        then group        n, d
-      when 'stmtlist'     then stmtlist     n, d
-      when 'quantifier'   then quantifier   n, d
-      when 'preprocessor' then false
-
-      else switch node.token.type
-        when 'operator'   then operator     n, d
-        else false
-
-
-   * walk tree
-  tock = tick()
-
-  walk map, null, ast, ''
-  tokens = combine()
-
-  tock "GLSL Compile"
-
-   * assembler function that takes map of symbol names
-   * and returns GLSL source code
-  (prefix = '', exceptions = {}) ->
-    replace = {}
-    for key of placeholders
-      replace[key] = if exceptions[key]? then key else prefix + key
-
-    out = ""
-    for token in tokens
-      if token.call
-        out += token(replace)
-      else
-        out += token
-
-    out
-
- * Walk AST, apply map and collect values
-debug = false
-
-walk = (map, collect, node, indent) ->
-  debug && console.log indent, node.type, node.token?.data, node.token?.type
-
-  recurse = map node, collect
-
-  if recurse
-    walk map, collect, child, indent + '  ', debug for child, i in node.children
-
-  null
-
-module.exports = walk
- */
 
 module.exports = compile;
 
@@ -50819,9 +50557,12 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "line.clipEnds": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float lineWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClipEnds;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid clipEndsPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, position4.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, position4.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClipEnds = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClipEnds.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClipEnds.y = d / range - 1.0;\n  }\n}",
 "line.position": "uniform float lineWidth;\nuniform float lineDepth;\nuniform vec4 geometryClip;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 p = min(geometryClip, position4);\n  getLineGeometry(p, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  \n  float width = lineWidth;\n  if (lineDepth < 1.0) {\n    width /= mix(1.0/max(0.001, -center.z), 1.0, lineDepth);\n  }\n  \n  return center + join * offset * width;\n}\n",
 "map.2d.data": "uniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 map2DData(vec2 xy) {\n  return fract((xy + dataPointer) * dataResolution);\n}\n",
+"map.xyz.2d": "vec2 mapXyz2D(vec3 xyz) {\n  return xyz.xy;\n}\n\n",
+"map.xyz.2dv": "void mapXyz2DV(vec3 xyz, out vec2 xy, out float z) {\n  xy = xyz.xy;\n  z  = xyz.z;\n}\n\n",
 "map.xyzw.2d": "vec2 mapXyzw2D(vec4 xyzw) {\n  return xyzw.xy;\n}\n\n",
 "map.xyzw.2dv": "void mapXyzw2DV(vec4 xyzw, out vec2 xy, out float z) {\n  xy = xyzw.xy;\n  z  = xyzw.z;\n}\n\n",
 "map.xyzw.texture": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 mapXyzw2D(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
+"map.xyzw.xyz": "vec3 mapXyzwXyz(vec4 xyzw) {\n  return xyzw.xyz;\n}\n\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "object4.position": "uniform mat4 objectMatrix;\nuniform vec2 object4D;\n\nvec4 getObject4Position(vec4 position) {\n  vec3 xyz = (objectMatrix * vec4(position.xyz, 1.0)).xyz;\n  return vec4(xyz, position.w * object4D.y + object4D.x);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
@@ -55465,7 +55206,7 @@ Context = (function() {
 module.exports = Context;
 
 
-},{"./model":23,"./primitives":27,"./render":89,"./shaders":100,"./stage":105,"./util":110}],20:[function(require,module,exports){
+},{"./model":23,"./primitives":27,"./render":90,"./shaders":101,"./stage":106,"./util":111}],20:[function(require,module,exports){
 var Context, k, mathBox, v, _ref;
 
 mathBox = function(options) {
@@ -56538,6 +56279,10 @@ Primitive = (function() {
     this.root = this.parent = null;
   }
 
+  Primitive.prototype.is = function(trait) {
+    return this.traits.indexOf(trait) >= 0;
+  };
+
   Primitive.prototype.make = function() {};
 
   Primitive.prototype.unmake = function(rebuild) {};
@@ -56910,13 +56655,14 @@ Classes = {
   group: require('./base/group'),
   root: require('./base/root'),
   rtt: require('./rtt/rtt'),
-  compose: require('./rtt/compose')
+  compose: require('./rtt/compose'),
+  frames: require('./rtt/frames')
 };
 
 module.exports = Classes;
 
 
-},{"./base/group":29,"./base/present":31,"./base/root":32,"./data/area":35,"./data/array":36,"./data/interval":38,"./data/matrix":39,"./data/volume":40,"./data/voxel":41,"./draw/axis":42,"./draw/grid":43,"./draw/line":44,"./draw/point":45,"./draw/surface":46,"./draw/ticks":47,"./draw/vector":48,"./operator/join":51,"./operator/lerp":52,"./operator/repeat":54,"./operator/split":55,"./operator/spread":56,"./operator/swizzle":57,"./operator/transpose":58,"./rtt/compose":59,"./rtt/rtt":60,"./transform/project4":62,"./view/cartesian":65,"./view/cartesian4":66,"./view/polar":67,"./view/spherical":68,"./view/stereographic":69,"./view/stereographic4":70}],35:[function(require,module,exports){
+},{"./base/group":29,"./base/present":31,"./base/root":32,"./data/area":35,"./data/array":36,"./data/interval":38,"./data/matrix":39,"./data/volume":40,"./data/voxel":41,"./draw/axis":42,"./draw/grid":43,"./draw/line":44,"./draw/point":45,"./draw/surface":46,"./draw/ticks":47,"./draw/vector":48,"./operator/join":51,"./operator/lerp":52,"./operator/repeat":54,"./operator/split":55,"./operator/spread":56,"./operator/swizzle":57,"./operator/transpose":58,"./rtt/compose":59,"./rtt/frames":60,"./rtt/rtt":61,"./transform/project4":63,"./view/cartesian":66,"./view/cartesian4":67,"./view/polar":68,"./view/spherical":69,"./view/stereographic":70,"./view/stereographic4":71}],35:[function(require,module,exports){
 var Area, Matrix,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57728,7 +57474,7 @@ Axis = (function(_super) {
 module.exports = Axis;
 
 
-},{"../../../util":110,"../../primitive":28}],43:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],43:[function(require,module,exports){
 var Grid, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57873,7 +57619,7 @@ Grid = (function(_super) {
 module.exports = Grid;
 
 
-},{"../../../util":110,"../../primitive":28}],44:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],44:[function(require,module,exports){
 var Line, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57988,7 +57734,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../../../util":110,"../../primitive":28}],45:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],45:[function(require,module,exports){
 var Point, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58072,7 +57818,7 @@ Point = (function(_super) {
 module.exports = Point;
 
 
-},{"../../../util":110,"../../primitive":28}],46:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],46:[function(require,module,exports){
 var Primitive, Surface, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58220,7 +57966,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../../util":110,"../../primitive":28}],47:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],47:[function(require,module,exports){
 var Primitive, Ticks, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58310,7 +58056,7 @@ Ticks = (function(_super) {
 module.exports = Ticks;
 
 
-},{"../../../util":110,"../../primitive":28}],48:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],48:[function(require,module,exports){
 var Primitive, Util, Vector,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58426,7 +58172,7 @@ Vector = (function(_super) {
 module.exports = Vector;
 
 
-},{"../../../util":110,"../../primitive":28}],49:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],49:[function(require,module,exports){
 var Util, View, helpers,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -58845,7 +58591,7 @@ module.exports = function(object, traits) {
 };
 
 
-},{"../../util":110,"./view/view":71}],50:[function(require,module,exports){
+},{"../../util":111,"./view/view":72}],50:[function(require,module,exports){
 var Model;
 
 Model = require('../../model');
@@ -58859,7 +58605,7 @@ exports.Traits = require('./traits');
 exports.Helpers = require('./helpers');
 
 
-},{"../../model":23,"./classes":34,"./helpers":49,"./traits":61,"./types":64}],51:[function(require,module,exports){
+},{"../../model":23,"./classes":34,"./helpers":49,"./traits":62,"./types":65}],51:[function(require,module,exports){
 var Join, Operator,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59454,7 +59200,7 @@ Swizzle = (function(_super) {
 module.exports = Swizzle;
 
 
-},{"../../../util":110,"./operator":53}],58:[function(require,module,exports){
+},{"../../../util":111,"./operator":53}],58:[function(require,module,exports){
 var Operator, Transpose, Util, labels, letters,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59539,11 +59285,10 @@ Transpose = (function(_super) {
 module.exports = Transpose;
 
 
-},{"../../../util":110,"./operator":53}],59:[function(require,module,exports){
+},{"../../../util":111,"./operator":53}],59:[function(require,module,exports){
 var Compose, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Primitive = require('../../primitive');
 
@@ -59583,7 +59328,7 @@ Compose = (function(_super) {
     this.remap4DScale = resampleUniforms.remap4DScale.value;
     fragment = this._shaders.shader();
     alpha = this._get('compose.alpha');
-    if (__indexOf.call(this.bind.source.traits, 'image') >= 0) {
+    if (this.bind.source.is('image')) {
       this.bind.source.imageShader(fragment);
     } else {
       fragment.pipe('screen.remap.4d', resampleUniforms);
@@ -59624,7 +59369,86 @@ Compose = (function(_super) {
 module.exports = Compose;
 
 
-},{"../../../util":110,"../../primitive":28}],60:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],60:[function(require,module,exports){
+var Frames, Source,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Source = require('../base/source');
+
+Frames = (function(_super) {
+  __extends(Frames, _super);
+
+  Frames.traits = ['node', 'bind', 'operator', 'source', 'frames'];
+
+  function Frames(node, context, helpers) {
+    Frames.__super__.constructor.call(this, node, context, helpers);
+    this.width = this.height = this.frames = this.size = null;
+  }
+
+  Frames.prototype.resize = function() {
+    var depth, dims, height, layers, width;
+    if (!(this.rtt && this.bind.source)) {
+      return;
+    }
+    dims = this.bind.source.getActive();
+    width = dims.width;
+    height = dims.height;
+    depth = dims.depth;
+    layers = dims.items;
+    this.remap4DScale.set(width, height);
+    return this.trigger({
+      type: 'resize'
+    });
+  };
+
+  Frames.prototype.getDimensions = function() {
+    return this.bind.source.getDimensions();
+  };
+
+  Frames.prototype.getActive = function() {
+    return this.bind.source.getActive();
+  };
+
+  Frames.prototype.sourceShader = function(shader) {
+    shader.pipe("map.xyzw.xyz");
+    return this.rtt.shaderAbsolute(shader, this.rtt.getFrames() - 1, this.shader);
+  };
+
+  Frames.prototype.make = function() {
+    this._helpers.bind.make({
+      'operator.source': 'rtt'
+    });
+    this.resampleUniforms = {
+      remap4DScale: this._attributes.make(this._types.vec2())
+    };
+    this.remap4DScale = this.resampleUniforms.remap4DScale.value;
+    this.rtt = this.bind.source.getRTT();
+    this.shader = this._get('frames.fragment');
+    this.resize();
+    return this.trigger({
+      type: 'rebuild'
+    });
+  };
+
+  Frames.prototype.unmake = function(rebuild) {
+    return this._helpers.bind.unmake();
+  };
+
+  Frames.prototype.change = function(changed, touched, init) {
+    if (touched['operator'] || touched['frames']) {
+      return this.rebuild();
+    }
+  };
+
+  return Frames;
+
+})(Source);
+
+module.exports = Frames;
+
+
+},{"../base/source":33}],61:[function(require,module,exports){
 var RTT, Root,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59634,7 +59458,7 @@ Root = require('../base/root');
 RTT = (function(_super) {
   __extends(RTT, _super);
 
-  RTT.traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image', 'frames'];
+  RTT.traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image'];
 
   function RTT(node, context, helpers) {
     RTT.__super__.constructor.call(this, node, context, helpers);
@@ -59644,21 +59468,22 @@ RTT = (function(_super) {
     };
   }
 
-  RTT.prototype.framesShader = function(shader) {
-    return this.rtt.shaderRelative(shader, true);
-  };
-
   RTT.prototype.imageShader = function(shader) {
     return this.rtt.shaderRelative(shader);
   };
 
   RTT.prototype.sourceShader = function(shader) {
-    return this.rtt.shaderAbsolute(shader, this.expose > 1);
+    shader.pipe("map.xyzw.xyz");
+    return this.rtt.shaderAbsolute(shader, this.expose);
   };
 
   RTT.prototype.update = function() {
     this.trigger(this.event);
     return this.rtt.render();
+  };
+
+  RTT.prototype.getRTT = function() {
+    return this.rtt;
   };
 
   RTT.prototype.getDimensions = function() {
@@ -59706,20 +59531,6 @@ RTT = (function(_super) {
       height: this.height,
       frames: this.frames
     });
-
-    /*
-    @debug1 = @_renderables.make 'debug',
-      x: -1,
-      map: @rtt.read()
-    
-    @debug2 = @_renderables.make 'debug',
-      x: 1,
-      map: @rtt.read()
-    
-    root = @_inherit 'root'
-    root.adopt @debug1
-    root.adopt @debug2
-     */
     return this.trigger({
       type: 'rebuild'
     });
@@ -59731,17 +59542,6 @@ RTT = (function(_super) {
     if (this.rtt == null) {
       return;
     }
-
-    /*
-    root = @_inherit 'root'
-    root.unadopt @debug1
-    root.unadopt @debug2
-    
-    @debug1.dispose()
-    @debug2.dispose()
-    
-    @debug1 = @debug2 = null
-     */
     this.rtt.dispose();
     if (!rebuild) {
       this.scene.dispose();
@@ -59807,7 +59607,7 @@ RTT = (function(_super) {
 module.exports = RTT;
 
 
-},{"../base/root":32}],61:[function(require,module,exports){
+},{"../base/root":32}],62:[function(require,module,exports){
 var Traits, Types;
 
 Types = require('./types');
@@ -59925,10 +59725,6 @@ Traits = {
     width: Types.nullable(Types.int()),
     height: Types.nullable(Types.int())
   },
-  rtt: {
-    history: Types.int(1),
-    expose: Types.int(1)
-  },
   operator: {
     source: Types.select(Types.object())
   },
@@ -59976,9 +59772,16 @@ Traits = {
   root: {
     camera: Types.nullable(Types.select(Types.object()))
   },
+  rtt: {
+    history: Types.int(1),
+    expose: Types.int(1)
+  },
   compose: {
     alpha: Types.bool(false),
     depth: Types.bool(false)
+  },
+  frames: {
+    fragment: Types.nullable(Types.string())
   },
   frame: {
     frame: Types.number(0)
@@ -59988,7 +59791,7 @@ Traits = {
 module.exports = Traits;
 
 
-},{"./types":64}],62:[function(require,module,exports){
+},{"./types":65}],63:[function(require,module,exports){
 var Project4, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60031,7 +59834,7 @@ Project4 = (function(_super) {
 module.exports = Project4;
 
 
-},{"./transform":63}],63:[function(require,module,exports){
+},{"./transform":64}],64:[function(require,module,exports){
 var Parent, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60056,7 +59859,7 @@ Transform = (function(_super) {
 module.exports = Transform;
 
 
-},{"../base/parent":30}],64:[function(require,module,exports){
+},{"../base/parent":30}],65:[function(require,module,exports){
 var Types;
 
 Types = {
@@ -60562,7 +60365,7 @@ Types = {
 module.exports = Types;
 
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 var Cartesian, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60642,7 +60445,7 @@ Cartesian = (function(_super) {
 module.exports = Cartesian;
 
 
-},{"./view":71}],66:[function(require,module,exports){
+},{"./view":72}],67:[function(require,module,exports){
 var Cartesian4, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60732,7 +60535,7 @@ Cartesian4 = (function(_super) {
 module.exports = Cartesian4;
 
 
-},{"./view":71}],67:[function(require,module,exports){
+},{"./view":72}],68:[function(require,module,exports){
 var Polar, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60854,7 +60657,7 @@ Polar = (function(_super) {
 module.exports = Polar;
 
 
-},{"../../../util":110,"./view":71}],68:[function(require,module,exports){
+},{"../../../util":111,"./view":72}],69:[function(require,module,exports){
 var Spherical, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -60989,7 +60792,7 @@ Spherical = (function(_super) {
 module.exports = Spherical;
 
 
-},{"../../../util":110,"./view":71}],69:[function(require,module,exports){
+},{"../../../util":111,"./view":72}],70:[function(require,module,exports){
 var Stereographic, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61086,7 +60889,7 @@ Stereographic = (function(_super) {
 module.exports = Stereographic;
 
 
-},{"../../../util":110,"./view":71}],70:[function(require,module,exports){
+},{"../../../util":111,"./view":72}],71:[function(require,module,exports){
 var Stereographic4, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61181,7 +60984,7 @@ Stereographic4 = (function(_super) {
 module.exports = Stereographic4;
 
 
-},{"../../../util":110,"./view":71}],71:[function(require,module,exports){
+},{"../../../util":111,"./view":72}],72:[function(require,module,exports){
 var Parent, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61222,7 +61025,7 @@ View = (function(_super) {
 module.exports = View;
 
 
-},{"../base/parent":30}],72:[function(require,module,exports){
+},{"../base/parent":30}],73:[function(require,module,exports){
 var ArrayBuffer_, Buffer, DataTexture, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61317,7 +61120,7 @@ ArrayBuffer_ = (function(_super) {
 module.exports = ArrayBuffer_;
 
 
-},{"../../util":110,"./buffer":73,"./texture/datatexture":77}],73:[function(require,module,exports){
+},{"../../util":111,"./buffer":74,"./texture/datatexture":78}],74:[function(require,module,exports){
 var Buffer, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61429,7 +61232,7 @@ Buffer = (function(_super) {
 module.exports = Buffer;
 
 
-},{"../renderable":97}],74:[function(require,module,exports){
+},{"../renderable":98}],75:[function(require,module,exports){
 var Buffer, DataBuffer, DataTexture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61468,7 +61271,7 @@ DataBuffer = (function(_super) {
 module.exports = DataBuffer;
 
 
-},{"./buffer":73,"./texture/datatexture":77}],75:[function(require,module,exports){
+},{"./buffer":74,"./texture/datatexture":78}],76:[function(require,module,exports){
 var Buffer, DataTexture, MatrixBuffer,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61593,7 +61396,7 @@ MatrixBuffer = (function(_super) {
 module.exports = MatrixBuffer;
 
 
-},{"./buffer":73,"./texture/datatexture":77}],76:[function(require,module,exports){
+},{"./buffer":74,"./texture/datatexture":78}],77:[function(require,module,exports){
 var RenderTarget, RenderToTexture, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61620,27 +61423,40 @@ RenderToTexture = (function(_super) {
     this.build(options);
   }
 
-  RenderToTexture.prototype.shaderRelative = function(shader, all) {
-    if (all) {
-      return shader.pipe("sample.2d", this.uniforms);
-    } else {
-      return shader.pipe("sample.2d", this.uniforms);
-    }
+  RenderToTexture.prototype.shaderRelative = function(shader) {
+    return shader.pipe("sample.2d", this.uniforms);
   };
 
-  RenderToTexture.prototype.shaderAbsolute = function(shader, all) {
+  RenderToTexture.prototype.shaderAbsolute = function(shader, frames, fragment) {
     var sample2DArray;
-    if (all) {
-      shader.pipe("map.xyzw.2d");
+    if (frames == null) {
+      frames = 1;
+    }
+    if (frames === 1) {
+      if (fragment != null) {
+        shader.callback();
+      }
+      shader.pipe("map.xyz.2d");
       shader.pipe("map.2d.data", this.uniforms);
-      return shader.pipe("sample.2d", this.uniforms);
+      shader.pipe("sample.2d", this.uniforms);
+      if (fragment != null) {
+        shader.join();
+        return shader.pipe(fragment);
+      }
     } else {
-      sample2DArray = Util.GLSL.sample2DArray(this.target.frames);
-      shader.pipe("map.xyzw.2dv");
+      sample2DArray = Util.GLSL.sample2DArray(Math.min(frames, this.target.frames));
+      if (fragment != null) {
+        shader.callback();
+      }
+      shader.pipe("map.xyz.2dv");
       shader.split();
       shader.pipe("map.2d.data", this.uniforms);
       shader.pass();
-      return shader.pipe(sample2DArray, this.uniforms);
+      shader.pipe(sample2DArray, this.uniforms);
+      if (fragment != null) {
+        shader.join();
+        return shader.pipe(fragment);
+      }
     }
   };
 
@@ -61684,6 +61500,10 @@ RenderToTexture = (function(_super) {
     return this.target.reads[Math.abs(frame)];
   };
 
+  RenderToTexture.prototype.getFrames = function() {
+    return this.target.frames;
+  };
+
   RenderToTexture.prototype.getFilled = function() {
     return this.filled;
   };
@@ -61701,7 +61521,7 @@ RenderToTexture = (function(_super) {
 module.exports = RenderToTexture;
 
 
-},{"../../util":110,"../renderable":97,"./texture/rendertarget":78}],77:[function(require,module,exports){
+},{"../../util":111,"../renderable":98,"./texture/rendertarget":79}],78:[function(require,module,exports){
 
 /*
 Manually allocated GL texture for data streaming. Allows partial updates via subImage.
@@ -61772,7 +61592,7 @@ DataTexture = (function() {
 module.exports = DataTexture;
 
 
-},{}],78:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 
 /*
 Virtual RenderTarget that cycles through multiple frames
@@ -61897,7 +61717,7 @@ RenderTarget = (function() {
 module.exports = RenderTarget;
 
 
-},{}],79:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 var Buffer, DataTexture, VoxelBuffer,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61991,7 +61811,7 @@ VoxelBuffer = (function(_super) {
 module.exports = VoxelBuffer;
 
 
-},{"./buffer":73,"./texture/datatexture":77}],80:[function(require,module,exports){
+},{"./buffer":74,"./texture/datatexture":78}],81:[function(require,module,exports){
 var Classes;
 
 Classes = {
@@ -62012,7 +61832,7 @@ Classes = {
 module.exports = Classes;
 
 
-},{"./buffer/arraybuffer":72,"./buffer/databuffer":74,"./buffer/matrixbuffer":75,"./buffer/rendertotexture":76,"./buffer/voxelbuffer":79,"./meshes/arrow":90,"./meshes/debug":92,"./meshes/line":93,"./meshes/screen":94,"./meshes/sprite":95,"./meshes/surface":96,"./scene":98}],81:[function(require,module,exports){
+},{"./buffer/arraybuffer":73,"./buffer/databuffer":75,"./buffer/matrixbuffer":76,"./buffer/rendertotexture":77,"./buffer/voxelbuffer":80,"./meshes/arrow":91,"./meshes/debug":93,"./meshes/line":94,"./meshes/screen":95,"./meshes/sprite":96,"./meshes/surface":97,"./scene":99}],82:[function(require,module,exports){
 var Factory;
 
 Factory = (function() {
@@ -62037,7 +61857,7 @@ Factory = (function() {
 module.exports = Factory;
 
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 var ArrowGeometry, Geometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62173,7 +61993,7 @@ ArrowGeometry = (function(_super) {
 module.exports = ArrowGeometry;
 
 
-},{"./geometry":83}],83:[function(require,module,exports){
+},{"./geometry":84}],84:[function(require,module,exports){
 var Geometry, debug, tick,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62268,7 +62088,7 @@ Geometry = (function(_super) {
 module.exports = Geometry;
 
 
-},{}],84:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 exports.Geometry = require('./geometry');
 
 exports.SpriteGeometry = require('./spritegeometry');
@@ -62282,7 +62102,7 @@ exports.ArrowGeometry = require('./arrowgeometry');
 exports.ScreenGeometry = require('./screengeometry');
 
 
-},{"./arrowgeometry":82,"./geometry":83,"./linegeometry":85,"./screengeometry":86,"./spritegeometry":87,"./surfacegeometry":88}],85:[function(require,module,exports){
+},{"./arrowgeometry":83,"./geometry":84,"./linegeometry":86,"./screengeometry":87,"./spritegeometry":88,"./surfacegeometry":89}],86:[function(require,module,exports){
 var Geometry, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62399,7 +62219,7 @@ LineGeometry = (function(_super) {
 module.exports = LineGeometry;
 
 
-},{"./geometry":83}],86:[function(require,module,exports){
+},{"./geometry":84}],87:[function(require,module,exports){
 var ScreenGeometry, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62465,7 +62285,7 @@ ScreenGeometry = (function(_super) {
 module.exports = ScreenGeometry;
 
 
-},{"./surfacegeometry":88}],87:[function(require,module,exports){
+},{"./surfacegeometry":89}],88:[function(require,module,exports){
 var Geometry, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62578,7 +62398,7 @@ SpriteGeometry = (function(_super) {
 module.exports = SpriteGeometry;
 
 
-},{"./geometry":83}],88:[function(require,module,exports){
+},{"./geometry":84}],89:[function(require,module,exports){
 var Geometry, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62699,7 +62519,7 @@ SurfaceGeometry = (function(_super) {
 module.exports = SurfaceGeometry;
 
 
-},{"./geometry":83}],89:[function(require,module,exports){
+},{"./geometry":84}],90:[function(require,module,exports){
 exports.Scene = require('./scene');
 
 exports.Factory = require('./factory');
@@ -62709,7 +62529,7 @@ exports.Renderable = require('./scene');
 exports.Classes = require('./classes');
 
 
-},{"./classes":80,"./factory":81,"./scene":98}],90:[function(require,module,exports){
+},{"./classes":81,"./factory":82,"./scene":99}],91:[function(require,module,exports){
 var Arrow, ArrowGeometry, Base,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62772,7 +62592,7 @@ Arrow = (function(_super) {
 module.exports = Arrow;
 
 
-},{"../geometry":84,"./base":91}],91:[function(require,module,exports){
+},{"../geometry":85,"./base":92}],92:[function(require,module,exports){
 var Base, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62859,7 +62679,7 @@ Base = (function(_super) {
 module.exports = Base;
 
 
-},{"../renderable":97}],92:[function(require,module,exports){
+},{"../renderable":98}],93:[function(require,module,exports){
 var Base, Debug,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62900,7 +62720,7 @@ Debug = (function(_super) {
 module.exports = Debug;
 
 
-},{"./base":91}],93:[function(require,module,exports){
+},{"./base":92}],94:[function(require,module,exports){
 var Base, Line, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -62972,7 +62792,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../geometry":84,"./base":91}],94:[function(require,module,exports){
+},{"../geometry":85,"./base":92}],95:[function(require,module,exports){
 var Base, Screen, ScreenGeometry, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -63038,7 +62858,7 @@ Screen = (function(_super) {
 module.exports = Screen;
 
 
-},{"../../util":110,"../geometry":84,"./base":91}],95:[function(require,module,exports){
+},{"../../util":111,"../geometry":85,"./base":92}],96:[function(require,module,exports){
 var Base, Sprite, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -63110,7 +62930,7 @@ Sprite = (function(_super) {
 module.exports = Sprite;
 
 
-},{"../geometry":84,"./base":91}],96:[function(require,module,exports){
+},{"../geometry":85,"./base":92}],97:[function(require,module,exports){
 var Base, Surface, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -63182,7 +63002,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../geometry":84,"./base":91}],97:[function(require,module,exports){
+},{"../geometry":85,"./base":92}],98:[function(require,module,exports){
 var Renderable;
 
 Renderable = (function() {
@@ -63224,7 +63044,7 @@ Renderable = (function() {
 module.exports = Renderable;
 
 
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 var MathBox, Renderable, Scene,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -63302,7 +63122,7 @@ Scene = (function(_super) {
 module.exports = Scene;
 
 
-},{"./renderable":97}],99:[function(require,module,exports){
+},{"./renderable":98}],100:[function(require,module,exports){
 var Factory;
 
 Factory = function(snippets) {
@@ -63312,13 +63132,13 @@ Factory = function(snippets) {
 module.exports = Factory;
 
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Snippets = MathBox.Shaders;
 
 
-},{"./factory":99}],101:[function(require,module,exports){
+},{"./factory":100}],102:[function(require,module,exports){
 var Animator;
 
 Animator = (function() {
@@ -63335,7 +63155,7 @@ Animator = (function() {
 module.exports = Animator;
 
 
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 var API;
 
 API = (function() {
@@ -63481,7 +63301,7 @@ API = (function() {
 module.exports = API;
 
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 var Controller;
 
 Controller = (function() {
@@ -63550,7 +63370,7 @@ Controller = (function() {
 module.exports = Controller;
 
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 var Director;
 
 Director = (function() {
@@ -63566,7 +63386,7 @@ Director = (function() {
 module.exports = Director;
 
 
-},{}],105:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 exports.Animator = require('./animator');
 
 exports.API = require('./api');
@@ -63576,7 +63396,7 @@ exports.Controller = require('./controller');
 exports.Director = require('./director');
 
 
-},{"./animator":101,"./api":102,"./controller":103,"./director":104}],106:[function(require,module,exports){
+},{"./animator":102,"./api":103,"./controller":104,"./director":105}],107:[function(require,module,exports){
 exports.setDimension = function(vec, dimension) {
   var w, x, y, z;
   x = dimension === 1 ? 1 : 0;
@@ -63620,7 +63440,7 @@ exports.recenterAxis = (function() {
 })();
 
 
-},{}],107:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 var getSizes;
 
 exports.getSizes = getSizes = function(data) {
@@ -63700,7 +63520,7 @@ exports.getDimensions = function(data, spec) {
 };
 
 exports.getThunk = function(data) {
-  var a, b, c, d, done, first, fourth, i, j, k, l, m, nesting, second, sizes, third;
+  var a, b, c, d, done, first, fourth, i, j, k, l, m, nesting, second, sizes, third, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
   sizes = getSizes(data);
   nesting = sizes.length;
   a = sizes.pop();
@@ -63718,79 +63538,79 @@ exports.getThunk = function(data) {
       };
     case 2:
       i = j = 0;
-      first = data[j];
+      first = (_ref = data[j]) != null ? _ref : [];
       return function() {
-        var x, _ref, _ref1;
+        var x, _ref1, _ref2;
         x = first[i++];
         if (i === a) {
-          _ref = [0, j + 1], i = _ref[0], j = _ref[1];
-          first = (_ref1 = data[j]) != null ? _ref1 : [];
+          _ref1 = [0, j + 1], i = _ref1[0], j = _ref1[1];
+          first = (_ref2 = data[j]) != null ? _ref2 : [];
         }
         return x;
       };
     case 3:
       i = j = k = 0;
-      second = data[k];
-      first = second[j];
+      second = (_ref1 = data[k]) != null ? _ref1 : [];
+      first = (_ref2 = second[j]) != null ? _ref2 : [];
       return function() {
-        var x, _ref, _ref1, _ref2, _ref3;
+        var x, _ref3, _ref4, _ref5, _ref6;
         x = first[i++];
         if (i === a) {
-          _ref = [0, j + 1], i = _ref[0], j = _ref[1];
+          _ref3 = [0, j + 1], i = _ref3[0], j = _ref3[1];
           if (j === b) {
-            _ref1 = [0, k + 1], j = _ref1[0], k = _ref1[1];
-            second = (_ref2 = data[k]) != null ? _ref2 : [];
+            _ref4 = [0, k + 1], j = _ref4[0], k = _ref4[1];
+            second = (_ref5 = data[k]) != null ? _ref5 : [];
           }
-          first = (_ref3 = second[j]) != null ? _ref3 : [];
+          first = (_ref6 = second[j]) != null ? _ref6 : [];
         }
         return x;
       };
     case 4:
       i = j = k = l = 0;
-      third = data[l];
-      second = third[k];
-      first = second[j];
+      third = (_ref3 = data[l]) != null ? _ref3 : [];
+      second = (_ref4 = third[k]) != null ? _ref4 : [];
+      first = (_ref5 = second[j]) != null ? _ref5 : [];
       return function() {
-        var x, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+        var x, _ref10, _ref11, _ref6, _ref7, _ref8, _ref9;
         x = first[i++];
         if (i === a) {
-          _ref = [0, j + 1], i = _ref[0], j = _ref[1];
+          _ref6 = [0, j + 1], i = _ref6[0], j = _ref6[1];
           if (j === b) {
-            _ref1 = [0, k + 1], j = _ref1[0], k = _ref1[1];
+            _ref7 = [0, k + 1], j = _ref7[0], k = _ref7[1];
             if (k === c) {
-              _ref2 = [0, l + 1], k = _ref2[0], l = _ref2[1];
-              third = (_ref3 = data[l]) != null ? _ref3 : [];
+              _ref8 = [0, l + 1], k = _ref8[0], l = _ref8[1];
+              third = (_ref9 = data[l]) != null ? _ref9 : [];
             }
-            second = (_ref4 = third[k]) != null ? _ref4 : [];
+            second = (_ref10 = third[k]) != null ? _ref10 : [];
           }
-          first = (_ref5 = second[j]) != null ? _ref5 : [];
+          first = (_ref11 = second[j]) != null ? _ref11 : [];
         }
         return x;
       };
     case 5:
       i = j = k = l = m = 0;
-      fourth = data[m];
-      third = fourth[l];
-      second = third[k];
-      first = second[j];
+      fourth = (_ref6 = data[m]) != null ? _ref6 : [];
+      third = (_ref7 = fourth[l]) != null ? _ref7 : [];
+      second = (_ref8 = third[k]) != null ? _ref8 : [];
+      first = (_ref9 = second[j]) != null ? _ref9 : [];
       return function() {
-        var x, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+        var x, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17;
         x = first[i++];
         if (i === a) {
-          _ref = [0, j + 1], i = _ref[0], j = _ref[1];
+          _ref10 = [0, j + 1], i = _ref10[0], j = _ref10[1];
           if (j === b) {
-            _ref1 = [0, k + 1], j = _ref1[0], k = _ref1[1];
+            _ref11 = [0, k + 1], j = _ref11[0], k = _ref11[1];
             if (k === c) {
-              _ref2 = [0, l + 1], k = _ref2[0], l = _ref2[1];
+              _ref12 = [0, l + 1], k = _ref12[0], l = _ref12[1];
               if (l === d) {
-                _ref3 = [0, m + 1], l = _ref3[0], m = _ref3[1];
-                fourth = (_ref4 = data[m]) != null ? _ref4 : [];
+                _ref13 = [0, m + 1], l = _ref13[0], m = _ref13[1];
+                fourth = (_ref14 = data[m]) != null ? _ref14 : [];
               }
-              third = (_ref5 = fourth[l]) != null ? _ref5 : [];
+              third = (_ref15 = fourth[l]) != null ? _ref15 : [];
             }
-            second = (_ref6 = third[k]) != null ? _ref6 : [];
+            second = (_ref16 = third[k]) != null ? _ref16 : [];
           }
-          first = (_ref7 = second[j]) != null ? _ref7 : [];
+          first = (_ref17 = second[j]) != null ? _ref17 : [];
         }
         return x;
       };
@@ -63798,7 +63618,7 @@ exports.getThunk = function(data) {
 };
 
 
-},{}],108:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 var ease;
 
 ease = {
@@ -63810,7 +63630,7 @@ ease = {
 module.exports = ease;
 
 
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 var index, letters;
 
 letters = 'xyzw'.split('');
@@ -63884,7 +63704,7 @@ exports.invertSwizzleVec4 = function(order) {
 };
 
 
-},{}],110:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 exports.Data = require('./data');
 
 exports.Ticks = require('./ticks');
@@ -63898,7 +63718,7 @@ exports.Axis = require('./axis');
 exports.JS = require('./js');
 
 
-},{"./axis":106,"./data":107,"./ease":108,"./glsl":109,"./js":111,"./ticks":112}],111:[function(require,module,exports){
+},{"./axis":107,"./data":108,"./ease":109,"./glsl":110,"./js":112,"./ticks":113}],112:[function(require,module,exports){
 exports.merge = function() {
   var k, obj, v, x, _i, _len;
   x = {};
@@ -63913,7 +63733,7 @@ exports.merge = function() {
 };
 
 
-},{}],112:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 
 /*
  Generate equally spaced ticks in a range at sensible positions.

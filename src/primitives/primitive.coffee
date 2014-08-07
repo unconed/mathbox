@@ -34,6 +34,9 @@ class Primitive
 
     @root = @parent = null
 
+  is: (trait) ->
+    @traits.indexOf(trait) >= 0
+
   # Renderables lifecycle
 
   make:   () ->

@@ -34,7 +34,7 @@ class Compose extends Primitive
     fragment = @_shaders.shader()
     alpha    = @_get 'compose.alpha'
 
-    if 'image' in @bind.source.traits
+    if @bind.source.is 'image'
       # Sample image directly in 2D
       @bind.source.imageShader fragment
     else

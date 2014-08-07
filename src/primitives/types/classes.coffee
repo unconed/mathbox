@@ -39,5 +39,6 @@ Classes =
 
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
+  frames:            require './rtt/frames'
 
 module.exports = Classes
