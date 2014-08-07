@@ -4,7 +4,7 @@ class Repeat extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'repeat']
 
   sourceShader: (shader) ->
-    shader.pipe @transform
+    shader.pipe @operator
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -37,7 +37,7 @@ class Repeat extends Operator
     transform.pipe 'repeat.position', uniforms
     @bind.source.sourceShader transform
 
-    @transform = transform
+    @operator = transform
 
     # Notify of reallocation
     @trigger

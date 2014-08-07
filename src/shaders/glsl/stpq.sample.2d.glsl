@@ -1,7 +1,7 @@
-varying vec4 vSTPQ;
+varying vec2 vST;
 
 vec4 getSample(vec2 st);
 
-vec4 getSTPQSample() {
-  return getSample(vSTPQ.st);
+vec4 getSTSample() {
+  return getSample(vST);
 }

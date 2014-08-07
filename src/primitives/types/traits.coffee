@@ -140,18 +140,18 @@ Traits =
     height:      Types.number(1)
     depth:       Types.number(1)
 
+  remap:
+    indices:     Types.number(4)
+    dimensions:  Types.number(4)
+    shader:      Types.nullable(Types.string())
+
   root:
     camera:      Types.nullable(Types.select(Types.object()))
 
   rtt:
     history:     Types.int(1)
-    expose:      Types.int(1)
   compose:
     alpha:       Types.bool(false)
     depth:       Types.bool(false)
-  frames:
-    fragment:    Types.nullable(Types.string())
-  frame:
-    frame:       Types.number(0)
 
 module.exports = Traits

@@ -44,23 +44,29 @@ exports.binaryOperator = (type, op) ->
   }
   """
 
-# Select component
-exports.selectVec4Float = (channel) ->
-  channel = letters[channel] if (channel == +channel)
+# Extend to 4-vector with zeroes
+exports.extendVec = (from, to) ->
+  diff = to - from
+
+  from = 'vec' + from
+  to   = 'vec' + to
+
+  parts = [0..diff].map (x) -> if x then '0.0' else 'v'
+  ctor  = parts.join ','
 
   """
-  float selectVec4Float(vec4 xyzw) {
-    return xyzw.#{channel};
-  }
+  #{to} extendVec(#{from} v) { return #{to}(#{ctor}); }
   """
 
-# Flip sampling component
-exports.flipVec2 = (channel) ->
+# Truncate 4-vector
+exports.truncateVec = (from, to) ->
+  swizzle = 'xyzw'.substr 0, to
+
+  from = 'vec' + from
+  to   = 'vec' + to
+
   """
-  vec2 flip(vec2 uv) {
-    uv.#{channel} = -uv.#{channel};
-    return uv;
-  }
+  #{to} extendVec(#{from} v) { return v.#{swizzle}; }
   """
 
 # Apply 4-component vector swizzle

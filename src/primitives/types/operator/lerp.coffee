@@ -4,7 +4,7 @@ class Lerp extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'lerp']
 
   sourceShader: (shader) ->
-    shader.concat @transform
+    shader.concat @operator
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -44,7 +44,7 @@ class Lerp extends Operator
         transform = @_shaders.shader().import transform
         transform.pipe id, uniforms
 
-    @transform = transform
+    @operator = transform
 
     # Notify of reallocation
     @trigger

@@ -4,7 +4,7 @@ class Spread extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'spread']
 
   sourceShader: (shader) ->
-    shader.pipe @transform
+    shader.pipe @operator
 
   make: () ->
     super
@@ -24,7 +24,7 @@ class Spread extends Operator
     transform.join()
     transform.pipe 'spread.position', uniforms
 
-    @transform = transform
+    @operator = transform
 
     # Notify of reallocation
     @trigger

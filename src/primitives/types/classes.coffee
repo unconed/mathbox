@@ -32,6 +32,7 @@ Classes =
   repeat:            require './operator/repeat'
   split:             require './operator/split'
   join:              require './operator/join'
+  remap:             require './operator/remap'
 
   present:           require './base/present'
   group:             require './base/group'
@@ -39,6 +40,5 @@ Classes =
 
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
-  frames:            require './rtt/frames'
 
 module.exports = Classes

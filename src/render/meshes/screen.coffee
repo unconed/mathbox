@@ -21,7 +21,7 @@ class Screen extends Base
     v = factory.vertex
     v.pipe    'raw.position',    @uniforms
     v.fan()
-    v  .pipe  'stpq.xyzw',       @uniforms
+    v  .pipe  'stpq.xyzw.2d',    @uniforms
     v.next()
     v  .pipe  'screen.position', @uniforms
     v.join()

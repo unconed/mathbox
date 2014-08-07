@@ -15,8 +15,7 @@ class RTT extends Root
     @rtt.shaderRelative shader
 
   sourceShader: (shader) ->
-    shader.pipe "map.xyzw.xyz"
-    @rtt.shaderAbsolute shader, @expose
+    @rtt.shaderAbsolute shader, @frames
 
   update: () ->
     @trigger @event
@@ -28,7 +27,7 @@ class RTT extends Root
     items:  1
     width:  @width
     height: @height
-    depth:  @expose
+    depth:  @frames
 
   getActive: () -> @getDimensions()
 
@@ -46,15 +45,14 @@ class RTT extends Root
 
     @width  = @_get('texture.width')  ? @size.renderWidth
     @height = @_get('texture.height') ? @size.renderHeight
-    @frames = @_get('rtt.history') + 1
-    @expose = Math.min @frames, @_get('rtt.expose')
+    @frames = @_get('rtt.history')
 
     @scene ?= @_renderables.make 'scene'
     @rtt    = @_renderables.make 'renderToTexture',
       scene:  @scene
       width:  @width
       height: @height
-      frames: @frames
+      frames: @frames + 1
 
     # Notify of buffer reallocation
     @trigger
@@ -72,8 +70,7 @@ class RTT extends Root
     @rtt = @width = @height = @frames = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['texture'] or
-                  changed['rtt.expose']
+    @rebuild() if touched['texture']
 
     if @size?
       @rtt.camera.aspect = @size.aspect if @rtt?

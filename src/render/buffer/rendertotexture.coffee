@@ -17,30 +17,19 @@ class RenderToTexture extends Renderable
   shaderRelative: (shader) ->
     shader.pipe "sample.2d", @uniforms
 
-  shaderAbsolute: (shader, frames = 1, fragment) ->
+  shaderAbsolute: (shader, frames = 1) ->
     if frames == 1
-      if fragment?
-        shader.callback()
-      shader.pipe "map.xyz.2d"
+      shader.pipe "map.xyzw.2d"
       shader.pipe "map.2d.data",   @uniforms
       shader.pipe "sample.2d",     @uniforms
-      if fragment?
-        shader.join()
-        shader.pipe fragment
 
     else
       sample2DArray = Util.GLSL.sample2DArray Math.min frames, @target.frames
-
-      if fragment?
-        shader.callback()
-      shader.pipe "map.xyz.2dv"
+      shader.pipe "map.xyzw.2dv"
       shader.split()
       shader  .pipe "map.2d.data", @uniforms
       shader.pass()
       shader.pipe sample2DArray,   @uniforms
-      if fragment?
-        shader.join()
-        shader.pipe fragment
 
   build: (options) ->
     @camera = new THREE.PerspectiveCamera()

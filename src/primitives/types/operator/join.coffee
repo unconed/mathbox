@@ -4,7 +4,7 @@ class Join extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'join']
 
   sourceShader: (shader) ->
-    shader.concat @transform
+    shader.concat @operator
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -42,7 +42,7 @@ class Join extends Operator
     transform.pipe 'split.position', uniforms
     @bind.source.sourceShader transform
 
-    @transform = transform
+    @operator = transform
 
     # Notify of reallocation
     @trigger

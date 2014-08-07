@@ -50557,12 +50557,9 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "line.clipEnds": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float lineWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClipEnds;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid clipEndsPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, position4.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, position4.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClipEnds = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClipEnds.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClipEnds.y = d / range - 1.0;\n  }\n}",
 "line.position": "uniform float lineWidth;\nuniform float lineDepth;\nuniform vec4 geometryClip;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 p = min(geometryClip, position4);\n  getLineGeometry(p, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  \n  float width = lineWidth;\n  if (lineDepth < 1.0) {\n    width /= mix(1.0/max(0.001, -center.z), 1.0, lineDepth);\n  }\n  \n  return center + join * offset * width;\n}\n",
 "map.2d.data": "uniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 map2DData(vec2 xy) {\n  return fract((xy + dataPointer) * dataResolution);\n}\n",
-"map.xyz.2d": "vec2 mapXyz2D(vec3 xyz) {\n  return xyz.xy;\n}\n\n",
-"map.xyz.2dv": "void mapXyz2DV(vec3 xyz, out vec2 xy, out float z) {\n  xy = xyz.xy;\n  z  = xyz.z;\n}\n\n",
 "map.xyzw.2d": "vec2 mapXyzw2D(vec4 xyzw) {\n  return xyzw.xy;\n}\n\n",
 "map.xyzw.2dv": "void mapXyzw2DV(vec4 xyzw, out vec2 xy, out float z) {\n  xy = xyzw.xy;\n  z  = xyzw.z;\n}\n\n",
 "map.xyzw.texture": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 mapXyzw2D(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
-"map.xyzw.xyz": "vec3 mapXyzwXyz(vec4 xyzw) {\n  return xyzw.xyz;\n}\n\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "object4.position": "uniform mat4 objectMatrix;\nuniform vec2 object4D;\n\nvec4 getObject4Position(vec4 position) {\n  vec3 xyz = (objectMatrix * vec4(position.xyz, 1.0)).xyz;\n  return vec4(xyz, position.w * object4D.y + object4D.x);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
@@ -50582,8 +50579,8 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "sprite.position": "uniform float pointSize;\nuniform float renderScale;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getPointPosition() {\n  vec3 center = getPosition(position4);\n\n  float pixelSize = renderScale * pointSize / -center.z;\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * pointSize * padFactor, 0.0);\n}\n",
 "stereographic.position": "uniform float stereoBend;\n\nuniform mat4 viewMatrix;\n\nvec4 getStereoPosition(vec4 position) {\n  if (stereoBend > 0.0001) {\n\n    vec3 pos = position.xyz;\n    float r = length(pos);\n    float z = r + pos.z;\n    vec3 project = vec3(pos.xy / z, r);\n    \n    vec3 lerped = mix(pos, project, stereoBend);\n\n    return viewMatrix * vec4(lerped, 1.0);\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "stereographic4.position": "uniform float stereoBend;\nuniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getStereographic4Position(vec4 position) {\n  \n  vec4 transformed;\n  if (stereoBend > 0.0001) {\n\n    float r = length(position);\n    float w = r + position.w;\n    vec4 project = vec4(position.xyz / w, r);\n    \n    transformed = mix(position, project, stereoBend);\n  }\n  else {\n    transformed = position;\n  }\n\n  vec4 pos4 = transformed * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n",
-"stpq.sample.2d": "varying vec4 vSTPQ;\n\nvec4 getSample(vec2 st);\n\nvec4 getSTPQSample() {\n  return getSample(vSTPQ.st);\n}\n",
-"stpq.xyzw": "varying vec4 vSTPQ;\n\nvoid setRawSTPQ(vec4 xyzw) {\n  vSTPQ = xyzw;\n}\n",
+"stpq.sample.2d": "varying vec2 vST;\n\nvec4 getSample(vec2 st);\n\nvec4 getSTSample() {\n  return getSample(vST);\n}\n",
+"stpq.xyzw.2d": "varying vec2 vST;\n\nvoid setRawST(vec4 xyzw) {\n  vST = xyzw.xy;\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvec4 getStyleColor() {\n\treturn vec4(styleColor, styleOpacity);\n}\n",
 "style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec4 getStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\treturn vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getSurfacePosition() {\n  return getPosition(position4);\n}\n",
@@ -56651,18 +56648,18 @@ Classes = {
   repeat: require('./operator/repeat'),
   split: require('./operator/split'),
   join: require('./operator/join'),
+  remap: require('./operator/remap'),
   present: require('./base/present'),
   group: require('./base/group'),
   root: require('./base/root'),
   rtt: require('./rtt/rtt'),
-  compose: require('./rtt/compose'),
-  frames: require('./rtt/frames')
+  compose: require('./rtt/compose')
 };
 
 module.exports = Classes;
 
 
-},{"./base/group":29,"./base/present":31,"./base/root":32,"./data/area":35,"./data/array":36,"./data/interval":38,"./data/matrix":39,"./data/volume":40,"./data/voxel":41,"./draw/axis":42,"./draw/grid":43,"./draw/line":44,"./draw/point":45,"./draw/surface":46,"./draw/ticks":47,"./draw/vector":48,"./operator/join":51,"./operator/lerp":52,"./operator/repeat":54,"./operator/split":55,"./operator/spread":56,"./operator/swizzle":57,"./operator/transpose":58,"./rtt/compose":59,"./rtt/frames":60,"./rtt/rtt":61,"./transform/project4":63,"./view/cartesian":66,"./view/cartesian4":67,"./view/polar":68,"./view/spherical":69,"./view/stereographic":70,"./view/stereographic4":71}],35:[function(require,module,exports){
+},{"./base/group":29,"./base/present":31,"./base/root":32,"./data/area":35,"./data/array":36,"./data/interval":38,"./data/matrix":39,"./data/volume":40,"./data/voxel":41,"./draw/axis":42,"./draw/grid":43,"./draw/line":44,"./draw/point":45,"./draw/surface":46,"./draw/ticks":47,"./draw/vector":48,"./operator/join":51,"./operator/lerp":52,"./operator/remap":54,"./operator/repeat":55,"./operator/split":56,"./operator/spread":57,"./operator/swizzle":58,"./operator/transpose":59,"./rtt/compose":60,"./rtt/rtt":61,"./transform/project4":63,"./view/cartesian":66,"./view/cartesian4":67,"./view/polar":68,"./view/spherical":69,"./view/stereographic":70,"./view/stereographic4":71}],35:[function(require,module,exports){
 var Area, Matrix,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58622,7 +58619,7 @@ Join = (function(_super) {
   Join.traits = ['node', 'bind', 'operator', 'source', 'join'];
 
   Join.prototype.sourceShader = function(shader) {
-    return shader.concat(this.transform);
+    return shader.concat(this.operator);
   };
 
   Join.prototype.getDimensions = function() {
@@ -58670,7 +58667,7 @@ Join = (function(_super) {
     this.splitDimension = uniforms.splitDimension;
     transform.pipe('split.position', uniforms);
     this.bind.source.sourceShader(transform);
-    this.transform = transform;
+    this.operator = transform;
     return this.trigger({
       event: 'rebuild'
     });
@@ -58732,7 +58729,7 @@ Lerp = (function(_super) {
   Lerp.traits = ['node', 'bind', 'operator', 'source', 'lerp'];
 
   Lerp.prototype.sourceShader = function(shader) {
-    return shader.concat(this.transform);
+    return shader.concat(this.operator);
   };
 
   Lerp.prototype.getDimensions = function() {
@@ -58773,7 +58770,7 @@ Lerp = (function(_super) {
         transform.pipe(id, uniforms);
       }
     }
-    this.transform = transform;
+    this.operator = transform;
     return this.trigger({
       event: 'rebuild'
     });
@@ -58845,6 +58842,78 @@ module.exports = Operator;
 
 
 },{"../base/source":33}],54:[function(require,module,exports){
+var Operator, Remap, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Operator = require('./operator');
+
+Util = require('../../../util');
+
+Remap = (function(_super) {
+  __extends(Remap, _super);
+
+  function Remap() {
+    return Remap.__super__.constructor.apply(this, arguments);
+  }
+
+  Remap.traits = ['node', 'bind', 'operator', 'source', 'remap'];
+
+  Remap.prototype.sourceShader = function(shader) {
+    return shader.pipe(this.operator);
+  };
+
+  Remap.prototype.make = function() {
+    var dimensions, indices, operator, shader;
+    Remap.__super__.make.apply(this, arguments);
+    indices = this._get('remap.indices');
+    dimensions = this._get('remap.dimensions');
+    shader = this._get('remap.shader');
+    operator = this._shaders.shader();
+    if (shader != null) {
+      if (indices !== 4) {
+        operator.pipe(Util.GLSL.truncateVec(4, indices));
+      }
+      operator.callback();
+      if (indices !== 4) {
+        operator.pipe(Util.GLSL.extendVec(indices, 4));
+      }
+      this.bind.source.sourceShader(operator);
+      if (dimensions !== 4) {
+        operator.pipe(Util.GLSL.truncateVec(4, dimensions));
+      }
+      operator.join();
+      operator.pipe(shader);
+      if (dimensions !== 4) {
+        operator.pipe(Util.GLSL.extendVec(dimensions, 4));
+      }
+    } else {
+      this.bind.source.sourceShader(operator);
+    }
+    this.operator = operator;
+    return this.trigger({
+      event: 'rebuild'
+    });
+  };
+
+  Remap.prototype.unmake = function() {
+    return Remap.__super__.unmake.apply(this, arguments);
+  };
+
+  Remap.prototype.change = function(changed, touched, init) {
+    if (touched['operator'] || touched['remap']) {
+      return this.rebuild();
+    }
+  };
+
+  return Remap;
+
+})(Operator);
+
+module.exports = Remap;
+
+
+},{"../../../util":111,"./operator":53}],55:[function(require,module,exports){
 var Operator, Repeat,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58861,7 +58930,7 @@ Repeat = (function(_super) {
   Repeat.traits = ['node', 'bind', 'operator', 'source', 'repeat'];
 
   Repeat.prototype.sourceShader = function(shader) {
-    return shader.pipe(this.transform);
+    return shader.pipe(this.operator);
   };
 
   Repeat.prototype.getDimensions = function() {
@@ -58894,7 +58963,7 @@ Repeat = (function(_super) {
     this.repeatModulus = uniforms.repeatModulus;
     transform.pipe('repeat.position', uniforms);
     this.bind.source.sourceShader(transform);
-    this.transform = transform;
+    this.operator = transform;
     return this.trigger({
       event: 'rebuild'
     });
@@ -58931,7 +59000,7 @@ Repeat = (function(_super) {
 module.exports = Repeat;
 
 
-},{"./operator":53}],55:[function(require,module,exports){
+},{"./operator":53}],56:[function(require,module,exports){
 var Operator, Split,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -58948,7 +59017,7 @@ Split = (function(_super) {
   Split.traits = ['node', 'bind', 'operator', 'source', 'split'];
 
   Split.prototype.sourceShader = function(shader) {
-    return shader.concat(this.transform);
+    return shader.concat(this.operator);
   };
 
   Split.prototype.getDimensions = function() {
@@ -59003,7 +59072,7 @@ Split = (function(_super) {
     this.splitDimensions = uniforms.splitDimensions;
     transform.pipe('split.position', uniforms);
     this.bind.source.sourceShader(transform);
-    this.transform = transform;
+    this.operator = transform;
     return this.trigger({
       event: 'rebuild'
     });
@@ -59052,7 +59121,7 @@ Split = (function(_super) {
 module.exports = Split;
 
 
-},{"./operator":53}],56:[function(require,module,exports){
+},{"./operator":53}],57:[function(require,module,exports){
 var Operator, Spread,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59069,7 +59138,7 @@ Spread = (function(_super) {
   Spread.traits = ['node', 'bind', 'operator', 'source', 'spread'];
 
   Spread.prototype.sourceShader = function(shader) {
-    return shader.pipe(this.transform);
+    return shader.pipe(this.operator);
   };
 
   Spread.prototype.make = function() {
@@ -59086,7 +59155,7 @@ Spread = (function(_super) {
     this.bind.source.sourceShader(transform);
     transform.join();
     transform.pipe('spread.position', uniforms);
-    this.transform = transform;
+    this.operator = transform;
     return this.trigger({
       event: 'rebuild'
     });
@@ -59145,7 +59214,7 @@ Spread = (function(_super) {
 module.exports = Spread;
 
 
-},{"./operator":53}],57:[function(require,module,exports){
+},{"./operator":53}],58:[function(require,module,exports){
 var Operator, Swizzle, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59200,7 +59269,7 @@ Swizzle = (function(_super) {
 module.exports = Swizzle;
 
 
-},{"../../../util":111,"./operator":53}],58:[function(require,module,exports){
+},{"../../../util":111,"./operator":53}],59:[function(require,module,exports){
 var Operator, Transpose, Util, labels, letters,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59285,7 +59354,7 @@ Transpose = (function(_super) {
 module.exports = Transpose;
 
 
-},{"../../../util":111,"./operator":53}],59:[function(require,module,exports){
+},{"../../../util":111,"./operator":53}],60:[function(require,module,exports){
 var Compose, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59369,86 +59438,7 @@ Compose = (function(_super) {
 module.exports = Compose;
 
 
-},{"../../../util":111,"../../primitive":28}],60:[function(require,module,exports){
-var Frames, Source,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Source = require('../base/source');
-
-Frames = (function(_super) {
-  __extends(Frames, _super);
-
-  Frames.traits = ['node', 'bind', 'operator', 'source', 'frames'];
-
-  function Frames(node, context, helpers) {
-    Frames.__super__.constructor.call(this, node, context, helpers);
-    this.width = this.height = this.frames = this.size = null;
-  }
-
-  Frames.prototype.resize = function() {
-    var depth, dims, height, layers, width;
-    if (!(this.rtt && this.bind.source)) {
-      return;
-    }
-    dims = this.bind.source.getActive();
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
-    layers = dims.items;
-    this.remap4DScale.set(width, height);
-    return this.trigger({
-      type: 'resize'
-    });
-  };
-
-  Frames.prototype.getDimensions = function() {
-    return this.bind.source.getDimensions();
-  };
-
-  Frames.prototype.getActive = function() {
-    return this.bind.source.getActive();
-  };
-
-  Frames.prototype.sourceShader = function(shader) {
-    shader.pipe("map.xyzw.xyz");
-    return this.rtt.shaderAbsolute(shader, this.rtt.getFrames() - 1, this.shader);
-  };
-
-  Frames.prototype.make = function() {
-    this._helpers.bind.make({
-      'operator.source': 'rtt'
-    });
-    this.resampleUniforms = {
-      remap4DScale: this._attributes.make(this._types.vec2())
-    };
-    this.remap4DScale = this.resampleUniforms.remap4DScale.value;
-    this.rtt = this.bind.source.getRTT();
-    this.shader = this._get('frames.fragment');
-    this.resize();
-    return this.trigger({
-      type: 'rebuild'
-    });
-  };
-
-  Frames.prototype.unmake = function(rebuild) {
-    return this._helpers.bind.unmake();
-  };
-
-  Frames.prototype.change = function(changed, touched, init) {
-    if (touched['operator'] || touched['frames']) {
-      return this.rebuild();
-    }
-  };
-
-  return Frames;
-
-})(Source);
-
-module.exports = Frames;
-
-
-},{"../base/source":33}],61:[function(require,module,exports){
+},{"../../../util":111,"../../primitive":28}],61:[function(require,module,exports){
 var RTT, Root,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -59473,8 +59463,7 @@ RTT = (function(_super) {
   };
 
   RTT.prototype.sourceShader = function(shader) {
-    shader.pipe("map.xyzw.xyz");
-    return this.rtt.shaderAbsolute(shader, this.expose);
+    return this.rtt.shaderAbsolute(shader, this.frames);
   };
 
   RTT.prototype.update = function() {
@@ -59491,7 +59480,7 @@ RTT = (function(_super) {
       items: 1,
       width: this.width,
       height: this.height,
-      depth: this.expose
+      depth: this.frames
     };
   };
 
@@ -59520,8 +59509,7 @@ RTT = (function(_super) {
     }
     this.width = (_ref = this._get('texture.width')) != null ? _ref : this.size.renderWidth;
     this.height = (_ref1 = this._get('texture.height')) != null ? _ref1 : this.size.renderHeight;
-    this.frames = this._get('rtt.history') + 1;
-    this.expose = Math.min(this.frames, this._get('rtt.expose'));
+    this.frames = this._get('rtt.history');
     if (this.scene == null) {
       this.scene = this._renderables.make('scene');
     }
@@ -59529,7 +59517,7 @@ RTT = (function(_super) {
       scene: this.scene,
       width: this.width,
       height: this.height,
-      frames: this.frames
+      frames: this.frames + 1
     });
     return this.trigger({
       type: 'rebuild'
@@ -59550,7 +59538,7 @@ RTT = (function(_super) {
   };
 
   RTT.prototype.change = function(changed, touched, init) {
-    if (touched['texture'] || changed['rtt.expose']) {
+    if (touched['texture']) {
       this.rebuild();
     }
     if (this.size != null) {
@@ -59769,22 +59757,20 @@ Traits = {
     height: Types.number(1),
     depth: Types.number(1)
   },
+  remap: {
+    indices: Types.number(4),
+    dimensions: Types.number(4),
+    shader: Types.nullable(Types.string())
+  },
   root: {
     camera: Types.nullable(Types.select(Types.object()))
   },
   rtt: {
-    history: Types.int(1),
-    expose: Types.int(1)
+    history: Types.int(1)
   },
   compose: {
     alpha: Types.bool(false),
     depth: Types.bool(false)
-  },
-  frames: {
-    fragment: Types.nullable(Types.string())
-  },
-  frame: {
-    frame: Types.number(0)
   }
 };
 
@@ -61427,36 +61413,22 @@ RenderToTexture = (function(_super) {
     return shader.pipe("sample.2d", this.uniforms);
   };
 
-  RenderToTexture.prototype.shaderAbsolute = function(shader, frames, fragment) {
+  RenderToTexture.prototype.shaderAbsolute = function(shader, frames) {
     var sample2DArray;
     if (frames == null) {
       frames = 1;
     }
     if (frames === 1) {
-      if (fragment != null) {
-        shader.callback();
-      }
-      shader.pipe("map.xyz.2d");
+      shader.pipe("map.xyzw.2d");
       shader.pipe("map.2d.data", this.uniforms);
-      shader.pipe("sample.2d", this.uniforms);
-      if (fragment != null) {
-        shader.join();
-        return shader.pipe(fragment);
-      }
+      return shader.pipe("sample.2d", this.uniforms);
     } else {
       sample2DArray = Util.GLSL.sample2DArray(Math.min(frames, this.target.frames));
-      if (fragment != null) {
-        shader.callback();
-      }
-      shader.pipe("map.xyz.2dv");
+      shader.pipe("map.xyzw.2dv");
       shader.split();
       shader.pipe("map.2d.data", this.uniforms);
       shader.pass();
-      shader.pipe(sample2DArray, this.uniforms);
-      if (fragment != null) {
-        shader.join();
-        return shader.pipe(fragment);
-      }
+      return shader.pipe(sample2DArray, this.uniforms);
     }
   };
 
@@ -62821,7 +62793,7 @@ Screen = (function(_super) {
     v = factory.vertex;
     v.pipe('raw.position', this.uniforms);
     v.fan();
-    v.pipe('stpq.xyzw', this.uniforms);
+    v.pipe('stpq.xyzw.2d', this.uniforms);
     v.next();
     v.pipe('screen.position', this.uniforms);
     v.join();
@@ -63662,15 +63634,32 @@ exports.binaryOperator = function(type, op) {
   return "" + type + " binaryOperator(" + type + " a, " + type + " b) {\n  return a " + op + " b;\n}";
 };
 
-exports.selectVec4Float = function(channel) {
-  if (channel === +channel) {
-    channel = letters[channel];
-  }
-  return "float selectVec4Float(vec4 xyzw) {\n  return xyzw." + channel + ";\n}";
+exports.extendVec = function(from, to) {
+  var ctor, diff, parts, _i, _results;
+  diff = to - from;
+  from = 'vec' + from;
+  to = 'vec' + to;
+  parts = (function() {
+    _results = [];
+    for (var _i = 0; 0 <= diff ? _i <= diff : _i >= diff; 0 <= diff ? _i++ : _i--){ _results.push(_i); }
+    return _results;
+  }).apply(this).map(function(x) {
+    if (x) {
+      return '0.0';
+    } else {
+      return 'v';
+    }
+  });
+  ctor = parts.join(',');
+  return "" + to + " extendVec(" + from + " v) { return " + to + "(" + ctor + "); }";
 };
 
-exports.flipVec2 = function(channel) {
-  return "vec2 flip(vec2 uv) {\n  uv." + channel + " = -uv." + channel + ";\n  return uv;\n}";
+exports.truncateVec = function(from, to) {
+  var swizzle;
+  swizzle = 'xyzw'.substr(0, to);
+  from = 'vec' + from;
+  to = 'vec' + to;
+  return "" + to + " extendVec(" + from + " v) { return v." + swizzle + "; }";
 };
 
 exports.swizzleVec4 = function(order) {

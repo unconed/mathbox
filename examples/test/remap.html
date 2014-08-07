@@ -33,9 +33,11 @@
     mathbox
       .rtt({
         history: 2,
-      });
-        .frames({
-          fragment:
+      })
+        .remap({
+          indices:    3,
+          dimensions: 4,
+          shader:
             "vec4 getSample(vec3 xyz);\n"+
             "vec4 getFramesSample(vec3 xyz) {\n"+
             "  vec4 c = getSample(xyz + vec3( 0.0, 0.0, 1.0));\n"+
@@ -44,7 +46,7 @@
             "  vec3 l = getSample(xyz + vec3(-1.0, 0.0, 0.0)).xyz;\n"+
             "  vec3 r = getSample(xyz + vec3( 1.0, 0.0, 0.0)).xyz;\n"+
             "  return vec4((t + b + l + r) / 2.0 - c.xyz, c.w);\n"+
-            "}"
+            "}",
         })
         .compose({
           color: '#ffffff',
