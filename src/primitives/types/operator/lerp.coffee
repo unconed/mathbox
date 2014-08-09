@@ -4,7 +4,7 @@ class Lerp extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'lerp']
 
   sourceShader: (shader) ->
-    shader.concat @operator
+    shader.pipe @operator
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()

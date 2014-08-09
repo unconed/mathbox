@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Spherical Vectors</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body style="cursor: move">
   <script>
@@ -18,11 +19,19 @@
     three.camera.position.set(.8, 1, 1.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    start = time = 5
+    time = 0
 
     three.on('update', function () {
-      start = start || three.Time.now;
-      //time = (three.Time.now - start + 3) / 7;
+      time = (three.Time.clock + 3) / 7;
+
+      t = Math.max(three.Time.clock - 3, 0) / 30
+      t = t < .5 ? t * t : t - .25
+
+      o = .5 - .5 * Math.cos(Math.min(1, t) * π)
+
+      c = Math.cos(t);
+      s = Math.sin(t);
+      view.set('rotation', [0, -s, 0, c]);
     });
 
     view = mathbox.spherical({

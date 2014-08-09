@@ -29,6 +29,10 @@
       c = rtt[0].primitive.rtt.camera;
       c.position.set(x, 0, z);
       c.lookAt(origin);
+
+      c = three.camera;
+      c.position.set(x, 1, z);
+      c.lookAt(origin);
     });
 
     mathbox
@@ -65,8 +69,14 @@
           })
         .end()
       .end()
-      .compose({
+      .lerp({
+        width: 64,
+        height: 64,
+        depth: 1,
+      })
+      .vector({
         color: '#fff',
+        scale: [100, 100, 100],
       })
 
     rtt = mathbox.select('rtt')

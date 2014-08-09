@@ -16,7 +16,7 @@ Traits =
     opacity:     Types.number(1)
     color:       Types.color()
     blending:    Types.blending()
-    zFactor:     Types.number(8)
+    zFactor:     Types.number(0)
     zUnits:      Types.number(0)
     zIndex:      Types.number(0)
     zOrder:      Types.nullable(Types.number())

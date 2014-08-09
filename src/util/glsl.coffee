@@ -66,7 +66,7 @@ exports.truncateVec = (from, to) ->
   to   = 'vec' + to
 
   """
-  #{to} extendVec(#{from} v) { return v.#{swizzle}; }
+  #{to} truncateVec(#{from} v) { return v.#{swizzle}; }
   """
 
 # Apply 4-component vector swizzle

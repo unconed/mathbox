@@ -50,8 +50,10 @@ class Surface extends Primitive
 
     # Darken wireframe if needed for contrast
     # Auto z-bias wireframe over surface
-    wireUniforms.styleColor = @_attributes.make @_types.color()
-    @wireColor = wireUniforms.styleColor.value
+    wireUniforms.styleColor  = @_attributes.make @_types.color()
+    wireUniforms.styleZIndex = @_attributes.make @_types.number()
+    @wireColor  = wireUniforms.styleColor.value
+    @wireZIndex = wireUniforms.styleZIndex
     @wireScratch = new THREE.Color
 
     # Fetch geometry dimensions
@@ -131,6 +133,7 @@ class Surface extends Primitive
       solid  = @_get 'mesh.solid'
       color  = @_get 'style.color'
 
+      @wireZIndex.value = @_get('style.zIndex') + 5
       @wireColor.copy color
       if solid
         c = @wireScratch

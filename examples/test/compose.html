@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - RTT</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
@@ -35,20 +36,22 @@
       scale: [2, 1, 1],
     });
     view.grid({
+      color: 'black',
       divideX: 2,
       divideY: 2,
       zIndex: 10,
-      opacity: .25,
+      opacity: .75,
     });
 
     view2 = view.rtt().cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     }).grid({
+      color: 'black',
       divideX: 2,
       divideY: 2,
       zIndex: 10,
-      opacity: .25,
+      opacity: .75,
     });
 
     rtt = mathbox.select('rtt')

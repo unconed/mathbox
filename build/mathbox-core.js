@@ -22,7 +22,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "object4.position": "uniform mat4 objectMatrix;\nuniform vec2 object4D;\n\nvec4 getObject4Position(vec4 position) {\n  vec3 xyz = (objectMatrix * vec4(position.xyz, 1.0)).xyz;\n  return vec4(xyz, position.w * object4D.y + object4D.x);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"project.position": "//uniform float styleZIndex;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n//  pos.z *= (1.0 - styleZIndex / 32768.0);\n  gl_Position = pos;\n}\n",
+"project.position": "uniform float styleZIndex;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  pos.z *= (1.0 - styleZIndex / 32768.0);\n  gl_Position = pos;\n}\n",
 "project4.position": "uniform mat4 projectionMatrix;\n\nvec4 getProject4Position(vec4 position) {\n  vec3 pos3 = (projectionMatrix * position).xyz;\n  return vec4(pos3, 1.0);\n}\n",
 "raw.position": "uniform vec4 geometryScale;\nattribute vec4 position4;\n\nvec4 getRawPosition() {\n  return geometryScale * position4;\n}\n",
 "repeat.position": "uniform vec4 repeatModulus;\n\nvec4 getRepeatXYZW(vec4 xyzw) {\n  return mod(xyzw, repeatModulus);\n}\n",
@@ -7332,7 +7332,9 @@ Surface = (function(_super) {
     lineUniforms = this._helpers.line.uniforms();
     surfaceUniforms = this._helpers.surface.uniforms();
     wireUniforms.styleColor = this._attributes.make(this._types.color());
+    wireUniforms.styleZIndex = this._attributes.make(this._types.number());
     this.wireColor = wireUniforms.styleColor.value;
+    this.wireZIndex = wireUniforms.styleZIndex;
     this.wireScratch = new THREE.Color;
     dims = this.bind.points.getDimensions();
     width = dims.width;
@@ -7403,6 +7405,7 @@ Surface = (function(_super) {
     if (changed['style.color'] || changed['mesh.solid'] || init) {
       solid = this._get('mesh.solid');
       color = this._get('style.color');
+      this.wireZIndex.value = this._get('style.zIndex') + 5;
       this.wireColor.copy(color);
       if (solid) {
         c = this.wireScratch;
@@ -7867,7 +7870,7 @@ helpers = {
   },
   object: {
     make: function(objects, forceTransparent) {
-      var blending, e, hasStyle, last, object, onChange, onVisible, opacity, visible, zFactor, zIndex, zUnits, _i, _len, _ref, _ref1;
+      var blending, e, hasStyle, last, object, onChange, onVisible, opacity, visible, zFactor, zIndex, zOrder, zUnits, _i, _len, _ref, _ref1;
       this.objects = objects != null ? objects : [];
       if (forceTransparent == null) {
         forceTransparent = false;
@@ -7887,6 +7890,7 @@ helpers = {
         blending = this._get('style.blending');
         zFactor = this._get('style.zFactor');
         zUnits = this._get('style.zUnits');
+        zOrder = this._get('style.zOrder');
       }
       onChange = this.handlers.objectChange = (function(_this) {
         return function(event) {
@@ -7917,7 +7921,7 @@ helpers = {
       onVisible = this.handlers.objectVisible = (function(_this) {
         return function() {
           var active, o, order, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
-          order = _this.node.order;
+          order = zOrder != null ? zOrder : _this.node.order;
           active = visible;
           if (active) {
             active = opacity > 0;
@@ -8188,7 +8192,7 @@ Lerp = (function(_super) {
   Lerp.traits = ['node', 'bind', 'operator', 'source', 'lerp'];
 
   Lerp.prototype.sourceShader = function(shader) {
-    return shader.concat(this.operator);
+    return shader.pipe(this.operator);
   };
 
   Lerp.prototype.getDimensions = function() {
@@ -8322,13 +8326,24 @@ Remap = (function(_super) {
     return shader.pipe(this.operator);
   };
 
+  Remap.prototype.resize = function() {
+    return this.refresh();
+  };
+
   Remap.prototype.make = function() {
-    var dimensions, indices, operator, shader;
+    var dimensions, indices, operator, shader, uniforms;
     Remap.__super__.make.apply(this, arguments);
     indices = this._get('remap.indices');
     dimensions = this._get('remap.dimensions');
     shader = this._get('remap.shader');
     operator = this._shaders.shader();
+    uniforms = {
+      dataSize: this._attributes.make(this._types.vec2(0, 0)),
+      dataResolution: this._attributes.make(this._types.vec2(0, 0)),
+      dataOffset: this._attributes.make(this._types.vec2(.5, .5))
+    };
+    this.dataResolution = uniforms.dataResolution.value;
+    this.dataSize = uniforms.dataSize.value;
     if (shader != null) {
       if (indices !== 4) {
         operator.pipe(Util.GLSL.truncateVec(4, indices));
@@ -8342,7 +8357,7 @@ Remap = (function(_super) {
         operator.pipe(Util.GLSL.truncateVec(4, dimensions));
       }
       operator.join();
-      operator.pipe(shader);
+      operator.pipe(shader, uniforms);
       if (dimensions !== 4) {
         operator.pipe(Util.GLSL.extendVec(dimensions, 4));
       }
@@ -8360,9 +8375,13 @@ Remap = (function(_super) {
   };
 
   Remap.prototype.change = function(changed, touched, init) {
+    var dims;
     if (touched['operator'] || touched['remap']) {
-      return this.rebuild();
+      this.rebuild();
     }
+    dims = this.bind.source.getActive();
+    this.dataResolution.set(1 / dims.width, 1 / dims.height);
+    return this.dataSize.set(dims.width, dims.height);
   };
 
   return Remap;
@@ -8978,6 +8997,7 @@ RTT = (function(_super) {
       height: this.height,
       frames: this.frames + 1
     });
+    console.log('rtt:rebuild');
     return this.trigger({
       type: 'rebuild'
     });
@@ -9075,7 +9095,7 @@ Traits = {
     opacity: Types.number(1),
     color: Types.color(),
     blending: Types.blending(),
-    zFactor: Types.number(8),
+    zFactor: Types.number(0),
     zUnits: Types.number(0),
     zIndex: Types.number(0),
     zOrder: Types.nullable(Types.number())
@@ -13118,7 +13138,7 @@ exports.truncateVec = function(from, to) {
   swizzle = 'xyzw'.substr(0, to);
   from = 'vec' + from;
   to = 'vec' + to;
-  return "" + to + " extendVec(" + from + " v) { return v." + swizzle + "; }";
+  return "" + to + " truncateVec(" + from + " v) { return v." + swizzle + "; }";
 };
 
 exports.swizzleVec4 = function(order) {

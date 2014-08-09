@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Repeat</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
@@ -21,6 +22,16 @@
     time = 0
     three.on('update', function () {
       time = three.Time.now
+
+
+      t = Math.max(three.Time.clock, 0) / 20
+      t = t < .5 ? t * t : t - .25
+
+      o = .5 - .5 * Math.cos(Math.min(1, t) * π)
+
+      c = Math.cos(t);
+      s = Math.sin(t);
+      view.set('rotation', [0, s, 0, c]);
     });
 
     view = mathbox.polar({

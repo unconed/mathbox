@@ -188,7 +188,7 @@ helpers =
       @present   shader unless inline
 
   object:
-    # Generic 3D renderable wrapper, handles the fiddly Three.js bits.
+    # Generic 3D renderable wrapper, handles the fiddly Three.js bits that require a 'style recalculation'.
     #
     # Pass renderables to nearest root for rendering
     # Track visibility from parent and notify children
@@ -210,6 +210,7 @@ helpers =
         blending = @_get 'style.blending'
         zFactor  = @_get 'style.zFactor'
         zUnits   = @_get 'style.zUnits'
+        zOrder   = @_get 'style.zOrder'
 
       onChange = @handlers.objectChange = (event) =>
         changed  = event.changed
@@ -223,7 +224,7 @@ helpers =
 
       last = null
       onVisible = @handlers.objectVisible = () =>
-        order  = @node.order
+        order  = zOrder ? @node.order
 
         active = visible
         active = opacity > 0             if active
