@@ -16,8 +16,10 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(6, 3, -7);
+    three.camera.position.set(7, 2, -7);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
 
     time = 0
     three.on('update', function () {
@@ -28,32 +30,40 @@
       t = t < .5 ? t * t : t - .25
 
       o = .5 - .5 * Math.cos(Math.min(1, t) * π)
+      p = .5 - .5 * Math.cos((t * 4) * π);
+      q = .5 - .5 * Math.cos((t * 1.13) * π);
+      m = .5 - .5 * Math.cos((t * 0.387) * π);
+      n = .5 - .5 * Math.cos(Math.max(0, Math.min(1, t - 40)) * π)
 
-      c = Math.cos(t);
-      s = Math.sin(t);
+      r = t * 2;
+      c = Math.cos(r);
+      s = Math.sin(r);
       view.set('rotation', [0, s, 0, c]);
+
+      view.set('bend', lerp(0.005, .721 - p * .1, o));
+      view.set('helix', o * .1);
+
+      r = o *.2 + q * .8 - m * 2 + n;
+      c = Math.cos(r);
+      s = Math.sin(r);
+      r = (m) * .1;
+      cc = Math.cos(r);
+      ss = Math.sin(r);
+      surface.set('rotation', [s*cc, 0, s*ss, c]);
     });
 
     view = mathbox.polar({
       bend: 1/128,
-      range: [[-π, π], [-1, 2], [-1, 1]],
-      scale: [2, 1, 2],
-    });
-    view.grid({
-      axes: [1, 3],
-      unitX: π,
-      unitY: π,
-      opacity: .5,
-      detailX: 60,
-      rangeX: [-20*π, 20*π],
+      range: [[-π, π], [-1, 1], [-1, 1]],
+      scale: [2, 2, 2],
     });
 
     view.interval({
       length: 32,
       centered: false,
       expression: function (x, i, emit) {
-        var a = Math.sin(x + time) * .7 * 2;
-        var b = Math.cos(x - time * .917) * .35 * 2
+        var a = Math.sin(x + time) * .5 - 1;
+        var b = Math.cos(x - time * .917) * .25 - 1
 
         emit(a);
         emit(b);
@@ -90,6 +100,8 @@
       color: 0x3090FF,
       position: [0, 2, 0],
     });
+
+    surface = mathbox.select('surface');
 
   </script>
 </body>

@@ -6,7 +6,7 @@ Provides easy access to past rendered frames
 class RenderTarget
   constructor: (@gl, @width, @height, @frames, @textureOptions = {}) ->
     @textureOptions.minFilter ?= THREE.LinearFilter
-    @textureOptions.magFilter ?= THREE.NearestFilter
+    @textureOptions.magFilter ?= THREE.LinearFilter
     @textureOptions.format    ?= THREE.RGBAFormat
 
     @width  = @width  || 1

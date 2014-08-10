@@ -21,7 +21,7 @@
 
     time = 0
     three.on('update', function () {
-      time = three.Time.now
+      time = three.Time.now * .5
     });
 
     view = mathbox.cartesian({

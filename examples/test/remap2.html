@@ -45,14 +45,15 @@
             divideY: 2,
             zIndex: 10,
             opacity: .25,
-            color: 0xffffff,
+            color: 0xffdfe0,
+            scale: [.7, .7, .7],
           })
         .end()
       .end()
 
       .rtt({
         id: 'rtt1',
-        history: 2,
+        history: 4,
       })
         .remap({
           id: 'remap1',
@@ -66,13 +67,13 @@
             "vec4 getSample(vec3 xyz);",
             "vec4 getFramesSample(vec3 xyz) {",
             "  vec2 pos = xyz.xy * dataResolution - .5;",
-            "  pos = pos * mat2(COS, SIN, -SIN, COS) * .999;",
+            "  pos = ((pos * vec2(16.0, 9.0)) * mat2(COS, SIN, -SIN, COS) * .999) / vec2(16.0, 9.0);",
             "  xyz.xy = (pos + .5) * dataSize;",
             "  vec4 c = getSample(xyz + vec3( 0.0, 0.0, 1.0));",
-            "  vec3 t = getSample(xyz + vec3( 0.0, 1.0, 0.0)).xyz;",
-            "  vec3 b = getSample(xyz + vec3( 0.0,-1.0, 0.0)).xyz;",
-            "  vec3 l = getSample(xyz + vec3(-1.0, 0.0, 0.0)).xyz;",
-            "  vec3 r = getSample(xyz + vec3( 1.0, 0.0, 0.0)).xyz;",
+            "  vec3 t = getSample(xyz + vec3( 0.0, 1.5, 0.0)).xyz;",
+            "  vec3 b = getSample(xyz + vec3( 0.0,-1.5, 0.0)).xyz;",
+            "  vec3 l = getSample(xyz + vec3(-1.5, 0.0, 0.0)).xyz;",
+            "  vec3 r = getSample(xyz + vec3( 1.5, 0.0, 0.0)).xyz;",
             "  return vec4((t + b + l + r) / 2.0 - c.xyz, c.w);",
             "}"].join("\n")
         })
@@ -86,6 +87,35 @@
           color: '#ffffff',
         })
       .end()
+      .rtt()
+        .remap({
+          id: 'remap2',
+          source: '#rtt1',
+          indices:    3,
+          dimensions: 4,
+          shader: [
+            "vec4 getSample(vec3 xyz);",
+            "vec4 getFramesSample(vec3 xyz) {",
+            "  vec4 color = (getSample(xyz) + getSample(xyz + vec3(0.0, 0.0, 1.0)) + getSample(xyz + vec3(0.0, 0.0, 2.0)) + getSample(xyz + vec3(0.0, 0.0, 3.0))) / 4.0;",
+            "  color = color * color * color * 1.15;",
+            "  float v = color.x + color.y + color.z;",
+            "  return vec4(vec3(v*v + color.x * .2, v*v, v*v*v + color.z) * .333, 1.0);",
+            "}"].join("\n")
+        })
+        .compose({
+          color: '#fff',
+        })
+      .end()
+      .remap({
+        id: 'remap3',
+        indices:    2,
+        dimensions: 4,
+        shader: [
+          "vec4 getSample(vec2 xy);",
+          "vec4 getFramesSample(vec2 xy) {",
+          "  return getSample(xy + vec2(0.5, 0.5));",
+          "}"].join("\n")
+      })
       .compose({
         color: '#fff',
       })

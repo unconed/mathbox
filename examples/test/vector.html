@@ -24,7 +24,7 @@
       clock = three.Time.clock
       time = clock / 4
 
-      t = Math.max(clock - 3, 0) / 12
+      t = Math.max(clock - 1, 0) / 12
       t = t < .5 ? t * t : t - .25
 
       o = .5 - .5 * Math.cos(Math.min(1, t) * π)
@@ -51,8 +51,8 @@
     });
 
     view.area({
-      width: 48,
-      height: 48,
+      width: 36,
+      height: 36,
       items: 2,
       axes: [1, 3],
       expression: function (x, y, i, j, emit) {
@@ -82,7 +82,7 @@
       dimensions: 3,
     });
     view.surface({
-      color: 0x60A0FF,
+      color: 0x5090FF,
       width: 0.005,
     });
 

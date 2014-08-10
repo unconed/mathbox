@@ -61628,7 +61628,7 @@ RenderTarget = (function() {
       _base.minFilter = THREE.LinearFilter;
     }
     if ((_base1 = this.textureOptions).magFilter == null) {
-      _base1.magFilter = THREE.NearestFilter;
+      _base1.magFilter = THREE.LinearFilter;
     }
     if ((_base2 = this.textureOptions).format == null) {
       _base2.format = THREE.RGBAFormat;
