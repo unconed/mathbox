@@ -69,14 +69,8 @@
           })
         .end()
       .end()
-      .lerp({
-        width: 64,
-        height: 64,
-        depth: 1,
-      })
-      .vector({
+      .compose({
         color: '#fff',
-        scale: [100, 100, 100],
       })
 
     rtt = mathbox.select('rtt')

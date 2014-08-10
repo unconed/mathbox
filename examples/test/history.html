@@ -64,7 +64,7 @@
       history: 96,
       expression: function (x, i, emit) {
         z = Math.sin(time * 5) * 3;
-        y = .25 + Math.cos(x + z + Math.sin(1.52 * x - z * z / 2) + time * 3) * .25;
+        y = .25 + Math.cos(x + z + Math.sin(1.52 * x - z * z / 3 + x * z * .25 + time) + time * 3) * .25;
         emit(x, y, z);
       },
       dimensions: 3,
