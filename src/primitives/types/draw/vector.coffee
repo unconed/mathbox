@@ -25,6 +25,7 @@ class Vector extends Primitive
     # Bind to attached data sources
     @_helpers.bind.make
       'geometry.points': 'source'
+      'geometry.colors': 'source'
 
     # Build transform chain
     position = @_shaders.shader()
@@ -53,6 +54,11 @@ class Vector extends Primitive
     ribbons = dims.height
     layers  = dims.depth
 
+    # Build color lookup
+    if @bind.colors
+      color = @_shaders.shader()
+      @bind.colors.sourceShader color
+
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms
     @line = @_renderables.make 'line',
@@ -62,6 +68,7 @@ class Vector extends Primitive
               strips:   strips
               layers:   layers
               position: position
+              color:    color
               clip:     start or end
 
     # Make arrow renderables
@@ -77,6 +84,7 @@ class Vector extends Primitive
                 strips:   strips
                 layers:   layers
                 position: position
+                color:    color
 
     if end
       @arrows.push @_renderables.make 'arrow',
@@ -86,6 +94,7 @@ class Vector extends Primitive
                 strips:   strips
                 layers:   layers
                 position: position
+                color:    color
 
     @resize()
 

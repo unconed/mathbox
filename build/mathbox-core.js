@@ -19,6 +19,8 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "map.xyzw.2d": "vec2 mapXyzw2D(vec4 xyzw) {\n  return xyzw.xy;\n}\n\n",
 "map.xyzw.2dv": "void mapXyzw2DV(vec4 xyzw, out vec2 xy, out float z) {\n  xy = xyzw.xy;\n  z  = xyzw.z;\n}\n\n",
 "map.xyzw.texture": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 mapXyzw2D(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
+"mesh.fragment.color": "varying vec4 vColor;\n\nvec4 getColor(vec4 rgba) {\n  return rgba * vColor;\n}\n",
+"mesh.vertex.color": "attribute vec4 position4;\nvarying vec4 vColor;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvoid vertexColor() {\n  vColor = getSample(position4);\n}\n",
 "object.position": "uniform mat4 objectMatrix;\n\nvec4 getObjectPosition(vec4 position) {\n  return objectMatrix * vec4(position.xyz, 1.0);\n}\n",
 "object4.position": "uniform mat4 objectMatrix;\nuniform vec2 object4D;\n\nvec4 getObject4Position(vec4 position) {\n  vec3 xyz = (objectMatrix * vec4(position.xyz, 1.0)).xyz;\n  return vec4(xyz, position.w * object4D.y + object4D.x);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
@@ -4765,7 +4767,7 @@ THREE.Bootstrap.registerPlugin('mathbox', {
     var _ref1;
     return (_ref1 = this.context) != null ? _ref1.update() : void 0;
   },
-  post: function() {
+  post: function(event, three) {
     var fmt, info;
     if (this.first) {
       fmt = function(x) {
@@ -5189,7 +5191,7 @@ Model = (function() {
         addType(node);
         addTraits(node);
         node.on('change:node', update);
-        update(event, node, true);
+        update(null, node, true);
         return force(node);
       };
     })(this);
@@ -7555,9 +7557,10 @@ Vector = (function(_super) {
   };
 
   Vector.prototype.make = function() {
-    var arrowUniforms, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, uniforms;
+    var arrowUniforms, color, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, uniforms;
     this._helpers.bind.make({
-      'geometry.points': 'source'
+      'geometry.points': 'source',
+      'geometry.colors': 'source'
     });
     position = this._shaders.shader();
     this._helpers.position.make();
@@ -7574,6 +7577,10 @@ Vector = (function(_super) {
     strips = dims.width;
     ribbons = dims.height;
     layers = dims.depth;
+    if (this.bind.colors) {
+      color = this._shaders.shader();
+      this.bind.colors.sourceShader(color);
+    }
     uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
@@ -7582,6 +7589,7 @@ Vector = (function(_super) {
       strips: strips,
       layers: layers,
       position: position,
+      color: color,
       clip: start || end
     });
     this.arrows = [];
@@ -7594,7 +7602,8 @@ Vector = (function(_super) {
         ribbons: ribbons,
         strips: strips,
         layers: layers,
-        position: position
+        position: position,
+        color: color
       }));
     }
     if (end) {
@@ -7604,7 +7613,8 @@ Vector = (function(_super) {
         ribbons: ribbons,
         strips: strips,
         layers: layers,
-        position: position
+        position: position,
+        color: color
       }));
     }
     this.resize();
@@ -7662,7 +7672,10 @@ helpers = {
       })(this);
       this.handlers.bindRebuild = (function(_this) {
         return function(event) {
-          return _this.rebuild();
+          _this.rebuild();
+          return _this.trigger({
+            type: 'rebuild'
+          });
         };
       })(this);
       this.handlers.bindWatchers = watchers = [];
@@ -8132,7 +8145,7 @@ Join = (function(_super) {
     this.bind.source.sourceShader(transform);
     this.operator = transform;
     return this.trigger({
-      event: 'rebuild'
+      type: 'rebuild'
     });
   };
 
@@ -8163,7 +8176,7 @@ Join = (function(_super) {
       this.resample.height = split.width / split.height;
       this.resample.depth = split.height / 1;
       return this.trigger({
-        event: 'rebuild'
+        type: 'rebuild'
       });
     }
   };
@@ -8235,7 +8248,7 @@ Lerp = (function(_super) {
     }
     this.operator = transform;
     return this.trigger({
-      event: 'rebuild'
+      type: 'rebuild'
     });
   };
 
@@ -8366,7 +8379,7 @@ Remap = (function(_super) {
     }
     this.operator = operator;
     return this.trigger({
-      event: 'rebuild'
+      type: 'rebuild'
     });
   };
 
@@ -8443,7 +8456,7 @@ Repeat = (function(_super) {
     this.bind.source.sourceShader(transform);
     this.operator = transform;
     return this.trigger({
-      event: 'rebuild'
+      type: 'rebuild'
     });
   };
 
@@ -8552,7 +8565,7 @@ Split = (function(_super) {
     this.bind.source.sourceShader(transform);
     this.operator = transform;
     return this.trigger({
-      event: 'rebuild'
+      type: 'rebuild'
     });
   };
 
@@ -8635,7 +8648,7 @@ Spread = (function(_super) {
     transform.pipe('spread.position', uniforms);
     this.operator = transform;
     return this.trigger({
-      event: 'rebuild'
+      type: 'rebuild'
     });
   };
 
@@ -8725,7 +8738,7 @@ Swizzle = (function(_super) {
       this.swizzler = Util.GLSL.swizzleVec4(order);
     }
     return this.trigger({
-      event: 'rebuild'
+      type: 'rebuild'
     });
   };
 
@@ -8810,7 +8823,7 @@ Transpose = (function(_super) {
       this.swizzler = Util.GLSL.invertSwizzleVec4(order);
     }
     return this.trigger({
-      event: 'rebuild'
+      type: 'rebuild'
     });
   };
 
@@ -9159,7 +9172,7 @@ Traits = {
   },
   geometry: {
     points: Types.select(Types.object()),
-    colors: Types.select(Types.object())
+    colors: Types.nullable(Types.select(Types.object()))
   },
   source: {
     hint: Types.nullable(Types.string())
@@ -12184,10 +12197,11 @@ Line = (function(_super) {
   __extends(Line, _super);
 
   function Line(renderer, shaders, options) {
-    var clip, f, factory, object, position, uniforms, v, _ref;
+    var clip, color, f, factory, object, position, uniforms, v, _ref;
     Line.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
+    color = options.color;
     clip = options.clip;
     this.geometry = new LineGeometry({
       samples: options.samples,
@@ -12200,6 +12214,11 @@ Line = (function(_super) {
     this._adopt(this.geometry.uniforms);
     factory = shaders.material();
     v = factory.vertex;
+    color = null;
+    if (color) {
+      v.require(color);
+      v.pipe('mesh.vertex.color', this.uniforms);
+    }
     if (position) {
       v.require(position);
     }
@@ -12218,6 +12237,9 @@ Line = (function(_super) {
       f.pipe('fragment.clipEnds', this.uniforms);
     }
     f.pipe('style.color', this.uniforms);
+    if (color) {
+      f.pipe('mesh.fragment.color', this.uniforms);
+    }
     f.pipe('fragment.color', this.uniforms);
     this.material = new THREE.ShaderMaterial(factory.build({
       side: THREE.DoubleSide,

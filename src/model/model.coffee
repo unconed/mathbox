@@ -56,7 +56,7 @@ class Model
       addTraits node
 
       node.on 'change:node', update
-      update event, node, true
+      update null, node, true
       force node
 
     dispose = (node) =>

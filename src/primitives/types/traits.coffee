@@ -74,7 +74,7 @@ Traits =
 
   geometry:
     points:      Types.select(Types.object())
-    colors:      Types.select(Types.object())
+    colors:      Types.nullable(Types.select(Types.object()))
 
   source:
     hint:        Types.nullable(Types.string())

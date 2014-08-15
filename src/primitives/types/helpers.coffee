@@ -19,7 +19,10 @@ helpers =
 
       # Monitor array for reallocation / resize
       @handlers.bindResize   = (event) => @resize()
-      @handlers.bindRebuild  = (event) => @rebuild()
+      @handlers.bindRebuild  = (event) =>
+        @rebuild()
+        @trigger
+          type: 'rebuild'
       @handlers.bindWatchers = watchers = []
 
       # Fetch attached objects and bind to them

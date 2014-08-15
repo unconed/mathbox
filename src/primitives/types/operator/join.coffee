@@ -46,7 +46,7 @@ class Join extends Operator
 
     # Notify of reallocation
     @trigger
-      event: 'rebuild'
+      type: 'rebuild'
 
   unmake: () ->
     super
@@ -78,6 +78,6 @@ class Join extends Operator
 
       # Rebuild geometry downstream
       @trigger
-        event: 'rebuild'
+        type: 'rebuild'
 
 module.exports = Join

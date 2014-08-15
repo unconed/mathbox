@@ -41,7 +41,7 @@ class Repeat extends Operator
 
     # Notify of reallocation
     @trigger
-      event: 'rebuild'
+      type: 'rebuild'
 
   unmake: () ->
     super

@@ -78,7 +78,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   render: (event, three) ->
     @context?.update()
 
-  post: () ->
+  post: (event, three) ->
     if @first
       fmt = (x) ->
         out = []

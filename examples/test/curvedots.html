@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Curve</title>
+  <title>MathBox - Curvedots</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
@@ -29,28 +29,9 @@
       scale: [2, 1, 1],
     });
 
-    view.axis({
-      detail: 30,
-    });
-
-    view.axis({
-      axis: 2,
-    });
-    view.ticks({
-      classes: ['foo', 'bar'],
-      divide: 10,
-    });
-
-    view.grid({
-      divideX: 20,
-      width: 0.005,
-      opacity: 0.5,
-      zIndex: -5,
-    });
-
     view.interval({
       id: 'sampler',
-      length: 64,
+      length: 32,
       expression: function (x, i, emit) {
         y = Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
@@ -58,11 +39,28 @@
       dimensions: 2,
     });
 
-    view.line({
-      points: '#sampler',
-      color: 0x3090FF,
-      width: 0.01,
+    view.spread({
+      height: [0, .05, 0, 0],
     });
+
+    view.line({
+      color: 0x3090FF,
+      width: 0.005,
+    });
+    view.point({
+      color: 0x3090FF,
+      size: 0.03,
+    });
+
+    // presentation integration
+    messageHandler = function (event) {
+      d = event.data;
+      if (d && (d = d.mathBoxDirector) && d.method == 'go') {
+        v = Math.max(0, Math.min(1, d.args[0] - 3))
+        mathbox.select('#sampler').set({ history: v * 25 })
+      }
+    }.bind(this);
+    window.addEventListener('message', messageHandler);
 
   </script>
 </body>
