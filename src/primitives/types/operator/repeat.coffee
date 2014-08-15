@@ -1,10 +1,10 @@
 Operator = require './operator'
 
 class Repeat extends Operator
-  @traits: ['node', 'bind', 'operator', 'repeat']
+  @traits: ['node', 'bind', 'operator', 'source', 'repeat']
 
-  shader: (shader) ->
-    shader.concat @transform
+  sourceShader: (shader) ->
+    shader.pipe @operator
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -34,20 +34,20 @@ class Repeat extends Operator
 
     @repeatModulus = uniforms.repeatModulus
 
-    transform.call 'repeat.position', uniforms
-    @bind.source.shader transform
+    transform.pipe 'repeat.position', uniforms
+    @bind.source.sourceShader transform
 
-    @transform = transform
+    @operator = transform
 
     # Notify of reallocation
     @trigger
-      event: 'rebuild'
+      type: 'rebuild'
 
   unmake: () ->
     super
 
   resize: () ->
-    @change {}, {}, true
+    @refresh()
     super
 
   change: (changed, touched, init) ->
@@ -61,7 +61,7 @@ class Repeat extends Operator
 
       @repeatModulus.value.set dims.width, dims.height, dims.depth, dims.items
 
-      # Rebuild geometry downstream
+      # Rebuild all geometry downstream (TODO: make this work better)
       @trigger
         event: 'rebuild'
 

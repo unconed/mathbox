@@ -6,7 +6,7 @@ Primitives = require './primitives'
 Util       = require './util'
 
 class Context
-  # Export for tinkering
+  # Export for extending
   @Namespace =
     Model:      Model
     Stage:      Stage
@@ -16,19 +16,19 @@ class Context
     Util:       Util
 
   # Set up entire environment
-  constructor: (gl, scene, camera, script = []) ->
+  constructor: (renderer, scene, camera, script = []) ->
 
     # Rendering factory
     @shaders     = new Shaders.Factory    Shaders.Snippets
-    @renderables = new Render.Factory     gl, Render.Classes, @shaders
-    @scene       = new Render.Scene       scene
+    @renderables = new Render.Factory     renderer, Render.Classes, @shaders
+    @scene       = @renderables.make      'scene', scene: scene, camera: camera
 
     # Primitives factory
     @attributes  = new Model.Attributes   Primitives.Types
     @primitives  = new Primitives.Factory Primitives.Types, @
+    @root        = @primitives.make       'root'
 
     # Document model
-    @root        = @primitives.make 'root'
     @model       = new Model.Model        @root
 
     # Scene controllers
@@ -37,7 +37,7 @@ class Context
     @director    = new Stage.Director     @controller, @animator, script
 
     # Public API
-    @api         = new Stage.API          @controller, @animator, @director
+    @api         = new Stage.API          @
 
     # Debug
     window.model = @model
@@ -55,6 +55,7 @@ class Context
   update: () ->
     @animator  .update()
     @attributes.digest()
+    @model     .digest()
 
     @root.primitive.update()
 

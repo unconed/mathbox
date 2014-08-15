@@ -1,7 +1,7 @@
 Data = require './data'
 
 class Matrix extends Data
-  @traits: ['node', 'data', 'matrix']
+  @traits: ['node', 'data', 'source', 'matrix']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -12,8 +12,7 @@ class Matrix extends Data
     @spaceWidth  = 0
     @spaceHeight = 0
 
-  shader: (shader) ->
-    shader.call 'map.2d.xyzw', @sampleUniforms
+  sourceShader: (shader) ->
     @buffer.shader shader
 
   getDimensions: () ->
@@ -57,14 +56,9 @@ class Matrix extends Data
     @width  = @spaceWidth  = Math.max @spaceWidth, width
     @height = @spaceHeight = Math.max @spaceHeight, height
 
-    # Prepare sampling uniforms
-    @sampleUniforms =
-      textureItems:  @_attributes.make @_types.number items
-      textureHeight: @_attributes.make @_types.number height
-
     # Create matrix buffer
     if @spaceWidth * @spaceHeight > 0
-      @buffer = @_renderables.make 'matrixbuffer',
+      @buffer = @_renderables.make 'matrixBuffer',
                 width:    @spaceWidth
                 height:   @spaceHeight
                 history:  history
@@ -89,13 +83,11 @@ class Matrix extends Data
     if changed['data.expression']? or
        init
 
-      callback = @_get 'data.expression'
-      @buffer.callback = @callback callback
+      @buffer.callback = @callback @_get 'data.expression'
 
   update: () ->
     return unless @buffer
     return unless !@filled or @_get 'data.live'
-    return unless @parent.visible
 
     data = @_get 'data.data'
 

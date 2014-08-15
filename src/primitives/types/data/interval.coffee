@@ -1,7 +1,7 @@
 _Array = require './array'
 
 class Interval extends _Array
-  @traits: ['node', 'data', 'array', 'span', 'interval', 'sampler']
+  @traits: ['node', 'data', 'source', 'array', 'span', 'interval', 'sampler']
 
   callback: (callback) ->
     dimension = @_get 'interval.axis'

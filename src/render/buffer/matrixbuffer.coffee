@@ -1,27 +1,34 @@
-Buffer = require('./buffer')
-Texture = require('./texture')
+Buffer      = require './buffer'
+DataTexture = require './texture/datatexture'
 
 class MatrixBuffer extends Buffer
-  constructor: (gl, shaders, options) ->
+  constructor: (renderer, shaders, options) ->
     @callback = options.callback || ->
     @width    = options.width    || 1
     @height   = options.height   || 1
     @history  = options.history  || 1
 
     @samples = @width * @height
-    super gl, shaders, options
+    super renderer, shaders, options
+
+  shader: (shader) ->
+    shader.pipe 'map.xyzw.texture', @uniforms
+    super shader
 
   build: () ->
     super
 
     @data    = new Float32Array @samples * @items * @channels
-    @texture = new Texture @gl, @width * @items, @height * @history, @channels
+    @texture = new DataTexture  @gl, @width * @items, @height * @history, @channels
     @index   = 0
     @filled  = 0
 
     @dataPointer = @uniforms.dataPointer.value
 
     @_adopt @texture.uniforms
+    @_adopt
+      textureItems:  { type: 'f', value: @items }
+      textureHeight: { type: 'f', value: @height }
 
   getFilled: () -> @filled
 

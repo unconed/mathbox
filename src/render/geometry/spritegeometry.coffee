@@ -23,10 +23,11 @@ class SpriteGeometry extends Geometry
     super options
 
     @geometryClip = new THREE.Vector4
-    @uniforms =
-      geometryClip:
-        type: 'v4'
-        value: @geometryClip
+
+    @uniforms ?= {}
+    @uniforms.geometryClip =
+      type: 'v4'
+      value: @geometryClip
 
     @items    = items   = +options.items   || 2
     @width    = width   = +options.width   || 1

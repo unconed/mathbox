@@ -1,7 +1,7 @@
 uniform float textureItems;
 uniform float textureHeight;
 
-vec2 map2Dxyzw(vec4 xyzw) {
+vec2 mapXyzw2D(vec4 xyzw) {
   
   float x = xyzw.x;
   float y = xyzw.y;

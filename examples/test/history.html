@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - History</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
@@ -21,6 +22,15 @@
     time = 0
     three.on('update', function () {
       time = three.Time.frames / 200
+
+      t = Math.max(three.Time.clock, 0) / 25
+      t = t < .5 ? t * t : t - .25
+
+      o = .5 - .5 * Math.cos(Math.min(1, t) * π)
+
+      c = Math.cos(t);
+      s = Math.sin(t);
+      view.set('rotation', [0, -s, 0, c]);
     });
 
     view = mathbox.cartesian({
@@ -54,7 +64,7 @@
       history: 96,
       expression: function (x, i, emit) {
         z = Math.sin(time * 5) * 3;
-        y = .25 + Math.cos(x + z + Math.sin(1.52 * x - z * z / 2) + time * 3) * .25;
+        y = .25 + Math.cos(x + z + Math.sin(1.52 * x - z * z / 3 + x * z * .25 + time) + time * 3) * .25;
         emit(x, y, z);
       },
       dimensions: 3,

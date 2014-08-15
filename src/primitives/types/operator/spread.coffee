@@ -1,10 +1,10 @@
 Operator = require './operator'
 
 class Spread extends Operator
-  @traits: ['node', 'bind', 'operator', 'spread']
+  @traits: ['node', 'bind', 'operator', 'source', 'spread']
 
-  shader: (shader) ->
-    shader.concat @transform
+  sourceShader: (shader) ->
+    shader.pipe @operator
 
   make: () ->
     super
@@ -20,21 +20,21 @@ class Spread extends Operator
     # Build shader to spread data on one dimension
     transform = @_shaders.shader()
     transform.callback()
-    @bind.source.shader transform
+    @bind.source.sourceShader transform
     transform.join()
-    transform.call 'spread.position', uniforms
+    transform.pipe 'spread.position', uniforms
 
-    @transform = transform
+    @operator = transform
 
     # Notify of reallocation
     @trigger
-      event: 'rebuild'
+      type: 'rebuild'
 
   unmake: () ->
     super
 
   resize: () ->
-    @change {}, {}, true
+    @refresh()
     super
 
   change: (changed, touched, init) ->

@@ -1,10 +1,10 @@
 Operator = require './operator'
 
 class Join extends Operator
-  @traits: ['node', 'bind', 'operator', 'join']
+  @traits: ['node', 'bind', 'operator', 'source', 'join']
 
-  shader: (shader) ->
-    shader.concat @transform
+  sourceShader: (shader) ->
+    shader.concat @operator
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -39,20 +39,20 @@ class Join extends Operator
     @splitScale     = uniforms.splitScale
     @splitDimension = uniforms.splitDimension
 
-    transform.call 'split.position', uniforms
-    @bind.source.shader transform
+    transform.pipe 'split.position', uniforms
+    @bind.source.sourceShader transform
 
-    @transform = transform
+    @operator = transform
 
     # Notify of reallocation
     @trigger
-      event: 'rebuild'
+      type: 'rebuild'
 
   unmake: () ->
     super
 
   resize: () ->
-    @change {}, {}, true
+    @refresh()
     super
 
   change: (changed, touched, init) ->
@@ -78,6 +78,6 @@ class Join extends Operator
 
       # Rebuild geometry downstream
       @trigger
-        event: 'rebuild'
+        type: 'rebuild'
 
 module.exports = Join

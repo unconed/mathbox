@@ -2,8 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - World</title>
+  <title>MathBox - Present</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
@@ -24,14 +25,14 @@
       rotation: [.866, 0, 0, -.5]
     });
 
-    view.world({
+    view.present({
       position: [2, 0, 0],
       rotation: [.866, 0, -.5, 0]
     }).grid({
       width: 0.005,
     });
 
-    view.world({
+    view.present({
       position: [-2, 0, 0],
       rotation: [.866, 0, .5, 0],
     }).grid({

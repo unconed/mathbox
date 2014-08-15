@@ -1,9 +1,9 @@
-Base            = require './base'
-SpriteGeometry  = require('../geometry').SpriteGeometry
+Base           = require './base'
+SpriteGeometry = require('../geometry').SpriteGeometry
 
 class Sprite extends Base
-  constructor: (gl, shaders, options) ->
-    super gl, shaders
+  constructor: (renderer, shaders, options) ->
+    super renderer, shaders, options
 
     uniforms = options.uniforms ? {}
     position = options.position
@@ -20,33 +20,34 @@ class Sprite extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    v.import position if position
-    v.call 'sprite.position',  @uniforms
-    v.call 'project.position', @uniforms
+    v.require position if position
+    v.pipe 'sprite.position',  @uniforms
+    v.pipe 'project.position', @uniforms
 
     f = factory.fragment
-    f.call 'style.color',      @uniforms
-    f.call 'fragment.round',   @uniforms
+    f.pipe 'style.color',      @uniforms
+    f.pipe 'fragment.round',   @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    window.material = @material
+    object = new THREE.Mesh @geometry, @material
 
-    @object = new THREE.Mesh @geometry, @material
-    @object.frustumCulled = false;
-    @object.matrixAutoUpdate = false;
+    @_raw object
+    @objects = [object]
 
-  show: (transparent) ->
-    @object.visible = true
-    @object.material.transparent = true
+  show: (transparent, blending) ->
+    for object in @objects
+      object.visible = true
+      object.material.transparent = true
+      object.material.blending    = blending
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @object = @geometry = @material = null
+    @objects = @geometry = @material = null
     super
 
 module.exports = Sprite

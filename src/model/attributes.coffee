@@ -2,7 +2,7 @@
  Custom attribute model
  - Organizes attributes by trait
  - Provides shorthand aliases to access via flat namespace API
- - Values are stored in three.js uniform-style objects by reference
+ - Values are stored in three.js uniform-style objects so they can be bound as uniforms
  - Type validators and setters avoid copying value objects on write
  - Coalesces update notifications per object and per trait
  
@@ -11,12 +11,13 @@
 
 class Attributes
   constructor: (definitions) ->
-    @traits = definitions.Traits
-    @types  = definitions.Types
+    @traits  = definitions.Traits
+    @types   = definitions.Types
     @pending = []
 
   make: (type) ->
-    type: type.uniform?()
+    _type: type
+    type:  type.uniform?() # for three.js
     value: type.make()
 
   apply: (object, traits = []) ->
@@ -33,8 +34,7 @@ class Attributes
       callback() for callback in calls
 
     if limit == 0
-      console.error 'While digesting: ', object
-      throw Error("Infinite loop in Data::digest")
+      throw Error("More than #{limit} iterations in Data::digest")
 
     return
 
@@ -56,17 +56,14 @@ class Data
       mapTo[alias]  = name
 
     # Get/set
-    get = (key) =>
-      key = to(key)
-      @[key]?.value
+    get = (key) => @[key]?.value ? @[to(key)]?.value
     set = (key, value, ignore) =>
       key = to(key)
-      throw "wat" unless validators[key]?
-      return console.warn "Setting unknown property `#{key}`" unless validators[key]?
+      throw "Setting unknown property '#{key}'" unless validators[key]?
 
       replace = validate key, value, @[key].value
       @[key].value = replace if replace != undefined
-      change key if !ignore
+      change key, value unless ignore
 
     object.get = (key) =>
       if key?
@@ -100,7 +97,7 @@ class Data
     changed = {}
     touched = {}
     getNS  = (key) -> key.split('.')[0]
-    change = (key) =>
+    change = (key, value) =>
       if !dirty
         dirty = true
         attributes.queue digest
@@ -166,7 +163,14 @@ class Data
         makers[key] = options.make
         validators[key] = options.validate
 
+    # Store array of traits
     unique = list.filter (object, i) -> list.indexOf(object) == i
     object.traits = unique
+
+    # And hash for CSSauron
+    hash = object.traits.hash = {}
+    hash[trait] = true for trait in unique
+
+    null
 
 module.exports = Attributes

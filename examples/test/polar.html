@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Polar</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
@@ -15,12 +16,12 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(2.3, 1, 2);
+    three.camera.position.set(0, 0, 3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     time = 0
     three.on('update', function () {
-      time = three.Time.now / 4
+      time = three.Time.clock / 4
     });
 
     view = mathbox.polar({
@@ -68,6 +69,7 @@
       opacity: 0.5,
       unitX: π,
       baseX: 2,
+      zIndex: -5,
     });
     view.line({
       points: '#sampler',

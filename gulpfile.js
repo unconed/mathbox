@@ -42,8 +42,8 @@ var source = coffees.concat(glsls).concat(vendor);
 var bundle = vendor.concat(core);
 
 var test = bundle.concat([
-  'test/**/*.spec.js',
-]);
+  'test/**/*.spec.coffee',
+]).filter(function (path) { return !path.match(/fix\.js/); });
 
 gulp.task('glsl', function () {
   return gulp.src(glsls)

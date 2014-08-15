@@ -1,30 +1,27 @@
 Parent = require './parent'
 
 class Root extends Parent
+  @traits = ['node', 'root', 'scene']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @visible = true
     @size = null
-
-    scene    = context.scene
-    render   = (event) => scene.add    event.renderable.object
-    unrender = (event) => scene.remove event.renderable.object
-
-    add = (event) ->
-      event.object.primitive.on  'render',   render
-      event.object.primitive.on  'unrender', unrender
-
-    remove = (event) ->
-      event.object.primitive.off 'render',   render
-      event.object.primitive.off 'unrender', unrender
-
-    @node.on 'add',    add
-    @node.on 'remove', remove
 
     @event =
       type: 'update'
+
+  adopt:   (renderable) -> @_context.scene.add    object for object in renderable.objects
+  unadopt: (renderable) -> @_context.scene.remove object for object in renderable.objects
+
+  select: (selector) ->
+    @node.model.select selector
+
+  watch: (selector, handler) ->
+    @node.model.watch selector, handler
+
+  unwatch: (handler) ->
+    @node.model.unwatch handler
 
   resize: (size) ->
     @size = size
@@ -32,10 +29,12 @@ class Root extends Parent
       type: 'resize'
       size: size
 
+  getSize: () -> @size
+
   update: () ->
     @trigger @event
 
   present: (shader) ->
-    shader.call 'view.position'
+    shader.pipe 'view.position'
 
 module.exports = Root

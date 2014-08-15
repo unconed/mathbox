@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <title>MathBox - Stereographic Hopf Fibration</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor', 'stats'],
+      plugins: ['core', 'controls', 'cursor'],
       controls: {
         klass: THREE.OrbitControls
       },
@@ -94,7 +95,7 @@
       opacity: .5,
       first: false,
       second: false,
-      zBias: -80,
+      zIndex: -80,
     });
 
     view.area({
@@ -113,7 +114,7 @@
       color: 0x3080FF,
       first: false,
       second: false,
-      zBias: -5,
+      zIndex: -5,
     });
 
     view.area({
@@ -132,7 +133,7 @@
     });
     view.line({
       color: 0x3080FF,
-      zBias: 10,
+      zIndex: 10,
       width: 0.003
     });
 

@@ -1,30 +1,34 @@
-Buffer  = require './buffer'
-Texture = require './texture'
-Util    = require '../../util'
+Buffer      = require './buffer'
+DataTexture = require './texture/datatexture'
+Util        = require '../../util'
 
 class ArrayBuffer_ extends Buffer
-  constructor: (gl, shaders, options) ->
+  constructor: (renderer, shaders, options) ->
     @callback = options.callback || ->
     @length   = options.length   || 1
     @history  = options.history  || 1
 
     @samples = @length
-    super gl, shaders, options
+    super renderer, shaders, options
 
   shader: (shader) ->
+    shader.pipe 'map.xyzw.texture', @uniforms
     super shader
 
   build: () ->
     super
 
     @data    = new Float32Array @samples * @channels * @items
-    @texture = new Texture @gl, @samples * @items, @history, @channels
+    @texture = new DataTexture  @gl, @samples * @items, @history, @channels
     @index   = 0
     @filled  = 0
 
     @dataPointer = @uniforms.dataPointer.value
 
     @_adopt @texture.uniforms
+    @_adopt
+      textureItems:  { type: 'f', value: @items }
+      textureHeight: { type: 'f', value: 1 }
 
   getFilled: () -> @filled
 

@@ -10,14 +10,11 @@ class Project4 extends Transform
   unmake: () ->
     delete @uniforms
 
-  change: (changed, touched, init) ->
-    return unless init
-
   to: (vector) ->
     vector.applyMatrix4 @projectionMatrix
 
   transform: (shader) ->
-    shader.call 'project4.position', @uniforms
+    shader.pipe 'project4.position', @uniforms
     @parent?.transform shader
 
 module.exports = Project4

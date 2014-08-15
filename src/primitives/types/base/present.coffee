@@ -1,6 +1,6 @@
 Parent = require './parent'
 
-class World extends Parent
+class Present extends Parent
   @traits = ['node', 'object', 'position']
 
   make: () ->
@@ -15,4 +15,4 @@ class World extends Parent
     @_helpers.position.shader shader, true
     @parent?.present shader
 
-module.exports = World
+module.exports = Present

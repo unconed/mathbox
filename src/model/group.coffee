@@ -5,15 +5,33 @@ class Group extends Node
     super options, type, traits, attributes
 
     @children = []
+    @on 'reindex', (event) => child.trigger event for child in @children
 
   add: (node) ->
-    node.index = @children.length
+    node.parent?.remove node
+
+    node._index @children.length, @
     @children.push node
     node._added @
 
+    # Adopt children ?
+    # if node.children?.length
+
   remove: (node) ->
-    delete node.index
-    @children = (child for child in @children when child != node)
+    # or Remove children?
+    # @node.empty() if node.children?.length
+
+    index = @children.indexOf node
+    return if index == -1
+
+    @children = @children.splice index, 1
+    node._index null
     node._removed @
+
+    node._index i for node, i in @children.slice index
+
+  empty: () ->
+    children = @children.slice()
+    @remove node for node in children
 
 module.exports = Group

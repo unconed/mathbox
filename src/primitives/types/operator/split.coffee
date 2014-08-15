@@ -1,10 +1,10 @@
 Operator = require './operator'
 
 class Split extends Operator
-  @traits: ['node', 'bind', 'operator', 'split']
+  @traits: ['node', 'bind', 'operator', 'source', 'split']
 
-  shader: (shader) ->
-    shader.concat @transform
+  sourceShader: (shader) ->
+    shader.concat @operator
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -41,20 +41,20 @@ class Split extends Operator
     @splitScale      = uniforms.splitScale
     @splitDimensions = uniforms.splitDimensions
 
-    transform.call 'split.position', uniforms
-    @bind.source.shader transform
+    transform.pipe 'split.position', uniforms
+    @bind.source.sourceShader transform
 
-    @transform = transform
+    @operator = transform
 
     # Notify of reallocation
     @trigger
-      event: 'rebuild'
+      type: 'rebuild'
 
   unmake: () ->
     super
 
   resize: () ->
-    @change {}, {}, true
+    @refresh()
     super
 
   change: (changed, touched, init) ->

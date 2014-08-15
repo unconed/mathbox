@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Curvedots</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(0, 0, 3);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    time = 0
+    three.on('update', function () {
+      time = three.Time.clock
+    });
+
+    view = mathbox.cartesian({
+      range: [[-2, 2], [-1, 1], [-1, 1]],
+      scale: [2, 1, 1],
+    });
+
+    view.interval({
+      id: 'sampler',
+      length: 32,
+      expression: function (x, i, emit) {
+        y = Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
+        emit(x, y);
+      },
+      dimensions: 2,
+    });
+
+    view.spread({
+      height: [0, .05, 0, 0],
+    });
+
+    view.line({
+      color: 0x3090FF,
+      width: 0.005,
+    });
+    view.point({
+      color: 0x3090FF,
+      size: 0.03,
+    });
+
+    // presentation integration
+    messageHandler = function (event) {
+      d = event.data;
+      if (d && (d = d.mathBoxDirector) && d.method == 'go') {
+        v = Math.max(0, Math.min(1, d.args[0] - 3))
+        mathbox.select('#sampler').set({ history: v * 25 })
+      }
+    }.bind(this);
+    window.addEventListener('message', messageHandler);
+
+  </script>
+</body>
+</html>

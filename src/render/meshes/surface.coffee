@@ -2,8 +2,8 @@ Base            = require './base'
 SurfaceGeometry = require('../geometry').SurfaceGeometry
 
 class Surface extends Base
-  constructor: (gl, shaders, options) ->
-    super gl, shaders
+  constructor: (renderer, shaders, options) ->
+    super renderer, shaders, options
 
     uniforms = options.uniforms ? {}
     position = options.position
@@ -21,33 +21,32 @@ class Surface extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    v.import position if position
+    v.require position if position
     v.split()
-    v  .call 'surface.position',        @uniforms if !shaded
-    v  .call 'surface.position.normal', @uniforms, '_shade_' if shaded
+    v  .pipe 'surface.position',        @uniforms if !shaded
+    v  .pipe 'surface.position.normal', @uniforms if  shaded
     v.pass()
-    v.call 'project.position',   @uniforms
+    v.pipe 'project.position',   @uniforms
 
     f = factory.fragment
-    f.call 'style.color',        @uniforms if !shaded
-    f.call 'style.color.shaded', @uniforms, '_shade_' if shaded
-    f.call 'fragment.color',     @uniforms
+    f.pipe 'style.color',        @uniforms if !shaded
+    f.pipe 'style.color.shaded', @uniforms if  shaded
+    f.pipe 'fragment.color',     @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    window.material = @material
+    object = new THREE.Mesh @geometry, @material
 
-    @object = new THREE.Mesh @geometry, @material
-    @object.frustumCulled = false;
-    @object.matrixAutoUpdate = false;
+    @_raw object
+    @objects = [object]
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @object = @geometry = @material = null
+    @objects = @geometry = @material = null
     super
 
 module.exports = Surface

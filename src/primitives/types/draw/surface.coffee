@@ -1,5 +1,4 @@
 Primitive = require '../../primitive'
-Source    = require '../base/source'
 Util      = require '../../../util'
 
 class Surface extends Primitive
@@ -26,22 +25,22 @@ class Surface extends Primitive
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make
-      'geometry.points': Source
+      'geometry.points': 'source'
 
     # Build transform chain
     position = @_shaders.shader()
     @_helpers.position.make()
 
     # Fetch position and transform to view
-    @bind.points.shader position
+    @bind.points.sourceShader position
     @_helpers.position.shader position
 
     # Samplers for XY / YX wires
     wireXY = position
 
     wireYX = @_shaders.shader()
-    wireYX.call Util.GLSL.swizzleVec4 'yxzw'
-    wireYX.concat position
+    wireYX.pipe Util.GLSL.swizzleVec4 'yxzw'
+    wireYX.pipe position
 
     # Prepare bound uniforms
     styleUniforms   = @_helpers.style.uniforms()
@@ -51,10 +50,10 @@ class Surface extends Primitive
 
     # Darken wireframe if needed for contrast
     # Auto z-bias wireframe over surface
-    wireUniforms.styleColor = @_attributes.make @_types.color()
-    wireUniforms.styleZBias = @_attributes.make @_types.number(0)
-    @wireColor = wireUniforms.styleColor.value
-    @wireZBias = wireUniforms.styleZBias
+    wireUniforms.styleColor  = @_attributes.make @_types.color()
+    wireUniforms.styleZIndex = @_attributes.make @_types.number()
+    @wireColor  = wireUniforms.styleColor.value
+    @wireZIndex = wireUniforms.styleZIndex
     @wireScratch = new THREE.Color
 
     # Fetch geometry dimensions
@@ -73,7 +72,8 @@ class Surface extends Primitive
     objects = []
 
     # Make line and surface renderables
-    uniforms = @_helpers.object.merge lineUniforms, styleUniforms, wireUniforms
+    uniforms = Util.JS.merge lineUniforms, styleUniforms, wireUniforms
+    zUnits = if first or second then -50 else 0
     if first
       @line1 = @_renderables.make 'line',
                 uniforms: uniforms
@@ -82,6 +82,7 @@ class Surface extends Primitive
                 ribbons:  depth
                 layers:   layers
                 position: wireXY
+                zUnits:   -zUnits
       objects.push @line1
 
     if second
@@ -92,10 +93,11 @@ class Surface extends Primitive
                 ribbons:  depth
                 layers:   layers
                 position: wireYX
+                zUnits:   -zUnits
       objects.push @line2
 
     if solid
-      uniforms = @_helpers.object.merge surfaceUniforms, styleUniforms
+      uniforms = Util.JS.merge surfaceUniforms, styleUniforms
       @surface = @_renderables.make 'surface',
                 uniforms: uniforms
                 width:    width
@@ -104,6 +106,7 @@ class Surface extends Primitive
                 layers:   layers
                 position: position
                 shaded:   shaded
+                zUnits:   zUnits
       objects.push @surface
 
     @resize()
@@ -123,10 +126,6 @@ class Surface extends Primitive
                   changed['mesh.solid'] or
                   touched['grid']
 
-    if changed['style.zBias'] or
-       init
-      @wireZBias.value = @_get('style.zBias') + 5
-
     if changed['style.color'] or
        changed['mesh.solid'] or
        init
@@ -134,6 +133,7 @@ class Surface extends Primitive
       solid  = @_get 'mesh.solid'
       color  = @_get 'style.color'
 
+      @wireZIndex.value = @_get('style.zIndex') + 5
       @wireColor.copy color
       if solid
         c = @wireScratch

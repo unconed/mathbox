@@ -1,27 +1,35 @@
 class API
-  constructor: (@_controller, @_animator, @_director, @_up, @_targets) ->
+  constructor: (@_context, @_up, @_targets) ->
+    root = @_context.controller.getRoot()
 
-    @_targets ?= [@_controller.getRoot()]
+    @_targets ?= [@root]
+    @isRoot = @_targets.length == 1 and @_targets[0] == @root
+
+    # Look like an array
+    @[i] = t for t, i in @_targets
+    @length = @_targets.length
 
     # Primitive factory
-    for type in @_controller.getTypes() when type !in ['root']
+    for type in @_context.controller.getTypes() when type !in ['root']
       do (type) =>
         @[type] = (options) => @add(type, options)
 
-    # Expose model for debug
-    @_model = @_controller.model
+  each: (callback) ->
+    callback @[i], i, @ for i in [0..@length]
 
   select: (selector) ->
-    @push @_controller.model.select selector
+    targets = @_context.model.select selector, if !@isRoot then _targets else null
+    @push targets
 
   add: (type, options) ->
     # Make node/primitive
+    controller = @_context.controller
 
     # Add to target
     nodes = []
     for target in @_targets
-      node = @_controller.make type, options
-      @_controller.add node, target
+      node = controller.make type, options
+      controller.add node, target
       nodes.push node
 
     # Enter node if it is capable of children
@@ -30,15 +38,20 @@ class API
       @push parents
     else @
 
+  remove: (selector) ->
+    return @select(selector).remove() if selector
+    @_context.controller.remove target for target in @_targets
+
   set: (key, value) ->
-    @_controller.set target, key, value for target in @_targets
+    @_context.controller.set target, key, value for target in @_targets
     @
 
-  get: () ->
-    @_controller.get target for target in @_targets
+  get: (selector) ->
+    return @select(selector).get() if selector
+    @_context.controller.get target for target in @_targets
 
   push: (targets) ->
-    new API @_controller, @_animator, @_director, @, targets
+    new API @_context, @, targets
 
   end: () -> @pop()
   pop: () -> @_up ? @

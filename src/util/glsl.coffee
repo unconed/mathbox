@@ -6,23 +6,67 @@ index =
   z: 2
   w: 3
 
-# Select component
-exports.selectVec4Float = (channel) ->
-  channel = letters[channel] if (channel == +channel)
+# Sample data texture array
+exports.sample2DArray = (textures) ->
+
+  divide = (a, b) ->
+    if a == b
+      out = """
+      return texture2D(dataTextures[#{a}], uv);
+      """
+    else
+      mid = Math.ceil a + (b - a) / 2
+      out = """
+      if (z < #{mid - .5}) {
+        #{divide(a, mid - 1)}
+      }
+      else {
+        #{divide(mid, b)}
+      }
+      """
+    out = out.replace /\n/g, "\n  "
+
+  body = divide 0, textures - 1
 
   """
-  float selectVec4Float(vec4 xyzw) {
-    return xyzw.#{channel};
+  uniform sampler2D dataTextures[#{textures}];
+
+  vec4 sample2DArray(vec2 uv, float z) {
+    #{body}
   }
   """
 
-# Flip sampling component
-exports.flipVec2 = (channel) ->
+# Binary operator
+exports.binaryOperator = (type, op) ->
   """
-  vec2 flip(vec2 uv) {
-    uv.#{channel} = -uv.#{channel};
-    return uv;
+  #{type} binaryOperator(#{type} a, #{type} b) {
+    return a #{op} b;
   }
+  """
+
+# Extend to 4-vector with zeroes
+exports.extendVec = (from, to) ->
+  diff = to - from
+
+  from = 'vec' + from
+  to   = 'vec' + to
+
+  parts = [0..diff].map (x) -> if x then '0.0' else 'v'
+  ctor  = parts.join ','
+
+  """
+  #{to} extendVec(#{from} v) { return #{to}(#{ctor}); }
+  """
+
+# Truncate 4-vector
+exports.truncateVec = (from, to) ->
+  swizzle = 'xyzw'.substr 0, to
+
+  from = 'vec' + from
+  to   = 'vec' + to
+
+  """
+  #{to} truncateVec(#{from} v) { return v.#{swizzle}; }
   """
 
 # Apply 4-component vector swizzle

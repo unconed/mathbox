@@ -109,7 +109,7 @@ class Spherical extends View
     vector.applyMatrix4 @viewMatrix
 
   transform: (shader) ->
-    shader.call 'spherical.position', @uniforms
+    shader.pipe 'spherical.position', @uniforms
     @parent?.transform shader
 
   axis: (dimension) ->

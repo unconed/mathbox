@@ -4,7 +4,7 @@ Traits =
   node:
     type:        Types.string()
     id:          Types.nullable(Types.string())
-    classes:     Types.array(Types.string())
+    classes:     Types.classes()
 
   object:
     position:    Types.vec4()
@@ -15,7 +15,11 @@ Traits =
   style:
     opacity:     Types.number(1)
     color:       Types.color()
-    zBias:       Types.number(0)
+    blending:    Types.blending()
+    zFactor:     Types.number(0)
+    zUnits:      Types.number(0)
+    zIndex:      Types.number(0)
+    zOrder:      Types.nullable(Types.number())
 
   point:
     size:        Types.number(.01)
@@ -70,12 +74,14 @@ Traits =
 
   geometry:
     points:      Types.select(Types.object())
-    colors:      Types.select(Types.object())
+    colors:      Types.nullable(Types.select(Types.object()))
+
+  source:
+    hint:        Types.nullable(Types.string())
 
   data:
     data:        Types.nullable(Types.object())
     expression:  Types.nullable(Types.func())
-    source:      Types.nullable(Types.select(Types.object()))
     live:        Types.bool(true)
     dimensions:  Types.int(3)
     items:       Types.int(1)
@@ -88,6 +94,14 @@ Traits =
     width:       Types.int(1)
     height:      Types.int(1)
     history:     Types.int(1)
+  voxel:
+    width:       Types.int(1)
+    height:      Types.int(1)
+    depth:       Types.int(1)
+
+  texture:
+    width:       Types.nullable(Types.int())
+    height:      Types.nullable(Types.int())
 
   operator:
     source:      Types.select(Types.object())
@@ -125,5 +139,19 @@ Traits =
     width:       Types.number(1)
     height:      Types.number(1)
     depth:       Types.number(1)
+
+  remap:
+    indices:     Types.number(4)
+    dimensions:  Types.number(4)
+    shader:      Types.nullable(Types.string())
+
+  root:
+    camera:      Types.nullable(Types.select(Types.object()))
+
+  rtt:
+    history:     Types.int(1)
+  compose:
+    alpha:       Types.bool(false)
+    depth:       Types.bool(false)
 
 module.exports = Traits

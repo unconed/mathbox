@@ -1,14 +1,18 @@
 Source = require '../base/source'
 
 class Data extends Source
-  @traits: ['node', 'data']
+  @traits: ['node', 'data', 'source']
+
+  update: () ->
 
   make: () ->
+    @dataRoot = @_inherit 'root'
+
     @handler = () => @update()
-    @root.on  'update', @handler
+    @dataRoot.on  'update', @handler
 
   unmake: () ->
-    @root.off 'update', @handler
+    @dataRoot.off 'update', @handler
 
 
 

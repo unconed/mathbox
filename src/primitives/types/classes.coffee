@@ -1,11 +1,11 @@
 Classes =
-  axis:              require './render/axis'
-  grid:              require './render/grid'
-  line:              require './render/line'
-  point:             require './render/point'
-  surface:           require './render/surface'
-  ticks:             require './render/ticks'
-  vector:            require './render/vector'
+  axis:              require './draw/axis'
+  grid:              require './draw/grid'
+  line:              require './draw/line'
+  point:             require './draw/point'
+  surface:           require './draw/surface'
+  ticks:             require './draw/ticks'
+  vector:            require './draw/vector'
 
   cartesian:         require './view/cartesian'
   cartesian4:        require './view/cartesian4'
@@ -22,6 +22,9 @@ Classes =
   matrix:            require './data/matrix'
   area:              require './data/area'
 
+  voxel:             require './data/voxel'
+  volume:            require './data/volume'
+
   lerp:              require './operator/lerp'
   transpose:         require './operator/transpose'
   swizzle:           require './operator/swizzle'
@@ -29,9 +32,13 @@ Classes =
   repeat:            require './operator/repeat'
   split:             require './operator/split'
   join:              require './operator/join'
+  remap:             require './operator/remap'
 
-  world:             require './base/world'
+  present:           require './base/present'
   group:             require './base/group'
   root:              require './base/root'
+
+  rtt:               require './rtt/rtt'
+  compose:           require './rtt/compose'
 
 module.exports = Classes

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Curve</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
@@ -15,12 +16,12 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(2.3, 1, 2);
+    three.camera.position.set(0, 0, 3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     time = 0
     three.on('update', function () {
-      time = three.Time.now
+      time = three.Time.clock
     });
 
     view = mathbox.cartesian({
@@ -44,22 +45,25 @@
       divideX: 20,
       width: 0.005,
       opacity: 0.5,
+      zIndex: -5,
     });
-
 
     view.interval({
       id: 'sampler',
       length: 64,
       expression: function (x, i, emit) {
-        emit(x, Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time + x * x * 10000)*.05);
+        y = Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
+        emit(x, y);
       },
       dimensions: 2,
     });
+
     view.line({
       points: '#sampler',
       color: 0x3090FF,
       width: 0.01,
     });
+
   </script>
 </body>
 </html>

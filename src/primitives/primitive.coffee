@@ -14,33 +14,42 @@ class Primitive
     @_types       = @_attributes.types
 
     @node.primitive = @
+    @traits = @node.traits
 
-    @node.on 'change', (event) =>
-      @change event.changed, event.touched if @root
-
+    # This node has been inserted/removed
     @node.on 'added', (event) =>
       @_added()
 
     @node.on 'removed', (event) =>
       @_removed()
 
+    # Property change
+    @node.on 'change', (event) =>
+      @change event.changed, event.touched if @root
+
+    # Attribute getter / helpers
     @_get = @node.get.bind @node
     @_helpers = helpers @, @node.traits
     @handlers = {}
 
-    @root = @rootNode = @parent = null
+    @root = @parent = null
 
-  # Construction of renderables
+  is: (trait) ->
+    @traits.indexOf(trait) >= 0
+
+  # Renderables lifecycle
+
+  make:   () ->
+  unmake: (rebuild) ->
+  change: (changed, touched, init) ->
 
   rebuild: () ->
     if @root
-      @unmake()
+      @unmake true
       @make()
-      @change {}, {}, true
+      @refresh()
 
-  make:   () ->
-  unmake: () ->
-  change: (changed, touched, init) ->
+  refresh: () -> @change {}, {}, true
 
   # Transform pipeline
   transform: (shader) ->
@@ -49,20 +58,23 @@ class Primitive
   present: (shader) ->
     @parent?.present shader
 
-  # Add/removal callback
+  # A node is being inserted
+  _add: () ->
+
+  _remove: () ->
+
+  # This node has been inserted
   _added: () ->
-    @rootNode = @node.root
     @parent   = @node.parent.primitive
-    @root     = @rootNode.primitive
+    @root     = @node.root.primitive
 
     @make()
-    @change {}, {}, true
+    @change {}, {}, {}, true
 
   _removed: () ->
     @unmake()
 
     @root     = null
-    @rootNode = null
     @parent   = null
 
   # Attribute changes
@@ -71,29 +83,32 @@ class Primitive
 
   # Find parent with certain class
 
-  _inherit: (klass) ->
+  _inherit: (trait, allowSelf = false) ->
 
-    if @ instanceof klass
+    if allowSelf and trait in @node.traits
       return @
 
     if @parent?
-      @parent._inherit klass
+      @parent._inherit trait, true
     else
       null
 
-  # Find attached data model
-  _attached: (key, klass) ->
+  # Attach to primitive by trait
+  _attach: (key, trait, watcher) ->
 
-    # Explicitly bound node
-    object    = @_get key
+    object = @_get key
 
-    if typeof object == 'string'
-      node = @rootNode.model.select(object)[0]
-      return node.primitive if node and node.primitive instanceof klass
-
+    # Direct JS binding, no watcher.
     if typeof object == 'object'
       node = object
-      return node.primitive if node and node.primitive instanceof klass
+      return node.primitive if node? and trait in node.traits
+
+    # Selector binding
+    if typeof object == 'string'
+      selection = @root.watch object, watcher
+      node = selection[0]
+      if node? and trait in node.traits
+        return node.primitive
 
     # Implicitly associated node (scan backwards until we find one)
     previous = @node
@@ -102,11 +117,11 @@ class Primitive
       break if !parent
       previous = parent.children[previous.index - 1]
       previous = parent if !previous
-      return previous.primitive if previous?.primitive instanceof klass
+      return previous.primitive if previous? and trait in previous.traits
 
-    throw "Could not locate attached data source on #{key} `#{@node.id}`"
+    id = "#" + @node.id if @node.id?
+    throw "Could not find #{trait} `#{object}` on `#{@node.type}#{id}` #{key}"
     null
-
 
 THREE.Binder.apply Primitive::
 

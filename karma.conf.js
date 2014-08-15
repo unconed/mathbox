@@ -7,13 +7,12 @@ module.exports = function(config) {
     // base path, that will be used to resolve files and exclude
     basePath: '',
 
-
     // frameworks to use
     frameworks: ['jasmine'],
 
-
     // list of files / patterns to load in the browser
     files: [
+      // Defined by gulp
     ],
 
 

@@ -1,19 +1,20 @@
-Renderable = require('../renderable')
+Renderable = require '../renderable'
 
 class Buffer extends Renderable
   @iterationLimit: 0xFFFF
 
-  constructor: (gl, shaders, options) ->
+  constructor: (renderer, shaders, options) ->
     @items    ?= options.items    || 1
     @samples  ?= options.samples  || 1
     @channels ?= options.channels || 4
 
-    super gl, shaders
+    super renderer, shaders
     @build()
 
   shader: (shader) ->
-    name = "sample.2d.#{@channels}"
-    shader.call name, @uniforms
+    shader.pipe "map.2d.data", @uniforms
+    shader.pipe "sample.2d", @uniforms
+    shader.pipe "sample.fill.#{@channels}" if @channels < 4
 
   build: () ->
     @uniforms =
@@ -41,9 +42,9 @@ class Buffer extends Renderable
   iterate: () ->
   generate: () ->
     data  = @data
-    i = 0
     limit = @samples * @channels * @items
 
+    i = 0
     switch @channels
 
       when 1 then (x) ->

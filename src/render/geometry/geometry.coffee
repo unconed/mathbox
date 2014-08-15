@@ -10,7 +10,7 @@ tick = () ->
 class Geometry extends THREE.BufferGeometry
   constructor: () ->
     THREE.BufferGeometry.call @
-    @uniforms = {}
+    @uniforms ?= {}
 
     @tock = tick() if debug
 

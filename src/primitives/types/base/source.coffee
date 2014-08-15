@@ -1,7 +1,7 @@
 Primitive = require '../../primitive'
 
 class Source extends Primitive
-  @traits: ['node', 'data']
+  @traits: ['node', 'data', 'source']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -9,8 +9,7 @@ class Source extends Primitive
   callback: (callback) ->
     callback ? () ->
 
-  shader: () ->
-  update: () ->
+  sourceShader: () ->
 
   getDimensions: () ->
     items:  1

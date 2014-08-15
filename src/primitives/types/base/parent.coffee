@@ -7,10 +7,5 @@ class Parent extends Primitive
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @visible = true
-
-  make: () ->
-
-  unmake: () ->
 
 module.exports = Parent

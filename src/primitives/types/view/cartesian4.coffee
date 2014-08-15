@@ -66,7 +66,7 @@ class Cartesian4 extends View
     throw "TODO"
 
   transform: (shader) ->
-    shader.call 'cartesian4.position', @uniforms
+    shader.pipe 'cartesian4.position', @uniforms
     @parent?.transform shader
 
 module.exports = Cartesian4

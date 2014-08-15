@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Surface</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
@@ -21,7 +22,7 @@
 
     time = 0
     three.on('update', function () {
-      time = three.Time.now
+      time = three.Time.clock
     });
 
     view = mathbox.cartesian({

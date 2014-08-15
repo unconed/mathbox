@@ -27,7 +27,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:
     init: true
 
-  listen: ['ready', 'update', 'post', 'size'],
+  listen: ['ready', 'update', 'post', 'resize'],
 
   install: (three) ->
     inited = false
@@ -42,7 +42,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
         camera = options?.camera || @options.camera || three.camera
         script = options?.script || @options.script
 
-        @context = new Context three.renderer.context, scene, camera, script
+        @context = new Context three.renderer, scene, camera, script
         @context.api.three = three
         three.mathbox = @context.api
 
@@ -75,7 +75,10 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   update: (event, three) ->
     @context?.update()
 
-  post: () ->
+  render: (event, three) ->
+    @context?.update()
+
+  post: (event, three) ->
     if @first
       fmt = (x) ->
         out = []

@@ -1,7 +1,7 @@
 Data = require './data'
 
 class Array_ extends Data
-  @traits: ['node', 'data', 'array']
+  @traits: ['node', 'data', 'source', 'array']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -11,8 +11,7 @@ class Array_ extends Data
     @length = 0
     @filled = false
 
-  shader: (shader) ->
-    shader.call 'map.2d.xyzw', @sampleUniforms
+  sourceShader: (shader) ->
     @buffer.shader shader
 
   getDimensions: () ->
@@ -50,14 +49,9 @@ class Array_ extends Data
 
     @length = @space
 
-    # Prepare sampling uniforms
-    @sampleUniforms =
-      textureItems:  @_attributes.make @_types.number items
-      textureHeight: @_attributes.make @_types.number 1
-
     # Create arraybuffer
     if @space > 0
-      @buffer = @_renderables.make 'arraybuffer',
+      @buffer = @_renderables.make 'arrayBuffer',
                 items:    @items
                 length:   @space
                 history:  @history
@@ -81,13 +75,11 @@ class Array_ extends Data
     if changed['data.expression']? or
        init
 
-      callback = @_get 'data.expression'
-      @buffer.callback = @callback callback
+      @buffer.callback = @callback @_get 'data.expression'
 
   update: () ->
     return unless @buffer
     return unless !@filled or @_get 'data.live'
-    return unless @parent.visible
 
     data = @_get 'data.data'
 

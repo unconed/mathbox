@@ -22,10 +22,11 @@ class SurfaceGeometry extends Geometry
     super options
 
     @geometryClip = new THREE.Vector4
-    @uniforms =
-      geometryClip:
-        type: 'v4'
-        value: @geometryClip
+
+    @uniforms ?= {}
+    @uniforms.geometryClip =
+      type: 'v4'
+      value: @geometryClip
 
     @width    = width    = +options.width    || 2
     @height   = height   = +options.height   || 2
