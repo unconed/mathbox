@@ -39,6 +39,8 @@ class ArrowGeometry extends Geometry
     @addAttribute 'arrow',     Float32Array, points,        3
     @addAttribute 'attach',    Float32Array, points,        2
 
+    @_autochunk()
+
     index    = @_emitter 'index'
     position = @_emitter 'position4'
     arrow    = @_emitter 'arrow'
@@ -94,9 +96,8 @@ class ArrowGeometry extends Geometry
           arrow    0, 0, 1
           attach   near, far
 
+    @_finalize()
     @clip()
-
-    @_ping()
 
     return
 
@@ -113,7 +114,7 @@ class ArrowGeometry extends Geometry
     else
       quads = 0
 
-    @offsets = [
+    @_offsets [
       start: 0
       count: quads * 6
     ]

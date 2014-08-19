@@ -42,6 +42,8 @@ class SpriteGeometry extends Geometry
     @addAttribute 'position4', Float32Array, points,        4
     @addAttribute 'sprite',    Float32Array, points,        2
 
+    @_autochunk()
+
     index    = @_emitter 'index'
     position = @_emitter 'position4'
     sprite   = @_emitter 'sprite'
@@ -74,9 +76,8 @@ class SpriteGeometry extends Geometry
               position x, y, z, l
               sprite v[0], v[1]
 
+    @_finalize()
     @clip()
-
-    @_ping()
 
     return
 
@@ -88,7 +89,7 @@ class SpriteGeometry extends Geometry
     maxs  = [@depth, @height, @width, @items]
     quads = @_reduce dims, maxs
 
-    @offsets = [
+    @_offsets [
       start: 0
       count: quads * 6
     ]

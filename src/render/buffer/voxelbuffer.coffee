@@ -52,7 +52,7 @@ class VoxelBuffer extends Buffer
       if repeat == false
         break
 
-    k
+    l
 
   write: (n = @samples) ->
     width  = @width * @items

@@ -95,19 +95,15 @@
       blending: THREE.AdditiveBlending,
     });
 
-    view.voxel({
+    view.volume({
       id: 'sampler',
       width:  32,
       height: 32,
       depth:  32,
-      expression: function (i, j, k, emit) {
+      expression: function (x, y, z, i, j, k, emit) {
         var u = Math.cos((i + j*j + k*k*k) * 100.681 + time) * .05;
         var v = Math.cos((i*i*i + j + k*k) * 120.681 + time) * .05;
         var w = Math.cos((i*i + j*j*j + k) * 140.681 + time) * .05;
-
-        var x = i / 32 * 2 - 1;
-        var y = j / 32 * 2 - 1;
-        var z = k / 32 * 2 - 1;
 
         emit(x, y, z);
         emit(x + u, y + v, z + w);

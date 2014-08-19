@@ -1,4 +1,5 @@
 Data = require './data'
+Util = require '../../../util'
 
 class Voxel extends Data
   @traits: ['node', 'data', 'source', 'voxel']
@@ -6,7 +7,7 @@ class Voxel extends Data
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @buffer = null
+    @buffer = @spec = null
     @filled = false
 
     @space =
@@ -41,40 +42,39 @@ class Voxel extends Data
   make: () ->
     super
 
+    # Read given dimensions
     width    = @_get 'voxel.width'
     height   = @_get 'voxel.height'
     depth    = @_get 'voxel.depth'
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
-    @items    = items
-    @channels = channels
+    dims = @spec =
+      channels: channels
+      items:    items
+      width:    width
+      height:   height
+      depth:    depth
 
-    # Allocate to right matrix size right away
+    @items    = dims.items
+    @channels = dims.channels
+
+    # Init to right size if data supplied
     data = @_get 'data.data'
-    if data?
+    dims = Util.Data.getDimensions data, dims
 
-      if data[0]?.length
-        if data[0][0]?.length
-          @spaceWidth = Math.max @spaceWidth, data[0].length / @items
-        else
-          @spaceWidth = Math.max @spaceWidth, data[0].length / @channels / @items
+    space = @space
+    space.width  = Math.max space.width,  dims.width  || 1
+    space.height = Math.max space.height, dims.height || 1
+    space.depth  = Math.max space.depth,  dims.depth  || 1
 
-        @spaceHeight = Math.max @spaceHeight, data.length
-      else
-        @spaceHeight = Math.max @spaceHeight, Math.floor data.length / @channels / @items / @spaceWidth
-
-    @width  = @spaceWidth  = Math.max @spaceWidth, width
-    @height = @spaceHeight = Math.max @spaceHeight, height
-
-    # Create matrix buffer
-    if @spaceWidth * @spaceHeight > 0
-      @buffer = @_renderables.make 'matrixBuffer',
-                width:    @spaceWidth
-                height:   @spaceHeight
-                history:  history
-                channels: channels
-                items:    items
+    # Create voxel buffer
+    @buffer = @_renderables.make 'voxelBuffer',
+              width:    space.width
+              height:   space.height
+              depth:    space.depth
+              channels: channels
+              items:    items
 
     # Notify of buffer reallocation
     @trigger
@@ -87,7 +87,7 @@ class Voxel extends Data
       @buffer = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['matrix'] or changed['data.dimensions']
+    @rebuild() if touched['voxel'] or changed['data.dimensions']
 
     return unless @buffer
 
@@ -102,55 +102,37 @@ class Voxel extends Data
 
     data = @_get 'data.data'
 
-    oldWidth  = @width
-    oldHeight = @height
-
-    width    = @spaceWidth
-    height   = @spaceHeight
-    channels = @channels
-    items    = @items
-
+    space    = @space
+    used     = @used
     filled   = @buffer.getFilled()
 
+    w = used.width
+    h = used.height
+    d = used.depth
+
     if data?
-
-      w = h = 0
-      method = 'copy'
-
-      # Autosize width/height based on data layout
-      if data[0]?.length
-        w = data[0].length / items
-        h = data.length
-
-        if !data[0][0]?.length
-          w /= channels
-          method = 'copy3D'
-        else
-          method = 'copy2D'
-      else
-        w = width
-        h = data.length / channels / items / width
-        method = 'copy'
-
-      # Enlarge if needed
-      if w > width           || h > height           #||
-#         w < @bufwidth * .33 || h < @bufheight * .33
-        @spaceWidth  = w
-        @spaceHeight = h
+      dims = Util.Data.getDimensions data, @spec
+      if dims.width  < spec.width  or
+         dims.height < spec.height or
+         dims.depth  < spec.depth
         @rebuild()
 
-      @buffer[method] data
-      @width  = w
-      @height = h
+      @buffer.callback = getThunk data
+
+      used.width  = dims.width
+      used.height = dims.height
+      used.depth  = dims.depth
 
     else
-      length  = @buffer.update()
+      length = @buffer.update()
 
-      @width  = width
-      @height = length / @width
+      used.width  = w = space.width
+      used.height = h = space.height
+      used.depth  = Math.ceil length / w / h
 
-    if oldWidth  != @width or
-       oldHeight != @height or
+    if used.width  != w or
+       used.height != h or
+       used.depth  != d or
        filled != @buffer.getFilled()
       @trigger
         type: 'resize'

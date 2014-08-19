@@ -1,14 +1,14 @@
 Voxel = require './voxel'
 
 class Volume extends Voxel
-  @traits: ['node', 'data', 'source', 'voxel', 'span:x', 'span:y', 'span:z', 'voxel', 'sampler:x', 'sampler:y', 'sampler:z']
+  @traits: ['node', 'data', 'source', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z']
 
   callback: (callback) ->
     dimensions = @_get 'volume.axes'
 
-    width      = @_get 'volume.width'
-    height     = @_get 'volume.height'
-    depth      = @_get 'volume.depth'
+    width      = @_get 'voxel.width'
+    height     = @_get 'voxel.height'
+    depth      = @_get 'voxel.depth'
     centeredX  = @_get 'x.sampler.centered'
     centeredY  = @_get 'y.sampler.centered'
     centeredZ  = @_get 'z.sampler.centered'
@@ -46,7 +46,7 @@ class Volume extends Voxel
     (i, j, k, emit) ->
       x = aX + bX * i
       y = aY + bY * j
-      Z = aZ + bZ * k
+      z = aZ + bZ * k
       callback x, y, z, i, j, k, emit
 
   make: () ->

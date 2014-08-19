@@ -11,8 +11,8 @@ exports.getDimensions = (data, spec = {}) ->
 
   dims = {}
 
-  if !data.length
-    return {items, channels, 0, 0, 0}
+  if !data || !data.length
+    return {items, channels, width: width ? 0, height: height ? 0, depth: depth ? 0}
 
   sizes = getSizes data
   nesting = sizes.length

@@ -2,6 +2,20 @@ Data = MathBox.Util.Data
 
 describe "util.data", () ->
 
+  it 'passed through null array dimensions', () ->
+    spec = Data.getDimensions null,
+      items: 2
+      channels: 3
+      width: 5
+      height: 7
+      depth: 11
+    expect(spec).toEqual
+      items:    2
+      channels: 3
+      width:    5
+      height:   7
+      depth:    11
+
   it 'parses 1D JS array dimensions', () ->
 
     spec = Data.getDimensions [1..3],

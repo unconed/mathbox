@@ -6599,14 +6599,14 @@ Volume = (function(_super) {
     return Volume.__super__.constructor.apply(this, arguments);
   }
 
-  Volume.traits = ['node', 'data', 'source', 'voxel', 'span:x', 'span:y', 'span:z', 'voxel', 'sampler:x', 'sampler:y', 'sampler:z'];
+  Volume.traits = ['node', 'data', 'source', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z'];
 
   Volume.prototype.callback = function(callback) {
     var aX, aY, aZ, bX, bY, bZ, centeredX, centeredY, centeredZ, depth, dimensions, height, inverseX, inverseY, inverseZ, rangeX, rangeY, rangeZ, width;
     dimensions = this._get('volume.axes');
-    width = this._get('volume.width');
-    height = this._get('volume.height');
-    depth = this._get('volume.depth');
+    width = this._get('voxel.width');
+    height = this._get('voxel.height');
+    depth = this._get('voxel.depth');
     centeredX = this._get('x.sampler.centered');
     centeredY = this._get('y.sampler.centered');
     centeredZ = this._get('z.sampler.centered');
@@ -6638,10 +6638,10 @@ Volume = (function(_super) {
     bY = (rangeY.y - rangeY.x) * inverseY;
     bZ = (rangeZ.y - rangeZ.x) * inverseZ;
     return function(i, j, k, emit) {
-      var Z, x, y;
+      var x, y, z;
       x = aX + bX * i;
       y = aY + bY * j;
-      Z = aZ + bZ * k;
+      z = aZ + bZ * k;
       return callback(x, y, z, i, j, k, emit);
     };
   };
@@ -6664,11 +6664,13 @@ module.exports = Volume;
 
 
 },{"./voxel":41}],41:[function(require,module,exports){
-var Data, Voxel,
+var Data, Util, Voxel,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Data = require('./data');
+
+Util = require('../../../util');
 
 Voxel = (function(_super) {
   __extends(Voxel, _super);
@@ -6677,7 +6679,7 @@ Voxel = (function(_super) {
 
   function Voxel(node, context, helpers) {
     Voxel.__super__.constructor.call(this, node, context, helpers);
-    this.buffer = null;
+    this.buffer = this.spec = null;
     this.filled = false;
     this.space = {
       width: 0,
@@ -6718,39 +6720,35 @@ Voxel = (function(_super) {
   };
 
   Voxel.prototype.make = function() {
-    var channels, data, depth, height, items, width, _ref, _ref1;
+    var channels, data, depth, dims, height, items, space, width;
     Voxel.__super__.make.apply(this, arguments);
     width = this._get('voxel.width');
     height = this._get('voxel.height');
     depth = this._get('voxel.depth');
     channels = this._get('data.dimensions');
     items = this._get('data.items');
-    this.items = items;
-    this.channels = channels;
+    dims = this.spec = {
+      channels: channels,
+      items: items,
+      width: width,
+      height: height,
+      depth: depth
+    };
+    this.items = dims.items;
+    this.channels = dims.channels;
     data = this._get('data.data');
-    if (data != null) {
-      if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        if ((_ref1 = data[0][0]) != null ? _ref1.length : void 0) {
-          this.spaceWidth = Math.max(this.spaceWidth, data[0].length / this.items);
-        } else {
-          this.spaceWidth = Math.max(this.spaceWidth, data[0].length / this.channels / this.items);
-        }
-        this.spaceHeight = Math.max(this.spaceHeight, data.length);
-      } else {
-        this.spaceHeight = Math.max(this.spaceHeight, Math.floor(data.length / this.channels / this.items / this.spaceWidth));
-      }
-    }
-    this.width = this.spaceWidth = Math.max(this.spaceWidth, width);
-    this.height = this.spaceHeight = Math.max(this.spaceHeight, height);
-    if (this.spaceWidth * this.spaceHeight > 0) {
-      this.buffer = this._renderables.make('matrixBuffer', {
-        width: this.spaceWidth,
-        height: this.spaceHeight,
-        history: history,
-        channels: channels,
-        items: items
-      });
-    }
+    dims = Util.Data.getDimensions(data, dims);
+    space = this.space;
+    space.width = Math.max(space.width, dims.width || 1);
+    space.height = Math.max(space.height, dims.height || 1);
+    space.depth = Math.max(space.depth, dims.depth || 1);
+    this.buffer = this._renderables.make('voxelBuffer', {
+      width: space.width,
+      height: space.height,
+      depth: space.depth,
+      channels: channels,
+      items: items
+    });
     return this.trigger({
       type: 'rebuild'
     });
@@ -6765,7 +6763,7 @@ Voxel = (function(_super) {
   };
 
   Voxel.prototype.change = function(changed, touched, init) {
-    if (touched['matrix'] || changed['data.dimensions']) {
+    if (touched['voxel'] || changed['data.dimensions']) {
       this.rebuild();
     }
     if (!this.buffer) {
@@ -6777,7 +6775,7 @@ Voxel = (function(_super) {
   };
 
   Voxel.prototype.update = function() {
-    var channels, data, filled, h, height, items, length, method, oldHeight, oldWidth, w, width, _ref, _ref1;
+    var d, data, dims, filled, h, length, space, used, w;
     if (!this.buffer) {
       return;
     }
@@ -6785,44 +6783,28 @@ Voxel = (function(_super) {
       return;
     }
     data = this._get('data.data');
-    oldWidth = this.width;
-    oldHeight = this.height;
-    width = this.spaceWidth;
-    height = this.spaceHeight;
-    channels = this.channels;
-    items = this.items;
+    space = this.space;
+    used = this.used;
     filled = this.buffer.getFilled();
+    w = used.width;
+    h = used.height;
+    d = used.depth;
     if (data != null) {
-      w = h = 0;
-      method = 'copy';
-      if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        w = data[0].length / items;
-        h = data.length;
-        if (!((_ref1 = data[0][0]) != null ? _ref1.length : void 0)) {
-          w /= channels;
-          method = 'copy3D';
-        } else {
-          method = 'copy2D';
-        }
-      } else {
-        w = width;
-        h = data.length / channels / items / width;
-        method = 'copy';
-      }
-      if (w > width || h > height) {
-        this.spaceWidth = w;
-        this.spaceHeight = h;
+      dims = Util.Data.getDimensions(data, this.spec);
+      if (dims.width < spec.width || dims.height < spec.height || dims.depth < spec.depth) {
         this.rebuild();
       }
-      this.buffer[method](data);
-      this.width = w;
-      this.height = h;
+      this.buffer.callback = getThunk(data);
+      used.width = dims.width;
+      used.height = dims.height;
+      used.depth = dims.depth;
     } else {
       length = this.buffer.update();
-      this.width = width;
-      this.height = length / this.width;
+      used.width = w = space.width;
+      used.height = h = space.height;
+      used.depth = Math.ceil(length / w / h);
     }
-    if (oldWidth !== this.width || oldHeight !== this.height || filled !== this.buffer.getFilled()) {
+    if (used.width !== w || used.height !== h || used.depth !== d || filled !== this.buffer.getFilled()) {
       this.trigger({
         type: 'resize'
       });
@@ -6837,7 +6819,7 @@ Voxel = (function(_super) {
 module.exports = Voxel;
 
 
-},{"./data":37}],42:[function(require,module,exports){
+},{"../../../util":111,"./data":37}],42:[function(require,module,exports){
 var Axis, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7883,7 +7865,7 @@ helpers = {
   },
   object: {
     make: function(objects, forceTransparent) {
-      var blending, e, hasStyle, last, object, onChange, onVisible, opacity, visible, zFactor, zIndex, zOrder, zUnits, _i, _len, _ref, _ref1;
+      var blending, e, hasStyle, last, object, onChange, onVisible, opacity, visible, zFactor, zIndex, zOrder, zUnits, zWrite, _i, _len, _ref, _ref1;
       this.objects = objects != null ? objects : [];
       if (forceTransparent == null) {
         forceTransparent = false;
@@ -7898,12 +7880,14 @@ helpers = {
       opacity = 1;
       visible = this._get('object.visible');
       blending = THREE.NormalBlending;
+      zWrite = true;
       if (hasStyle) {
         opacity = this._get('style.opacity');
         blending = this._get('style.blending');
         zFactor = this._get('style.zFactor');
         zUnits = this._get('style.zUnits');
         zOrder = this._get('style.zOrder');
+        zWrite = this._get('style.zWrite');
       }
       onChange = this.handlers.objectChange = (function(_this) {
         return function(event) {
@@ -7924,6 +7908,9 @@ helpers = {
           }
           if (changed['style.zUnits']) {
             refresh = zUnits = _this._get('style.zUnits');
+          }
+          if (changed['style.zWrite']) {
+            refresh = zWrite = _this._get('style.zWrite');
           }
           if (refresh != null) {
             return onVisible();
@@ -7947,14 +7934,14 @@ helpers = {
               _ref = _this.objects;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 o = _ref[_i];
-                o.show(opacity < 1 || forceTransparent, blending, order);
+                o.show(opacity < 1 || forceTransparent, blending, order, zWrite);
                 o.polygonOffset(zFactor, zUnits);
               }
             } else {
               _ref1 = _this.objects;
               for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
                 o = _ref1[_j];
-                o.show(false, blending, order);
+                o.show(false, blending, order, zWrite);
               }
             }
           } else {
@@ -9108,6 +9095,7 @@ Traits = {
     opacity: Types.number(1),
     color: Types.color(),
     blending: Types.blending(),
+    zWrite: Types.bool(true),
     zFactor: Types.number(0),
     zUnits: Types.number(0),
     zIndex: Types.number(0),
@@ -9157,6 +9145,9 @@ Traits = {
   area: {
     axes: Types.vec2(1, 2)
   },
+  volume: {
+    axes: Types.vec3(1, 2, 3)
+  },
   scale: {
     divide: Types.number(10),
     unit: Types.number(1),
@@ -9197,9 +9188,9 @@ Traits = {
     history: Types.int(1)
   },
   voxel: {
-    width: Types.int(1),
-    height: Types.int(1),
-    depth: Types.int(1)
+    width: Types.nullable(Types.int(1)),
+    height: Types.nullable(Types.int(1)),
+    depth: Types.nullable(Types.int(1))
   },
   texture: {
     width: Types.nullable(Types.int()),
@@ -11253,7 +11244,7 @@ VoxelBuffer = (function(_super) {
         break;
       }
     }
-    return k;
+    return l;
   };
 
   VoxelBuffer.prototype.write = function(n) {
@@ -11367,6 +11358,7 @@ ArrowGeometry = (function(_super) {
     this.addAttribute('position4', Float32Array, points, 4);
     this.addAttribute('arrow', Float32Array, points, 3);
     this.addAttribute('attach', Float32Array, points, 2);
+    this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
     arrow = this._emitter('arrow');
@@ -11414,8 +11406,8 @@ ArrowGeometry = (function(_super) {
         }
       }
     }
+    this._finalize();
     this.clip();
-    this._ping();
     return;
   }
 
@@ -11442,12 +11434,12 @@ ArrowGeometry = (function(_super) {
     } else {
       quads = 0;
     }
-    return this.offsets = [
+    return this._offsets([
       {
         start: 0,
         count: quads * 6
       }
-    ];
+    ]);
   };
 
   return ArrowGeometry;
@@ -11483,16 +11475,15 @@ Geometry = (function(_super) {
     if (this.uniforms == null) {
       this.uniforms = {};
     }
+    if (this.offsets == null) {
+      this.offsets = [];
+    }
     if (debug) {
       this.tock = tick();
     }
+    this.chunked = false;
+    this.limit = 0xFFFF;
   }
-
-  Geometry.prototype._ping = function() {
-    if (debug) {
-      return this.tock(this.constructor.name);
-    }
-  };
 
   Geometry.prototype._reduce = function(dims, maxs) {
     var dim, i, max, multiple, quads, _i, _len;
@@ -11513,17 +11504,11 @@ Geometry = (function(_super) {
   };
 
   Geometry.prototype._emitter = function(name) {
-    var array, attribute, dimensions, four, numItems, offset, one, three, two;
+    var array, attribute, dimensions, four, offset, one, three, two;
     attribute = this.attributes[name];
     dimensions = attribute.itemSize;
     array = attribute.array;
     offset = 0;
-    if (name !== 'index') {
-      numItems = attribute.array.length / attribute.itemSize;
-      if (numItems > 65536) {
-        throw "Index out of bounds. Cannot exceed 65536 indexed vertices.";
-      }
-    }
     one = function(a) {
       return array[offset++] = a;
     };
@@ -11543,6 +11528,132 @@ Geometry = (function(_super) {
       return array[offset++] = d;
     };
     return [null, one, two, three, four][dimensions];
+  };
+
+  Geometry.prototype._autochunk = function() {
+    var array, attribute, indexed, name, numItems, _ref;
+    indexed = this.attributes.index;
+    _ref = this.attributes;
+    for (name in _ref) {
+      attribute = _ref[name];
+      if (name !== 'index' && indexed) {
+        numItems = attribute.array.length / attribute.itemSize;
+        if (numItems > this.limit) {
+          this.chunked = true;
+        }
+      }
+    }
+    if (this.chunked && !indexed.u16) {
+      indexed.u16 = array = indexed.array;
+      return indexed.array = new Uint32Array(array.length);
+    }
+  };
+
+  Geometry.prototype._finalize = function() {
+    var attrib;
+    if (!this.chunked) {
+      return;
+    }
+    attrib = this.attributes.index;
+    this.chunks = this._chunks(attrib.array, this.limit);
+    this._chunkify(attrib, this.chunks);
+    if (debug) {
+      return this.tock(this.constructor.name);
+    }
+  };
+
+  Geometry.prototype._chunks = function(array, limit) {
+    var a, b, chunks, end, i, j1, j2, j3, jmax, jmin, last, n, o, push, start, _i;
+    chunks = [];
+    last = 0;
+    start = array[0];
+    end = array[0];
+    push = function(i) {
+      var _count, _end, _start;
+      _start = last * 3;
+      _end = i * 3;
+      _count = _end - _start;
+      return chunks.push({
+        index: start,
+        start: _start,
+        count: _count,
+        end: _end
+      });
+    };
+    n = Math.floor(array.length / 3);
+    o = 0;
+    for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+      j1 = array[o++];
+      j2 = array[o++];
+      j3 = array[o++];
+      jmin = Math.min(j1, j2, j3);
+      jmax = Math.max(j1, j2, j3);
+      a = Math.min(start, jmin);
+      b = Math.max(end, jmax);
+      if (b - a > limit) {
+        push(i);
+        a = jmin;
+        b = jmax;
+        last = i;
+      }
+      start = a;
+      end = b;
+    }
+    push(n);
+    return chunks;
+  };
+
+  Geometry.prototype._chunkify = function(attrib, chunks) {
+    var chunk, from, i, offset, to, _i, _j, _len, _ref, _ref1;
+    if (!attrib.u16) {
+      return;
+    }
+    from = attrib.array;
+    to = attrib.u16;
+    for (_i = 0, _len = chunks.length; _i < _len; _i++) {
+      chunk = chunks[_i];
+      offset = chunk.index;
+      for (i = _j = _ref = chunk.start, _ref1 = chunk.end; _ref <= _ref1 ? _j < _ref1 : _j > _ref1; i = _ref <= _ref1 ? ++_j : --_j) {
+        to[i] = from[i] - offset;
+      }
+    }
+    attrib.array = attrib.u16;
+    return delete attrib.u16;
+  };
+
+  Geometry.prototype._offsets = function(offsets) {
+    var chunk, chunks, end, offset, out, start, _end, _i, _j, _len, _len1, _start;
+    if (!this.chunked) {
+      this.offsets = offsets;
+    } else {
+      chunks = this.chunks;
+      out = this.offsets;
+      out.length = null;
+      if (window.ii == null) {
+        window.ii = 0;
+      }
+      window.ii++;
+      for (_i = 0, _len = offsets.length; _i < _len; _i++) {
+        offset = offsets[_i];
+        start = offset.start;
+        end = offset.count - start;
+        for (_j = 0, _len1 = chunks.length; _j < _len1; _j++) {
+          chunk = chunks[_j];
+          _start = chunk.start;
+          _end = chunk.end;
+          if (start <= _start && end > _start || start < _end && end >= _end || start > _start && end < _end) {
+            _start = Math.max(start, _start);
+            _end = Math.min(end, _end);
+            out.push({
+              index: chunk.index,
+              start: _start,
+              count: _end - _start
+            });
+          }
+        }
+      }
+    }
+    return null;
   };
 
   return Geometry;
@@ -11610,6 +11721,7 @@ LineGeometry = (function(_super) {
     this.addAttribute('position4', Float32Array, points, 4);
     this.addAttribute('line', Float32Array, points, 2);
     this.addAttribute('strip', Float32Array, points, 2);
+    this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
     line = this._emitter('line');
@@ -11644,8 +11756,8 @@ LineGeometry = (function(_super) {
         }
       }
     }
+    this._finalize();
     this.clip();
-    this._ping();
     return;
   }
 
@@ -11668,12 +11780,12 @@ LineGeometry = (function(_super) {
     dims = [layers, ribbons, strips, segments];
     maxs = [this.layers, this.ribbons, this.strips, this.segments];
     quads = this._reduce(dims, maxs);
-    return this.offsets = [
+    return this._offsets([
       {
         start: 0,
         count: quads * 6
       }
-    ];
+    ]);
   };
 
   return LineGeometry;
@@ -11797,6 +11909,7 @@ SpriteGeometry = (function(_super) {
     this.addAttribute('index', Uint16Array, triangles * 3, 1);
     this.addAttribute('position4', Float32Array, points, 4);
     this.addAttribute('sprite', Float32Array, points, 2);
+    this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
     sprite = this._emitter('sprite');
@@ -11824,8 +11937,8 @@ SpriteGeometry = (function(_super) {
         }
       }
     }
+    this._finalize();
     this.clip();
-    this._ping();
     return;
   }
 
@@ -11847,12 +11960,12 @@ SpriteGeometry = (function(_super) {
     dims = [depth, height, width, items];
     maxs = [this.depth, this.height, this.width, this.items];
     quads = this._reduce(dims, maxs);
-    return this.offsets = [
+    return this._offsets([
       {
         start: 0,
         count: quads * 6
       }
-    ];
+    ]);
   };
 
   return SpriteGeometry;
@@ -11912,6 +12025,7 @@ SurfaceGeometry = (function(_super) {
     this.addAttribute('index', Uint16Array, triangles * 3, 1);
     this.addAttribute('position4', Float32Array, points, 4);
     this.addAttribute('surface', Float32Array, points, 2);
+    this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
     surface = this._emitter('surface');
@@ -11943,8 +12057,8 @@ SurfaceGeometry = (function(_super) {
         }
       }
     }
+    this._finalize();
     this.clip();
-    this._ping();
     return;
   }
 
@@ -11968,12 +12082,12 @@ SurfaceGeometry = (function(_super) {
     dims = [layers, surfaces, segmentsY, segmentsX];
     maxs = [this.layers, this.surfaces, this.segmentsY, this.segmentsX];
     quads = this._reduce(dims, maxs);
-    return this.offsets = [
+    return this._offsets([
       {
         start: 0,
         count: quads * 6
       }
-    ];
+    ]);
   };
 
   return SurfaceGeometry;
@@ -12108,7 +12222,7 @@ Base = (function(_super) {
     return null;
   };
 
-  Base.prototype.show = function(transparent, blending, order) {
+  Base.prototype.show = function(transparent, blending, order, depth) {
     var m, object, z, _i, _len, _ref;
     if (blending > THREE.NormalBlending) {
       transparent = true;
@@ -12122,6 +12236,7 @@ Base = (function(_super) {
       object.visible = true;
       m.transparent = transparent;
       m.blending = blending;
+      m.depthWrite = depth;
     }
     return null;
   };
@@ -12934,13 +13049,13 @@ exports.getDimensions = function(data, spec) {
   }
   items = spec.items, channels = spec.channels, width = spec.width, height = spec.height, depth = spec.depth;
   dims = {};
-  if (!data.length) {
+  if (!data || !data.length) {
     return {
       items: items,
       channels: channels,
-      0: 0,
-      0: 0,
-      0: 0
+      width: width != null ? width : 0,
+      height: height != null ? height : 0,
+      depth: depth != null ? depth : 0
     };
   }
   sizes = getSizes(data);

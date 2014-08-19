@@ -37,6 +37,8 @@ class LineGeometry extends Geometry
     @addAttribute 'line',      Float32Array, points,        2
     @addAttribute 'strip',     Float32Array, points,        2
 
+    @_autochunk()
+
     index    = @_emitter 'index'
     position = @_emitter 'position4'
     line     = @_emitter 'line'
@@ -73,9 +75,8 @@ class LineGeometry extends Geometry
             strip 0, segments
             strip 0, segments
 
+    @_finalize()
     @clip()
-
-    @_ping()
 
     return
 
@@ -88,7 +89,7 @@ class LineGeometry extends Geometry
     maxs  = [@layers, @ribbons, @strips, @segments]
     quads = @_reduce dims, maxs
 
-    @offsets = [
+    @_offsets [
       start: 0
       count: quads * 6
     ]
