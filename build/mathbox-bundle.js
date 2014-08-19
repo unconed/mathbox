@@ -62205,10 +62205,6 @@ Geometry = (function(_super) {
       chunks = this.chunks;
       out = this.offsets;
       out.length = null;
-      if (window.ii == null) {
-        window.ii = 0;
-      }
-      window.ii++;
       for (_i = 0, _len = offsets.length; _i < _len; _i++) {
         offset = offsets[_i];
         start = offset.start;

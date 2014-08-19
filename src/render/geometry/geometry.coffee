@@ -138,9 +138,6 @@ class Geometry extends THREE.BufferGeometry
       out    = @offsets
       out.length = null
 
-      window.ii ?= 0
-      window.ii++
-
       for offset in offsets
         start = offset.start
         end   = offset.count - start
