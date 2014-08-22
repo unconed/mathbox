@@ -1,7 +1,7 @@
 exports.getSizes = getSizes = (data) ->
   sizes = []
   array = data
-  while array.length?
+  while array?.length?
     sizes.push array.length
     array = array[0]
   sizes
@@ -79,7 +79,8 @@ exports.makeEmitter = (thunk, items, channels, indices) ->
     when 3 then (i, j, k, emit) ->    middle emit
     when 4 then (i, j, k, l, emit) -> middle emit
 
-  outer.reset = thunk.reset
+  outer.reset  = thunk.reset
+  outer.rebind = thunk.rebind
   outer
 
 exports.getThunk = (data) ->
@@ -96,6 +97,7 @@ exports.getThunk = (data) ->
   switch nesting
     when 0
       thunk = () ->
+      thunk.reset = () ->
 
     when 1
       i = 0
@@ -174,7 +176,7 @@ exports.getThunk = (data) ->
         x
       thunk.reset = () -> i = j = k = l = m = 0
 
-  thunk.reset ?= () ->
+  thunk.rebind = (d) -> data = d
   thunk
 
 

@@ -37,6 +37,8 @@ class ArrayBuffer_ extends Buffer
     output = @generate()
     limit = @samples
 
+    callback.reset() if callback.reset?
+
     i = 0
     while i < limit && callback(i++, output) != false
       true

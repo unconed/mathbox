@@ -91,11 +91,11 @@ Traits =
   sampler:
     centered:    Types.bool(false)
   array:
-    length:      Types.int(1)
+    length:      Types.nullable(Types.int(1))
     history:     Types.int(1)
   matrix:
-    width:       Types.int(1)
-    height:      Types.int(1)
+    width:       Types.nullable(Types.int(1))
+    height:      Types.nullable(Types.int(1))
     history:     Types.int(1)
   voxel:
     width:       Types.nullable(Types.int(1))

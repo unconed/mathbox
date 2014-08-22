@@ -39,6 +39,8 @@ class MatrixBuffer extends Buffer
     n     = @width
     limit = @samples
 
+    callback.reset() if callback.reset?
+
     i = j = k = 0
     while k < limit
       k++

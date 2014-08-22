@@ -56895,7 +56895,8 @@ Array_ = (function(_super) {
         space.length = Math.max(length + step, dims.width);
         this.rebuild();
       }
-      used.length = dims.length;
+      used.length = dims.width;
+      this.buffer.callback.rebind(data);
       this.buffer.update();
     } else {
       length = this.buffer.update();
@@ -57162,6 +57163,7 @@ Matrix = (function(_super) {
       }
       used.width = dims.width;
       used.height = dims.height;
+      this.buffer.callback.rebind(data);
       this.buffer.update();
     } else {
       length = this.buffer.update();
@@ -57404,6 +57406,7 @@ Voxel = (function(_super) {
       used.width = dims.width;
       used.height = dims.height;
       used.depth = dims.depth;
+      this.buffer.callback.rebind(data);
       this.buffer.update();
     } else {
       length = this.buffer.update();
@@ -59786,12 +59789,12 @@ Traits = {
     centered: Types.bool(false)
   },
   array: {
-    length: Types.int(1),
+    length: Types.nullable(Types.int(1)),
     history: Types.int(1)
   },
   matrix: {
-    width: Types.int(1),
-    height: Types.int(1),
+    width: Types.nullable(Types.int(1)),
+    height: Types.nullable(Types.int(1)),
     history: Types.int(1)
   },
   voxel: {
@@ -61169,6 +61172,9 @@ ArrayBuffer_ = (function(_super) {
     callback = this.callback;
     output = this.generate();
     limit = this.samples;
+    if (callback.reset != null) {
+      callback.reset();
+    }
     i = 0;
     while (i < limit && callback(i++, output) !== false) {
       true;
@@ -61415,6 +61421,9 @@ MatrixBuffer = (function(_super) {
     output = this.generate();
     n = this.width;
     limit = this.samples;
+    if (callback.reset != null) {
+      callback.reset();
+    }
     i = j = k = 0;
     while (k < limit) {
       k++;
@@ -63654,7 +63663,7 @@ exports.getSizes = getSizes = function(data) {
   var array, sizes;
   sizes = [];
   array = data;
-  while (array.length != null) {
+  while ((array != null ? array.length : void 0) != null) {
     sizes.push(array.length);
     array = array[0];
   }
@@ -63803,6 +63812,7 @@ exports.makeEmitter = function(thunk, items, channels, indices) {
     }
   })();
   outer.reset = thunk.reset;
+  outer.rebind = thunk.rebind;
   return outer;
 };
 
@@ -63818,6 +63828,7 @@ exports.getThunk = function(data) {
   switch (nesting) {
     case 0:
       thunk = function() {};
+      thunk.reset = function() {};
       break;
     case 1:
       i = 0;
@@ -63922,9 +63933,9 @@ exports.getThunk = function(data) {
         return i = j = k = l = m = 0;
       };
   }
-  if (thunk.reset == null) {
-    thunk.reset = function() {};
-  }
+  thunk.rebind = function(d) {
+    return data = d;
+  };
   return thunk;
 };
 

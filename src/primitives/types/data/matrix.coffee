@@ -146,6 +146,7 @@ class Matrix extends Data
       used.width  = dims.width
       used.height = dims.height
 
+      @buffer.callback.rebind data
       @buffer.update()
     else
       length = @buffer.update()

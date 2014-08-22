@@ -130,6 +130,7 @@ class Voxel extends Data
       used.height = dims.height
       used.depth  = dims.depth
 
+      @buffer.callback.rebind data
       @buffer.update()
     else
       length = @buffer.update()

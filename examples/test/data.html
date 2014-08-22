@@ -16,100 +16,48 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(-1.5, .4, -1.3);
+    three.camera.position.set(-.5, .4, -1.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
-    array = [
-       0,  0,  0,
-      -1, -1, -1,
-       0,  0,  0,
-       1, -1, -1,
-       0,  0,  0,
-      -1,  1, -1,
-       0,  0,  0,
-       1,  1, -1,
-       0,  0,  0,
-      -1, -1,  1,
-       0,  0,  0,
-       1, -1,  1,
-       0,  0,  0,
-      -1,  1,  1,
-       0,  0,  0,
-       1,  1,  1,
-    ]
-    sampler = array.slice()
+    data = []
+    for (var i = 0; i < 100; ++i) {
+      data.push(i/100 * 2 - 1);
+      data.push(0);
+      data.push(0);
+
+      data.push(i/100 * 2 - 1);
+      data.push(Math.random())
+      data.push(0);
+    }
+    sampler = data.slice()
+
+    map = function (x) {
+      return Math.floor(x * data.length / 6) * 6
+    };
 
     time = 0
     three.on('update', function () {
       time = three.Time.frames / 200
 
-      t = Math.max(three.Time.clock, 0) / 25
-      t = t < .5 ? t * t : t - .25
+      o = Math.cos(time * 4 + Math.cos(time * .91)) * .5 - .5;
+      p = Math.cos(time * 5 + Math.sin(time)) * .5 - .5;
 
-      o = .5 - .5 * Math.cos(Math.min(1, t) * π)
+      q = map(Math.min(o, p));
+      r = map(Math.max(o, p));
 
-      c = Math.cos(t);
-      s = Math.sin(t);
-      view.set('rotation', [0, -s, 0, c]);
-
-      sampler = array.slice(0, Math.floor(Math.random() * array.length / 3 + 1) * 3);
-      if (three.Time.frames < 10) console.log(sampler);
-      voxel.set('data', sampler);
+      sampler = data.slice(q, r);
+      array.set('data', sampler);
     });
 
     view = mathbox.cartesian({
-      range: [[-1, 1], [-1, 1], [-1, 1]],
+      range: [[-1, 1], [-.5, 1.5], [-1, 1]],
       scale: [1, 1, 1],
-    });
-
-    view.grid({
-      axes: [1, 3],
-      position: [0, -1, 0],
-      width: 0.002,
-      depth: 1,
-      color: 0xffffff,
-      opacity: .5,
-      blending: THREE.AdditiveBlending,
-    });
-
-    view.grid({
-      axes: [1, 3],
-      position: [0, 1, 0],
-      width: 0.002,
-      depth: 1,
-      color: 0xffffff,
-      opacity: .5,
-      blending: THREE.AdditiveBlending,
     });
 
     view.axis({
       axis: 1,
       end: true,
-      position: [0, -1, 0],
-      width: 0.003,
-      depth: 1,
-      size: 0.02,
-      color: 0xffffff,
-      opacity: .5,
-      zIndex: -1,
-      blending: THREE.AdditiveBlending,
-    });
-    view.axis({
-      axis: 2,
-      end: true,
-      width: 0.003,
-      depth: 1,
-      size: 0.02,
-      color: 0xffffff,
-      opacity: .5,
-      zIndex: -1,
-      blending: THREE.AdditiveBlending,
-    });
-    view.axis({
-      axis: 3,
-      end: true,
-      position: [0, -1, 0],
       width: 0.003,
       depth: 1,
       size: 0.02,
@@ -119,40 +67,23 @@
       blending: THREE.AdditiveBlending,
     });
 
-    view.voxel({
+    view.array({
       id: 'sampler',
-      width:  2,
-      height: 2,
-      //depth:  2,
-      data: array,
-      /*
-      expression: function (i, j, k, emit) {
-        var u = Math.cos((i + j*j + k*k*k) * 100.681 + time) * .05;
-        var v = Math.cos((i*i*i + j + k*k) * 120.681 + time) * .05;
-        var w = Math.cos((i*i + j*j*j + k) * 140.681 + time) * .05;
-
-        var x = i / 32 * 2 - 1;
-        var y = j / 32 * 2 - 1;
-        var z = k / 32 * 2 - 1;
-
-        emit(x, y, z);
-        emit(x + u, y + v, z + w);
-      },
-      */
+      data: [],
       items: 2,
       dimensions: 3,
     });
     view.vector({
       color: 0x3090FF,
-      width: 0.001,
+      width: 0.002,
       depth: 1,
-      size:  0.008,
+      size:  0.01,
       end: true,
       zWrite: false,
       blending: THREE.AdditiveBlending,
     });
 
-    voxel = mathbox.select('voxel')
+    array = mathbox.select('array')
 
   </script>
 </body>

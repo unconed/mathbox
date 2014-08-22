@@ -58,7 +58,7 @@ class Array_ extends Data
     dims = Util.Data.getDimensions data, dims
 
     space = @space
-    space.length  = Math.max space.length, dims.width  || 1
+    space.length  = Math.max space.length, dims.width || 1
     space.history = history
 
     # Create array buffer
@@ -118,10 +118,12 @@ class Array_ extends Data
 
         # But always at least size to fit
         space.length = Math.max length + step, dims.width
+
         @rebuild()
 
-      used.length = dims.length
+      used.length = dims.width
 
+      @buffer.callback.rebind data
       @buffer.update()
     else
       length = @buffer.update()
