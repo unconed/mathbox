@@ -2,6 +2,7 @@ Classes =
   sprite:          require('./meshes/sprite')
   line:            require('./meshes/line')
   surface:         require('./meshes/surface')
+  face:            require('./meshes/face')
   arrow:           require('./meshes/arrow')
   screen:          require('./meshes/screen')
 

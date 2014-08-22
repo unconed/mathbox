@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Voxelbuffer</title>
+  <title>MathBox - Data</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
@@ -20,36 +20,49 @@
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
+    // Prepare test data
     data = []
     for (var i = 0; i < 100; ++i) {
-      data.push(i/100 * 2 - 1);
-      data.push(0);
-      data.push(0);
-
-      data.push(i/100 * 2 - 1);
-      data.push(Math.random())
-      data.push(0);
+      data.push([i/100 * 2 - 1, 0, 0]);
+      data.push([i/100 * 2 - 1, Math.random(), 0]);
     }
     sampler = data.slice()
 
+    // Animate begin/end range
     map = function (x) {
-      return Math.floor(x * data.length / 6) * 6
+      return Math.floor(x * data.length / 2) * 2
+    };
+
+    clamp = function (x) { return Math.max(0, Math.min(1, x)); };
+
+    rand = function (seed, i) {
+      var r = Math.sin(seed + i * 100) * 11.0;
+      return r - Math.floor(r);
     };
 
     time = 0
     three.on('update', function () {
       time = three.Time.frames / 200
 
-      o = Math.cos(time * 4 + Math.cos(time * .91)) * .5 - .5;
-      p = Math.cos(time * 5 + Math.sin(time)) * .5 - .5;
+      o = -Math.cos(time * 4 + Math.cos(time * .91)) * .5 + .5;
+      p = Math.cos(time * 5 + Math.sin(time)) * .5 + .5;
 
       q = map(Math.min(o, p));
       r = map(Math.max(o, p));
 
-      sampler = data.slice(q, r);
-      array.set('data', sampler);
+      sampler = data.slice(q, r)
+      sampler1.set('data', sampler);
+
+      o = -Math.sin(time * 3.1 + Math.cos(time * .81)) * .5 + .5;
+      p = Math.cos(time * 4.47 + Math.sin(time * 1.21)) * .5 + .5;
+
+      q = map(Math.min(o, p));
+      r = map(Math.max(o, p));
+
+      sampler2.set('data', data.slice(q, r));
     });
 
+    // Mathbox view
     view = mathbox.cartesian({
       range: [[-1, 1], [-.5, 1.5], [-1, 1]],
       scale: [1, 1, 1],
@@ -68,22 +81,59 @@
     });
 
     view.array({
-      id: 'sampler',
-      data: [],
+      id: 'dimmed',
+      length: 100,
+      data: data,
       items: 2,
       dimensions: 3,
     });
     view.vector({
-      color: 0x3090FF,
-      width: 0.002,
+      color: 0x707070,
+      width: 0.004,
       depth: 1,
-      size:  0.01,
+      opacity: .25,
+      size:  0.02,
       end: true,
       zWrite: false,
       blending: THREE.AdditiveBlending,
     });
 
-    array = mathbox.select('array')
+    view.array({
+      id: 'sampler1',
+      length: 100,
+      data: [[]],
+      items: 2,
+      dimensions: 3,
+    });
+    view.vector({
+      color: 0x3090FF,
+      width: 0.004,
+      depth: 1,
+      size:  0.02,
+      end: true,
+      zWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+
+    view.array({
+      id: 'sampler2',
+      length: 100,
+      data: [[]],
+      items: 2,
+      dimensions: 3,
+    });
+    view.vector({
+      color: 0x903000,
+      width: 0.004,
+      depth: 1,
+      size:  0.02,
+      end: true,
+      zWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+
+    sampler1 = mathbox.select('#sampler1')
+    sampler2 = mathbox.select('#sampler2')
 
   </script>
 </body>

@@ -1,5 +1,6 @@
 Classes =
   axis:              require './draw/axis'
+  face:              require './draw/face'
   grid:              require './draw/grid'
   line:              require './draw/line'
   point:             require './draw/point'

@@ -19,11 +19,11 @@ class Screen extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    v.pipe    'raw.position',    @uniforms
+    v.pipe    'raw.position.scale', @uniforms
     v.fan()
-    v  .pipe  'stpq.xyzw.2d',    @uniforms
+    v  .pipe  'stpq.xyzw.2d',       @uniforms
     v.next()
-    v  .pipe  'screen.position', @uniforms
+    v  .pipe  'screen.position',    @uniforms
     v.join()
 
     f = factory.fragment

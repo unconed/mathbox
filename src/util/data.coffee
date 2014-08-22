@@ -176,7 +176,15 @@ exports.getThunk = (data) ->
         x
       thunk.reset = () -> i = j = k = l = m = 0
 
-  thunk.rebind = (d) -> data = d
+  thunk.rebind = (d) ->
+    data = d
+
+    sizes = getSizes data
+    a = sizes.pop() if sizes.length
+    b = sizes.pop() if sizes.length
+    c = sizes.pop() if sizes.length
+    d = sizes.pop() if sizes.length
+
   thunk
 
 

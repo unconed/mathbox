@@ -1,14 +1,15 @@
-Base           = require './base'
-SpriteGeometry = require('../geometry').SpriteGeometry
+Base         = require './base'
+FaceGeometry = require('../geometry').FaceGeometry
 
-class Sprite extends Base
+class Face extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
     uniforms = options.uniforms ? {}
     position = options.position
+    shaded   = options.shaded ? true
 
-    @geometry = new SpriteGeometry
+    @geometry = new FaceGeometry
       items:  options.items
       width:  options.width
       height: options.height
@@ -21,12 +22,16 @@ class Sprite extends Base
 
     v = factory.vertex
     v.require position if position
-    v.pipe 'sprite.position',  @uniforms
-    v.pipe 'project.position', @uniforms
+    v.split()
+    v  .pipe 'face.position',        @uniforms if !shaded
+    v  .pipe 'face.position.normal', @uniforms if  shaded
+    v.pass()
+    v.pipe 'project.position',       @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',      @uniforms
-    f.pipe 'fragment.round',   @uniforms
+    f.pipe 'style.color',            @uniforms if !shaded
+    f.pipe 'style.color.shaded',     @uniforms if  shaded
+    f.pipe 'fragment.color',         @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide
@@ -38,13 +43,10 @@ class Sprite extends Base
     @_raw object
     @objects = [object]
 
-  show: (transparent, blending, order, depth) ->
-    super true, blending, order, depth
-
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
     @objects = @geometry = @material = null
     super
 
-module.exports = Sprite
+module.exports = Face
