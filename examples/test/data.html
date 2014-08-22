@@ -20,6 +20,26 @@
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
+    array = [
+       0,  0,  0,
+      -1, -1, -1,
+       0,  0,  0,
+       1, -1, -1,
+       0,  0,  0,
+      -1,  1, -1,
+       0,  0,  0,
+       1,  1, -1,
+       0,  0,  0,
+      -1, -1,  1,
+       0,  0,  0,
+       1, -1,  1,
+       0,  0,  0,
+      -1,  1,  1,
+       0,  0,  0,
+       1,  1,  1,
+    ]
+    sampler = array.slice()
+
     time = 0
     three.on('update', function () {
       time = three.Time.frames / 200
@@ -32,6 +52,10 @@
       c = Math.cos(t);
       s = Math.sin(t);
       view.set('rotation', [0, -s, 0, c]);
+
+      sampler = array.slice(0, Math.floor(Math.random() * array.length / 3 + 1) * 3);
+      if (three.Time.frames < 10) console.log(sampler);
+      voxel.set('data', sampler);
     });
 
     view = mathbox.cartesian({
@@ -97,9 +121,11 @@
 
     view.voxel({
       id: 'sampler',
-      width:  32,
-      height: 32,
-      depth:  32,
+      width:  2,
+      height: 2,
+      //depth:  2,
+      data: array,
+      /*
       expression: function (i, j, k, emit) {
         var u = Math.cos((i + j*j + k*k*k) * 100.681 + time) * .05;
         var v = Math.cos((i*i*i + j + k*k) * 120.681 + time) * .05;
@@ -112,6 +138,7 @@
         emit(x, y, z);
         emit(x + u, y + v, z + w);
       },
+      */
       items: 2,
       dimensions: 3,
     });
@@ -124,6 +151,8 @@
       zWrite: false,
       blending: THREE.AdditiveBlending,
     });
+
+    voxel = mathbox.select('voxel')
 
   </script>
 </body>

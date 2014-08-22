@@ -1,4 +1,5 @@
 Data = require './data'
+Util = require '../../../util'
 
 class Array_ extends Data
   @traits: ['node', 'data', 'source', 'array']
@@ -6,56 +7,72 @@ class Array_ extends Data
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @buffer = null
-    @space  = 0
-    @length = 0
+    @buffer = @spec = null
     @filled = false
+
+    @space =
+      length:  0
+      history: 0
+
+    @used =
+      length:  0
 
   sourceShader: (shader) ->
     @buffer.shader shader
 
   getDimensions: () ->
+    space = @space
+
     items:  @items
-    width:  @space
-    height: @history
+    width:  space.length
+    height: space.history
     depth:  1
 
   getActive: () ->
+    used = @used
+
     items:  @items
-    width:  @length
+    width:  used.length
     height: @buffer.getFilled()
     depth:  1
 
   make: () ->
     super
 
+    # Read given dimensions
     length   = @_get 'array.length'
     history  = @_get 'array.history'
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
-    @space    = Math.max @space, length
-    @items    = items
-    @channels = channels
-    @history  = history
+    dims = @spec =
+      channels: channels
+      items:    items
+      width:    length
 
-    # Allocate to right array size right away
+    @items    = dims.items
+    @channels = dims.channels
+
+    # Init to right size if data supplied
     data = @_get 'data.data'
+    dims = Util.Data.getDimensions data, dims
+
+    space = @space
+    space.length  = Math.max space.length, dims.width  || 1
+    space.history = history
+
+    # Create array buffer
+    @buffer = @_renderables.make 'arrayBuffer',
+              length:   space.length
+              history:  space.history
+              channels: channels
+              items:    items
+
+    # Create data thunk to copy (multi-)array if bound to one
     if data?
-      if data[0]?.length
-        @space = Math.max @space, data.length / items
-      else
-        @space = Math.max @space, Math.floor data.length / channels / items
-
-    @length = @space
-
-    # Create arraybuffer
-    if @space > 0
-      @buffer = @_renderables.make 'arrayBuffer',
-                items:    @items
-                length:   @space
-                history:  @history
-                channels: @channels
+      thunk   = Util.Data.getThunk    data
+      emitter = Util.Data.makeEmitter thunk, items, channels, 1
+      @buffer.callback = emitter
 
     # Notify of buffer reallocation
     @trigger
@@ -75,7 +92,8 @@ class Array_ extends Data
     if changed['data.expression']? or
        init
 
-      @buffer.callback = @callback @_get 'data.expression'
+      data = @_get 'data.data'
+      @buffer.callback = @callback @_get 'data.expression' if !data?
 
   update: () ->
     return unless @buffer
@@ -83,43 +101,38 @@ class Array_ extends Data
 
     data = @_get 'data.data'
 
-    length   = @length
-    channels = @channels
-    items    = @items
-
+    space    = @space
+    used     = @used
     filled   = @buffer.getFilled()
 
+    l = used.length
+
     if data?
-      l = 0
+      dims = Util.Data.getDimensions data, @spec
 
-      if data[0]?.length
-        l = data.length / items
-      else
-        l = Math.floor data.length / channels / items
+      # Grow length if needed
+      if dims.width > space.length
+        # Size up by 200%, up to 128 increase.
+        length = space.length
+        step   = Math.min 128, length
 
-      if l > @space
-        @space = Math.min l, @space * 2
+        # But always at least size to fit
+        space.length = Math.max length + step, dims.width
         @rebuild()
-#      if length < @space * .1
-#        @space = @length
-#        @rebuild()
 
-      if data[0]?.length
-        @buffer.copy2D data
-      else
-        @buffer.copy data
+      used.length = dims.length
 
-      @length = l
-
+      @buffer.update()
     else
-      @length = @buffer.update()
+      length = @buffer.update()
 
-    if length != @length or
+      used.length = length
+
+    if used.length != l or
        filled != @buffer.getFilled()
       @trigger
         type: 'resize'
 
     @filled = true
-
 
 module.exports = Array_

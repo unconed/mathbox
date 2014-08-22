@@ -48,6 +48,40 @@ exports.getDimensions = (data, spec = {}) ->
 
   dims
 
+exports.makeEmitter = (thunk, items, channels, indices) ->
+  inner = switch channels
+    when 0 then () -> true
+    when 1 then (emit) -> emit thunk()
+    when 2 then (emit) -> emit thunk(), thunk()
+    when 3 then (emit) -> emit thunk(), thunk(), thunk()
+    when 4 then (emit) -> emit thunk(), thunk(), thunk(), thunk()
+
+  middle = switch items
+    when 0 then () -> true
+    when 1 then (emit) ->
+      inner emit
+    when 2 then (emit) ->
+      inner emit
+      inner emit
+    when 3 then (emit) ->
+      inner emit
+      inner emit
+      inner emit
+    when 4 then (emit) ->
+      inner emit
+      inner emit
+      inner emit
+      inner emit
+
+  outer = switch indices
+    when 1 then (i, emit) ->          middle emit
+    when 2 then (i, j, emit) ->       middle emit
+    when 3 then (i, j, k, emit) ->    middle emit
+    when 4 then (i, j, k, l, emit) -> middle emit
+
+  outer.reset = thunk.reset
+  outer
+
 exports.getThunk = (data) ->
   sizes = getSizes data
   nesting = sizes.length
@@ -60,29 +94,32 @@ exports.getThunk = (data) ->
   done = false
 
   switch nesting
-    when 0 then () ->
+    when 0
+      thunk = () ->
 
     when 1
       i = 0
-      () -> data[i++]
+      thunk = () -> data[i++]
+      thunk.reset = () -> i = 0
 
     when 2
       i = j = 0
       first = data[j] ? []
 
-      () ->
+      thunk = () ->
         x = first[i++]
         if i == a
           [i, j] = [0, j + 1] 
           first = data[j] ? []
         x
+      thunk.reset = () -> i = j = 0
 
     when 3
       i = j = k = 0
       second = data[k]   ? []
       first  = second[j] ? []
 
-      () ->
+      thunk = () ->
         x = first[i++]
         if i == a
           [i, j] = [0, j + 1] 
@@ -91,6 +128,7 @@ exports.getThunk = (data) ->
             second = data[k] ? []
           first = second[j]  ? []
         x
+      thunk.reset = () -> i = j = k = 0
 
     when 4
       i = j = k = l = 0
@@ -98,7 +136,7 @@ exports.getThunk = (data) ->
       second = third[k]  ? []
       first  = second[j] ? []
 
-      () ->
+      thunk = () ->
         x = first[i++]
         if i == a
           [i, j] = [0, j + 1] 
@@ -110,6 +148,7 @@ exports.getThunk = (data) ->
             second = third[k] ? []
           first = second[j]   ? []
         x
+      thunk.reset = () -> i = j = k = l = 0
 
     when 5
       i = j = k = l = m = 0
@@ -118,7 +157,7 @@ exports.getThunk = (data) ->
       second = third[k]  ? []
       first  = second[j] ? []
 
-      () ->
+      thunk = () ->
         x = first[i++]
         if i == a
           [i, j] = [0, j + 1] 
@@ -133,5 +172,9 @@ exports.getThunk = (data) ->
             second = third[k]    ? []
           first = second[j]      ? []
         x
+      thunk.reset = () -> i = j = k = l = m = 0
+
+  thunk.reset ?= () ->
+  thunk
 
 

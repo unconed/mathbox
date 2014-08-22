@@ -91,8 +91,9 @@ class Spherical extends View
     @objectMatrix.compose o, q, s
     @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
 
-    @trigger
-      type: 'range'
+    if changed['view.range'] or touched['spherical']
+      @trigger
+        type: 'range'
 
   to: (vector) ->
     if @bend > 0.0001

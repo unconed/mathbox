@@ -59,6 +59,7 @@ class Geometry extends THREE.BufferGeometry
         numItems = attribute.array.length / attribute.itemSize
         if numItems > @limit
           @chunked = true
+        break
 
     if @chunked and !indexed.u16
       indexed.u16   = array = indexed.array

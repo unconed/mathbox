@@ -56763,11 +56763,13 @@ module.exports = Area;
 
 
 },{"./matrix":39}],36:[function(require,module,exports){
-var Array_, Data,
+var Array_, Data, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Data = require('./data');
+
+Util = require('../../../util');
 
 Array_ = (function(_super) {
   __extends(Array_, _super);
@@ -56776,10 +56778,15 @@ Array_ = (function(_super) {
 
   function Array_(node, context, helpers) {
     Array_.__super__.constructor.call(this, node, context, helpers);
-    this.buffer = null;
-    this.space = 0;
-    this.length = 0;
+    this.buffer = this.spec = null;
     this.filled = false;
+    this.space = {
+      length: 0,
+      history: 0
+    };
+    this.used = {
+      length: 0
+    };
   }
 
   Array_.prototype.sourceShader = function(shader) {
@@ -56787,50 +56794,56 @@ Array_ = (function(_super) {
   };
 
   Array_.prototype.getDimensions = function() {
+    var space;
+    space = this.space;
     return {
       items: this.items,
-      width: this.space,
-      height: this.history,
+      width: space.length,
+      height: space.history,
       depth: 1
     };
   };
 
   Array_.prototype.getActive = function() {
+    var used;
+    used = this.used;
     return {
       items: this.items,
-      width: this.length,
+      width: used.length,
       height: this.buffer.getFilled(),
       depth: 1
     };
   };
 
   Array_.prototype.make = function() {
-    var channels, data, history, items, length, _ref;
+    var channels, data, dims, emitter, history, items, length, space, thunk;
     Array_.__super__.make.apply(this, arguments);
     length = this._get('array.length');
     history = this._get('array.history');
     channels = this._get('data.dimensions');
     items = this._get('data.items');
-    this.space = Math.max(this.space, length);
-    this.items = items;
-    this.channels = channels;
-    this.history = history;
+    dims = this.spec = {
+      channels: channels,
+      items: items,
+      width: length
+    };
+    this.items = dims.items;
+    this.channels = dims.channels;
     data = this._get('data.data');
+    dims = Util.Data.getDimensions(data, dims);
+    space = this.space;
+    space.length = Math.max(space.length, dims.width || 1);
+    space.history = history;
+    this.buffer = this._renderables.make('arrayBuffer', {
+      length: space.length,
+      history: space.history,
+      channels: channels,
+      items: items
+    });
     if (data != null) {
-      if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        this.space = Math.max(this.space, data.length / items);
-      } else {
-        this.space = Math.max(this.space, Math.floor(data.length / channels / items));
-      }
-    }
-    this.length = this.space;
-    if (this.space > 0) {
-      this.buffer = this._renderables.make('arrayBuffer', {
-        items: this.items,
-        length: this.space,
-        history: this.history,
-        channels: this.channels
-      });
+      thunk = Util.Data.getThunk(data);
+      emitter = Util.Data.makeEmitter(thunk, items, channels, 1);
+      this.buffer.callback = emitter;
     }
     return this.trigger({
       type: 'rebuild'
@@ -56846,6 +56859,7 @@ Array_ = (function(_super) {
   };
 
   Array_.prototype.change = function(changed, touched, init) {
+    var data;
     if (touched['array'] || changed['data.dimensions']) {
       this.rebuild();
     }
@@ -56853,12 +56867,15 @@ Array_ = (function(_super) {
       return;
     }
     if ((changed['data.expression'] != null) || init) {
-      return this.buffer.callback = this.callback(this._get('data.expression'));
+      data = this._get('data.data');
+      if (data == null) {
+        return this.buffer.callback = this.callback(this._get('data.expression'));
+      }
     }
   };
 
   Array_.prototype.update = function() {
-    var channels, data, filled, items, l, length, _ref, _ref1;
+    var data, dims, filled, l, length, space, step, used;
     if (!this.buffer) {
       return;
     }
@@ -56866,31 +56883,25 @@ Array_ = (function(_super) {
       return;
     }
     data = this._get('data.data');
-    length = this.length;
-    channels = this.channels;
-    items = this.items;
+    space = this.space;
+    used = this.used;
     filled = this.buffer.getFilled();
+    l = used.length;
     if (data != null) {
-      l = 0;
-      if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        l = data.length / items;
-      } else {
-        l = Math.floor(data.length / channels / items);
-      }
-      if (l > this.space) {
-        this.space = Math.min(l, this.space * 2);
+      dims = Util.Data.getDimensions(data, this.spec);
+      if (dims.width > space.length) {
+        length = space.length;
+        step = Math.min(128, length);
+        space.length = Math.max(length + step, dims.width);
         this.rebuild();
       }
-      if ((_ref1 = data[0]) != null ? _ref1.length : void 0) {
-        this.buffer.copy2D(data);
-      } else {
-        this.buffer.copy(data);
-      }
-      this.length = l;
+      used.length = dims.length;
+      this.buffer.update();
     } else {
-      this.length = this.buffer.update();
+      length = this.buffer.update();
+      used.length = length;
     }
-    if (length !== this.length || filled !== this.buffer.getFilled()) {
+    if (used.length !== l || filled !== this.buffer.getFilled()) {
       this.trigger({
         type: 'resize'
       });
@@ -56905,7 +56916,7 @@ Array_ = (function(_super) {
 module.exports = Array_;
 
 
-},{"./data":37}],37:[function(require,module,exports){
+},{"../../../util":111,"./data":37}],37:[function(require,module,exports){
 var Data, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -56999,11 +57010,13 @@ module.exports = Interval;
 
 
 },{"./array":36}],39:[function(require,module,exports){
-var Data, Matrix,
+var Data, Matrix, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Data = require('./data');
+
+Util = require('../../../util');
 
 Matrix = (function(_super) {
   __extends(Matrix, _super);
@@ -57012,10 +57025,17 @@ Matrix = (function(_super) {
 
   function Matrix(node, context, helpers) {
     Matrix.__super__.constructor.call(this, node, context, helpers);
-    this.buffer = null;
+    this.buffer = this.spec = null;
     this.filled = false;
-    this.spaceWidth = 0;
-    this.spaceHeight = 0;
+    this.space = {
+      width: 0,
+      height: 0,
+      history: 0
+    };
+    this.used = {
+      width: 0,
+      height: 0
+    };
   }
 
   Matrix.prototype.sourceShader = function(shader) {
@@ -57023,57 +57043,61 @@ Matrix = (function(_super) {
   };
 
   Matrix.prototype.getDimensions = function() {
+    var space;
+    space = this.space;
     return {
       items: this.items,
-      width: this.spaceWidth,
-      height: this.spaceHeight,
-      depth: this.history
+      width: space.width,
+      height: space.height,
+      depth: space.history
     };
   };
 
   Matrix.prototype.getActive = function() {
+    var used;
+    used = this.used;
     return {
       items: this.items,
-      width: this.width,
-      height: this.height,
+      width: used.width,
+      height: used.height,
       depth: this.buffer.getFilled()
     };
   };
 
   Matrix.prototype.make = function() {
-    var channels, data, height, history, items, width, _ref, _ref1;
+    var channels, data, dims, emitter, height, history, items, space, thunk, width;
     Matrix.__super__.make.apply(this, arguments);
     width = this._get('matrix.width');
     height = this._get('matrix.height');
     history = this._get('matrix.history');
     channels = this._get('data.dimensions');
     items = this._get('data.items');
-    this.items = items;
-    this.channels = channels;
-    this.history = history;
+    dims = this.spec = {
+      channels: channels,
+      items: items,
+      width: width,
+      height: height,
+      depth: history
+    };
+    this.items = dims.items;
+    this.channels = dims.channels;
     data = this._get('data.data');
+    dims = Util.Data.getDimensions(data, dims);
+    space = this.space;
+    space.width = Math.max(space.width, dims.width || 1);
+    space.height = Math.max(space.height, dims.height || 1);
+    space.history = history;
+    this.buffer = this._renderables.make('matrixBuffer', {
+      width: space.width,
+      height: space.height,
+      history: space.history,
+      channels: channels,
+      items: items
+    });
     if (data != null) {
-      if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        if ((_ref1 = data[0][0]) != null ? _ref1.length : void 0) {
-          this.spaceWidth = Math.max(this.spaceWidth, data[0].length / this.items);
-        } else {
-          this.spaceWidth = Math.max(this.spaceWidth, data[0].length / this.channels / this.items);
-        }
-        this.spaceHeight = Math.max(this.spaceHeight, data.length);
-      } else {
-        this.spaceHeight = Math.max(this.spaceHeight, Math.floor(data.length / this.channels / this.items / this.spaceWidth));
-      }
-    }
-    this.width = this.spaceWidth = Math.max(this.spaceWidth, width);
-    this.height = this.spaceHeight = Math.max(this.spaceHeight, height);
-    if (this.spaceWidth * this.spaceHeight > 0) {
-      this.buffer = this._renderables.make('matrixBuffer', {
-        width: this.spaceWidth,
-        height: this.spaceHeight,
-        history: history,
-        channels: channels,
-        items: items
-      });
+      thunk = Util.Data.getThunk(data);
+      emitter = Util.Data.makeEmitter(thunk, items, channels, 2);
+      this.buffer.callback = emitter;
     }
     return this.trigger({
       type: 'rebuild'
@@ -57089,6 +57113,7 @@ Matrix = (function(_super) {
   };
 
   Matrix.prototype.change = function(changed, touched, init) {
+    var data;
     if (touched['matrix'] || changed['data.dimensions']) {
       this.rebuild();
     }
@@ -57096,12 +57121,15 @@ Matrix = (function(_super) {
       return;
     }
     if ((changed['data.expression'] != null) || init) {
-      return this.buffer.callback = this.callback(this._get('data.expression'));
+      data = this._get('data.data');
+      if (data == null) {
+        return this.buffer.callback = this.callback(this._get('data.expression'));
+      }
     }
   };
 
   Matrix.prototype.update = function() {
-    var channels, data, filled, h, height, items, length, method, oldHeight, oldWidth, w, width, _ref, _ref1;
+    var data, dims, filled, h, length, rebuild, space, step, used, w, _w;
     if (!this.buffer) {
       return;
     }
@@ -57109,44 +57137,38 @@ Matrix = (function(_super) {
       return;
     }
     data = this._get('data.data');
-    oldWidth = this.width;
-    oldHeight = this.height;
-    width = this.spaceWidth;
-    height = this.spaceHeight;
-    channels = this.channels;
-    items = this.items;
+    space = this.space;
+    used = this.used;
     filled = this.buffer.getFilled();
+    w = used.width;
+    h = used.height;
     if (data != null) {
-      w = h = 0;
-      method = 'copy';
-      if ((_ref = data[0]) != null ? _ref.length : void 0) {
-        w = data[0].length / items;
-        h = data.length;
-        if (!((_ref1 = data[0][0]) != null ? _ref1.length : void 0)) {
-          w /= channels;
-          method = 'copy3D';
-        } else {
-          method = 'copy2D';
-        }
-      } else {
-        w = width;
-        h = data.length / channels / items / width;
-        method = 'copy';
+      dims = Util.Data.getDimensions(data, this.spec);
+      rebuild = false;
+      if (dims.width > space.width) {
+        rebuild = true;
+        length = space.width;
+        step = Math.min(128, length);
+        space.width = Math.max(length + step, dims.width);
       }
-      if (w > width || h > height) {
-        this.spaceWidth = w;
-        this.spaceHeight = h;
+      if (dims.height > space.height) {
+        rebuild = true;
+        length = space.height;
+        step = Math.min(128, length);
+        space.height = Math.max(length + step, dims.height);
+      }
+      if (rebuild) {
         this.rebuild();
       }
-      this.buffer[method](data);
-      this.width = w;
-      this.height = h;
+      used.width = dims.width;
+      used.height = dims.height;
+      this.buffer.update();
     } else {
       length = this.buffer.update();
-      this.width = width;
-      this.height = length / this.width;
+      used.width = _w = space.width;
+      used.height = Math.ceil(length / _w);
     }
-    if (oldWidth !== this.width || oldHeight !== this.height || filled !== this.buffer.getFilled()) {
+    if (used.width !== w || used.height !== h || filled !== this.buffer.getFilled()) {
       this.trigger({
         type: 'resize'
       });
@@ -57161,7 +57183,7 @@ Matrix = (function(_super) {
 module.exports = Matrix;
 
 
-},{"./data":37}],40:[function(require,module,exports){
+},{"../../../util":111,"./data":37}],40:[function(require,module,exports){
 var Volume, Voxel,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -57296,7 +57318,7 @@ Voxel = (function(_super) {
   };
 
   Voxel.prototype.make = function() {
-    var channels, data, depth, dims, height, items, space, width;
+    var channels, data, depth, dims, emitter, height, items, space, thunk, width;
     Voxel.__super__.make.apply(this, arguments);
     width = this._get('voxel.width');
     height = this._get('voxel.height');
@@ -57325,6 +57347,11 @@ Voxel = (function(_super) {
       channels: channels,
       items: items
     });
+    if (data != null) {
+      thunk = Util.Data.getThunk(data);
+      emitter = Util.Data.makeEmitter(thunk, items, channels, 3);
+      this.buffer.callback = emitter;
+    }
     return this.trigger({
       type: 'rebuild'
     });
@@ -57339,6 +57366,7 @@ Voxel = (function(_super) {
   };
 
   Voxel.prototype.change = function(changed, touched, init) {
+    var data;
     if (touched['voxel'] || changed['data.dimensions']) {
       this.rebuild();
     }
@@ -57346,12 +57374,15 @@ Voxel = (function(_super) {
       return;
     }
     if ((changed['data.expression'] != null) || init) {
-      return this.buffer.callback = this.callback(this._get('data.expression'));
+      data = this._get('data.data');
+      if (data == null) {
+        return this.buffer.callback = this.callback(this._get('data.expression'));
+      }
     }
   };
 
   Voxel.prototype.update = function() {
-    var d, data, dims, filled, h, length, space, used, w;
+    var d, data, dims, filled, h, length, space, used, w, _h, _w;
     if (!this.buffer) {
       return;
     }
@@ -57367,18 +57398,18 @@ Voxel = (function(_super) {
     d = used.depth;
     if (data != null) {
       dims = Util.Data.getDimensions(data, this.spec);
-      if (dims.width < spec.width || dims.height < spec.height || dims.depth < spec.depth) {
+      if (dims.width > space.width || dims.height > space.height || dims.depth > space.depth) {
         this.rebuild();
       }
-      this.buffer.callback = getThunk(data);
       used.width = dims.width;
       used.height = dims.height;
       used.depth = dims.depth;
+      this.buffer.update();
     } else {
       length = this.buffer.update();
-      used.width = w = space.width;
-      used.height = h = space.height;
-      used.depth = Math.ceil(length / w / h);
+      used.width = _w = space.width;
+      used.height = _h = space.height;
+      used.depth = Math.ceil(length / _w / _h);
     }
     if (used.width !== w || used.height !== h || used.depth !== d || filled !== this.buffer.getFilled()) {
       this.trigger({
@@ -60461,9 +60492,11 @@ Cartesian = (function(_super) {
     this.viewMatrix.set(2 / dx, 0, 0, -(2 * x + dx) / dx, 0, 2 / dy, 0, -(2 * y + dy) / dy, 0, 0, 2 / dz, -(2 * z + dz) / dz, 0, 0, 0, 1);
     this.objectMatrix.compose(o, q, s);
     this.viewMatrix.multiplyMatrices(this.objectMatrix, this.viewMatrix);
-    return this.trigger({
-      type: 'range'
-    });
+    if (changed['view.range']) {
+      return this.trigger({
+        type: 'range'
+      });
+    }
   };
 
   Cartesian.prototype.to = function(vector) {
@@ -60558,9 +60591,11 @@ Cartesian4 = (function(_super) {
     this.basisOffset.set(-(2 * x + dx) / dx, -(2 * y + dy) / dy, -(2 * z + dz) / dz, -(2 * w + dw) / dw);
     this.viewMatrix.compose(o, q, s);
     this.view4D.set(o.w, s.w);
-    return this.trigger({
-      type: 'range'
-    });
+    if (changed['view.range']) {
+      return this.trigger({
+        type: 'range'
+      });
+    }
   };
 
   Cartesian4.prototype.to = function(vector) {
@@ -60653,9 +60688,11 @@ Polar = (function(_super) {
     this.viewMatrix.set(2 / fdx, 0, 0, -(2 * x + dx) / dx, 0, 2 / dy, 0, -(2 * y + dy) / dy, 0, 0, 2 / dz, -(2 * z + dz) / dz, 0, 0, 0, 1);
     this.objectMatrix.compose(o, q, s);
     this.viewMatrix.multiplyMatrices(this.objectMatrix, this.viewMatrix);
-    return this.trigger({
-      type: 'range'
-    });
+    if (changed['view.range'] || touched['polar']) {
+      return this.trigger({
+        type: 'range'
+      });
+    }
   };
 
   Polar.prototype.to = function(vector) {
@@ -60786,9 +60823,11 @@ Spherical = (function(_super) {
     this.viewMatrix.set(2 / fdx, 0, 0, -(2 * x + dx) / dx, 0, 2 / fdy, 0, -(2 * y + dy) / dy, 0, 0, 2 / dz, -(2 * z + dz) / dz, 0, 0, 0, 1);
     this.objectMatrix.compose(o, q, s);
     this.viewMatrix.multiplyMatrices(this.objectMatrix, this.viewMatrix);
-    return this.trigger({
-      type: 'range'
-    });
+    if (changed['view.range'] || touched['spherical']) {
+      return this.trigger({
+        type: 'range'
+      });
+    }
   };
 
   Spherical.prototype.to = function(vector) {
@@ -60897,9 +60936,11 @@ Stereographic = (function(_super) {
     this.viewMatrix.set(2 / dx, 0, 0, -(2 * x + dx) / dx, 0, 2 / dy, 0, -(2 * y + dy) / dy, 0, 0, 2 / dz, -(2 * z + dz) / dz, 0, 0, 0, 1);
     this.objectMatrix.compose(o, q, s);
     this.viewMatrix.multiplyMatrices(this.objectMatrix, this.viewMatrix);
-    return this.trigger({
-      type: 'range'
-    });
+    if (changed['view.range'] || touched['stereographic']) {
+      return this.trigger({
+        type: 'range'
+      });
+    }
   };
 
   Stereographic.prototype.to = function(vector) {
@@ -61007,9 +61048,11 @@ Stereographic4 = (function(_super) {
     this.basisOffset.set(-(2 * x + dx) / dx, -(2 * y + dy) / dy, -(2 * z + dz) / dz, -(2 * w + dw) / dw);
     this.viewMatrix.compose(o, q, s);
     this.view4D.set(o.w, s.w);
-    return this.trigger({
-      type: 'range'
-    });
+    if (changed['view.range'] || touched['stereographic']) {
+      return this.trigger({
+        type: 'range'
+      });
+    }
   };
 
   Stereographic4.prototype.to = function(vector) {
@@ -61805,6 +61848,9 @@ VoxelBuffer = (function(_super) {
     m = this.height;
     o = this.depth;
     limit = this.samples;
+    if (callback.reset != null) {
+      callback.reset();
+    }
     i = j = k = l = 0;
     while (l < limit) {
       l++;
@@ -62117,6 +62163,7 @@ Geometry = (function(_super) {
         if (numItems > this.limit) {
           this.chunked = true;
         }
+        break;
       }
     }
     if (this.chunked && !indexed.u16) {
@@ -63679,8 +63726,88 @@ exports.getDimensions = function(data, spec) {
   return dims;
 };
 
+exports.makeEmitter = function(thunk, items, channels, indices) {
+  var inner, middle, outer;
+  inner = (function() {
+    switch (channels) {
+      case 0:
+        return function() {
+          return true;
+        };
+      case 1:
+        return function(emit) {
+          return emit(thunk());
+        };
+      case 2:
+        return function(emit) {
+          return emit(thunk(), thunk());
+        };
+      case 3:
+        return function(emit) {
+          return emit(thunk(), thunk(), thunk());
+        };
+      case 4:
+        return function(emit) {
+          return emit(thunk(), thunk(), thunk(), thunk());
+        };
+    }
+  })();
+  middle = (function() {
+    switch (items) {
+      case 0:
+        return function() {
+          return true;
+        };
+      case 1:
+        return function(emit) {
+          return inner(emit);
+        };
+      case 2:
+        return function(emit) {
+          inner(emit);
+          return inner(emit);
+        };
+      case 3:
+        return function(emit) {
+          inner(emit);
+          inner(emit);
+          return inner(emit);
+        };
+      case 4:
+        return function(emit) {
+          inner(emit);
+          inner(emit);
+          inner(emit);
+          return inner(emit);
+        };
+    }
+  })();
+  outer = (function() {
+    switch (indices) {
+      case 1:
+        return function(i, emit) {
+          return middle(emit);
+        };
+      case 2:
+        return function(i, j, emit) {
+          return middle(emit);
+        };
+      case 3:
+        return function(i, j, k, emit) {
+          return middle(emit);
+        };
+      case 4:
+        return function(i, j, k, l, emit) {
+          return middle(emit);
+        };
+    }
+  })();
+  outer.reset = thunk.reset;
+  return outer;
+};
+
 exports.getThunk = function(data) {
-  var a, b, c, d, done, first, fourth, i, j, k, l, m, nesting, second, sizes, third, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+  var a, b, c, d, done, first, fourth, i, j, k, l, m, nesting, second, sizes, third, thunk, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
   sizes = getSizes(data);
   nesting = sizes.length;
   a = sizes.pop();
@@ -63690,16 +63817,21 @@ exports.getThunk = function(data) {
   done = false;
   switch (nesting) {
     case 0:
-      return function() {};
+      thunk = function() {};
+      break;
     case 1:
       i = 0;
-      return function() {
+      thunk = function() {
         return data[i++];
       };
+      thunk.reset = function() {
+        return i = 0;
+      };
+      break;
     case 2:
       i = j = 0;
       first = (_ref = data[j]) != null ? _ref : [];
-      return function() {
+      thunk = function() {
         var x, _ref1, _ref2;
         x = first[i++];
         if (i === a) {
@@ -63708,11 +63840,15 @@ exports.getThunk = function(data) {
         }
         return x;
       };
+      thunk.reset = function() {
+        return i = j = 0;
+      };
+      break;
     case 3:
       i = j = k = 0;
       second = (_ref1 = data[k]) != null ? _ref1 : [];
       first = (_ref2 = second[j]) != null ? _ref2 : [];
-      return function() {
+      thunk = function() {
         var x, _ref3, _ref4, _ref5, _ref6;
         x = first[i++];
         if (i === a) {
@@ -63725,12 +63861,16 @@ exports.getThunk = function(data) {
         }
         return x;
       };
+      thunk.reset = function() {
+        return i = j = k = 0;
+      };
+      break;
     case 4:
       i = j = k = l = 0;
       third = (_ref3 = data[l]) != null ? _ref3 : [];
       second = (_ref4 = third[k]) != null ? _ref4 : [];
       first = (_ref5 = second[j]) != null ? _ref5 : [];
-      return function() {
+      thunk = function() {
         var x, _ref10, _ref11, _ref6, _ref7, _ref8, _ref9;
         x = first[i++];
         if (i === a) {
@@ -63747,13 +63887,17 @@ exports.getThunk = function(data) {
         }
         return x;
       };
+      thunk.reset = function() {
+        return i = j = k = l = 0;
+      };
+      break;
     case 5:
       i = j = k = l = m = 0;
       fourth = (_ref6 = data[m]) != null ? _ref6 : [];
       third = (_ref7 = fourth[l]) != null ? _ref7 : [];
       second = (_ref8 = third[k]) != null ? _ref8 : [];
       first = (_ref9 = second[j]) != null ? _ref9 : [];
-      return function() {
+      thunk = function() {
         var x, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17;
         x = first[i++];
         if (i === a) {
@@ -63774,7 +63918,14 @@ exports.getThunk = function(data) {
         }
         return x;
       };
+      thunk.reset = function() {
+        return i = j = k = l = m = 0;
+      };
   }
+  if (thunk.reset == null) {
+    thunk.reset = function() {};
+  }
+  return thunk;
 };
 
 

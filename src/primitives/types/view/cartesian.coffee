@@ -47,8 +47,9 @@ class Cartesian extends View
     @objectMatrix.compose o, q, s
     @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
 
-    @trigger
-      type: 'range'
+    if changed['view.range']
+      @trigger
+        type: 'range'
 
   to: (vector) ->
     vector.applyMatrix4 @viewMatrix

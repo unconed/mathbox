@@ -76,6 +76,12 @@ class Voxel extends Data
               channels: channels
               items:    items
 
+    # Create data thunk to copy (multi-)array if bound to one
+    if data?
+      thunk   = Util.Data.getThunk    data
+      emitter = Util.Data.makeEmitter thunk, items, channels, 3
+      @buffer.callback = emitter
+
     # Notify of buffer reallocation
     @trigger
       type: 'rebuild'
@@ -94,7 +100,8 @@ class Voxel extends Data
     if changed['data.expression']? or
        init
 
-      @buffer.callback = @callback @_get 'data.expression'
+      data = @_get 'data.data'
+      @buffer.callback = @callback @_get 'data.expression' if !data?
 
   update: () ->
     return unless @buffer
@@ -112,23 +119,24 @@ class Voxel extends Data
 
     if data?
       dims = Util.Data.getDimensions data, @spec
-      if dims.width  < spec.width  or
-         dims.height < spec.height or
-         dims.depth  < spec.depth
-        @rebuild()
 
-      @buffer.callback = getThunk data
+      # Grow dimensions if needed
+      if dims.width  > space.width  or
+         dims.height > space.height or
+         dims.depth  > space.depth
+        @rebuild()
 
       used.width  = dims.width
       used.height = dims.height
       used.depth  = dims.depth
 
+      @buffer.update()
     else
       length = @buffer.update()
 
-      used.width  = w = space.width
-      used.height = h = space.height
-      used.depth  = Math.ceil length / w / h
+      used.width  = _w = space.width
+      used.height = _h = space.height
+      used.depth  = Math.ceil length / _w / _h
 
     if used.width  != w or
        used.height != h or

@@ -78,8 +78,9 @@ class Polar extends View
     @objectMatrix.compose o, q, s
     @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
 
-    @trigger
-      type: 'range'
+    if changed['view.range'] or touched['polar']
+      @trigger
+        type: 'range'
 
   to: (vector) ->
     if @bend > 0.0001

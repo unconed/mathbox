@@ -40,6 +40,8 @@ class VoxelBuffer extends Buffer
     o     = @depth
     limit = @samples
 
+    callback.reset() if callback.reset?
+
     i = j = k = l = 0
     while l < limit
       l++

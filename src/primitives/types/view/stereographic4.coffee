@@ -67,8 +67,9 @@ class Stereographic4 extends View
     @viewMatrix.compose o, q, s
     @view4D    .set o.w, s.w
 
-    @trigger
-      type: 'range'
+    if changed['view.range'] or touched['stereographic']
+      @trigger
+        type: 'range'
 
   to: (vector) ->
     throw "TODO"

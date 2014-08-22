@@ -1,4 +1,5 @@
 Data = require './data'
+Util = require '../../../util'
 
 class Matrix extends Data
   @traits: ['node', 'data', 'source', 'matrix']
@@ -6,64 +7,79 @@ class Matrix extends Data
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @buffer = null
+    @buffer = @spec = null
     @filled = false
 
-    @spaceWidth  = 0
-    @spaceHeight = 0
+    @space =
+      width:   0
+      height:  0
+      history: 0
+
+    @used =
+      width:   0
+      height:  0
 
   sourceShader: (shader) ->
     @buffer.shader shader
 
   getDimensions: () ->
+    space = @space
+
     items:  @items
-    width:  @spaceWidth
-    height: @spaceHeight
-    depth:  @history
+    width:  space.width
+    height: space.height
+    depth:  space.history
 
   getActive: () ->
+    used = @used
+
     items:  @items
-    width:  @width
-    height: @height
+    width:  used.width
+    height: used.height
     depth:  @buffer.getFilled()
 
   make: () ->
     super
 
+    # Read given dimensions
     width    = @_get 'matrix.width'
     height   = @_get 'matrix.height'
     history  = @_get 'matrix.history'
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
-    @items    = items
-    @channels = channels
-    @history  = history
+    dims = @spec =
+      channels: channels
+      items:    items
+      width:    width
+      height:   height
+      depth:    history
 
-    # Allocate to right matrix size right away
+    @items    = dims.items
+    @channels = dims.channels
+
+    # Init to right size if data supplied
     data = @_get 'data.data'
-    if data?
-      if data[0]?.length
-        if data[0][0]?.length
-          @spaceWidth = Math.max @spaceWidth, data[0].length / @items
-        else
-          @spaceWidth = Math.max @spaceWidth, data[0].length / @channels / @items
+    dims = Util.Data.getDimensions data, dims
 
-        @spaceHeight = Math.max @spaceHeight, data.length
-      else
-        @spaceHeight = Math.max @spaceHeight, Math.floor data.length / @channels / @items / @spaceWidth
-
-    @width  = @spaceWidth  = Math.max @spaceWidth, width
-    @height = @spaceHeight = Math.max @spaceHeight, height
+    space = @space
+    space.width   = Math.max space.width,  dims.width  || 1
+    space.height  = Math.max space.height, dims.height || 1
+    space.history = history
 
     # Create matrix buffer
-    if @spaceWidth * @spaceHeight > 0
-      @buffer = @_renderables.make 'matrixBuffer',
-                width:    @spaceWidth
-                height:   @spaceHeight
-                history:  history
-                channels: channels
-                items:    items
+    @buffer = @_renderables.make 'matrixBuffer',
+              width:    space.width
+              height:   space.height
+              history:  space.history
+              channels: channels
+              items:    items
+
+    # Create data thunk to copy (multi-)array if bound to one
+    if data?
+      thunk   = Util.Data.getThunk    data
+      emitter = Util.Data.makeEmitter thunk, items, channels, 2
+      @buffer.callback = emitter
 
     # Notify of buffer reallocation
     @trigger
@@ -83,7 +99,8 @@ class Matrix extends Data
     if changed['data.expression']? or
        init
 
-      @buffer.callback = @callback @_get 'data.expression'
+      data = @_get 'data.data'
+      @buffer.callback = @callback @_get 'data.expression' if !data?
 
   update: () ->
     return unless @buffer
@@ -91,55 +108,53 @@ class Matrix extends Data
 
     data = @_get 'data.data'
 
-    oldWidth  = @width
-    oldHeight = @height
-
-    width    = @spaceWidth
-    height   = @spaceHeight
-    channels = @channels
-    items    = @items
-
+    space    = @space
+    used     = @used
     filled   = @buffer.getFilled()
 
+    w = used.width
+    h = used.height
+
     if data?
+      dims = Util.Data.getDimensions data, @spec
+      rebuild = false
 
-      w = h = 0
-      method = 'copy'
+      # Grow width if needed
+      if dims.width > space.width
+        rebuild = true
 
-      # Autosize width/height based on data layout
-      if data[0]?.length
-        w = data[0].length / items
-        h = data.length
+        # Size up by 200%, up to 128 increase.
+        length = space.width
+        step   = Math.min 128, length
 
-        if !data[0][0]?.length
-          w /= channels
-          method = 'copy3D'
-        else
-          method = 'copy2D'
-      else
-        w = width
-        h = data.length / channels / items / width
-        method = 'copy'
+        # But always at least size to fit
+        space.width = Math.max length + step, dims.width
 
-      # Enlarge if needed
-      if w > width           || h > height           #||
-#         w < @bufwidth * .33 || h < @bufheight * .33
-        @spaceWidth  = w
-        @spaceHeight = h
-        @rebuild()
+      # Grow height if needed
+      if dims.height > space.height
+        rebuild = true
 
-      @buffer[method] data
-      @width  = w
-      @height = h
+        # Size up by 200%, up to 128 increase.
+        length = space.height
+        step   = Math.min 128, length
 
+        # But always at least size to fit
+        space.height = Math.max length + step, dims.height
+
+      @rebuild() if rebuild
+
+      used.width  = dims.width
+      used.height = dims.height
+
+      @buffer.update()
     else
-      length  = @buffer.update()
+      length = @buffer.update()
 
-      @width  = width
-      @height = length / @width
+      used.width  = _w = space.width
+      used.height = Math.ceil length / _w
 
-    if oldWidth  != @width or
-       oldHeight != @height or
+    if used.width  != w or
+       used.height != h or
        filled != @buffer.getFilled()
       @trigger
         type: 'resize'
