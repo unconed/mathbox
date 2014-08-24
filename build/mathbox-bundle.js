@@ -58560,7 +58560,7 @@ helpers = {
     divide: function(prefix) {
       var divide;
       divide = this._get(prefix + 'scale.divide');
-      return divide * 2.5;
+      return Math.round(divide * 2.5);
     },
     generate: function(prefix, buffer, min, max) {
       var base, divide, mode, ticks, unit;
@@ -59421,7 +59421,7 @@ Split = (function(_super) {
       }
       return _results;
     })();
-    remain = (set[index] - overlap) / stride;
+    remain = Math.floor((set[index] - overlap) / stride);
     set.splice(index, 1, length, remain);
     set = set.slice(0, 4);
     out = {};
@@ -59585,7 +59585,7 @@ Spread = (function(_super) {
 
   Spread.prototype.change = function(changed, touched, init) {
     var anchor, d, dims, els, factor, i, id, k, key, matrix, offset, order, spread, v, _i, _ref, _ref1, _results;
-    if (changed['spread'] || init) {
+    if (touched['spread'] || init) {
       if (this.bind.source) {
         anchor = this._get('spread.anchor');
         dims = this.bind.source.getActive();

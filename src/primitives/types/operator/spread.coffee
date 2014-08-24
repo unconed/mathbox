@@ -38,7 +38,7 @@ class Spread extends Operator
     super
 
   change: (changed, touched, init) ->
-    if changed['spread'] or
+    if touched['spread'] or
        init
 
       if @bind.source

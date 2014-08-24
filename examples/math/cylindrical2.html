@@ -2,25 +2,26 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Strip</title>
+  <title>MathBox - Cylindrical Rotation</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
-    mathbox = mathBox({
+    var mathbox = mathBox({
       plugins: ['core', 'controls', 'cursor'],
       controls: {
         klass: THREE.OrbitControls
       },
     });
-    three = mathbox.three;
+    var three = mathbox.three;
 
     three.camera.position.set(5.5, .5, -2.3);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
-    time = 0
-    scrub = 0
+    var objs = null
+    var time = 0
+    var scrub = 0
     three.on('update', function () {
       clock = three.Time.frames / 60
       time = clock
@@ -42,7 +43,8 @@
       c = Math.cos(f);
       s = Math.sin(f);
 
-      objs.set('rotation', [-s, 0, 0, c]);
+      if (objs)
+        objs.set('rotation', [-s, 0, 0, c]);
     });
 
     view = mathbox.polar({
@@ -53,38 +55,41 @@
     view.grid({
       unitX: π / 6,
       baseX: 2,
-      detailX: 49,
+      zWrite: false,
+      detailX: 81,
       divideX: 6,
       divideY: 10,
       axes: 'xz',
       position: [0, .5, 0],
       blending: 'add',
-      color: 0x00F0F0,
+      color: 0x00F0B0,
       opacity: .2,
     })
     view.grid({
       unitX: π / 3,
       baseX: 2,
-      detailX: 49,
+      zWrite: false,
+      detailX: 81,
       divideX: 3,
       divideY: 3,
       axes: 'xz',
       position: [0, .5, 0],
       blending: 'add',
-      color: 0x00F0F0,
+      color: 0x00F0B0,
       opacity: .2,
     })
 
     view.grid({
       unitX: π / 3,
       baseX: 2,
-      detailX: 49,
+      zWrite: false,
+      detailX: 81,
       divideX: 3,
       divideY: 3,
       axes: 'xz',
       position: [0, 1, 0],
       blending: 'add',
-      color: 0x00F0F0,
+      color: 0x00F0B0,
       opacity: .36,
     })
 
@@ -106,7 +111,8 @@
       length: 2,
     });
     view.spread({
-      width: [0, 0, .03/π, 0],
+      width: [0, 0, .015, 0],
+      depth: [0, 0, .01, 0],
       id: 'split',
     });
     view.transpose({
@@ -114,25 +120,25 @@
       id: 'strips',
     });
 
-    group = view.group({
-      position: [0, .75, 0],
-      scale: [1, 1, π],
-    })
-    group.surface({
+    view.surface({
       width: 0.002,
       zIndex: 2,
-      color: 0x0050F0,
+      color: 0x1550FF,
       solid: false,
       first: false,
+      position: [0, .75, 0],
+      scale: [1, 1, π],
     });
-    group.surface({
+    view.surface({
       width: 0.002,
-      color: 0x3000F0,
+      color: 0x2070FF,
       first: false,
       second: false,
+      position: [0, .75, 0],
+      scale: [1, 1, π],
     });
 
-    objs = mathbox.select('group');
+    objs = mathbox.select('surface');
 
   </script>
 </body>

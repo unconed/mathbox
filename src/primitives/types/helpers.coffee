@@ -88,7 +88,7 @@ helpers =
     # Divisions to allocate on scale
     divide: (prefix) ->
       divide = @_get prefix + 'scale.divide'
-      divide * 2.5
+      Math.round divide * 2.5
 
     # Generate ticks on scale
     generate: (prefix, buffer, min, max) ->

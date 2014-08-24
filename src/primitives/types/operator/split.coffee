@@ -32,7 +32,7 @@ class Split extends Operator
     mapped  = order.map (x) -> labels[x - 1]
     index   = order.indexOf axis
     set     = (dims[dim] for dim in mapped)
-    remain  = (set[index] - overlap) / stride
+    remain  = Math.floor (set[index] - overlap) / stride
 
     set.splice index, 1, length, remain
     set = set.slice 0, 4
