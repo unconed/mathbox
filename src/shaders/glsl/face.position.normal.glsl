@@ -15,7 +15,6 @@ void getFaceGeometry(vec4 xyzw, out vec3 pos, out vec3 normal) {
   c   = getPosition(vec4(xyzw.xyz, 2.0));
 
   pos = getPosition(xyzw);
-  
   normal = normalize(cross(c - a, b - a));
 }
 

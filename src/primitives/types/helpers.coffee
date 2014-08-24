@@ -208,6 +208,7 @@ helpers =
       visible  = @_get 'object.visible'
       blending = THREE.NormalBlending
       zWrite   = true
+      zTest    = true
 
       if hasStyle
         opacity  = @_get 'style.opacity'
@@ -216,6 +217,7 @@ helpers =
         zUnits   = @_get 'style.zUnits'
         zOrder   = @_get 'style.zOrder'
         zWrite   = @_get 'style.zWrite'
+        zTest    = @_get 'style.zTest'
 
       onChange = @handlers.objectChange = (event) =>
         changed  = event.changed
@@ -226,6 +228,7 @@ helpers =
         refresh  = zFactor  = @_get 'style.zFactor'  if changed['style.zFactor']
         refresh  = zUnits   = @_get 'style.zUnits'   if changed['style.zUnits']
         refresh  = zWrite   = @_get 'style.zWrite'   if changed['style.zWrite']
+        refresh  = zTest    = @_get 'style.zWrite'   if changed['style.zTest']
         onVisible() if refresh?
 
       last = null
@@ -239,10 +242,11 @@ helpers =
         if active
           if hasStyle
             for o in @objects
-              o.show opacity < 1 or forceTransparent, blending, order, zWrite
+              o.show opacity < 1 or forceTransparent, blending, order
               o.polygonOffset zFactor, zUnits
+              o.depth zWrite, zTest
           else
-            o.show false, blending, order, zWrite for o in @objects
+            o.show false, blending, order for o in @objects
         else
           o.hide() for o in @objects
 

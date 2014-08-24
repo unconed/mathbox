@@ -14,8 +14,8 @@ class Base extends Renderable
     for object in @objects
       m = object.material
 
-      m.depthWrite = false
-      m.depthTest  = false
+      m.depthWrite = write
+      m.depthTest  = test
 
   polygonOffset: (factor, units) ->
     units  -= @zUnits
@@ -29,7 +29,7 @@ class Base extends Renderable
         m.polygonOffsetUnits  = units
     null
 
-  show: (transparent, blending, order, depth) ->
+  show: (transparent, blending, order) ->
     transparent = true if blending > THREE.NormalBlending
 
     z = if transparent then order else -order
@@ -41,7 +41,6 @@ class Base extends Renderable
       object.visible = true
       m.transparent  = transparent
       m.blending     = blending
-      m.depthWrite   = depth
 
     null
 

@@ -10,26 +10,29 @@ class Area extends Matrix
     centeredX  = @_get 'x.sampler.centered'
     centeredY  = @_get 'y.sampler.centered'
 
-    rangeX     = @_helpers.span.get 'x.', dimensions.x
-    rangeY     = @_helpers.span.get 'y.', dimensions.y
+    rangeX     = @_helpers.span.get 'x.', dimensions[0]
+    rangeY     = @_helpers.span.get 'y.', dimensions[1]
 
     aX = rangeX.x
     aY = rangeY.x
 
+    spanX = rangeX.y - rangeX.x
+    spanY = rangeY.y - rangeY.x
+
     if centeredX
       inverseX  = 1 / Math.max 1, width
-      aX += inverseX / 2
+      aX += spanX * inverseX / 2
     else
       inverseX  = 1 / Math.max 1, width - 1
 
     if centeredY
       inverseY  = 1 / Math.max 1, height
-      aY += inverseY / 2
+      aY += spanY * inverseY / 2
     else
       inverseY  = 1 / Math.max 1, height - 1
 
-    bX = (rangeX.y - rangeX.x) * inverseX
-    bY = (rangeY.y - rangeY.x) * inverseY
+    bX = spanX * inverseX
+    bY = spanY * inverseY
 
     (i, j, emit) ->
       x = aX + bX * i

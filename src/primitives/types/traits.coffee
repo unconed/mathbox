@@ -17,6 +17,7 @@ Traits =
     color:       Types.color()
     blending:    Types.blending()
     zWrite:      Types.bool(true)
+    zTest:       Types.bool(true)
     zFactor:     Types.number(0)
     zUnits:      Types.number(0)
     zIndex:      Types.number(0)
@@ -57,11 +58,11 @@ Traits =
     bend:        Types.number(1)
 
   interval:
-    axis:        Types.int(1)
+    axis:        Types.axis()
   area:
-    axes:        Types.vec2(1, 2)
+    axes:        Types.swizzle([1, 2], 2)
   volume:
-    axes:        Types.vec3(1, 2, 3)
+    axes:        Types.swizzle([1, 2, 3], 3)
 
   scale:
     divide:      Types.number(10)
@@ -109,10 +110,10 @@ Traits =
   operator:
     source:      Types.select(Types.object())
   lerp:
-    items:       Types.nullable(Types.number())
-    width:       Types.nullable(Types.number())
-    height:      Types.nullable(Types.number())
-    depth:       Types.nullable(Types.number())
+    items:       Types.nullable(Types.int())
+    width:       Types.nullable(Types.int())
+    height:      Types.nullable(Types.int())
+    depth:       Types.nullable(Types.int())
   spread:
     items:       Types.nullable(Types.vec4())
     width:       Types.nullable(Types.vec4())
@@ -120,18 +121,13 @@ Traits =
     depth:       Types.nullable(Types.vec4())
     anchor:      Types.number(0)
   split:
-    order:       Types.transpose()
-    items:       Types.nullable(Types.number())
-    width:       Types.nullable(Types.number())
-    height:      Types.nullable(Types.number())
-    depth:       Types.nullable(Types.number())
+    order:       Types.transpose('wxyz')
+    axis:        Types.axis()
+    length:      Types.int(1)
     overlap:     Types.int(0)
   join:
-    order:       Types.transpose()
-    items:       Types.nullable(Types.number())
-    width:       Types.nullable(Types.number())
-    height:      Types.nullable(Types.number())
-    depth:       Types.nullable(Types.number())
+    order:       Types.transpose('wxyz')
+    axis:        Types.axis()
     overlap:     Types.int(0)
   swizzle:
     order:       Types.swizzle()

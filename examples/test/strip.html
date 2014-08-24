@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Strip</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(5.5, .5, -2.3);
+    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+
+    time = 0
+    scrub = 0
+    three.on('update', function () {
+      clock = three.Time.frames / 60
+      time = clock
+
+      t = Math.max(clock, 0) / 2
+      t = t < .5 ? t * t : t - .25
+
+      scrub = t
+
+      f = t / 8;
+      c = Math.cos(f);
+      s = Math.sin(f);
+      view.set('rotation', [0, -s, 0, c]);
+
+      t = Math.max(clock - 4, 0) / 2
+      t = t < .5 ? t * t : t - .25
+
+      f = t / 3.71;
+      c = Math.cos(f);
+      s = Math.sin(f);
+
+      objs.set('rotation', [-s, 0, 0, c]);
+    });
+
+    view = mathbox.polar({
+      range: [[-π, π], [0, 1], [-1, 1]],
+      scale: [2, 2, 2],
+    });
+
+    view.grid({
+      unitX: π / 6,
+      baseX: 2,
+      detailX: 49,
+      divideX: 6,
+      divideY: 10,
+      axes: 'xz',
+      position: [0, .5, 0],
+      blending: 'add',
+      color: 0x00F0F0,
+      opacity: .2,
+    })
+    view.grid({
+      unitX: π / 3,
+      baseX: 2,
+      detailX: 49,
+      divideX: 3,
+      divideY: 3,
+      axes: 'xz',
+      position: [0, .5, 0],
+      blending: 'add',
+      color: 0x00F0F0,
+      opacity: .2,
+    })
+
+    view.grid({
+      unitX: π / 3,
+      baseX: 2,
+      detailX: 49,
+      divideX: 3,
+      divideY: 3,
+      axes: 'xz',
+      position: [0, 1, 0],
+      blending: 'add',
+      color: 0x00F0F0,
+      opacity: .36,
+    })
+
+    view.interval({
+      centered: true,
+      axis: 'z',
+      length: 512,
+      history: 64,
+      expression: function (x, i, emit) {
+        j = Math.floor(i/2);
+        theta = scrub * (1 + Math.sin(j * j * j + j) * .5) * 4;
+        rad = Math.sin(j * 12 + j * j) * .5 + Math.sin((j * .018 + 1 + Math.sin(j) * .3) * time);
+        emit(theta, rad * .5, x / π);
+      },
+      dimensions: 3,
+    });
+    view.split({
+      axis: 'width',
+      length: 2,
+    });
+    view.spread({
+      width: [0, 0, .03/π, 0],
+      id: 'split',
+    });
+    view.transpose({
+      order: "xzyw",
+      id: 'strips',
+    });
+
+    group = view.group({
+      position: [0, .75, 0],
+      scale: [1, 1, π],
+    })
+    group.surface({
+      width: 0.002,
+      zIndex: 2,
+      color: 0x0050F0,
+      solid: false,
+      first: false,
+    });
+    group.surface({
+      width: 0.002,
+      color: 0x3000F0,
+      first: false,
+      second: false,
+    });
+
+    objs = mathbox.select('group');
+
+  </script>
+</body>
+</html>

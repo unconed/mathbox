@@ -4,6 +4,7 @@ Classes =
   grid:              require './draw/grid'
   line:              require './draw/line'
   point:             require './draw/point'
+  strip:             require './draw/strip'
   surface:           require './draw/surface'
   ticks:             require './draw/ticks'
   vector:            require './draw/vector'

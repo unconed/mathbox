@@ -1,6 +1,16 @@
-uniform vec4 splitModulus;
+uniform float joinStride;
+
+float getIndex(vec4 xyzw);
+vec4 getRest(vec4 xyzw);
+vec4 injectIndices(float a, float b);
 
 vec4 getJoinXYZW(vec4 xyzw) {
-  vec4 base = mod(xyzw, repeatModulus);
-  vec3 offset = floor(xyzw / repeatModulus).wxy;
+
+  float a = getIndex(xyzw);
+  float b = a / joinStride;
+
+  float integer  = floor(b);
+  float fraction = b - integer;
+  
+  return injectIndices(fraction * joinStride, integer) + getRest(xyzw);
 }

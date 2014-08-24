@@ -1,22 +1,23 @@
 Geometry = require './geometry'
 
 ###
-(flat) Triangle fans arranged in items, columns and rows
+Triangle strips arranged in items, columns and rows
 
-+-+     +-+     +-+     +-+     
-|\\\    |\\\    |\\\    |\\\    
-+-+-+   +-+-+   +-+-+   +-+-+   
++--+--+--+  +--+--+--+  +--+--+--+  +--+--+--+  
+| /| /| /   | /| /| /   | /| /| /   | /| /| / 
++--+--+/    +--+--+/    +--+--+/    +--+--+/  
 
-+-+     +-+     +-+     +-+     
-|\\\    |\\\    |\\\    |\\\    
-+-+-+   +-+-+   +-+-+   +-+-+   
++--+--+--+  +--+--+--+  +--+--+--+  +--+--+--+  
+| /| /| /   | /| /| /   | /| /| /   | /| /| / 
++--+--+/    +--+--+/    +--+--+/    +--+--+/  
 
-+-+     +-+     +-+     +-+     
-|\\\    |\\\    |\\\    |\\\    
-+-+-+   +-+-+   +-+-+   +-+-+   
++--+--+--+  +--+--+--+  +--+--+--+  +--+--+--+  
+| /| /| /   | /| /| /   | /| /| /   | /| /| / 
++--+--+/    +--+--+/    +--+--+/    +--+--+/  
+
 ###
 
-class FaceGeometry extends Geometry
+class StripGeometry extends Geometry
 
   constructor: (options) ->
     super options
@@ -40,26 +41,44 @@ class FaceGeometry extends Geometry
 
     @addAttribute 'index',     Uint16Array,  triangles * 3, 1
     @addAttribute 'position4', Float32Array, points,        4
+    @addAttribute 'strip',     Float32Array, points,        3
 
     @_autochunk()
 
     index    = @_emitter 'index'
     position = @_emitter 'position4'
+    strip    = @_emitter 'strip'
 
     base = 0
     for i in [0...samples]
+      o = base
       for j in [0...sides]
-        index base
-        index base + j + 1
-        index base + j + 2
-
+        if j & 1
+          index o + 1
+          index o
+          index o + 2
+        else
+          index o
+          index o + 1
+          index o + 2
+        o++
       base += items
 
+    last = items - 1
     for z in [0...depth]
       for y in [0...height]
         for x in [0...width]
-          for l in [0...items]
+          f = 1
+
+          position x, y, z, 0
+          strip 1, 2, f
+
+          for l in [1...last]
             position x, y, z, l
+            strip l - 1, l + 1, f = -f
+
+          position x, y, z, last
+          strip last - 2, last - 1, -f
 
     @_finalize()
     @clip()
@@ -81,4 +100,4 @@ class FaceGeometry extends Geometry
       count: tris * 3
     ]
 
-module.exports = FaceGeometry
+module.exports = StripGeometry

@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Split</title>
+  <title>MathBox - Join</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
@@ -52,6 +52,16 @@
     view.split({
       axis: 'items',
       length: 2,
+      overlap: 1,
+    });
+
+    view.join({
+      axis: 'items',
+      overlap: 1,
+    });
+
+    view.join({
+      axis: 'items',
       overlap: 1,
     });
 

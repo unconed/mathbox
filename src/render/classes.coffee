@@ -3,6 +3,7 @@ Classes =
   line:            require('./meshes/line')
   surface:         require('./meshes/surface')
   face:            require('./meshes/face')
+  strip:           require('./meshes/strip')
   arrow:           require('./meshes/arrow')
   screen:          require('./meshes/screen')
 

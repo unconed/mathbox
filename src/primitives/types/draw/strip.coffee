@@ -1,16 +1,16 @@
 Primitive = require '../../primitive'
 Util      = require '../../../util'
 
-class Face extends Primitive
+class Strip extends Primitive
   @traits: ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @face = null
+    @strip = null
 
   resize: () ->
-    return unless @face and @bind.points
+    return unless @strip and @bind.points
     dims = @bind.points.getActive()
 
     items  = dims.items
@@ -18,7 +18,9 @@ class Face extends Primitive
     height = dims.height
     depth  = dims.depth
 
-    @face.geometry.clip width, height, depth, items
+    #console.log 'strip', dims
+
+    @strip.geometry.clip width, height, depth, items
 
   make: () ->
     # Bind to attached data sources
@@ -66,10 +68,10 @@ class Face extends Primitive
               clip:     start or end
     ###
 
-    # Make face renderable
+    # Make strip renderable
     uniforms = Util.JS.merge styleUniforms, {}
 
-    @face = @_renderables.make 'face',
+    @strip = @_renderables.make 'strip',
               uniforms: uniforms
               width:    width
               height:   height
@@ -79,16 +81,16 @@ class Face extends Primitive
 
     @resize()
 
-    @_helpers.object.make [@face]
+    @_helpers.object.make [@strip]
 
   unmake: () ->
     @_helpers.bind.unmake()
     @_helpers.object.unmake()
     @_helpers.position.unmake()
 
-    @face = null
+    @strip = null
 
   change: (changed, touched, init) ->
     @rebuild() if changed['geometry.points']?
 
-module.exports = Face
+module.exports = Strip

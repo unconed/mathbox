@@ -11,14 +11,15 @@ class Interval extends _Array
     range     = @_helpers.span.get '', dimension
 
     a = range.x
+    span = range.y - range.x
 
     if centered
       inverse   = 1 / Math.max 1, length
-      a += inverse / 2
+      a += span * inverse / 2
     else
       inverse   = 1 / Math.max 1, length - 1
 
-    b = (range.y - range.x) * inverse
+    b = span * inverse
 
     (i, emit) ->
       x = a + b * i

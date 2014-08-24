@@ -1,10 +1,16 @@
 letters = 'xyzw'.split('')
 
 index =
+  0: -1
   x: 0
   y: 1
   z: 2
   w: 3
+
+parseOrder = (order) ->
+  order = order.split '' if order == "" + order
+  order = [order]        if order == +order
+  order
 
 # Sample data texture array
 exports.sample2DArray = (textures) ->
@@ -44,7 +50,7 @@ exports.binaryOperator = (type, op) ->
   }
   """
 
-# Extend to 4-vector with zeroes
+# Extend to n-vector with zeroes
 exports.extendVec = (from, to) ->
   diff = to - from
 
@@ -58,7 +64,7 @@ exports.extendVec = (from, to) ->
   #{to} extendVec(#{from} v) { return #{to}(#{ctor}); }
   """
 
-# Truncate 4-vector
+# Truncate n-vector
 exports.truncateVec = (from, to) ->
   swizzle = 'xyzw'.substr 0, to
 
@@ -69,22 +75,53 @@ exports.truncateVec = (from, to) ->
   #{to} truncateVec(#{from} v) { return v.#{swizzle}; }
   """
 
-# Apply 4-component vector swizzle
-exports.swizzleVec4 = (order) ->
-  l = order.length
-  extra = ""
-  if l < 4
-    extra = ', ' + ('0.0' for i in [l...4]).join ', '
+# Inject float into 4-component vector
+exports.injectVec4 = (order) ->
+  swizzler = ['0.0', '0.0', '0.0', '0.0']
+
+  order = parseOrder order
+  order = order.map (v) -> if v == "" + v then index[v] else v
+
+  for channel, i in order
+    swizzler[channel] = ['a','b','c','d'][i]
+
+  mask = swizzler.slice(0, 4).join ', '
+
+  args = ['float a', 'float b', 'float c', 'float d'].slice 0, order.length
 
   """
-  vec4 swizzle(vec4 xyzw) {
-    return vec4(xyzw.#{order}#{extra});
+  vec4 inject(#{args}) {
+    return vec4(#{mask});
   }
   """
+
+# Apply 4-component vector swizzle
+exports.swizzleVec4 = (order, size = null) ->
+  lookup = ['0.0', 'xyzw.x', 'xyzw.y', 'xyzw.z', 'xyzw.w']
+
+  size = order.length if !size?
+
+  order = parseOrder order
+  order = order.map (v) ->
+    v = +v           if +v in [0..4]
+    v = index[v] + 1 if v == "" + v
+    lookup[v]
+
+  order.push '0.0' while order.length < size
+  mask = order.join ', '
+
+  """
+  vec#{size} swizzle(vec4 xyzw) {
+    return vec#{size}(#{mask});
+  }
+  """.replace /vec1/g, 'float'
 
 # Invert full or truncated swizzles for pointer lookups
 exports.invertSwizzleVec4 = (order) ->
   swizzler = ['0.0', '0.0', '0.0', '0.0']
+
+  order = parseOrder order
+  order = order.map (v) -> if v == +v then letters[v - 1] else v
 
   for letter, i in order
     src = letters[i]

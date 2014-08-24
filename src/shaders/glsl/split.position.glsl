@@ -1,11 +1,11 @@
-uniform vec4 splitScale;
-uniform vec4 splitModulus;
-uniform vec4 splitDimensions;
+uniform float splitStride;
+
+vec2 getIndices(vec4 xyzw);
+vec4 getRest(vec4 xyzw);
+vec4 injectIndex(float v);
 
 vec4 getSplitXYZW(vec4 xyzw) {
-  vec4 base = floor(xyzw * splitScale);
-  vec4 offset = mod(xyzw, splitModulus);
-  
-  vec4 result = base + vec4(offset.yz, 0.0, offset.x) * splitDimensions;
-  return result;
+  vec2 uv = getIndices(xyzw);
+  float offset = uv.x + uv.y * splitStride;
+  return injectIndex(offset) + getRest(xyzw);
 }

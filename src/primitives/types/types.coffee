@@ -1,8 +1,9 @@
 Types =
 
-  array: (type, size) ->
+  array: (type, size, value = null) ->
     uniform: () -> if type.uniform then type.uniform() + 'v' else undefined
     make: () ->
+      return value.slice() if value?
       return [] if !size
       (type.make() for i in [0...size])
     validate: (value, target) ->
@@ -16,6 +17,21 @@ Types =
         target[i] = type.value for i in [0..target.length]
       return
 
+  letters: (type, size, value = null) ->
+    if value?
+      if value == "" + value
+        value = value.split ''
+      value[i] = type.validate v, v for v, i in value
+
+    array = Types.array type, size, value
+
+    uniform: () -> array.uniform()
+    make: () -> array.make()
+    validate: (value, target) ->
+      if value == "" + value
+        value = value.split ''
+      return array.validate value, target
+
   nullable: (type) ->
     make: () -> null
     validate: (value, target) ->
@@ -24,6 +40,17 @@ Types =
         target = type.make()
       value = type.validate value, target
       if value != undefined then value else target
+
+  enum: (value, keys, map = {}) ->
+    values = {}
+    map[key] ?= i    for key, i in keys
+    values[i] = true for key, i of map
+    value = map[value] if !values[value]?
+
+    make: () -> value
+    validate: (value) ->
+      v = if values[value] then value else map[value]
+      return v if v?
 
   select: (type) ->
     make: () -> null
@@ -163,23 +190,59 @@ Types =
 
       return
 
-  transpose: (order) ->
-    swizzle = Types.swizzle order
+  axis: (value = 1, allowZero = false) ->
+    map =
+      x: 1
+      y: 2
+      z: 3
+      w: 4
+      i: 4
+      null:   0
+      width:  1
+      height: 2
+      depth:  3
+      items:  4
 
-    make: () -> swizzle.make()
+    range = if allowZero then [0..4] else [1..4]
+    value = v if (v = map[value])?
+
+    make: () -> value
     validate: (value) ->
-      value = "" + value
-      unique = (value.indexOf(letter) == i for letter, i in value)
+      value = v if (v = map[value])?
+      value = Math.round(value) ? 0
+      return value if value in range
+
+  transpose: (order = [1, 2, 3, 4]) ->
+    looseArray = Types.letters(Types.axis(null, false), 0, order)
+    axesArray  = Types.letters(Types.axis(null, false), 4, order)
+
+    make: () -> axesArray.make()
+    validate: (value, target) ->
+      temp = [1, 2, 3, 4]
+      looseArray.validate value, temp
+
+      if temp.length < 4
+        missing = [1, 2, 3, 4].filter (x) -> temp.indexOf(x) == -1
+        temp = temp.concat(missing)
+
+      unique = (temp.indexOf(letter) == i for letter, i in temp)
       if unique.indexOf(false) < 0
-        return swizzle.validate value
+        return axesArray.validate temp, target
 
-  swizzle: (order = 'xyzw') ->
+  swizzle: (order = [1, 2, 3, 4], size = 4) ->
+    order = order.slice 0, size
+    looseArray = Types.letters(Types.axis(null, false), 0, order)
+    axesArray  = Types.letters(Types.axis(null, true), size, order)
 
-    make: () -> order
-    validate: (value) ->
-      value = "" + value
-      if value.match /^[xyzw]{1,4}$/
-        return value
+    make: () -> axesArray.make()
+    validate: (value, target) ->
+      temp = order.slice()
+      looseArray.validate value, temp
+
+      if temp.length < size
+        temp = temp.concat([0, 0, 0, 0]).slice(0, size)
+
+      return axesArray.validate temp, target
 
   classes: () ->
     stringArray = Types.array(Types.string())
@@ -189,17 +252,6 @@ Types =
       value = value.split ' ' if (value == "" + value)
       value = value.filter (x) -> !!x.length
       return stringArray.validate value, target
-
-  enum: (value, keys, map = {}) ->
-    values = {}
-    map[key] ?= i    for key, i in keys
-    values[i] = true for key, i of map
-    value = map[value] if !values[value]?
-
-    make: () -> value
-    validate: (value) ->
-      v = if values[value] then value else map[value]
-      return v if v?
 
   blending: (value = 'normal') ->
     keys = ['no', 'normal', 'add', 'subtract', 'multiply', 'custom']

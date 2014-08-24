@@ -1,12 +1,11 @@
 Operator = require './operator'
 Util     = require '../../../util'
 
-letters = 'xyzw'.split('')
 labels =
-  x: 'width'
-  y: 'height'
-  z: 'depth'
-  w: 'items'
+  1: 'width'
+  2: 'height'
+  3: 'depth'
+  4: 'items'
 
 class Transpose extends Operator
   @traits: ['node', 'bind', 'operator', 'source', 'transpose']
@@ -25,10 +24,9 @@ class Transpose extends Operator
     # Map dimensions onto their new axis
     out = {}
 
-    for letter, i in letters
-      dst = labels[letter]
+    for i in [0..3]
+      dst = labels[i + 1]
       src = labels[transpose[i]]
-
       out[dst] = dims[src] ? 1
 
     out
@@ -38,8 +36,8 @@ class Transpose extends Operator
 
     # Transposition order
     order = @_get 'transpose.order'
-    @transpose = order.split ''
-    @swizzler  = Util.GLSL.invertSwizzleVec4 order if order != 'xyzw'
+    @swizzler = Util.GLSL.invertSwizzleVec4 order if order.join() != '1234'
+    @transpose = order
 
     # Notify of reallocation
     @trigger

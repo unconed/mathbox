@@ -125,16 +125,16 @@ class Grid extends Primitive
 
       # Fetch grid range in both dimensions
       axes   = @_get 'area.axes'
-      range1 = @_helpers.span.get 'x.', Math.round(axes.x)
-      range2 = @_helpers.span.get 'y.', Math.round(axes.y)
+      range1 = @_helpers.span.get 'x.', axes[0]
+      range2 = @_helpers.span.get 'y.', axes[1]
 
       # Update both line sets
       first  = @_get 'grid.first'
       second = @_get 'grid.second'
 
       if first
-        axis axes.x, axes.y, range1, range2, @axes[0]
+        axis axes[0], axes[1], range1, range2, @axes[0]
       if second
-        axis axes.y, axes.x, range2, range1, @axes[+first]
+        axis axes[1], axes[0], range2, range1, @axes[+first]
 
 module.exports = Grid

@@ -13,7 +13,7 @@ class Swizzle extends Operator
 
     # Swizzling order
     order = @_get 'swizzle.order'
-    @swizzler = Util.GLSL.swizzleVec4 order if order != 'xyzw'
+    @swizzler = Util.GLSL.swizzleVec4 order, 4 if order.join() != '1234'
 
     # Notify of reallocation
     @trigger
