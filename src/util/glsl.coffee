@@ -57,6 +57,9 @@ exports.extendVec = (from, to) ->
   from = 'vec' + from
   to   = 'vec' + to
 
+  from = 'float' if from == 'vec1'
+  to   = 'float' if to   == 'vec1'
+
   parts = [0..diff].map (x) -> if x then '0.0' else 'v'
   ctor  = parts.join ','
 
@@ -66,13 +69,15 @@ exports.extendVec = (from, to) ->
 
 # Truncate n-vector
 exports.truncateVec = (from, to) ->
-  swizzle = 'xyzw'.substr 0, to
+  swizzle = '.' + ('xyzw'.substr 0, to)
 
   from = 'vec' + from
   to   = 'vec' + to
 
+  to = 'float' if to == 'vec1'
+
   """
-  #{to} truncateVec(#{from} v) { return v.#{swizzle}; }
+  #{to} truncateVec(#{from} v) { return v#{swizzle}; }
   """
 
 # Inject float into 4-component vector

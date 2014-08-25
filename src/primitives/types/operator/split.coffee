@@ -99,15 +99,9 @@ class Split extends Operator
     split   = permute[index] + (permute[index + 1] ? 0)
     rest    = (permute.replace(split[1], '').replace(split[0], '0') + '0')
 
-    transform.callback()
-    transform  .pipe Util.GLSL.swizzleVec4 split, 2
-    transform.join()
-    transform.callback()
-    transform  .pipe Util.GLSL.swizzleVec4 rest, 4
-    transform.join()
-    transform.callback()
-    transform  .pipe Util.GLSL.injectVec4  index
-    transform.join()
+    transform.require Util.GLSL.swizzleVec4 split, 2
+    transform.require Util.GLSL.swizzleVec4 rest, 4
+    transform.require Util.GLSL.injectVec4  index
     transform.pipe 'split.position', uniforms
     transform.pipe Util.GLSL.invertSwizzleVec4 order
 
@@ -127,7 +121,9 @@ class Split extends Operator
     super
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['split.axis'] or changed['split.order']
+    @rebuild() if changed['split.axis'] or
+                  changed['split.order'] or
+                  touched['operator']
 
     if touched['split'] or
        init

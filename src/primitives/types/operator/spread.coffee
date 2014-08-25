@@ -38,6 +38,8 @@ class Spread extends Operator
     super
 
   change: (changed, touched, init) ->
+    @rebuild() if touched['operator']
+
     if touched['spread'] or
        init
 

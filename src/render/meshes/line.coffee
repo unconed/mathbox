@@ -23,7 +23,7 @@ class Line extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    color = null
+    #color = null
     if color
       v.require color
       v.pipe 'mesh.vertex.color',   @uniforms

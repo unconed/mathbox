@@ -48,7 +48,8 @@ class Transpose extends Operator
     @swizzler = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['transpose']
+    @rebuild() if touched['transpose'] or
+                  touched['operator']
 
 
 module.exports = Transpose

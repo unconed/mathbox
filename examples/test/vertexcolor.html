@@ -16,9 +16,10 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(.3, 1, 3);
+    three.camera.position.set(.3, .3, 3);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
+    view = null
     time = 0;
     origin = new THREE.Vector3();
     three.on('update', function (event) {
@@ -30,9 +31,10 @@
       c.position.set(x, 0, z);
       c.lookAt(origin);
 
-      c = three.camera;
-      c.position.set(x, 0.2, z);
-      c.lookAt(origin);
+      c = Math.cos(time / 4) * 1.71;
+      s = Math.sin(time / 4) * 1.71;
+
+      view.set('rotation', [0, s, 0, c]);
 
       o = Math.cos(time) * .5 + .5;
       grid.set('opacity', o * .25)
@@ -56,6 +58,7 @@
             opacity: .25,
             color: 0xffdfe0,
             scale: [.7, .7, .7],
+            width: 0.01,
           })
         .end()
       .end()
@@ -93,6 +96,7 @@
           color: '#ffffff',
         })
       .end()
+
       .rtt({
         width: 64*4,
         height: 36*4,
@@ -107,7 +111,7 @@
             "vec4 getFramesSample(vec3 xyz) {",
             "  vec4 color = (getSample(xyz) + getSample(xyz + vec3(0.0, 0.0, 1.0)) + getSample(xyz + vec3(0.0, 0.0, 2.0)) + getSample(xyz + vec3(0.0, 0.0, 3.0))) / 4.0;",
             "  float v = color.x + color.y + color.z;",
-            "  return vec4(vec3(v), 1.0);",
+            "  return vec4(vec3(v * v) / 8.0, 1.0);",
             "}"].join("\n")
         })
         .compose({
@@ -115,10 +119,14 @@
         })
       .end()
       .lerp({
-        width: 64,
-        height: 64,
+        width: 65,
+        height: 37,
+        id: 'lerp',
+      })
+      .repeat({
         depth: 2,
       })
+
       .remap({
         indices:    3,
         dimensions: 3,
@@ -126,27 +134,50 @@
           "vec3 getSample(vec3 xyz);",
           "vec3 getFramesSample(vec3 xyz) {",
           "  vec3 c = getSample(xyz);",
-          "  vec2 uv = (xyz.xy - 32.0) / 32.0 * vec2(16.0 / 9.0, 1.0);",
+          "  vec2 uv = (xyz.xy - vec2(32.0, 18.0)) / vec2(32.0, 18.0) * vec2(16.0 / 9.0, 1.0);",
           "  float f = xyz.z * 2.0 - 1.0;",
-          "  return vec3(uv, (c.x + c.y + c.z) * .05 * f);",
+          "  return vec3(uv, (c.x + c.y + c.z) * .1 * f);",
           "}"
         ].join("\n")
       })
       .transpose({
         order: 'xywz',
+        id: 'transpose',
       })
 
+      .remap({
+        id: 'color',
+        source: '#lerp',
+        indices:    2,
+        dimensions: 4,
+        shader: [
+          "uniform vec2 dataResolution;",
+          "vec4 getSample(vec2 xy);",
+          "vec4 getFramesSample(vec2 xy) {",
+          "  vec4 c = getSample(xy);",
+          "  return vec4(c.z * vec3(c.z * vec2(c.z, 1.0), 1.0), 1.0);",
+          "}"
+        ].join("\n")
+      })
+
+
       .cartesian({
-        range: [[-2, 2], [-1, 1], [-1, 1]],
-        scale: [2, 1, 1],
+        range: [[-16/9-.001, 16/9+.001], [-1, 1], [-1, 1]],
+        scale: [16/9, 1, 1],
       })
         .grid({
           opacity: .25,
+          blending: 'add',
+          divideX: 16,
+          divideY: 9,
+          unitX: 16/9,
+          unitY: 1,
         })
         .vector({
           points: '#transpose',
-          colors: '#transpose',
+          colors: '#color',
           color: '#205090',
+          color: '#ffffff',
           start: true,
           end: true,
           width: 0.004,
@@ -156,6 +187,7 @@
 
     rtt = mathbox.select('rtt')
     grid = mathbox.select('grid:nth-of-type(2)')
+    view = mathbox.select('cartesian')[1]
 
   </script>
 </body>

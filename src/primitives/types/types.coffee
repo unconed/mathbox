@@ -52,24 +52,23 @@ Types =
       v = if values[value] then value else map[value]
       return v if v?
 
-  select: (type) ->
-    make: () -> null
+  select: (value = '<') ->
+    make: () -> value
     validate: (value, target) ->
-      return value if value == null or typeof value == 'string'
-      if target == null or typeof target == 'string'
-        target = type.make()
-      value = type.validate value, target
-      if value != undefined then value else target
+      return value if typeof value == 'string'
+      return value if typeof value == 'object'
 
   bool: (value) ->
+    value = !!value
     uniform: () -> 'f'
-    make: () -> !!value
+    make: () -> value
     validate: (value) ->
       !!value
 
   int: (value = 0) ->
+    value = +Math.round(value)
     uniform: () -> 'i'
-    make: () -> +Math.round(value)
+    make: () -> value
     validate: (value) ->
       +Math.round(value) || 0
 

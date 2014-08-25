@@ -94,30 +94,31 @@ class Primitive
       null
 
   # Attach to primitive by trait
-  _attach: (key, trait, watcher) ->
-
-    object = @_get key
+  _attach: (selector, trait, watcher) ->
 
     # Direct JS binding, no watcher.
-    if typeof object == 'object'
-      node = object
+    if typeof selector == 'object'
+      node = selector
       return node.primitive if node? and trait in node.traits
 
+    # Auto-link selector '<'
+    if selector == '<'
+
+      # Implicitly associated node (scan backwards until we find one)
+      previous = @node
+      while previous
+        parent   = previous.parent
+        break if !parent
+        previous = parent.children[previous.index - 1]
+        previous = parent if !previous
+        return previous.primitive if previous? and trait in previous.traits
+
     # Selector binding
-    if typeof object == 'string'
-      selection = @root.watch object, watcher
+    else if typeof selector == 'string'
+      selection = @root.watch selector, watcher
       node = selection[0]
       if node? and trait in node.traits
         return node.primitive
-
-    # Implicitly associated node (scan backwards until we find one)
-    previous = @node
-    while previous
-      parent   = previous.parent
-      break if !parent
-      previous = parent.children[previous.index - 1]
-      previous = parent if !previous
-      return previous.primitive if previous? and trait in previous.traits
 
     id = "#" + @node.id if @node.id?
     throw "Could not find #{trait} `#{object}` on `#{@node.type}#{id}` #{key}"

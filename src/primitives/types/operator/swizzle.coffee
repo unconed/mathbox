@@ -24,7 +24,8 @@ class Swizzle extends Operator
     @swizzler = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['swizzle']
+    @rebuild() if touched['swizzle'] or
+                  touched['operator']
 
 
 module.exports = Swizzle

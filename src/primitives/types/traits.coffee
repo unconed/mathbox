@@ -77,8 +77,8 @@ Traits =
     detail:      Types.int(1)
 
   geometry:
-    points:      Types.select(Types.object())
-    colors:      Types.nullable(Types.select(Types.object()))
+    points:      Types.select()
+    colors:      Types.nullable(Types.select())
 
   source:
     hint:        Types.nullable(Types.string())
@@ -108,7 +108,7 @@ Traits =
     height:      Types.nullable(Types.int())
 
   operator:
-    source:      Types.select(Types.object())
+    source:      Types.select()
   lerp:
     items:       Types.nullable(Types.int())
     width:       Types.nullable(Types.int())
@@ -145,7 +145,7 @@ Traits =
     shader:      Types.nullable(Types.string())
 
   root:
-    camera:      Types.nullable(Types.select(Types.object()))
+    camera:      Types.nullable(Types.select())
 
   rtt:
     history:     Types.int(1)

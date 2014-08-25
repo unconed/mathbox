@@ -92,15 +92,9 @@ class Join extends Operator
     labels = [null, 'width', 'height', 'depth', 'items']
     major  = labels[axis]
 
-    transform.callback()
-    transform  .pipe Util.GLSL.swizzleVec4 axis, 1
-    transform.join()
-    transform.callback()
-    transform  .pipe Util.GLSL.swizzleVec4 rest, 4
-    transform.join()
-    transform.callback()
-    transform  .pipe Util.GLSL.injectVec4  [index, index + 1]
-    transform.join()
+    transform.require Util.GLSL.swizzleVec4 axis, 1
+    transform.require Util.GLSL.swizzleVec4 rest, 4
+    transform.require Util.GLSL.injectVec4  [index, index + 1]
     transform.pipe 'join.position', uniforms
     transform.pipe Util.GLSL.invertSwizzleVec4 order
 

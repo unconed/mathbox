@@ -46402,7 +46402,7 @@ Factory = (function() {
     var block;
     block = new Block.Callback(factory.graph);
     this._tail(factory._state, factory.graph);
-    this._append(block);
+    this._insert(block);
     return this;
   };
 
@@ -56381,34 +56381,34 @@ Primitive = (function() {
     }
   };
 
-  Primitive.prototype._attach = function(key, trait, watcher) {
-    var id, node, object, parent, previous, selection;
-    object = this._get(key);
-    if (typeof object === 'object') {
-      node = object;
+  Primitive.prototype._attach = function(selector, trait, watcher) {
+    var id, node, parent, previous, selection;
+    if (typeof selector === 'object') {
+      node = selector;
       if ((node != null) && __indexOf.call(node.traits, trait) >= 0) {
         return node.primitive;
       }
     }
-    if (typeof object === 'string') {
-      selection = this.root.watch(object, watcher);
+    if (selector === '<') {
+      previous = this.node;
+      while (previous) {
+        parent = previous.parent;
+        if (!parent) {
+          break;
+        }
+        previous = parent.children[previous.index - 1];
+        if (!previous) {
+          previous = parent;
+        }
+        if ((previous != null) && __indexOf.call(previous.traits, trait) >= 0) {
+          return previous.primitive;
+        }
+      }
+    } else if (typeof selector === 'string') {
+      selection = this.root.watch(selector, watcher);
       node = selection[0];
       if ((node != null) && __indexOf.call(node.traits, trait) >= 0) {
         return node.primitive;
-      }
-    }
-    previous = this.node;
-    while (previous) {
-      parent = previous.parent;
-      if (!parent) {
-        break;
-      }
-      previous = parent.children[previous.index - 1];
-      if (!previous) {
-        previous = parent;
-      }
-      if ((previous != null) && __indexOf.call(previous.traits, trait) >= 0) {
-        return previous.primitive;
       }
     }
     if (this.node.id != null) {
@@ -56683,14 +56683,14 @@ Classes = {
   area: require('./data/area'),
   voxel: require('./data/voxel'),
   volume: require('./data/volume'),
+  join: require('./operator/join'),
   lerp: require('./operator/lerp'),
-  transpose: require('./operator/transpose'),
+  remap: require('./operator/remap'),
+  repeat: require('./operator/repeat'),
   swizzle: require('./operator/swizzle'),
   spread: require('./operator/spread'),
-  repeat: require('./operator/repeat'),
   split: require('./operator/split'),
-  join: require('./operator/join'),
-  remap: require('./operator/remap'),
+  transpose: require('./operator/transpose'),
   present: require('./base/present'),
   group: require('./base/group'),
   root: require('./base/root'),
@@ -58461,7 +58461,7 @@ Helpers are auto-attached to primitives that have the matching trait
 helpers = {
   bind: {
     make: function(map) {
-      var key, name, source, trait, watcher, watchers;
+      var key, name, selector, source, trait, watcher, watchers;
       if (this.handlers.bindRebuild) {
         this._helpers.bind.unmake();
       }
@@ -58489,8 +58489,9 @@ helpers = {
         })(this);
         watchers.push(watcher);
         name = key.split(/\./g).pop();
-        source = this._attach(key, trait, watcher);
-        if (source) {
+        selector = this._get(key);
+        source = selector != null ? this._attach(selector, trait, watcher) : null;
+        if (source != null) {
           source.on('resize', this.handlers.bindResize);
           source.on('rebuild', this.handlers.bindRebuild);
         }
@@ -59001,15 +59002,9 @@ Join = (function(_super) {
     rest = permute.replace(axis, '00').substring(0, 4);
     labels = [null, 'width', 'height', 'depth', 'items'];
     major = labels[axis];
-    transform.callback();
-    transform.pipe(Util.GLSL.swizzleVec4(axis, 1));
-    transform.join();
-    transform.callback();
-    transform.pipe(Util.GLSL.swizzleVec4(rest, 4));
-    transform.join();
-    transform.callback();
-    transform.pipe(Util.GLSL.injectVec4([index, index + 1]));
-    transform.join();
+    transform.require(Util.GLSL.swizzleVec4(axis, 1));
+    transform.require(Util.GLSL.swizzleVec4(rest, 4));
+    transform.require(Util.GLSL.injectVec4([index, index + 1]));
     transform.pipe('join.position', uniforms);
     transform.pipe(Util.GLSL.invertSwizzleVec4(order));
     this.bind.source.sourceShader(transform);
@@ -59341,6 +59336,9 @@ Repeat = (function(_super) {
 
   Repeat.prototype.change = function(changed, touched, init) {
     var dims, id, key;
+    if (touched['operator']) {
+      this.rebuild();
+    }
     if (touched['repeat'] || init) {
       dims = this.bind.source.getDimensions();
       for (key in dims) {
@@ -59479,15 +59477,9 @@ Split = (function(_super) {
     index = permute.indexOf(axis);
     split = permute[index] + ((_ref = permute[index + 1]) != null ? _ref : 0);
     rest = permute.replace(split[1], '').replace(split[0], '0') + '0';
-    transform.callback();
-    transform.pipe(Util.GLSL.swizzleVec4(split, 2));
-    transform.join();
-    transform.callback();
-    transform.pipe(Util.GLSL.swizzleVec4(rest, 4));
-    transform.join();
-    transform.callback();
-    transform.pipe(Util.GLSL.injectVec4(index));
-    transform.join();
+    transform.require(Util.GLSL.swizzleVec4(split, 2));
+    transform.require(Util.GLSL.swizzleVec4(rest, 4));
+    transform.require(Util.GLSL.injectVec4(index));
     transform.pipe('split.position', uniforms);
     transform.pipe(Util.GLSL.invertSwizzleVec4(order));
     this.bind.source.sourceShader(transform);
@@ -59508,7 +59500,7 @@ Split = (function(_super) {
 
   Split.prototype.change = function(changed, touched, init) {
     var dims, length, overlap, stride;
-    if (changed['split.axis'] || changed['split.order']) {
+    if (changed['split.axis'] || changed['split.order'] || touched['operator']) {
       this.rebuild();
     }
     if (touched['split'] || init) {
@@ -59585,6 +59577,9 @@ Spread = (function(_super) {
 
   Spread.prototype.change = function(changed, touched, init) {
     var anchor, d, dims, els, factor, i, id, k, key, matrix, offset, order, spread, v, _i, _ref, _ref1, _results;
+    if (touched['operator']) {
+      this.rebuild();
+    }
     if (touched['spread'] || init) {
       if (this.bind.source) {
         anchor = this._get('spread.anchor');
@@ -59670,7 +59665,7 @@ Swizzle = (function(_super) {
   };
 
   Swizzle.prototype.change = function(changed, touched, init) {
-    if (touched['swizzle']) {
+    if (touched['swizzle'] || touched['operator']) {
       return this.rebuild();
     }
   };
@@ -59752,7 +59747,7 @@ Transpose = (function(_super) {
   };
 
   Transpose.prototype.change = function(changed, touched, init) {
-    if (touched['transpose']) {
+    if (touched['transpose'] || touched['operator']) {
       return this.rebuild();
     }
   };
@@ -60095,8 +60090,8 @@ Traits = {
     detail: Types.int(1)
   },
   geometry: {
-    points: Types.select(Types.object()),
-    colors: Types.nullable(Types.select(Types.object()))
+    points: Types.select(),
+    colors: Types.nullable(Types.select())
   },
   source: {
     hint: Types.nullable(Types.string())
@@ -60130,7 +60125,7 @@ Traits = {
     height: Types.nullable(Types.int())
   },
   operator: {
-    source: Types.select(Types.object())
+    source: Types.select()
   },
   lerp: {
     items: Types.nullable(Types.int()),
@@ -60174,7 +60169,7 @@ Traits = {
     shader: Types.nullable(Types.string())
   },
   root: {
-    camera: Types.nullable(Types.select(Types.object()))
+    camera: Types.nullable(Types.select())
   },
   rtt: {
     history: Types.int(1)
@@ -60389,34 +60384,32 @@ Types = {
       }
     };
   },
-  select: function(type) {
+  select: function(value) {
+    if (value == null) {
+      value = '<';
+    }
     return {
       make: function() {
-        return null;
+        return value;
       },
       validate: function(value, target) {
-        if (value === null || typeof value === 'string') {
+        if (typeof value === 'string') {
           return value;
         }
-        if (target === null || typeof target === 'string') {
-          target = type.make();
-        }
-        value = type.validate(value, target);
-        if (value !== void 0) {
+        if (typeof value === 'object') {
           return value;
-        } else {
-          return target;
         }
       }
     };
   },
   bool: function(value) {
+    value = !!value;
     return {
       uniform: function() {
         return 'f';
       },
       make: function() {
-        return !!value;
+        return value;
       },
       validate: function(value) {
         return !!value;
@@ -60427,12 +60420,13 @@ Types = {
     if (value == null) {
       value = 0;
     }
+    value = +Math.round(value);
     return {
       uniform: function() {
         return 'i';
       },
       make: function() {
-        return +Math.round(value);
+        return value;
       },
       validate: function(value) {
         return +Math.round(value) || 0;
@@ -63683,7 +63677,6 @@ Line = (function(_super) {
     this._adopt(this.geometry.uniforms);
     factory = shaders.material();
     v = factory.vertex;
-    color = null;
     if (color) {
       v.require(color);
       v.pipe('mesh.vertex.color', this.uniforms);
@@ -64803,6 +64796,12 @@ exports.extendVec = function(from, to) {
   diff = to - from;
   from = 'vec' + from;
   to = 'vec' + to;
+  if (from === 'vec1') {
+    from = 'float';
+  }
+  if (to === 'vec1') {
+    to = 'float';
+  }
   parts = (function() {
     _results = [];
     for (var _i = 0; 0 <= diff ? _i <= diff : _i >= diff; 0 <= diff ? _i++ : _i--){ _results.push(_i); }
@@ -64820,10 +64819,13 @@ exports.extendVec = function(from, to) {
 
 exports.truncateVec = function(from, to) {
   var swizzle;
-  swizzle = 'xyzw'.substr(0, to);
+  swizzle = '.' + ('xyzw'.substr(0, to));
   from = 'vec' + from;
   to = 'vec' + to;
-  return "" + to + " truncateVec(" + from + " v) { return v." + swizzle + "; }";
+  if (to === 'vec1') {
+    to = 'float';
+  }
+  return "" + to + " truncateVec(" + from + " v) { return v" + swizzle + "; }";
 };
 
 exports.injectVec4 = function(order) {

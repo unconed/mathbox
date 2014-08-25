@@ -31,10 +31,11 @@ helpers =
         watcher = () => @rebuild()
         watchers.push watcher
 
-        name   = key.split(/\./g).pop()
-        source = @_attach key, trait, watcher
+        name     = key.split(/\./g).pop()
+        selector = @_get key
+        source   = if selector? then @_attach selector, trait, watcher else null
 
-        if source
+        if source?
           source.on 'resize',  @handlers.bindResize
           source.on 'rebuild', @handlers.bindRebuild
 

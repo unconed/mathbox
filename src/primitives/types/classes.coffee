@@ -27,14 +27,14 @@ Classes =
   voxel:             require './data/voxel'
   volume:            require './data/volume'
 
+  join:              require './operator/join'
   lerp:              require './operator/lerp'
-  transpose:         require './operator/transpose'
+  remap:             require './operator/remap'
+  repeat:            require './operator/repeat'
   swizzle:           require './operator/swizzle'
   spread:            require './operator/spread'
-  repeat:            require './operator/repeat'
   split:             require './operator/split'
-  join:              require './operator/join'
-  remap:             require './operator/remap'
+  transpose:         require './operator/transpose'
 
   present:           require './base/present'
   group:             require './base/group'
