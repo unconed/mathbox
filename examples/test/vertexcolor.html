@@ -23,15 +23,17 @@
     time = 0;
     origin = new THREE.Vector3();
     three.on('update', function (event) {
-      time = three.Time.clock;
+      time = three.Time.clock * 1.5;
+
       x = Math.cos(time) * 3;
       z = Math.sin(time) * 3;
-
       y = Math.sin(time * .341) * 3;
 
       c = rtt[0].primitive.rtt.camera;
       c.position.set(x, (x + z) * .2 + y, z);
       c.lookAt(origin);
+
+      time = three.Time.clock / 3;
 
       c = Math.cos(time / 4);
       s = Math.sin(time / 4);
