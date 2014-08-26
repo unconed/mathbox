@@ -177,7 +177,7 @@
           "vec4 getFramesSample(vec2 xy) {",
           "  vec4 c = getSample(xy);",
           "  vec3 rgb = (c.z * vec3(c.z * vec2(c.z, 1.0), 1.0));",
-          "  return vec4(sqrt(rgb.xzy) + .2, 1.0);",
+          "  return vec4(sqrt(rgb.yxz) + .2, 1.0);",
           "}"
         ].join("\n")
       })
@@ -187,20 +187,24 @@
         range: [[-16/9-.001, 16/9+.001], [-1, 1], [-1, 1]],
         scale: [16/9, 1, 1],
       })
+
         .vector({
           points: '#transpose',
           colors: '#color1',
           color: '#ffffff',
-          start: true,
-          end: true,
-          width: 0.004,
-          size: 0.04,
+          start: false,
+          end: false,
+          width: 0.02,
+          opacity: .15,
+          blending: 'add',
+          zWrite: false,
         })
         .point({
           points: '#transpose',
           colors: '#color2',
           color: '#ffffff',
           size: 0.005,
+          zIndex: 5,
         })
 
 
