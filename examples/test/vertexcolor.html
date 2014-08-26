@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - RTT Feedback History</title>
+  <title>MathBox - Vertex Colors</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
@@ -90,15 +90,30 @@
             "  return getSample(xyz) - .01;",
             "}"].join("\n")
         })
-        /**/
         .compose({
           color: '#ffffff',
         })
+
+        /**/
+        /**/
+        /**/
+        /** Triggres crash in safari**/
+        /**/
+        /**/
+        /**/
+
         .compose({
           source: '#render',
           blending: THREE.AdditiveBlending,
           color: '#ffffff',
         })
+
+        /**/
+        /**/
+        /**/
+        /**/
+        /**/
+        /**/
       .end()
 
       .rtt({

@@ -46682,7 +46682,7 @@ module.exports = Factory;
 
 
 },{"../block":4,"../graph":21}],9:[function(require,module,exports){
-var c1, c2, c3, c4, c5, hash;
+var c1, c2, c3, c4, c5, hash, imul, test;
 
 c1 = 0xcc9e2d51;
 
@@ -46693,6 +46693,22 @@ c3 = 0xe6546b64;
 c4 = 0x85ebca6b;
 
 c5 = 0xc2b2ae35;
+
+imul = function(a, b) {
+  var ah, al, bh, bl;
+  ah = (a >>> 16) & 0xffff;
+  al = a & 0xffff;
+  bh = (b >>> 16) & 0xffff;
+  bl = b & 0xffff;
+  return (al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0;
+};
+
+if (Math.imul != null) {
+  test = Math.imul(0xffffffff, 5);
+  if (test === -5) {
+    imul = Math.imul;
+  }
+}
 
 hash = function(string) {
   var h, iterate, j, m, n, next;
@@ -46706,12 +46722,12 @@ hash = function(string) {
     var k;
     k = a | (b << 16);
     k ^= k << 9;
-    k = Math.imul(k, c1);
+    k = imul(k, c1);
     k = (k << 15) | (k >>> 17);
-    k = Math.imul(k, c2);
+    k = imul(k, c2);
     h ^= k;
     h = (h << 13) | (h >>> 19);
-    h = Math.imul(h, 5);
+    h = imul(h, 5);
     return h = (h + c3) | 0;
   };
   while (m--) {
@@ -46722,9 +46738,9 @@ hash = function(string) {
   }
   h ^= n;
   h ^= h >>> 16;
-  h = Math.imul(h, c4);
+  h = imul(h, c4);
   h ^= h >>> 13;
-  h = Math.imul(h, c5);
+  h = imul(h, c5);
   return h ^= h >>> 16;
 };
 
