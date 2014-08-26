@@ -26,6 +26,7 @@ class Surface extends Primitive
     # Bind to attached data sources
     @_helpers.bind.make
       'geometry.points': 'source'
+      'geometry.colors': 'source'
 
     # Build transform chain
     position = @_shaders.shader()
@@ -71,6 +72,11 @@ class Surface extends Primitive
 
     objects = []
 
+    # Build color lookup
+    if @bind.colors
+      color = @_shaders.shader()
+      @bind.colors.sourceShader color
+
     # Make line and surface renderables
     uniforms = Util.JS.merge lineUniforms, styleUniforms, wireUniforms
     zUnits = if first or second then -50 else 0
@@ -82,6 +88,7 @@ class Surface extends Primitive
                 ribbons:  depth
                 layers:   layers
                 position: wireXY
+                color:    color
                 zUnits:   -zUnits
       objects.push @line1
 
@@ -93,6 +100,7 @@ class Surface extends Primitive
                 ribbons:  depth
                 layers:   layers
                 position: wireYX
+                color:    color
                 zUnits:   -zUnits
       objects.push @line2
 
@@ -105,6 +113,7 @@ class Surface extends Primitive
                 surfaces: depth
                 layers:   layers
                 position: position
+                color:    color
                 shaded:   shaded
                 zUnits:   zUnits
       objects.push @surface

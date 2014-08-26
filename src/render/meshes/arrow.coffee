@@ -7,6 +7,7 @@ class Arrow extends Base
 
     uniforms = options.uniforms ? {}
     position = options.position
+    color    = options.color
 
     @geometry = new ArrowGeometry
       sides:   options.sides
@@ -23,13 +24,17 @@ class Arrow extends Base
     factory = shaders.material()
 
     v = factory.vertex
+    if color
+      v.require color
+      v.pipe 'mesh.vertex.color',   @uniforms
     v.require position if position
-    v.pipe 'arrow.position',   @uniforms
-    v.pipe 'project.position', @uniforms
+    v.pipe 'arrow.position',        @uniforms
+    v.pipe 'project.position',      @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',      @uniforms
-    f.pipe 'fragment.color',   @uniforms
+    f.pipe 'style.color',           @uniforms
+    f.pipe 'mesh.fragment.color',   @uniforms if color
+    f.pipe 'fragment.color',        @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       defaultAttributeValues: null

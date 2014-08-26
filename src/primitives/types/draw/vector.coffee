@@ -32,7 +32,8 @@ class Vector extends Primitive
     @_helpers.position.make()
 
     # Fetch position (swizzle x into items, inv(wxyz) = yzwx)
-    position.pipe Util.GLSL.swizzleVec4 'yzwx'
+    swizzle = Util.GLSL.swizzleVec4 'yzwx'
+    position.pipe swizzle
     @bind.points.sourceShader position
 
     # Transform position to view
@@ -57,6 +58,7 @@ class Vector extends Primitive
     # Build color lookup
     if @bind.colors
       color = @_shaders.shader()
+      color.pipe swizzle
       @bind.colors.sourceShader color
 
     # Make line renderable

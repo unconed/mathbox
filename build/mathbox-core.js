@@ -7032,7 +7032,8 @@ Face = (function(_super) {
       height: height,
       depth: depth,
       items: items,
-      position: position
+      position: position,
+      color: color
     });
     this.resize();
     return this._helpers.object.make([this.face]);
@@ -7243,9 +7244,10 @@ Line = (function(_super) {
   };
 
   Line.prototype.make = function() {
-    var arrowUniforms, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, uniforms;
+    var arrowUniforms, color, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, uniforms;
     this._helpers.bind.make({
-      'geometry.points': 'source'
+      'geometry.points': 'source',
+      'geometry.colors': 'source'
     });
     position = this._shaders.shader();
     this._helpers.position.make();
@@ -7261,6 +7263,10 @@ Line = (function(_super) {
     strips = dims.height;
     ribbons = dims.depth;
     layers = dims.items;
+    if (this.bind.colors) {
+      color = this._shaders.shader();
+      this.bind.colors.sourceShader(color);
+    }
     uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
@@ -7269,7 +7275,8 @@ Line = (function(_super) {
       ribbons: ribbons,
       layers: layers,
       position: position,
-      clip: start || end
+      clip: start || end,
+      color: color
     });
     this.arrows = [];
     uniforms = Util.JS.merge(arrowUniforms, styleUniforms);
@@ -7281,7 +7288,8 @@ Line = (function(_super) {
         strips: strips,
         ribbons: ribbons,
         layers: layers,
-        position: position
+        position: position,
+        color: color
       }));
     }
     if (end) {
@@ -7291,7 +7299,8 @@ Line = (function(_super) {
         strips: strips,
         ribbons: ribbons,
         layers: layers,
-        position: position
+        position: position,
+        color: color
       }));
     }
     this.resize();
@@ -7351,9 +7360,10 @@ Point = (function(_super) {
   };
 
   Point.prototype.make = function() {
-    var depth, dims, height, items, pointUniforms, position, renderUniforms, styleUniforms, uniforms, width;
+    var color, depth, dims, height, items, pointUniforms, position, renderUniforms, styleUniforms, uniforms, width;
     this._helpers.bind.make({
-      'geometry.points': 'source'
+      'geometry.points': 'source',
+      'geometry.colors': 'source'
     });
     this._helpers.renderScale.make();
     position = this._shaders.shader();
@@ -7368,6 +7378,10 @@ Point = (function(_super) {
     styleUniforms = this._helpers.style.uniforms();
     pointUniforms = this._helpers.point.uniforms();
     renderUniforms = this._helpers.renderScale.uniforms();
+    if (this.bind.colors) {
+      color = this._shaders.shader();
+      this.bind.colors.sourceShader(color);
+    }
     uniforms = Util.JS.merge(renderUniforms, pointUniforms, styleUniforms);
     this.point = this._renderables.make('sprite', {
       uniforms: uniforms,
@@ -7375,7 +7389,8 @@ Point = (function(_super) {
       height: height,
       depth: depth,
       items: items,
-      position: position
+      position: position,
+      color: color
     });
     this.resize();
     return this._helpers.object.make([this.point]);
@@ -7475,7 +7490,8 @@ Strip = (function(_super) {
       height: height,
       depth: depth,
       items: items,
-      position: position
+      position: position,
+      color: color
     });
     this.resize();
     return this._helpers.object.make([this.strip]);
@@ -7542,9 +7558,10 @@ Surface = (function(_super) {
   };
 
   Surface.prototype.make = function() {
-    var depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, uniforms, width, wireUniforms, wireXY, wireYX, zUnits;
+    var color, depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, styleUniforms, surfaceUniforms, uniforms, width, wireUniforms, wireXY, wireYX, zUnits;
     this._helpers.bind.make({
-      'geometry.points': 'source'
+      'geometry.points': 'source',
+      'geometry.colors': 'source'
     });
     position = this._shaders.shader();
     this._helpers.position.make();
@@ -7573,6 +7590,10 @@ Surface = (function(_super) {
     first = this._get('grid.first');
     second = this._get('grid.second');
     objects = [];
+    if (this.bind.colors) {
+      color = this._shaders.shader();
+      this.bind.colors.sourceShader(color);
+    }
     uniforms = Util.JS.merge(lineUniforms, styleUniforms, wireUniforms);
     zUnits = first || second ? -50 : 0;
     if (first) {
@@ -7583,6 +7604,7 @@ Surface = (function(_super) {
         ribbons: depth,
         layers: layers,
         position: wireXY,
+        color: color,
         zUnits: -zUnits
       });
       objects.push(this.line1);
@@ -7595,6 +7617,7 @@ Surface = (function(_super) {
         ribbons: depth,
         layers: layers,
         position: wireYX,
+        color: color,
         zUnits: -zUnits
       });
       objects.push(this.line2);
@@ -7608,6 +7631,7 @@ Surface = (function(_super) {
         surfaces: depth,
         layers: layers,
         position: position,
+        color: color,
         shaded: shaded,
         zUnits: zUnits
       });
@@ -7782,14 +7806,15 @@ Vector = (function(_super) {
   };
 
   Vector.prototype.make = function() {
-    var arrowUniforms, color, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, uniforms;
+    var arrowUniforms, color, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, styleUniforms, swizzle, uniforms;
     this._helpers.bind.make({
       'geometry.points': 'source',
       'geometry.colors': 'source'
     });
     position = this._shaders.shader();
     this._helpers.position.make();
-    position.pipe(Util.GLSL.swizzleVec4('yzwx'));
+    swizzle = Util.GLSL.swizzleVec4('yzwx');
+    position.pipe(swizzle);
     this.bind.points.sourceShader(position);
     this._helpers.position.shader(position);
     styleUniforms = this._helpers.style.uniforms();
@@ -7804,6 +7829,7 @@ Vector = (function(_super) {
     layers = dims.depth;
     if (this.bind.colors) {
       color = this._shaders.shader();
+      color.pipe(swizzle);
       this.bind.colors.sourceShader(color);
     }
     uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms);
@@ -12821,10 +12847,11 @@ Arrow = (function(_super) {
   __extends(Arrow, _super);
 
   function Arrow(renderer, shaders, options) {
-    var f, factory, object, position, uniforms, v, _ref;
+    var color, f, factory, object, position, uniforms, v, _ref;
     Arrow.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
+    color = options.color;
     this.geometry = new ArrowGeometry({
       sides: options.sides,
       samples: options.samples,
@@ -12838,6 +12865,10 @@ Arrow = (function(_super) {
     this._adopt(this.geometry.uniforms);
     factory = shaders.material();
     v = factory.vertex;
+    if (color) {
+      v.require(color);
+      v.pipe('mesh.vertex.color', this.uniforms);
+    }
     if (position) {
       v.require(position);
     }
@@ -12845,6 +12876,9 @@ Arrow = (function(_super) {
     v.pipe('project.position', this.uniforms);
     f = factory.fragment;
     f.pipe('style.color', this.uniforms);
+    if (color) {
+      f.pipe('mesh.fragment.color', this.uniforms);
+    }
     f.pipe('fragment.color', this.uniforms);
     this.material = new THREE.ShaderMaterial(factory.build({
       defaultAttributeValues: null,
@@ -13012,11 +13046,12 @@ Face = (function(_super) {
   __extends(Face, _super);
 
   function Face(renderer, shaders, options) {
-    var f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
+    var color, f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
     Face.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
     shaded = (_ref1 = options.shaded) != null ? _ref1 : true;
+    color = options.color;
     this.geometry = new FaceGeometry({
       items: options.items,
       width: options.width,
@@ -13027,6 +13062,10 @@ Face = (function(_super) {
     this._adopt(this.geometry.uniforms);
     factory = shaders.material();
     v = factory.vertex;
+    if (color) {
+      v.require(color);
+      v.pipe('mesh.vertex.color', this.uniforms);
+    }
     if (position) {
       v.require(position);
     }
@@ -13045,6 +13084,9 @@ Face = (function(_super) {
     }
     if (shaded) {
       f.pipe('style.color.shaded', this.uniforms);
+    }
+    if (color) {
+      f.pipe('mesh.fragment.color', this.uniforms);
     }
     f.pipe('fragment.color', this.uniforms);
     this.material = new THREE.ShaderMaterial(factory.build({
@@ -13230,10 +13272,11 @@ Sprite = (function(_super) {
   __extends(Sprite, _super);
 
   function Sprite(renderer, shaders, options) {
-    var f, factory, object, position, uniforms, v, _ref;
+    var color, f, factory, object, position, uniforms, v, _ref;
     Sprite.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
+    color = options.color;
     this.geometry = new SpriteGeometry({
       items: options.items,
       width: options.width,
@@ -13244,6 +13287,10 @@ Sprite = (function(_super) {
     this._adopt(this.geometry.uniforms);
     factory = shaders.material();
     v = factory.vertex;
+    if (color) {
+      v.require(color);
+      v.pipe('mesh.vertex.color', this.uniforms);
+    }
     if (position) {
       v.require(position);
     }
@@ -13251,6 +13298,9 @@ Sprite = (function(_super) {
     v.pipe('project.position', this.uniforms);
     f = factory.fragment;
     f.pipe('style.color', this.uniforms);
+    if (color) {
+      f.pipe('mesh.fragment.color', this.uniforms);
+    }
     f.pipe('fragment.round', this.uniforms);
     this.material = new THREE.ShaderMaterial(factory.build({
       side: THREE.DoubleSide,
@@ -13293,11 +13343,12 @@ Strip = (function(_super) {
   __extends(Strip, _super);
 
   function Strip(renderer, shaders, options) {
-    var f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
+    var color, f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
     Strip.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
     shaded = (_ref1 = options.shaded) != null ? _ref1 : true;
+    color = options.color;
     this.geometry = new StripGeometry({
       items: options.items,
       width: options.width,
@@ -13308,6 +13359,10 @@ Strip = (function(_super) {
     this._adopt(this.geometry.uniforms);
     factory = shaders.material();
     v = factory.vertex;
+    if (color) {
+      v.require(color);
+      v.pipe('mesh.vertex.color', this.uniforms);
+    }
     if (position) {
       v.require(position);
     }
@@ -13326,6 +13381,9 @@ Strip = (function(_super) {
     }
     if (shaded) {
       f.pipe('style.color.shaded', this.uniforms);
+    }
+    if (color) {
+      f.pipe('mesh.fragment.color', this.uniforms);
     }
     f.pipe('fragment.color', this.uniforms);
     this.material = new THREE.ShaderMaterial(factory.build({
@@ -13365,10 +13423,11 @@ Surface = (function(_super) {
   __extends(Surface, _super);
 
   function Surface(renderer, shaders, options) {
-    var f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
+    var color, f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
     Surface.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
+    color = options.color;
     shaded = (_ref1 = options.shaded) != null ? _ref1 : true;
     this.geometry = new SurfaceGeometry({
       width: options.width,
@@ -13380,6 +13439,10 @@ Surface = (function(_super) {
     this._adopt(this.geometry.uniforms);
     factory = shaders.material();
     v = factory.vertex;
+    if (color) {
+      v.require(color);
+      v.pipe('mesh.vertex.color', this.uniforms);
+    }
     if (position) {
       v.require(position);
     }
@@ -13398,6 +13461,9 @@ Surface = (function(_super) {
     }
     if (shaded) {
       f.pipe('style.color.shaded', this.uniforms);
+    }
+    if (color) {
+      f.pipe('mesh.fragment.color', this.uniforms);
     }
     f.pipe('fragment.color', this.uniforms);
     this.material = new THREE.ShaderMaterial(factory.build({
@@ -13548,7 +13614,20 @@ module.exports = Scene;
 var Factory;
 
 Factory = function(snippets) {
-  return new ShaderGraph(snippets);
+  var fetch;
+  fetch = function(name) {
+    var element, s;
+    s = snippets[name];
+    if (s != null) {
+      return s;
+    }
+    element = document.getElementById(key);
+    if ((element != null) && element.tagName === 'SCRIPT') {
+      return element.textContent || element.innerText;
+    }
+    throw "Unknown shader `" + name + "`";
+  };
+  return new ShaderGraph(fetch);
 };
 
 module.exports = Factory;

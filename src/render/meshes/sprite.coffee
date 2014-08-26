@@ -7,6 +7,7 @@ class Sprite extends Base
 
     uniforms = options.uniforms ? {}
     position = options.position
+    color    = options.color
 
     @geometry = new SpriteGeometry
       items:  options.items
@@ -20,13 +21,17 @@ class Sprite extends Base
     factory = shaders.material()
 
     v = factory.vertex
+    if color
+      v.require color
+      v.pipe 'mesh.vertex.color',   @uniforms
     v.require position if position
-    v.pipe 'sprite.position',  @uniforms
-    v.pipe 'project.position', @uniforms
+    v.pipe 'sprite.position',       @uniforms
+    v.pipe 'project.position',      @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',      @uniforms
-    f.pipe 'fragment.round',   @uniforms
+    f.pipe 'style.color',           @uniforms
+    f.pipe 'mesh.fragment.color',   @uniforms if color
+    f.pipe 'fragment.round',        @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide

@@ -43,7 +43,7 @@ class Node
 
   # Asymptotic arithmetic encoding
   # Computes invariant node order from path of indices
-  # Goes from 1 at the root [0] of the tree, to 0 at [∞].
+  # Goes from 1 at the root [0] of the tree, to 0 at [∞] (best for FP precision).
   _encode: (path) ->
     # Tune precision between deep and narrow (1) vs shallow and wide (n)
     k    = 3

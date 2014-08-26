@@ -7,6 +7,7 @@ class Surface extends Base
 
     uniforms = options.uniforms ? {}
     position = options.position
+    color    = options.color
     shaded   = options.shaded ? true
 
     @geometry = new SurfaceGeometry
@@ -21,17 +22,21 @@ class Surface extends Base
     factory = shaders.material()
 
     v = factory.vertex
+    if color
+      v.require color
+      v.pipe 'mesh.vertex.color',       @uniforms
     v.require position if position
     v.split()
     v  .pipe 'surface.position',        @uniforms if !shaded
     v  .pipe 'surface.position.normal', @uniforms if  shaded
     v.pass()
-    v.pipe 'project.position',   @uniforms
+    v.pipe 'project.position',          @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',        @uniforms if !shaded
-    f.pipe 'style.color.shaded', @uniforms if  shaded
-    f.pipe 'fragment.color',     @uniforms
+    f.pipe 'style.color',               @uniforms if !shaded
+    f.pipe 'style.color.shaded',        @uniforms if  shaded
+    f.pipe 'mesh.fragment.color',       @uniforms if  color
+    f.pipe 'fragment.color',            @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide

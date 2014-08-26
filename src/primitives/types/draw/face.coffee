@@ -76,6 +76,7 @@ class Face extends Primitive
               depth:    depth
               items:    items
               position: position
+              color:    color
 
     @resize()
 

@@ -8,6 +8,7 @@ class Strip extends Base
     uniforms = options.uniforms ? {}
     position = options.position
     shaded   = options.shaded ? true
+    color    = options.color
 
     @geometry = new StripGeometry
       items:  options.items
@@ -21,6 +22,9 @@ class Strip extends Base
     factory = shaders.material()
 
     v = factory.vertex
+    if color
+      v.require color
+      v.pipe 'mesh.vertex.color',     @uniforms
     v.require position if position
     v.split()
     v  .pipe 'mesh.position',         @uniforms if !shaded
@@ -31,6 +35,7 @@ class Strip extends Base
     f = factory.fragment
     f.pipe 'style.color',             @uniforms if !shaded
     f.pipe 'style.color.shaded',      @uniforms if  shaded
+    f.pipe 'mesh.fragment.color',     @uniforms if  color
     f.pipe 'fragment.color',          @uniforms
 
     @material = new THREE.ShaderMaterial factory.build

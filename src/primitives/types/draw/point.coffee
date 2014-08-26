@@ -24,6 +24,7 @@ class Point extends Primitive
     # Bind to attached data sources
     @_helpers.bind.make
       'geometry.points': 'source'
+      'geometry.colors': 'source'
 
     # Prepare renderScale helper
     @_helpers.renderScale.make()
@@ -48,6 +49,11 @@ class Point extends Primitive
     pointUniforms  = @_helpers.point.uniforms()
     renderUniforms = @_helpers.renderScale.uniforms()
 
+    # Build color lookup
+    if @bind.colors
+      color = @_shaders.shader()
+      @bind.colors.sourceShader color
+
     # Make sprite renderable
     uniforms = Util.JS.merge renderUniforms, pointUniforms, styleUniforms
     @point = @_renderables.make 'sprite',
@@ -57,6 +63,7 @@ class Point extends Primitive
               depth:    depth
               items:    items
               position: position
+              color:    color
 
     @resize()
 

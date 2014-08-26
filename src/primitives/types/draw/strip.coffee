@@ -78,6 +78,7 @@ class Strip extends Primitive
               depth:    depth
               items:    items
               position: position
+              color:    color
 
     @resize()
 

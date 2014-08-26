@@ -23,25 +23,24 @@ class Line extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    #color = null
     if color
       v.require color
       v.pipe 'mesh.vertex.color',   @uniforms
     v.require position if position
     v.split()
-    v  .pipe 'line.position',     @uniforms
+    v  .pipe 'line.position',       @uniforms
     v.pass()
     v.fan()
-    v  .pipe 'line.clipEnds',     @uniforms if clip
+    v  .pipe 'line.clipEnds',       @uniforms if clip
     v.next()
-    v  .pipe 'project.position',  @uniforms
+    v  .pipe 'project.position',    @uniforms
     v.join()
 
     f = factory.fragment
-    f.pipe 'fragment.clipEnds',   @uniforms if clip
-    f.pipe 'style.color',         @uniforms
-    f.pipe 'mesh.fragment.color', @uniforms if color
-    f.pipe 'fragment.color',      @uniforms
+    f.pipe 'fragment.clipEnds',     @uniforms if clip
+    f.pipe 'style.color',           @uniforms
+    f.pipe 'mesh.fragment.color',   @uniforms if color
+    f.pipe 'fragment.color',        @uniforms
 
     @material = new THREE.ShaderMaterial factory.build
       side: THREE.DoubleSide

@@ -25,6 +25,7 @@ class Line extends Primitive
     # Bind to attached data sources
     @_helpers.bind.make
       'geometry.points': 'source'
+      'geometry.colors': 'source'
 
     # Build transform chain
     position = @_shaders.shader()
@@ -52,6 +53,11 @@ class Line extends Primitive
     ribbons = dims.depth
     layers  = dims.items
 
+    # Build color lookup
+    if @bind.colors
+      color = @_shaders.shader()
+      @bind.colors.sourceShader color
+
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms
     @line = @_renderables.make 'line',
@@ -62,6 +68,7 @@ class Line extends Primitive
               layers:   layers
               position: position
               clip:     start or end
+              color:    color
 
     # Make arrow renderables
     @arrows = []
@@ -76,6 +83,7 @@ class Line extends Primitive
                 ribbons:  ribbons
                 layers:   layers
                 position: position
+                color:    color
 
     if end
       @arrows.push @_renderables.make 'arrow',
@@ -85,6 +93,7 @@ class Line extends Primitive
                 ribbons:  ribbons
                 layers:   layers
                 position: position
+                color:    color
 
     @resize()
 
