@@ -9374,7 +9374,6 @@ RTT = (function(_super) {
       height: this.height,
       frames: this.frames + 1
     });
-    console.log('rtt:rebuild');
     return this.trigger({
       type: 'rebuild'
     });
@@ -13623,7 +13622,7 @@ Factory = function(snippets) {
     }
     element = document.getElementById(key);
     if ((element != null) && element.tagName === 'SCRIPT') {
-      return element.textContent || element.textContent;
+      return element.textContent || element.innerText;
     }
     throw "Unknown shader `" + name + "`";
   };

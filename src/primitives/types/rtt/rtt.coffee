@@ -54,7 +54,6 @@ class RTT extends Root
       height: @height
       frames: @frames + 1
 
-    console.log 'rtt:rebuild'
     # Notify of buffer reallocation
     @trigger
       type: 'rebuild'
