@@ -11847,10 +11847,10 @@ ArrowGeometry = (function(_super) {
     arrows = strips * ribbons * layers;
     points = (sides + 2) * arrows;
     triangles = (sides * 2) * arrows;
-    this.addAttribute('index', Uint16Array, triangles * 3, 1);
-    this.addAttribute('position4', Float32Array, points, 4);
-    this.addAttribute('arrow', Float32Array, points, 3);
-    this.addAttribute('attach', Float32Array, points, 2);
+    this.addAttribute('index', new THREE.BufferAttribute(new Uint16Array(triangles * 3), 1));
+    this.addAttribute('position4', new THREE.BufferAttribute(new Float32Array(points * 4), 4));
+    this.addAttribute('arrow', new THREE.BufferAttribute(new Float32Array(points * 3), 3));
+    this.addAttribute('attach', new THREE.BufferAttribute(new Float32Array(points * 2), 2));
     this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
@@ -11988,8 +11988,8 @@ FaceGeometry = (function(_super) {
     samples = width * height * depth;
     points = items * samples;
     triangles = sides * samples;
-    this.addAttribute('index', Uint16Array, triangles * 3, 1);
-    this.addAttribute('position4', Float32Array, points, 4);
+    this.addAttribute('index', new THREE.BufferAttribute(new Uint16Array(triangles * 3), 1));
+    this.addAttribute('position4', new THREE.BufferAttribute(new Float32Array(points * 4), 4));
     this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
@@ -12319,10 +12319,10 @@ LineGeometry = (function(_super) {
     points = samples * strips * ribbons * layers * 2;
     quads = segments * strips * ribbons * layers;
     triangles = quads * 2;
-    this.addAttribute('index', Uint16Array, triangles * 3, 1);
-    this.addAttribute('position4', Float32Array, points, 4);
-    this.addAttribute('line', Float32Array, points, 2);
-    this.addAttribute('strip', Float32Array, points, 2);
+    this.addAttribute('index', new THREE.BufferAttribute(new Uint16Array(triangles * 3), 1));
+    this.addAttribute('position4', new THREE.BufferAttribute(new Float32Array(points * 4), 4));
+    this.addAttribute('line', new THREE.BufferAttribute(new Float32Array(points * 2), 2));
+    this.addAttribute('strip', new THREE.BufferAttribute(new Float32Array(points * 2), 2));
     this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
@@ -12508,9 +12508,9 @@ SpriteGeometry = (function(_super) {
     samples = items * width * height * depth;
     points = samples * 4;
     triangles = samples * 2;
-    this.addAttribute('index', Uint16Array, triangles * 3, 1);
-    this.addAttribute('position4', Float32Array, points, 4);
-    this.addAttribute('sprite', Float32Array, points, 2);
+    this.addAttribute('index', new THREE.BufferAttribute(new Uint16Array(triangles * 3), 1));
+    this.addAttribute('position4', new THREE.BufferAttribute(new Float32Array(points * 4), 4));
+    this.addAttribute('sprite', new THREE.BufferAttribute(new Float32Array(points * 2), 2));
     this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
@@ -12623,9 +12623,9 @@ StripGeometry = (function(_super) {
     samples = width * height * depth;
     points = items * samples;
     triangles = sides * samples;
-    this.addAttribute('index', Uint16Array, triangles * 3, 1);
-    this.addAttribute('position4', Float32Array, points, 4);
-    this.addAttribute('strip', Float32Array, points, 3);
+    this.addAttribute('index', new THREE.BufferAttribute(new Uint16Array(triangles * 3), 1));
+    this.addAttribute('position4', new THREE.BufferAttribute(new Float32Array(points * 4), 4));
+    this.addAttribute('strip', new THREE.BufferAttribute(new Float32Array(points * 3), 3));
     this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
@@ -12749,9 +12749,9 @@ SurfaceGeometry = (function(_super) {
     points = width * height * surfaces * layers;
     quads = segmentsX * segmentsY * surfaces * layers;
     triangles = quads * 2;
-    this.addAttribute('index', Uint16Array, triangles * 3, 1);
-    this.addAttribute('position4', Float32Array, points, 4);
-    this.addAttribute('surface', Float32Array, points, 2);
+    this.addAttribute('index', new THREE.BufferAttribute(new Uint16Array(triangles * 3), 1));
+    this.addAttribute('position4', new THREE.BufferAttribute(new Float32Array(points * 4), 4));
+    this.addAttribute('surface', new THREE.BufferAttribute(new Float32Array(points * 2), 2));
     this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
@@ -13623,7 +13623,7 @@ Factory = function(snippets) {
     }
     element = document.getElementById(key);
     if ((element != null) && element.tagName === 'SCRIPT') {
-      return element.textContent || element.innerText;
+      return element.textContent || element.textContent;
     }
     throw "Unknown shader `" + name + "`";
   };

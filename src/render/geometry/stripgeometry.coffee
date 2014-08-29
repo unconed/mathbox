@@ -39,9 +39,9 @@ class StripGeometry extends Geometry
     points    = items * samples
     triangles = sides * samples
 
-    @addAttribute 'index',     Uint16Array,  triangles * 3, 1
-    @addAttribute 'position4', Float32Array, points,        4
-    @addAttribute 'strip',     Float32Array, points,        3
+    @addAttribute 'index',     new THREE.BufferAttribute new  Uint16Array(triangles * 3), 1
+    @addAttribute 'position4', new THREE.BufferAttribute new Float32Array(points * 4),    4
+    @addAttribute 'strip',     new THREE.BufferAttribute new Float32Array(points * 3),    3
 
     @_autochunk()
 

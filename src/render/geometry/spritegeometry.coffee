@@ -38,9 +38,9 @@ class SpriteGeometry extends Geometry
     points    = samples * 4
     triangles = samples * 2
 
-    @addAttribute 'index',     Uint16Array,  triangles * 3, 1
-    @addAttribute 'position4', Float32Array, points,        4
-    @addAttribute 'sprite',    Float32Array, points,        2
+    @addAttribute 'index',     new THREE.BufferAttribute new  Uint16Array(triangles * 3), 1
+    @addAttribute 'position4', new THREE.BufferAttribute new Float32Array(points * 4),    4
+    @addAttribute 'sprite',    new THREE.BufferAttribute new Float32Array(points * 2),    2
 
     @_autochunk()
 

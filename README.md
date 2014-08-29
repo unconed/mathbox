@@ -2,14 +2,6 @@
 
 Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule init`.
 
-# DANGER WILL ROBINSON! #
-
-Currently fucked/incomplete:
-
-- Voxel/volume (3D sampler)
-- Split/join operator (initial idea was dumb, need to revisit)
-- Per vertex colors (broken due to shadergraph edge case, disabled for now)
-
 See examples/ for a start.
 
 ####

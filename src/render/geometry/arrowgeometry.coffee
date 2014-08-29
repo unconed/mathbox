@@ -34,10 +34,10 @@ class ArrowGeometry extends Geometry
     points    = (sides + 2) * arrows
     triangles = (sides * 2) * arrows
 
-    @addAttribute 'index',     Uint16Array,  triangles * 3, 1
-    @addAttribute 'position4', Float32Array, points,        4
-    @addAttribute 'arrow',     Float32Array, points,        3
-    @addAttribute 'attach',    Float32Array, points,        2
+    @addAttribute 'index',     new THREE.BufferAttribute new  Uint16Array(triangles * 3), 1
+    @addAttribute 'position4', new THREE.BufferAttribute new Float32Array(points * 4),    4
+    @addAttribute 'arrow',     new THREE.BufferAttribute new Float32Array(points * 3),    3
+    @addAttribute 'attach',    new THREE.BufferAttribute new Float32Array(points * 2),    2
 
     @_autochunk()
 

@@ -9,10 +9,7 @@
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor'],
-      controls: {
-        klass: THREE.OrbitControls
-      },
+      plugins: ['core', 'cursor'],
     });
     three = mathbox.three;
 
@@ -94,26 +91,12 @@
           color: '#ffffff',
         })
 
-        /**/
-        /**/
-        /**/
-        /** Triggres crash in safari**/
-        /**/
-        /**/
-        /**/
-
         .compose({
           source: '#render',
           blending: THREE.AdditiveBlending,
           color: '#ffffff',
         })
 
-        /**/
-        /**/
-        /**/
-        /**/
-        /**/
-        /**/
       .end()
 
       .rtt({
