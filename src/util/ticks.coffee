@@ -77,10 +77,13 @@ log = (min, max, n, unit, base, inclusive, bias) ->
 
   ###
 
+LINEAR = 0
+LOG    = 1
+
 make = (type, min, max, ticks, unit, base, inclusive, bias) ->
   switch type
-    when 'linear' then linear min, max, ticks, unit, base, inclusive, bias
-    when 'log'    then log    min, max, ticks, unit, base, inclusive, bias
+    when LINEAR then linear min, max, ticks, unit, base, inclusive, bias
+    when LOG    then log    min, max, ticks, unit, base, inclusive, bias
 
 exports.make = make
 exports.linear = linear

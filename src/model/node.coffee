@@ -5,6 +5,12 @@ class Node
 
     @set options, null, true
 
+  toString: () ->
+    out = @type
+    out += '#' + @id if @id
+    out += '.' + @classes.join '.' if @classes?.length
+    out
+
   # Add/removal callback
   _added: (parent) ->
     @parent = parent

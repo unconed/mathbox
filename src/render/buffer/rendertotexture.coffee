@@ -9,7 +9,6 @@ class RenderToTexture extends Renderable
 
   constructor: (renderer, shaders, options) ->
     @scene  = options.scene ? new THREE.Scene()
-    @inited = false
 
     super renderer, shaders
     @build options
@@ -19,7 +18,7 @@ class RenderToTexture extends Renderable
 
   shaderAbsolute: (shader, frames = 1) ->
     if frames == 1
-      shader.pipe "map.xyzw.2d"
+      shader.pipe Util.GLSL.truncateVec(4, 2)
       shader.pipe "map.2d.data",   @uniforms
       shader.pipe "sample.2d",     @uniforms
 
@@ -35,7 +34,7 @@ class RenderToTexture extends Renderable
     @camera = new THREE.PerspectiveCamera()
     @camera.position.set 0, 0, 3
     @camera.lookAt new THREE.Vector3()
-    @scene.inject()
+    @scene.inject?()
 
     @target = new RenderTarget @gl, options.width, options.height, options.frames, options
     @target.warmup (target) => @renderer.setRenderTarget target
@@ -50,7 +49,7 @@ class RenderToTexture extends Renderable
     @filled = 0
 
   render: (camera = @camera) ->
-    @renderer.render @scene.scene, @camera, @target.write
+    @renderer.render @scene.scene ? @scene, @camera, @target.write
     @target.cycle()
     @filled++ if @filled < @target.frames
 
@@ -61,7 +60,7 @@ class RenderToTexture extends Renderable
   getFilled: () -> @filled
 
   dispose: () ->
-    @scene.unject()
+    @scene.unject?()
     @scene = null
     @scene = @camera = null
 

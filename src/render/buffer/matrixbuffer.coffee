@@ -62,32 +62,5 @@ class MatrixBuffer extends Buffer
     @index = (@index + @history - 1) % @history
     @filled = Math.min @history, @filled + 1
 
-  copy2D: (data) ->
-    width  = Math.min data[0].length, @width * @channels * @items
-    height = Math.min data.length,    @height
-
-    o = 0
-    data = @data
-    for k in [0...height]
-      d = data[k]
-      d[o++] = (d[i] ? 0) for i in [0...width]
-
-    @write Math.floor o / @channels / @items
-
-  copy3D: (data) ->
-    channels = Math.min data[0][0].length, @channels
-    width    = Math.min data[0].length,    @width * @items
-    height   = Math.min data.length,       @height
-
-    o = 0
-    data = @data
-    for k in [0...height]
-      d = data[k]
-      for j in [0...width]
-        v = d[j]
-        d[o++] = (v[i] ? 0) for i in [0...channels]
-
-    @write Math.floor n / @channels / @items
-
 
 module.exports = MatrixBuffer

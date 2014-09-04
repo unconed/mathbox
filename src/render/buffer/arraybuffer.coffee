@@ -51,16 +51,4 @@ class ArrayBuffer_ extends Buffer
     @index = (@index + @history - 1) % @history
     @filled = Math.min @history, @filled + 1
 
-  copy2D: (data) ->
-    channels = Math.min data[0].length, @channels
-    samples  = Math.min data.length,    @samples * @items
-
-    o = 0
-    data = @data
-    for k in [0...samples]
-      d = data[k]
-      d[o++] = (v[i] ? 0) for i in [0...channels]
-
-    @write Math.floor o / @channels / @items
-
 module.exports = ArrayBuffer_

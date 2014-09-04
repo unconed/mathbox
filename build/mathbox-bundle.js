@@ -45367,20 +45367,20 @@ queue = require('./queue');
 hash = require('./hash');
 
 cache = function(fetch) {
-  var push;
-  cache = {};
+  var cached, push;
+  cached = {};
   push = queue(100);
   return function(name) {
     var expire, key;
     key = name.length > 32 ? '##' + hash(name).toString(16) : name;
     expire = push(key);
     if (expire != null) {
-      delete cache[expire];
+      delete cached[expire];
     }
-    if (cache[key] == null) {
-      cache[key] = fetch(name);
+    if (cached[key] == null) {
+      cached[key] = fetch(name);
     }
-    return cache[key].clone();
+    return cached[key].clone();
   };
 };
 
@@ -45850,8 +45850,8 @@ library = function(language, snippets, load) {
       };
     }
   }
-  inline = function(name) {
-    return load(language, '', name);
+  inline = function(code) {
+    return load(language, '', code);
   };
   if (callback == null) {
     return inline;
@@ -46658,6 +46658,9 @@ parseGLSL = function(name, code) {
     tock('GLSL Tokenize & Parse');
   }
   if (!ast || errors.length) {
+    if (!name) {
+      name = '(inline code)';
+    }
     for (_i = 0, _len = errors.length; _i < _len; _i++) {
       error = errors[_i];
       console.error("[ShaderGraph] " + name + " -", error.message);
@@ -50468,9 +50471,8 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "line.clipEnds": "uniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\nuniform float lineWidth;\n\nattribute vec2 strip;\n//attribute vec2 position4;\n\nvarying vec2 vClipEnds;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid clipEndsPosition(vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, position4.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, position4.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = clipRange * scale;\n  \n  vClipEnds = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClipEnds.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClipEnds.y = d / range - 1.0;\n  }\n}",
 "line.position": "uniform float lineWidth;\nuniform float lineDepth;\nuniform vec4 geometryClip;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  if (center.z < 0.0) {\n    vec4 a = vec4(left.xy, right.xy);\n    vec4 b = a / vec4(left.zz, right.zz);\n\n    vec2 l = b.xy;\n    vec2 r = b.zw;\n    vec2 c = center.xy / center.z;\n\n    vec4 d = vec4(l, c) - vec4(c, r);\n    float l1 = dot(d.xy, d.xy);\n    float l2 = dot(d.zw, d.zw);\n\n    if (l1 + l2 > 0.0) {\n      \n      if (edge > 0.5 || l2 == 0.0) {\n        vec2 nl = normalize(l - c);\n        vec2 tl = vec2(nl.y, -nl.x);\n\n        join = tl;\n      }\n      else if (edge < -0.5 || l1 == 0.0) {\n        vec2 nr = normalize(c - r);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        join = tr;\n      }\n      else {\n        vec2 nl = normalize(d.xy);\n        vec2 nr = normalize(d.zw);\n\n        vec2 tl = vec2(nl.y, -nl.x);\n        vec2 tr = vec2(nr.y, -nr.x);\n\n        vec2 tc = normalize(tl + tr);\n      \n        float cosA = dot(nl, tc);\n        float sinA = max(0.1, abs(dot(tl, tc)));\n        float factor = cosA / sinA;\n        float scale = sqrt(1.0 + factor * factor);\n\n        join = tc * scale;\n      }\n    }\n    else {\n      return vec3(0.0);\n    }\n  }\n    \n  return vec3(join, 0.0);\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 p = min(geometryClip, position4);\n  getLineGeometry(p, edge, left, center, right);\n  join = getLineJoin(edge, left, center, right);\n  \n  float width = lineWidth;\n  if (lineDepth < 1.0) {\n    width /= mix(1.0/max(0.001, -center.z), 1.0, lineDepth);\n  }\n  \n  return center + join * offset * width;\n}\n",
 "map.2d.data": "uniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 map2DData(vec2 xy) {\n  return fract((xy + dataPointer) * dataResolution);\n}\n",
-"map.xyzw.2d": "vec2 mapXyzw2D(vec4 xyzw) {\n  return xyzw.xy;\n}\n\n",
 "map.xyzw.2dv": "void mapXyzw2DV(vec4 xyzw, out vec2 xy, out float z) {\n  xy = xyzw.xy;\n  z  = xyzw.z;\n}\n\n",
-"map.xyzw.texture": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 mapXyzw2D(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
+"map.xyzw.texture": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 mapXyzwTexture(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i + x * textureItems, y + z * textureHeight);\n}\n\n",
 "mesh.fragment.color": "varying vec4 vColor;\n\nvec4 getColor(vec4 rgba) {\n  return rgba * vColor;\n}\n",
 "mesh.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getMeshPosition() {\n  return getPosition(position4);\n}\n",
 "mesh.vertex.color": "attribute vec4 position4;\nvarying vec4 vColor;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvoid vertexColor() {\n  vColor = getSample(position4);\n}\n",
@@ -50482,9 +50484,6 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "raw.position.scale": "uniform vec4 geometryScale;\nattribute vec4 position4;\n\nvec4 getRawPositionScale() {\n  return geometryScale * position4;\n}\n",
 "repeat.position": "uniform vec4 repeatModulus;\n\nvec4 getRepeatXYZW(vec4 xyzw) {\n  return mod(xyzw, repeatModulus);\n}\n",
 "sample.2d": "uniform sampler2D dataTexture;\n\nvec4 sample2D(vec2 uv) {\n  return texture2D(dataTexture, uv);\n}\n",
-"sample.fill.1": "vec4 sampleFill1(vec4 xyzw) {\n  return vec4(xyzw.x, 0.0, 0.0, 0.0);\n}\n",
-"sample.fill.2": "vec4 sampleFill2(vec4 xyzw) {\n  return vec4(xyzw.xw, 0.0, 0.0);\n}\n",
-"sample.fill.3": "vec4 sampleFill3(vec4 xyzw) {\n  return vec4(xyzw.xyz, 0.0);\n}\n",
 "screen.position": "void setScreenPosition(vec4 position) {\n  gl_Position = vec4(position.xy * 2.0 - 1.0, 0.5, 1.0);\n}\n",
 "screen.remap.4d": "uniform vec2 remap4DScale;\n\nvec4 screenRemap4D(vec2 uv) {\n  return vec4(remap4DScale * uv - vec2(.5), 0.0, 0.0);\n}\n",
 "spherical.position": "uniform float sphericalBend;\nuniform float sphericalFocus;\nuniform float sphericalAspectX;\nuniform float sphericalAspectY;\nuniform float sphericalScaleY;\n\nuniform mat4 viewMatrix;\n\nvec4 getSphericalPosition(vec4 position) {\n  if (sphericalBend > 0.0001) {\n\n    vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);\n    float radius = sphericalFocus + xyz.z;\n    float cosine = cos(xyz.y) * radius;\n\n    return viewMatrix * vec4(\n      sin(xyz.x) * cosine,\n      sin(xyz.y) * radius * sphericalAspectY,\n      (cos(xyz.x) * cosine - sphericalFocus) / sphericalAspectX,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
@@ -55254,6 +55253,7 @@ THREE.Bootstrap.registerPlugin('mathbox', {
  - Provides shorthand aliases to access via flat namespace API
  - Values are stored in three.js uniform-style objects so they can be bound as uniforms
  - Type validators and setters avoid copying value objects on write
+ - Value is double-buffered to detect changes and nops
  - Coalesces update notifications per object and per trait
  
   Actual type and trait definitions are injected from Primitives
@@ -55311,7 +55311,7 @@ Attributes = (function() {
 
 Data = (function() {
   function Data(object, traits, attributes) {
-    var change, changed, define, digest, dirty, event, from, get, getNS, hash, key, list, makers, mapFrom, mapTo, name, ns, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _j, _len, _len1, _ref;
+    var change, changed, define, digest, dirty, equalors, equals, event, from, get, getNS, hash, key, list, makers, mapFrom, mapTo, name, ns, options, set, shorthand, spec, to, touched, trait, unique, validate, validators, values, _i, _j, _len, _len1, _ref, _ref1, _ref2;
     if (traits == null) {
       traits = [];
     }
@@ -55340,16 +55340,18 @@ Data = (function() {
     })(this);
     set = (function(_this) {
       return function(key, value, ignore) {
-        var replace;
+        var attr, replace, _ref;
         key = to(key);
         if (validators[key] == null) {
           throw "Setting unknown property '" + key + "'";
         }
-        replace = validate(key, value, _this[key].value);
-        if (replace !== void 0) {
-          _this[key].value = replace;
+        attr = _this[key];
+        replace = validate(key, value, attr.last);
+        if (replace === void 0) {
+          replace = attr.last;
         }
-        if (!ignore) {
+        _ref = [replace, attr.value], attr.value = _ref[0], attr.last = _ref[1];
+        if (!(ignore || equals(key, attr.value, attr.last))) {
           return change(key, value);
         }
       };
@@ -55383,6 +55385,10 @@ Data = (function() {
     };
     makers = {};
     validators = {};
+    equalors = {};
+    equals = function(key, value, target) {
+      return equalors[key](value, target);
+    };
     validate = function(key, value, target) {
       return validators[key](value, target);
     };
@@ -55466,11 +55472,17 @@ Data = (function() {
         key = [name, key].join('.');
         this[key] = {
           type: typeof options.uniform === "function" ? options.uniform() : void 0,
+          last: options.make(),
           value: options.make()
         };
         define(key, shorthand(key));
         makers[key] = options.make;
-        validators[key] = options.validate;
+        validators[key] = (_ref1 = options.validate) != null ? _ref1 : function(v) {
+          return v;
+        };
+        equalors[key] = (_ref2 = options.equals) != null ? _ref2 : function(a, b) {
+          return a === b;
+        };
       }
     }
     unique = list.filter(function(object, i) {
@@ -56020,6 +56032,18 @@ Node = (function() {
     this.parent = this.root = this.path = this.index = null;
     this.set(options, null, true);
   }
+
+  Node.prototype.toString = function() {
+    var out, _ref;
+    out = this.type;
+    if (this.id) {
+      out += '#' + this.id;
+    }
+    if ((_ref = this.classes) != null ? _ref.length : void 0) {
+      out += '.' + this.classes.join('.');
+    }
+    return out;
+  };
 
   Node.prototype._added = function(parent) {
     var event;
@@ -60183,21 +60207,36 @@ Types = {
         return _results;
       },
       validate: function(value, target) {
-        var i, replace, _i, _j, _ref, _ref1;
+        var i, l, replace, _i, _j;
         if ((value.constructor != null) && value.constructor === Array) {
-          target.length = size ? size : value.length;
-          for (i = _i = 0, _ref = target.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+          l = target.length = size ? size : value.length;
+          for (i = _i = 0; 0 <= l ? _i < l : _i > l; i = 0 <= l ? ++_i : --_i) {
             replace = type.validate(value[i], target[i]);
             if (replace !== void 0) {
               target[i] = replace;
             }
           }
         } else {
-          target.length = size;
-          for (i = _j = 0, _ref1 = target.length; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
+          l = target.length = size;
+          for (i = _j = 0; 0 <= l ? _j <= l : _j >= l; i = 0 <= l ? ++_j : --_j) {
             target[i] = type.value;
           }
         }
+      },
+      equals: function(a, b) {
+        var al, bl, i, l, _i;
+        al = a.length;
+        bl = b.length;
+        if (al !== bl) {
+          return false;
+        }
+        l = Math.min(al, bl);
+        for (i = _i = 0; 0 <= l ? _i < l : _i > l; i = 0 <= l ? ++_i : --_i) {
+          if (!type.equals(a[i], b[i])) {
+            return false;
+          }
+        }
+        return true;
       }
     };
   },
@@ -60228,6 +60267,9 @@ Types = {
           value = value.split('');
         }
         return array.validate(value, target);
+      },
+      equals: function(a, b) {
+        return array.equals(a, b);
       }
     };
   },
@@ -60249,6 +60291,18 @@ Types = {
         } else {
           return target;
         }
+      },
+      equals: function(a, b) {
+        var an, bn;
+        an = a === null;
+        bn = b === null;
+        if (an && bn) {
+          return true;
+        }
+        if (an ^ bn) {
+          return false;
+        }
+        return type.equals(a, b);
       }
     };
   },
@@ -60362,9 +60416,6 @@ Types = {
       }
     };
   },
-  scale: function() {
-    return new Types.string('linear');
-  },
   func: function() {
     return {
       make: function() {
@@ -60414,6 +60465,9 @@ Types = {
         } else {
           target.set(x, y);
         }
+      },
+      equals: function(a, b) {
+        return a.x === b.x && a.y === b.y;
       }
     };
   },
@@ -60445,6 +60499,9 @@ Types = {
         } else {
           target.set(x, y, z);
         }
+      },
+      equals: function(a, b) {
+        return a.x === b.x && a.y === b.y && a.z === b.z;
       }
     };
   },
@@ -60479,6 +60536,9 @@ Types = {
         } else {
           target.set(x, y, z, w);
         }
+      },
+      equals: function(a, b) {
+        return a.x === b.x && a.y === b.y && a.z === b.z && a.w === b.w;
       }
     };
   },
@@ -60583,6 +60643,9 @@ Types = {
         }
         (ret != null ? ret : target).normalize();
         return ret;
+      },
+      equals: function(a, b) {
+        return a.x === b.x && a.y === b.y && a.z === b.z && a.w === b.w;
       }
     };
   },
@@ -60618,6 +60681,9 @@ Types = {
         } else {
           return vec3.validate(value, target);
         }
+      },
+      equals: function(a, b) {
+        return a.x === b.x && a.y === b.y;
       }
     };
   },
@@ -60694,6 +60760,9 @@ Types = {
         if (unique.indexOf(false) < 0) {
           return axesArray.validate(temp, target);
         }
+      },
+      equals: function(a, b) {
+        return axesArray.equals(a, b);
       }
     };
   },
@@ -60720,6 +60789,9 @@ Types = {
           temp = temp.concat([0, 0, 0, 0]).slice(0, size);
         }
         return axesArray.validate(temp, target);
+      },
+      equals: function(a, b) {
+        return axesArray.equals(a, b);
       }
     };
   },
@@ -60738,6 +60810,9 @@ Types = {
           return !!x.length;
         });
         return stringArray.validate(value, target);
+      },
+      equals: function(a, b) {
+        return stringArray.equals(a, b);
       }
     };
   },
@@ -60747,6 +60822,14 @@ Types = {
       value = 'normal';
     }
     keys = ['no', 'normal', 'add', 'subtract', 'multiply', 'custom'];
+    return Types["enum"](value, keys);
+  },
+  scale: function(value) {
+    var keys;
+    if (value == null) {
+      value = 'linear';
+    }
+    keys = ['linear', 'log'];
     return Types["enum"](value, keys);
   }
 };
@@ -61502,21 +61585,6 @@ ArrayBuffer_ = (function(_super) {
     return this.filled = Math.min(this.history, this.filled + 1);
   };
 
-  ArrayBuffer_.prototype.copy2D = function(data) {
-    var channels, d, i, k, o, samples, _i, _j, _ref;
-    channels = Math.min(data[0].length, this.channels);
-    samples = Math.min(data.length, this.samples * this.items);
-    o = 0;
-    data = this.data;
-    for (k = _i = 0; 0 <= samples ? _i < samples : _i > samples; k = 0 <= samples ? ++_i : --_i) {
-      d = data[k];
-      for (i = _j = 0; 0 <= channels ? _j < channels : _j > channels; i = 0 <= channels ? ++_j : --_j) {
-        d[o++] = (_ref = v[i]) != null ? _ref : 0;
-      }
-    }
-    return this.write(Math.floor(o / this.channels / this.items));
-  };
-
   return ArrayBuffer_;
 
 })(Buffer);
@@ -61525,11 +61593,13 @@ module.exports = ArrayBuffer_;
 
 
 },{"../../util":117,"./buffer":76,"./texture/datatexture":80}],76:[function(require,module,exports){
-var Buffer, Renderable,
+var Buffer, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Renderable = require('../renderable');
+
+Util = require('../../util');
 
 Buffer = (function(_super) {
   __extends(Buffer, _super);
@@ -61554,7 +61624,7 @@ Buffer = (function(_super) {
     shader.pipe("map.2d.data", this.uniforms);
     shader.pipe("sample.2d", this.uniforms);
     if (this.channels < 4) {
-      return shader.pipe("sample.fill." + this.channels);
+      return shader.pipe(Util.GLSL.swizzleVec4(['0000', 'x000', 'xw00', 'xyz0'][this.channels]));
     }
   };
 
@@ -61636,7 +61706,7 @@ Buffer = (function(_super) {
 module.exports = Buffer;
 
 
-},{"../renderable":104}],77:[function(require,module,exports){
+},{"../../util":117,"../renderable":104}],77:[function(require,module,exports){
 var Buffer, DataBuffer, DataTexture,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61762,40 +61832,6 @@ MatrixBuffer = (function(_super) {
     return this.filled = Math.min(this.history, this.filled + 1);
   };
 
-  MatrixBuffer.prototype.copy2D = function(data) {
-    var d, height, i, k, o, width, _i, _j, _ref;
-    width = Math.min(data[0].length, this.width * this.channels * this.items);
-    height = Math.min(data.length, this.height);
-    o = 0;
-    data = this.data;
-    for (k = _i = 0; 0 <= height ? _i < height : _i > height; k = 0 <= height ? ++_i : --_i) {
-      d = data[k];
-      for (i = _j = 0; 0 <= width ? _j < width : _j > width; i = 0 <= width ? ++_j : --_j) {
-        d[o++] = (_ref = d[i]) != null ? _ref : 0;
-      }
-    }
-    return this.write(Math.floor(o / this.channels / this.items));
-  };
-
-  MatrixBuffer.prototype.copy3D = function(data) {
-    var channels, d, height, i, j, k, o, v, width, _i, _j, _k, _ref;
-    channels = Math.min(data[0][0].length, this.channels);
-    width = Math.min(data[0].length, this.width * this.items);
-    height = Math.min(data.length, this.height);
-    o = 0;
-    data = this.data;
-    for (k = _i = 0; 0 <= height ? _i < height : _i > height; k = 0 <= height ? ++_i : --_i) {
-      d = data[k];
-      for (j = _j = 0; 0 <= width ? _j < width : _j > width; j = 0 <= width ? ++_j : --_j) {
-        v = d[j];
-        for (i = _k = 0; 0 <= channels ? _k < channels : _k > channels; i = 0 <= channels ? ++_k : --_k) {
-          d[o++] = (_ref = v[i]) != null ? _ref : 0;
-        }
-      }
-    }
-    return this.write(Math.floor(n / this.channels / this.items));
-  };
-
   return MatrixBuffer;
 
 })(Buffer);
@@ -61825,7 +61861,6 @@ RenderToTexture = (function(_super) {
   function RenderToTexture(renderer, shaders, options) {
     var _ref;
     this.scene = (_ref = options.scene) != null ? _ref : new THREE.Scene();
-    this.inited = false;
     RenderToTexture.__super__.constructor.call(this, renderer, shaders);
     this.build(options);
   }
@@ -61840,7 +61875,7 @@ RenderToTexture = (function(_super) {
       frames = 1;
     }
     if (frames === 1) {
-      shader.pipe("map.xyzw.2d");
+      shader.pipe(Util.GLSL.truncateVec(4, 2));
       shader.pipe("map.2d.data", this.uniforms);
       return shader.pipe("sample.2d", this.uniforms);
     } else {
@@ -61854,10 +61889,13 @@ RenderToTexture = (function(_super) {
   };
 
   RenderToTexture.prototype.build = function(options) {
+    var _base;
     this.camera = new THREE.PerspectiveCamera();
     this.camera.position.set(0, 0, 3);
     this.camera.lookAt(new THREE.Vector3());
-    this.scene.inject();
+    if (typeof (_base = this.scene).inject === "function") {
+      _base.inject();
+    }
     this.target = new RenderTarget(this.gl, options.width, options.height, options.frames, options);
     this.target.warmup((function(_this) {
       return function(target) {
@@ -61876,10 +61914,11 @@ RenderToTexture = (function(_super) {
   };
 
   RenderToTexture.prototype.render = function(camera) {
+    var _ref;
     if (camera == null) {
       camera = this.camera;
     }
-    this.renderer.render(this.scene.scene, this.camera, this.target.write);
+    this.renderer.render((_ref = this.scene.scene) != null ? _ref : this.scene, this.camera, this.target.write);
     this.target.cycle();
     if (this.filled < this.target.frames) {
       return this.filled++;
@@ -61902,7 +61941,10 @@ RenderToTexture = (function(_super) {
   };
 
   RenderToTexture.prototype.dispose = function() {
-    this.scene.unject();
+    var _base;
+    if (typeof (_base = this.scene).unject === "function") {
+      _base.unject();
+    }
     this.scene = null;
     return this.scene = this.camera = null;
   };
@@ -61917,7 +61959,9 @@ module.exports = RenderToTexture;
 },{"../../util":117,"../renderable":104,"./texture/rendertarget":81}],80:[function(require,module,exports){
 
 /*
-Manually allocated GL texture for data streaming. Allows partial updates via subImage.
+Manually allocated GL texture for data streaming.
+
+Allows partial updates via subImage.
  */
 var DataTexture;
 
@@ -64890,7 +64934,7 @@ exports.merge = function() {
  @param inclusive - Whether to add ticks at the edges
  @param bias - Integer to bias divisions one or more levels up or down (to create nested scales)
  */
-var linear, log, make;
+var LINEAR, LOG, linear, log, make;
 
 linear = function(min, max, n, unit, base, inclusive, bias) {
   var distance, edge, factor, factors, i, ideal, ref, span, step, steps, _i, _results;
@@ -64960,11 +65004,15 @@ log = function(min, max, n, unit, base, inclusive, bias) {
    */
 };
 
+LINEAR = 0;
+
+LOG = 1;
+
 make = function(type, min, max, ticks, unit, base, inclusive, bias) {
   switch (type) {
-    case 'linear':
+    case LINEAR:
       return linear(min, max, ticks, unit, base, inclusive, bias);
-    case 'log':
+    case LOG:
       return log(min, max, ticks, unit, base, inclusive, bias);
   }
 };

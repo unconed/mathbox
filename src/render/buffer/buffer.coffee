@@ -1,4 +1,5 @@
 Renderable = require '../renderable'
+Util         = require '../../util'
 
 class Buffer extends Renderable
   @iterationLimit: 0xFFFF
@@ -14,7 +15,7 @@ class Buffer extends Renderable
   shader: (shader) ->
     shader.pipe "map.2d.data", @uniforms
     shader.pipe "sample.2d", @uniforms
-    shader.pipe "sample.fill.#{@channels}" if @channels < 4
+    shader.pipe Util.GLSL.swizzleVec4 ['0000', 'x000', 'xw00', 'xyz0'][@channels] if @channels < 4
 
   build: () ->
     @uniforms =

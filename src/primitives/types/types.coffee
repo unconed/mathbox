@@ -8,14 +8,23 @@ Types =
       (type.make() for i in [0...size])
     validate: (value, target) ->
       if value.constructor? and value.constructor == Array
-        target.length = if size then size else value.length
-        for i in [0...target.length]
+        l = target.length = if size then size else value.length
+        for i in [0...l]
           replace = type.validate value[i], target[i]
           target[i] = replace if replace != undefined
       else
-        target.length = size
-        target[i] = type.value for i in [0..target.length]
+        l = target.length = size
+        target[i] = type.value for i in [0..l]
       return
+    equals: (a, b) ->
+      al = a.length
+      bl = b.length
+      return false if al != bl
+
+      l = Math.min al, bl
+      for i in [0...l]
+        return false if !type.equals a[i], b[i]
+      true
 
   letters: (type, size, value = null) ->
     if value?
@@ -31,6 +40,7 @@ Types =
       if value == "" + value
         value = value.split ''
       return array.validate value, target
+    equals: (a, b) -> array.equals a, b
 
   nullable: (type) ->
     make: () -> null
@@ -40,6 +50,12 @@ Types =
         target = type.make()
       value = type.validate value, target
       if value != undefined then value else target
+    equals: (a, b) ->
+      an = a == null
+      bn = b == null
+      return true  if an and bn
+      return false if an ^   bn
+      return type.equals a, b
 
   enum: (value, keys, map = {}) ->
     values = {}
@@ -83,8 +99,6 @@ Types =
     validate: (value) ->
       "" + value
 
-  scale: () -> new Types.string 'linear'
-
   func: () ->
     make: () -> () ->
     validate: (value) ->
@@ -109,6 +123,7 @@ Types =
       else
         target.set x, y
       return
+    equals: (a, b) -> a.x == b.x and a.y == b.y
 
   vec3: (x = 0, y = 0, z = 0) ->
     defaults = [x, y, z]
@@ -124,6 +139,7 @@ Types =
       else
         target.set x, y, z
       return
+    equals: (a, b) -> a.x == b.x and a.y == b.y and a.z == b.z
 
   vec4: (x = 0, y = 0, z = 0, w = 0) ->
     defaults = [x, y, z, w]
@@ -139,6 +155,7 @@ Types =
       else
         target.set x, y, z, w
       return
+    equals: (a, b) -> a.x == b.x and a.y == b.y and a.z == b.z and a.w == b.w
 
   mat4: (n11 = 1, n12 = 0, n13 = 0, n14 = 0, n21 = 0, n22 = 1, n23 = 0, n24 = 0, n31 = 0, n32 = 0, n33 = 1, n34 = 0, n41 = 0, n42 = 0, n43 = 0, n44 = 1) ->
     defaults = [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44]
@@ -168,6 +185,7 @@ Types =
       else ret = vec4.validate value, target
       (ret ? target).normalize()
       return ret
+    equals: (a, b) -> a.x == b.x and a.y == b.y and a.z == b.z and a.w == b.w
 
   color: (r = .5, g = .5, b = .5) ->
     vec3 = Types.vec3(r, g, b)
@@ -188,6 +206,7 @@ Types =
       else return vec3.validate value, target
 
       return
+    equals: (a, b) -> a.x == b.x and a.y == b.y
 
   axis: (value = 1, allowZero = false) ->
     map =
@@ -227,6 +246,7 @@ Types =
       unique = (temp.indexOf(letter) == i for letter, i in temp)
       if unique.indexOf(false) < 0
         return axesArray.validate temp, target
+    equals: (a, b) -> axesArray.equals a, b
 
   swizzle: (order = [1, 2, 3, 4], size = 4) ->
     order = order.slice 0, size
@@ -242,6 +262,7 @@ Types =
         temp = temp.concat([0, 0, 0, 0]).slice(0, size)
 
       return axesArray.validate temp, target
+    equals: (a, b) -> axesArray.equals a, b
 
   classes: () ->
     stringArray = Types.array(Types.string())
@@ -251,9 +272,14 @@ Types =
       value = value.split ' ' if (value == "" + value)
       value = value.filter (x) -> !!x.length
       return stringArray.validate value, target
+    equals: (a, b) -> stringArray.equals a, b
 
   blending: (value = 'normal') ->
     keys = ['no', 'normal', 'add', 'subtract', 'multiply', 'custom']
+    Types.enum value, keys
+
+  scale: (value = 'linear') ->
+    keys = ['linear', 'log']
     Types.enum value, keys
 
 
