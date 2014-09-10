@@ -177,10 +177,6 @@ class Data
     unique = list.filter (object, i) -> list.indexOf(object) == i
     object.traits = unique
 
-    # And hash for CSSauron
-    hash = object.traits.hash = {}
-    hash[trait] = true for trait in unique
-
     null
 
 module.exports = Attributes

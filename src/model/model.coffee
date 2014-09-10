@@ -6,6 +6,9 @@ CLASS  = /^\.([A-Za-z0-9_]+)$/
 TRAIT  = /^\[([A-Za-z0-9_]+)\]$/
 TYPE   = /^[A-Za-z0-9_]+$/
 
+# Lazy load CSSauron
+language = null
+
 ###
 
   Model that wraps a root node and its children.
@@ -32,15 +35,14 @@ class Model
 
     @event = type: 'update'
 
-    # Prepare CSSauron
-    @language =
-      cssauron
-        tag:      'type'
-        id:       'id'
-        class:    "classes.join(' ')"
-        parent:   'parent'
-        children: 'children'
-        attr:     'traits.hash[attr]'
+    # Init CSSauron
+    language ?= cssauron
+      tag:      'type'
+      id:       'id'
+      class:    "classes.join(' ')"
+      parent:   'parent'
+      children: 'children'
+      attr:     'traits.hash[attr]'
 
     # Triggered by child addition/removal
     add    = (event) => adopt   event.node
@@ -105,29 +107,29 @@ class Model
           prime node unless init
           primed = true
 
-          removeID node.id, node
+          removeID node.id, node if node.id?
           addID    id,      node
 
       if _klass
         classes = node.get('node.classes') ? []
         klass   = classes.join ','
         if klass != node.classes?.klass
+          classes = classes.slice()
+
           prime node unless init or primed
           primed = true
 
-          removeClasses node.classes, node
+          removeClasses node.classes, node if node.classes?
           addClasses    classes,      node
 
-          node.classes       = classes.slice()
+          node.classes       = classes
           node.classes.klass = klass
-          hash = node.classes.hash = {}
-          hash[klass] = true for klass in node.classes
 
       check node if !init and primed
       null
 
     # Manage lookup tables for types/classes/traits
-    addTags = (sets, tags, node) =>
+    addTags = (sets, tags, node) ->
       return unless tags?
       for k in tags
         list = sets[k] ? []
@@ -135,7 +137,7 @@ class Model
         sets[k] = list
       null
 
-    removeTags = (sets, tags, node) =>
+    removeTags = (sets, tags, node) ->
       return unless tags?
       for k in tags
         list = sets[k]
@@ -144,6 +146,15 @@ class Model
         if list.length == 0
           delete sets[k]
       null
+
+    # Build a hash for an array of tags for quick lookups
+    hashTags = (array) ->
+      return unless array.length > 0
+      hash = array.hash = {}
+      hash[klass] = true for klass in array
+
+    unhashTags = (array) ->
+      delete array.hash
 
     # Track IDs (live)
     addID = (id, node) =>
@@ -159,8 +170,13 @@ class Model
       delete node.id
 
     # Track classes (live)
-    addClasses    = (classes, node) => addTags    @classes, classes, node
-    removeClasses = (classes, node) => removeTags @classes, classes, node
+    addClasses    = (classes, node) =>
+      addTags    @classes, classes, node
+      hashTags   classes if classes?
+
+    removeClasses = (classes, node) =>
+      removeTags @classes, classes, node
+      unhashTags classes if classes?
 
     # Track nodes
     addNode       = (node) => @nodes.push node
@@ -171,8 +187,13 @@ class Model
     removeType    = (node) => removeTags @types, [node.type], node
 
     # Track nodes by trait
-    addTraits     = (node) => addTags    @traits, node.traits, node
-    removeTraits  = (node) => removeTags @traits, node.traits, node
+    addTraits     = (node) =>
+      addTags    @traits, node.traits, node
+      hashTags   node.traits
+
+    removeTraits  = (node) =>
+      removeTags @traits, node.traits, node
+      unhashTags node.traits
 
     adopt @root
 
@@ -239,14 +260,14 @@ class Model
   _matcher: (s) ->
     # Check for simple *, #id, .class or type selector
     [all, id, klass, trait, type] = @_simplify s
-    return ((node) -> true)                     if all
-    return ((node) -> node.id == id)            if id
-    return ((node) -> node.classes.hash[klass]) if klass
-    return ((node) -> node.traits .hash[trait]) if trait
-    return ((node) -> node.type == type)        if type
+    return ((node) -> true)                      if all
+    return ((node) -> node.id == id)             if id
+    return ((node) -> node.classes?.hash[klass]) if klass
+    return ((node) -> node.traits?. hash[trait]) if trait
+    return ((node) -> node.type == type)         if type
 
     # Otherwise apply CSSauron filter
-    return @language s
+    return language s
 
   # Query single selector
   _select: (s) ->
