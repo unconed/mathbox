@@ -90,6 +90,6 @@ class Face extends Primitive
     @face = null
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['geometry.points']?
+    return @rebuild() if changed['geometry.points']
 
 module.exports = Face

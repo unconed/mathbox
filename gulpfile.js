@@ -103,7 +103,7 @@ gulp.task('watch-karma', function() {
     }));
 });
 
-gulp.task('watch-build', function () {
+gulp.task('watch-build-watch', function () {
   gulp.src(source)
     .pipe(
       watch(function(files) {
@@ -125,6 +125,10 @@ gulp.task('default', function (callback) {
 gulp.task('test', function (callback) {
   sequence('build', 'karma', callback);
 });
+
+gulp.task('watch-build', function (callback) {
+  sequence('build', 'watch-build-watch', callback);
+})
 
 gulp.task('watch', function (callback) {
   sequence('watch-build', 'watch-karma', callback);

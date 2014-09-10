@@ -115,7 +115,7 @@ class Join extends Operator
     super
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['join.axis'] or changed['join.order']
+    return @rebuild() if changed['join.axis'] or changed['join.order']
 
     if touched['join'] or
        init

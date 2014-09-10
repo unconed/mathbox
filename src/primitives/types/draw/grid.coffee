@@ -92,10 +92,10 @@ class Grid extends Primitive
 
   change: (changed, touched, init) ->
 
-    @rebuild() if changed['x.axis.detail'] or
-                  changed['y.axis.detail'] or
-                  changed['grid.first']    or
-                  changed['grid.second']
+    return @rebuild() if changed['x.axis.detail'] or
+                         changed['y.axis.detail'] or
+                         changed['grid.first']    or
+                         changed['grid.second']
 
     axis = (x, y, range1, range2, axis) =>
       {first, second, resolution, samples, line, buffer, values} = axis

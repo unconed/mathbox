@@ -130,10 +130,10 @@ class Surface extends Primitive
     @line1 = @line2 = @surface = null
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['geometry.points']? or
-                  changed['mesh.shaded'] or
-                  changed['mesh.solid'] or
-                  touched['grid']
+    return @rebuild() if changed['geometry.points'] or
+                         changed['mesh.shaded'] or
+                         changed['mesh.solid'] or
+                         touched['grid']
 
     if changed['style.color'] or
        changed['mesh.solid'] or

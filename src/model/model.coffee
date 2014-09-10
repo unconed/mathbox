@@ -69,7 +69,7 @@ class Model
       node.off 'change:node', update
       force node
 
-    # Watcher cycle
+    # Watcher cycle for catching changes in id/classes
     prime = (node) =>
       for watcher in @watchers.slice()
         watcher.match = watcher.matcher node
@@ -109,7 +109,7 @@ class Model
           addID    id,      node
 
       if _klass
-        classes = node.get 'node.classes'
+        classes = node.get('node.classes') ? []
         klass   = classes.join ','
         if klass != node.classes?.klass
           prime node unless init or primed
@@ -150,7 +150,7 @@ class Model
       if @ids[id]
         throw "Duplicate id `#{id}`"
 
-      @ids[id] = [node] if id
+      @ids[id] = [node] if id?
       node.id = id
 
     removeID = (id, node) =>

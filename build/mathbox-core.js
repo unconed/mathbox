@@ -5272,7 +5272,7 @@ Model = (function() {
     })(this);
     update = (function(_this) {
       return function(event, node, init) {
-        var classes, hash, id, klass, primed, _i, _id, _klass, _len, _ref, _ref1;
+        var classes, hash, id, klass, primed, _i, _id, _klass, _len, _ref, _ref1, _ref2;
         _id = init || event.changed['node.id'];
         _klass = init || event.changed['node.classes'];
         primed = false;
@@ -5288,9 +5288,9 @@ Model = (function() {
           }
         }
         if (_klass) {
-          classes = node.get('node.classes');
+          classes = (_ref = node.get('node.classes')) != null ? _ref : [];
           klass = classes.join(',');
-          if (klass !== ((_ref = node.classes) != null ? _ref.klass : void 0)) {
+          if (klass !== ((_ref1 = node.classes) != null ? _ref1.klass : void 0)) {
             if (!(init || primed)) {
               prime(node);
             }
@@ -5300,9 +5300,9 @@ Model = (function() {
             node.classes = classes.slice();
             node.classes.klass = klass;
             hash = node.classes.hash = {};
-            _ref1 = node.classes;
-            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-              klass = _ref1[_i];
+            _ref2 = node.classes;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              klass = _ref2[_i];
               hash[klass] = true;
             }
           }
@@ -5353,7 +5353,7 @@ Model = (function() {
         if (_this.ids[id]) {
           throw "Duplicate id `" + id + "`";
         }
-        if (id) {
+        if (id != null) {
           _this.ids[id] = [node];
         }
         return node.id = id;
@@ -6313,7 +6313,7 @@ Array_ = (function(_super) {
   Array_.prototype.change = function(changed, touched, init) {
     var data;
     if (touched['array'] || changed['data.dimensions']) {
-      this.rebuild();
+      return this.rebuild();
     }
     if (!this.buffer) {
       return;
@@ -6569,7 +6569,7 @@ Matrix = (function(_super) {
   Matrix.prototype.change = function(changed, touched, init) {
     var data;
     if (touched['matrix'] || changed['data.dimensions']) {
-      this.rebuild();
+      return this.rebuild();
     }
     if (!this.buffer) {
       return;
@@ -6826,7 +6826,7 @@ Voxel = (function(_super) {
   Voxel.prototype.change = function(changed, touched, init) {
     var data;
     if (touched['voxel'] || changed['data.dimensions']) {
-      this.rebuild();
+      return this.rebuild();
     }
     if (!this.buffer) {
       return;
@@ -6960,8 +6960,8 @@ Axis = (function(_super) {
 
   Axis.prototype.change = function(changed, touched, init) {
     var dimension, max, min, range;
-    if (changed['axis.detail'] != null) {
-      this.rebuild();
+    if (changed['axis.detail']) {
+      return this.rebuild();
     }
     if (touched['interval'] || touched['span'] || touched['view'] || init) {
       dimension = this._get('interval.axis');
@@ -7068,7 +7068,7 @@ Face = (function(_super) {
   };
 
   Face.prototype.change = function(changed, touched, init) {
-    if (changed['geometry.points'] != null) {
+    if (changed['geometry.points']) {
       return this.rebuild();
     }
   };
@@ -7185,7 +7185,7 @@ Grid = (function(_super) {
   Grid.prototype.change = function(changed, touched, init) {
     var axes, axis, first, range1, range2, second;
     if (changed['x.axis.detail'] || changed['y.axis.detail'] || changed['grid.first'] || changed['grid.second']) {
-      this.rebuild();
+      return this.rebuild();
     }
     axis = (function(_this) {
       return function(x, y, range1, range2, axis) {
@@ -7336,7 +7336,7 @@ Line = (function(_super) {
   };
 
   Line.prototype.change = function(changed, touched, init) {
-    if ((changed['geometry.points'] != null) || (changed['arrow.start'] != null) || (changed['arrow.end'] != null)) {
+    if (changed['geometry.points'] || changed['arrow.start'] || changed['arrow.end']) {
       return this.rebuild();
     }
   };
@@ -7426,7 +7426,7 @@ Point = (function(_super) {
   };
 
   Point.prototype.change = function(changed, touched, init) {
-    if (changed['geometry.points'] != null) {
+    if (changed['geometry.points']) {
       return this.rebuild();
     }
   };
@@ -7526,7 +7526,7 @@ Strip = (function(_super) {
   };
 
   Strip.prototype.change = function(changed, touched, init) {
-    if (changed['geometry.points'] != null) {
+    if (changed['geometry.points']) {
       return this.rebuild();
     }
   };
@@ -7671,8 +7671,8 @@ Surface = (function(_super) {
 
   Surface.prototype.change = function(changed, touched, init) {
     var c, color, solid;
-    if ((changed['geometry.points'] != null) || changed['mesh.shaded'] || changed['mesh.solid'] || touched['grid']) {
-      this.rebuild();
+    if (changed['geometry.points'] || changed['mesh.shaded'] || changed['mesh.solid'] || touched['grid']) {
+      return this.rebuild();
     }
     if (changed['style.color'] || changed['mesh.solid'] || init) {
       solid = this._get('mesh.solid');
@@ -7765,7 +7765,7 @@ Ticks = (function(_super) {
   Ticks.prototype.change = function(changed, touched, init) {
     var dimension, max, min, n, range, ticks;
     if (changed['scale.divide']) {
-      this.rebuild();
+      return this.rebuild();
     }
     if (touched['view'] || touched['interval'] || touched['span'] || touched['scale'] || init) {
       dimension = this._get('interval.axis');
@@ -7901,7 +7901,7 @@ Vector = (function(_super) {
   };
 
   Vector.prototype.change = function(changed, touched, init) {
-    if ((changed['geometry.points'] != null) || (changed['arrow.start'] != null) || (changed['arrow.end'] != null)) {
+    if (changed['geometry.points'] || changed['arrow.start'] || changed['arrow.end']) {
       return this.rebuild();
     }
   };
@@ -8498,7 +8498,7 @@ Join = (function(_super) {
   Join.prototype.change = function(changed, touched, init) {
     var dims, length, major, overlap, stride;
     if (changed['join.axis'] || changed['join.order']) {
-      this.rebuild();
+      return this.rebuild();
     }
     if (touched['join'] || init) {
       dims = this.bind.source.getDimensions();
@@ -8726,7 +8726,7 @@ Remap = (function(_super) {
   Remap.prototype.change = function(changed, touched, init) {
     var dims;
     if (touched['operator'] || touched['remap']) {
-      this.rebuild();
+      return this.rebuild();
     }
     dims = this.bind.source.getActive();
     this.dataResolution.set(1 / dims.width, 1 / dims.height);
@@ -8808,7 +8808,7 @@ Repeat = (function(_super) {
   Repeat.prototype.change = function(changed, touched, init) {
     var dims, id, key;
     if (touched['operator']) {
-      this.rebuild();
+      return this.rebuild();
     }
     if (touched['repeat'] || init) {
       dims = this.bind.source.getDimensions();
@@ -8972,7 +8972,7 @@ Split = (function(_super) {
   Split.prototype.change = function(changed, touched, init) {
     var dims, length, overlap, stride;
     if (changed['split.axis'] || changed['split.order'] || touched['operator']) {
-      this.rebuild();
+      return this.rebuild();
     }
     if (touched['split'] || init) {
       overlap = this._get('split.overlap');
@@ -9049,7 +9049,7 @@ Spread = (function(_super) {
   Spread.prototype.change = function(changed, touched, init) {
     var anchor, d, dims, els, factor, i, id, k, key, matrix, offset, order, spread, v, _i, _ref, _ref1, _results;
     if (touched['operator']) {
-      this.rebuild();
+      return this.rebuild();
     }
     if (touched['spread'] || init) {
       if (this.bind.source) {
@@ -9280,7 +9280,7 @@ Compose = (function(_super) {
       this.bind.source.sourceShader(fragment);
     }
     if (!alpha) {
-      fragment.call('color.opaque');
+      fragment.pipe('color.opaque');
     }
     composeUniforms = this._helpers.style.uniforms();
     this.compose = this._renderables.make('screen', {
@@ -9299,8 +9299,8 @@ Compose = (function(_super) {
   };
 
   Compose.prototype.change = function(changed, touched, init) {
-    if ((changed['operator.source'] != null) || (changed['compose.alpha'] != null)) {
-      this.rebuild();
+    if (changed['operator.source'] || changed['compose.alpha']) {
+      return this.rebuild();
     }
     if (changed['compose.depth'] || init) {
       return this.compose.depth(false, this._get('compose.depth'));
@@ -9343,8 +9343,9 @@ RTT = (function(_super) {
   };
 
   RTT.prototype.update = function() {
+    var _ref;
     this.trigger(this.event);
-    return this.rtt.render();
+    return (_ref = this.rtt) != null ? _ref.render() : void 0;
   };
 
   RTT.prototype.getRTT = function() {
@@ -9365,7 +9366,7 @@ RTT = (function(_super) {
   };
 
   RTT.prototype.make = function() {
-    var _ref, _ref1;
+    var magFilter, minFilter, pixelType, _ref, _ref1;
     this.parentRoot = this._inherit('root');
     this.size = this.parentRoot.getSize();
     this.updateHandler = (function(_this) {
@@ -9383,8 +9384,11 @@ RTT = (function(_super) {
     if (this.size == null) {
       return;
     }
-    this.width = (_ref = this._get('texture.width')) != null ? _ref : this.size.renderWidth;
-    this.height = (_ref1 = this._get('texture.height')) != null ? _ref1 : this.size.renderHeight;
+    minFilter = this._get('texture.minFilter');
+    magFilter = this._get('texture.magFilter');
+    pixelType = this._get('texture.pixelType');
+    this.width = (_ref = this._get('rtt.width')) != null ? _ref : this.size.renderWidth;
+    this.height = (_ref1 = this._get('rtt.height')) != null ? _ref1 : this.size.renderHeight;
     this.frames = this._get('rtt.history');
     if (this.scene == null) {
       this.scene = this._renderables.make('scene');
@@ -9393,7 +9397,10 @@ RTT = (function(_super) {
       scene: this.scene,
       width: this.width,
       height: this.height,
-      frames: this.frames + 1
+      frames: this.frames + 1,
+      minFilter: minFilter,
+      magFilter: magFilter,
+      type: pixelType
     });
     return this.trigger({
       type: 'rebuild'
@@ -9414,8 +9421,8 @@ RTT = (function(_super) {
   };
 
   RTT.prototype.change = function(changed, touched, init) {
-    if (touched['texture']) {
-      this.rebuild();
+    if (touched['texture'] || changed['rtt.width'] || changed['rtt.height']) {
+      return this.rebuild();
     }
     if (this.size != null) {
       if (this.rtt != null) {
@@ -9591,8 +9598,9 @@ Traits = {
     depth: Types.nullable(Types.int(1))
   },
   texture: {
-    width: Types.nullable(Types.int()),
-    height: Types.nullable(Types.int())
+    minFilter: Types.filter('linear'),
+    magFilter: Types.filter('linear'),
+    pixelType: Types.type()
   },
   operator: {
     source: Types.select()
@@ -9642,6 +9650,8 @@ Traits = {
     camera: Types.nullable(Types.select())
   },
   rtt: {
+    width: Types.nullable(Types.int()),
+    height: Types.nullable(Types.int()),
     history: Types.int(1)
   },
   compose: {
@@ -10369,6 +10379,37 @@ Types = {
     }
     keys = ['no', 'normal', 'add', 'subtract', 'multiply', 'custom'];
     return Types["enum"](value, keys);
+  },
+  filter: function(value) {
+    var map;
+    if (value == null) {
+      value = 'nearest';
+    }
+    map = {
+      nearest: THREE.NearestFilter,
+      nearestMipMapNearest: THREE.NearestMipMapNearestFilter,
+      nearestMipMapLinear: THREE.NearestMipMapLinearFilter,
+      linear: THREE.LinearFilter,
+      linearMipMapNearest: THREE.LinearMipMapNearestFilter,
+      lienarMipmapLinear: THREE.LinearMipMapLinearFilter
+    };
+    return Types["enum"](value, [], map);
+  },
+  type: function(value) {
+    var map;
+    if (value == null) {
+      value = 'unsignedByte';
+    }
+    map = {
+      unsignedByte: THREE.UnsignedByteType,
+      byte: THREE.ByteType,
+      short: THREE.ShortType,
+      unsignedShort: THREE.UnsignedShortType,
+      int: THREE.IntType,
+      unsignedInt: THREE.UnsignedIntType,
+      float: THREE.FloatType
+    };
+    return Types["enum"](value, [], map);
   },
   scale: function(value) {
     var keys;
@@ -11586,7 +11627,7 @@ var RenderTarget;
 
 RenderTarget = (function() {
   function RenderTarget(gl, width, height, frames, textureOptions) {
-    var _base, _base1, _base2;
+    var _base, _base1, _base2, _base3;
     this.gl = gl;
     this.width = width;
     this.height = height;
@@ -11600,6 +11641,9 @@ RenderTarget = (function() {
     }
     if ((_base2 = this.textureOptions).format == null) {
       _base2.format = THREE.RGBAFormat;
+    }
+    if ((_base3 = this.textureOptions).type == null) {
+      _base3.type = THREE.UnsignedByteType;
     }
     this.width = this.width || 1;
     this.height = this.height || 1;
@@ -14465,6 +14509,10 @@ exports.merge = function() {
     }
   }
   return x;
+};
+
+exports.clone = function(o) {
+  return JSON.parse(JSON.serialize(o));
 };
 
 

@@ -43,7 +43,7 @@ class Compose extends Primitive
       @bind.source.sourceShader fragment
 
     # Force pixels to solid if requested
-    fragment.call 'color.opaque' if !alpha
+    fragment.pipe 'color.opaque' if !alpha
 
     # Make screen renderable
     composeUniforms = @_helpers.style.uniforms()
@@ -62,8 +62,8 @@ class Compose extends Primitive
     @_helpers.object.unmake()
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['operator.source']? or
-                  changed['compose.alpha']?
+    return @rebuild() if changed['operator.source'] or
+                         changed['compose.alpha']
 
     if changed['compose.depth'] or init
       @compose.depth false, @_get 'compose.depth'

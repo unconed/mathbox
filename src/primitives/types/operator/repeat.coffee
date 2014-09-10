@@ -51,7 +51,7 @@ class Repeat extends Operator
     super
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['operator']
+    return @rebuild() if touched['operator']
 
     if touched['repeat'] or
        init

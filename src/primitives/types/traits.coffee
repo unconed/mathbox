@@ -104,8 +104,9 @@ Traits =
     depth:       Types.nullable(Types.int(1))
 
   texture:
-    width:       Types.nullable(Types.int())
-    height:      Types.nullable(Types.int())
+    minFilter:   Types.filter('linear')
+    magFilter:   Types.filter('linear')
+    pixelType:   Types.type()
 
   operator:
     source:      Types.select()
@@ -148,6 +149,8 @@ Traits =
     camera:      Types.nullable(Types.select())
 
   rtt:
+    width:       Types.nullable(Types.int())
+    height:      Types.nullable(Types.int())
     history:     Types.int(1)
   compose:
     alpha:       Types.bool(false)

@@ -70,7 +70,7 @@ class Ticks extends Primitive
     @_helpers.position.unmake()
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['scale.divide']
+    return @rebuild() if changed['scale.divide']
 
     if touched['view']     or
        touched['interval'] or

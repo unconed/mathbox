@@ -74,7 +74,7 @@ class Axis extends Primitive
     @_helpers.position.unmake()
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['axis.detail']?
+    return @rebuild() if changed['axis.detail']
 
     if touched['interval'] or
        touched['span']     or

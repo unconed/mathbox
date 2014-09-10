@@ -110,8 +110,8 @@ class Vector extends Primitive
     @line = @arrows = null
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['geometry.points']? or
-                  changed['arrow.start']?     or
-                  changed['arrow.end']?
+    return @rebuild() if changed['geometry.points'] or
+                         changed['arrow.start']     or
+                         changed['arrow.end']
 
 module.exports = Vector

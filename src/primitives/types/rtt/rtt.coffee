@@ -19,7 +19,7 @@ class RTT extends Root
 
   update: () ->
     @trigger @event
-    @rtt.render()
+    @rtt?.render()
 
   getRTT: () -> @rtt
 
@@ -43,16 +43,23 @@ class RTT extends Root
 
     return unless @size?
 
-    @width  = @_get('texture.width')  ? @size.renderWidth
-    @height = @_get('texture.height') ? @size.renderHeight
+    minFilter = @_get 'texture.minFilter'
+    magFilter = @_get 'texture.magFilter'
+    pixelType = @_get 'texture.pixelType'
+
+    @width  = @_get('rtt.width')  ? @size.renderWidth
+    @height = @_get('rtt.height') ? @size.renderHeight
     @frames = @_get('rtt.history')
 
     @scene ?= @_renderables.make 'scene'
     @rtt    = @_renderables.make 'renderToTexture',
-      scene:  @scene
-      width:  @width
-      height: @height
-      frames: @frames + 1
+      scene:     @scene
+      width:     @width
+      height:    @height
+      frames:    @frames + 1
+      minFilter: minFilter
+      magFilter: magFilter
+      type:      pixelType
 
     # Notify of buffer reallocation
     @trigger
@@ -70,7 +77,9 @@ class RTT extends Root
     @rtt = @width = @height = @frames = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['texture']
+    return @rebuild() if touched['texture']    or
+                         changed['rtt.width']  or
+                         changed['rtt.height']
 
     if @size?
       @rtt.camera.aspect = @size.aspect if @rtt?

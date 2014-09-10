@@ -121,9 +121,9 @@ class Split extends Operator
     super
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['split.axis'] or
-                  changed['split.order'] or
-                  touched['operator']
+    return @rebuild() if changed['split.axis'] or
+                         changed['split.order'] or
+                         touched['operator']
 
     if touched['split'] or
        init

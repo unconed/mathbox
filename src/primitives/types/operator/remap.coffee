@@ -56,8 +56,8 @@ class Remap extends Operator
     super
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['operator'] or
-                  touched['remap']
+    return @rebuild() if touched['operator'] or
+                         touched['remap']
 
     dims = @bind.source.getActive()
     @dataResolution.set 1 / dims.width, 1 / dims.height

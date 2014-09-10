@@ -92,6 +92,6 @@ class Strip extends Primitive
     @strip = null
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['geometry.points']?
+    return @rebuild() if changed['geometry.points']
 
 module.exports = Strip

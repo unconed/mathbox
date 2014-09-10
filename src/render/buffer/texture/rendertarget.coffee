@@ -8,6 +8,7 @@ class RenderTarget
     @textureOptions.minFilter ?= THREE.LinearFilter
     @textureOptions.magFilter ?= THREE.LinearFilter
     @textureOptions.format    ?= THREE.RGBAFormat
+    @textureOptions.type      ?= THREE.UnsignedByteType
 
     @width  = @width  || 1
     @height = @height || 1

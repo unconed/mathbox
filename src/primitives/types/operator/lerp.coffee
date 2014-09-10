@@ -54,7 +54,7 @@ class Lerp extends Operator
     super
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['lerp']
+    return @rebuild() if touched['lerp']
 
 
 module.exports = Lerp

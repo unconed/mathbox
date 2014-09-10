@@ -93,7 +93,7 @@ class Voxel extends Data
       @buffer = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['voxel'] or changed['data.dimensions']
+    return @rebuild() if touched['voxel'] or changed['data.dimensions']
 
     return unless @buffer
 

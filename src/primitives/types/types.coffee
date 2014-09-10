@@ -278,6 +278,29 @@ Types =
     keys = ['no', 'normal', 'add', 'subtract', 'multiply', 'custom']
     Types.enum value, keys
 
+  filter: (value = 'nearest') ->
+    map =
+      nearest:              THREE.NearestFilter
+      nearestMipMapNearest: THREE.NearestMipMapNearestFilter
+      nearestMipMapLinear:  THREE.NearestMipMapLinearFilter
+      linear:               THREE.LinearFilter
+      linearMipMapNearest:  THREE.LinearMipMapNearestFilter
+      lienarMipmapLinear:   THREE.LinearMipMapLinearFilter
+
+    Types.enum value, [], map
+
+  type: (value = 'unsignedByte') ->
+    map =
+      unsignedByte:  THREE.UnsignedByteType
+      byte:          THREE.ByteType
+      short:         THREE.ShortType
+      unsignedShort: THREE.UnsignedShortType
+      int:           THREE.IntType
+      unsignedInt:   THREE.UnsignedIntType
+      float:         THREE.FloatType
+
+    Types.enum value, [], map
+
   scale: (value = 'linear') ->
     keys = ['linear', 'log']
     Types.enum value, keys

@@ -92,7 +92,7 @@ class Matrix extends Data
       @buffer = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['matrix'] or changed['data.dimensions']
+    return @rebuild() if touched['matrix'] or changed['data.dimensions']
 
     return unless @buffer
 
