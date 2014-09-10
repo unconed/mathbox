@@ -59,6 +59,6 @@ class RenderTarget
 
   dispose: () ->
     target.dispose() for target in @targets
-    virtual.dispose()
+    @targets = @reads = @write = null
 
 module.exports = RenderTarget

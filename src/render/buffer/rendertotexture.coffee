@@ -64,4 +64,8 @@ class RenderToTexture extends Renderable
     @scene = null
     @scene = @camera = null
 
+    @target.dispose()
+
+    super
+
 module.exports = RenderToTexture
