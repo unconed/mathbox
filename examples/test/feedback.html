@@ -9,7 +9,7 @@
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor'],
+      plugins: ['core', 'cursor'],
       controls: {
         klass: THREE.OrbitControls
       },
@@ -31,7 +31,9 @@
       c.lookAt(origin);
     });
 
-    view = mathbox.rtt().compose({
+    view = mathbox.rtt({
+      type: 'float',
+    }).compose({
       color: '#fcfbfa',
     }).cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],

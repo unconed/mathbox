@@ -1,0 +1,6 @@
+[rtt][texture] {
+  minFilter: 'linear';
+  magFilter: 'linear';
+  type:      'unsignedByte';
+}
+

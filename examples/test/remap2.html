@@ -35,6 +35,9 @@
 
       .rtt({
         id: 'render',
+        minFilter: 'nearest',
+        magFilter: 'nearest',
+        type: 'unsignedByte',
       })
         .cartesian({
           range: [[-2, 2], [-1, 1], [-1, 1]],
@@ -54,6 +57,9 @@
       .rtt({
         id: 'rtt1',
         history: 4,
+        type: 'unsignedByte',
+        minFilter: 'linear',
+        magFilter: 'linear',
       })
         .remap({
           id: 'remap1',
@@ -87,7 +93,11 @@
           color: '#ffffff',
         })
       .end()
-      .rtt()
+      .rtt({
+        minFilter: 'nearest',
+        magFilter: 'nearest',
+        type: 'unsignedByte',
+      })
         .remap({
           id: 'remap2',
           source: '#rtt1',

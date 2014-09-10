@@ -103,9 +103,9 @@ Traits =
     depth:       Types.nullable(Types.int(1))
 
   texture:
-    minFilter:   Types.filter('linear')
-    magFilter:   Types.filter('linear')
-    type:        Types.type()
+    minFilter:   Types.filter('nearest')
+    magFilter:   Types.filter('nearest')
+    type:        Types.type('float')
 
   operator:
     source:      Types.select()

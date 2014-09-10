@@ -49,7 +49,9 @@
       opacity: .25,
     });
 
-    view2 = view.rtt().cartesian({
+    view2 = view.rtt({
+      type: 'unsignedByte',
+    }).cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     }).grid({
@@ -59,7 +61,9 @@
       opacity: .25,
     });
 
-    view3 = view2.rtt().cartesian({
+    view3 = view2.rtt({
+      type: 'unsignedByte',
+    }).cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     }).grid();
