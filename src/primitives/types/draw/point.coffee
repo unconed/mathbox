@@ -64,6 +64,7 @@ class Point extends Primitive
               items:    items
               position: position
               color:    color
+              shape:    'circle'
 
     @resize()
 

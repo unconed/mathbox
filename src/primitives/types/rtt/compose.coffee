@@ -48,8 +48,6 @@ class Compose extends Primitive
     # Make screen renderable
     composeUniforms = @_helpers.style.uniforms()
     @compose = @_renderables.make 'screen',
-                 width:    2
-                 height:   2
                  fragment: fragment
                  uniforms: composeUniforms
 

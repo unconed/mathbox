@@ -6,14 +6,7 @@ class Factory
   getTypes: () ->
     Object.keys @classes
 
-  make: (type, options) ->
-    if !options? and type?.type
-      options = type
-      type    = options.type
-
-    options     ?= {}
-    options.type = type
-
+  make: (type, options = {}) ->
     klass        = @classes[type]
     throw "Unknown primitive class `#{type}`" unless klass
 

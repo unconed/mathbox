@@ -26,10 +26,8 @@ class Surface extends Base
       v.require color
       v.pipe 'mesh.vertex.color',       @uniforms
     v.require position if position
-    v.split()
-    v  .pipe 'surface.position',        @uniforms if !shaded
-    v  .pipe 'surface.position.normal', @uniforms if  shaded
-    v.pass()
+    v.pipe 'surface.position',          @uniforms if !shaded
+    v.pipe 'surface.position.normal',   @uniforms if  shaded
     v.pipe 'project.position',          @uniforms
 
     f = factory.fragment

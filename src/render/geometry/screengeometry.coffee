@@ -24,6 +24,9 @@ class ScreenGeometry extends SurfaceGeometry
       type: 'v4'
       value: new THREE.Vector4
 
+    options.width  = Math.max 2, +options.width  ? 2
+    options.height = Math.max 2, +options.height ? 2
+
     super options
 
   clip: (width = @width, height = @height, surfaces = @surfaces, layers = @layers) ->

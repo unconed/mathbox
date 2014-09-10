@@ -2,7 +2,6 @@ Types = require './types'
 
 Traits =
   node:
-    type:        Types.string()
     id:          Types.nullable(Types.string())
     classes:     Types.classes()
 
@@ -106,7 +105,7 @@ Traits =
   texture:
     minFilter:   Types.filter('linear')
     magFilter:   Types.filter('linear')
-    pixelType:   Types.type()
+    type:        Types.type()
 
   operator:
     source:      Types.select()
