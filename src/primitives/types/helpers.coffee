@@ -44,6 +44,8 @@ helpers =
       null
 
     unmake: () ->
+      return unless @bind
+
       # Unbind from attached objects
       for key, source of @bind when source
         source.off 'resize',  @handlers.bindResize
@@ -171,6 +173,8 @@ helpers =
       recalc()
 
     unmake: () ->
+      return unless @objectMatrix
+
       @node.off 'change:object', @handlers.position
 
       delete @objectMatrix
@@ -265,6 +269,8 @@ helpers =
       onVisible()
 
     unmake: (dispose = true) ->
+      return unless @objects
+
       @objectScene.unadopt object for object in @objects
       object.dispose() for object in @objects if dispose
 

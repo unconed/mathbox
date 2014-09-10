@@ -10,7 +10,7 @@ class Buffer extends Renderable
     @channels ?= options.channels || 4
 
     super renderer, shaders
-    @build()
+    @build options
 
   shader: (shader) ->
     shader.pipe "map.2d.data", @uniforms

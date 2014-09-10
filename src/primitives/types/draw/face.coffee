@@ -10,7 +10,7 @@ class Face extends Primitive
     @face = null
 
   resize: () ->
-    return unless @face and @bind.points
+    return unless @bind.points?
     dims = @bind.points.getActive()
 
     items  = dims.items
@@ -25,6 +25,8 @@ class Face extends Primitive
     @_helpers.bind.make
       'geometry.points': 'source'
       'geometry.colors': 'source'
+
+    return unless @bind.points?
 
     # Build transform chain
     position = @_shaders.shader()

@@ -12,6 +12,7 @@ class Remap extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Get custom shader
     indices    = @_get 'remap.indices'

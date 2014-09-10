@@ -32,8 +32,8 @@ class Screen extends Base
     f.require options.fragment
     f.pipe    'stpq.sample.2d'
     if hasStyle
-      f.pipe  'style.color',     @uniforms
-      f.pipe    Util.GLSL.binaryOperator 'vec4', '*'
+      f.pipe  'style.color',        @uniforms
+      f.pipe  Util.GLSL.binaryOperator 'vec4', '*'
     f.pipe    'fragment.color'
 
     @material = new THREE.ShaderMaterial factory.build

@@ -15,11 +15,11 @@ class ArrayBuffer_ extends Buffer
     shader.pipe 'map.xyzw.texture', @uniforms
     super shader
 
-  build: () ->
+  build: (options) ->
     super
 
     @data    = new Float32Array @samples * @channels * @items
-    @texture = new DataTexture  @gl, @samples * @items, @history, @channels
+    @texture = new DataTexture  @gl, @samples * @items, @history, @channels, options
     @index   = 0
     @filled  = 0
 

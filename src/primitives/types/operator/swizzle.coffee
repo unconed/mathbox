@@ -10,6 +10,7 @@ class Swizzle extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Swizzling order
     order = @_get 'swizzle.order'

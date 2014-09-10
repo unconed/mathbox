@@ -21,6 +21,7 @@ class Repeat extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Build shader to repeat along all dimensions
     transform = @_shaders.shader()

@@ -10,7 +10,7 @@ class Line extends Primitive
     @line = @arrows = null
 
   resize: () ->
-    return unless @line and @bind.points
+    return unless @bind.points?
     dims = @bind.points.getActive()
 
     samples = dims.width
@@ -26,6 +26,8 @@ class Line extends Primitive
     @_helpers.bind.make
       'geometry.points': 'source'
       'geometry.colors': 'source'
+
+    return unless @bind.points?
 
     # Build transform chain
     position = @_shaders.shader()

@@ -49,20 +49,18 @@ class Sprite extends Base
     f.require "sprite.alpha.#{shape}", @uniforms
     f.pipe 'sprite.fill',              @uniforms
 
-    window.exportedGraph = f._graph
-
-    @materialEdge = new THREE.ShaderMaterial edgeFactory.build
+    @edgeMaterial = new THREE.ShaderMaterial edgeFactory.build
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    @materialFill = new THREE.ShaderMaterial fillFactory.build
+    @fillMaterial = new THREE.ShaderMaterial fillFactory.build
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    @edgeObject = new THREE.Mesh @geometry, @materialEdge
-    @fillObject = new THREE.Mesh @geometry, @materialFill
+    @edgeObject = new THREE.Mesh @geometry, @edgeMaterial
+    @fillObject = new THREE.Mesh @geometry, @fillMaterial
 
     @_raw @edgeObject
     @_raw @fillObject
@@ -75,8 +73,9 @@ class Sprite extends Base
 
   dispose: () ->
     @geometry.dispose()
-    @material.dispose()
-    @objects = @geometry = @material = null
+    @edgeMaterial.dispose()
+    @fillMaterial.dispose()
+    @objects = @edgeObject = @fillObject = @geometry = @material = null
     super
 
 module.exports = Sprite

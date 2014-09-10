@@ -33,6 +33,7 @@ class Transpose extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Transposition order
     order = @_get 'transpose.order'

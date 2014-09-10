@@ -10,7 +10,7 @@ class Surface extends Primitive
     @line1 = @line2 = @surface = null
 
   resize: () ->
-    return unless @surface and @bind.points
+    return unless @bind.points?
 
     dims = @bind.points.getActive()
     width  = dims.width
@@ -27,6 +27,8 @@ class Surface extends Primitive
     @_helpers.bind.make
       'geometry.points': 'source'
       'geometry.colors': 'source'
+
+    return unless @bind.points?
 
     # Build transform chain
     position = @_shaders.shader()

@@ -15,11 +15,11 @@ class VoxelBuffer extends Buffer
     shader.pipe 'map.xyzw.texture', @uniforms
     super shader
 
-  build: () ->
+  build: (options) ->
     super
 
     @data    = new Float32Array @samples * @items * @channels
-    @texture = new DataTexture  @gl, @width * @items, @height * @depth, @channels
+    @texture = new DataTexture  @gl, @width * @items, @height * @depth, @channels, options
     @filled  = 0
 
     @dataPointer = @uniforms.dataPointer.value

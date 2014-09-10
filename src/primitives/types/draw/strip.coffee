@@ -10,7 +10,7 @@ class Strip extends Primitive
     @strip = null
 
   resize: () ->
-    return unless @strip and @bind.points
+    return unless @bind.points?
     dims = @bind.points.getActive()
 
     items  = dims.items
@@ -27,6 +27,8 @@ class Strip extends Primitive
     @_helpers.bind.make
       'geometry.points': 'source'
       'geometry.colors': 'source'
+
+    return unless @bind.points?
 
     # Build transform chain
     position = @_shaders.shader()

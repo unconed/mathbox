@@ -15,11 +15,11 @@ class MatrixBuffer extends Buffer
     shader.pipe 'map.xyzw.texture', @uniforms
     super shader
 
-  build: () ->
+  build: (options) ->
     super
 
     @data    = new Float32Array @samples * @items * @channels
-    @texture = new DataTexture  @gl, @width * @items, @height * @history, @channels
+    @texture = new DataTexture  @gl, @width * @items, @height * @history, @channels, options
     @index   = 0
     @filled  = 0
 

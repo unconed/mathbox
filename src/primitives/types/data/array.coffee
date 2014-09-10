@@ -2,7 +2,7 @@ Data = require './data'
 Util = require '../../../util'
 
 class Array_ extends Data
-  @traits: ['node', 'data', 'source', 'array']
+  @traits: ['node', 'data', 'source', 'array', 'texture']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -39,6 +39,11 @@ class Array_ extends Data
   make: () ->
     super
 
+    # Read sampling parameters
+    minFilter = @_get 'texture.minFilter'
+    magFilter = @_get 'texture.magFilter'
+    type      = @_get 'texture.type'
+
     # Read given dimensions
     length   = @_get 'array.length'
     history  = @_get 'array.history'
@@ -63,10 +68,13 @@ class Array_ extends Data
 
     # Create array buffer
     @buffer = @_renderables.make 'arrayBuffer',
-              length:   space.length
-              history:  space.history
-              channels: channels
-              items:    items
+              length:    space.length
+              history:   space.history
+              channels:  channels
+              items:     items
+              minFilter: minFilter
+              magFilter: magFilter
+              type:      type
 
     # Create data thunk to copy (multi-)array if bound to one
     if data?
@@ -85,7 +93,9 @@ class Array_ extends Data
       @buffer = null
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['array'] or changed['data.dimensions']
+    return @rebuild() if touched['array'] or
+                         touched['texture'] or
+                         changed['data.dimensions']
 
     return unless @buffer
 

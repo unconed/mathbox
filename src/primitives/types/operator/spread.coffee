@@ -8,6 +8,7 @@ class Spread extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Uniforms
     uniforms =

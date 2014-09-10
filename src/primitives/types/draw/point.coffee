@@ -10,7 +10,7 @@ class Point extends Primitive
     @point = null
 
   resize: () ->
-    return unless @point and @bind.points
+    return unless @bind.points?
 
     dims = @bind.points.getActive()
     width  = dims.width
@@ -25,6 +25,8 @@ class Point extends Primitive
     @_helpers.bind.make
       'geometry.points': 'source'
       'geometry.colors': 'source'
+
+    return unless @bind.points?
 
     # Prepare renderScale helper
     @_helpers.renderScale.make()

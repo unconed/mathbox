@@ -2,7 +2,7 @@ Data = require './data'
 Util = require '../../../util'
 
 class Matrix extends Data
-  @traits: ['node', 'data', 'source', 'matrix']
+  @traits: ['node', 'data', 'source', 'texture', 'matrix']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -41,6 +41,11 @@ class Matrix extends Data
   make: () ->
     super
 
+    # Read sampling parameters
+    minFilter = @_get 'texture.minFilter'
+    magFilter = @_get 'texture.magFilter'
+    type      = @_get 'texture.type'
+
     # Read given dimensions
     width    = @_get 'matrix.width'
     height   = @_get 'matrix.height'
@@ -69,11 +74,14 @@ class Matrix extends Data
 
     # Create matrix buffer
     @buffer = @_renderables.make 'matrixBuffer',
-              width:    space.width
-              height:   space.height
-              history:  space.history
-              channels: channels
-              items:    items
+              width:     space.width
+              height:    space.height
+              history:   space.history
+              channels:  channels
+              items:     items
+              minFilter: minFilter
+              magFilter: magFilter
+              type:      type
 
     # Create data thunk to copy (multi-)array if bound to one
     if data?
@@ -92,7 +100,9 @@ class Matrix extends Data
       @buffer = null
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['matrix'] or changed['data.dimensions']
+    return @rebuild() if touched['matrix'] or
+                         touched['texture'] or
+                         changed['data.dimensions']
 
     return unless @buffer
 

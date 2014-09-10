@@ -47,6 +47,7 @@ class Join extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Build shader to split a dimension into two
     transform = @_shaders.shader()

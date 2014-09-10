@@ -21,6 +21,7 @@ class Lerp extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Build shader to resample data one dimension at a time
     transform = @_shaders.shader()

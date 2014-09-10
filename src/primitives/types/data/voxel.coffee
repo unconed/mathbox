@@ -2,7 +2,7 @@ Data = require './data'
 Util = require '../../../util'
 
 class Voxel extends Data
-  @traits: ['node', 'data', 'source', 'voxel']
+  @traits: ['node', 'data', 'source', 'texture', 'voxel']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -42,6 +42,11 @@ class Voxel extends Data
   make: () ->
     super
 
+    # Read sampling parameters
+    minFilter = @_get 'texture.minFilter'
+    magFilter = @_get 'texture.magFilter'
+    type      = @_get 'texture.type'
+
     # Read given dimensions
     width    = @_get 'voxel.width'
     height   = @_get 'voxel.height'
@@ -70,11 +75,14 @@ class Voxel extends Data
 
     # Create voxel buffer
     @buffer = @_renderables.make 'voxelBuffer',
-              width:    space.width
-              height:   space.height
-              depth:    space.depth
-              channels: channels
-              items:    items
+              width:     space.width
+              height:    space.height
+              depth:     space.depth
+              channels:  channels
+              items:     items
+              minFilter: minFilter
+              magFilter: magFilter
+              type:      type
 
     # Create data thunk to copy (multi-)array if bound to one
     if data?
@@ -93,7 +101,9 @@ class Voxel extends Data
       @buffer = null
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['voxel'] or changed['data.dimensions']
+    return @rebuild() if touched['voxel'] or
+                         touched['texture'] or
+                         changed['data.dimensions']
 
     return unless @buffer
 

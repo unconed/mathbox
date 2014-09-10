@@ -1,7 +1,7 @@
 Matrix = require './matrix'
 
 class Area extends Matrix
-  @traits: ['node', 'data', 'source', 'matrix', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
+  @traits: ['node', 'data', 'source', 'matrix', 'texture', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
 
   callback: (callback) ->
     dimensions = @_get 'area.axes'

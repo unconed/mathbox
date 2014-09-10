@@ -29,6 +29,7 @@ Classes =
 
   join:              require './operator/join'
   lerp:              require './operator/lerp'
+  memo:              require './operator/memo'
   remap:             require './operator/remap'
   repeat:            require './operator/repeat'
   swizzle:           require './operator/swizzle'
