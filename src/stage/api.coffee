@@ -15,10 +15,11 @@ class API
         @[type] = (options) => @add(type, options)
 
   each: (callback) ->
-    callback @[i], i, @ for i in [0..@length]
+    callback @[i], i, @ for i in [0...@length]
 
   select: (selector) ->
-    targets = @_context.model.select selector, if !@isRoot then _targets else null
+    context = if !@isRoot then _targets else null
+    targets = @_context.model.select selector, context
     @push targets
 
   add: (type, options) ->

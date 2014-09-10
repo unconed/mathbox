@@ -64188,15 +64188,16 @@ API = (function() {
   API.prototype.each = function(callback) {
     var i, _i, _ref, _results;
     _results = [];
-    for (i = _i = 0, _ref = this.length; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+    for (i = _i = 0, _ref = this.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
       _results.push(callback(this[i], i, this));
     }
     return _results;
   };
 
   API.prototype.select = function(selector) {
-    var targets;
-    targets = this._context.model.select(selector, !this.isRoot ? _targets : null);
+    var context, targets;
+    context = !this.isRoot ? _targets : null;
+    targets = this._context.model.select(selector, context);
     return this.push(targets);
   };
 
