@@ -22,6 +22,11 @@ var products = [
 var vendor = [
   'vendor/three.js',
   'vendor/threestrap/build/threestrap.js',
+  'vendor/threestrap/vendor/renderers/VRRenderer.js',
+  'vendor/threestrap/vendor/controls/VRControls.js',
+  'vendor/threestrap/vendor/controls/OrbitControls.js',
+  'vendor/threestrap/vendor/controls/DeviceOrientationControls.js',
+  'vendor/threestrap/vendor/controls/TrackBallControls.js',
   'vendor/shadergraph/build/shadergraph.js',
   'vendor/fix.js',
 ];

@@ -61,7 +61,7 @@ class Cartesian4 extends View
 
     if changed['view.range']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
   to: (vector) ->
     throw "TODO"

@@ -7,7 +7,7 @@ class Array_ extends Data
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @buffer = @spec = null
+    @buffer = @spec = @expression = null
     @filled = false
 
     @space =
@@ -84,13 +84,13 @@ class Array_ extends Data
 
     # Notify of buffer reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
     if @buffer
       @buffer.dispose()
-      @buffer = null
+      @buffer = @spec = @expression = null
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['array'] or
@@ -102,7 +102,6 @@ class Array_ extends Data
     if changed['data.expression']? or
        init
 
-      data = @_get 'data.data'
       @buffer.callback = @callback @_get 'data.expression' if !data?
 
   update: () ->
@@ -143,7 +142,7 @@ class Array_ extends Data
     if used.length != l or
        filled != @buffer.getFilled()
       @trigger
-        type: 'resize'
+        type: 'source.resize'
 
     @filled = true
 

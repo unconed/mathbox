@@ -21,8 +21,6 @@ class RTT extends Root
     @trigger @event
     @rtt?.render()
 
-  getRTT: () -> @rtt
-
   getDimensions: () ->
     items:  1
     width:  @width
@@ -38,8 +36,8 @@ class RTT extends Root
     @updateHandler = (event) => @update()
     @resizeHandler = (event) => @resize event.size
 
-    @parentRoot.on 'update', @updateHandler
-    @parentRoot.on 'resize', @resizeHandler
+    @parentRoot.on 'root.update', @updateHandler
+    @parentRoot.on 'root.resize', @resizeHandler
 
     return unless @size?
 
@@ -63,11 +61,11 @@ class RTT extends Root
 
     # Notify of buffer reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: (rebuild) ->
-    @parentRoot.off 'update', @updateHandler
-    @parentRoot.off 'resize', @resizeHandler
+    @parentRoot.off 'root.update', @updateHandler
+    @parentRoot.off 'root.resize', @resizeHandler
 
     return unless @rtt?
 
@@ -85,7 +83,7 @@ class RTT extends Root
       @rtt.camera.aspect = @size.aspect if @rtt?
       @rtt.camera.updateProjectionMatrix()
       @trigger
-        type: 'resize'
+        type: 'root.resize'
         size: @size
 
   adopt:   (renderable) -> @scene.add    object for object in renderable.objects

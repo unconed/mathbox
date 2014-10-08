@@ -23,7 +23,7 @@ Types =
 
       l = Math.min al, bl
       for i in [0...l]
-        return false if !type.equals a[i], b[i]
+        return false if !type.equals? a[i], b[i]
       true
 
   letters: (type, size, value = null) ->
@@ -55,7 +55,7 @@ Types =
       bn = b == null
       return true  if an and bn
       return false if an ^   bn
-      return type.equals a, b
+      return type.equals? a, b
 
   enum: (value, keys, map = {}) ->
     values = {}

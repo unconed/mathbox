@@ -22,10 +22,11 @@ void clipEndsPosition(vec3 pos) {
   vec3 start = getPosition(xyzwS);
 
   // Measure length and adjust clip range
+  // Approach linear scaling with cubic ease the smaller we get
   vec3 diff = end - start;
   float l = length(vec2(length(diff), lineWidth)) * clipSpace;
   float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);
-  float scale = 1.0 - mini * mini * mini;
+  float scale = 1.0 - mini * mini * mini; 
   float range = clipRange * scale;
   
   vClipEnds = vec2(1.0);

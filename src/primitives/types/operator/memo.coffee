@@ -2,18 +2,30 @@ Operator = require './operator'
 Util     = require '../../../util'
 
 class Memo extends Operator
-  @traits: ['node', 'bind', 'operator', 'source', 'texture', 'memo']
+  @traits: ['node', 'bind', 'operator', 'source', 'image', 'texture', 'memo']
+
+  imageShader: (shader) ->
+    @rtt.shaderRelative shader
 
   sourceShader: (shader) ->
-    @memo.shader shader
+    @rtt.shaderAbsolute shader, 1
+
+  update: () ->
+    @rtt?.render()
+
+  resize: () ->
+    @refresh()
+    super
 
   make: () ->
     super
     return unless @bind.source?
 
-    # Build shader to remap data
-    operator = @_shaders.shader()
-    @bind.source.sourceShader operator
+    # Listen for updates
+    @memoRoot = @_inherit 'root'
+
+    @handler = () => @update()
+    @memoRoot.on  'root.update', @handler
 
     # Read sampling parameters
     minFilter = @_get 'texture.minFilter'
@@ -21,16 +33,14 @@ class Memo extends Operator
     type      = @_get 'texture.type'
 
     # Fetch geometry dimensions
-    dims   = @bind.points.getDimensions()
+    dims   = @bind.source.getDimensions()
     items  = dims.items
     width  = dims.width
     height = dims.height
     depth  = dims.depth
 
     # Prepare memoization RTT
-    @scene ?= @_renderables.make 'scene'
     @rtt    = @_renderables.make 'renderToTexture',
-      scene:     @scene
       width:     items  * width
       height:    height * depth
       frames:    1
@@ -38,124 +48,59 @@ class Memo extends Operator
       magFilter: magFilter
       type:      type
 
+    uniforms =
+      remap2DScale:    @_attributes.make @_types.vec2()
+      remapModulus:    @_attributes.make @_types.vec2()
+      remapModulusInv: @_attributes.make @_types.vec2()
+
+    @remap2DScale    = uniforms.remap2DScale.value
+    @remapModulus    = uniforms.remapModulus.value
+    @remapModulusInv = uniforms.remapModulusInv.value
+
+    # Build shader to remap data (do it after RTT creation to allow feedback)
+    operator = @_shaders.shader()
+    operator.pipe 'screen.remap.4d.xyzw', uniforms
+    @bind.source.sourceShader operator
+
+    # Make screen renderable inside RTT scene
+    @compose = @_renderables.make 'screen', fragment: operator
+    @rtt.scene.add object for object in @compose.objects
+
     # Notify of reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
-    @memo.dispose()
-    @memo = null
+
+    if @bind.source?
+      @rtt.scene.remove object for object in @compose.objects
+      @compose = null
+
+      @rtt.dispose()
+      @rtt = null
+
+      @memoRoot.off 'root.update', @handler
+      @memoRoot = null
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['memo'] or
                          touched['operator']
 
+    return unless @bind.source?
+
+    if touched['memo'] or
+       init
+
+      # Fetch geometry dimensions
+      dims   = @bind.source.getActive()
+      items  = dims.items
+      width  = dims.width
+      height = dims.height
+      depth  = dims.depth
+
+      @remap2DScale   .set items * width, height * depth
+      @remapModulus   .set items, height
+      @remapModulusInv.set 1 / items, 1 / height
 
 module.exports = Memo
-
-###
-Root = require '../base/root'
-
-class RTT extends Root
-  @traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image']
-
-  constructor: (node, context, helpers) ->
-    super node, context, helpers
-
-    @rtt = @scene = @width = @height = @frames = @size = null
-
-    @event =
-      type: 'update'
-
-  imageShader: (shader) ->
-    @rtt.shaderRelative shader
-
-  sourceShader: (shader) ->
-    @rtt.shaderAbsolute shader, @frames
-
-  update: () ->
-    @trigger @event
-    @rtt?.render()
-
-  getRTT: () -> @rtt
-
-  getDimensions: () ->
-    items:  1
-    width:  @width
-    height: @height
-    depth:  @frames
-
-  getActive: () -> @getDimensions()
-
-  make: () ->
-    @parentRoot = @_inherit 'root'
-    @size = @parentRoot.getSize()
-
-    @updateHandler = (event) => @update()
-    @resizeHandler = (event) => @resize event.size
-
-    @parentRoot.on 'update', @updateHandler
-    @parentRoot.on 'resize', @resizeHandler
-
-    return unless @size?
-
-    minFilter = @_get 'texture.minFilter'
-    magFilter = @_get 'texture.magFilter'
-    type      = @_get 'texture.type'
-
-    @width  = @_get('rtt.width')  ? @size.renderWidth
-    @height = @_get('rtt.height') ? @size.renderHeight
-    @frames = @_get('rtt.history')
-
-    @scene ?= @_renderables.make 'scene'
-    @rtt    = @_renderables.make 'renderToTexture',
-      scene:     @scene
-      width:     @width
-      height:    @height
-      frames:    @frames
-      minFilter: minFilter
-      magFilter: magFilter
-      type:      type
-
-    # Notify of buffer reallocation
-    @trigger
-      type: 'rebuild'
-
-  unmake: (rebuild) ->
-    @parentRoot.off 'update', @updateHandler
-    @parentRoot.off 'resize', @resizeHandler
-
-    return unless @rtt?
-
-    @rtt.dispose()
-    @scene.dispose() unless rebuild
-
-    @rtt = @width = @height = @frames = null
-
-  change: (changed, touched, init) ->
-    return @rebuild() if touched['texture']    or
-                         changed['rtt.width']  or
-                         changed['rtt.height']
-
-    if @size?
-      @rtt.camera.aspect = @size.aspect if @rtt?
-      @rtt.camera.updateProjectionMatrix()
-      @trigger
-        type: 'resize'
-        size: @size
-
-  adopt:   (renderable) -> @scene.add    object for object in renderable.objects
-  unadopt: (renderable) -> @scene.remove object for object in renderable.objects
-
-  resize: (size) ->
-    @size = size
-    @change {}, { texture: true }, {}, true
-
-  # End transform chain here
-  transform: (shader) ->
-  present: (shader) ->
-    shader.pipe 'view.position'
-
-module.exports = RTT
-###

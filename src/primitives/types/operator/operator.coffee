@@ -21,6 +21,6 @@ class Operator extends Source
 
   resize: () ->
     @trigger
-      type: 'resize'
+      type: 'source.resize'
 
 module.exports = Operator

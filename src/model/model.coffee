@@ -73,27 +73,27 @@ class Model
 
     # Watcher cycle for catching changes in id/classes
     prime = (node) =>
-      for watcher in @watchers.slice()
+      for watcher in @watchers
         watcher.match = watcher.matcher node
       null
 
     check = (node) =>
-      for watcher in @watchers.slice()
+      for watcher in @watchers
         @fire ||= watcher.fire ||= (watcher.match != watcher.matcher node)
       null
 
     force = (node) =>
-      for watcher in @watchers.slice()
+      for watcher in @watchers
         @fire ||= watcher.fire ||= watcher.matcher node
       null
 
     @digest = () =>
-      return unless @fire
+      return false unless @fire
       for watcher in @watchers.slice() when watcher.fire
         watcher.fire = false
         watcher.handler()
       @fire = false
-      null
+      true
 
     # Track id/class changes
     update = (event, node, init) =>
@@ -285,7 +285,5 @@ class Model
 
   getRoot: () ->
     @root
-
-THREE.Binder.apply Model::
 
 module.exports = Model

@@ -80,7 +80,7 @@ class Polar extends View
 
     if changed['view.range'] or touched['polar']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
   to: (vector) ->
     if @bend > 0.0001

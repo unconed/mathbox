@@ -92,7 +92,7 @@ class Voxel extends Data
 
     # Notify of buffer reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
@@ -154,7 +154,7 @@ class Voxel extends Data
        used.depth  != d or
        filled != @buffer.getFilled()
       @trigger
-        type: 'resize'
+        type: 'source.resize'
 
     @filled = true
 

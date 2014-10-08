@@ -42,7 +42,7 @@ class Repeat extends Operator
 
     # Notify of reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
@@ -54,18 +54,20 @@ class Repeat extends Operator
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator']
 
+    if @bind.source
+      dims = @bind.source.getActive()
+      @repeatModulus.value.set dims.width, dims.height, dims.depth, dims.items
+
     if touched['repeat'] or
        init
 
-      dims = @bind.source.getDimensions()
-      for key of dims
+      for key of @getDimensions()
         id = "repeat.#{key}"
         @resample[key] = @_get id
 
-      @repeatModulus.value.set dims.width, dims.height, dims.depth, dims.items
-
       # Rebuild all geometry downstream (TODO: make this work better)
-      @trigger
-        event: 'rebuild'
+      if !init
+        @trigger
+          type: 'source.rebuild'
 
 module.exports = Repeat

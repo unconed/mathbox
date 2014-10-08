@@ -29,7 +29,7 @@ class Spread extends Operator
 
     # Notify of reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
@@ -51,9 +51,8 @@ class Spread extends Operator
         matrix = @spreadMatrix.value
         els = matrix.elements
 
-        order = { width: 0, height: 1, depth: 2, items: 3 }
-        for key of dims
-          i = order[key]
+        order = ['width', 'height', 'depth', 'items']
+        for key, i in order
           id = "spread.#{key}"
           spread = @_get id
 

@@ -91,7 +91,7 @@ class Matrix extends Data
 
     # Notify of buffer reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
@@ -168,7 +168,7 @@ class Matrix extends Data
        used.height != h or
        filled != @buffer.getFilled()
       @trigger
-        type: 'resize'
+        type: 'source.resize'
 
     @filled = true
 

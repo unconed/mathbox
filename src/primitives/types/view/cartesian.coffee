@@ -49,7 +49,7 @@ class Cartesian extends View
 
     if changed['view.range']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
   to: (vector) ->
     vector.applyMatrix4 @viewMatrix

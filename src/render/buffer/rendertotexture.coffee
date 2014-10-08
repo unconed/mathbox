@@ -61,7 +61,6 @@ class RenderToTexture extends Renderable
 
   dispose: () ->
     @scene.unject?()
-    @scene = null
     @scene = @camera = null
 
     @target.dispose()

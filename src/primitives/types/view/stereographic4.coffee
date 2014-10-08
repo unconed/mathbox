@@ -69,7 +69,7 @@ class Stereographic4 extends View
 
     if changed['view.range'] or touched['stereographic']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
   to: (vector) ->
     throw "TODO"

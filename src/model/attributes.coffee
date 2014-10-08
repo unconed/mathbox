@@ -28,16 +28,10 @@ class Attributes
     @pending.push callback
 
   digest: () ->
-    limit = 10
-
-    while @pending.length > 0 && --limit > 0
-      [calls, @pending] = [@pending, []]
-      callback() for callback in calls
-
-    if limit == 0
-      throw Error("More than #{limit} iterations in Data::digest")
-
-    return
+    return false if !@pending.length
+    [calls, @pending] = [@pending, []]
+    callback() for callback in calls
+    true
 
   getTrait: (name) ->
     @traits[name]

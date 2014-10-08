@@ -53,8 +53,10 @@ class Join extends Operator
     transform = @_shaders.shader()
 
     uniforms =
-      joinStride: @_attributes.make @_types.number()
-    @joinStride = uniforms.joinStride
+      joinStride:    @_attributes.make @_types.number()
+      joinStrideInv: @_attributes.make @_types.number()
+    @joinStride    = uniforms.joinStride
+    @joinStrideInv = uniforms.joinStrideInv
 
     order = @_get 'join.order'
     axis  = @_get 'join.axis'
@@ -106,7 +108,7 @@ class Join extends Operator
 
     # Notify of reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
@@ -134,10 +136,12 @@ class Join extends Operator
       @length  = length
       @stride  = stride
 
-      @joinStride.value = stride
+      @joinStride.value    = stride
+      @joinStrideInv.value = 1 / stride
 
       # Rebuild geometry downstream
-      @trigger
-        event: 'rebuild'
+      if !init
+        @trigger
+          type: 'source.rebuild'
 
 module.exports = Join

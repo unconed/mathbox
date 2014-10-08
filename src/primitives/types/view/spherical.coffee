@@ -93,7 +93,7 @@ class Spherical extends View
 
     if changed['view.range'] or touched['spherical']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
   to: (vector) ->
     if @bend > 0.0001

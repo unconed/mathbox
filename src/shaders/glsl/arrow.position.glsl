@@ -30,7 +30,8 @@ mat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {
   vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));
   vec3 b = cross(n, t);
   
-  // Shrink arrows when vector gets too small, cubic ease asymptotically to y=x
+  // Shrink arrows when vector gets too small
+  // Approach linear scaling with cubic ease the smaller we get
   diff = right - start;
   l = length(diff) * arrowSpace;
   float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);

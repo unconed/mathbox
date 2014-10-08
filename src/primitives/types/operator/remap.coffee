@@ -51,7 +51,7 @@ class Remap extends Operator
 
     # Notify of reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super

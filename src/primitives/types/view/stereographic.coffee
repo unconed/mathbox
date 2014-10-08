@@ -59,7 +59,7 @@ class Stereographic extends View
 
     if changed['view.range'] or touched['stereographic']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
   to: (vector) ->
     vector.applyMatrix4 @viewMatrix

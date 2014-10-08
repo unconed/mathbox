@@ -14,6 +14,13 @@ class Factory
 
     model        = new modelKlass options, type, klass.traits, @context.attributes
     controller   = new klass model, @context, @helpers
+
+    ###
+    guard        = @context.guard
+    guard.apply    model
+    guard.apply    controller
+    ###
+
     model
 
 module.exports = Factory

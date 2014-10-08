@@ -24,6 +24,7 @@ class Context
     @scene       = @renderables.make      'scene', scene: scene, camera: camera
 
     # Primitives factory
+    @guard       = new Model.Guard
     @attributes  = new Model.Attributes   Primitives.Types
     @primitives  = new Primitives.Factory Primitives.Types, @
     @root        = @primitives.make       'root'
@@ -53,9 +54,11 @@ class Context
     @root.primitive.resize size
 
   update: () ->
-    @animator  .update()
-    @attributes.digest()
-    @model     .digest()
+    @animator.update()
+
+    @guard.iterate () =>
+      change   = @attributes.digest()
+      change ||= @model     .digest()
 
     @root.primitive.update()
 

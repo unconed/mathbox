@@ -49,12 +49,12 @@ class Sprite extends Base
     f.require "sprite.alpha.#{shape}", @uniforms
     f.pipe 'sprite.fill',              @uniforms
 
-    @edgeMaterial = new THREE.ShaderMaterial edgeFactory.build
+    @edgeMaterial = new THREE.ShaderMaterial edgeFactory.link
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    @fillMaterial = new THREE.ShaderMaterial fillFactory.build
+    @fillMaterial = new THREE.ShaderMaterial fillFactory.link
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"

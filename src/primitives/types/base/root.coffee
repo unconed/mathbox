@@ -9,7 +9,7 @@ class Root extends Parent
     @size = null
 
     @event =
-      type: 'update'
+      type: 'root.update'
 
   adopt:   (renderable) -> @_context.scene.add    object for object in renderable.objects
   unadopt: (renderable) -> @_context.scene.remove object for object in renderable.objects
@@ -26,7 +26,7 @@ class Root extends Parent
   resize: (size) ->
     @size = size
     @trigger
-      type: 'resize'
+      type: 'root.resize'
       size: size
 
   getSize: () -> @size

@@ -9,10 +9,10 @@ class Data extends Source
     @dataRoot = @_inherit 'root'
 
     @handler = () => @update()
-    @dataRoot.on  'update', @handler
+    @dataRoot.on  'root.update', @handler
 
   unmake: () ->
-    @dataRoot.off 'update', @handler
+    @dataRoot.off 'root.update', @handler
 
 
 

@@ -38,7 +38,7 @@ class Face extends Base
     f.pipe 'mesh.fragment.color',    @uniforms if  color
     f.pipe 'fragment.color',         @uniforms
 
-    @material = new THREE.ShaderMaterial factory.build
+    @material = new THREE.ShaderMaterial factory.link
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"

@@ -19,10 +19,7 @@ helpers =
 
       # Monitor array for reallocation / resize
       @handlers.bindResize   = (event) => @resize()
-      @handlers.bindRebuild  = (event) =>
-        @rebuild()
-        @trigger
-          type: 'rebuild'
+      @handlers.bindRebuild  = (event) => @rebuild()
       @handlers.bindWatchers = watchers = []
 
       # Fetch attached objects and bind to them
@@ -36,8 +33,8 @@ helpers =
         source   = if selector? then @_attach selector, trait, watcher else null
 
         if source?
-          source.on 'resize',  @handlers.bindResize
-          source.on 'rebuild', @handlers.bindRebuild
+          source.on 'source.resize',  @handlers.bindResize
+          source.on 'source.rebuild', @handlers.bindRebuild
 
         @bind[name] = source
 
@@ -48,8 +45,8 @@ helpers =
 
       # Unbind from attached objects
       for key, source of @bind when source
-        source.off 'resize',  @handlers.bindResize
-        source.off 'rebuild', @handlers.bindRebuild
+        source.off 'source.resize',  @handlers.bindResize
+        source.off 'source.rebuild', @handlers.bindRebuild
 
       # Stop watching selector (if any)
       watcher.unwatch?() for watcher in @handlers.bindWatchers
@@ -65,11 +62,11 @@ helpers =
       @spanView = @_inherit 'view'
       if @spanView?
         @handlers.span = (event) => @change {}, {}, {}, true
-        @spanView.on 'range', @handlers.span
+        @spanView.on 'view.range', @handlers.span
 
     unmake: () ->
       if @spanView?
-        @spanView.off 'range', @handlers.span
+        @spanView.off 'view.range', @handlers.span
         delete @handlers.span
       delete @spanView
 
@@ -205,7 +202,7 @@ helpers =
       @objectParent = @_inherit 'object'
       @objectScene  = @_inherit 'scene'
 
-      e       = type: 'visible'
+      e       = type: 'object.visible'
       opacity = blending = zIndex = zFactor = null
 
       hasStyle = 'style' in @traits
@@ -233,7 +230,7 @@ helpers =
         refresh  = zFactor  = @_get 'style.zFactor'  if changed['style.zFactor']
         refresh  = zUnits   = @_get 'style.zUnits'   if changed['style.zUnits']
         refresh  = zWrite   = @_get 'style.zWrite'   if changed['style.zWrite']
-        refresh  = zTest    = @_get 'style.zWrite'   if changed['style.zTest']
+        refresh  = zTest    = @_get 'style.zTest'    if changed['style.zTest']
         onVisible() if refresh?
 
       last = null
@@ -262,7 +259,8 @@ helpers =
       @node.on    'change:object', onChange
       @node.on    'change:style',  onChange
       @node.on    'reindex',       onVisible
-      @objectParent?.on 'visible', onVisible
+
+      @objectParent?.on 'object.visible', onVisible
 
       @objectScene.adopt object for object in @objects
 
@@ -280,7 +278,8 @@ helpers =
       @node.off    'change:object', onChange
       @node.off    'change:style',  onChange
       @node.off    'reindex',       onVisible
-      @objectParent?.off 'visible', onVisible
+
+      @objectParent?.off 'object.visible', onVisible
 
       delete @handlers.objectChange
       delete @handlers.objectVisible
@@ -299,10 +298,10 @@ helpers =
       @handlers.renderResize = (event) => scale.value = @root.size.renderHeight / 2
       @handlers.renderResize()
 
-      @renderRoot?.on 'resize',  @handlers.renderResize
+      @renderRoot?.on 'root.resize',  @handlers.renderResize
 
     unmake: () ->
-      @renderRoot?.off 'resize', @handlers.renderResize
+      @renderRoot?.off 'root.resize', @handlers.renderResize
       delete @handlers.renderResize
 
     uniforms: () ->

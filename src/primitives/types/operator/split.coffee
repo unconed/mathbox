@@ -112,7 +112,7 @@ class Split extends Operator
 
     # Notify of reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
@@ -145,6 +145,6 @@ class Split extends Operator
 
       # Rebuild geometry downstream
       @trigger
-        event: 'rebuild'
+        type: 'source.rebuild'
 
 module.exports = Split
