@@ -1,8 +1,9 @@
+Overlay    = require './overlay'
 Model      = require './model'
-Stage      = require './stage'
+Primitives = require './primitives'
 Render     = require './render'
 Shaders    = require './shaders'
-Primitives = require './primitives'
+Stage      = require './stage'
 Util       = require './util'
 
 class Context
@@ -16,21 +17,27 @@ class Context
     Util:       Util
 
   # Set up entire environment
-  constructor: (renderer, scene, camera, script = []) ->
+  constructor: (renderer, scene = null, camera = null, script = []) ->
+
+    # DOM container
+    @canvas      = canvas  = renderer.domElement
+    @element     = element = canvas.parentNode
 
     # Rendering factory
-    @shaders     = new Shaders.Factory    Shaders.Snippets
-    @renderables = new Render.Factory     renderer, Render.Classes, @shaders
-    @scene       = @renderables.make      'scene', scene: scene, camera: camera
+    @shaders     = new Shaders.Factory              Shaders.Snippets
+    @renderables = new Render .Factory    renderer, Render .Classes, @shaders
+    @overlays    = new Overlay.Factory    element,  canvas, Overlay.Classes
+    @scene       = @renderables.make      'scene',  scene: scene
+    @camera      = @renderables.make      'camera', camera: camera
 
     # Primitives factory
-    @guard       = new Model.Guard
     @attributes  = new Model.Attributes   Primitives.Types
     @primitives  = new Primitives.Factory Primitives.Types, @
     @root        = @primitives.make       'root'
 
     # Document model
     @model       = new Model.Model        @root
+    @guard       = new Model.Guard
 
     # Scene controllers
     @controller  = new Stage.Controller   @model, @primitives
@@ -46,12 +53,17 @@ class Context
 
   init: () ->
     @scene.inject()
+    @overlays.inject()
 
   destroy: () ->
     @scene.unject()
+    @overlays.unject()
 
   resize: (size) ->
-    @root.primitive.resize size
+    @root.controller.resize size
+
+  pre: () ->
+    @root.controller.pre?()
 
   update: () ->
     @animator.update()
@@ -60,6 +72,12 @@ class Context
       change   = @attributes.digest()
       change ||= @model     .digest()
 
-    @root.primitive.update()
+    @root.controller.update?()
+
+  render: () ->
+    @root.controller.render?()
+
+  post: () ->
+    @root.controller.post?()
 
 module.exports = Context

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Surface extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind']
+  @traits = ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -32,11 +32,10 @@ class Surface extends Primitive
 
     # Build transform chain
     position = @_shaders.shader()
-    @_helpers.position.make()
 
     # Fetch position and transform to view
-    @bind.points.sourceShader position
-    @_helpers.position.shader position
+    position = @bind.points.sourceShader position
+    position = @_helpers.position.pipeline position
 
     # Samplers for XY / YX wires
     wireXY = position
@@ -71,6 +70,7 @@ class Surface extends Primitive
     solid  = @_get 'mesh.solid'
     first  = @_get 'grid.first'
     second = @_get 'grid.second'
+    stroke = @_get 'line.stroke'
 
     objects = []
 
@@ -92,6 +92,7 @@ class Surface extends Primitive
                 position: wireXY
                 color:    color
                 zUnits:   -zUnits
+                stroke:   stroke
       objects.push @line1
 
     if second
@@ -104,6 +105,7 @@ class Surface extends Primitive
                 position: wireYX
                 color:    color
                 zUnits:   -zUnits
+                stroke:   stroke
       objects.push @line2
 
     if solid
@@ -118,16 +120,16 @@ class Surface extends Primitive
                 color:    color
                 shaded:   shaded
                 zUnits:   zUnits
+                stroke:   stroke
       objects.push @surface
 
-    @resize()
-
     @_helpers.object.make objects
+
+  made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
     @_helpers.object.unmake()
-    @_helpers.position.unmake()
 
     @line1 = @line2 = @surface = null
 
@@ -135,6 +137,7 @@ class Surface extends Primitive
     return @rebuild() if changed['geometry.points'] or
                          changed['mesh.shaded'] or
                          changed['mesh.solid'] or
+                         changed['line.stroke'] or
                          touched['grid']
 
     if changed['style.color'] or

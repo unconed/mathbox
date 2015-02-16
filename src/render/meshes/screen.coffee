@@ -36,12 +36,13 @@ class Screen extends Base
       f.pipe  Util.GLSL.binaryOperator 'vec4', '*'
     f.pipe    'fragment.color'
 
-    @material = new THREE.ShaderMaterial factory.link
+    @material = @_material factory.link
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material
+    object.frustumCulled = false
 
     @_raw object
     @objects = [object]

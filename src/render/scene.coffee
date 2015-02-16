@@ -14,8 +14,8 @@ class MathBox extends THREE.Object3D
  Holds the root and binds to a THREE.Scene
 ###
 class Scene extends Renderable
-  constructor: (gl, shaders, options) ->
-    super gl, shaders, options
+  constructor: (renderer, shaders, options) ->
+    super renderer, shaders, options
     @root = new MathBox
 
     @scene = options.scene if options?.scene?

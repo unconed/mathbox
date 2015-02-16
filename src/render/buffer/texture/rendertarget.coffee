@@ -5,8 +5,8 @@ Provides easy access to past rendered frames
 ###
 class RenderTarget
   constructor: (@gl, width, height, frames, options = {}) ->
-    options.minFilter ?= THREE.LinearFilter
-    options.magFilter ?= THREE.LinearFilter
+    options.minFilter ?= THREE.NearestFilter
+    options.magFilter ?= THREE.NearestFilter
     options.format    ?= THREE.RGBAFormat
     options.type      ?= THREE.UnsignedByteType
 

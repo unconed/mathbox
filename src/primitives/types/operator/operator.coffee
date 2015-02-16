@@ -1,7 +1,10 @@
 Source = require '../base/source'
 
 class Operator extends Source
-  @traits: ['node', 'operator', 'source']
+  @traits = ['node', 'bind', 'operator', 'source', 'index']
+
+  indexShader:   (shader)   -> @bind.source?.indexShader?   shader
+  sourceShader:  (shader)   -> @bind.source?.sourceShader?  shader
 
   getDimensions: () ->
     @bind.source.getDimensions()
@@ -15,6 +18,8 @@ class Operator extends Source
     # Bind to attached data sources
     @_helpers.bind.make
       'operator.source': 'source'
+
+  made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()

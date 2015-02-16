@@ -2,11 +2,13 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Compose extends Primitive
-  @traits: ['node', 'bind', 'object', 'operator', 'style', 'compose']
+  @traits = ['node', 'bind', 'object', 'operator', 'style', 'compose']
+  @defaults =
+    zWrite: false
+    zTest:  false
+    color: '#ffffff'
 
-  constructor: (node, context, helpers) ->
-    super node, context, helpers
-
+  init: () ->
     @compose = null
 
   resize: () ->
@@ -38,11 +40,11 @@ class Compose extends Primitive
 
     if @bind.source.is 'image'
       # Sample image directly in 2D
-      @bind.source.imageShader fragment
+      fragment = @bind.source.imageShader fragment
     else
       # Sample data source in 4D
       fragment.pipe 'screen.remap.2d.xyzw', resampleUniforms
-      @bind.source.sourceShader fragment
+      fragment = @bind.source.sourceShader fragment
 
     # Force pixels to solid if requested
     fragment.pipe 'color.opaque' if !alpha
@@ -53,9 +55,9 @@ class Compose extends Primitive
                  fragment: fragment
                  uniforms: composeUniforms
 
-    @resize()
+    @_helpers.object.make [@compose]
 
-    @_helpers.object.make [@compose], true
+  made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
@@ -65,8 +67,6 @@ class Compose extends Primitive
     return @rebuild() if changed['operator.source'] or
                          changed['compose.alpha']
 
-    if changed['compose.depth'] or init
-      @compose.depth false, @_get 'compose.depth'
 
 
 module.exports = Compose

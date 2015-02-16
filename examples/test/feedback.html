@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - RTT Feedback</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -16,7 +17,7 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(.3, 1, 3);
+    three.camera.position.set(0, 0, 3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     time = 0;
@@ -26,22 +27,25 @@
       x = Math.cos(time) * 3;
       z = Math.sin(time) * 3;
 
-      c = rtt[0].primitive.rtt.camera;
+      c = rtt[0].controller.rtt.camera;
       c.position.set(x, 0, z);
       c.lookAt(origin);
     });
 
-    view = mathbox.rtt({
+    view = mathbox
+    .rtt({
       type: 'float',
-    }).compose({
+    })
+    .compose({
       color: '#fcfbfa',
-    }).cartesian({
+      zWrite: false,
+    })
+    .cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     }).grid({
       divideX: 2,
       divideY: 2,
-      zIndex: 10,
       opacity: .25,
     });
 

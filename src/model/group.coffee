@@ -28,7 +28,7 @@ class Group extends Node
     node._index null
     node._removed @
 
-    node._index i for node, i in @children.slice index
+    node._index i for node, i in @children when i >= index
 
   empty: () ->
     children = @children.slice()

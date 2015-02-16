@@ -1,11 +1,11 @@
 Voxel = require './voxel'
+Util = require '../../../util'
 
 class Volume extends Voxel
-  @traits: ['node', 'data', 'source', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z']
+  @traits = ['node', 'data', 'source', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z']
 
   callback: (callback) ->
     dimensions = @_get 'volume.axes'
-
     width      = @_get 'voxel.width'
     height     = @_get 'voxel.height'
     depth      = @_get 'voxel.depth'
@@ -47,6 +47,7 @@ class Volume extends Voxel
     bY = spanY * inverseY
     bZ = spanZ * inverseZ
 
+    callback = Util.Data.normalizeEmitter callback, 6
     (i, j, k, emit) ->
       x = aX + bX * i
       y = aY + bY * j

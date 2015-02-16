@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <title>MathBox - Memo</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <link rel="stylesheet" href="../../vendor/shadergraph/build/shadergraph.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -37,11 +39,13 @@
         var y = Math.sin(three.Time.frames * .1) * .5 + .5;
         emit(x + y, i%2, Math.cos(y)*.5+.5);
       },
+      bufferLength: 32,
       minFilter: 'linear',
       magFilter: 'linear',
     });
     view.memo({
     });
+    view.compose();
 
   </script>
 </body>

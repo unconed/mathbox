@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Axis extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
+  @traits = ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -19,11 +19,9 @@ class Axis extends Primitive
     @axisStep       = positionUniforms.axisStep.value
 
     # Build transform chain
-    @_helpers.position.make()
-
     position = @_shaders.shader()
     position.pipe 'axis.position', positionUniforms
-    @_helpers.position.shader position
+    position = @_helpers.position.pipeline position
 
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
@@ -39,6 +37,9 @@ class Axis extends Primitive
     start   = @_get 'arrow.start'
     end     = @_get 'arrow.end'
 
+    # Stroke style
+    stroke  = @_get 'line.stroke'
+
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms
     @line = @_renderables.make 'line',
@@ -46,6 +47,7 @@ class Axis extends Primitive
               samples:  samples
               position: position
               clip:     start or end
+              stroke:   stroke
 
     # Make arrow renderables
     @arrows = []
@@ -71,10 +73,10 @@ class Axis extends Primitive
   unmake: () ->
     @_helpers.object.unmake()
     @_helpers.span.unmake()
-    @_helpers.position.unmake()
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['axis.detail']
+    return @rebuild() if changed['axis.detail'] or
+                         changed['line.stroke']
 
     if touched['interval'] or
        touched['span']     or

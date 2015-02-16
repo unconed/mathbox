@@ -2,7 +2,7 @@ View = require './view'
 Util = require '../../../util'
 
 class Spherical extends View
-  @traits: ['node', 'object', 'view', 'spherical']
+  @traits = ['node', 'object', 'view', 'view3', 'spherical', 'transform']
 
   make: () ->
     super
@@ -27,17 +27,20 @@ class Spherical extends View
 
     delete @viewMatrix
     delete @objectMatrix
+    delete @aspectX
+    delete @aspectY
+    delete @uniforms
 
   change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or touched['spherical'] or init
+    return unless touched['view'] or touched['view3'] or touched['spherical'] or init
 
     @bend  = bend  = @_get 'spherical.bend'
     @focus = focus = if bend > 0 then 1 / bend - 1 else 0
 
-    o = @_get 'object.position'
-    s = @_get 'object.scale'
-    q = @_get 'object.rotation'
+    o = @_get 'view3.position'
+    s = @_get 'view3.scale'
+    q = @_get 'view3.rotation'
     r = @_get 'view.range'
 
     x = r[0].x
@@ -95,23 +98,9 @@ class Spherical extends View
       @trigger
         type: 'view.range'
 
-  to: (vector) ->
-    if @bend > 0.0001
-      radius = @focus + vector.z * @aspectX
-      x      = vector.x * @bend
-      y      = vector.y * @bend / @aspectY * @scaleY
-
-      # Apply spherical warp
-      c = Math.cos(y) * radius
-      vector.x = Math.sin(x) * c
-      vector.x = Math.sin(y) * radius * aspectY
-      vector.z = (Math.cos(x) * c - focus) / aspectX
-
-    vector.applyMatrix4 @viewMatrix
-
-  transform: (shader) ->
-    shader.pipe 'spherical.position', @uniforms
-    @parent?.transform shader
+  transform: (shader, pass) ->
+    shader.pipe 'spherical.position', @uniforms if pass == 1
+    super shader, pass
 
   axis: (dimension) ->
     range = @_get('view.range')[dimension - 1]
@@ -124,11 +113,5 @@ class Spherical extends View
       min = Math.max -@focus / @aspectX + .001, min
 
     return new THREE.Vector2 min, max
-
-  ###
-  from: (vector) ->
-    this.inverse.multiplyVector3(vector);
-  },
-  ###
 
 module.exports = Spherical

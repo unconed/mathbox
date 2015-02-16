@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - RTT Feedback History</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -26,9 +27,13 @@
       x = Math.cos(time) * 3;
       z = Math.sin(time) * 3;
 
-      c = rtt[0].primitive.rtt.camera;
-      c.position.set(x, 0, z);
-      c.lookAt(origin);
+      if (rtt) {
+        c = rtt[0].controller.rtt.camera;
+        if (c) {
+          c.position.set(x, 0, z);
+          c.lookAt(origin);
+        }
+      }
     });
 
     mathbox
@@ -36,7 +41,7 @@
         history: 2,
         type: 'unsignedByte',
       })
-        .remap({
+        .resample({
           indices:    3,
           dimensions: 4,
           shader:
@@ -52,6 +57,7 @@
         })
         .compose({
           color: '#ffffff',
+          zWrite: false,
         })
         .cartesian({
           range: [[-2, 2], [-1, 1], [-1, 1]],
@@ -68,9 +74,10 @@
       .end()
       .compose({
         color: '#fff',
+        zWrite: false,
       })
 
-    rtt = mathbox.select('rtt')
+    var rtt = mathbox.select('rtt')
 
   </script>
 </body>

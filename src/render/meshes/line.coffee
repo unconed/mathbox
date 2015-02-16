@@ -9,6 +9,9 @@ class Line extends Base
     position = options.position
     color    = options.color
     clip     = options.clip
+    stroke   = options.stroke
+
+    stroke   = [null, 'dotted', 'dashed'][stroke]
 
     @geometry = new LineGeometry
       samples: options.samples
@@ -22,27 +25,26 @@ class Line extends Base
 
     factory = shaders.material()
 
+    defs = {}
+    defs.LINE_STROKE = '' if stroke
+    defs.LINE_CLIP   = '' if clip
+
     v = factory.vertex
     if color
       v.require color
-      v.pipe 'mesh.vertex.color',   @uniforms
+      v.pipe 'mesh.vertex.color',     @uniforms
     v.require position if position
-    v.split()
-    v  .pipe 'line.position',       @uniforms
-    v.pass()
-    v.fan()
-    v  .pipe 'line.clipEnds',       @uniforms if clip
-    v.next()
-    v  .pipe 'project.position',    @uniforms
-    v.join()
+    v.pipe 'line.position',           @uniforms, defs
+    v.pipe 'project.position',        @uniforms
 
     f = factory.fragment
-    f.pipe 'fragment.clipEnds',     @uniforms if clip
-    f.pipe 'style.color',           @uniforms
-    f.pipe 'mesh.fragment.color',   @uniforms if color
-    f.pipe 'fragment.color',        @uniforms
+    f.pipe "fragment.clip.#{stroke}", @uniforms if stroke
+    f.pipe 'fragment.clip.ends',      @uniforms if clip
+    f.pipe 'style.color',             @uniforms
+    f.pipe 'mesh.fragment.color',     @uniforms if color
+    f.pipe 'fragment.color',          @uniforms
 
-    @material = new THREE.ShaderMaterial factory.link
+    @material = @_material factory.link
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"

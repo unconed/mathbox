@@ -1,10 +1,15 @@
 Operator = require './operator'
 
 class Repeat extends Operator
-  @traits: ['node', 'bind', 'operator', 'source', 'repeat']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'repeat']
+
+  indexShader:  (shader) ->
+    shader.pipe @operator
+    super
 
   sourceShader: (shader) ->
     shader.pipe @operator
+    super
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -23,51 +28,37 @@ class Repeat extends Operator
     super
     return unless @bind.source?
 
-    # Build shader to repeat along all dimensions
-    transform = @_shaders.shader()
-
     # Repeat multipliers
     @resample = {}
 
     # Modulus on all 4 dimensions
     uniforms =
       repeatModulus: @_attributes.make @_types.vec4()
-
     @repeatModulus = uniforms.repeatModulus
 
+    # Build shader to repeat along all dimensions
+    transform = @_shaders.shader()
     transform.pipe 'repeat.position', uniforms
-    @bind.source.sourceShader transform
-
     @operator = transform
-
-    # Notify of reallocation
-    @trigger
-      type: 'source.rebuild'
 
   unmake: () ->
     super
 
   resize: () ->
-    @refresh()
-    super
-
-  change: (changed, touched, init) ->
-    return @rebuild() if touched['operator']
-
-    if @bind.source
+    if @bind.source?
       dims = @bind.source.getActive()
       @repeatModulus.value.set dims.width, dims.height, dims.depth, dims.items
 
-    if touched['repeat'] or
-       init
+    super
 
-      for key of @getDimensions()
+  change: (changed, touched, init) ->
+    return @rebuild() if touched['operator'] or
+                         touched['repeat']
+
+    if init
+
+      for key in ['items', 'width', 'height', 'depth']
         id = "repeat.#{key}"
         @resample[key] = @_get id
-
-      # Rebuild all geometry downstream (TODO: make this work better)
-      if !init
-        @trigger
-          type: 'source.rebuild'
 
 module.exports = Repeat

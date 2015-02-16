@@ -24,6 +24,11 @@ class Base extends Renderable
     @_hide object for object in @objects
     null
 
+  _material: (options) ->
+    material = new THREE.ShaderMaterial options
+    material[key] = options[key] for key in ['vertexGraph', 'fragmentGraph']
+    material
+
   _raw: (object) ->
     object.rotationAutoUpdate = false
     object.frustumCulled      = false
@@ -46,7 +51,10 @@ class Base extends Renderable
       m.polygonOffsetUnits  = units
 
   _show: (object, transparent, blending, order) ->
-    transparent = true if blending > THREE.NormalBlending
+    # Force transparent to true to ensure all renderables drawn in order
+    transparent = true
+
+    # Beware front-to-back / back-to-front changes
     z = if transparent then order else -order
 
     m = object.material

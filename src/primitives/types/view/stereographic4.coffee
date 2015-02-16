@@ -2,43 +2,34 @@ View = require('./view')
 Util = require '../../../util'
 
 class Stereographic4 extends View
-  @traits: ['node', 'object', 'view', 'view4', 'stereographic']
-
-  dimensions: () -> 4
+  @traits = ['node', 'object', 'view', 'view4', 'stereographic', 'transform']
 
   make: () ->
     super
 
     @uniforms =
-      stereoBend:          @node.attributes['stereographic.bend']
-      viewMatrix:          @_attributes.make @_types.mat4()
-      view4D:              @_attributes.make @_types.vec2()
-      basisScale:          @_attributes.make @_types.vec4()
       basisOffset:         @_attributes.make @_types.vec4()
+      basisScale:          @_attributes.make @_types.vec4()
+      stereoBend:          @node.attributes['stereographic.bend']
 
-    @viewMatrix          = @uniforms.viewMatrix.value
-    @view4D              = @uniforms.view4D.value
     @basisScale          = @uniforms.basisScale.value
     @basisOffset         = @uniforms.basisOffset.value
-    @objectMatrix        = new THREE.Matrix4
-
-    @v3                  = new THREE.Vector3
 
   unmake: () ->
     super
 
-    delete @viewMatrix
-    delete @rotationMatrix
+    delete @basisScale
+    delete @basisOffset
+    delete @uniforms
 
   change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or init
+    return unless touched['view'] or touched['view4'] or touched['stereographic'] or init
 
     @bend = bend = @_get 'stereographic.bend'
 
-    o = @_get 'object.position'
-    s = @_get 'object.scale'
-    q = @_get 'object.rotation'
+    p = @_get 'view4.position'
+    s = @_get 'view4.scale'
     r = @_get 'view.range'
 
     x = r[0].x
@@ -48,34 +39,34 @@ class Stereographic4 extends View
     dx = (r[0].y - x) || 1
     dy = (r[1].y - y) || 1
     dz = (r[2].y - z) || 1
-    dw = (r[3].y - z) || 1
-    sx = s.x
-    sy = s.y
-    sz = s.z
-    sw = s.w
+    dw = (r[3].y - w) || 1
+
+    mult = (a, b) ->
+      a.x *= b.x
+      a.y *= b.y
+      a.z *= b.z
+      a.w *= b.w
 
     # Recenter viewport on projection point the more it's bent
     [w, dw] = Util.Axis.recenterAxis w, dw, bend, 1
-
-    @uniforms.stereoBend.value    = bend
 
     # 4D axis adjustment
     @basisScale .set 2/dx, 2/dy, 2/dz, 2/dw
     @basisOffset.set -(2*x+dx)/dx, -(2*y+dy)/dy, -(2*z+dz)/dz, -(2*w+dw)/dw
 
-    # 3D/4D placement
-    @viewMatrix.compose o, q, s
-    @view4D    .set o.w, s.w
+    # 4D scale
+    mult @basisScale,  s
+    mult @basisOffset, s
+
+    # 4D position
+    @basisOffset.add p
 
     if changed['view.range'] or touched['stereographic']
       @trigger
         type: 'view.range'
 
-  to: (vector) ->
-    throw "TODO"
-
-  transform: (shader) ->
-    shader.pipe 'stereographic4.position', @uniforms
-    @parent?.transform shader
+  transform: (shader, pass) ->
+    shader.pipe 'stereographic4.position', @uniforms if pass == 1
+    super shader, pass
 
 module.exports = Stereographic4

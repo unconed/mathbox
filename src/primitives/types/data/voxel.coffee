@@ -2,12 +2,10 @@ Data = require './data'
 Util = require '../../../util'
 
 class Voxel extends Data
-  @traits: ['node', 'data', 'source', 'texture', 'voxel']
+  @traits = ['node', 'data', 'source', 'texture', 'voxel']
 
-  constructor: (node, context, helpers) ->
-    super node, context, helpers
-
-    @buffer = @spec = null
+  init: () ->
+    @buffer = @spec = @emitter = null
     @filled = false
 
     @space =
@@ -51,6 +49,9 @@ class Voxel extends Data
     width    = @_get 'voxel.width'
     height   = @_get 'voxel.height'
     depth    = @_get 'voxel.depth'
+    reserveX = @_get 'voxel.bufferWidth'
+    reserveY = @_get 'voxel.bufferHeight'
+    reserveZ = @_get 'voxel.bufferDepth'
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
@@ -69,9 +70,9 @@ class Voxel extends Data
     dims = Util.Data.getDimensions data, dims
 
     space = @space
-    space.width  = Math.max space.width,  dims.width  || 1
-    space.height = Math.max space.height, dims.height || 1
-    space.depth  = Math.max space.depth,  dims.depth  || 1
+    space.width  = Math.max reserveX,  dims.width  || 1
+    space.height = Math.max reserveY,  dims.height || 1
+    space.depth  = Math.max reserveZ,  dims.depth  || 1
 
     # Create voxel buffer
     @buffer = @_renderables.make 'voxelBuffer',
@@ -86,32 +87,47 @@ class Voxel extends Data
 
     # Create data thunk to copy (multi-)array if bound to one
     if data?
-      thunk   = Util.Data.getThunk    data
-      emitter = Util.Data.makeEmitter thunk, items, channels, 3
-      @buffer.callback = emitter
-
-    # Notify of buffer reallocation
-    @trigger
-      type: 'source.rebuild'
+      thunk    = Util.Data.getThunk    data
+      @emitter = Util.Data.makeEmitter thunk, items, channels, 3
 
   unmake: () ->
     super
     if @buffer
       @buffer.dispose()
-      @buffer = null
+      @buffer = @spec = @emitter = null
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['voxel'] or
-                         touched['texture'] or
-                         changed['data.dimensions']
+    return @rebuild() if touched['texture'] or
+                         changed['data.dimensions'] or
+                         changed['voxel.bufferWidth'] or
+                         changed['voxel.bufferHeight'] or
+                         changed['voxel.bufferDepth']
 
     return unless @buffer
 
-    if changed['data.expression']? or
+    if changed['voxel.width']
+      width = @_get 'voxel.width'
+      return @rebuild() if width  > @space.width
+
+    if changed['voxel.height']
+      height = @_get 'voxel.height'
+      return @rebuild() if height > @space.height
+
+    if changed['voxel.depth']
+      depth = @_get 'voxel.depth'
+      return @rebuild() if depth  > @space.depth
+
+    if changed['data.expression'] or
+       changed['data.data'] or
        init
 
+      emitter = @emitter
       data = @_get 'data.data'
-      @buffer.callback = @callback @_get 'data.expression' if !data?
+      if !data?
+        emitter = @callback @_get 'data.expression'
+      @buffer.setCallback emitter
+
+  callback: (callback) -> Util.Data.normalizeEmitter emitter, 3
 
   update: () ->
     return unless @buffer
@@ -140,14 +156,19 @@ class Voxel extends Data
       used.height = dims.height
       used.depth  = dims.depth
 
+      @buffer.setActive used.width, used.height, used.depth
       @buffer.callback.rebind data
       @buffer.update()
     else
+      @buffer.setActive @spec.width, @spec.height, @spec.depth
+
       length = @buffer.update()
 
-      used.width  = _w = space.width
-      used.height = _h = space.height
+      used.width  = _w = @spec.width
+      used.height = _h = @spec.height
       used.depth  = Math.ceil length / _w / _h
+
+    @filled = true
 
     if used.width  != w or
        used.height != h or
@@ -155,7 +176,5 @@ class Voxel extends Data
        filled != @buffer.getFilled()
       @trigger
         type: 'source.resize'
-
-    @filled = true
 
 module.exports = Voxel

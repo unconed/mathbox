@@ -1,53 +1,40 @@
-Renderable   = require '../renderable'
-RTT          = require './rendertotexture'
-Screen       = rqeuire '../meshes/screen'
-Util         = require '../../util'
+Renderable      = require '../renderable'
+RenderToTexture = require './rendertotexture'
+Util            = require '../../util'
 
 ###
-Memoize data to a texture in GL
+Wrapped RTT for memoizing 4D arrays back to a 2D texture
 ###
-class Memo extends Renderable
+class Memo extends RenderToTexture
+
   constructor: (renderer, shaders, options) ->
-    super renderer, shaders
 
-    @items     ?= options.items     || 1
-    @channels  ?= options.channels  || 4
-    @width     ?= options.width     || 1
-    @height    ?= options.height    || 1
-    @depth     ?= options.depth     || 1
-    @minFilter ?= options.minFilter ? THREE.NearestFilter
-    @magFilter ?= options.magFilter ? THREE.NearestFilter
-    @type      ?= options.type      ? THREE.FloatType
+    @items    ?= options.items    || 1
+    @channels ?= options.channels || 4
+    @width    ?= options.width    || 1
+    @height   ?= options.height   || 1
+    @depth    ?= options.depth    || 1
 
-    @build options
+    #options.format = [null, THREE.LuminanceFormat, THREE.LuminanceAlphaFormat, THREE.RGBFormat, THREE.RGBAFormat][@channels]
+    options.format = THREE.RGBAFormat
+    options.width  = @_width  = @items  * @width
+    options.height = @_height = @height * @depth
+    options.frames = 1
 
-  shader: (shader) ->
-    @rtt.shaderAbsolute shader
+    delete options.items
+    delete options.depth
+    delete options.channels
 
-  build: (options) ->
-    rttOptions =
-      minFilter: @minFilter
-      magFilter: @magFilter
-      width:     width  = @width  * @items
-      height:    height = @height * @depth
-      type:      @type
+    super renderer, shaders, options
 
     @_adopt
-      remap2DScale: { type: 'v2', value: new THREE.Vector2 width, height }
-      remapModulus: { type: 'v2', value: new THREE.Vector2 items, height }
+      textureItems:  { type: 'f', value: @items }
+      textureHeight: { type: 'f', value: @height }
 
-    fragment = shaders.shader()
-    fragment.pipe 'screen.remap.4d.xyzw', @uniforms
-    fragment.pipe options.source
-
-    @rtt    = new RTT renderer, shaders, rttOptions
-    @screen = new Screen fragment: fragment
-
-  update: () ->
-    @rtt.render()
-
-  dispose: () ->
-    @rtt.dispose()
-    super
+  shaderAbsolute: (shader) ->
+    shader ?= @shaders.shader()
+    shader.pipe 'map.xyzw.texture', @uniforms
+    super shader, 1, 2
+    #shader.pipe Util.GLSL.swizzleVec4 ['0000', 'x000', 'xw00', 'xyz0'][@channels] if @channels < 4
 
 module.exports = Memo

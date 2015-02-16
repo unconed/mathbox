@@ -1,7 +1,8 @@
 _Array = require './array'
+Util = require '../../../util'
 
 class Interval extends _Array
-  @traits: ['node', 'data', 'source', 'texture', 'array', 'span', 'interval', 'sampler']
+  @traits = ['node', 'data', 'source', 'texture', 'array', 'span', 'interval', 'sampler']
 
   callback: (callback) ->
     dimension = @_get 'interval.axis'
@@ -21,6 +22,7 @@ class Interval extends _Array
 
     b = span * inverse
 
+    callback = Util.Data.normalizeEmitter callback, 2
     (i, emit) ->
       x = a + b * i
       callback x, i, emit

@@ -8,11 +8,15 @@ labels =
   4: 'items'
 
 class Transpose extends Operator
-  @traits: ['node', 'bind', 'operator', 'source', 'transpose']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'transpose']
+
+  indexShader: (shader) ->
+    shader.pipe @swizzler if @swizzler
+    super
 
   sourceShader: (shader) ->
     shader.pipe @swizzler if @swizzler
-    @bind.source.sourceShader shader
+    super
 
   getDimensions: () ->
     @_remap @transpose, @bind.source.getDimensions()

@@ -8,7 +8,14 @@ class Sprite extends Base
     uniforms = options.uniforms ? {}
     position = options.position
     color    = options.color
-    shape    = options.shape    ? 'circle'
+    shape    = +options.shape   ? 0
+    fill     = options.fill ? true
+
+    shapes   = ['circle', 'square', 'diamond', 'triangle']
+    passes   = ['circle', 'generic', 'generic', 'generic']
+    mask     = shapes[shape] ? shapes[0]
+    pass     = passes[shape] ? passes[0]
+    alpha    = if fill then pass else "#{pass}.hollow"
 
     @geometry = new SpriteGeometry
       items:  options.items
@@ -35,8 +42,8 @@ class Sprite extends Base
     f = edgeFactory.fragment
     f.pipe 'style.color',              @uniforms
     f.pipe 'mesh.fragment.color',      @uniforms if color
-    f.require "sprite.mask.#{shape}",  @uniforms
-    f.require "sprite.alpha.#{shape}", @uniforms
+    f.require "sprite.mask.#{mask}",   @uniforms
+    f.require "sprite.alpha.#{alpha}", @uniforms
     f.pipe 'sprite.edge',              @uniforms
 
     fillFactory = shaders.material()
@@ -45,16 +52,16 @@ class Sprite extends Base
     f = fillFactory.fragment
     f.pipe 'style.color',              @uniforms
     f.pipe 'mesh.fragment.color',      @uniforms if color
-    f.require "sprite.mask.#{shape}",  @uniforms
-    f.require "sprite.alpha.#{shape}", @uniforms
+    f.require "sprite.mask.#{mask}",   @uniforms
+    f.require "sprite.alpha.#{alpha}", @uniforms
     f.pipe 'sprite.fill',              @uniforms
 
-    @edgeMaterial = new THREE.ShaderMaterial edgeFactory.link
+    @edgeMaterial = @_material edgeFactory.link
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    @fillMaterial = new THREE.ShaderMaterial fillFactory.link
+    @fillMaterial = @_material fillFactory.link
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"

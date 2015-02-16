@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - World Transform</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.on('update', function () {
+      var t = three.Time.now
+
+      view.set('rotation', [0, Math.cos(t), 0, Math.sin(t)]);
+    });
+
+    three.camera.position.set(0, 1, 4);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    view = mathbox.cartesian({
+      range: [[-1, 1], [-1, 1], [-1, 1]],
+      scale: [.5, .5, .5],
+      rotation: [.866, 0, 0, -.5]
+    });
+
+    view.transform({
+      position: [1.5, 0, 0],
+    }).grid({
+      width: 0.005,
+      color: "green"
+    });
+
+    view.transform({
+      position: [-2, 0, 0],
+    }).grid({
+      width: 0.005,
+      color: "green"
+    });
+
+    view.transform({
+      pass: 'world',
+      position: [2, 0, 0],
+    }).grid({
+      width: 0.005,
+      color: "red"
+    });
+
+    view.transform({
+      pass: 'world',
+      position: [-1.5, 0, 0],
+    }).grid({
+      width: 0.005,
+      color: "red"
+    });
+
+    view.transform({
+      pass: 'eye',
+      position: [1, 0, 0],
+    }).grid({
+      width: 0.005,
+      color: "blue"
+    });
+
+    view.transform({
+      pass: 'eye',
+      position: [-1, 0, 0],
+    }).grid({
+      width: 0.005,
+      color: "blue"
+    });
+
+  </script>
+</body>
+</html>

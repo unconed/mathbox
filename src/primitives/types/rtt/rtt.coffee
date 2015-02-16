@@ -1,15 +1,20 @@
 Root = require '../base/root'
+Util = require '../../../util'
 
 class RTT extends Root
-  @traits = ['node', 'root', 'scene', 'texture', 'rtt', 'source', 'image']
+  @traits = ['node', 'root', 'scene', 'transform', 'texture', 'rtt', 'source', 'index', 'image']
+  @defaults =
+    minFilter: 'linear',
+    magFilter: 'linear',
+    type:      'unsignedByte',
 
-  constructor: (node, context, helpers) ->
-    super node, context, helpers
-
+  init: () ->
     @rtt = @scene = @width = @height = @history = @size = null
 
     @event =
-      type: 'update'
+      type: 'root.update'
+
+  indexShader: (shader) -> shader
 
   imageShader: (shader) ->
     @rtt.shaderRelative shader
@@ -33,11 +38,8 @@ class RTT extends Root
     @parentRoot = @_inherit 'root'
     @size = @parentRoot.getSize()
 
-    @updateHandler = (event) => @update()
-    @resizeHandler = (event) => @resize event.size
-
-    @parentRoot.on 'root.update', @updateHandler
-    @parentRoot.on 'root.resize', @resizeHandler
+    @_listen @parentRoot, 'root.update', @update
+    @_listen @parentRoot, 'root.resize', (event) -> @resize event.size
 
     return unless @size?
 
@@ -59,9 +61,13 @@ class RTT extends Root
       magFilter: magFilter
       type:      type
 
+  made: () ->
     # Notify of buffer reallocation
     @trigger
       type: 'source.rebuild'
+    @trigger
+      type: 'root.resize'
+      size: @size
 
   unmake: (rebuild) ->
     @parentRoot.off 'root.update', @updateHandler
@@ -82,20 +88,18 @@ class RTT extends Root
     if @size?
       @rtt.camera.aspect = @size.aspect if @rtt?
       @rtt.camera.updateProjectionMatrix()
-      @trigger
-        type: 'root.resize'
-        size: @size
 
   adopt:   (renderable) -> @scene.add    object for object in renderable.objects
   unadopt: (renderable) -> @scene.remove object for object in renderable.objects
 
   resize: (size) ->
     @size = size
-    @change {}, { texture: true }, {}, true
+    @rebuild()
 
   # End transform chain here
-  transform: (shader) ->
-  present: (shader) ->
-    shader.pipe 'view.position'
+  transform: (shader, pass) ->
+    return shader.pipe 'view.position'            if pass == 2
+    return shader.pipe Util.GLSL.truncateVec 4, 3 if pass == 3
+    shader
 
 module.exports = RTT

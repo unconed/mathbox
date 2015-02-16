@@ -1,4 +1,6 @@
-class Factory
+Util = require '../util'
+
+class PrimitiveFactory
   constructor: (definitions, @context) ->
     @classes = definitions.Classes
     @helpers = definitions.Helpers
@@ -12,6 +14,7 @@ class Factory
 
     modelKlass   = klass.model
 
+    options      = Util.JS.merge klass.defaults, options
     model        = new modelKlass options, type, klass.traits, @context.attributes
     controller   = new klass model, @context, @helpers
 
@@ -23,4 +26,4 @@ class Factory
 
     model
 
-module.exports = Factory
+module.exports = PrimitiveFactory

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Ticks extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position']
+  @traits = ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -28,23 +28,12 @@ class Ticks extends Primitive
     @tickNormal = positionUniforms.tickNormal.value
 
     # Build transform chain
-    @_helpers.position.make()
     p = position = @_shaders.shader()
-    p.split()
-
-    # Collect view transform as callback
-    p  .callback();
-    @_helpers.position.shader position
-    p  .join()
-    p.next()
-
-    # Collect buffer sampler as callback
-    p  .callback();
-    @buffer.shader p
-    p  .join()
-
+    # Require view transform as callback
+    p.require @_helpers.position.pipeline @_shaders.shader()
+    # Require buffer sampler as callback
+    p.require @buffer.shader @_shaders.shader()
     # Link to tick shader
-    p.join()
     p.pipe 'ticks.position', positionUniforms
 
     # Prepare bound uniforms
@@ -67,7 +56,6 @@ class Ticks extends Primitive
 
     @_helpers.object.unmake()
     @_helpers.span.unmake()
-    @_helpers.position.unmake()
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['scale.divide']

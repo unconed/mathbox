@@ -1,0 +1,37 @@
+.mathbox-overlays {
+  position: absolute;
+  left:   0;
+  top:    0;
+  right:  0;
+  bottom: 0;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+.mathbox-overlay > div {
+  position: absolute;
+  will-change: transform;
+}
+.mathbox-label {
+  font-family: sans-serif;
+  text-shadow:
+    3px 0px 1px rgb(255, 255, 255),
+    -3px 0px 1px rgb(255, 255, 255),
+    0px -3px 1px rgb(255, 255, 255),
+    0px 3px 1px rgb(255, 255, 255),
+    2px 2px 1px rgb(255, 255, 255),
+    -2px 2px 1px rgb(255, 255, 255),
+    2px -2px 1px rgb(255, 255, 255),
+    -2px -2px 1px rgb(255, 255, 255),
+    3px 1px 1px rgb(255, 255, 255),
+    -3px 1px 1px rgb(255, 255, 255),
+    3px -1px 1px rgb(255, 255, 255),
+    -3px -1px 1px rgb(255, 255, 255),
+    1px 3px 1px rgb(255, 255, 255),
+    -1px 3px 1px rgb(255, 255, 255),
+    1px -3px 1px rgb(255, 255, 255),
+    -1px -3px 1px rgb(255, 255, 255),
+    -1px -1px 1px rgb(255, 255, 255),
+    -1px 1px 1px rgb(255, 255, 255),
+    1px -1px 1px rgb(255, 255, 255),
+    1px 1px 1px rgb(255, 255, 255);
+}

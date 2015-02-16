@@ -1,5 +1,6 @@
 Buffer      = require './buffer'
 DataTexture = require './texture/datatexture'
+Util        = require '../../util'
 
 class VoxelBuffer extends Buffer
   constructor: (renderer, shaders, options) ->
@@ -12,15 +13,20 @@ class VoxelBuffer extends Buffer
     super renderer, shaders, options
 
   shader: (shader) ->
-    shader.pipe 'map.xyzw.texture', @uniforms
+    if @items > 1 or @depth > 1
+      shader.pipe 'map.xyzw.texture', @uniforms
+    else
+      shader.pipe Util.GLSL.truncateVec 4, 2
     super shader
 
   build: (options) ->
     super
 
-    @data    = new Float32Array @samples * @items * @channels
-    @texture = new DataTexture  @gl, @width * @items, @height * @depth, @channels, options
-    @filled  = 0
+    @data     = new Float32Array @samples * @items * @channels
+    @texture  = new DataTexture  @gl, @width * @items, @height * @depth, @channels, options
+    @filled   = 0
+    @pad      = {x: 0, y: 0, z: 0}
+    @streamer = @generate @data
 
     @dataPointer = @uniforms.dataPointer.value
 
@@ -31,34 +37,42 @@ class VoxelBuffer extends Buffer
 
   getFilled: () -> @filled
 
+  setActive: (i, j, k) -> [@pad.x, @pad.y, @pad.z] = [@width - i, @height - j, @depth - k]
+
   iterate: () ->
     callback = @callback
-    output   = @generate()
+    callback.reset?()
+
+    {emit, skip, count, done, reset} = @streamer
+    reset()
 
     n     = @width
     m     = @height
     o     = @depth
-    limit = @samples
-
-    callback.reset() if callback.reset?
+    padX  = @pad.x
+    padY  = @pad.y
+    limit = @samples - @pad.z * n * m
 
     i = j = k = l = 0
-    while l < limit
+    while !done() && l < limit
       l++
-      repeat = callback(i, j, k, output)
-      if ++i == n
+      repeat = callback(i, j, k, emit)
+      if ++i == n - padX
+        skip padX
         i = 0
-        if ++j == m
+        if ++j == m - padY
+          skip n * padY
           j = 0
           k++
       if repeat == false
         break
 
-    l
+    Math.floor count() / @items
 
   write: (n = @samples) ->
+    n     *= @items
     width  = @width * @items
-    height = Math.ceil n / @width
+    height = Math.ceil n / width
 
     @texture.write @data, 0, 0, width, height
     @dataPointer.set .5, .5

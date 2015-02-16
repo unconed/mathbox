@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Cylindrical Rotation</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -52,7 +53,11 @@
       scale: [2, 2, 2],
     });
 
-    view.grid({
+    view
+    .transform({
+      position: [0, .5, 0],
+    })
+    .grid({
       unitX: π / 6,
       baseX: 2,
       zWrite: false,
@@ -60,26 +65,16 @@
       divideX: 6,
       divideY: 10,
       axes: 'xz',
-      position: [0, .5, 0],
-      blending: 'add',
-      color: 0x00F0B0,
-      opacity: .2,
-    })
-    view.grid({
-      unitX: π / 3,
-      baseX: 2,
-      zWrite: false,
-      detailX: 81,
-      divideX: 3,
-      divideY: 3,
-      axes: 'xz',
-      position: [0, .5, 0],
       blending: 'add',
       color: 0x00F0B0,
       opacity: .2,
     })
 
-    view.grid({
+    view
+    .transform({
+      position: [0, .5, 0],
+    })
+    .grid({
       unitX: π / 3,
       baseX: 2,
       zWrite: false,
@@ -87,7 +82,23 @@
       divideX: 3,
       divideY: 3,
       axes: 'xz',
+      blending: 'add',
+      color: 0x00F0B0,
+      opacity: .2,
+    })
+
+    view
+    .transform({
       position: [0, 1, 0],
+    })
+    .grid({
+      unitX: π / 3,
+      baseX: 2,
+      zWrite: false,
+      detailX: 81,
+      divideX: 3,
+      divideY: 3,
+      axes: 'xz',
       blending: 'add',
       color: 0x00F0B0,
       opacity: .36,
@@ -119,25 +130,33 @@
       id: 'strips',
     });
 
-    view.surface({
+    view
+    .transform({
+      classes: ['surface'],
+      position: [0, .75, 0],
+      scale: [1, 1, π],
+    })
+    .surface({
       width: 0.002,
       zIndex: 2,
       color: 0x1550FF,
       solid: false,
       first: false,
+    });
+    view
+    .transform({
+      classes: ['surface'],
       position: [0, .75, 0],
       scale: [1, 1, π],
-    });
-    view.surface({
+    })
+    .surface({
       width: 0.002,
       color: 0x2070FF,
       first: false,
       second: false,
-      position: [0, .75, 0],
-      scale: [1, 1, π],
     });
 
-    objs = mathbox.select('surface');
+    objs = mathbox.select('transform.surface');
 
   </script>
 </body>

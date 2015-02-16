@@ -2,11 +2,12 @@ Operator = require './operator'
 Util     = require '../../../util'
 
 class Swizzle extends Operator
-  @traits: ['node', 'bind', 'operator', 'source', 'swizzle']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'swizzle']
 
   sourceShader: (shader) ->
-    @bind.source.sourceShader shader
+    super
     shader.pipe @swizzler if @swizzler
+    shader
 
   make: () ->
     super
@@ -15,10 +16,6 @@ class Swizzle extends Operator
     # Swizzling order
     order = @_get 'swizzle.order'
     @swizzler = Util.GLSL.swizzleVec4 order, 4 if order.join() != '1234'
-
-    # Notify of reallocation
-    @trigger
-      type: 'source.rebuild'
 
   unmake: () ->
     super

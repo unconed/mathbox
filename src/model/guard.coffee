@@ -1,7 +1,5 @@
 class Guard
-  constructor: () ->
-    @limit = 10
-
+  constructor: (@limit = 10) ->
   iterate: (callback) ->
     limit = @limit
     while run = callback()

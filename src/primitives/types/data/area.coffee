@@ -1,7 +1,8 @@
 Matrix = require './matrix'
+Util = require '../../../util'
 
 class Area extends Matrix
-  @traits: ['node', 'data', 'source', 'matrix', 'texture', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
+  @traits = ['node', 'data', 'source', 'matrix', 'texture', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
 
   callback: (callback) ->
     dimensions = @_get 'area.axes'
@@ -34,6 +35,7 @@ class Area extends Matrix
     bX = spanX * inverseX
     bY = spanY * inverseY
 
+    callback = Util.Data.normalizeEmitter callback, 4
     (i, j, emit) ->
       x = aX + bX * i
       y = aY + bY * j

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Point extends Primitive
-  @traits: ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind', 'renderScale']
+  @traits = ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind', 'renderScale']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -33,11 +33,10 @@ class Point extends Primitive
 
     # Build transform chain
     position = @_shaders.shader()
-    @_helpers.position.make()
 
     # Fetch position and transform to view
-    @bind.points.sourceShader position
-    @_helpers.position.shader position
+    position = @bind.points.sourceShader position
+    position = @_helpers.position.pipeline position
 
     # Fetch geometry dimensions
     dims   = @bind.points.getDimensions()
@@ -56,6 +55,10 @@ class Point extends Primitive
       color = @_shaders.shader()
       @bind.colors.sourceShader color
 
+    # Sprite style
+    shape  = @_get 'point.shape'
+    fill   = @_get 'point.fill'
+
     # Make sprite renderable
     uniforms = Util.JS.merge renderUniforms, pointUniforms, styleUniforms
     @point = @_renderables.make 'sprite',
@@ -66,21 +69,23 @@ class Point extends Primitive
               items:    items
               position: position
               color:    color
-              shape:    'circle'
-
-    @resize()
+              shape:    shape
+              fill:     fill
 
     @_helpers.object.make [@point]
+
+  made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
     @_helpers.renderScale.unmake()
     @_helpers.object.unmake()
-    @_helpers.position.unmake()
 
     @point = null
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['geometry.points']
+    return @rebuild() if changed['geometry.points'] or
+                         changed['point.shape'] or
+                         changed['point.fill']
 
 module.exports = Point

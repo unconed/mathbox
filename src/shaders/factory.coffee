@@ -13,7 +13,8 @@ Factory = (snippets) ->
 
     throw "Unknown shader `#{name}`"
 
-  new ShaderGraph fetch
+  new ShaderGraph fetch,
+    autoInspect: true
 
 
 module.exports = Factory

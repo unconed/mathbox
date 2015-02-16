@@ -10,10 +10,15 @@ split:
 ###
 
 class Split extends Operator
-  @traits: ['node', 'bind', 'operator', 'source', 'split']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'split']
+
+  indexShader:  (shader) ->
+    shader.pipe @operator
+    super
 
   sourceShader: (shader) ->
     shader.pipe @operator
+    super
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -49,20 +54,13 @@ class Split extends Operator
     super
     return unless @bind.source?
 
-    # Build shader to split a dimension into two
-    transform = @_shaders.shader()
-
-    uniforms =
-      splitStride: @_attributes.make @_types.number()
-    @splitStride = uniforms.splitStride
-
-    order = @_get 'split.order'
-    axis  = @_get 'split.axis'
-
-    @order = order
-    @axis  = axis
+    order   = @_get 'split.order'
+    axis    = @_get 'split.axis'
+    overlap = @_get 'split.overlap'
+    length  = @_get 'split.length'
 
     ###
+    Calculate index transform
 
     order: wxyz
     length: 3
@@ -100,51 +98,35 @@ class Split extends Operator
     split   = permute[index] + (permute[index + 1] ? 0)
     rest    = (permute.replace(split[1], '').replace(split[0], '0') + '0')
 
+    # Prepare uniforms
+    overlap = Math.min length - 1, overlap
+    stride  = length - overlap
+
+    uniforms =
+      splitStride: @_attributes.make @_types.number stride
+
+    # Build shader to split a dimension into two
+    transform = @_shaders.shader()
     transform.require Util.GLSL.swizzleVec4 split, 2
     transform.require Util.GLSL.swizzleVec4 rest, 4
     transform.require Util.GLSL.injectVec4  index
     transform.pipe 'split.position', uniforms
     transform.pipe Util.GLSL.invertSwizzleVec4 order
 
-    @bind.source.sourceShader transform
-
     @operator = transform
 
-    # Notify of reallocation
-    @trigger
-      type: 'source.rebuild'
+    @order = order
+    @axis  = axis
+    @overlap = overlap
+    @length  = length
+    @stride  = stride
 
   unmake: () ->
-    super
-
-  resize: () ->
-    @refresh()
     super
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['split.axis'] or
                          changed['split.order'] or
                          touched['operator']
-
-    if touched['split'] or
-       init
-
-      overlap = @_get 'split.overlap'
-      length  = @_get 'split.length'
-
-      overlap = Math.min length - 1, overlap
-      stride  = length - overlap
-
-      @overlap = overlap
-      @length  = length
-      @stride  = stride
-
-      @splitStride.value = stride
-
-      dims = @bind.source.getDimensions()
-
-      # Rebuild geometry downstream
-      @trigger
-        type: 'source.rebuild'
 
 module.exports = Split
