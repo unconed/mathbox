@@ -1,8 +1,10 @@
 ###
  Custom attribute model
  - Organizes attributes by trait
- - Provides shorthand aliases to access via flat namespace API
- - Values are stored in three.js uniform-style objects so they can be bound as uniforms
+ - Provides shorthand aliases to access via flat namespace API .get(key)
+ - Provides constant-time .get() access to flat dictionary
+ - Originally passed values are preserved and can be fetched via .get(true), .get(key, true)
+ - Values are stored in three.js uniform-style objects so they can be bound as GL uniforms
  - Type validators and setters avoid copying value objects on write
  - Value is double-buffered to detect changes and nops
  - Coalesces update notifications per object and per trait
@@ -17,7 +19,7 @@ class Attributes
     @pending = []
 
   make: (type) ->
-    _type: type
+    enum:  type.enum?()
     type:  type.uniform?() # for three.js
     value: type.make()
 
@@ -28,16 +30,10 @@ class Attributes
     @pending.push callback
 
   digest: () ->
-    limit = 10
-
-    while @pending.length > 0 && --limit > 0
-      [calls, @pending] = [@pending, []]
-      callback() for callback in calls
-
-    if limit == 0
-      throw Error("More than #{limit} iterations in Data::digest")
-
-    return
+    return false if !@pending.length
+    [calls, @pending] = [@pending, []]
+    callback() for callback in calls
+    true
 
   getTrait: (name) ->
     @traits[name]
@@ -46,14 +42,15 @@ class Attributes
 class Data
   constructor: (object, traits = [], attributes) ->
 
+    # Flattened and original values
+    flattened = {}
+    originals = {}
+
     # Aliases
     mapTo = {}
-    mapFrom = {}
     to   = (name) -> mapTo[name]   ? name
-    from = (name) -> mapFrom[name] ? name
     define = (name, alias) ->
       throw "Duplicate property `#{alias}`" if mapTo[alias]
-      mapFrom[name] = alias
       mapTo[alias]  = name
 
     # Get/set
@@ -65,20 +62,28 @@ class Data
       attr = @[key]
 
       # Validate new value
-      replace = validate key, value, attr.last
+      valid   = true
+      replace = validate key, value, attr.last, () -> valid = false; null
       replace = attr.last if replace == undefined
-      [attr.value, attr.last] = [replace, attr.value]
 
-      # Compare to last value
-      change key, value unless ignore or equals key, attr.value, attr.last
+      # Accept and insert into flattened/original list
+      if valid
+        [attr.value, attr.last] = [replace, attr.value]
 
-    object.get = (key) =>
-      if key?
-        get(key)
+        short = attr.short
+        flattened[short] = replace
+        originals[short] = value
+
+        # Compare to last value
+        change key, value unless ignore or equals key, attr.value, attr.last
+
+      return valid
+
+    object.get = (key, original) =>
+      if key? and key != true
+        if original then originals[to(key)] else get(key)
       else
-        out = {}
-        out[from(key)] = value.value for key, value of @
-        out
+        if key or original then originals else flattened
 
     object.set = (key, value, ignore) ->
       if key? and value?
@@ -92,12 +97,15 @@ class Data
     makers     = {}
     validators = {}
     equalors   = {}
-    equals   = (key, value, target) -> equalors[key]   value, target
-    validate = (key, value, target) -> validators[key] value, target
+
+    equals   = (key, value, target)          -> equalors[key]   value, target
+    validate = (key, value, target, invalid) -> validators[key] value, target, invalid
+
     object.validate = (key, value) ->
+      key  = to(key)
       make = makers[key]
       target = make() if make?
-      replace = validate key, value, target
+      replace = validate key, value, target, () -> throw "Invalid value for `#{key}`"
       if replace != undefined then replace else target
 
     # Accumulate changes
@@ -160,13 +168,19 @@ class Data
 
       for key, options of spec
         key = [name, key].join '.'
-        @[key] =
+        short = shorthand key
+
+        # Make attribute object
+        @[key] = attr =
+          short: short
+          enum:  options.enum?()
           type:  options.uniform?()
           last:  options.make()
-          value: options.make()
+          value: value = options.make()
 
         # Define flat namespace alias
-        define key, shorthand key
+        define key, short
+        flattened[short] = value
 
         # Collect makers, validators and comparators
         makers[key]      = options.make
@@ -176,10 +190,6 @@ class Data
     # Store array of traits
     unique = list.filter (object, i) -> list.indexOf(object) == i
     object.traits = unique
-
-    # And hash for CSSauron
-    hash = object.traits.hash = {}
-    hash[trait] = true for trait in unique
 
     null
 

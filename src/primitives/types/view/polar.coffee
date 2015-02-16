@@ -2,7 +2,7 @@ View = require './view'
 Util = require '../../../util'
 
 class Polar extends View
-  @traits: ['node', 'object', 'view', 'polar']
+  @traits = ['node', 'object', 'view', 'view3', 'polar', 'transform']
 
   make: () ->
     super
@@ -25,19 +25,21 @@ class Polar extends View
 
     delete @viewMatrix
     delete @objectMatrix
+    delete @aspect
+    delete @uniforms
 
   change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or touched['polar'] or init
+    return unless touched['view'] or touched['view3'] or touched['polar'] or init
 
     @helix = helix = @_get 'polar.helix'
     @bend  = bend  = @_get 'polar.bend'
 
     @focus = focus = if bend > 0 then 1 / bend - 1 else 0
 
-    o = @_get 'object.position'
-    s = @_get 'object.scale'
-    q = @_get 'object.rotation'
+    o = @_get 'view3.position'
+    s = @_get 'view3.scale'
+    q = @_get 'view3.rotation'
     r = @_get 'view.range'
 
     x = r[0].x
@@ -80,25 +82,11 @@ class Polar extends View
 
     if changed['view.range'] or touched['polar']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
-  to: (vector) ->
-    if @bend > 0.0001
-      radius = @focus + vector.y * aspect
-      x      = vector.x * @bend
-
-      # Separate folds of complex plane into helix
-      vector.z += vector.x * @helix * @bend
-
-      # Apply polar warp
-      vector.x = Math.sin(x) * radius
-      vector.y = (Math.cos(x) * radius - focus) / aspect
-
-    vector.applyMatrix4 @viewMatrix
-
-  transform: (shader) ->
-    shader.pipe 'polar.position', @uniforms
-    @parent?.transform shader
+  transform: (shader, pass) ->
+    shader.pipe 'polar.position', @uniforms if pass == 1
+    super shader, pass
 
   axis: (dimension) ->
     range = @_get('view.range')[dimension - 1]
@@ -111,11 +99,5 @@ class Polar extends View
       min = Math.max -@focus / @aspect + .001, min
 
     return new THREE.Vector2 min, max
-
-  ###
-  from: (vector) ->
-    this.inverse.multiplyVector3(vector);
-  },
-  ###
 
 module.exports = Polar

@@ -9,10 +9,15 @@ split:
 ###
 
 class Join extends Operator
-  @traits: ['node', 'bind', 'operator', 'source', 'join']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'join']
+
+  indexShader:  (shader) ->
+    shader.pipe @operator
+    super shader
 
   sourceShader: (shader) ->
     shader.pipe @operator
+    super shader
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
@@ -47,21 +52,14 @@ class Join extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
-    # Build shader to split a dimension into two
-    transform = @_shaders.shader()
-
-    uniforms =
-      joinStride: @_attributes.make @_types.number()
-    @joinStride = uniforms.joinStride
-
-    order = @_get 'join.order'
-    axis  = @_get 'join.axis'
-
-    @order = order
-    @axis  = axis
+    order   = @_get 'join.order'
+    axis    = @_get 'join.axis'
+    overlap = @_get 'join.overlap'
 
     ###
+    Calculate index transform
 
     order: wxyz
     length: 3
@@ -92,51 +90,38 @@ class Join extends Operator
     labels = [null, 'width', 'height', 'depth', 'items']
     major  = labels[axis]
 
+    # Prepare uniforms
+    dims    = @bind.source.getDimensions()
+    length  = dims[major]
+
+    overlap = Math.min length - 1, overlap
+    stride  = length - overlap
+
+    uniforms =
+      joinStride:    @_attributes.make @_types.number stride
+      joinStrideInv: @_attributes.make @_types.number 1 / stride
+
+    # Build shader to split a dimension into two
+    transform = @_shaders.shader()
     transform.require Util.GLSL.swizzleVec4 axis, 1
     transform.require Util.GLSL.swizzleVec4 rest, 4
     transform.require Util.GLSL.injectVec4  [index, index + 1]
     transform.pipe 'join.position', uniforms
     transform.pipe Util.GLSL.invertSwizzleVec4 order
 
-    @bind.source.sourceShader transform
-
     @operator = transform
-    @major = major
 
-    # Notify of reallocation
-    @trigger
-      type: 'rebuild'
+    @order   = order
+    @axis    = axis
+    @overlap = overlap
+    @length  = length
+    @stride  = stride
 
   unmake: () ->
     super
 
-  resize: () ->
-    @refresh()
-    super
-
   change: (changed, touched, init) ->
-    @rebuild() if changed['join.axis'] or changed['join.order']
-
-    if touched['join'] or
-       init
-
-      dims    = @bind.source.getDimensions()
-      major   = @major
-
-      overlap = @_get 'join.overlap'
-      length  = dims[major]
-
-      overlap = Math.min length - 1, overlap
-      stride  = length - overlap
-
-      @overlap = overlap
-      @length  = length
-      @stride  = stride
-
-      @joinStride.value = stride
-
-      # Rebuild geometry downstream
-      @trigger
-        event: 'rebuild'
+    return @rebuild() if touched['join'] or
+                         touched['operator']
 
 module.exports = Join

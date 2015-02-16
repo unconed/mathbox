@@ -2,7 +2,7 @@ View = require('./view')
 Util = require '../../../util'
 
 class Stereographic extends View
-  @traits: ['node', 'object', 'view', 'stereographic']
+  @traits = ['node', 'object', 'view', 'view3', 'stereographic', 'transform']
 
   make: () ->
     super
@@ -20,16 +20,17 @@ class Stereographic extends View
 
     delete @viewMatrix
     delete @rotationMatrix
+    delete @uniforms
 
   change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or touched['stereographic'] or init
+    return unless touched['view'] or touched['view3'] or touched['stereographic'] or init
 
     @bend = bend = @_get 'stereographic.bend'
 
-    o = @_get 'object.position'
-    s = @_get 'object.scale'
-    q = @_get 'object.rotation'
+    o = @_get 'view3.position'
+    s = @_get 'view3.scale'
+    q = @_get 'view3.rotation'
     r = @_get 'view.range'
 
     x = r[0].x
@@ -59,26 +60,10 @@ class Stereographic extends View
 
     if changed['view.range'] or touched['stereographic']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
-  to: (vector) ->
-    vector.applyMatrix4 @viewMatrix
-
-  transform: (shader) ->
-    shader.pipe 'stereographic.position', @uniforms
-    @parent?.transform shader
-
-  axis: (dimension) ->
-    range = @_get('view.range')[dimension - 1]
-    min = range.x
-    max = range.y
-
-    return new THREE.Vector2 min, max
-
-  ###
-  from: (vector) ->
-    this.inverse.multiplyVector3(vector);
-  },
-  ###
+  transform: (shader, pass) ->
+    shader.pipe 'stereographic.position', @uniforms if pass == 1
+    super shader, pass
 
 module.exports = Stereographic

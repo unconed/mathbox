@@ -12,16 +12,21 @@ class ArrayBuffer_ extends Buffer
     super renderer, shaders, options
 
   shader: (shader) ->
-    shader.pipe 'map.xyzw.texture', @uniforms
+    if @items > 1
+      shader.pipe 'map.xyzw.texture', @uniforms
+    else
+      shader.pipe Util.GLSL.truncateVec 4, 2
     super shader
 
-  build: () ->
+  build: (options) ->
     super
 
-    @data    = new Float32Array @samples * @channels * @items
-    @texture = new DataTexture  @gl, @samples * @items, @history, @channels
-    @index   = 0
-    @filled  = 0
+    @data     = new Float32Array @samples * @channels * @items
+    @texture  = new DataTexture  @gl, @samples * @items, @history, @channels, options
+    @index    = 0
+    @filled   = 0
+    @pad      = 0
+    @streamer = @generate @data
 
     @dataPointer = @uniforms.dataPointer.value
 
@@ -32,21 +37,26 @@ class ArrayBuffer_ extends Buffer
 
   getFilled: () -> @filled
 
+  setActive: (i) -> @pad = @length - i
+
   iterate: () ->
     callback = @callback
-    output = @generate()
-    limit = @samples
+    callback.reset?()
 
-    callback.reset() if callback.reset?
+    {emit, skip, count, done, reset} = @streamer
+    reset()
+
+    limit = @samples - @pad
 
     i = 0
-    while i < limit && callback(i++, output) != false
+    while !done() && i < limit && callback(i++, emit) != false
       true
 
-    i
+    Math.floor count() / @items
 
   write: (n = @samples) ->
-    @texture.write @data, 0, @index, n * @items, 1
+    n *= @items
+    @texture.write @data, 0, @index, n, 1
     @dataPointer.set .5, @index + .5
     @index = (@index + @history - 1) % @history
     @filled = Math.min @history, @filled + 1

@@ -4,23 +4,27 @@ Provides easy access to past rendered frames
 @reads[] and @write contain THREE.WebGLRenderTargets whose internal pointers are rotated automatically
 ###
 class RenderTarget
-  constructor: (@gl, @width, @height, @frames, @textureOptions = {}) ->
-    @textureOptions.minFilter ?= THREE.LinearFilter
-    @textureOptions.magFilter ?= THREE.LinearFilter
-    @textureOptions.format    ?= THREE.RGBAFormat
+  constructor: (@gl, width, height, frames, options = {}) ->
+    options.minFilter ?= THREE.NearestFilter
+    options.magFilter ?= THREE.NearestFilter
+    options.format    ?= THREE.RGBAFormat
+    options.type      ?= THREE.UnsignedByteType
 
-    @width  = @width  || 1
-    @height = @height || 1
-    @frames = @frames || 1
+    @options = options
+
+    @width   = width  || 1
+    @height  = height || 1
+    @frames  = frames || 1
+    @buffers = @frames + 1
 
     @build()
 
   build: () ->
 
-    make = () => new THREE.WebGLRenderTarget @width, @height, @textureOptions
+    make = () => new THREE.WebGLRenderTarget @width, @height, @options
 
-    @targets = (make() for i in [0..@frames])
-    @reads   = (make() for i in [0..@frames])
+    @targets = (make() for i in [0...@buffers])
+    @reads   = (make() for i in [0...@buffers])
     @write   = make()
 
     @index = 0
@@ -39,12 +43,12 @@ class RenderTarget
 
   cycle: () ->
     keys = ['__webglTexture', '__webglFramebuffer', '__webglRenderbuffer']
-    frames = @frames
+    buffers = @buffers
 
     copy = (a, b) ->
       b[key] = a[key] for key in keys
       null
-    add  = (i, j) -> (i + j + frames * 2) % frames
+    add  = (i, j) -> (i + j + buffers * 2) % buffers
 
     copy @write, @targets[@index]
     copy @targets[add @index, -i], read for read, i in @reads
@@ -52,12 +56,12 @@ class RenderTarget
     copy @targets[@index], @write
 
   warmup: (callback) ->
-    for i in [0..@frames]
+    for i in [0...@buffers]
       callback @write
       @cycle()
 
   dispose: () ->
     target.dispose() for target in @targets
-    virtual.dispose()
+    @targets = @reads = @write = null
 
 module.exports = RenderTarget

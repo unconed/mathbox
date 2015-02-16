@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Point</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -31,8 +32,8 @@
 
     view.area({
       id: 'sampler',
-      width: 300,
-      height: 300,
+      width: 200,
+      height: 200,
       axes: [1, 2],
       expression: function (x, y, i, j, emit) {
         z = 2 * (Math.sin(x * 500 + Math.cos(x * y * 100) + time) * Math.sin(y * 503 + Math.sin(x * 40 + y * 60) + time));

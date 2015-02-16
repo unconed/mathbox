@@ -9,6 +9,7 @@ Classes =
   ticks:             require './draw/ticks'
   vector:            require './draw/vector'
 
+  view:              require './view/view'
   cartesian:         require './view/cartesian'
   cartesian4:        require './view/cartesian4'
   polar:             require './view/polar'
@@ -16,7 +17,9 @@ Classes =
   stereographic:     require './view/stereographic'
   stereographic4:    require './view/stereographic4'
 
-  project4:          require './transform/project4'
+  transform:         require './transform/transform3'
+  transform4:        require './transform/transform4'
+  vertex:            require './transform/vertex'
 
   array:             require './data/array'
   interval:          require './data/interval'
@@ -29,18 +32,20 @@ Classes =
 
   join:              require './operator/join'
   lerp:              require './operator/lerp'
-  remap:             require './operator/remap'
+  memo:              require './operator/memo'
+  resample:          require './operator/resample'
   repeat:            require './operator/repeat'
   swizzle:           require './operator/swizzle'
   spread:            require './operator/spread'
   split:             require './operator/split'
   transpose:         require './operator/transpose'
 
-  present:           require './base/present'
   group:             require './base/group'
   root:              require './base/root'
 
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
+
+  label:             require './overlay/label'
 
 module.exports = Classes

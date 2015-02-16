@@ -2,8 +2,9 @@ class API
   constructor: (@_context, @_up, @_targets) ->
     root = @_context.controller.getRoot()
 
-    @_targets ?= [@root]
-    @isRoot = @_targets.length == 1 and @_targets[0] == @root
+    @_targets ?= [root]
+    @isRoot = @_targets.length == 1 and @_targets[0] == root
+    @isLeaf = @_targets.length == 1 and !@_targets[0].children?
 
     # Look like an array
     @[i] = t for t, i in @_targets
@@ -14,17 +15,20 @@ class API
       do (type) =>
         @[type] = (options) => @add(type, options)
 
+  select: (selector) ->
+    targets = @_context.model.select selector, if !@isRoot then _targets else null
+    @_push targets
+
   each: (callback) ->
     callback @[i], i, @ for i in [0...@length]
-
-  select: (selector) ->
-    context = if !@isRoot then _targets else null
-    targets = @_context.model.select selector, context
-    @push targets
+    @
 
   add: (type, options) ->
     # Make node/primitive
     controller = @_context.controller
+
+    # Auto-pop if targeting leaf
+    return @_pop().add(type, options) if @isLeaf
 
     # Add to target
     nodes = []
@@ -33,11 +37,8 @@ class API
       controller.add node, target
       nodes.push node
 
-    # Enter node if it is capable of children
-    parents = (node for node in nodes when node.children?)
-    if parents.length
-      @push parents
-    else @
+    # Change selection
+    @_push nodes
 
   remove: (selector) ->
     return @select(selector).remove() if selector
@@ -51,15 +52,10 @@ class API
     return @select(selector).get() if selector
     @_context.controller.get target for target in @_targets
 
-  push: (targets) ->
-    new API @_context, @, targets
+  end:   () -> (if @isLeaf then @_pop() else @)._pop()
 
-  end: () -> @pop()
-  pop: () -> @_up ? @
-
-  reset: () ->
-    self = @
-    self = self._up while self._up?
-    self
+  _push:  (targets) -> new API @_context, @, targets
+  _pop:   () -> @_up ? @
+  _reset: () -> @_up?.reset() ? @
 
 module.exports = API

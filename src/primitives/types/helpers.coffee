@@ -13,47 +13,26 @@ helpers =
 
   bind:
     make: (map) ->
-      @_helpers.bind.unmake() if @handlers.bindRebuild
-
       @bind = {}
-
-      # Monitor array for reallocation / resize
-      @handlers.bindResize   = (event) => @resize()
-      @handlers.bindRebuild  = (event) =>
-        @rebuild()
-        @trigger
-          type: 'rebuild'
-      @handlers.bindWatchers = watchers = []
 
       # Fetch attached objects and bind to them
       # Attach watchers for DOM changes
       for key, trait of map
-        watcher = () => @rebuild()
-        watchers.push watcher
-
         name     = key.split(/\./g).pop()
         selector = @_get key
-        source   = if selector? then @_attach selector, trait, watcher else null
+        source   = if selector? then @_attach selector, trait, @rebuild else null
 
+        # Monitor source for reallocation / resize
         if source?
-          source.on 'resize',  @handlers.bindResize
-          source.on 'rebuild', @handlers.bindRebuild
+          @_listen source, 'source.resize',  @resize
+          @_listen source, 'source.rebuild', @rebuild
 
         @bind[name] = source
 
       null
 
     unmake: () ->
-      # Unbind from attached objects
-      for key, source of @bind when source
-        source.off 'resize',  @handlers.bindResize
-        source.off 'rebuild', @handlers.bindRebuild
-
-      # Stop watching selector (if any)
-      watcher.unwatch?() for watcher in @handlers.bindWatchers
-
-      delete @handlers.bindResize
-      delete @handlers.bindRebuild
+      return unless @bind
       delete @bind
 
   span:
@@ -61,14 +40,9 @@ helpers =
       # Look up nearest view to inherit from
       # Monitor size changes
       @spanView = @_inherit 'view'
-      if @spanView?
-        @handlers.span = (event) => @change {}, {}, {}, true
-        @spanView.on 'range', @handlers.span
+      @_listen 'view', 'view.range', @refresh
 
     unmake: () ->
-      if @spanView?
-        @spanView.off 'range', @handlers.span
-        delete @handlers.span
       delete @spanView
 
     get: do ->
@@ -80,10 +54,7 @@ helpers =
         return range if range?
 
         # Inherit from view
-        if @spanView?
-          return @spanView.axis dimension
-
-        return def
+        return @spanView?.axis(dimension) ? def
 
   scale:
     # Divisions to allocate on scale
@@ -142,54 +113,9 @@ helpers =
     uniforms: () -> {}
 
   position:
-    make: () ->
-      # Look up nearest view to inherit from
-      # Monitor size changes
-      @positionView = @_inherit 'view'
-      dims = @positionDims = @positionView?.dimensions() ? 3
-
-      @objectMatrix = @_attributes.make @_attributes.types.mat4()
-      @object4D     = @_attributes.make @_attributes.types.vec2() if dims == 4
-
-      # Recalculate transform if P/R/S changes
-      recalc = () =>
-        o = @_get 'object.position'
-        s = @_get 'object.scale'
-        q = @_get 'object.rotation'
-
-        @objectMatrix.value.compose o, q, s
-        @object4D    .value.set o.w, s.w if dims == 4
-
-      @handlers.position = (event) =>
-        changed = event.changed
-        if changed['object.position'] or
-           changed['object.rotation'] or
-           changed['object.scale']
-          recalc()
-
-      @node.on  'change:object', @handlers.position
-      recalc()
-
-    unmake: () ->
-      @node.off 'change:object', @handlers.position
-
-      delete @objectMatrix
-      delete @object4D
-      delete @handlers.position
-      delete @positionView
-      delete @positionDims
-
-    shader: (shader, inline) ->
-      id = switch @positionDims
-        when 4 then 'object4.position'
-        else 'object.position'
-
-      shader.pipe id,
-        objectMatrix: @objectMatrix
-        object4D:     @object4D
-
-      @transform shader unless inline
-      @present   shader unless inline
+    pipeline: (shader) ->
+      shader = @_inherit('transform')?.transform shader, pass for pass in [0..3]
+      shader
 
   object:
     # Generic 3D renderable wrapper, handles the fiddly Three.js bits that require a 'style recalculation'.
@@ -197,12 +123,12 @@ helpers =
     # Pass renderables to nearest root for rendering
     # Track visibility from parent and notify children
     # Track blends / transparency for three.js materials
-    make: (@objects = [], forceTransparent = false) ->
-      @objectParent = @_inherit 'object'
-      @objectScene  = @_inherit 'scene'
+    make: (@objects = []) ->
+      objectParent = @_inherit 'object'
+      objectScene  = @_inherit 'scene'
 
-      e       = type: 'visible'
-      opacity = blending = zIndex = zFactor = null
+      e       = type: 'object.visible'
+      opacity = blending = zOrder = zUnits = zFactor = null
 
       hasStyle = 'style' in @traits
       opacity  = 1
@@ -220,7 +146,7 @@ helpers =
         zWrite   = @_get 'style.zWrite'
         zTest    = @_get 'style.zTest'
 
-      onChange = @handlers.objectChange = (event) =>
+      onChange = (event) =>
         changed  = event.changed
         refresh  = null
         refresh  = visible  = @_get 'object.visible' if changed['object.visible']
@@ -229,25 +155,25 @@ helpers =
         refresh  = zFactor  = @_get 'style.zFactor'  if changed['style.zFactor']
         refresh  = zUnits   = @_get 'style.zUnits'   if changed['style.zUnits']
         refresh  = zWrite   = @_get 'style.zWrite'   if changed['style.zWrite']
-        refresh  = zTest    = @_get 'style.zWrite'   if changed['style.zTest']
+        refresh  = zTest    = @_get 'style.zTest'    if changed['style.zTest']
         onVisible() if refresh?
 
       last = null
-      onVisible = @handlers.objectVisible = () =>
+      onVisible = () =>
         order  = zOrder ? @node.order
 
         active = visible
-        active = opacity > 0             if active
-        active = @objectParent.isVisible if active and @objectParent?
+        active = opacity > 0            if active
+        active = objectParent.isVisible if active and objectParent?
 
         if active
           if hasStyle
             for o in @objects
-              o.show opacity < 1 or forceTransparent, blending, order
+              o.show opacity < 1, blending, order
               o.polygonOffset zFactor, zUnits
               o.depth zWrite, zTest
           else
-            o.show false, blending, order for o in @objects
+            o.show true, blending, order for o in @objects
         else
           o.hide() for o in @objects
 
@@ -255,52 +181,53 @@ helpers =
         @trigger e if last != active
         last = active
 
-      @node.on    'change:object', onChange
-      @node.on    'change:style',  onChange
-      @node.on    'reindex',       onVisible
-      @objectParent?.on 'visible', onVisible
+      @_listen @node, 'change:object', onChange
+      @_listen @node, 'change:style',  onChange
+      @_listen @node, 'reindex',       onVisible
 
-      @objectScene.adopt object for object in @objects
+      @_listen objectParent, 'object.visible', onVisible if objectParent
 
+      objectScene.adopt object for object in @objects
       onVisible()
 
     unmake: (dispose = true) ->
-      @objectScene.unadopt object for object in @objects
+      return unless @objects
+
+      objectScene  = @_inherit 'scene'
+      objectScene.unadopt object for object in @objects
       object.dispose() for object in @objects if dispose
-
-      onChange  = @handlers.objectChange
-      onVisible = @handlers.objectVisible
-
-      @node.off    'change:object', onChange
-      @node.off    'change:style',  onChange
-      @node.off    'reindex',       onVisible
-      @objectParent?.off 'visible', onVisible
-
-      delete @handlers.objectChange
-      delete @handlers.objectVisible
-
-      delete @objectVisible
-      delete @objectParent
-      delete @objectScene
 
   renderScale:
     make: () ->
-      @renderRoot = @_inherit 'root'
+      @renderUniforms = {
+        renderScale:  scale  = @_attributes.make @_types.number 0
+        renderAspect: aspect = @_attributes.make @_types.number 0
+        renderWidth:  width  = @_attributes.make @_types.number 0
+        renderHeight: height = @_attributes.make @_types.number 0
+      }
 
-      @render =
-        scale: scale = @_attributes.make @_types.number 0
+      handler = () =>
+        if (size = root?.getSize())?
+          width .value = size.renderWidth / 2
+          height.value = size.renderHeight / 2
+          aspect.value = size.aspect
+          scale .value = height.value
 
-      @handlers.renderResize = (event) => scale.value = @root.size.renderHeight / 2
-      @handlers.renderResize()
-
-      @renderRoot?.on 'resize',  @handlers.renderResize
+      root = @_listen 'root', 'root.resize', handler
+      handler()
 
     unmake: () ->
-      @renderRoot?.off 'resize', @handlers.renderResize
-      delete @handlers.renderResize
+      delete @renderUniforms
 
-    uniforms: () ->
-      renderScale: @render.scale
+    get: () ->
+      u = @renderUniforms
+
+      width:  u.renderWidth .value
+      height: u.renderHeight.value
+      aspect: u.renderAspect.value
+      scale:  u.renderScale .value
+
+    uniforms: () -> @renderUniforms
 
 
 module.exports = (object, traits) ->

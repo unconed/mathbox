@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Strip extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -10,7 +10,7 @@ class Strip extends Primitive
     @strip = null
 
   resize: () ->
-    return unless @strip and @bind.points
+    return unless @bind.points?
     dims = @bind.points.getActive()
 
     items  = dims.items
@@ -28,15 +28,16 @@ class Strip extends Primitive
       'geometry.points': 'source'
       'geometry.colors': 'source'
 
+    return unless @bind.points?
+
     # Build transform chain
     position = @_shaders.shader()
-    @_helpers.position.make()
 
     # Fetch position
-    @bind.points.sourceShader position
+    position = @bind.points.sourceShader position
 
     # Transform position to view
-    @_helpers.position.shader position
+    position = @_helpers.position.pipeline position
 
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
@@ -52,7 +53,7 @@ class Strip extends Primitive
     # Build color lookup
     if @bind.colors
       color = @_shaders.shader()
-      @bind.colors.sourceShader color
+      color = @bind.colors.sourceShader color
 
     # Make line renderable
     ###
@@ -80,18 +81,17 @@ class Strip extends Primitive
               position: position
               color:    color
 
-    @resize()
-
     @_helpers.object.make [@strip]
+
+  made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
     @_helpers.object.unmake()
-    @_helpers.position.unmake()
 
     @strip = null
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['geometry.points']?
+    return @rebuild() if changed['geometry.points']
 
 module.exports = Strip

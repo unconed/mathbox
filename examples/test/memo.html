@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Memo</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <link rel="stylesheet" href="../../vendor/shadergraph/build/shadergraph.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(.3, 1, 3);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    time = 0;
+    three.on('update', function (event) {
+    });
+
+    view = mathbox.cartesian({
+      range: [[-2, 2], [-1, 1], [-1, 1]],
+      scale: [2, 1, 1],
+    });
+
+    view.interval({
+      length: 16,
+      history: 16,
+      range: [0, 1],
+      expression: function (x, i, emit) {
+        var j = three.Time.frames;
+        var y = Math.sin(three.Time.frames * .1) * .5 + .5;
+        emit(x + y, i%2, Math.cos(y)*.5+.5);
+      },
+      bufferLength: 32,
+      minFilter: 'linear',
+      magFilter: 'linear',
+    });
+    view.memo({
+    });
+    view.compose();
+
+  </script>
+</body>
+</html>

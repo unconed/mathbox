@@ -2,12 +2,10 @@ Data = require './data'
 Util = require '../../../util'
 
 class Array_ extends Data
-  @traits: ['node', 'data', 'source', 'array']
+  @traits = ['node', 'data', 'source', 'array', 'texture']
 
-  constructor: (node, context, helpers) ->
-    super node, context, helpers
-
-    @buffer = @spec = null
+  init: () ->
+    @buffer = @spec = @emitter = null
     @filled = false
 
     @space =
@@ -39,9 +37,15 @@ class Array_ extends Data
   make: () ->
     super
 
+    # Read sampling parameters
+    minFilter = @_get 'texture.minFilter'
+    magFilter = @_get 'texture.magFilter'
+    type      = @_get 'texture.type'
+
     # Read given dimensions
     length   = @_get 'array.length'
     history  = @_get 'array.history'
+    reserve  = @_get 'array.bufferLength'
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
@@ -58,42 +62,53 @@ class Array_ extends Data
     dims = Util.Data.getDimensions data, dims
 
     space = @space
-    space.length  = Math.max space.length, dims.width || 1
+    space.length  = Math.max reserve, dims.width || 1
     space.history = history
 
     # Create array buffer
     @buffer = @_renderables.make 'arrayBuffer',
-              length:   space.length
-              history:  space.history
-              channels: channels
-              items:    items
+              length:    space.length
+              history:   space.history
+              channels:  channels
+              items:     items
+              minFilter: minFilter
+              magFilter: magFilter
+              type:      type
 
     # Create data thunk to copy (multi-)array if bound to one
     if data?
-      thunk   = Util.Data.getThunk    data
-      emitter = Util.Data.makeEmitter thunk, items, channels, 1
-      @buffer.callback = emitter
-
-    # Notify of buffer reallocation
-    @trigger
-      type: 'rebuild'
+      thunk    = Util.Data.getThunk    data
+      @emitter = Util.Data.makeEmitter thunk, items, channels, 1
 
   unmake: () ->
     super
     if @buffer
       @buffer.dispose()
-      @buffer = null
+      @buffer = @spec = @emitter = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['array'] or changed['data.dimensions']
+    return @rebuild() if touched['texture'] or
+                         changed['array.history'] or
+                         changed['data.dimensions'] or
+                         changed['array.bufferLength']
 
     return unless @buffer
 
-    if changed['data.expression']? or
+    if changed['array.length']
+      length = @_get 'array.length'
+      return @rebuild() if length > @space.length
+
+    if changed['data.expression'] or
+       changed['data.data'] or
        init
 
+      emitter = @emitter
       data = @_get 'data.data'
-      @buffer.callback = @callback @_get 'data.expression' if !data?
+      if !data?
+        emitter = @callback @_get 'data.expression'
+      @buffer.setCallback emitter
+
+  callback: (callback) -> Util.Data.normalizeEmitter emitter, 1
 
   update: () ->
     return unless @buffer
@@ -112,29 +127,24 @@ class Array_ extends Data
 
       # Grow length if needed
       if dims.width > space.length
-        # Size up by 200%, up to 128 increase.
-        length = space.length
-        step   = Math.min 128, length
-
-        # But always at least size to fit
-        space.length = Math.max length + step, dims.width
-
         @rebuild()
 
       used.length = dims.width
 
+      @buffer.setActive used.length
       @buffer.callback.rebind data
       @buffer.update()
     else
-      length = @buffer.update()
+      @buffer.setActive @spec.width
 
+      length = @buffer.update()
       used.length = length
+
+    @filled = true
 
     if used.length != l or
        filled != @buffer.getFilled()
       @trigger
-        type: 'resize'
-
-    @filled = true
+        type: 'source.resize'
 
 module.exports = Array_

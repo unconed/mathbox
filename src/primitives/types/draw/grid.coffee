@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Grid extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'grid', 'area', 'position',
+  @traits = ['node', 'object', 'style', 'line', 'grid', 'area', 'position',
             'axis:x',  'axis:y',
             'scale:x', 'scale:y',
             'span:x',  'span:y']
@@ -38,18 +38,15 @@ class Grid extends Primitive
 
       # Build transform chain
       p = position = @_shaders.shader()
-      @_helpers.position.make()
 
-      # Collect buffer sampler as callback
-      p.callback()
-      buffer.shader p
-      p.join()
+      # Require buffer sampler as callback
+      p.require buffer.shader @_shaders.shader()
 
       # Calculate grid position
       p.pipe 'grid.position', positionUniforms
 
       # Apply view transform
-      @_helpers.position.shader position
+      position = @_helpers.position.pipeline p
 
       # Prepare bound uniforms
       styleUniforms = @_helpers.style.uniforms()
@@ -62,6 +59,7 @@ class Grid extends Primitive
                 samples:  samples
                 strips:   strips
                 position: position
+                stroke:   stroke
 
       # Store axis object for manipulation later
       {first, second, resolution, samples, line, buffer, values}
@@ -69,6 +67,9 @@ class Grid extends Primitive
     # Generate both line sets
     first  = @_get 'grid.first'
     second = @_get 'grid.second'
+
+    # Stroke style
+    stroke  = @_get 'line.stroke'
 
     @axes = []
     first  && @axes.push axis 'x.', 'y.'
@@ -82,20 +83,19 @@ class Grid extends Primitive
   unmake: () ->
     @_helpers.object.unmake()
     @_helpers.span.unmake()
-    @_helpers.position.unmake()
 
     for axis in @axes
       axis.buffer.dispose()
-      axis.line.dispose()
 
     @axes = null
 
   change: (changed, touched, init) ->
 
-    @rebuild() if changed['x.axis.detail'] or
-                  changed['y.axis.detail'] or
-                  changed['grid.first']    or
-                  changed['grid.second']
+    return @rebuild() if changed['x.axis.detail'] or
+                         changed['y.axis.detail'] or
+                         changed['grid.first']    or
+                         changed['grid.second']   or
+                         changed['line.stroke']
 
     axis = (x, y, range1, range2, axis) =>
       {first, second, resolution, samples, line, buffer, values} = axis

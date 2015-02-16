@@ -1,15 +1,13 @@
 Parent = require './parent'
+Util   = require '../../../util'
 
 class Root extends Parent
-  @traits = ['node', 'root', 'scene']
+  @traits = ['node', 'root', 'scene', 'transform']
 
-  constructor: (node, context, helpers) ->
-    super node, context, helpers
-
+  init: () ->
     @size = null
-
     @event =
-      type: 'update'
+      type: 'root.update'
 
   adopt:   (renderable) -> @_context.scene.add    object for object in renderable.objects
   unadopt: (renderable) -> @_context.scene.remove object for object in renderable.objects
@@ -26,7 +24,7 @@ class Root extends Parent
   resize: (size) ->
     @size = size
     @trigger
-      type: 'resize'
+      type: 'root.resize'
       size: size
 
   getSize: () -> @size
@@ -34,7 +32,12 @@ class Root extends Parent
   update: () ->
     @trigger @event
 
-  present: (shader) ->
-    shader.pipe 'view.position'
+  getCamera: () -> @_context.camera.get()
+
+  # End transform chain here
+  transform: (shader, pass) ->
+    return shader.pipe 'view.position'            if pass == 2
+    return shader.pipe Util.GLSL.truncateVec 4, 3 if pass == 3
+    shader
 
 module.exports = Root

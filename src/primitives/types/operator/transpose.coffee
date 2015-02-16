@@ -8,11 +8,15 @@ labels =
   4: 'items'
 
 class Transpose extends Operator
-  @traits: ['node', 'bind', 'operator', 'source', 'transpose']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'transpose']
+
+  indexShader: (shader) ->
+    shader.pipe @swizzler if @swizzler
+    super
 
   sourceShader: (shader) ->
     shader.pipe @swizzler if @swizzler
-    @bind.source.sourceShader shader
+    super
 
   getDimensions: () ->
     @_remap @transpose, @bind.source.getDimensions()
@@ -33,6 +37,7 @@ class Transpose extends Operator
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Transposition order
     order = @_get 'transpose.order'
@@ -41,15 +46,15 @@ class Transpose extends Operator
 
     # Notify of reallocation
     @trigger
-      type: 'rebuild'
+      type: 'source.rebuild'
 
   unmake: () ->
     super
     @swizzler = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['transpose'] or
-                  touched['operator']
+    return @rebuild() if touched['transpose'] or
+                         touched['operator']
 
 
 module.exports = Transpose

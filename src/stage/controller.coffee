@@ -1,5 +1,5 @@
 class Controller
-  constructor: (@model, @factory) ->
+  constructor: (@model, @primitives) ->
 
   _name: (node) ->
     n = node.type
@@ -11,10 +11,10 @@ class Controller
     @model.getRoot()
 
   getTypes: () ->
-    @factory.getTypes()
+    @primitives.getTypes()
 
   make: (type, options) ->
-    @factory.make type, options
+    @primitives.make type, options
 
   get: (node) ->
     node.get()

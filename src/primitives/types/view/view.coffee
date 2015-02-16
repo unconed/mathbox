@@ -1,7 +1,7 @@
-Parent = require '../base/parent'
+Transform = require '../transform/transform'
 
-class View extends Parent
-  @traits: ['node', 'object', 'view']
+class View extends Transform
+  @traits = ['node', 'object', 'view', 'transform']
 
   make: () ->
     @_helpers.object.make()
@@ -9,11 +9,7 @@ class View extends Parent
   unmake: () ->
     @_helpers.object.unmake()
 
-  dimensions: () -> 3
-
   axis: (dimension) ->
     @_get('view.range')[dimension - 1]
-
-  to: (vector) ->
 
 module.exports = View

@@ -2,12 +2,10 @@ Data = require './data'
 Util = require '../../../util'
 
 class Matrix extends Data
-  @traits: ['node', 'data', 'source', 'matrix']
+  @traits = ['node', 'data', 'source', 'texture', 'matrix']
 
-  constructor: (node, context, helpers) ->
-    super node, context, helpers
-
-    @buffer = @spec = null
+  init: () ->
+    @buffer = @spec = @emitter = null
     @filled = false
 
     @space =
@@ -41,10 +39,17 @@ class Matrix extends Data
   make: () ->
     super
 
+    # Read sampling parameters
+    minFilter = @_get 'texture.minFilter'
+    magFilter = @_get 'texture.magFilter'
+    type      = @_get 'texture.type'
+
     # Read given dimensions
     width    = @_get 'matrix.width'
     height   = @_get 'matrix.height'
     history  = @_get 'matrix.history'
+    reserveX = @_get 'matrix.bufferWidth'
+    reserveY = @_get 'matrix.bufferHeight'
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
@@ -63,44 +68,60 @@ class Matrix extends Data
     dims = Util.Data.getDimensions data, dims
 
     space = @space
-    space.width   = Math.max space.width,  dims.width  || 1
-    space.height  = Math.max space.height, dims.height || 1
+    space.width   = Math.max reserveX, dims.width  || 1
+    space.height  = Math.max reserveY, dims.height || 1
     space.history = history
 
     # Create matrix buffer
     @buffer = @_renderables.make 'matrixBuffer',
-              width:    space.width
-              height:   space.height
-              history:  space.history
-              channels: channels
-              items:    items
+              width:     space.width
+              height:    space.height
+              history:   space.history
+              channels:  channels
+              items:     items
+              minFilter: minFilter
+              magFilter: magFilter
+              type:      type
 
     # Create data thunk to copy (multi-)array if bound to one
     if data?
-      thunk   = Util.Data.getThunk    data
-      emitter = Util.Data.makeEmitter thunk, items, channels, 2
-      @buffer.callback = emitter
-
-    # Notify of buffer reallocation
-    @trigger
-      type: 'rebuild'
+      thunk    = Util.Data.getThunk    data
+      @emitter = Util.Data.makeEmitter thunk, items, channels, 2
 
   unmake: () ->
     super
     if @buffer
       @buffer.dispose()
-      @buffer = null
+      @buffer = @spec = @emitter = null
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['matrix'] or changed['data.dimensions']
+    return @rebuild() if touched['texture'] or
+                         changed['matrix.history'] or
+                         changed['data.dimensions'] or
+                         changed['matrix.bufferWidth'] or
+                         changed['matrix.bufferHeight']
 
     return unless @buffer
 
-    if changed['data.expression']? or
+    if changed['matrix.width']
+      width = @_get 'matrix.width'
+      return @rebuild() if width  > @space.width
+
+    if changed['matrix.height']
+      height = @_get 'matrix.height'
+      return @rebuild() if height > @space.height
+
+    if changed['data.expression'] or
+       changed['data.data'] or
        init
 
+      emitter = @emitter
       data = @_get 'data.data'
-      @buffer.callback = @callback @_get 'data.expression' if !data?
+      if !data?
+        emitter = @callback @_get 'data.expression'
+      @buffer.setCallback emitter
+
+  callback: (callback) -> Util.Data.normalizeEmitter emitter, 2
 
   update: () ->
     return unless @buffer
@@ -146,20 +167,23 @@ class Matrix extends Data
       used.width  = dims.width
       used.height = dims.height
 
+      @buffer.setActive used.width, used.height
       @buffer.callback.rebind data
       @buffer.update()
     else
+      @buffer.setActive @spec.width, @spec.height
+
       length = @buffer.update()
 
-      used.width  = _w = space.width
+      used.width  = _w = @spec.width
       used.height = Math.ceil length / _w
+
+    @filled = true
 
     if used.width  != w or
        used.height != h or
        filled != @buffer.getFilled()
       @trigger
-        type: 'resize'
-
-    @filled = true
+        type: 'source.resize'
 
 module.exports = Matrix

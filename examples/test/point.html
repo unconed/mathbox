@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Point</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -54,6 +55,30 @@
     view.point({
       color: 0x3090FF,
       size: 0.05,
+    });
+    view.transform({
+      position: [0, .5, 0],
+    }).point({
+      color: 0xFFFFFF,
+      size: 0.05,
+      shape: 'diamond',
+      fill: true,
+      zIndex: -1,
+    });
+    view.transform({
+      position: [0, .5, 0],
+    }).point({
+      color: 0xFF3090,
+      size: 0.05,
+      shape: 'diamond',
+      fill: false,
+    });
+    view.transform({
+      position: [0, 1, 0],
+    }).point({
+      color: 0x00CF30,
+      size: 0.05,
+      shape: 'triangle',
     });
 
   </script>

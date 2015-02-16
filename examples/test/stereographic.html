@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Stereographic</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -32,7 +33,6 @@
       q1.normalize();
 
       q2.slerp(q1, .05);
-
       spherical.set('rotation', q2);
     });
 
@@ -45,15 +45,20 @@
       range: [[-π, π], [-π/2, π/2], [-1, 1]],
     });
 
-    spherical.grid({
+    spherical
+    .transform({
+      position: [0, 0, 1]
+    })
+    .grid({
       detailX: 128,
       detailY: 128,
       unitX: π,
       unitY: π,
       divideX: 20,
       divideY: 20,
-      position: [0, 0, 1]
     });
+
+    console.log(spherical)
 
   </script>
 </body>

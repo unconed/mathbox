@@ -1,6 +1,7 @@
 View = require('./view')
 
 class Cartesian extends View
+  @traits = ['node', 'object', 'view', 'view3', 'transform']
 
   make: () ->
     super
@@ -16,15 +17,15 @@ class Cartesian extends View
 
     delete @viewMatrix
     delete @objectMatrix
-    delete @positionMatrix
+    delete @uniforms
 
   change: (changed, touched, init) ->
 
-    return unless touched['object'] or touched['view'] or init
+    return unless touched['view'] or touched['view3'] or init
 
-    o = @_get 'object.position'
-    s = @_get 'object.scale'
-    q = @_get 'object.rotation'
+    o = @_get 'view3.position'
+    s = @_get 'view3.scale'
+    q = @_get 'view3.rotation'
     r = @_get 'view.range'
 
     x = r[0].x
@@ -49,19 +50,10 @@ class Cartesian extends View
 
     if changed['view.range']
       @trigger
-        type: 'range'
+        type: 'view.range'
 
-  to: (vector) ->
-    vector.applyMatrix4 @viewMatrix
-
-  transform: (shader) ->
-    shader.pipe 'cartesian.position', @uniforms
-    @parent?.transform shader
-
-  ###
-  from: (vector) ->
-    this.inverse.multiplyVector3(vector);
-  },
-  ###
+  transform: (shader, pass) ->
+    shader.pipe 'cartesian.position', @uniforms if pass == 1
+    super shader, pass
 
 module.exports = Cartesian

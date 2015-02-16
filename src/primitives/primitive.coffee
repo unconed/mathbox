@@ -11,9 +11,10 @@ class Primitive
     @_attributes  = @_context.attributes
     @_renderables = @_context.renderables
     @_shaders     = @_context.shaders
+    @_overlays    = @_context.overlays
     @_types       = @_attributes.types
 
-    @node.primitive = @
+    @node.controller = @
     @traits = @node.traits
 
     # This node has been inserted/removed
@@ -25,81 +26,102 @@ class Primitive
 
     # Property change
     @node.on 'change', (event) =>
-      @change event.changed, event.touched if @root
+      @change event.changed, event.touched if @_root
 
     # Attribute getter / helpers
     @_get = @node.get.bind @node
     @_helpers = helpers @, @node.traits
-    @handlers = {}
 
-    @root = @parent = null
+    # Keep track of various handlers to do auto-cleanup on unmake()
+    @_handlers = inherit: {}, listen: [], watch: []
+
+    # Detached initially
+    @_root = @_parent = null
+
+    # Friendly constructor
+    @init()
 
   is: (trait) ->
-    @traits.indexOf(trait) >= 0
+    @traits.hash[trait]
 
   # Renderables lifecycle
 
+  init:   () ->
   make:   () ->
+  made:   () ->
   unmake: (rebuild) ->
+  unmade: () ->
   change: (changed, touched, init) ->
 
   rebuild: () ->
-    if @root
+    if @_root
       @unmake true
+      @_unlisten()
+      @_unattach()
+      @unmade()
+
       @make()
       @refresh()
+      @made()
 
   refresh: () -> @change {}, {}, true
 
-  # Transform pipeline
-  transform: (shader) ->
-    @parent?.transform shader
-
-  present: (shader) ->
-    @parent?.present shader
-
-  # A node is being inserted
-  _add: () ->
-
-  _remove: () ->
-
   # This node has been inserted
   _added: () ->
-    @parent   = @node.parent.primitive
-    @root     = @node.root.primitive
+    @_parent   = @node.parent.controller
+    @_root     = @node.root  .controller
 
     @make()
-    @change {}, {}, {}, true
+    @refresh()
+    @made()
 
   _removed: () ->
     @unmake()
+    @_unlisten()
+    @_unattach()
 
-    @root     = null
-    @parent   = null
+    @_root     = null
+    @_parent   = null
 
-  # Attribute changes
+  # Bind event listeners to methods
+  _listen: (object, type, method, self = @) ->
+    object  = @_inherit object if typeof object == 'string'
 
-  _change: (changed) ->
+    if object?
+      handler = method.bind self
+      object.on type, handler
 
-  # Find parent with certain class
+      @_handlers.listen.push [object, type, handler]
+    object
 
-  _inherit: (trait, allowSelf = false) ->
+  _unlisten: () ->
+    return unless @_handlers.listen.length
 
-    if allowSelf and trait in @node.traits
-      return @
+    for [object, type, handler] in @_handlers.listen
+      object.off type, handler
+    @_handlers.listen = []
 
-    if @parent?
-      @parent._inherit trait, true
-    else
-      null
+  # Find parent with certain trait
+  _inherit: (trait) ->
+    cached = @_handlers.inherit[trait]
+    return cached if cached != undefined
 
-  # Attach to primitive by trait
-  _attach: (selector, trait, watcher) ->
+    @_handlers.inherit[trait] = @_parent?._find trait ? null
+
+  _find: (trait) ->
+    return @ if @is trait
+    return @_parent?._find trait
+
+  _uninherit: () ->
+    @_handlers.inherit = {}
+
+  # Attach to controller by trait
+  _attach: (selector, trait, method, self = @) ->
 
     # Direct JS binding, no watcher.
     if typeof selector == 'object'
       node = selector
-      return node.primitive if node? and trait in node.traits
+      return node.controller if node? and trait in node.traits
 
     # Auto-link selector '<'
     if selector == '<'
@@ -111,18 +133,28 @@ class Primitive
         break if !parent
         previous = parent.children[previous.index - 1]
         previous = parent if !previous
-        return previous.primitive if previous? and trait in previous.traits
+        return previous.controller if previous? and trait in previous.traits
 
     # Selector binding
     else if typeof selector == 'string'
-      selection = @root.watch selector, watcher
+      watcher = method.bind self
+      @_handlers.watch.push watcher
+
+      selection = @_root.watch selector, watcher
       node = selection[0]
       if node? and trait in node.traits
-        return node.primitive
+        return node.controller
 
     id = "#" + @node.id if @node.id?
-    throw "Could not find #{trait} `#{object}` on `#{@node.type}#{id}` #{key}"
+    throw "Could not find #{trait} `#{selector}` on `#{@node.type}#{id ? ''}`"
     null
+
+  # Remove attachments
+  _unattach: () ->
+    return unless @_handlers.watch.length
+
+    watcher?.unwatch() for watcher in @_handlers.watch
+    @_handlers.watch = []
 
 THREE.Binder.apply Primitive::
 

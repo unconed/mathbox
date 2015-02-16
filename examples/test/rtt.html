@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - RTT</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -16,55 +17,48 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(.3, 1, 3);
-    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+    three.camera.position.set(.3, 0, 3);
+    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
-    time = 0;
-    origin = new THREE.Vector3();
-    three.on('update', function (event) {
-      time = three.Time.clock;
-      x = Math.cos(time) * 3;
-      z = Math.sin(time) * 3;
-
-      c = rtt[0].primitive.rtt.camera;
-      c.position.set(x, 0, z);
-      c.lookAt(origin);
-
-      x = Math.cos(time * .91) * 3;
-      z = Math.sin(time * .91) * 3;
-
-      c = rtt[1].primitive.rtt.camera;
-      c.position.set(x, 0, z);
-      c.lookAt(origin);
+    var rtt = mathbox.rtt({
+      type: 'unsignedByte',
     });
 
-    view = mathbox.cartesian({
-      range: [[-2, 2], [-1, 1], [-1, 1]],
-      scale: [2, 1, 1],
-    });
-    view.grid({
-      divideX: 2,
-      divideY: 2,
-      zIndex: 10,
-      opacity: .25,
-    });
+    rtt[0].controller.rtt.camera.position.set(.3, 0, 3);
+    rtt[0].controller.rtt.camera.lookAt(new THREE.Vector3())
 
-    view2 = view.rtt().cartesian({
-      range: [[-2, 2], [-1, 1], [-1, 1]],
-      scale: [2, 1, 1],
-    }).grid({
-      divideX: 2,
-      divideY: 2,
-      zIndex: 10,
-      opacity: .25,
+    rtt.resample({
+      indices: 2,
+      shader: [
+        "vec4 getSample(vec2 xy);",
+        "vec4 getFramesSample(vec2 xy) { return getSample(xy); }",
+      ].join("\n")
+    }).compose({
+      color: '#ffffff',
+      opacity: .98,
     });
 
-    view3 = view2.rtt().cartesian({
-      range: [[-2, 2], [-1, 1], [-1, 1]],
-      scale: [2, 1, 1],
-    }).grid();
+    rtt.cartesian({
+      range: [[-1, 1], [-1, 1]]
+    })
+    .grid()
+    .interval({
+      id: 'sampler',
+      length: 64,
+      expression: function (x, i, emit) {
+        y = Math.sin(x + three.Time.now) * .7;
+        emit(x, y);
+      },
+      dimensions: 2,
+    })
+    .line({
+      points: '#sampler',
+      color: 0x3090FF,
+      width: 0.02,
+    });
 
-    rtt = mathbox.select('rtt')
+    mathbox.compose({
+    });
 
   </script>
 </body>

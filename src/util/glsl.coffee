@@ -12,6 +12,27 @@ parseOrder = (order) ->
   order = [order]        if order == +order
   order
 
+toType = (type) ->
+  type = 'vec' + type if type == +type
+  type = 'float' if type == 'vec1'
+  type
+
+toFloatString = (value) ->
+  value = "" + value
+  value += '.0' if value.indexOf('.') < 0
+
+# Helper for float to byte conversion on the w axis, for readback
+exports.mapByte2FloatOffset = (stretch = 4) ->
+  factor = toFloatString stretch
+  """
+  vec4 float2ByteIndex(vec4 xyzw, out float channelIndex) {
+    float relative = xyzw.w / #{factor};
+    float w = floor(relative);
+    channelIndex = (relative - w) * #{factor};
+    return vec4(xyzw.xyz, w);
+  }
+  """
+
 # Sample data texture array
 exports.sample2DArray = (textures) ->
 
@@ -43,24 +64,31 @@ exports.sample2DArray = (textures) ->
   """
 
 # Binary operator
-exports.binaryOperator = (type, op) ->
-  """
-  #{type} binaryOperator(#{type} a, #{type} b) {
-    return a #{op} b;
-  }
-  """
+exports.binaryOperator = (type, op, curry) ->
+  type = toType type
+  if curry?
+    """
+    #{type} binaryOperator(#{type} a) {
+      return a #{op} #{curry};
+    }
+    """
+  else
+    """
+    #{type} binaryOperator(#{type} a, #{type} b) {
+      return a #{op} b;
+    }
+    """
 
 # Extend to n-vector with zeroes
-exports.extendVec = (from, to) ->
+exports.extendVec = (from, to, value = 0) ->
   diff = to - from
 
-  from = 'vec' + from
-  to   = 'vec' + to
+  from = toType from
+  to   = toType to
 
-  from = 'float' if from == 'vec1'
-  to   = 'float' if to   == 'vec1'
+  value = toFloatString value
 
-  parts = [0..diff].map (x) -> if x then '0.0' else 'v'
+  parts = [0..diff].map (x) -> if x then value else 'v'
   ctor  = parts.join ','
 
   """
@@ -142,3 +170,17 @@ exports.invertSwizzleVec4 = (order) ->
   }
   """
 
+exports.identity = (type) ->
+  args = [].slice.call arguments
+  if args.length > 1
+    args = args.map (t, i) -> ['inout', t, String.fromCharCode 97 + i].join ' '
+    args = args.join ', '
+    """
+    void identity(#{args}) { }
+    """
+  else
+    """
+    #{type} identity(#{type} x) {
+      return x;
+    }
+    """

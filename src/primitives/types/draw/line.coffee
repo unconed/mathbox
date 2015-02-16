@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Line extends Primitive
-  @traits: ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind', 'attach']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -10,7 +10,7 @@ class Line extends Primitive
     @line = @arrows = null
 
   resize: () ->
-    return unless @line and @bind.points
+    return unless @bind.points?
     dims = @bind.points.getActive()
 
     samples = dims.width
@@ -27,15 +27,16 @@ class Line extends Primitive
       'geometry.points': 'source'
       'geometry.colors': 'source'
 
+    return unless @bind.points?
+
     # Build transform chain
     position = @_shaders.shader()
-    @_helpers.position.make()
 
     # Fetch position
-    @bind.points.sourceShader position
+    position = @bind.points.sourceShader position
 
     # Transform position to view
-    @_helpers.position.shader position
+    position = @_helpers.position.pipeline position
 
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
@@ -45,6 +46,9 @@ class Line extends Primitive
     # Clip start/end for terminating arrow
     start   = @_get 'arrow.start'
     end     = @_get 'arrow.end'
+
+    # Stroke style
+    stroke  = @_get 'line.stroke'
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
@@ -67,8 +71,9 @@ class Line extends Primitive
               ribbons:  ribbons
               layers:   layers
               position: position
-              clip:     start or end
               color:    color
+              clip:     start or end
+              stroke:   stroke
 
     # Make arrow renderables
     @arrows = []
@@ -95,20 +100,20 @@ class Line extends Primitive
                 position: position
                 color:    color
 
-    @resize()
-
     @_helpers.object.make @arrows.concat [@line]
+
+  made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
     @_helpers.object.unmake()
-    @_helpers.position.unmake()
 
     @line = @arrows = null
 
   change: (changed, touched, init) ->
-    @rebuild() if changed['geometry.points']? or
-                  changed['arrow.start']?     or
-                  changed['arrow.end']?
+    return @rebuild() if changed['geometry.points'] or
+                         changed['line.stroke'] or
+                         changed['arrow.start'] or
+                         changed['arrow.end']
 
 module.exports = Line

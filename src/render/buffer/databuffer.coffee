@@ -5,11 +5,11 @@ class DataBuffer extends Buffer
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-  build: () ->
+  build: (options) ->
     super
 
     @data    = new Float32Array @samples * @channels * @items
-    @texture = new DataTexture  @gl, @samples * @items, 1, @channels
+    @texture = new DataTexture  @gl, @samples * @items, 1, @channels, options
 
     @dataPointer = @uniforms.dataPointer.value
     @_adopt @texture.uniforms

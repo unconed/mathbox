@@ -1,7 +1,11 @@
 Operator = require './operator'
 
 class Lerp extends Operator
-  @traits: ['node', 'bind', 'operator', 'source', 'lerp']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'lerp', 'sampler']
+
+  indexShader: (shader) ->
+    shader.pipe @indexer
+    super
 
   sourceShader: (shader) ->
     shader.pipe @operator
@@ -14,17 +18,23 @@ class Lerp extends Operator
 
   _resample: (dims) ->
     r = @resample
-    items:  r.items  * dims.items
-    width:  r.width  * dims.width
-    height: r.height * dims.height
-    depth:  r.depth  * dims.depth
+    items:  Math.floor r.items  * dims.items
+    width:  Math.floor r.width  * dims.width
+    height: Math.floor r.height * dims.height
+    depth:  Math.floor r.depth  * dims.depth
 
   make: () ->
     super
+    return unless @bind.source?
 
     # Build shader to resample data one dimension at a time
-    transform = @_shaders.shader()
-    @bind.source.sourceShader transform
+    transform = @bind.source.sourceShader @_shaders.shader()
+
+    # Build index-only shader
+    indexer   = @_shaders.shader()
+
+    # Sampler behavior
+    centered = @_get 'sampler.centered'
 
     # Resampling ratios
     @resample = {}
@@ -38,23 +48,25 @@ class Lerp extends Operator
       @resample[key] = size / dims[key]
 
       if size != dims[key]
+        ratio = if centered
+                  dims[key] / Math.max 1, size
+                else
+                  (dims[key] - 1) / Math.max 1, size - 1
         uniforms =
-          sampleRatio: @_attributes.make @_types.number (dims[key] - 1) / (size - 1)
+          sampleRatio: @_attributes.make @_types.number ratio
 
-        transform = @_shaders.shader().import transform
+        transform = @_shaders.shader().require transform
         transform.pipe id, uniforms
 
     @operator = transform
-
-    # Notify of reallocation
-    @trigger
-      type: 'rebuild'
+    @indexer  = indexer
 
   unmake: () ->
     super
 
   change: (changed, touched, init) ->
-    @rebuild() if touched['lerp']
+    return @rebuild() if touched['lerp'] or
+                         touched['operator']
 
 
 module.exports = Lerp

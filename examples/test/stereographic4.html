@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - 4D Stereographic</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -52,7 +53,7 @@
       s = .7 + b1;
 
       // Use slerped q as rotation
-      view.set('rotation', q2);
+      wrapper.set('rotation', q2);
 
       // Use target as projection offset
       view.set('position', [q1.x * s, q1.y * s, q1.z * s, q1.w * s]);
@@ -64,14 +65,15 @@
     } });
 
     // Stereographic 4D
-    view = mathbox.stereographic4({
+    wrapper = mathbox.transform();
+    view = wrapper.stereographic4({
       range: [[-4, 4], [-4, 4], [-4, 4], [-1, 1]],
       scale: [4, 4, 4, 1],
-    }).group();
+    }).transform4();
 
     /// Grids
 
-    view.group({
+    view.transform4({
       position: [1, 0, 0, 0],
     })
     .grid({
@@ -101,7 +103,7 @@
 
     ///
 
-    view.group({
+    view.transform4({
       position: [0, 1, 0, 0],
     })
     .grid({
@@ -131,7 +133,7 @@
 
     ///
 
-    view.group({
+    view.transform4({
       position: [0, 0, 1, 0],
     })
     .grid({
@@ -161,7 +163,7 @@
 
     ///
 
-    view.group({
+    view.transform4({
       position: [-1, 0, 0, 0],
     })
     .grid({
@@ -191,7 +193,7 @@
 
     ///
 
-    view.group({
+    view.transform4({
       position: [0, -1, 0, 0],
     })
     .grid({
@@ -221,7 +223,7 @@
 
     ///
 
-    view.group({
+    view.transform4({
       position: [0, 0, -1, 0],
     })
     .grid({
@@ -251,7 +253,7 @@
 
     ///
 
-    view.group({
+    view.transform4({
       position: [0, 0, 0, 1],
     })
     .grid({
@@ -281,7 +283,7 @@
 
     ///
 
-    view.group({
+    view.transform4({
       position: [0, 0, 0, -1],
     })
     .grid({

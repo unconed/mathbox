@@ -36,7 +36,7 @@ class Arrow extends Base
     f.pipe 'mesh.fragment.color',   @uniforms if color
     f.pipe 'fragment.color',        @uniforms
 
-    @material = new THREE.ShaderMaterial factory.build
+    @material = @_material factory.link
       defaultAttributeValues: null
       index0AttributeName: "position4"
 

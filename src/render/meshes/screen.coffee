@@ -9,6 +9,8 @@ class Screen extends Base
     uniforms = options.uniforms ? {}
     fragment = options.fragment
 
+    hasStyle = uniforms.styleColor?
+
     @geometry = new ScreenGeometry
       width:    options.width
       height:   options.height
@@ -28,20 +30,19 @@ class Screen extends Base
 
     f = factory.fragment
     f.require options.fragment
-    f.fan()
-    f.  pipe  'stpq.sample.2d'
-    f.next()
-    f.  pipe  'style.color',     @uniforms
-    f.pass()
-    f.pipe    Util.GLSL.binaryOperator 'vec4', '*'
-    f.pipe    'fragment.color',  @uniforms
+    f.pipe    'stpq.sample.2d'
+    if hasStyle
+      f.pipe  'style.color',        @uniforms
+      f.pipe  Util.GLSL.binaryOperator 'vec4', '*'
+    f.pipe    'fragment.color'
 
-    @material = new THREE.ShaderMaterial factory.build
+    @material = @_material factory.link
       side: THREE.DoubleSide
       defaultAttributeValues: null
       index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material
+    object.frustumCulled = false
 
     @_raw object
     @objects = [object]

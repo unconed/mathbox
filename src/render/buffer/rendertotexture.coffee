@@ -14,16 +14,19 @@ class RenderToTexture extends Renderable
     @build options
 
   shaderRelative: (shader) ->
+    shader ?= @shaders.shader()
     shader.pipe "sample.2d", @uniforms
 
-  shaderAbsolute: (shader, frames = 1) ->
-    if frames == 1
-      shader.pipe Util.GLSL.truncateVec(4, 2)
+  shaderAbsolute: (shader, frames = 1, indices = 4) ->
+    shader ?= @shaders.shader()
+    if frames <= 1
+      shader.pipe Util.GLSL.truncateVec(indices, 2) if indices > 2
       shader.pipe "map.2d.data",   @uniforms
       shader.pipe "sample.2d",     @uniforms
 
     else
       sample2DArray = Util.GLSL.sample2DArray Math.min frames, @target.frames
+      shader.pipe Util.GLSL.extendVec(indices, 4) if indices < 4
       shader.pipe "map.xyzw.2dv"
       shader.split()
       shader  .pipe "map.2d.data", @uniforms
@@ -48,8 +51,11 @@ class RenderToTexture extends Renderable
 
     @filled = 0
 
+  adopt:   (renderable) -> @scene.add    object for object in renderable.objects
+  unadopt: (renderable) -> @scene.remove object for object in renderable.objects
+
   render: (camera = @camera) ->
-    @renderer.render @scene.scene ? @scene, @camera, @target.write
+    @renderer.render @scene.scene ? @scene, camera, @target.write
     @target.cycle()
     @filled++ if @filled < @target.frames
 
@@ -61,7 +67,10 @@ class RenderToTexture extends Renderable
 
   dispose: () ->
     @scene.unject?()
-    @scene = null
     @scene = @camera = null
+
+    @target.dispose()
+
+    super
 
 module.exports = RenderToTexture

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Repeat</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -88,20 +89,24 @@
     view.transpose({
       order: 'zwxy'
     });
-    view.surface({
-      color: 0x3090FF,
+
+    view
+    .transform({
+      classes: ['surface'],
       position: [0, 2, 0],
-    });
-    view.transpose({
+    })
+    .surface({
+      color: 0x3090FF,
+    })
+    .transpose({
       source: '#spread',
       order: 'wxzy',
-    });
-    view.surface({
+    })
+    .surface({
       color: 0x3090FF,
-      position: [0, 2, 0],
     });
 
-    surface = mathbox.select('surface');
+    surface = mathbox.select('transform.surface');
 
   </script>
 </body>

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>MathBox - Polar</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -30,28 +31,30 @@
       scale: [2, 1, 1],
     });
 
-    view.axis({
-      detail: 30,
+    view.transform({
       position: [0, .5, 0],
-    });
-    view.ticks({
+    }).axis({
+      detail: 30,
+    })
+    .ticks({
       classes: ['foo', 'bar'],
       divide: 10,
       unit: π,
       base: 2,
-      position: [0, .5, 0],
     });
 
     view.axis({
       axis: 2,
     });
-    view.axis({
-      axis: 2,
+    view.transform({
       position: [π/2, 0, 0],
-    });
-    view.axis({
+    }).axis({
       axis: 2,
+    });
+    view.transform({
       position: [-π/2, 0, 0],
+    }).axis({
+      axis: 2,
     });
 
     view.interval({
