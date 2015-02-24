@@ -2,8 +2,6 @@ Renderable = require '../renderable'
 Util       = require '../../util'
 
 class Buffer extends Renderable
-  @iterationLimit: 0xFFFF
-
   constructor: (renderer, shaders, options) ->
     @items    ?= options.items    || 1
     @samples  ?= options.samples  || 1
@@ -27,20 +25,12 @@ class Buffer extends Renderable
         value: new THREE.Vector2()
 
   dispose: () ->
-    @data = null
-    @texture.dispose()
     super
 
   update: () ->
     n = @iterate()
     @write n
     n
-
-  copy: (data) ->
-    n    = Math.min data.length, @samples * @channels * @items
-    d    = @data
-    d[i] = data[i] for i in [0...n]
-    @write Math.floor n / @channels / @items
 
   setActive: (i, j, k, l) ->
   setCallback: (@callback) ->

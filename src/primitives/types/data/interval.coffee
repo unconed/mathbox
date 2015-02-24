@@ -22,10 +22,9 @@ class Interval extends _Array
 
     b = span * inverse
 
-    callback = Util.Data.normalizeEmitter callback, 2
-    (i, emit) ->
+    (emit, i) ->
       x = a + b * i
-      callback x, i, emit
+      callback emit, x, i
 
   make: () ->
     super

@@ -33,6 +33,7 @@ class Base extends Renderable
     object.rotationAutoUpdate = false
     object.frustumCulled      = false
     object.matrixAutoUpdate   = false
+    object.material.defaultAttributeValues = undefined
 
   _depth: (object, write, test) ->
     m = object.material

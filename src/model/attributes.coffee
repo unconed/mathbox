@@ -72,7 +72,7 @@ class Data
 
         short = attr.short
         flattened[short] = replace
-        originals[short] = value
+        originals[short] = value   if !ignore
 
         # Compare to last value
         change key, value unless ignore or equals key, attr.value, attr.last

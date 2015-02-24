@@ -47,12 +47,11 @@ class Volume extends Voxel
     bY = spanY * inverseY
     bZ = spanZ * inverseZ
 
-    callback = Util.Data.normalizeEmitter callback, 6
-    (i, j, k, emit) ->
+    (emit, i, j, k) ->
       x = aX + bX * i
       y = aY + bY * j
       z = aZ + bZ * k
-      callback x, y, z, i, j, k, emit
+      callback emit, x, y, z, i, j, k
 
   make: () ->
     super

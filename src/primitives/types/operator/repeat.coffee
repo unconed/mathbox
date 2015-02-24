@@ -5,11 +5,11 @@ class Repeat extends Operator
 
   indexShader:  (shader) ->
     shader.pipe @operator
-    super
+    super shader
 
   sourceShader: (shader) ->
     shader.pipe @operator
-    super
+    super shader
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()

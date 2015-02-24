@@ -9,6 +9,8 @@ class Arrow extends Base
     position = options.position
     color    = options.color
 
+    hasStyle = uniforms.styleColor?
+
     @geometry = new ArrowGeometry
       sides:   options.sides
       samples: options.samples
@@ -32,12 +34,12 @@ class Arrow extends Base
     v.pipe 'project.position',      @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',           @uniforms
-    f.pipe 'mesh.fragment.color',   @uniforms if color
+    f.pipe 'style.color',           @uniforms    if hasStyle
+    f.pipe 'mesh.fragment.blend',   @uniforms    if color && hasStyle
+    f.pipe 'mesh.fragment.color',   @uniforms    if color && !hasStyle
     f.pipe 'fragment.color',        @uniforms
 
     @material = @_material factory.link
-      defaultAttributeValues: null
       index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material

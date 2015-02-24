@@ -5,7 +5,7 @@ class Matrix extends Data
   @traits = ['node', 'data', 'source', 'texture', 'matrix']
 
   init: () ->
-    @buffer = @spec = @emitter = null
+    @buffer = @spec = null
     @filled = false
 
     @space =
@@ -16,6 +16,8 @@ class Matrix extends Data
     @used =
       width:   0
       height:  0
+    
+    super
 
   sourceShader: (shader) ->
     @buffer.shader shader
@@ -53,12 +55,7 @@ class Matrix extends Data
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
-    dims = @spec =
-      channels: channels
-      items:    items
-      width:    width
-      height:   height
-      depth:    history
+    dims = @spec = {channels, items, width, height}
 
     @items    = dims.items
     @channels = dims.channels
@@ -72,6 +69,9 @@ class Matrix extends Data
     space.height  = Math.max reserveY, dims.height || 1
     space.history = history
 
+    @spec.width  ?= 1
+    @spec.height ?= 1
+
     # Create matrix buffer
     @buffer = @_renderables.make 'matrixBuffer',
               width:     space.width
@@ -83,21 +83,17 @@ class Matrix extends Data
               magFilter: magFilter
               type:      type
 
-    # Create data thunk to copy (multi-)array if bound to one
-    if data?
-      thunk    = Util.Data.getThunk    data
-      @emitter = Util.Data.makeEmitter thunk, items, channels, 2
-
   unmake: () ->
     super
     if @buffer
       @buffer.dispose()
-      @buffer = @spec = @emitter = null
+      @buffer = @spec = null
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
                          changed['matrix.history'] or
                          changed['data.dimensions'] or
+                         changed['data.items'] or
                          changed['matrix.bufferWidth'] or
                          changed['matrix.bufferHeight']
 
@@ -115,13 +111,9 @@ class Matrix extends Data
        changed['data.data'] or
        init
 
-      emitter = @emitter
-      data = @_get 'data.data'
-      if !data?
-        emitter = @callback @_get 'data.expression'
-      @buffer.setCallback emitter
+      @buffer.setCallback @emitter()
 
-  callback: (callback) -> Util.Data.normalizeEmitter emitter, 2
+  callback: (callback) -> callback
 
   update: () ->
     return unless @buffer
@@ -138,31 +130,11 @@ class Matrix extends Data
 
     if data?
       dims = Util.Data.getDimensions data, @spec
-      rebuild = false
 
-      # Grow width if needed
-      if dims.width > space.width
-        rebuild = true
-
-        # Size up by 200%, up to 128 increase.
-        length = space.width
-        step   = Math.min 128, length
-
-        # But always at least size to fit
-        space.width = Math.max length + step, dims.width
-
-      # Grow height if needed
-      if dims.height > space.height
-        rebuild = true
-
-        # Size up by 200%, up to 128 increase.
-        length = space.height
-        step   = Math.min 128, length
-
-        # But always at least size to fit
-        space.height = Math.max length + step, dims.height
-
-      @rebuild() if rebuild
+      # Grow if needed
+      if dims.width  > space.width or
+         dims.height > space.height
+        @rebuild()
 
       used.width  = dims.width
       used.height = dims.height
@@ -177,6 +149,7 @@ class Matrix extends Data
 
       used.width  = _w = @spec.width
       used.height = Math.ceil length / _w
+      used.width  = length if used.height == 1
 
     @filled = true
 

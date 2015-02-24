@@ -12,20 +12,33 @@ Helpers are auto-attached to primitives that have the matching trait
 helpers =
 
   bind:
-    make: (map) ->
+    make: (slots) ->
       @bind = {}
+      @bound = []
 
       # Fetch attached objects and bind to them
-      # Attach watchers for DOM changes
-      for key, trait of map
-        name     = key.split(/\./g).pop()
-        selector = @_get key
-        source   = if selector? then @_attach selector, trait, @rebuild else null
+      # Attach rebuild watcher for DOM changes to bound nodes
+      for slot in slots
+        {to, trait} = slot
+        
+        name     = to.split(/\./g).pop()
+        selector = @_get to
+
+        # Find by selector
+        source = null
+        if selector?
+          start    = @
+          unique   = false
+          while !unique
+            # Keep scanning back until a new node is found
+            start  = source = @_attach selector, trait, @rebuild, @, start
+            unique = !source? or @bound.indexOf(source) < 0
 
         # Monitor source for reallocation / resize
         if source?
           @_listen source, 'source.resize',  @resize
           @_listen source, 'source.rebuild', @rebuild
+          @bound.push source
 
         @bind[name] = source
 
@@ -200,18 +213,32 @@ helpers =
   renderScale:
     make: () ->
       @renderUniforms = {
-        renderScale:  scale  = @_attributes.make @_types.number 0
-        renderAspect: aspect = @_attributes.make @_types.number 0
-        renderWidth:  width  = @_attributes.make @_types.number 0
-        renderHeight: height = @_attributes.make @_types.number 0
+        renderInvScale:  invScale  = @_attributes.make @_types.number 0
+        renderScale:     scale     = @_attributes.make @_types.number 0
+        renderAspect:    aspect    = @_attributes.make @_types.number 0
+        renderWidth:     width     = @_attributes.make @_types.number 0
+        renderHeight:    height    = @_attributes.make @_types.number 0
       }
+      
+      top    = new THREE.Vector3()
+      bottom = new THREE.Vector3()
 
       handler = () =>
+        measure = 1
+
+        if (camera = root?.getCamera())
+          m = camera.projectionMatrix
+          top   .set(0, -.5, 1).applyProjection(m)
+          bottom.set(0,  .5, 1).applyProjection(m)
+          top.sub bottom
+          measure = top.y
+          
         if (size = root?.getSize())?
-          width .value = size.renderWidth / 2
-          height.value = size.renderHeight / 2
-          aspect.value = size.aspect
-          scale .value = height.value
+          width    .value = size.renderWidth
+          height   .value = size.renderHeight
+          aspect   .value = size.aspect
+          scale    .value = height.value / measure
+          invScale .value = 1 / scale.value
 
       root = @_listen 'root', 'root.resize', handler
       handler()

@@ -6,8 +6,9 @@ class Root extends Parent
 
   init: () ->
     @size = null
-    @event =
-      type: 'root.update'
+
+    @updateEvent = type: 'root.update'
+    @postEvent   = type: 'root.post'
 
   adopt:   (renderable) -> @_context.scene.add    object for object in renderable.objects
   unadopt: (renderable) -> @_context.scene.remove object for object in renderable.objects
@@ -29,8 +30,9 @@ class Root extends Parent
 
   getSize: () -> @size
 
-  update: () ->
-    @trigger @event
+  pre:    () -> @getCamera().updateProjectionMatrix()
+  update: () -> @trigger @updateEvent
+  post:   () -> @trigger @postEvent
 
   getCamera: () -> @_context.camera.get()
 

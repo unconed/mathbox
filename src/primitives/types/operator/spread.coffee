@@ -3,7 +3,8 @@ Operator = require './operator'
 class Spread extends Operator
   @traits = ['node', 'bind', 'operator', 'source', 'index', 'spread']
 
-  sourceShader: (shader) -> shader.pipe @operator
+  sourceShader: (shader) ->
+    shader.pipe @operator
 
   make: () ->
     super
@@ -29,16 +30,17 @@ class Spread extends Operator
 
   resize: () ->
     if @bind.source
-      anchor = @_get 'spread.anchor'
       dims = @bind.source.getActive()
 
       matrix = @spreadMatrix.value
       els = matrix.elements
 
       order = ['width', 'height', 'depth', 'items']
+      align = ['alignWidth', 'alignHeight', 'alignDepth', 'alignItems']
+
       for key, i in order
-        id = "spread.#{key}"
-        spread = @_get id
+        spread = @_get "spread.#{key}"
+        anchor = @_get "spread.#{align[i]}"
 
         factor = 0
         if spread?

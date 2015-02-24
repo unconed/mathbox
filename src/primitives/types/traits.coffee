@@ -22,18 +22,6 @@ Traits =
     zFactor:           Types.number(0)
     zUnits:            Types.number(0)
 
-  overlay:
-    opacity:           Types.number(1)
-  html:
-    element:           Types.select()
-  label:
-    indexing:          Types.indexing()
-    offset:            Types.vec2(0, -20)
-    snap:              Types.bool(true)
-    source:            Types.select()
-    data:              Types.nullable(Types.object())
-    expression:        Types.nullable(Types.func())
-
   point:
     size:              Types.number(.01)
     shape:             Types.shape()
@@ -148,6 +136,21 @@ Traits =
     bufferHeight:      Types.int(1)
     bufferDepth:       Types.int(1)
 
+  text:
+    font:              Types.string()
+    outline:           Types.number(0)
+  label:
+    points:            Types.select()
+    text:              Types.select()
+    colors:            Types.nullable(Types.select())
+    offset:            Types.vec2(0, -20)
+    snap:              Types.bool(true)
+    alignItems:        Types.anchor()
+    alignWidth:        Types.anchor()
+    alignHeight:       Types.anchor()
+    alignDepth:        Types.anchor()
+    outlineColor:      Types.color(1, 1, 1)
+
   texture:
     minFilter:         Types.filter('nearest')
     magFilter:         Types.filter('nearest')
@@ -160,7 +163,10 @@ Traits =
     width:             Types.nullable(Types.vec4())
     height:            Types.nullable(Types.vec4())
     depth:             Types.nullable(Types.vec4())
-    anchor:            Types.number(0)
+    alignItems:        Types.anchor()
+    alignWidth:        Types.anchor()
+    alignHeight:       Types.anchor()
+    alignDepth:        Types.anchor()
   split:
     order:             Types.transpose('wxyz')
     axis:              Types.axis()
@@ -194,6 +200,20 @@ Traits =
     width:             Types.nullable(Types.int())
     height:            Types.nullable(Types.int())
     depth:             Types.nullable(Types.int())
+  readback:
+    indexed:           Types.bool()
+
+  overlay:
+    opacity:           Types.number(1)
+  html:
+    element:           Types.select()
+  div:
+    attributes:        Types.nullable(Types.object())
+    data:              Types.nullable(Types.object())
+    expression:        Types.nullable(Types.func())
+    indexing:          Types.indexing()
+    offset:            Types.vec2(0, -20)
+    snap:              Types.bool(true)
 
   root:
     camera:            Types.nullable(Types.select())

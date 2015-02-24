@@ -10,6 +10,8 @@ class Face extends Base
     shaded   = options.shaded ? true
     color    = options.color
 
+    hasStyle = uniforms.styleColor?
+
     @geometry = new FaceGeometry
       items:  options.items
       width:  options.width
@@ -33,14 +35,14 @@ class Face extends Base
     v.pipe 'project.position',       @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',            @uniforms if !shaded
-    f.pipe 'style.color.shaded',     @uniforms if  shaded
-    f.pipe 'mesh.fragment.color',    @uniforms if  color
+    f.pipe 'style.color',            @uniforms if !shaded && hasStyle
+    f.pipe 'style.color.shaded',     @uniforms if  shaded && hasStyle
+    f.pipe 'mesh.fragment.blend',    @uniforms if color   && hasStyle
+    f.pipe 'mesh.fragment.color',    @uniforms if color   && !hasStyle
     f.pipe 'fragment.color',         @uniforms
 
     @material = @_material factory.link
       side: THREE.DoubleSide
-      defaultAttributeValues: null
       index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material

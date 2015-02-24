@@ -5,7 +5,6 @@ class Lerp extends Operator
 
   indexShader: (shader) ->
     shader.pipe @indexer
-    super
 
   sourceShader: (shader) ->
     shader.pipe @operator

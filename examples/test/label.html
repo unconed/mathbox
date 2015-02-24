@@ -10,7 +10,7 @@
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor'],
+      plugins: ['core', 'controls', 'cursor', 'stats'],
       controls: {
         klass: THREE.OrbitControls
       },
@@ -21,7 +21,7 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(-2, -0.03, -0.02);
+    three.camera.position.set(2, 0.2, 3);
     three.camera.lookAt(new THREE.Vector3())
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
@@ -36,23 +36,24 @@
     });
 
     view.axis({
+      zIndex: -10,
     });
 
     view.axis({
       axis: 2,
+      zIndex: -10,
     });
 
     view.grid({
       divideX: 30,
       width: 0.01,
       opacity: 0.5,
-      zIndex: -5,
+      zIndex: -10,
     });
 
     view.interval({
-      id: 'sampler',
-      length: 8,
-      expression: function (x, i, emit) {
+      length: 4,
+      expression: function (emit, x, i) {
         y = Math.sin(x + time) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
       },
@@ -66,44 +67,33 @@
       height: [0, 0, .3, 0],
     });
 
-    view.point({
-      color: 0x3090FF,
-      size: 0.04,
-    });
-    view.label({
-      //data:        Types.nullable(Types.object())
-      expression: function (i, j, k, l, x, y, z, w, emit) {
-        emit([i, j, k, l].join(','));
-      },
-      indexing: 'final'
-    });
-
-    view.resample({
-      shader: [
-        "vec4 getSample(vec4 xyzw);",
-        "vec4 ripple(vec4 xyzw) {",
-        "  vec4 pos = getSample(xyzw);",
-        "  return pos + sin(pos * 2.0 + xyzw.zyxw * 4.0) * .25;",
-        "}"
-      ].join("\n")
-    });
-
-    view.transform({
-      position: [0, 1, 0],
+    view
+    .transform({
+      position: [0, .5, 0],
     })
     .point({
-      color: 0xFF9030,
+      color: 0x3090FF,
       size: 0.04,
     })
-    .label({
-      //data:        Types.nullable(Types.object())
-      expression: function (i, j, k, l, x, y, z, w, emit) {
-        emit([i, j, k, l].join(','));
-      },
-      indexing: 'original'
-    });
 
-    //mathbox.select('label')[0].controller.readback.floatCompose.material.fragmentGraph.inspect()
+    .text({
+      width:  5,
+      height: 5,
+      expression: function (emit, i, j) {
+        emit('Hello World');
+        /*
+        emit(
+          Math.floor(time / 2)
+           + String.fromCharCode(Math.random() * 26 + 65)
+           + String.fromCharCode(Math.random() * 15 + 0x80ac + Math.floor(time * 10))
+        );
+        */
+      },
+    })
+    .label({
+      color: 0x000090,
+      snap: false
+    });
 
   </script>
 </body>

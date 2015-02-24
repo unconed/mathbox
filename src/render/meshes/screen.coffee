@@ -7,7 +7,8 @@ class Screen extends Base
     super renderer, shaders, options
 
     uniforms = options.uniforms ? {}
-    fragment = options.fragment
+    map      = options.map
+    combine  = options.combine
 
     hasStyle = uniforms.styleColor?
 
@@ -29,16 +30,16 @@ class Screen extends Base
     v.join()
 
     f = factory.fragment
-    f.require options.fragment
+    f.require options.map
     f.pipe    'stpq.sample.2d'
     if hasStyle
       f.pipe  'style.color',        @uniforms
-      f.pipe  Util.GLSL.binaryOperator 'vec4', '*'
+      f.pipe  combine                               if combine
+      f.pipe  Util.GLSL.binaryOperator 'vec4', '*'  if !combine
     f.pipe    'fragment.color'
 
     @material = @_material factory.link
       side: THREE.DoubleSide
-      defaultAttributeValues: null
       index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material

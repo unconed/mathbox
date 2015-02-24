@@ -26,8 +26,8 @@ linear = (min, max, n, unit, base, inclusive, bias) ->
 
   # Make derived steps at sensible factors.
   factors =
-            if base % 2 == 0 then [base / 2, 1, 1/2]
-            else if base % 3 == 0 then [base / 3, 1, 1/3]
+            if base % 2 == 0 then [base / 2, 1, 1 / 2]
+            else if base % 3 == 0 then [base / 3, 1, 1 / 3]
             else                       [1]
   steps = (ref * factor for factor in factors)
 
@@ -35,7 +35,7 @@ linear = (min, max, n, unit, base, inclusive, bias) ->
   distance = Infinity
   step = steps.reduce (ref, step) ->
     f = step / ideal
-    d = Math.max(f, 1/f)
+    d = Math.max(f, 1 / f)
 
     if d < distance
       distance = d

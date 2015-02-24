@@ -11,6 +11,10 @@ class Compose extends Primitive
   init: () ->
     @compose = null
 
+  rebuild: () ->
+    console.log 'compose.rebuild', @node.get(null, true), @bind.source?
+    super
+
   resize: () ->
     return unless @compose and @bind.source
 
@@ -24,8 +28,9 @@ class Compose extends Primitive
 
   make: () ->
     # Bind to attached data sources
-    @_helpers.bind.make
-      'operator.source': 'source'
+    @_helpers.bind.make [
+      { to: 'operator.source', trait: 'source' }
+    ]
 
     return unless @bind.source?
 
@@ -52,7 +57,7 @@ class Compose extends Primitive
     # Make screen renderable
     composeUniforms = @_helpers.style.uniforms()
     @compose = @_renderables.make 'screen',
-                 fragment: fragment
+                 map: fragment
                  uniforms: composeUniforms
 
     @_helpers.object.make [@compose]

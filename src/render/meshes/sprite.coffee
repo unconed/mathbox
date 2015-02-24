@@ -7,15 +7,12 @@ class Sprite extends Base
 
     uniforms = options.uniforms ? {}
     position = options.position
+    sprite   = options.sprite
+    map      = options.map
+    combine  = options.combine
     color    = options.color
-    shape    = +options.shape   ? 0
-    fill     = options.fill ? true
 
-    shapes   = ['circle', 'square', 'diamond', 'triangle']
-    passes   = ['circle', 'generic', 'generic', 'generic']
-    mask     = shapes[shape] ? shapes[0]
-    pass     = passes[shape] ? passes[0]
-    alpha    = if fill then pass else "#{pass}.hollow"
+    hasStyle = uniforms.styleColor?
 
     @geometry = new SpriteGeometry
       items:  options.items
@@ -27,62 +24,45 @@ class Sprite extends Base
     @_adopt @geometry.uniforms
 
     # Shared vertex shader
-    v = shaders.shader()
+    factory = shaders.material()
+    v = factory.vertex
     if color
       v.require color
       v.pipe 'mesh.vertex.color',   @uniforms
     v.require position if position
+    v.require sprite   if sprite
     v.pipe 'sprite.position',       @uniforms
     v.pipe 'project.position',      @uniforms
 
-    # Split fragment into edge and fill pass for better z layering
-    edgeFactory = shaders.material()
-    edgeFactory.vertex.pipe v
+    blend = color || hasStyle
 
-    f = edgeFactory.fragment
-    f.pipe 'style.color',              @uniforms
-    f.pipe 'mesh.fragment.color',      @uniforms if color
-    f.require "sprite.mask.#{mask}",   @uniforms
-    f.require "sprite.alpha.#{alpha}", @uniforms
-    f.pipe 'sprite.edge',              @uniforms
+    f = factory.fragment
+    f.split()                                       if blend
+    f  .require map
+    f  .pipe 'sprite.fragment',        @uniforms 
+    f.next()                                        if blend
+    f  .pipe 'style.color',            @uniforms    if hasStyle
+    f  .pipe 'mesh.fragment.blend',    @uniforms    if color && hasStyle
+    f  .pipe 'mesh.fragment.color',    @uniforms    if color && !hasStyle
+    f.join()                                        if blend
+    f.pipe combine                                  if combine
+    f.pipe Util.GLSL.binaryOperator 'vec4', '*'     if !combine
+    f.pipe 'fragment.color',           @uniforms
 
-    fillFactory = shaders.material()
-    fillFactory.vertex.pipe v
-
-    f = fillFactory.fragment
-    f.pipe 'style.color',              @uniforms
-    f.pipe 'mesh.fragment.color',      @uniforms if color
-    f.require "sprite.mask.#{mask}",   @uniforms
-    f.require "sprite.alpha.#{alpha}", @uniforms
-    f.pipe 'sprite.fill',              @uniforms
-
-    @edgeMaterial = @_material edgeFactory.link
+    @material = @_material factory.link
       side: THREE.DoubleSide
-      defaultAttributeValues: null
       index0AttributeName: "position4"
 
-    @fillMaterial = @_material fillFactory.link
-      side: THREE.DoubleSide
-      defaultAttributeValues: null
-      index0AttributeName: "position4"
+    @object = new THREE.Mesh @geometry, @material
 
-    @edgeObject = new THREE.Mesh @geometry, @edgeMaterial
-    @fillObject = new THREE.Mesh @geometry, @fillMaterial
+    @_raw @object
 
-    @_raw @edgeObject
-    @_raw @fillObject
-
-    @objects = [@edgeObject, @fillObject]
-
-  show: (transparent, blending, order, depth) ->
-    @_show @edgeObject, true,        blending, order, depth
-    @_show @fillObject, transparent, blending, order, depth
+    @objects = [@object]
 
   dispose: () ->
     @geometry.dispose()
-    @edgeMaterial.dispose()
-    @fillMaterial.dispose()
-    @objects = @edgeObject = @fillObject = @geometry = @material = null
+    @material.dispose()
+    @objects = @geometry = @material = null
     super
 
 module.exports = Sprite

@@ -35,11 +35,10 @@ class Area extends Matrix
     bX = spanX * inverseX
     bY = spanY * inverseY
 
-    callback = Util.Data.normalizeEmitter callback, 4
-    (i, j, emit) ->
+    (emit, i, j) ->
       x = aX + bX * i
       y = aY + bY * j
-      callback x, y, i, j, emit
+      callback emit, x, y, i, j
 
   make: () ->
     super

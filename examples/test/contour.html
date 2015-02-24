@@ -154,7 +154,7 @@
       centeredX: true,
       centeredY: true,
       centeredZ: true,
-      expression: function (x, y, z, i, j, k, emit) {
+      expression: function (emit, x, y, z, i, j, k) {
         x = x - d/2
         y = y - d/2
         z = z - d/2
@@ -206,7 +206,7 @@
       width:  33,
       height: 33,
       depth:  33,
-      expression: function (x, y, z, i, j, k, emit) {
+      expression: function (emit, x, y, z, i, j, k) {
         emit(pot(x, y, z));
       },
       dimensions: 1,

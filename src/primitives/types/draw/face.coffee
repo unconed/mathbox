@@ -12,30 +12,22 @@ class Face extends Primitive
   resize: () ->
     return unless @bind.points?
     dims = @bind.points.getActive()
-
-    items  = dims.items
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
+    {items, width, height, depth} = dims
 
     @face.geometry.clip width, height, depth, items if @face
     @line.geometry.clip items, width, height, depth if @line
 
   make: () ->
     # Bind to attached data sources
-    @_helpers.bind.make
-      'geometry.points': 'source'
-      'geometry.colors': 'source'
+    @_helpers.bind.make [
+      { to: 'geometry.points', trait: 'source' }
+      { to: 'geometry.colors', trait: 'source' }
+    ]
 
     return unless @bind.points?
 
-    # Build transform chain
-    position = @_shaders.shader()
-
-    # Fetch position
-    position = @bind.points.sourceShader position
-
-    # Transform position to view
+    # Fetch position and transform to view
+    position = @bind.points.sourceShader @_shaders.shader()
     position = @_helpers.position.pipeline position
 
     # Prepare bound uniforms
@@ -44,10 +36,7 @@ class Face extends Primitive
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
-    items   = dims.items
-    width   = dims.width
-    height  = dims.height
-    depth   = dims.depth
+    {items, width, height, depth} = dims
 
     # Get display properties
     outline = @_get 'face.outline'

@@ -27,7 +27,7 @@
     var m = new THREE.Vector3(0, rad, 0);
     var l = 0;
 
-    var expression = function (x, y, z, i, j, k, emit) {
+    var expression = function (emit, x, y, z, i, j, k) {
       // dipole magnetic field
       r.set(x, y, z);
       l = r.length();
@@ -157,7 +157,7 @@
 
     view.array({
       length: 1,
-      expression: function (i, emit) {
+      expression: function (emit, i) {
         emit(0, 0, 0);
         emit(m.x / 2000, m.y / 2000, m.z / 2000);
       },

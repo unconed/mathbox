@@ -109,7 +109,7 @@
       axis: 'z',
       length: 512,
       history: 64,
-      expression: function (x, i, emit) {
+      expression: function (emit, x, i) {
         j = Math.floor(i/2);
         theta = scrub * (1 + Math.sin(j * j * j + j) * .5) * 4;
         rad = Math.sin(j * 12 + j * j) * .5 + Math.sin((j * .018 + 1 + Math.sin(j) * .3) * time);

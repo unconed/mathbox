@@ -1,41 +1,22 @@
-Buffer      = require './buffer'
-DataTexture = require './texture/datatexture'
+DataBuffer  = require './databuffer'
 Util        = require '../../util'
 
-class ArrayBuffer_ extends Buffer
+class ArrayBuffer_ extends DataBuffer
   constructor: (renderer, shaders, options) ->
-    @callback = options.callback || ->
     @length   = options.length   || 1
     @history  = options.history  || 1
 
-    @samples = @length
+    options.width  = @length
+    options.height = @history
+    options.depth  = 1
     super renderer, shaders, options
-
-  shader: (shader) ->
-    if @items > 1
-      shader.pipe 'map.xyzw.texture', @uniforms
-    else
-      shader.pipe Util.GLSL.truncateVec 4, 2
-    super shader
 
   build: (options) ->
     super
 
-    @data     = new Float32Array @samples * @channels * @items
-    @texture  = new DataTexture  @gl, @samples * @items, @history, @channels, options
     @index    = 0
-    @filled   = 0
     @pad      = 0
     @streamer = @generate @data
-
-    @dataPointer = @uniforms.dataPointer.value
-
-    @_adopt @texture.uniforms
-    @_adopt
-      textureItems:  { type: 'f', value: @items }
-      textureHeight: { type: 'f', value: 1 }
-
-  getFilled: () -> @filled
 
   setActive: (i) -> @pad = @length - i
 
@@ -49,7 +30,7 @@ class ArrayBuffer_ extends Buffer
     limit = @samples - @pad
 
     i = 0
-    while !done() && i < limit && callback(i++, emit) != false
+    while !done() && i < limit && callback(emit, i++) != false
       true
 
     Math.floor count() / @items

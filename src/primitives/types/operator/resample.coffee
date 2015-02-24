@@ -4,8 +4,12 @@ Util     = require '../../../util'
 class Resample extends Operator
   @traits = ['node', 'bind', 'operator', 'source', 'index', 'resample', 'sampler']
 
-  indexShader:  (shader) -> shader.pipe @indexer
-  sourceShader: (shader) -> shader.pipe @operator
+  indexShader:  (shader) ->
+    shader.pipe @indexer
+    super shader
+
+  sourceShader: (shader) ->
+    shader.pipe @operator
 
   getDimensions: () ->
     @_resample @bind.source.getDimensions()

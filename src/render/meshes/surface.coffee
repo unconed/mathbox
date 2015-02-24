@@ -10,6 +10,8 @@ class Surface extends Base
     color    = options.color
     shaded   = options.shaded ? true
 
+    hasStyle = uniforms.styleColor?
+
     @geometry = new SurfaceGeometry
       width:    options.width
       height:   options.height
@@ -31,14 +33,14 @@ class Surface extends Base
     v.pipe 'project.position',          @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',               @uniforms if !shaded
-    f.pipe 'style.color.shaded',        @uniforms if  shaded
-    f.pipe 'mesh.fragment.color',       @uniforms if  color
-    f.pipe 'fragment.color',            @uniforms
+    f.pipe 'style.color',            @uniforms if !shaded && hasStyle
+    f.pipe 'style.color.shaded',     @uniforms if  shaded && hasStyle
+    f.pipe 'mesh.fragment.blend',    @uniforms if color   && hasStyle
+    f.pipe 'mesh.fragment.color',    @uniforms if color   && !hasStyle
+    f.pipe 'fragment.color',         @uniforms
 
     @material = @_material factory.link
       side: THREE.DoubleSide
-      defaultAttributeValues: null
       index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material

@@ -1,4 +1,4 @@
-Overlay = require './overlay'
+Primitive = require './primitive'
 
 class HTML extends Overlay
   @traits = ['node', 'overlay', 'html']

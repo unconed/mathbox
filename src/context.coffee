@@ -1,5 +1,5 @@
-Overlay    = require './overlay'
 Model      = require './model'
+Overlay    = require './overlay'
 Primitives = require './primitives'
 Render     = require './render'
 Shaders    = require './shaders'
@@ -8,13 +8,7 @@ Util       = require './util'
 
 class Context
   # Export for extending
-  @Namespace =
-    Model:      Model
-    Stage:      Stage
-    Render:     Render
-    Shaders:    Shaders
-    Primitives: Primitives
-    Util:       Util
+  @Namespace = { Model, Overlay, Primitives, Render, Shaders, Stage, Util, DOM: Overlay.Classes.dom }
 
   # Set up entire environment
   constructor: (renderer, scene = null, camera = null, script = []) ->
@@ -24,15 +18,17 @@ class Context
     @element     = element = canvas.parentNode
 
     # Rendering factory
-    @shaders     = new Shaders.Factory              Shaders.Snippets
-    @renderables = new Render .Factory    renderer, Render .Classes, @shaders
-    @overlays    = new Overlay.Factory    element,  canvas, Overlay.Classes
+    @shaders     = new Shaders.Factory    Shaders.Snippets                   
+    @renderables = new Render .Factory    Render .Classes, renderer, @shaders
+    @overlays    = new Overlay.Factory    Overlay.Classes, element,  canvas
+
     @scene       = @renderables.make      'scene',  scene: scene
     @camera      = @renderables.make      'camera', camera: camera
 
     # Primitives factory
     @attributes  = new Model.Attributes   Primitives.Types
     @primitives  = new Primitives.Factory Primitives.Types, @
+
     @root        = @primitives.make       'root'
 
     # Document model

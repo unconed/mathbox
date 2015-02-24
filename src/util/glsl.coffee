@@ -81,6 +81,8 @@ exports.binaryOperator = (type, op, curry) ->
 
 # Extend to n-vector with zeroes
 exports.extendVec = (from, to, value = 0) ->
+  return exports.truncateVec from, to if from > to
+
   diff = to - from
 
   from = toType from
@@ -97,12 +99,12 @@ exports.extendVec = (from, to, value = 0) ->
 
 # Truncate n-vector
 exports.truncateVec = (from, to) ->
+  return exports.extendVec from, to if from < to
+
   swizzle = '.' + ('xyzw'.substr 0, to)
 
-  from = 'vec' + from
-  to   = 'vec' + to
-
-  to = 'float' if to == 'vec1'
+  from = toType from
+  to   = toType to
 
   """
   #{to} truncateVec(#{from} v) { return v#{swizzle}; }

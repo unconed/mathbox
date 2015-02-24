@@ -65,9 +65,11 @@ class RTT extends Root
     # Notify of buffer reallocation
     @trigger
       type: 'source.rebuild'
-    @trigger
-      type: 'root.resize'
-      size: @size
+
+    if @size
+      @trigger
+        type: 'root.resize'
+        size: @size
 
   unmake: (rebuild) ->
     @parentRoot.off 'root.update', @updateHandler
@@ -94,7 +96,13 @@ class RTT extends Root
 
   resize: (size) ->
     @size = size
-    @rebuild()
+    
+    width  = @_get 'rtt.width'
+    height = @_get 'rtt.height'
+    
+    return @rebuild() if !width? or !height?
+    @trigger
+      type: 'source.resize'    
 
   # End transform chain here
   transform: (shader, pass) ->

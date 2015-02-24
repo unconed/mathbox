@@ -5,7 +5,7 @@ class Swizzle extends Operator
   @traits = ['node', 'bind', 'operator', 'source', 'index', 'swizzle']
 
   sourceShader: (shader) ->
-    super
+    shader = super shader
     shader.pipe @swizzler if @swizzler
     shader
 

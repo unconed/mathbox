@@ -16,15 +16,18 @@ class Operator extends Source
     super
 
     # Bind to attached data sources
-    @_helpers.bind.make
-      'operator.source': 'source'
+    @_helpers.bind.make [
+      { to: 'operator.source', trait: 'source' }
+    ]
 
-  made: () -> @resize()
+  made: () ->
+    @resize()
+    super
 
   unmake: () ->
     @_helpers.bind.unmake()
 
-  resize: () ->
+  resize: (rebuild) ->
     @trigger
       type: 'source.resize'
 

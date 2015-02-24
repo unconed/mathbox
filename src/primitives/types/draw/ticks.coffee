@@ -15,7 +15,7 @@ class Ticks extends Primitive
     @resolution = samples = @_helpers.scale.divide ''
 
     @buffer = @_renderables.make 'dataBuffer',
-              samples:  samples
+              width:    samples
               channels: 1
 
     # Prepare position shader
@@ -32,7 +32,7 @@ class Ticks extends Primitive
     # Require view transform as callback
     p.require @_helpers.position.pipeline @_shaders.shader()
     # Require buffer sampler as callback
-    p.require @buffer.shader @_shaders.shader()
+    p.require @buffer.shader @_shaders.shader(), 1
     # Link to tick shader
     p.pipe 'ticks.position', positionUniforms
 

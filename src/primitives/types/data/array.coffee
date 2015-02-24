@@ -5,7 +5,7 @@ class Array_ extends Data
   @traits = ['node', 'data', 'source', 'array', 'texture']
 
   init: () ->
-    @buffer = @spec = @emitter = null
+    @buffer = @spec = null
     @filled = false
 
     @space =
@@ -14,6 +14,8 @@ class Array_ extends Data
 
     @used =
       length:  0
+    
+    super
 
   sourceShader: (shader) ->
     @buffer.shader shader
@@ -49,10 +51,7 @@ class Array_ extends Data
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
-    dims = @spec =
-      channels: channels
-      items:    items
-      width:    length
+    dims = @spec = {channels, items, width: length}
 
     @items    = dims.items
     @channels = dims.channels
@@ -65,6 +64,8 @@ class Array_ extends Data
     space.length  = Math.max reserve, dims.width || 1
     space.history = history
 
+    @spec.width  ?= 1
+
     # Create array buffer
     @buffer = @_renderables.make 'arrayBuffer',
               length:    space.length
@@ -75,21 +76,17 @@ class Array_ extends Data
               magFilter: magFilter
               type:      type
 
-    # Create data thunk to copy (multi-)array if bound to one
-    if data?
-      thunk    = Util.Data.getThunk    data
-      @emitter = Util.Data.makeEmitter thunk, items, channels, 1
-
   unmake: () ->
     super
     if @buffer
       @buffer.dispose()
-      @buffer = @spec = @emitter = null
+      @buffer = @spec = null
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
                          changed['array.history'] or
                          changed['data.dimensions'] or
+                         changed['data.items'] or
                          changed['array.bufferLength']
 
     return unless @buffer
@@ -102,13 +99,9 @@ class Array_ extends Data
        changed['data.data'] or
        init
 
-      emitter = @emitter
-      data = @_get 'data.data'
-      if !data?
-        emitter = @callback @_get 'data.expression'
-      @buffer.setCallback emitter
+      @buffer.setCallback @emitter()
 
-  callback: (callback) -> Util.Data.normalizeEmitter emitter, 1
+  callback: (callback) -> callback
 
   update: () ->
     return unless @buffer

@@ -1,24 +1,23 @@
-uniform float pointSize;
-uniform float renderScale;
+uniform float renderInvScale;
 
 attribute vec4 position4;
 attribute vec2 sprite;
 
 varying vec2 vSprite;
-varying float vPixelSize;
 
 // External
 vec3 getPosition(vec4 xyzw);
+vec4 getSprite(vec4 xyzw);
 
-vec3 getPointPosition() {
+vec3 getSpritePosition() {
   vec3 center = getPosition(position4);
+  vec4 offset = getSprite(position4);
 
-  float pixelSize = renderScale * pointSize / -center.z;
-  float paddedSize = pixelSize + 0.5;
-  float padFactor = paddedSize / pixelSize;
+  vec2 halfSprite = sprite * .5;
 
-  vPixelSize = paddedSize;
-  vSprite    = sprite;
+  offset.zw -= 1.0;
+  vSprite = offset.xy + offset.zw * (halfSprite + .5);
+  halfSprite.y = -halfSprite.y;
 
-  return center + vec3(sprite * pointSize * padFactor, 0.0);
+  return center + vec3(halfSprite * offset.zw * renderInvScale, 0.0);
 }

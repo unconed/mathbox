@@ -8,6 +8,7 @@ Classes =
   surface:           require './draw/surface'
   ticks:             require './draw/ticks'
   vector:            require './draw/vector'
+  label:             require './draw/label'
 
   view:              require './view/view'
   cartesian:         require './view/cartesian'
@@ -23,12 +24,11 @@ Classes =
 
   array:             require './data/array'
   interval:          require './data/interval'
-
   matrix:            require './data/matrix'
   area:              require './data/area'
-
   voxel:             require './data/voxel'
   volume:            require './data/volume'
+  text:              require './data/text'
 
   join:              require './operator/join'
   lerp:              require './operator/lerp'
@@ -46,6 +46,6 @@ Classes =
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
 
-  label:             require './overlay/label'
+  div:               require './overlay/div'
 
 module.exports = Classes

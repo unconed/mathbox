@@ -43,7 +43,7 @@ class DataTexture
     # Make wrapper texture object.
     @textureObject = new THREE.Texture(
       new Image(),
-      new THREE.UVMapping(),
+      THREE.UVMapping,
       THREE.ClampToEdgeWrapping,
       THREE.ClampToEdgeWrapping,
       THREE.NearestFilter,

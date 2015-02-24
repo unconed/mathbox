@@ -6,10 +6,11 @@
   bottom: 0;
   pointer-events: none;
   transform-style: preserve-3d;
+  overflow: hidden;
 }
 .mathbox-overlay > div {
   position: absolute;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 .mathbox-label {
   font-family: sans-serif;

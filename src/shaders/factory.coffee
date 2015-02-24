@@ -1,4 +1,4 @@
-#ShaderGraph = require '../../vendor/shadergraph'
+ShaderGraph = require '../../vendor/shadergraph/src'
 
 Factory = (snippets) ->
   fetch = (name) ->

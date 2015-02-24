@@ -32,13 +32,13 @@ class Readback extends Renderable
     ###
 
   build: (options) ->
-    fragment  = options.fragment
+    map       = options.map
     indexer   = options.indexer
     isIndexed = indexer? and !indexer.empty()
 
     {items, width, height, depth} = @
 
-    sampler = fragment
+    sampler = map
     if indexer?
       # Preserve original xyzw offset of datapoint to tie it back to the source
 
@@ -47,7 +47,7 @@ class Readback extends Renderable
 
       # Build shader to pack XYZ + index into a single RGBA
       sampler = @shaders.shader()
-      sampler.require fragment
+      sampler.require map
       sampler.require indexer                   if  isIndexed
       sampler.require Util.GLSL.identity 'vec4' if !isIndexed
       sampler.pipe 'float.index.pack', @uniforms
@@ -64,7 +64,7 @@ class Readback extends Renderable
         type:      THREE.FloatType
 
       @floatCompose = new MemoScreen @renderer, @shaders,
-        fragment: sampler
+        map:      sampler
         items:    items
         width:    width
         height:   height
@@ -113,7 +113,7 @@ class Readback extends Renderable
       type:      THREE.UnsignedByteType
 
     @byteCompose = new MemoScreen @renderer, @shaders,
-      fragment: sampler
+      map:      sampler
       items:    items * stretch
       width:    width
       height:   height
@@ -179,6 +179,8 @@ class Readback extends Renderable
     @floatMemo?.render camera
     @byteMemo ?.render camera
 
+  post: () ->
+    @renderer.setRenderTarget @byteMemo.target.write
     @gl.readPixels 0, 0, @rect.w, @rect.h, gl.RGBA, gl.UNSIGNED_BYTE, @bytes
 
   readFloat: (n) -> @floatMemo?.read n
@@ -188,6 +190,8 @@ class Readback extends Renderable
     @emitter = @callback callback
 
   callback: (callback) ->
+    return callback unless @isIndexed
+
     n = @width
     m = @height
     o = @depth
@@ -195,18 +199,16 @@ class Readback extends Renderable
 
     # Decode packed index
     f = (x, y, z, w) ->
-      index = w
+      idx = w
+      ll  = (idx % p)
+      idx = ((idx - ll) / p)
+      ii  = (idx % n)
+      idx = ((idx - ii) / n)
+      jj  = (idx % m)
+      idx = ((idx - jj) / m)
+      kk  = idx
 
-      w  = w
-      ll = (w % p)
-      w  = ((w - ll) / p)
-      ii = (w % n)
-      w  = ((w - ii) / n)
-      jj = (w % m)
-      w  = ((w - jj) / m)
-      kk = w
-
-      callback ii, jj, kk, ll, x, y, z, w, index
+      callback x, y, z, w, ii, jj, kk, ll
 
     f.reset = () -> callback.reset?()
     f
@@ -227,6 +229,10 @@ class Readback extends Renderable
     padZ  = @pad.z          |0
     padW  = @pad.w          |0
     limit = n * m * p * (o - padZ)
+
+    if !@isIndexed
+      callback = emit
+      emit = (x, y, z, w) -> callback x, y, z, w, i, j, k, l
 
     i = j = k = l = m = 0
     while !done() && m < limit

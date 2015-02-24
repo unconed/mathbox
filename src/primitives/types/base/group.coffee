@@ -1,7 +1,7 @@
 Parent = require './parent'
 
 class Group extends Parent
-  @traits = ['node', 'object', 'entity']
+  @traits = ['node', 'object', 'entity', 'group']
 
   make: () ->
     @_helpers.object.make()

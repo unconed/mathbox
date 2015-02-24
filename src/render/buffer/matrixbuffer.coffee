@@ -1,40 +1,19 @@
-Buffer      = require './buffer'
-DataTexture = require './texture/datatexture'
+DataBuffer  = require './databuffer'
 Util        = require '../../util'
 
-class MatrixBuffer extends Buffer
+class MatrixBuffer extends DataBuffer
   constructor: (renderer, shaders, options) ->
-    @callback = options.callback || ->
-    @width    = options.width    || 1
-    @height   = options.height   || 1
     @history  = options.history  || 1
 
-    @samples = @width * @height
+    options.depth = @history
     super renderer, shaders, options
-
-  shader: (shader) ->
-    if @items > 1 or @history > 1
-      shader.pipe 'map.xyzw.texture', @uniforms
-    else
-      shader.pipe Util.GLSL.truncateVec 4, 2
-    super shader
 
   build: (options) ->
     super
 
-    @data     = new Float32Array @samples * @items * @channels
-    @texture  = new DataTexture  @gl, @width * @items, @height * @history, @channels, options
     @index    = 0
-    @filled   = 0
     @pad      = {x: 0,  y: 0}
     @streamer = @generate @data
-
-    @dataPointer = @uniforms.dataPointer.value
-
-    @_adopt @texture.uniforms
-    @_adopt
-      textureItems:  { type: 'f', value: @items }
-      textureHeight: { type: 'f', value: @height }
 
   getFilled: () -> @filled
 
@@ -52,15 +31,25 @@ class MatrixBuffer extends Buffer
     limit = @samples - @pad.y * n
 
     i = j = k = 0
-    while !done() && k < limit
-      k++
-      repeat = callback(i, j, emit)
-      if ++i == n - pad
-        skip pad
-        i = 0
-        j++
-      if repeat == false
-        break
+    if pad
+      while !done() && k < limit
+        k++
+        repeat = callback emit, i, j
+        if ++i == n - pad
+          skip pad
+          i = 0
+          j++
+        if repeat == false
+          break
+    else
+      while !done() && k < limit
+        k++
+        repeat = callback emit, i, j
+        if ++i == n
+          i = 0
+          j++
+        if repeat == false
+          break
 
     Math.floor count() / @items
 

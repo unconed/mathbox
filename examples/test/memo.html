@@ -34,7 +34,7 @@
       length: 16,
       history: 16,
       range: [0, 1],
-      expression: function (x, i, emit) {
+      expression: function (emit, x, i) {
         var j = three.Time.frames;
         var y = Math.sin(three.Time.frames * .1) * .5 + .5;
         emit(x + y, i%2, Math.cos(y)*.5+.5);

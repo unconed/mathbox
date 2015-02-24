@@ -1,5 +1,5 @@
 class OverlayFactory
-  constructor: (@element, @canvas, @classes) ->
+  constructor: (@classes, @element, @canvas) ->
     div = document.createElement 'div'
     div.classList.add 'mathbox-overlays'
     @div = div

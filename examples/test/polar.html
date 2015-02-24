@@ -60,7 +60,7 @@
     view.interval({
       id: 'sampler',
       length: 128,
-      expression: function (x, i, emit) {
+      expression: function (emit, x, i) {
         emit(x, .5 + .5 * Math.sin(x + time));
       },
       dimensions: 2,

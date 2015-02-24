@@ -1,5 +1,5 @@
 class RenderFactory
-  constructor: (@renderer, @classes, @shaders) ->
+  constructor: (@classes, @renderer, @shaders) ->
 
   getTypes: () ->
     Object.keys @classes

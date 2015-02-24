@@ -13,18 +13,16 @@ class Point extends Primitive
     return unless @bind.points?
 
     dims = @bind.points.getActive()
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
-    items  = dims.items
+    {items, width, height, depth} = dims
 
     @point.geometry.clip width, height, depth, items
 
   make: () ->
     # Bind to attached data sources
-    @_helpers.bind.make
-      'geometry.points': 'source'
-      'geometry.colors': 'source'
+    @_helpers.bind.make [
+      { to: 'geometry.points', trait: 'source' }
+      { to: 'geometry.colors', trait: 'source' }
+    ]
 
     return unless @bind.points?
 
@@ -40,10 +38,7 @@ class Point extends Primitive
 
     # Fetch geometry dimensions
     dims   = @bind.points.getDimensions()
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
-    items  = dims.items
+    {items, width, height, depth} = dims
 
     # Prepare bound uniforms
     styleUniforms  = @_helpers.style.uniforms()
@@ -55,13 +50,13 @@ class Point extends Primitive
       color = @_shaders.shader()
       @bind.colors.sourceShader color
 
-    # Sprite style
+    # Point style
     shape  = @_get 'point.shape'
     fill   = @_get 'point.fill'
 
-    # Make sprite renderable
+    # Make point renderable
     uniforms = Util.JS.merge renderUniforms, pointUniforms, styleUniforms
-    @point = @_renderables.make 'sprite',
+    @point = @_renderables.make 'point',
               uniforms: uniforms
               width:    width
               height:   height

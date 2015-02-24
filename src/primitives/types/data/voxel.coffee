@@ -5,7 +5,7 @@ class Voxel extends Data
   @traits = ['node', 'data', 'source', 'texture', 'voxel']
 
   init: () ->
-    @buffer = @spec = @emitter = null
+    @buffer = @spec = null
     @filled = false
 
     @space =
@@ -17,6 +17,8 @@ class Voxel extends Data
       width:  0
       height: 0
       depth:  0
+    
+    super
 
   sourceShader: (shader) ->
     @buffer.shader shader
@@ -55,12 +57,7 @@ class Voxel extends Data
     channels = @_get 'data.dimensions'
     items    = @_get 'data.items'
 
-    dims = @spec =
-      channels: channels
-      items:    items
-      width:    width
-      height:   height
-      depth:    depth
+    dims = @spec = {channels, items, width, height, depth}
 
     @items    = dims.items
     @channels = dims.channels
@@ -74,6 +71,10 @@ class Voxel extends Data
     space.height = Math.max reserveY,  dims.height || 1
     space.depth  = Math.max reserveZ,  dims.depth  || 1
 
+    @spec.width  ?= 1
+    @spec.height ?= 1
+    @spec.depth  ?= 1
+
     # Create voxel buffer
     @buffer = @_renderables.make 'voxelBuffer',
               width:     space.width
@@ -85,20 +86,16 @@ class Voxel extends Data
               magFilter: magFilter
               type:      type
 
-    # Create data thunk to copy (multi-)array if bound to one
-    if data?
-      thunk    = Util.Data.getThunk    data
-      @emitter = Util.Data.makeEmitter thunk, items, channels, 3
-
   unmake: () ->
     super
     if @buffer
       @buffer.dispose()
-      @buffer = @spec = @emitter = null
+      @buffer = @spec = null
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
                          changed['data.dimensions'] or
+                         changed['data.items'] or
                          changed['voxel.bufferWidth'] or
                          changed['voxel.bufferHeight'] or
                          changed['voxel.bufferDepth']
@@ -121,13 +118,9 @@ class Voxel extends Data
        changed['data.data'] or
        init
 
-      emitter = @emitter
-      data = @_get 'data.data'
-      if !data?
-        emitter = @callback @_get 'data.expression'
-      @buffer.setCallback emitter
+      @buffer.setCallback @emitter()
 
-  callback: (callback) -> Util.Data.normalizeEmitter emitter, 3
+  callback: (callback) -> callback
 
   update: () ->
     return unless @buffer
@@ -167,6 +160,10 @@ class Voxel extends Data
       used.width  = _w = @spec.width
       used.height = _h = @spec.height
       used.depth  = Math.ceil length / _w / _h
+
+      if used.depth == 1
+        used.height = Math.ceil length / _w
+        used.width  = length if used.height == 1          
 
     @filled = true
 

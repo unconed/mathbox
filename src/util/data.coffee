@@ -48,7 +48,7 @@ exports.getDimensions = (data, spec = {}) ->
 
   dims
 
-exports.makeEmitter = (thunk, items, channels, indices) ->
+exports.makeEmitter = (thunk, items, channels) ->
   inner = switch channels
     when 0 then () -> true
     when 1 then (emit) -> emit thunk()
@@ -58,7 +58,7 @@ exports.makeEmitter = (thunk, items, channels, indices) ->
     when 6 then (emit) -> emit thunk(), thunk(), thunk(), thunk(), thunk(), thunk()
     when 8 then (emit) -> emit thunk(), thunk(), thunk(), thunk(), thunk(), thunk(), thunk(), thunk()
 
-  middle = switch items
+  outer = switch items
     when 0 then () -> true
     when 1 then (emit) ->
       inner emit
@@ -91,75 +91,10 @@ exports.makeEmitter = (thunk, items, channels, indices) ->
       inner emit
       inner emit
 
-  outer = switch indices
-    when 1 then (i, emit) ->                      middle emit
-    when 2 then (i, j, emit) ->                   middle emit
-    when 3 then (i, j, k, emit) ->                middle emit
-    when 4 then (i, j, k, l, emit) ->             middle emit
-    when 6 then (i, j, k, l, m, n, emit) ->       middle emit
-    when 8 then (i, j, k, l, m, n, o, p, emit) -> middle emit
-
   outer.reset  = thunk.reset
   outer.rebind = thunk.rebind
   outer
 
-exports.normalizeEmitter = (emitter, indices) ->
-  arity = emitter.length - 1
-  f = switch indices
-    when 1
-      switch arity
-        when 0 then (i, emit) -> emitter emit
-        when 1 then emitter
-        else   throw "Invalid expression signature: " + emitter
-    when 2
-      switch arity
-        when 0 then (i, j, emit) -> emitter emit
-        when 1 then (i, j, emit) -> emitter i, emit
-        when 2 then emitter
-        else   throw "Invalid expression signature: " + emitter
-    when 3
-      switch arity
-        when 0 then (i, j, k, emit) -> emitter emit
-        when 1 then (i, j, k, emit) -> emitter i, emit
-        when 2 then (i, j, k, emit) -> emitter i, j, emit
-        when 3 then emitter
-        else   throw "Invalid expression signature: " + emitter
-    when 4
-      switch arity
-        when 0 then (i, j, k, l, emit) -> emitter emit
-        when 1 then (i, j, k, l, emit) -> emitter i, emit
-        when 2 then (i, j, k, l, emit) -> emitter i, j, emit
-        when 3 then (i, j, k, l, emit) -> emitter i, j, k, emit
-        when 4 then emitter
-        else   throw "Invalid expression signature: " + emitter
-    when 6
-      switch arity
-        when 0 then (i, j, k, l, m, n, emit) -> emitter emit
-        when 1 then (i, j, k, l, m, n, emit) -> emitter i, emit
-        when 2 then (i, j, k, l, m, n, emit) -> emitter i, j, emit
-        when 3 then (i, j, k, l, m, n, emit) -> emitter i, j, k, emit
-        when 4 then (i, j, k, l, m, n, emit) -> emitter i, j, k, l, emit
-        when 5 then (i, j, k, l, m, n, emit) -> emitter i, j, k, l, m, emit
-        when 6 then emitter
-        else   throw "Invalid expression signature: " + emitter
-    when 8
-      switch arity
-        when 0 then (i, j, k, l, m, n, o, p, emit) -> emitter emit
-        when 1 then (i, j, k, l, m, n, o, p, emit) -> emitter i, emit
-        when 2 then (i, j, k, l, m, n, o, p, emit) -> emitter i, j, emit
-        when 3 then (i, j, k, l, m, n, o, p, emit) -> emitter i, j, k, emit
-        when 4 then (i, j, k, l, m, n, o, p, emit) -> emitter i, j, k, l, emit
-        when 5 then (i, j, k, l, m, n, o, p, emit) -> emitter i, j, k, l, m, emit
-        when 6 then (i, j, k, l, m, n, o, p, emit) -> emitter i, j, k, l, m, n, emit
-        when 7 then (i, j, k, l, m, n, o, p, emit) -> emitter i, j, k, l, m, n, o, emit
-        when 8 then emitter
-        else   throw "Invalid expression signature: " + emitter
-    else
-      throw "Invalid expression signature: " + emitter
-
-  f.reset  = emitter.reset
-  f.rebind = emitter.rebind
-  f
 
 exports.getThunk = (data) ->
   sizes = getSizes data

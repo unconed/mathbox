@@ -24,9 +24,10 @@ class Surface extends Primitive
 
   make: () ->
     # Bind to attached data sources
-    @_helpers.bind.make
-      'geometry.points': 'source'
-      'geometry.colors': 'source'
+    @_helpers.bind.make [
+      { to: 'geometry.points', trait: 'source' }
+      { to: 'geometry.colors', trait: 'source' }
+    ]
 
     return unless @bind.points?
 

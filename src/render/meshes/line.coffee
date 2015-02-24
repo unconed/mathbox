@@ -13,6 +13,8 @@ class Line extends Base
 
     stroke   = [null, 'dotted', 'dashed'][stroke]
 
+    hasStyle = uniforms.styleColor?
+
     @geometry = new LineGeometry
       samples: options.samples
       strips:  options.strips
@@ -40,13 +42,13 @@ class Line extends Base
     f = factory.fragment
     f.pipe "fragment.clip.#{stroke}", @uniforms if stroke
     f.pipe 'fragment.clip.ends',      @uniforms if clip
-    f.pipe 'style.color',             @uniforms
-    f.pipe 'mesh.fragment.color',     @uniforms if color
+    f.pipe 'style.color',             @uniforms if hasStyle
+    f.pipe 'mesh.fragment.blend',     @uniforms if color && hasStyle
+    f.pipe 'mesh.fragment.color',     @uniforms if color && !hasStyle
     f.pipe 'fragment.color',          @uniforms
 
     @material = @_material factory.link
       side: THREE.DoubleSide
-      defaultAttributeValues: null
       index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material

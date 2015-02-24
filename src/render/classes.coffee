@@ -1,5 +1,6 @@
 Classes =
   sprite:          require('./meshes/sprite')
+  point:           require('./meshes/point')
   line:            require('./meshes/line')
   surface:         require('./meshes/surface')
   face:            require('./meshes/face')
@@ -17,6 +18,8 @@ Classes =
   renderToTexture: require('./buffer/rendertotexture')
   memo:            require('./buffer/memo')
   readback:        require('./buffer/readback')
+  atlas:           require('./buffer/atlas')
+  textAtlas:       require('./buffer/textatlas')
 
   scene:           require('./scene')
   camera:          require('./camera')

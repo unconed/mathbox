@@ -55,7 +55,7 @@
       return t*.5-.5;
     };
 
-    hopf = function (ϕ, θ, γ, emit) {
+    hopf = function (emit, ϕ, θ, γ) {
       η  = θ / 2 + (Math.cos(ϕ * 2 + time) * skew + Math.cos(ϕ * fa)) * .15 * deform
       ξ1 = ϕ + Math.cos(γ * fb + time)*.25 * deform
       ξ2 = γ
@@ -84,10 +84,10 @@
       rangeY: [-π/2, π/2],
       width: 127,
       height: 63,
-      expression: function (x, y, i, j, emit) {
+      expression: function (emit, x, y, i, j) {
         ϕ = y
         θ = angle
-        hopf(ϕ, θ, x, emit);
+        hopf(emit, ϕ, θ, x);
       },
       dimensions: 4,
     });
@@ -104,10 +104,10 @@
       rangeY: [-.6, .6],
       width: 127,
       height: 63,
-      expression: function (x, y, i, j, emit) {
+      expression: function (emit, x, y, i, j) {
         ϕ = y + time
         θ = angle
-        hopf(ϕ, θ, x, emit);
+        hopf(emit, ϕ, θ, x);
       },
       dimensions: 4,
     });
@@ -125,10 +125,10 @@
       height: 16,
       centeredX: false,
       centeredY: true,
-      expression: function (x, y, i, j, emit) {
+      expression: function (emit, x, y, i, j) {
         ϕ = y
         θ = angle
-        hopf(ϕ, θ, x, emit);
+        hopf(emit, ϕ, θ, x);
       },
       dimensions: 4,
     });

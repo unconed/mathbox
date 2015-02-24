@@ -22,7 +22,7 @@ class Grid extends Primitive
 
       strips = @_helpers.scale.divide second
       buffer = @_renderables.make 'dataBuffer',
-               samples:  strips
+               width:    strips
                channels: 1
 
       # Prepare position shader
@@ -40,7 +40,7 @@ class Grid extends Primitive
       p = position = @_shaders.shader()
 
       # Require buffer sampler as callback
-      p.require buffer.shader @_shaders.shader()
+      p.require buffer.shader @_shaders.shader(), 2
 
       # Calculate grid position
       p.pipe 'grid.position', positionUniforms
@@ -79,7 +79,7 @@ class Grid extends Primitive
     lines = (axis.line for axis in @axes)
     @_helpers.object.make lines
     @_helpers.span.make()
-
+    
   unmake: () ->
     @_helpers.object.unmake()
     @_helpers.span.unmake()

@@ -1,8 +1,10 @@
-Overlay = require './overlay'
-Util    = require '../../../util'
+Primitive = require '../../primitive'
+Util      = require '../../../util'
 
-class Label extends Overlay
-  @traits = ['node', 'bind', 'overlay', 'label', 'position', 'renderScale']
+class Div extends Primitive
+  @traits = ['node', 'bind', 'overlay', 'div', 'object', 'label', 'position', 'renderScale']
+  @defaults =
+    'div.attributes': className: 'mathbox-label'
 
   init: () ->
     @emitter = @root = null
@@ -12,28 +14,26 @@ class Label extends Overlay
     super
 
     # Bind to attached objects
-    @_helpers.bind.make
-      'label.source': 'source'
+    @_helpers.bind.make [
+      { to: 'label.source', trait: 'source' }
+    ]
 
     return unless @bind.source?
 
-    # Labelling options
-    indexing = @_get 'label.indexing'
+    # Be aware of size changes
+    @_helpers.renderScale.make()
 
     # Listen for updates
     @root = @_inherit 'root'
     @_listen 'root', 'root.update', @update
+    @_listen 'root', 'root.post',   @post
 
     # Label properties
-    @offset = @node.attributes['label.offset']
-    @snap   = @node.attributes['label.snap']
+    indexing = @_get 'label.indexing'
 
     # Fetch geometry dimensions
     dims   = @bind.source.getDimensions()
-    items  = dims.items
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
+    {items, width, height, depth} = dims
 
     # Build shader to sample position data
     position = @bind.source.sourceShader @_shaders.shader()
@@ -53,7 +53,7 @@ class Label extends Overlay
 
     # Prepare memoization RTT
     @readback = @_renderables.make 'readback',
-                  fragment: position
+                  map:      position
                   indexer:  indexer
                   items:    items
                   width:    width
@@ -62,11 +62,8 @@ class Label extends Overlay
                   channels: 4,
 
     # Prepare DOM overlay
-    @dom = @_overlays.make 'dom',
-             items:    items
-             width:    width
-             height:   height
-             depth:    depth
+    @dom = @_overlays.make 'dom'
+    @dom.hint items * width * height * depth
 
     # DEBUG
     #window.dom = @dom
@@ -76,18 +73,12 @@ class Label extends Overlay
     #scene = @_inherit 'scene'
     #scene.adopt dbg
 
-    # Be aware of size changes
-    @_helpers.renderScale.make()
-
   unmake: () ->
     @_helpers.renderScale.unmake()
     @_helpers.bind.unmake()
 
     if @bind.source?
-      @memo.unadopt @compose
-      @memo.dispose()
-
-      @memo = @compose = null
+      @readback.dispose()
       @root = null
       @emitter = null
       @active = {}
@@ -96,9 +87,17 @@ class Label extends Overlay
     return unless @readback?
 
     @readback.update @root.getCamera()
-    @readback.iterate()
 
-    @dom.render @emitter.nodes()
+  post: () ->
+    return unless @readback?
+
+    @readback.post()
+
+    if @_get 'object.visible'
+      @readback.iterate()
+      @dom.render @emitter.nodes()
+    else
+      @dom.render []
 
   callback: (emitter) ->
     # Create static label DOM emitter for the readback
@@ -106,30 +105,48 @@ class Label extends Overlay
     width  = uniforms.renderWidth
     height = uniforms.renderHeight
 
-    offset = @offset.value
-    snap   = @snap
-    dom    = @dom
-    nodes  = []
+    attr    = @node.attributes['div.attributes']
+    opacity = @node.attributes['overlay.opacity']
+    offset  = @node.attributes['label.offset']
+    snap    = @node.attributes['label.snap']
+    el      = @dom.el
+    
+    nodes   = []
+    props   = null
 
-    f = (i, j, k, l, x, y, z, w, index) ->
-      emitter i, j, k, l, x, y, z, w, (label) ->
-        label = "" + label if label == +label
+    emit = (label) -> nodes.push el 'div', props, label
+    
+    f = (x, y, z, w, i, j, k, l) ->
+      # Clip behind camera or when invisible
+      clip = z < 0
 
-        x = (x + 1) * width .value + offset.x + 1e-5
-        y = (y - 1) * height.value + offset.y + 1e-5
+      # GL to CSS coordinate transform
+      xx = (x + 1) * width .value + offset.value.x + 1e-5
+      yy = (y - 1) * height.value + offset.value.y + 1e-5
 
-        if snap.value
-          x = Math.round x
-          y = Math.round y
+      # Snap to pixel
+      if snap.value
+        xx = Math.round xx
+        yy = Math.round yy
 
-        display = if z < 0 then 'none' else 'block'
+      # Clip and apply opacity
+      alpha = Math.min .999, if clip then 0 else opacity.value
 
-        props =
-          className:    'mathbox-label'
-          style:
-            transform:  "translate(-50%, -50%) translate3d(#{x}px, #{-y}px, #{-z}px)"
-            display:    display
-        nodes.push dom.el 'div', props, label
+      # Generate div
+      props =
+        className:    'mathbox-label'
+        style:
+          transform:  "translate(-50%, -50%) translate3d(#{xx}px, #{-yy}px, #{1-z}px)"
+          opacity:    alpha
+    
+      # Merge in external attributes
+      a = attr.value
+      if a?
+        s = a.style
+        props[k]       = v for k, v of a when k != 'style'
+        props.style[k] = v for k, v of s if s?
+
+      emitter emit, el, i, j, k, l
 
     f.reset = () ->
       nodes = []
@@ -159,10 +176,8 @@ class Label extends Overlay
 
       if data?
         emitter = () -> ''
-      else
-        emitter = Util.Data.normalizeEmitter emitter, 8
 
       @emitter = emitter = @callback emitter
       @readback.setCallback emitter
 
-module.exports = Label
+module.exports = Div

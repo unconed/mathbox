@@ -12,11 +12,11 @@ class Transpose extends Operator
 
   indexShader: (shader) ->
     shader.pipe @swizzler if @swizzler
-    super
+    super shader
 
   sourceShader: (shader) ->
     shader.pipe @swizzler if @swizzler
-    super
+    super shader
 
   getDimensions: () ->
     @_remap @transpose, @bind.source.getDimensions()

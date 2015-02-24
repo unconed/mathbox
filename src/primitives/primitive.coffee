@@ -89,6 +89,7 @@ class Primitive
 
     if object?
       handler = method.bind self
+      handler.node = @node
       object.on type, handler
 
       @_handlers.listen.push [object, type, handler]
@@ -116,10 +117,11 @@ class Primitive
     @_handlers.inherit = {}
 
   # Attach to controller by trait
-  _attach: (selector, trait, method, self = @) ->
+  _attach: (selector, trait, method, self = @, start = @) ->
 
     # Direct JS binding, no watcher.
     if typeof selector == 'object'
+      selector = selector[0] if selector._up    # Unwrap an API object
       node = selector
       return node.controller if node? and trait in node.traits
 
@@ -127,12 +129,17 @@ class Primitive
     if selector == '<'
 
       # Implicitly associated node (scan backwards until we find one)
-      previous = @node
+      previous = start.node
       while previous
+        # Find previous node
         parent   = previous.parent
         break if !parent
         previous = parent.children[previous.index - 1]
+
+        # If we reached the first child, ascend
         previous = parent if !previous
+
+        # See if matched
         return previous.controller if previous? and trait in previous.traits
 
     # Selector binding

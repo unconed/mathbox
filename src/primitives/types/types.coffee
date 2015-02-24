@@ -215,7 +215,10 @@ Types =
 
     uniform: () -> 'm4'
     make:
-      () -> new THREE.Matrix4 n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44
+      () ->
+        m = new THREE.Matrix4
+        m.set n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44
+        m
     validate: (value, target, invalid) ->
       if value instanceof THREE.Matrix4
         target.copy value
@@ -377,5 +380,19 @@ Types =
   vertexPass: (value = 'view') ->
     keys = ['data', 'view', 'world', 'eye']
     Types.enum value, keys
+
+  anchor: (value = 'middle') ->
+    map =
+      first:   1
+      middle:  0
+      last:   -1
+    value = map[value] ? +value
+
+    uniform: () -> 'f'
+    make: () -> +value
+    validate: (value, target, invalid) ->
+      return invalid() if value != (x = +value)
+      x || 0
+    
 
 module.exports = Types

@@ -11,12 +11,9 @@ class Strip extends Primitive
 
   resize: () ->
     return unless @bind.points?
-    dims = @bind.points.getActive()
 
-    items  = dims.items
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
+    dims = @bind.points.getActive()
+    {items, width, height, depth} = dims
 
     #console.log 'strip', dims
 
@@ -24,9 +21,10 @@ class Strip extends Primitive
 
   make: () ->
     # Bind to attached data sources
-    @_helpers.bind.make
-      'geometry.points': 'source'
-      'geometry.colors': 'source'
+    @_helpers.bind.make [
+      { to: 'geometry.points', trait: 'source' }
+      { to: 'geometry.colors', trait: 'source' }
+    ]
 
     return unless @bind.points?
 
@@ -45,10 +43,7 @@ class Strip extends Primitive
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
-    items   = dims.items
-    width   = dims.width
-    height  = dims.height
-    depth   = dims.depth
+    {items, width, height, depth} = dims
 
     # Build color lookup
     if @bind.colors

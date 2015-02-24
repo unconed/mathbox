@@ -35,7 +35,7 @@
       width: 200,
       height: 200,
       axes: [1, 2],
-      expression: function (x, y, i, j, emit) {
+      expression: function (emit, x, y, i, j) {
         z = 2 * (Math.sin(x * 500 + Math.cos(x * y * 100) + time) * Math.sin(y * 503 + Math.sin(x * 40 + y * 60) + time));
         emit(x, -y, z);
       },

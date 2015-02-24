@@ -10,11 +10,11 @@ class MemoScreen extends Screen
       remapModulus:    { type: 'v2', value: new THREE.Vector2 items, height }
       remapModulusInv: { type: 'v2', value: new THREE.Vector2 1 / items, 1 / height }
 
-    fragment = shaders.shader()
-    fragment.pipe 'screen.remap.4d.xyzw', uniforms
-    fragment.pipe options.fragment if options.fragment?
+    map = shaders.shader()
+    map.pipe 'screen.remap.4d.xyzw', uniforms
+    map.pipe options.map if options.map?
 
-    super renderer, shaders, {fragment}
+    super renderer, shaders, {map}
 
     for object in @objects
       object.transparent = false

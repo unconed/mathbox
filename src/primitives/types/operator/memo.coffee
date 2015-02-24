@@ -20,10 +20,7 @@ class Memo extends Operator
 
     # Fetch geometry dimensions
     dims   = @bind.source.getDimensions()
-    items  = dims.items
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
+    {items, width, height, depth} = dims
 
     # Prepare memoization RTT
     @memo = @_renderables.make 'memo',
@@ -41,7 +38,7 @@ class Memo extends Operator
 
     # Make screen renderable inside RTT scene
     @compose = @_renderables.make 'memoScreen',
-                 fragment: operator
+                 map:    operator
                  items:  items
                  width:  width
                  height: height
@@ -71,9 +68,7 @@ class Memo extends Operator
 
     # Fetch geometry dimensions
     dims   = @bind.source.getActive()
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
+    {width, height, depth} = dims
 
     # Cover only part of the RTT viewport
     @compose.cover width, height, depth
