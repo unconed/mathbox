@@ -50,13 +50,14 @@ class Surface extends Primitive
     wireUniforms    = @_helpers.style.uniforms()
     lineUniforms    = @_helpers.line.uniforms()
     surfaceUniforms = @_helpers.surface.uniforms()
+    unitUniforms    = @_inherit('unit').getUnitUniforms()
 
     # Darken wireframe if needed for contrast
     # Auto z-bias wireframe over surface
     wireUniforms.styleColor  = @_attributes.make @_types.color()
-    wireUniforms.styleZIndex = @_attributes.make @_types.number()
+    wireUniforms.styleZBias  = @_attributes.make @_types.number()
     @wireColor  = wireUniforms.styleColor.value
-    @wireZIndex = wireUniforms.styleZIndex
+    @wireZBias  = wireUniforms.styleZBias
     @wireScratch = new THREE.Color
 
     # Fetch geometry dimensions
@@ -81,7 +82,7 @@ class Surface extends Primitive
       @bind.colors.sourceShader color
 
     # Make line and surface renderables
-    uniforms = Util.JS.merge lineUniforms, styleUniforms, wireUniforms
+    uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms, wireUniforms
     zUnits = if first or second then -50 else 0
     if first
       @line1 = @_renderables.make 'line',
@@ -110,7 +111,7 @@ class Surface extends Primitive
       objects.push @line2
 
     if solid
-      uniforms = Util.JS.merge surfaceUniforms, styleUniforms
+      uniforms = Util.JS.merge unitUniforms, surfaceUniforms, styleUniforms
       @surface = @_renderables.make 'surface',
                 uniforms: uniforms
                 width:    width
@@ -148,7 +149,7 @@ class Surface extends Primitive
       solid  = @_get 'mesh.solid'
       color  = @_get 'style.color'
 
-      @wireZIndex.value = @_get('style.zIndex') + 5
+      @wireZBias.value = @_get('style.zBias') + 5
       @wireColor.copy color
       if solid
         c = @wireScratch

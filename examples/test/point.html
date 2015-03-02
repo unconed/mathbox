@@ -14,9 +14,12 @@
       controls: {
         klass: THREE.OrbitControls
       },
+      camera: {
+        fov: 60
+      },
     });
     three = mathbox.three;
-
+    three.Time.set({speed: .5});
     three.camera.position.set(-3.5, 1.4, -2.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
@@ -26,7 +29,7 @@
     });
 
     view = mathbox.cartesian({
-      range: [[-3, 3], [0, 1], [-3, 3]],
+      range: [[-2, 2], [0, 1], [-2, 2]],
       scale: [2, 1, 2],
     });
 
@@ -38,7 +41,7 @@
     });
 
     view.grid({
-      width: 0.005,
+      width: 4,
       opacity: 0.5,
       axes: [1, 3],
     });
@@ -54,22 +57,24 @@
     });
     view.point({
       color: 0x3090FF,
-      size: 0.05,
+      size: 20,
+      depth: 0,
     });
+
     view.transform({
       position: [0, .5, 0],
     }).point({
       color: 0xFFFFFF,
-      size: 0.05,
+      size: 38,
       shape: 'diamond',
       fill: true,
-      zIndex: -1,
+      zBias: -1,
     });
     view.transform({
       position: [0, .5, 0],
     }).point({
       color: 0x30C030,
-      size: 0.05,
+      size: 40,
       shape: 'diamond',
       fill: false,
     });
@@ -99,7 +104,7 @@
       },
       width:  2,
       height: 2,
-      dimensions: 4,
+      channels: 4,
     });
 
     view.transform({
@@ -108,7 +113,7 @@
       points: '#sampler',
       colors: '#color',
       color: 0xFFFFFF,
-      size: 0.05,
+      size: 40,
       shape: 'triangle',
     });
 

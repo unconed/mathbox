@@ -39,7 +39,8 @@ class Ticks extends Primitive
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
     lineUniforms  = @_helpers.line.uniforms()
-    uniforms      = Util.JS.merge lineUniforms, styleUniforms
+    unitUniforms  = @_inherit('unit').getUnitUniforms()
+    uniforms      = Util.JS.merge lineUniforms, styleUniforms, unitUniforms
 
     # Make line renderable
     @line = @_renderables.make 'line',

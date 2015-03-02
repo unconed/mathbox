@@ -28,8 +28,6 @@ var vendor = [
   'vendor/threestrap/vendor/controls/OrbitControls.js',
   'vendor/threestrap/vendor/controls/DeviceOrientationControls.js',
   'vendor/threestrap/vendor/controls/TrackBallControls.js',
-  'vendor/shadergraph/build/shadergraph.js',
-  'vendor/fix.js',
 ];
 
 var css = [

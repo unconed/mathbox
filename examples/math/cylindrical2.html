@@ -48,10 +48,14 @@
         objs.set('rotation', [-s, 0, 0, c]);
     });
 
-    view = mathbox.polar({
-      range: [[-π, π], [0, 1], [-1, 1]],
-      scale: [2, 2, 2],
-    });
+    view = mathbox
+      .unit({
+        scale: 720,
+      })
+      .polar({
+        range: [[-π, π], [0, 1], [-1, 1]],
+        scale: [2, 2, 2],
+      });
 
     view
     .transform({
@@ -115,7 +119,7 @@
         rad = Math.sin(j * 12 + j * j) * .5 + Math.sin((j * .018 + 1 + Math.sin(j) * .3) * time);
         emit(theta, rad * .5, x / π);
       },
-      dimensions: 3,
+      channels: 3,
     });
     view.split({
       axis: 'width',
@@ -138,8 +142,8 @@
       scale: [1, 1, π],
     })
       .surface({
-        width: 0.002,
-        zIndex: 2,
+        width: 2,
+        zBias: 2,
         color: 0x1550FF,
         solid: false,
         first: false,
@@ -152,7 +156,7 @@
       scale: [1, 1, π],
     })
       .surface({
-        width: 0.002,
+        width: 2,
         color: 0x2070FF,
         first: false,
         second: false,

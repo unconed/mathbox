@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - GL Label</title>
+  <title>MathBox - Label</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -27,7 +27,7 @@
 
     time = 0
     three.on('update', function () {
-      time = three.Time.clock * .2;
+      time = three.Time.clock
     });
 
     view = mathbox
@@ -41,15 +41,11 @@
 
     view.axis({
       zBias: -10,
-      end: true,
-      width: 10,
     });
 
     view.axis({
       axis: 2,
       zBias: -10,
-      end: true,
-      width: 10,
     });
 
     view.grid({
@@ -57,14 +53,6 @@
       width: 10,
       opacity: 0.5,
       zBias: -10,
-      axes: [1, 3],
-    });
-    
-    view.array({
-      id: 'colors',
-      length: 2,
-      channels: 4,
-      data: [[0xc0, 0x20, 0x50, 1], [0x50, 0xc0, 0x20, 1]],
     });
 
     view.interval({
@@ -80,10 +68,13 @@
       height: 5
     });
     view.spread({
-      height: [0, 0, .25, 0],
+      height: [0, 0, .3, 0],
     });
 
     view
+    .transform({
+      position: [0, .5, 0],
+    })
     .point({
       color: 0x3090FF,
       size: 40,
@@ -94,22 +85,20 @@
       style: 'bold',
       width:  16,
       height: 5,
-      //expand: 0,
+      expand: 0,
       expression: function (emit, i, j) {
         //emit('QxAfjldgざおぎぼアプヸ⾤⾘⿕⿒');
         emit(
-          Math.floor(time * 2 + i / 8)
-           + String.fromCharCode(j + 65)
-           + String.fromCharCode(i + 0x8000 + Math.floor(time + i/8)%100 * 3)
+          Math.floor(time / 2 + i/10)
+           + String.fromCharCode(Math.random() * 26 + j + 65)
+           + String.fromCharCode(Math.random() * 15 + i + 0x8000 + Math.floor(time + i/10)%100 * 3)
         );
       },
     })
     .label({
-      color: 0x010101,
-      colors: '#colors',
+      color: 0x000090,
       snap: false,
-      outline: 2,
-      size: 24,
+      size: 16,
       offset: [0, -32],
       depth: .5,
       zIndex: 1,

@@ -1,3 +1,4 @@
+uniform float worldUnit;
 uniform float lineWidth;
 uniform float lineDepth;
 uniform vec4 geometryClip;
@@ -25,7 +26,7 @@ attribute vec2 strip;
 
 varying vec2 vClipEnds;
 
-void clipEnds(vec4 xyzw, vec3 pos) {
+void clipEnds(vec4 xyzw, vec3 center, vec3 pos, float depth) {
 
   // Sample end of line strip
   vec4 xyzwE = vec4(strip.y, xyzw.yzw);
@@ -35,27 +36,34 @@ void clipEnds(vec4 xyzw, vec3 pos) {
   vec4 xyzwS = vec4(strip.x, xyzw.yzw);
   vec3 start = getPosition(xyzwS);
 
+  // Absolute arrow length (=2.5x radius)
+  float size = clipRange * lineWidth * worldUnit * depth * 1.25;
+
   // Measure length and adjust clip range
   // Approach linear scaling with cubic ease the smaller we get
   vec3 diff = end - start;
-  float l = length(vec2(length(diff), lineWidth)) * clipSpace;
-  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);
+  float l = length(diff) * clipSpace;
+  float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);
   float scale = 1.0 - mini * mini * mini; 
-  float range = clipRange * scale;
+  float invrange = 1.0 / (size * scale);
   
   vClipEnds = vec2(1.0);
-  
+
   if (clipStyle.y > 0.0) {
     // Clip end
-    float d = length(pos - end);
-    vClipEnds.x = d / range - 1.0;
+    diff = normalize(end - center);
+    float d = dot(end - pos, diff);
+    vClipEnds.x = d * invrange - 1.0;
   }
 
   if (clipStyle.x > 0.0) {
     // Clip start 
-    float d = length(pos - start);
-    vClipEnds.y = d / range - 1.0;
+    diff = normalize(center - start);
+    float d = dot(pos - start, diff);
+    vClipEnds.y = d * invrange - 1.0;
   }
+
+
 }
 #endif
 
@@ -82,7 +90,7 @@ void getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out 
   right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;
 }
 
-vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right) {
+vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float width) {
   vec2 join = vec2(1.0, 0.0);
 
   fixCenter(left, center, right);
@@ -119,6 +127,9 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right) {
       join = tr;
     }
     else {
+      // Limit join stretch for tiny segments
+      float lmin2 = min(l1, l2) / (width * width);
+      
       vec2 nl = normalize(d.xy);
       vec2 nr = normalize(d.zw);
 
@@ -130,7 +141,7 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right) {
       float cosA = dot(nl, tc);
       float sinA = max(0.1, abs(dot(tl, tc)));
       float factor = cosA / sinA;
-      float scale = sqrt(1.0 + factor * factor);
+      float scale = sqrt(1.0 + min(lmin2, factor * factor));
 
 #ifdef LINE_STROKE
       vec3 stroke1 = normalize(left - center);
@@ -163,9 +174,11 @@ vec3 getLinePosition() {
 
   vec4 p = min(geometryClip, position4);
 
+  // Get position + adjacent neighbours
   getLineGeometry(p, edge, left, center, right);
 
 #ifdef LINE_STROKE
+  // Set parameters for line stroke fragment shader
   vClipStrokePosition = center;
   vClipStrokeIndex = p.x;
   bool odd = mod(p.x, 2.0) >= 1.0;
@@ -173,12 +186,21 @@ vec3 getLinePosition() {
   bool odd = true;
 #endif
 
-  join = getLineJoin(edge, odd, left, center, right);
-  
+  // Divide line width up/down
   float width = lineWidth * 0.5;
+
+  float depth = 1.0;
   if (lineDepth < 1.0) {
-    width *= mix(max(0.00001, -center.z), 1.0, lineDepth);
+    // Depth blending
+    float z = max(0.00001, -center.z);
+    depth = mix(z, 1.0, lineDepth);
+    width *= depth;
   }
+
+  // Convert to world units
+  width *= worldUnit;
+
+  join = getLineJoin(edge, odd, left, center, right, width);
 
 #ifdef LINE_STROKE
   vClipStrokeWidth = width;
@@ -187,7 +209,7 @@ vec3 getLinePosition() {
   vec3 pos = center + join * offset * width;
 
 #ifdef LINE_CLIP
-  clipEnds(position4, pos);
+  clipEnds(position4, center, pos, depth);
 #endif
 
   return pos;

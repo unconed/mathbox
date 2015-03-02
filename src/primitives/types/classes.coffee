@@ -30,6 +30,9 @@ Classes =
   volume:            require './data/volume'
   text:              require './data/text'
 
+  html:              require './overlay/html'
+  dom:               require './overlay/dom'
+
   join:              require './operator/join'
   lerp:              require './operator/lerp'
   memo:              require './operator/memo'
@@ -42,10 +45,9 @@ Classes =
 
   group:             require './base/group'
   root:              require './base/root'
+  unit:              require './base/unit'
 
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
-
-  div:               require './overlay/div'
 
 module.exports = Classes

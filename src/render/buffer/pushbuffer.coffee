@@ -1,18 +1,42 @@
-DataBuffer  = require './databuffer'
+Buffer      = require './buffer'
 Util        = require '../../util'
 
-#
-# 3D array
-#
-class VoxelBuffer extends DataBuffer
+###
+# Buffer for CPU-side use
+###
+class PushBuffer extends Buffer
+  constructor: (renderer, shaders, options) ->
+    @width    = options.width    || 1
+    @height   = options.height   || 1
+    @depth    = options.depth    || 1
+
+    @samples ?= @width * @height * @depth
+    super renderer, shaders, options
+
+    @build options
+
   build: (options) ->
-    super
+    @data     = []
+    @data.length = @samples
+
+    @filled   = 0
     @pad      = {x: 0, y: 0, z: 0}
     @streamer = @generate @data
+
+  dispose: () ->
+    @data = null
+    super
 
   getFilled: () -> @filled
 
   setActive: (i, j, k) -> [@pad.x, @pad.y, @pad.z] = [@width - i, @height - j, @depth - k]
+
+  read: () -> @data
+
+  copy: (data) ->
+    n    = Math.min data.length, @samples * @channels * @items
+    d    = @data
+    d[i] = data[i] for i in [0...n]
 
   iterate: () ->
     callback = @callback
@@ -54,7 +78,7 @@ class VoxelBuffer extends DataBuffer
         if repeat == false
           break
 
+    @filled = 1
     Math.floor count() / @items
-
-
-module.exports = VoxelBuffer
+    
+module.exports = PushBuffer

@@ -50,8 +50,6 @@ apply = (el, last, node, parent, index) ->
         remove node, parent
         return insert el, parent, index
       else
-        # Compatible: apply changes
-        
         # Diff props
         props     = last?.props
         nextProps = el   .props
@@ -64,17 +62,21 @@ apply = (el, last, node, parent, index) ->
         nextChildren = el   .children
 
         if typeof nextChildren in ['string', 'number']
-          # Skip text node creation and use innerText directly
+          # Insert text directly
           if nextChildren != children
-            node.innerText = nextChildren
+            node.textContent = nextChildren
 
         else if nextChildren?
-          # Diff children
-          childNodes   = node.childNodes
-          if children?
-            apply child, children[i], childNodes[i], node, i for child, i in nextChildren
+          if nextChildren.type?
+            # Single child
+            apply nextChildren, children, node.childNodes[0], node, 0
           else
-            apply child, null,        childNodes[i], node, i for child, i in nextChildren
+            # Diff children
+            childNodes   = node.childNodes
+            if children?
+              apply child, children[i], childNodes[i], node, i for child, i in nextChildren
+            else
+              apply child, null,        childNodes[i], node, i for child, i in nextChildren
 
         else if children?
           # Remove all children
@@ -94,10 +96,16 @@ insert = (el, parent, index = 0) ->
     set node, key, value for key, value of el.props
 
   children = el.children
-  if typeof children == 'string'
-    insert children, node, 0
-  else
-    insert child, node, i for child, i in children if children?
+  if typeof children in ['string', 'number']
+    # Insert text directly
+    node.textContent = children
+  else if children?
+    if children.type?
+      # Single child
+      insert children, node, 0
+    else
+      # Insert children
+      insert child, node, i for child, i in children
 
   parent.insertBefore node, parent.childNodes[index]
   return

@@ -20636,8 +20636,12 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	function painterSortStable ( a, b ) {
 
-		if ( a.material.id !== b.material.id ) {
+		if ( a.object.renderOrder !== b.object.renderOrder ) {
 
+			return a.object.renderOrder - b.object.renderOrder;
+
+		} else if ( a.material.id !== b.material.id ) {
+      
 			return a.material.id - b.material.id;
 
 		} else if ( a.z !== b.z ) {
@@ -20654,7 +20658,11 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	function reversePainterSortStable ( a, b ) {
 
-		if ( a.z !== b.z ) {
+		if ( a.object.renderOrder !== b.object.renderOrder ) {
+
+			return a.object.renderOrder - b.object.renderOrder;
+
+		} if ( a.z !== b.z ) {
 
 			return b.z - a.z;
 

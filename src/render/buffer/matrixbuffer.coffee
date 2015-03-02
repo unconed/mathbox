@@ -1,9 +1,16 @@
 DataBuffer  = require './databuffer'
 Util        = require '../../util'
 
+###
+# 2D + history array
+###
 class MatrixBuffer extends DataBuffer
   constructor: (renderer, shaders, options) ->
+    @width    = options.width    || 1
+    @height   = options.height   || 1
     @history  = options.history  || 1
+
+    @samples = @width * @height
 
     options.depth = @history
     super renderer, shaders, options

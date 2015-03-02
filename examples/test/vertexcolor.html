@@ -62,10 +62,10 @@
             .grid({
               divideX: 4,
               divideY: 4,
-              zIndex: 10,
+              zBias: 10,
               opacity: .25,
               color: 0xffdfe0,
-              width: 0.01,
+              width: 10,
             })
           .end()
         .end()
@@ -81,7 +81,7 @@
         .resample({
           id: 'resample1',
           indices:    3,
-          dimensions: 4,
+          channels: 4,
           shader: [
             "uniform vec3 dataResolution;",
             "uniform vec3 dataSize;",
@@ -119,7 +119,7 @@
           id: 'resample2',
           source: '#rtt1',
           indices:    3,
-          dimensions: 4,
+          channels: 4,
           shader: [
             "vec4 getSample(vec3 xyz);",
             "vec4 getFramesSample(vec3 xyz) {",
@@ -144,7 +144,7 @@
 
       .resample({
         indices:    3,
-        dimensions: 3,
+        channels: 3,
         shader: [
           "vec3 getSample(vec3 xyz);",
           "vec3 getFramesSample(vec3 xyz) {",
@@ -169,7 +169,7 @@
         source: '#color',
         id: 'color1',
         indices:    2,
-        dimensions: 4,
+        channels: 4,
         shader: [
           "vec4 getSample(vec2 xy);",
           "vec4 getFramesSample(vec2 xy) {",
@@ -182,7 +182,7 @@
         source: '#color',
         id: 'color2',
         indices:    2,
-        dimensions: 4,
+        channels: 4,
         shader: [
           "vec4 getSample(vec2 xy);",
           "vec4 getFramesSample(vec2 xy) {",
@@ -205,7 +205,7 @@
           color: '#ffffff',
           start: false,
           end: false,
-          width: 0.04,
+          width: 20,
           opacity: .15,
           blending: 'add',
           zWrite: false,
@@ -214,8 +214,8 @@
           points: '#transpose',
           colors: '#color2',
           color: '#ffffff',
-          size: 0.005,
-          zIndex: 5,
+          size: 5,
+          zBias: 5,
         })
 
 

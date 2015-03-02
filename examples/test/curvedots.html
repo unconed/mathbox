@@ -37,7 +37,7 @@
         y = Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
       },
-      dimensions: 2,
+      channels: 2,
     });
 
     view.spread({
@@ -46,11 +46,11 @@
 
     view.line({
       color: 0x3090FF,
-      width: 0.005,
+      width: 5,
     });
     view.point({
       color: 0x3090FF,
-      size: 0.03,
+      size: 30,
     });
 
     // presentation integration

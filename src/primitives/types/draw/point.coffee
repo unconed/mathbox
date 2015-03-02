@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Point extends Primitive
-  @traits = ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind', 'renderScale']
+  @traits = ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -26,9 +26,6 @@ class Point extends Primitive
 
     return unless @bind.points?
 
-    # Prepare renderScale helper
-    @_helpers.renderScale.make()
-
     # Build transform chain
     position = @_shaders.shader()
 
@@ -41,9 +38,9 @@ class Point extends Primitive
     {items, width, height, depth} = dims
 
     # Prepare bound uniforms
-    styleUniforms  = @_helpers.style.uniforms()
-    pointUniforms  = @_helpers.point.uniforms()
-    renderUniforms = @_helpers.renderScale.uniforms()
+    styleUniforms = @_helpers.style.uniforms()
+    pointUniforms = @_helpers.point.uniforms()
+    unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Build color lookup
     if @bind.colors
@@ -55,7 +52,7 @@ class Point extends Primitive
     fill   = @_get 'point.fill'
 
     # Make point renderable
-    uniforms = Util.JS.merge renderUniforms, pointUniforms, styleUniforms
+    uniforms = Util.JS.merge unitUniforms, pointUniforms, styleUniforms
     @point = @_renderables.make 'point',
               uniforms: uniforms
               width:    width
@@ -73,7 +70,6 @@ class Point extends Primitive
 
   unmake: () ->
     @_helpers.bind.unmake()
-    @_helpers.renderScale.unmake()
     @_helpers.object.unmake()
 
     @point = null

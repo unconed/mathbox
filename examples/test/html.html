@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - GL Label</title>
+  <title>MathBox - HTML Label</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -59,13 +59,6 @@
       zBias: -10,
       axes: [1, 3],
     });
-    
-    view.array({
-      id: 'colors',
-      length: 2,
-      channels: 4,
-      data: [[0xc0, 0x20, 0x50, 1], [0x50, 0xc0, 0x20, 1]],
-    });
 
     view.interval({
       length: 16,
@@ -89,30 +82,26 @@
       size: 40,
     })
 
-    .text({
-      font: 'Helvetica',
-      style: 'bold',
-      width:  16,
+    .html({
+      width: 16,
       height: 5,
-      //expand: 0,
-      expression: function (emit, i, j) {
-        //emit('QxAfjldgざおぎぼアプヸ⾤⾘⿕⿒');
-        emit(
-          Math.floor(time * 2 + i / 8)
-           + String.fromCharCode(j + 65)
-           + String.fromCharCode(i + 0x8000 + Math.floor(time + i/8)%100 * 3)
-        );
+      expression: function (emit, el, i, j) {
+        var color = ['#c02050','#50c020'][i%2];
+        emit([
+          el('span', {style: {color: color}}, Math.floor(time * 2 + i / 8)),
+          el('strong', null,
+            String.fromCharCode(j + 65) + 
+            String.fromCharCode(i + 0x8000 + Math.floor(time + i/8)%100 * 3)
+          )
+        ]);
       },
     })
-    .label({
-      color: 0x010101,
-      colors: '#colors',
+    .dom({
       snap: false,
-      outline: 2,
-      size: 24,
       offset: [0, -32],
       depth: .5,
-      zIndex: 1,
+      size: 24,
+      zoom: 1,
     });
 
   </script>

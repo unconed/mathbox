@@ -3,7 +3,7 @@ RenderToTexture = require './rendertotexture'
 Util            = require '../../util'
 
 ###
-Wrapped RTT for memoizing 4D arrays back to a 2D texture
+# Wrapped RTT for memoizing 4D arrays back to a 2D texture
 ###
 class Memo extends RenderToTexture
 

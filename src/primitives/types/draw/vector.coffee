@@ -45,6 +45,7 @@ class Vector extends Primitive
     styleUniforms = @_helpers.style.uniforms()
     lineUniforms  = @_helpers.line.uniforms()
     arrowUniforms = @_helpers.arrow.uniforms()
+    unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Clip start/end for terminating arrow
     start   = @_get 'arrow.start'
@@ -67,7 +68,7 @@ class Vector extends Primitive
       @bind.colors.sourceShader color
 
     # Make line renderable
-    uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms
+    uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
     @line = @_renderables.make 'line',
               uniforms: uniforms
               samples:  samples
@@ -81,8 +82,6 @@ class Vector extends Primitive
 
     # Make arrow renderables
     @arrows = []
-    uniforms = Util.JS.merge arrowUniforms, styleUniforms
-
     if start
       @arrows.push @_renderables.make 'arrow',
                 uniforms: uniforms

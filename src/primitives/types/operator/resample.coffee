@@ -37,7 +37,7 @@ class Resample extends Operator
 
     # Get custom shader
     indices    = @_get 'resample.indices'
-    dimensions = @_get 'resample.dimensions'
+    dimensions = @_get 'resample.channels'
     shader     = @_get 'resample.shader'
 
     # Get resampled dimensions (if any)

@@ -11,9 +11,9 @@ class Compose extends Primitive
   init: () ->
     @compose = null
 
-  rebuild: () ->
-    console.log 'compose.rebuild', @node.get(null, true), @bind.source?
-    super
+  #rebuild: () ->
+  #  console.log 'compose.rebuild', @node.get(null, true), @bind.source?
+  #  super
 
   resize: () ->
     return unless @compose and @bind.source

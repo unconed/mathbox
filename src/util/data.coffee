@@ -124,7 +124,8 @@ exports.getThunk = (data) ->
       thunk = () ->
         x = first[i++]
         if i == a
-          [i, j] = [0, j + 1] 
+          i = 0
+          j++
           first = data[j] ? []
         x
 
@@ -141,9 +142,11 @@ exports.getThunk = (data) ->
       thunk = () ->
         x = first[i++]
         if i == a
-          [i, j] = [0, j + 1] 
+          i = 0
+          j++
           if j == b
-            [j, k] = [0, k + 1]
+            j = 0
+            k++
             second = data[k] ? []
           first = second[j]  ? []
         x
@@ -162,11 +165,14 @@ exports.getThunk = (data) ->
       thunk = () ->
         x = first[i++]
         if i == a
-          [i, j] = [0, j + 1] 
+          i = 0
+          j++
           if j == b
-            [j, k] = [0, k + 1]
+            j = 0
+            k++
             if k == c
-              [k, l] = [0, l + 1]
+              k = 0
+              l++
               third = data[l] ? []
             second = third[k] ? []
           first = second[j]   ? []
@@ -188,13 +194,17 @@ exports.getThunk = (data) ->
       thunk = () ->
         x = first[i++]
         if i == a
-          [i, j] = [0, j + 1] 
+          i = 0
+          j++
           if j == b
-            [j, k] = [0, k + 1]
+            j = 0
+            k++
             if k == c
-              [k, l] = [0, l + 1]
+              k = 0
+              l++
               if l == d
-                [l, m] = [0, m + 1]
+                l = 0
+                m++
                 fourth = data[m] ? []
               third = fourth[l]  ? []
             second = third[k]    ? []

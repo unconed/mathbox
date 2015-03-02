@@ -2,14 +2,23 @@ Buffer      = require './buffer'
 DataTexture = require './texture/datatexture'
 Util        = require '../../util'
 
+###
+# Data buffer on the GPU
+# - Stores samples (1-n) x items (1-n) x channels (1-4)
+# - Provides generic sampler shader
+# - Provides generic copy/write handler
+# => specialized into Array/Matrix/VoxelBuffer
+###
 class DataBuffer extends Buffer
   constructor: (renderer, shaders, options) ->
     @width    = options.width    || 1
     @height   = options.height   || 1
     @depth    = options.depth    || 1
 
-    @samples = @width * @height * @depth
+    @samples ?= @width * @height * @depth
     super renderer, shaders, options
+
+    @build options
 
   shader: (shader, indices = 4) ->
     if @items > 1 or @depth > 1
@@ -17,20 +26,24 @@ class DataBuffer extends Buffer
       shader.pipe 'map.xyzw.texture', @uniforms
     else
       shader.pipe Util.GLSL.truncateVec indices, 2 if indices != 2
-    super shader
+
+    shader.pipe "map.2d.data", @uniforms
+    shader.pipe "sample.2d", @uniforms
+    shader.pipe Util.GLSL.swizzleVec4 ['0000', 'x000', 'xw00', 'xyz0'][@channels] if @channels < 4
+    shader
 
   build: (options) ->
-    super
-
     @data    = new Float32Array @samples * @channels * @items
     @texture = new DataTexture  @gl, @items * @width, @height * @depth, @channels, options
     @filled  = 0
 
-    @dataPointer = @uniforms.dataPointer.value
     @_adopt @texture.uniforms
     @_adopt
-      textureItems:  { type: 'f', value: @items }
-      textureHeight: { type: 'f', value: @height }
+      dataPointer:   { type: 'v2', value: new THREE.Vector2() }
+      textureItems:  { type: 'f',  value: @items }
+      textureHeight: { type: 'f',  value: @height }
+
+    @dataPointer = @uniforms.dataPointer.value
 
   dispose: () ->
     @data = null

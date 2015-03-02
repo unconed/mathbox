@@ -55,12 +55,9 @@ class Base extends Renderable
     # Force transparent to true to ensure all renderables drawn in order
     transparent = true
 
-    # Beware front-to-back / back-to-front changes
-    z = if transparent then order else -order
-
     m = object.material
 
-    object.renderDepth = z
+    object.renderOrder = -order
     object.visible = true
     m.transparent  = transparent
     m.blending     = blending

@@ -196,6 +196,7 @@ class Model
       unhashTags node.traits
 
     adopt @root
+    @root.trigger type: 'added'
 
   # Filter array by selector
   filter: (nodes, selector) ->

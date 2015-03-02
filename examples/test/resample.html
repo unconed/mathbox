@@ -43,7 +43,7 @@
       })
         .resample({
           indices:    3,
-          dimensions: 4,
+          channels: 4,
           shader:
             "vec4 getSample(vec3 xyz);\n"+
             "vec4 getFramesSample(vec3 xyz) {\n"+
@@ -66,7 +66,7 @@
           .grid({
             divideX: 2,
             divideY: 2,
-            zIndex: 10,
+            zBias: 10,
             opacity: .25,
             color: 0xc0e0ff,
           })

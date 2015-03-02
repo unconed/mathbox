@@ -41,7 +41,7 @@
         emit(.5 + d * 1.5);
       },
       items: 4,
-      dimensions: 1,
+      channels: 1,
     });
     view.swizzle({
       order: 'yx',
@@ -58,6 +58,7 @@
 
     view.vector({
       color: 0x3090FF,
+      width: 6,
       start: true,
       end: true,
     });

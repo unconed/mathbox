@@ -2,28 +2,32 @@ Primitive = require '../../primitive'
 Util    = require '../../../util'
 
 class Label extends Primitive
-  @traits = ['node', 'bind', 'object', 'style', 'label', 'position', 'renderScale']
+  @traits = ['node', 'bind', 'object', 'style', 'label', 'attach', 'geometry', 'position']
+  @defaults =
+    color: '#000000'
 
   make: () ->
     super
 
     # Bind to attached objects
     @_helpers.bind.make [
-      { to: 'label.text',   trait: 'text'   }
-      { to: 'label.points', trait: 'source' }
-      { to: 'label.colors', trait: 'source' }
+      { to: 'label.text',      trait: 'text'   }
+      { to: 'geometry.points', trait: 'source' }
+      { to: 'geometry.colors', trait: 'source' }
     ]
 
     return unless @bind.points?
     return unless @bind.text?
 
-    # Be aware of size changes
-    @_helpers.renderScale.make()
-
     # Fetch geometry/text dimensions
     pointDims = @bind.points.getDimensions()
     textDims  = @bind.text.getDimensions()
-    {items, width, height, depth} = textDims
+    textIsSDF = @bind.text.textIsSDF()
+    
+    items  = Math.min pointDims.items,  textDims.items
+    width  = Math.min pointDims.width,  textDims.width
+    height = Math.min pointDims.height, textDims.height
+    depth  = Math.min pointDims.depth,  textDims.depth
 
     # Build shader to sample position data
     # and transform into screen space
@@ -36,13 +40,22 @@ class Label extends Primitive
     # Build shader to sample text image data
     map      = @bind.text.textShader @_shaders.shader()
     
-    # Build shader to color text data
+    # Build shader to resolve text data
     labelUniforms =
-      outlineColor: @node.attributes['label.outlineColor']
-      
-    outlined = @bind.text.textIsOutlined()
-    combine  = @_shaders.shader().pipe 'label.outline', labelUniforms if outlined
-    combine  = @_shaders.shader().pipe 'label.solid'                  if !outlined
+      spriteDepth:   @node.attributes['attach.depth']
+      spriteOffset:  @node.attributes['attach.offset']
+      spriteSnap:    @node.attributes['attach.snap']
+      spriteScale:   @_attributes.make @_types.number()
+      outlineStep:   @_attributes.make @_types.number()
+      outlineExpand: @_attributes.make @_types.number()
+      outlineColor:  @node.attributes['label.background']
+    
+    @spriteScale   = labelUniforms.spriteScale
+    @outlineStep   = labelUniforms.outlineStep
+    @outlineExpand = labelUniforms.outlineExpand
+
+    snippet  = if textIsSDF then 'label.outline' else 'label.alpha'
+    combine  = @_shaders.shader().pipe snippet, labelUniforms
 
     # Build color lookup
     if @bind.colors
@@ -50,11 +63,11 @@ class Label extends Primitive
       @bind.colors.sourceShader color
 
     # Prepare bound uniforms
-    styleUniforms  = @_helpers.style.uniforms()
-    renderUniforms = @_helpers.renderScale.uniforms()
+    styleUniforms = @_helpers.style.uniforms()
+    unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Make sprite renderable
-    uniforms = Util.JS.merge renderUniforms, styleUniforms
+    uniforms = Util.JS.merge unitUniforms, styleUniforms, labelUniforms
     @sprite = @_renderables.make 'sprite',
               uniforms: uniforms
               width:    width
@@ -70,32 +83,36 @@ class Label extends Primitive
     @_helpers.object.make [@sprite]
 
   unmake: () ->
-    @_helpers.renderScale.unmake()
     @_helpers.bind.unmake()
+    @_helpers.object.unmake()
 
-    if @bind.points?
-      @sprite.dispose()
-
-      @sprite = null
+    @sprite = null
 
   resize: () ->
-    # Fetch geometry dimensions
-    {items, width, height, depth} = @bind.text.getActive()
+    # Fetch geometry/text dimensions
+    pointDims = @bind.points.getActive()
+    textDims  = @bind.text.getActive()
+
+    items  = Math.min pointDims.items,  textDims.items
+    width  = Math.min pointDims.width,  textDims.width
+    height = Math.min pointDims.height, textDims.height
+    depth  = Math.min pointDims.depth,  textDims.depth
     
     @sprite.geometry.clip width, height, depth, items
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['label.points'] or
+    return @rebuild() if touched['geometry'] or
                          changed['label.text']
     return unless @bind.points?
 
-    ###
-    offset:            Types.vec2(0, -20)
-    snap:              Types.bool(true)
-    alignItems:        Types.anchor()
-    alignWidth:        Types.anchor()
-    alignHeight:       Types.anchor()
-    alignDepth:        Types.anchor()
-    ###
+    size    = @_get 'label.size'
+    outline = @_get 'label.outline'
+    expand  = @_get 'label.expand'
+    height  = @bind.text.textHeight()
+    scale   = size / height
+
+    @outlineExpand.value = expand / scale * 16 / 255
+    @outlineStep.value   = outline / scale * 16 / 255
+    @spriteScale.value   = scale
 
 module.exports = Label

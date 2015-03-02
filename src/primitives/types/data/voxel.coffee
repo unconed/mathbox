@@ -18,6 +18,8 @@ class Voxel extends Data
       height: 0
       depth:  0
     
+    @storage = 'voxelBuffer'
+    
     super
 
   sourceShader: (shader) ->
@@ -54,7 +56,7 @@ class Voxel extends Data
     reserveX = @_get 'voxel.bufferWidth'
     reserveY = @_get 'voxel.bufferHeight'
     reserveZ = @_get 'voxel.bufferDepth'
-    channels = @_get 'data.dimensions'
+    channels = @_get 'data.channels'
     items    = @_get 'data.items'
 
     dims = @spec = {channels, items, width, height, depth}
@@ -76,7 +78,7 @@ class Voxel extends Data
     @spec.depth  ?= 1
 
     # Create voxel buffer
-    @buffer = @_renderables.make 'voxelBuffer',
+    @buffer = @_renderables.make @storage,
               width:     space.width
               height:    space.height
               depth:     space.depth
@@ -94,7 +96,7 @@ class Voxel extends Data
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
-                         changed['data.dimensions'] or
+                         changed['data.channels'] or
                          changed['data.items'] or
                          changed['voxel.bufferWidth'] or
                          changed['voxel.bufferHeight'] or

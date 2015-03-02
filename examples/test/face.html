@@ -44,7 +44,7 @@
     });
 
     view.grid({
-      width: 0.005,
+      width: 5,
       opacity: 0.5,
       axes: [1, 3],
       blending: 'add'
@@ -75,15 +75,15 @@
         emit(x + 1/50, y + a, z);
       },
       items: 4,
-      dimensions: 3,
+      channels: 3,
     });
     view.face({
       color: 0x3090FF,
       color: 0xA0B7FF,
-      width: 0.005,
+      width: 5,
     });
     view.point({
-      size: 0.005,
+      size: 5,
       color: 0x3090FF,
       color: 0xB0C7FF,
     });

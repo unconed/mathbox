@@ -1,24 +1,44 @@
-Primitive = require './primitive'
+Voxel = require '../data/voxel'
+Util = require '../../../util'
 
-class HTML extends Overlay
-  @traits = ['node', 'overlay', 'html']
+class HTML extends Voxel
+  @traits = ['node', 'data', 'voxel', 'html']
+  @defaults =
+    channels: 1
 
   init: () ->
-    @element = null
+    super
+    @storage = 'pushBuffer'
 
   make: () ->
-    selector = @_get 'html.element'
-    @element = document.querySelector selector
+    super
+
+    # Get our own size
+    {items, width, height, depth} = @getDimensions()
+
+    # Prepare DOM element factory
+    @dom = @_overlays.make 'dom'
+    @dom.hint items * width * height * depth
 
   unmake: () ->
-    @element = null
+    super
+    if dom
+      @dom.dispose()
+      @dom = null
+
+  update: () ->
+    super
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['html']
+    super changed, touched, init
 
-    if changed['overlay.opacity'] or
-       init
+  nodes: () -> @buffer.read()
 
-      @element.style.opacity = @_get 'overlay.opacity' if @element
+  callback: (callback) ->
+    el = @dom.el
+
+    (emit, i, j, k, l) ->
+      callback emit, el, i, j, k, l
 
 module.exports = HTML

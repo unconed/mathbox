@@ -1,10 +1,15 @@
 DataBuffer  = require './databuffer'
 Util        = require '../../util'
 
+###
+# 1D + history array
+###
 class ArrayBuffer_ extends DataBuffer
   constructor: (renderer, shaders, options) ->
     @length   = options.length   || 1
     @history  = options.history  || 1
+
+    @samples = @length
 
     options.width  = @length
     options.height = @history

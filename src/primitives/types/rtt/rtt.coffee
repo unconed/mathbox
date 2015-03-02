@@ -9,7 +9,7 @@ class RTT extends Root
     type:      'unsignedByte',
 
   init: () ->
-    @rtt = @scene = @width = @height = @history = @size = null
+    @rtt = @scene = @width = @height = @history = @rootSize = @size = null
 
     @event =
       type: 'root.update'
@@ -36,21 +36,26 @@ class RTT extends Root
 
   make: () ->
     @parentRoot = @_inherit 'root'
-    @size = @parentRoot.getSize()
+    @rootSize = @parentRoot.getSize()
 
     @_listen @parentRoot, 'root.update', @update
     @_listen @parentRoot, 'root.resize', (event) -> @resize event.size
 
-    return unless @size?
+    return unless @rootSize?
 
     minFilter = @_get 'texture.minFilter'
     magFilter = @_get 'texture.magFilter'
     type      = @_get 'texture.type'
 
-    @width   = @_get('rtt.width')  ? @size.renderWidth
-    @height  = @_get('rtt.height') ? @size.renderHeight
-    @history = @_get 'rtt.history'
-
+    width     = @_get 'rtt.width'
+    height    = @_get 'rtt.height'
+    history   = @_get 'rtt.history'
+    
+    @width    = width  ? @rootSize.renderWidth
+    @height   = height ? @rootSize.renderHeight
+    @history  = history
+    @aspect   = aspect = @width / @height
+    
     @scene ?= @_renderables.make 'scene'
     @rtt    = @_renderables.make 'renderToTexture',
       scene:     @scene
@@ -60,6 +65,21 @@ class RTT extends Root
       minFilter: minFilter
       magFilter: magFilter
       type:      type
+  
+    aspect     = if width or height then aspect else @rootSize.aspect
+    viewWidth  = width  ? @rootSize.viewWidth
+    viewHeight = height ? @rootSize.viewHeight
+  
+    @size =
+      renderWidth:  @width
+      renderHeight: @height
+      aspect:       aspect
+      viewWidth:    viewWidth
+      viewHeight:   viewHeight
+      pixelRatio:   @height / viewHeight
+
+    @rtt.camera.aspect = aspect
+    @rtt.camera.updateProjectionMatrix()
 
   made: () ->
     # Notify of buffer reallocation
@@ -69,7 +89,7 @@ class RTT extends Root
     if @size
       @trigger
         type: 'root.resize'
-        size: @size
+        size: @size          
 
   unmake: (rebuild) ->
     @parentRoot.off 'root.update', @updateHandler
@@ -87,22 +107,16 @@ class RTT extends Root
                          changed['rtt.width']  or
                          changed['rtt.height']
 
-    if @size?
-      @rtt.camera.aspect = @size.aspect if @rtt?
-      @rtt.camera.updateProjectionMatrix()
-
   adopt:   (renderable) -> @scene.add    object for object in renderable.objects
   unadopt: (renderable) -> @scene.remove object for object in renderable.objects
 
   resize: (size) ->
-    @size = size
+    @rootSize = size
     
     width  = @_get 'rtt.width'
     height = @_get 'rtt.height'
     
-    return @rebuild() if !width? or !height?
-    @trigger
-      type: 'source.resize'    
+    return @rebuild() if !@rtt or !width? or !height?
 
   # End transform chain here
   transform: (shader, pass) ->

@@ -3,6 +3,12 @@ Util          = require '../../util'
 DataTexture   = require './texture/datatexture'
 BackedTexture = require './texture/backedtexture'
 
+###
+# Dynamic sprite atlas
+#
+# - Allocates variable-sized sprites in rows
+# - Will grow itself when full
+###
 class Atlas extends Renderable
   constructor: (renderer, shaders, options) ->
     @width    ?= options.width    || 512

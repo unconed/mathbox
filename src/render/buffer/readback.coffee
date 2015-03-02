@@ -5,7 +5,7 @@ MemoScreen      = require '../meshes/memoscreen'
 Util            = require '../../util'
 
 ###
-Readback up to 4D array of up to 4D data from GL
+# Readback up to 4D array of up to 4D data from GL
 ###
 class Readback extends Renderable
   constructor: (renderer, shaders, options) ->
@@ -39,7 +39,7 @@ class Readback extends Renderable
     {items, width, height, depth} = @
 
     sampler = map
-    if indexer?
+    if isIndexed
       # Preserve original xyzw offset of datapoint to tie it back to the source
 
       # Modulus to pack xyzw into a single integer index
@@ -48,8 +48,8 @@ class Readback extends Renderable
       # Build shader to pack XYZ + index into a single RGBA
       sampler = @shaders.shader()
       sampler.require map
-      sampler.require indexer                   if  isIndexed
-      sampler.require Util.GLSL.identity 'vec4' if !isIndexed
+      sampler.require indexer
+      #sampler.require Util.GLSL.identity 'vec4'
       sampler.pipe 'float.index.pack', @uniforms
 
     if @isFloat && @channels > 1

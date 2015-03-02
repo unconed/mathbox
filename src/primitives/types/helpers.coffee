@@ -91,6 +91,7 @@ helpers =
     uniforms: () ->
       styleColor:   @node.attributes['style.color']
       styleOpacity: @node.attributes['style.opacity']
+      styleZBias:   @node.attributes['style.zBias']
       styleZIndex:  @node.attributes['style.zIndex']
 
   arrow:
@@ -99,7 +100,7 @@ helpers =
       start   = @_get 'arrow.start'
       end     = @_get 'arrow.end'
 
-      space = @_attributes.make @_types.number 1 / (start + end)
+      space = @_attributes.make @_types.number 1.25 / (start + end)
       style = @_attributes.make @_types.vec2 +start, +end
       size  = @node.attributes['arrow.size']
 
@@ -114,6 +115,7 @@ helpers =
     # Return bound point style uniforms
     uniforms: () ->
       pointSize:   @node.attributes['point.size']
+      pointDepth:  @node.attributes['point.depth']
 
   line:
     # Return bound line style uniforms
@@ -153,8 +155,6 @@ helpers =
       if hasStyle
         opacity  = @_get 'style.opacity'
         blending = @_get 'style.blending'
-        zFactor  = @_get 'style.zFactor'
-        zUnits   = @_get 'style.zUnits'
         zOrder   = @_get 'style.zOrder'
         zWrite   = @_get 'style.zWrite'
         zTest    = @_get 'style.zTest'
@@ -165,8 +165,6 @@ helpers =
         refresh  = visible  = @_get 'object.visible' if changed['object.visible']
         refresh  = opacity  = @_get 'style.opacity'  if changed['style.opacity']
         refresh  = blending = @_get 'style.blending' if changed['style.blending']
-        refresh  = zFactor  = @_get 'style.zFactor'  if changed['style.zFactor']
-        refresh  = zUnits   = @_get 'style.zUnits'   if changed['style.zUnits']
         refresh  = zWrite   = @_get 'style.zWrite'   if changed['style.zWrite']
         refresh  = zTest    = @_get 'style.zTest'    if changed['style.zTest']
         onVisible() if refresh?
@@ -183,7 +181,6 @@ helpers =
           if hasStyle
             for o in @objects
               o.show opacity < 1, blending, order
-              o.polygonOffset zFactor, zUnits
               o.depth zWrite, zTest
           else
             o.show true, blending, order for o in @objects
@@ -210,52 +207,95 @@ helpers =
       objectScene.unadopt object for object in @objects
       object.dispose() for object in @objects if dispose
 
-  renderScale:
+  unit:
     make: () ->
-      @renderUniforms = {
-        renderInvScale:  invScale  = @_attributes.make @_types.number 0
-        renderScale:     scale     = @_attributes.make @_types.number 0
-        renderAspect:    aspect    = @_attributes.make @_types.number 0
-        renderWidth:     width     = @_attributes.make @_types.number 0
-        renderHeight:    height    = @_attributes.make @_types.number 0
+      π = Math.PI
+
+      @unitUniforms = {
+        renderScaleInv:   renderScaleInv  = @_attributes.make @_types.number 1
+        renderScale:      renderScale     = @_attributes.make @_types.number 1
+        renderAspect:     renderAspect    = @_attributes.make @_types.number 1
+        renderWidth:      renderWidth     = @_attributes.make @_types.number 0
+        renderHeight:     renderHeight    = @_attributes.make @_types.number 0
+        viewWidth:        viewWidth       = @_attributes.make @_types.number 0
+        viewHeight:       viewHeight      = @_attributes.make @_types.number 0
+        pixelRatio:       pixelRatio      = @_attributes.make @_types.number 1
+        pixelUnit:        pixelUnit       = @_attributes.make @_types.number 1
+        worldUnit:        worldUnit       = @_attributes.make @_types.number 1
+        renderOdd:        renderOdd       = @_attributes.make @_types.vec2()
       }
       
       top    = new THREE.Vector3()
       bottom = new THREE.Vector3()
 
       handler = () =>
-        measure = 1
+        return unless (size = root?.getSize())?
 
+        π = Math.PI
+        
+        scale = @_get 'unit.scale'
+        map   = @_get 'unit.map'
+        fov   = @_get 'unit.fov'
+
+        isAbsolute = scale == null
+        
+        # Measure live FOV to be able to accurately predict anti-aliasing in perspective
+        measure = 1
         if (camera = root?.getCamera())
           m = camera.projectionMatrix
+          # Measure top to bottom
           top   .set(0, -.5, 1).applyProjection(m)
           bottom.set(0,  .5, 1).applyProjection(m)
           top.sub bottom
           measure = top.y
           
-        if (size = root?.getSize())?
-          width    .value = size.renderWidth
-          height   .value = size.renderHeight
-          aspect   .value = size.aspect
-          scale    .value = height.value / measure
-          invScale .value = 1 / scale.value
+        # Calculate device pixel ratio
+        dpr      = size.renderHeight / size.viewHeight
 
-      root = @_listen 'root', 'root.resize', handler
+        # Calculate correction for fixed on-screen size regardless of FOV
+        fovtan   = if fov? then Math.tan(fov * π / 360) / measure else 1
+
+        # Calculate device pixels per virtual pixel
+        pixel    = if isAbsolute then dpr else size.renderHeight / scale * fovtan
+
+        # Calculate device pixels per world unit
+        rscale   = size.renderHeight * measure / 2
+        
+        # Calculate world units per virtual pixel
+        world    = pixel / rscale
+        
+        viewWidth     .value = size.viewWidth
+        viewHeight    .value = size.viewHeight
+        renderWidth   .value = size.renderWidth
+        renderHeight  .value = size.renderHeight
+        renderAspect  .value = size.aspect
+        renderScale   .value = rscale
+        renderScaleInv.value = 1 / rscale
+        pixelRatio    .value = dpr
+        pixelUnit     .value = pixel
+        worldUnit     .value = world
+
+        renderOdd     .value.set(size.renderWidth % 2, size.renderHeight % 2).multiplyScalar(.5);
+
+        #console.log 'worldUnit', world, pixel, rscale, isAbsolute
+
+      root = if @is 'root' then @ else @_inherit 'root'
+      #@_listen root, 'root.resize', handler
+      #@_listen root, 'root.camera', handler
+      #@_listen @node, 'change:unit', handler
+      @_listen root,  'root.update', handler
+      
       handler()
-
+      
     unmake: () ->
-      delete @renderUniforms
+      delete @unitUniforms
 
     get: () ->
-      u = @renderUniforms
+      u = {}
+      u[k] = v.value for k, v of @unitUniforms
+      u
 
-      width:  u.renderWidth .value
-      height: u.renderHeight.value
-      aspect: u.renderAspect.value
-      scale:  u.renderScale .value
-
-    uniforms: () -> @renderUniforms
-
+    uniforms: () -> @unitUniforms
 
 module.exports = (object, traits) ->
   h = {}

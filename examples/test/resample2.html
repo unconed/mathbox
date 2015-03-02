@@ -53,7 +53,7 @@
             .grid({
               divideX: 2,
               divideY: 2,
-              zIndex: 10,
+              zBias: 10,
               opacity: .25,
               color: 0xffdfe0,
             })
@@ -71,7 +71,7 @@
         .resample({
           id: 'resample1',
           indices:    3,
-          dimensions: 4,
+          channels: 4,
           shader: [
             "uniform vec3 dataResolution;",
             "uniform vec3 dataSize;",
@@ -111,7 +111,7 @@
           id: 'resample2',
           source: '#rtt1',
           indices:    3,
-          dimensions: 4,
+          channels: 4,
           shader: [
             "vec4 getSample(vec3 xyz);",
             "vec4 getFramesSample(vec3 xyz) {",
@@ -129,7 +129,7 @@
       .resample({
         id: 'resample3',
         indices:    2,
-        dimensions: 4,
+        channels: 4,
         shader: [
           "vec4 getSample(vec2 xy);",
           "vec4 getFramesSample(vec2 xy) {",

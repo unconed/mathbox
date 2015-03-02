@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw);\n  left  = getPosition(vec4(near, xyzw.yzw));\n  start = getPosition(vec4(far, xyzw.yzw));\n}\n\nmat4 getArrowMatrix(float size, vec3 left, vec3 right, vec3 start) {\n  \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small\n  // Approach linear scaling with cubic ease the smaller we get\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp((3.0 - l / size) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  \n  // Size to 2.5:1 ratio\n  size *= scale;\n  float sizeNB = size / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * sizeNB,  0),\n              vec4(b * sizeNB,  0),\n              vec4(t * size, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(arrowSize, left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
+window.MathBox.Shaders = {"arrow.position": "uniform float worldUnit;\nuniform float lineDepth;\nuniform float lineWidth;\n\nuniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw);\n  left  = getPosition(vec4(near, xyzw.yzw));\n  start = getPosition(vec4(far, xyzw.yzw));\n}\n\nmat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {\n\n  float depth = 1.0;\n  if (lineDepth < 1.0) {\n    // Depth blending\n    float z = max(0.00001, -right.z);\n    depth = mix(z, 1.0, lineDepth);\n  }\n    \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small\n  // Approach linear scaling with cubic ease the smaller we get\n  float size = arrowSize * lineWidth * worldUnit * depth * 1.25;\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = size * scale;\n  \n  // Size to 2.5:1 ratio\n  float rangeNB = range / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * rangeNB,  0),\n              vec4(b * rangeNB,  0),\n              vec4(t * range, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  getArrowGeometry(position4, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
 "axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw) {\n  return axisStep * xyzw.x + axisPosition;\n}\n",
 "cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
 "cartesian4.position": "uniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform vec4 viewScale;\nuniform vec4 viewOffset;\n\nvec4 getCartesian4Position(vec4 position) {\n  return position * basisScale + basisOffset;\n}\n",
@@ -13,22 +13,38 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "fragment.clip.dotted": "varying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n\nvoid clipStrokeFragment() {\n  bool odd = mod(vClipStrokeIndex, 2.0) >= 1.0;\n\n  vec3 tangent;\n  if (odd) {\n    tangent = vClipStrokeOdd;\n  }\n  else {\n    tangent = vClipStrokeEven;\n  }\n\n  float travel = dot(vClipStrokePosition, normalize(tangent)) / vClipStrokeWidth;\n  if (mod(travel, 4.0) > 2.0) {\n    discard;\n  }\n}\n",
 "fragment.clip.ends": "varying vec2 vClipEnds;\n\nvoid clipEndsFragment() {\n  if (vClipEnds.x < 0.0 || vClipEnds.y < 0.0) discard;\n}\n",
 "fragment.color": "void setFragmentColor(vec4 color) {\n  gl_FragColor = color;\n}",
+"fragment.solid": "void setFragmentColor(vec4 color) {\n  if (color.a < 1.0) discard;\n  gl_FragColor = color;\n}",
+"fragment.transparent": "void setFragmentColor(vec4 color) {\n  if (color.a >= 1.0) discard;\n  gl_FragColor = color;\n}",
 "grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzw) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzw.y, 0.0)).x;\n  vec4 offAxis = gridStep * xyzw.x + gridPosition;\n  return onAxis + offAxis;\n}\n",
 "join.position": "uniform float joinStride;\nuniform float joinStrideInv;\n\nfloat getIndex(vec4 xyzw);\nvec4 getRest(vec4 xyzw);\nvec4 injectIndices(float a, float b);\n\nvec4 getJoinXYZW(vec4 xyzw) {\n\n  float a = getIndex(xyzw);\n  float b = a * joinStrideInv;\n\n  float integer  = floor(b);\n  float fraction = b - integer;\n  \n  return injectIndices(fraction * joinStride, integer) + getRest(xyzw);\n}\n",
+"label.alpha": "varying float vPixelSize;\n\nvec4 getLabelAlphaColor(vec4 sample, vec4 color) {\n  float mask = clamp(sample.r * 1000.0, 0.0, 1.0);\n  float alpha = (sample.r - .5) * vPixelSize + .5;\n  float a = mask * alpha * color.a;\n  if (a <= 0.0) discard;\n  return vec4(color.xyz, a);\n}\n",
+"label.outline": "uniform float outlineExpand;\nuniform float outlineStep;\nuniform vec3  outlineColor;\n\nvarying float vPixelSize;\n\nconst float PIXEL_STEP = 255.0 / 16.0;\n\nvec4 getLabelOutlineColor(vec4 sample, vec4 color) {\n  //return vec4(color.xyz, 1.0);\n  float ps = vPixelSize * PIXEL_STEP;\n  float os = outlineStep;\n\n  float sdf = sample.r - .5 + outlineExpand;\n  vec2  sdfs = vec2(sdf, sdf + os);\n  vec2  alpha = clamp(sdfs * ps + .5, 0.0, 1.0);\n\n  if (alpha.y <= 0.0) {\n    discard;\n  }\n\n  vec3  blend = color.xyz;\n  if (alpha.y > alpha.x) {\n    blend = sqrt(mix(outlineColor * outlineColor, blend * blend, alpha.x));\n  }\n  \n  return vec4(blend, alpha.y * color.a);\n}\n",
 "lerp.depth": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpDepth(vec4 xyzw) {\n  float x = xyzw.z * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xy, i, xyzw.w);\n  vec4 xyzw2 = vec4(xyzw.xy, i + 1.0, xyzw.w);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.height": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpHeight(vec4 xyzw) {\n  float x = xyzw.y * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.items": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpItems(vec4 xyzw) {\n  float x = xyzw.w * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
 "lerp.width": "uniform float sampleRatio;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpWidth(vec4 xyzw) {\n  float x = xyzw.x * sampleRatio;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
-"line.position": "uniform float lineWidth;\nuniform float lineDepth;\nuniform vec4 geometryClip;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n#ifdef LINE_STROKE\nvarying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw);\n\n#ifdef LINE_CLIP\nuniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\n\nattribute vec2 strip;\n\nvarying vec2 vClipEnds;\n\nvoid clipEnds(vec4 xyzw, vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, xyzw.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, xyzw.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Measure length and adjust clip range\n  // Approach linear scaling with cubic ease the smaller we get\n  vec3 diff = end - start;\n  float l = length(vec2(length(diff), lineWidth)) * clipSpace;\n  float mini = clamp((3.0 - l / clipRange) * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini; \n  float range = clipRange * scale;\n  \n  vClipEnds = vec2(1.0);\n  \n  if (clipStyle.y > 0.0) {\n    // Clip end\n    float d = length(pos - end);\n    vClipEnds.x = d / range - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    float d = length(pos - start);\n    vClipEnds.y = d / range - 1.0;\n  }\n}\n#endif\n\nconst float epsilon = 1e-5;\nvoid fixCenter(vec3 left, inout vec3 center, vec3 right) {\n  if (center.z >= 0.0) {\n    if (left.z < 0.0) {\n      float d = (center.z - epsilon) / (center.z - left.z);\n      center = mix(center, left, d);\n    }\n    else if (right.z < 0.0) {\n      float d = (center.z - epsilon) / (center.z - right.z);\n      center = mix(center, right, d);\n    }\n  }\n}\n\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right) {\n  vec2 join = vec2(1.0, 0.0);\n\n  fixCenter(left, center, right);\n\n  vec4 a = vec4(left.xy, right.xy);\n  vec4 b = a / vec4(left.zz, right.zz);\n\n  vec2 l = b.xy;\n  vec2 r = b.zw;\n  vec2 c = center.xy / center.z;\n\n  vec4 d = vec4(l, c) - vec4(c, r);\n  float l1 = dot(d.xy, d.xy);\n  float l2 = dot(d.zw, d.zw);\n\n  if (l1 + l2 > 0.0) {\n    \n    if (edge > 0.5 || l2 == 0.0) {\n      vec2 nl = normalize(l - c);\n      vec2 tl = vec2(nl.y, -nl.x);\n\n#ifdef LINE_STROKE\n      vClipStrokeEven = vClipStrokeOdd = normalize(left - center);\n#endif\n      join = tl;\n    }\n    else if (edge < -0.5 || l1 == 0.0) {\n      vec2 nr = normalize(c - r);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n#ifdef LINE_STROKE\n      vClipStrokeEven = vClipStrokeOdd = normalize(center - right);\n#endif\n      join = tr;\n    }\n    else {\n      vec2 nl = normalize(d.xy);\n      vec2 nr = normalize(d.zw);\n\n      vec2 tl = vec2(nl.y, -nl.x);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n      vec2 tc = normalize(tl + tr);\n    \n      float cosA = dot(nl, tc);\n      float sinA = max(0.1, abs(dot(tl, tc)));\n      float factor = cosA / sinA;\n      float scale = sqrt(1.0 + factor * factor);\n\n#ifdef LINE_STROKE\n      vec3 stroke1 = normalize(left - center);\n      vec3 stroke2 = normalize(center - right);\n\n      if (odd) {\n        vClipStrokeEven = stroke1;\n        vClipStrokeOdd  = stroke2;\n      }\n      else {\n        vClipStrokeEven = stroke2;\n        vClipStrokeOdd  = stroke1;\n      }\n#endif\n      join = tc * scale;\n    }\n    return vec3(join, 0.0);\n  }\n  else {\n    return vec3(0.0);\n  }\n\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 p = min(geometryClip, position4);\n\n  getLineGeometry(p, edge, left, center, right);\n\n#ifdef LINE_STROKE\n  vClipStrokePosition = center;\n  vClipStrokeIndex = p.x;\n  bool odd = mod(p.x, 2.0) >= 1.0;\n#else\n  bool odd = true;\n#endif\n\n  join = getLineJoin(edge, odd, left, center, right);\n  \n  float width = lineWidth * 0.5;\n  if (lineDepth < 1.0) {\n    width *= mix(max(0.00001, -center.z), 1.0, lineDepth);\n  }\n\n#ifdef LINE_STROKE\n  vClipStrokeWidth = width;\n#endif\n  \n  vec3 pos = center + join * offset * width;\n\n#ifdef LINE_CLIP\n  clipEnds(position4, pos);\n#endif\n\n  return pos;\n}\n",
+"line.position": "uniform float worldUnit;\nuniform float lineWidth;\nuniform float lineDepth;\nuniform vec4 geometryClip;\n\nattribute vec2 line;\nattribute vec4 position4;\n\n#ifdef LINE_STROKE\nvarying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw);\n\n#ifdef LINE_CLIP\nuniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\n\nattribute vec2 strip;\n\nvarying vec2 vClipEnds;\n\nvoid clipEnds(vec4 xyzw, vec3 center, vec3 pos, float depth) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, xyzw.yzw);\n  vec3 end   = getPosition(xyzwE);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, xyzw.yzw);\n  vec3 start = getPosition(xyzwS);\n\n  // Absolute arrow length (=2.5x radius)\n  float size = clipRange * lineWidth * worldUnit * depth * 1.25;\n\n  // Measure length and adjust clip range\n  // Approach linear scaling with cubic ease the smaller we get\n  vec3 diff = end - start;\n  float l = length(diff) * clipSpace;\n  float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini; \n  float invrange = 1.0 / (size * scale);\n  \n  vClipEnds = vec2(1.0);\n\n  if (clipStyle.y > 0.0) {\n    // Clip end\n    diff = normalize(end - center);\n    float d = dot(end - pos, diff);\n    vClipEnds.x = d * invrange - 1.0;\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Clip start \n    diff = normalize(center - start);\n    float d = dot(pos - start, diff);\n    vClipEnds.y = d * invrange - 1.0;\n  }\n\n\n}\n#endif\n\nconst float epsilon = 1e-5;\nvoid fixCenter(vec3 left, inout vec3 center, vec3 right) {\n  if (center.z >= 0.0) {\n    if (left.z < 0.0) {\n      float d = (center.z - epsilon) / (center.z - left.z);\n      center = mix(center, left, d);\n    }\n    else if (right.z < 0.0) {\n      float d = (center.z - epsilon) / (center.z - right.z);\n      center = mix(center, right, d);\n    }\n  }\n}\n\n\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;\n}\n\nvec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float width) {\n  vec2 join = vec2(1.0, 0.0);\n\n  fixCenter(left, center, right);\n\n  vec4 a = vec4(left.xy, right.xy);\n  vec4 b = a / vec4(left.zz, right.zz);\n\n  vec2 l = b.xy;\n  vec2 r = b.zw;\n  vec2 c = center.xy / center.z;\n\n  vec4 d = vec4(l, c) - vec4(c, r);\n  float l1 = dot(d.xy, d.xy);\n  float l2 = dot(d.zw, d.zw);\n\n  if (l1 + l2 > 0.0) {\n    \n    if (edge > 0.5 || l2 == 0.0) {\n      vec2 nl = normalize(l - c);\n      vec2 tl = vec2(nl.y, -nl.x);\n\n#ifdef LINE_STROKE\n      vClipStrokeEven = vClipStrokeOdd = normalize(left - center);\n#endif\n      join = tl;\n    }\n    else if (edge < -0.5 || l1 == 0.0) {\n      vec2 nr = normalize(c - r);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n#ifdef LINE_STROKE\n      vClipStrokeEven = vClipStrokeOdd = normalize(center - right);\n#endif\n      join = tr;\n    }\n    else {\n      // Limit join stretch for tiny segments\n      float lmin2 = min(l1, l2) / (width * width);\n      \n      vec2 nl = normalize(d.xy);\n      vec2 nr = normalize(d.zw);\n\n      vec2 tl = vec2(nl.y, -nl.x);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n      vec2 tc = normalize(tl + tr);\n    \n      float cosA = dot(nl, tc);\n      float sinA = max(0.1, abs(dot(tl, tc)));\n      float factor = cosA / sinA;\n      float scale = sqrt(1.0 + min(lmin2, factor * factor));\n\n#ifdef LINE_STROKE\n      vec3 stroke1 = normalize(left - center);\n      vec3 stroke2 = normalize(center - right);\n\n      if (odd) {\n        vClipStrokeEven = stroke1;\n        vClipStrokeOdd  = stroke2;\n      }\n      else {\n        vClipStrokeEven = stroke2;\n        vClipStrokeOdd  = stroke1;\n      }\n#endif\n      join = tc * scale;\n    }\n    return vec3(join, 0.0);\n  }\n  else {\n    return vec3(0.0);\n  }\n\n}\n\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  float edge = line.x;\n  float offset = line.y;\n\n  vec4 p = min(geometryClip, position4);\n\n  // Get position + adjacent neighbours\n  getLineGeometry(p, edge, left, center, right);\n\n#ifdef LINE_STROKE\n  // Set parameters for line stroke fragment shader\n  vClipStrokePosition = center;\n  vClipStrokeIndex = p.x;\n  bool odd = mod(p.x, 2.0) >= 1.0;\n#else\n  bool odd = true;\n#endif\n\n  // Divide line width up/down\n  float width = lineWidth * 0.5;\n\n  float depth = 1.0;\n  if (lineDepth < 1.0) {\n    // Depth blending\n    float z = max(0.00001, -center.z);\n    depth = mix(z, 1.0, lineDepth);\n    width *= depth;\n  }\n\n  // Convert to world units\n  width *= worldUnit;\n\n  join = getLineJoin(edge, odd, left, center, right, width);\n\n#ifdef LINE_STROKE\n  vClipStrokeWidth = width;\n#endif\n  \n  vec3 pos = center + join * offset * width;\n\n#ifdef LINE_CLIP\n  clipEnds(position4, center, pos, depth);\n#endif\n\n  return pos;\n}\n",
 "map.2d.data": "uniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 map2DData(vec2 xy) {\n  return fract((xy + dataPointer) * dataResolution);\n}\n",
 "map.xyzw.2dv": "void mapXyzw2DV(vec4 xyzw, out vec2 xy, out float z) {\n  xy = xyzw.xy;\n  z  = xyzw.z;\n}\n\n",
 "map.xyzw.texture": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 mapXyzwTexture(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i, y) + vec2(x, z) * vec2(textureItems, textureHeight);\n}\n\n",
-"mesh.fragment.color": "varying vec4 vColor;\n\nvec4 getColor(vec4 rgba) {\n  return rgba * vColor;\n}\n",
+"mesh.fragment.blend": "varying vec4 vColor;\n\nvec4 blendColor(vec4 rgba) {\n  return rgba * vColor;\n}\n",
+"mesh.fragment.color": "varying vec4 vColor;\n\nvec4 getColor() {\n  return vColor;\n}\n",
 "mesh.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getMeshPosition() {\n  return getPosition(position4);\n}\n",
 "mesh.vertex.color": "attribute vec4 position4;\nvarying vec4 vColor;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvoid vertexColor() {\n  vColor = getSample(position4);\n}\n",
+"point.alpha.circle": "varying float vPixelSize;\n\nfloat getDiscAlpha(float mask) {\n  // Approximation: 1 - x*x is approximately linear around x = 1 with slope 2\n  return vPixelSize * (1.0 - mask);\n  //  return vPixelSize * 2.0 * (1.0 - sqrt(mask));\n}\n",
+"point.alpha.circle.hollow": "varying float vPixelSize;\n\nfloat getDiscHollowAlpha(float mask) {\n  return vPixelSize * (0.5 - 2.0 * abs(sqrt(mask) - .75));\n}\n",
+"point.alpha.generic": "varying float vPixelSize;\n\nfloat getGenericAlpha(float mask) {\n  return vPixelSize * 2.0 * (1.0 - mask);\n}\n",
+"point.alpha.generic.hollow": "varying float vPixelSize;\n\nfloat getGenericHollowAlpha(float mask) {\n  return vPixelSize * (0.5 - 2.0 * abs(mask - .75));\n}\n",
+"point.edge": "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha >= 1.0) {\n    discard;\n  }\n  gl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n",
+"point.fill": "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha < 1.0) {\n    discard;\n  }\n  gl_FragColor = color;\n}\n\n",
+"point.mask.circle": "varying float vPixelSize;\n\nfloat getCircleMask(vec2 uv) {\n  return dot(uv, uv);\n}\n",
+"point.mask.diamond": "varying float vPixelSize;\n\nfloat getDiamondMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return a.x + a.y;\n}\n",
+"point.mask.square": "varying float vPixelSize;\n\nfloat getSquareMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return max(a.x, a.y);\n}\n",
+"point.mask.triangle": "varying float vPixelSize;\n\nfloat getTriangleMask(vec2 uv) {\n  uv.y -= .25;\n  return max(-uv.y, abs(uv.x) * .866 + uv.y * .5 + .6);\n}\n",
+"point.position": "uniform float pointSize;\nuniform float pointDepth;\n\nuniform float pixelUnit;\nuniform float renderScale;\nuniform float renderScaleInv;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getPointPosition() {\n  vec3 center = getPosition(position4);\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float z = -center.z;\n  float depth = mix(z, 1.0, pointDepth);\n  \n  // Match device/unit mapping \n  // Sprite goes from -1..1, width = 2.\n  float size = pointSize * pixelUnit * .5;\n  float depthSize = depth * size;\n  \n  // Pad sprite by half a pixel to make the anti-aliasing straddle the pixel edge\n  // Note: pixelsize measures radius\n  float pixelSize = .5 * (pointDepth > 0.0 ? depthSize / z : size);\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * depthSize * renderScaleInv * padFactor, 0.0);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position) {\n  if (polarBend > 0.0001) {\n\n    vec2 xy = position.xy * vec2(polarBend, polarAspect);\n    float radius = polarFocus + xy.y;\n\n    return viewMatrix * vec4(\n      sin(xy.x) * radius,\n      (cos(xy.x) * radius - polarFocus) / polarAspect,\n      position.z + position.x * polarHelix * polarBend,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"project.position": "uniform float styleZIndex;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  pos.z *= (1.0 - styleZIndex / 32768.0);\n  gl_Position = pos;\n}\n",
-"project.readback": "// This is three.js' global uniform, missing from fragment shaders.\nuniform mat4 projectionMatrix;\n\nvec4 readbackPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  if (pos.w < 0.0) {\n    return vec4(0.0, 0.0, -1.0, 0.0);\n  }\n  else {\n    return pos / pos.w;\n  }\n}\n",
+"project.position": "uniform float styleZBias;\nuniform float styleZIndex;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n\n  // Apply relative Z bias\n  float bias  = (1.0 - styleZBias / 32768.0);\n  pos.z *= bias;\n  \n  // Apply large scale Z index changes\n  if (styleZIndex > 0.0) {\n    float z = pos.z / pos.w;\n    pos.z = ((z + 1.0) / (styleZIndex + 1.0) - 1.0) * pos.w;\n  }\n  \n  gl_Position = pos;\n}",
+"project.readback": "// This is three.js' global uniform, missing from fragment shaders.\nuniform mat4 projectionMatrix;\n\nvec4 readbackPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  vec3 final = pos.xyz / pos.w;\n  if (final.z < -1.0) {\n    return vec4(0.0, 0.0, 0.0, -1.0);\n  }\n  else {\n    return vec4(final, -position.z);\n  }\n}\n",
 "raw.position.scale": "uniform vec4 geometryScale;\nattribute vec4 position4;\n\nvec4 getRawPositionScale() {\n  return geometryScale * position4;\n}\n",
 "repeat.position": "uniform vec4 repeatModulus;\n\nvec4 getRepeatXYZW(vec4 xyzw) {\n  return mod(xyzw + .5, repeatModulus) - .5;\n}\n",
 "resample.relative": "uniform vec4 resampleFactor;\n\nvec4 resampleRelative(vec4 xyzw) {\n  return xyzw * resampleFactor;\n}",
@@ -39,17 +55,8 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "spherical.position": "uniform float sphericalBend;\nuniform float sphericalFocus;\nuniform float sphericalAspectX;\nuniform float sphericalAspectY;\nuniform float sphericalScaleY;\n\nuniform mat4 viewMatrix;\n\nvec4 getSphericalPosition(vec4 position) {\n  if (sphericalBend > 0.0001) {\n\n    vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);\n    float radius = sphericalFocus + xyz.z;\n    float cosine = cos(xyz.y) * radius;\n\n    return viewMatrix * vec4(\n      sin(xyz.x) * cosine,\n      sin(xyz.y) * radius * sphericalAspectY,\n      (cos(xyz.x) * cosine - sphericalFocus) / sphericalAspectX,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "split.position": "uniform float splitStride;\n\nvec2 getIndices(vec4 xyzw);\nvec4 getRest(vec4 xyzw);\nvec4 injectIndex(float v);\n\nvec4 getSplitXYZW(vec4 xyzw) {\n  vec2 uv = getIndices(xyzw);\n  float offset = uv.x + uv.y * splitStride;\n  return injectIndex(offset) + getRest(xyzw);\n}\n",
 "spread.position": "uniform vec4 spreadOffset;\nuniform mat4 spreadMatrix;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvec4 getSpreadSample(vec4 xyzw) {\n  vec4 sample = getSample(xyzw);\n  return sample + spreadMatrix * (spreadOffset + xyzw);\n}\n",
-"sprite.alpha.circle": "varying float vPixelSize;\n\nfloat getDiscAlpha(float mask) {\n  // Approximation: 1 - x*x is approximately linear around x = 1 with slope 2\n  return vPixelSize * (1.0 - mask);\n  //  return vPixelSize * 2.0 * (1.0 - sqrt(mask));\n}\n",
-"sprite.alpha.circle.hollow": "varying float vPixelSize;\n\nfloat getDiscHollowAlpha(float mask) {\n  return vPixelSize * (0.5 - 2.0 * abs(sqrt(mask) - .75));\n}\n",
-"sprite.alpha.generic": "varying float vPixelSize;\n\nfloat getGenericAlpha(float mask) {\n  return vPixelSize * 2.0 * (1.0 - mask);\n}\n",
-"sprite.alpha.generic.hollow": "varying float vPixelSize;\n\nfloat getGenericHollowAlpha(float mask) {\n  return vPixelSize * (0.5 - 2.0 * abs(mask - .75));\n}\n",
-"sprite.edge": "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha >= 1.0) {\n    discard;\n  }\n  gl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n",
-"sprite.fill": "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha < 1.0) {\n    discard;\n  }\n  gl_FragColor = color;\n}\n\n",
-"sprite.mask.circle": "varying float vPixelSize;\n\nfloat getCircleMask(vec2 uv) {\n  return dot(uv, uv);\n}\n",
-"sprite.mask.diamond": "varying float vPixelSize;\n\nfloat getDiamondMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return a.x + a.y;\n}\n",
-"sprite.mask.square": "varying float vPixelSize;\n\nfloat getSquareMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return max(a.x, a.y);\n}\n",
-"sprite.mask.triangle": "varying float vPixelSize;\n\nfloat getTriangleMask(vec2 uv) {\n  uv.y -= .25;\n  return max(-uv.y, abs(uv.x) * .866 + uv.y * .5 + .6);\n}\n",
-"sprite.position": "uniform float pointSize;\nuniform float renderScale;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getPointPosition() {\n  vec3 center = getPosition(position4);\n\n  float pixelSize = renderScale * pointSize / -center.z;\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * pointSize * padFactor, 0.0);\n}\n",
+"sprite.fragment": "varying vec2 vSprite;\n\nvec4 getSample(vec2 xy);\n\nvec4 getSpriteColor() {\n  return getSample(vSprite);\n}",
+"sprite.position": "uniform vec2 spriteOffset;\nuniform float spriteScale;\nuniform float spriteDepth;\nuniform float spriteSnap;\n\nuniform vec2 renderOdd;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float pixelUnit;\n\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw);\nvec4 getSprite(vec4 xyzw);\n\nvec3 getSpritePosition() {\n  vec3 center = getPosition(position4);\n  vec4 atlas = getSprite(position4);\n\n  // Sprite goes from -1..1, width = 2.\n  // -1..1 -> -0.5..0.5\n  vec2 halfSprite = sprite * .5;\n  vec2 halfFlipSprite = vec2(halfSprite.x, -halfSprite.y);\n\n  // Assign UVs\n  vSprite = atlas.xy + atlas.zw * (halfFlipSprite + .5);\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float z = -center.z;\n  float depth = mix(z, 1.0, spriteDepth);\n  \n  // Match device/unit mapping \n  float size = pixelUnit * spriteScale;\n  float depthSize = depth * size;\n\n  // Calculate pixelSize for anti-aliasing\n  float pixelSize = (spriteDepth > 0.0 ? depthSize / z : size);\n  vPixelSize = pixelSize;\n\n  // Position sprite\n  vec2 atlasOdd = fract(atlas.zw / 2.0);\n  vec2 offset = (spriteOffset + halfSprite * atlas.zw) * depthSize;\n  if (spriteSnap > 0.5) {\n    // Snap to pixel\n    return vec3(((floor(center.xy / center.z * renderScale) + renderOdd + atlasOdd) * center.z + offset) * renderScaleInv, center.z);\n  }\n  else {\n    // Place directly\n    return center + vec3(offset * renderScaleInv, 0.0);\n  }\n\n}\n",
 "stereographic.position": "uniform float stereoBend;\n\nuniform mat4 viewMatrix;\n\nvec4 getStereoPosition(vec4 position) {\n  if (stereoBend > 0.0001) {\n\n    vec3 pos = position.xyz;\n    float r = length(pos);\n    float z = r + pos.z;\n    vec3 project = vec3(pos.xy / z, r);\n    \n    vec3 lerped = mix(pos, project, stereoBend);\n\n    return viewMatrix * vec4(lerped, 1.0);\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "stereographic4.position": "uniform float stereoBend;\nuniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getStereographic4Position(vec4 position) {\n  \n  vec4 transformed;\n  if (stereoBend > 0.0001) {\n\n    float r = length(position);\n    float w = r + position.w;\n    vec4 project = vec4(position.xyz / w, r);\n    \n    transformed = mix(position, project, stereoBend);\n  }\n  else {\n    transformed = position;\n  }\n\n  vec4 pos4 = transformed * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n",
 "stpq.sample.2d": "varying vec2 vST;\n\nvec4 getSample(vec2 st);\n\nvec4 getSTSample() {\n  return getSample(vST);\n}\n",
@@ -59,7 +66,7 @@ window.MathBox.Shaders = {"arrow.position": "uniform float arrowSize;\nuniform f
 "style.color.shaded": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec4 getStyleColor() {\n  \n  vec3 color = styleColor * styleColor;\n  vec3 color2 = styleColor;\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\treturn vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);\n}\n",
 "surface.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getSurfacePosition() {\n  return getPosition(position4);\n}\n",
 "surface.position.normal": "attribute vec4 position4;\nattribute vec2 surface;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvoid getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec4 deltaX = vec4(1.0, 0.0, 0.0, 0.0);\n  vec4 deltaY = vec4(0.0, 1.0, 0.0, 0.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xyzw);\n  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : center;\n  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xyzw);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : (2.0 * center - getPosition(xyzw - deltaX));\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : (2.0 * center - getPosition(xyzw - deltaY));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  getSurfaceGeometry(position4, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);// - center);\n  vPosition = -center;\n  \n  return center;\n}\n",
-"ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(vec2 xy);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec4 xyzw) {\n\n  const float epsilon = 0.0001;\n  float line = xyzw.x - .5;\n\n  vec4 center = tickAxis * sampleData(vec2(xyzw.y, 0.0));\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
+"ticks.position": "uniform float tickSize;\nuniform vec4  tickAxis;\nuniform vec4  tickNormal;\n\nvec4 sampleData(float x);\n\nvec3 transformPosition(vec4 value);\n\nvec3 getTickPosition(vec4 xyzw) {\n\n  const float epsilon = 0.0001;\n  float line = xyzw.x - .5;\n\n  vec4 center = tickAxis * sampleData(xyzw.y);\n  vec4 edge   = tickNormal * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + edge;\n\n  vec3 c = transformPosition(a);\n  vec3 d = transformPosition(b);\n  \n  vec3 mid  = c;\n  vec3 side = normalize(d - c);\n\n  return mid + side * line * tickSize;\n}\n",
 "transform3.position": "uniform mat4 transformMatrix;\n\nvec4 transformPosition(vec4 position) {\n  return transformMatrix * vec4(position.xyz, 1.0);\n}\n",
 "transform4.position": "uniform mat4 transformMatrix;\nuniform vec4 transformOffset;\n\nvec4 transformPosition(vec4 position) {\n  return transformMatrix * position + transformOffset;\n}\n",
 "view.position": "// Implicit three.js uniform\n// uniform mat4 viewMatrix;\n\nvec4 getViewPosition(vec4 position) {\n  return (viewMatrix * vec4(position.xyz, 1.0));\n}"};
@@ -4729,8 +4736,8 @@ exports.getDimensions = function(data, spec) {
   return dims;
 };
 
-exports.makeEmitter = function(thunk, items, channels, indices) {
-  var inner, middle, outer;
+exports.makeEmitter = function(thunk, items, channels) {
+  var inner, outer;
   inner = (function() {
     switch (channels) {
       case 0:
@@ -4763,7 +4770,7 @@ exports.makeEmitter = function(thunk, items, channels, indices) {
         };
     }
   })();
-  middle = (function() {
+  outer = (function() {
     switch (items) {
       case 0:
         return function() {
@@ -4813,195 +4820,9 @@ exports.makeEmitter = function(thunk, items, channels, indices) {
         };
     }
   })();
-  outer = (function() {
-    switch (indices) {
-      case 1:
-        return function(i, emit) {
-          return middle(emit);
-        };
-      case 2:
-        return function(i, j, emit) {
-          return middle(emit);
-        };
-      case 3:
-        return function(i, j, k, emit) {
-          return middle(emit);
-        };
-      case 4:
-        return function(i, j, k, l, emit) {
-          return middle(emit);
-        };
-      case 6:
-        return function(i, j, k, l, m, n, emit) {
-          return middle(emit);
-        };
-      case 8:
-        return function(i, j, k, l, m, n, o, p, emit) {
-          return middle(emit);
-        };
-    }
-  })();
   outer.reset = thunk.reset;
   outer.rebind = thunk.rebind;
   return outer;
-};
-
-exports.normalizeEmitter = function(emitter, indices) {
-  var arity, f;
-  arity = emitter.length - 1;
-  f = (function() {
-    switch (indices) {
-      case 1:
-        switch (arity) {
-          case 0:
-            return function(i, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 2:
-        switch (arity) {
-          case 0:
-            return function(i, j, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 3:
-        switch (arity) {
-          case 0:
-            return function(i, j, k, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, k, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return function(i, j, k, emit) {
-              return emitter(i, j, emit);
-            };
-          case 3:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 4:
-        switch (arity) {
-          case 0:
-            return function(i, j, k, l, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, k, l, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return function(i, j, k, l, emit) {
-              return emitter(i, j, emit);
-            };
-          case 3:
-            return function(i, j, k, l, emit) {
-              return emitter(i, j, k, emit);
-            };
-          case 4:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 6:
-        switch (arity) {
-          case 0:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, j, emit);
-            };
-          case 3:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, j, k, emit);
-            };
-          case 4:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, j, k, l, emit);
-            };
-          case 5:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, j, k, l, m, emit);
-            };
-          case 6:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 8:
-        switch (arity) {
-          case 0:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, emit);
-            };
-          case 3:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, emit);
-            };
-          case 4:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, l, emit);
-            };
-          case 5:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, l, m, emit);
-            };
-          case 6:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, l, m, n, emit);
-            };
-          case 7:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, l, m, n, o, emit);
-            };
-          case 8:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      default:
-        throw "Invalid expression signature: " + emitter;
-    }
-  })();
-  f.reset = emitter.reset;
-  f.rebind = emitter.rebind;
-  return f;
 };
 
 exports.getThunk = function(data) {
@@ -5033,11 +4854,12 @@ exports.getThunk = function(data) {
       i = j = 0;
       first = (_ref = data[j]) != null ? _ref : [];
       thunk = function() {
-        var x, _ref1, _ref2;
+        var x, _ref1;
         x = first[i++];
         if (i === a) {
-          _ref1 = [0, j + 1], i = _ref1[0], j = _ref1[1];
-          first = (_ref2 = data[j]) != null ? _ref2 : [];
+          i = 0;
+          j++;
+          first = (_ref1 = data[j]) != null ? _ref1 : [];
         }
         return x;
       };
@@ -5052,15 +4874,17 @@ exports.getThunk = function(data) {
       second = (_ref1 = data[k]) != null ? _ref1 : [];
       first = (_ref2 = second[j]) != null ? _ref2 : [];
       thunk = function() {
-        var x, _ref3, _ref4, _ref5, _ref6;
+        var x, _ref3, _ref4;
         x = first[i++];
         if (i === a) {
-          _ref3 = [0, j + 1], i = _ref3[0], j = _ref3[1];
+          i = 0;
+          j++;
           if (j === b) {
-            _ref4 = [0, k + 1], j = _ref4[0], k = _ref4[1];
-            second = (_ref5 = data[k]) != null ? _ref5 : [];
+            j = 0;
+            k++;
+            second = (_ref3 = data[k]) != null ? _ref3 : [];
           }
-          first = (_ref6 = second[j]) != null ? _ref6 : [];
+          first = (_ref4 = second[j]) != null ? _ref4 : [];
         }
         return x;
       };
@@ -5077,19 +4901,22 @@ exports.getThunk = function(data) {
       second = (_ref4 = third[k]) != null ? _ref4 : [];
       first = (_ref5 = second[j]) != null ? _ref5 : [];
       thunk = function() {
-        var x, _ref10, _ref11, _ref6, _ref7, _ref8, _ref9;
+        var x, _ref6, _ref7, _ref8;
         x = first[i++];
         if (i === a) {
-          _ref6 = [0, j + 1], i = _ref6[0], j = _ref6[1];
+          i = 0;
+          j++;
           if (j === b) {
-            _ref7 = [0, k + 1], j = _ref7[0], k = _ref7[1];
+            j = 0;
+            k++;
             if (k === c) {
-              _ref8 = [0, l + 1], k = _ref8[0], l = _ref8[1];
-              third = (_ref9 = data[l]) != null ? _ref9 : [];
+              k = 0;
+              l++;
+              third = (_ref6 = data[l]) != null ? _ref6 : [];
             }
-            second = (_ref10 = third[k]) != null ? _ref10 : [];
+            second = (_ref7 = third[k]) != null ? _ref7 : [];
           }
-          first = (_ref11 = second[j]) != null ? _ref11 : [];
+          first = (_ref8 = second[j]) != null ? _ref8 : [];
         }
         return x;
       };
@@ -5108,23 +4935,27 @@ exports.getThunk = function(data) {
       second = (_ref8 = third[k]) != null ? _ref8 : [];
       first = (_ref9 = second[j]) != null ? _ref9 : [];
       thunk = function() {
-        var x, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17;
+        var x, _ref10, _ref11, _ref12, _ref13;
         x = first[i++];
         if (i === a) {
-          _ref10 = [0, j + 1], i = _ref10[0], j = _ref10[1];
+          i = 0;
+          j++;
           if (j === b) {
-            _ref11 = [0, k + 1], j = _ref11[0], k = _ref11[1];
+            j = 0;
+            k++;
             if (k === c) {
-              _ref12 = [0, l + 1], k = _ref12[0], l = _ref12[1];
+              k = 0;
+              l++;
               if (l === d) {
-                _ref13 = [0, m + 1], l = _ref13[0], m = _ref13[1];
-                fourth = (_ref14 = data[m]) != null ? _ref14 : [];
+                l = 0;
+                m++;
+                fourth = (_ref10 = data[m]) != null ? _ref10 : [];
               }
-              third = (_ref15 = fourth[l]) != null ? _ref15 : [];
+              third = (_ref11 = fourth[l]) != null ? _ref11 : [];
             }
-            second = (_ref16 = third[k]) != null ? _ref16 : [];
+            second = (_ref12 = third[k]) != null ? _ref12 : [];
           }
-          first = (_ref17 = second[j]) != null ? _ref17 : [];
+          first = (_ref13 = second[j]) != null ? _ref13 : [];
         }
         return x;
       };
@@ -5262,7 +5093,9 @@ exports.getStreamer = function(array, samples, channels, items) {
 
 
 },{}],21:[function(require,module,exports){
-var ease;
+var ease, π;
+
+π = Math.PI;
 
 ease = {
   cosine: function(x) {
@@ -5353,6 +5186,9 @@ exports.extendVec = function(from, to, value) {
   if (value == null) {
     value = 0;
   }
+  if (from > to) {
+    return exports.truncateVec(from, to);
+  }
   diff = to - from;
   from = toType(from);
   to = toType(to);
@@ -5374,12 +5210,12 @@ exports.extendVec = function(from, to, value) {
 
 exports.truncateVec = function(from, to) {
   var swizzle;
-  swizzle = '.' + ('xyzw'.substr(0, to));
-  from = 'vec' + from;
-  to = 'vec' + to;
-  if (to === 'vec1') {
-    to = 'float';
+  if (from < to) {
+    return exports.extendVec(from, to);
   }
+  swizzle = '.' + ('xyzw'.substr(0, to));
+  from = toType(from);
+  to = toType(to);
   return "" + to + " truncateVec(" + from + " v) { return v" + swizzle + "; }";
 };
 
@@ -5466,22 +5302,24 @@ exports.identity = function(type) {
 
 
 },{}],23:[function(require,module,exports){
-exports.Data = require('./data');
+exports.Axis = require('./axis');
 
-exports.Ticks = require('./ticks');
+exports.Data = require('./data');
 
 exports.Ease = require('./ease');
 
 exports.GLSL = require('./glsl');
 
-exports.Axis = require('./axis');
-
 exports.JS = require('./js');
 
 exports.Three = require('./three');
 
+exports.Ticks = require('./ticks');
 
-},{"./axis":19,"./data":20,"./ease":21,"./glsl":22,"./js":24,"./three":25,"./ticks":26}],24:[function(require,module,exports){
+exports.VDOM = require('./vdom');
+
+
+},{"./axis":19,"./data":20,"./ease":21,"./glsl":22,"./js":24,"./three":25,"./ticks":26,"./vdom":27}],24:[function(require,module,exports){
 exports.merge = function() {
   var k, obj, v, x, _i, _len;
   x = {};
@@ -5742,11 +5580,216 @@ exports.log = log;
 
 
 },{}],27:[function(require,module,exports){
+var HEAP, apply, descriptor, element, hint, id, insert, key, map, prop, recycle, remove, set, unset, _i, _len, _ref;
+
+HEAP = [];
+
+id = 0;
+
+descriptor = function() {
+  return {
+    id: id++,
+    type: null,
+    props: null,
+    children: null
+  };
+};
+
+hint = function(n) {
+  var i, _i, _results;
+  n *= 2;
+  n = Math.max(0, HEAP.length - n);
+  _results = [];
+  for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+    _results.push(HEAP.push(descriptor()));
+  }
+  return _results;
+};
+
+element = function(type, props, children) {
+  var el;
+  el = HEAP.length ? HEAP.pop() : descriptor();
+  el.type = type != null ? type : 'div';
+  el.props = props != null ? props : null;
+  el.children = children != null ? children : null;
+  return el;
+};
+
+recycle = function(el) {
+  var child, children, _i, _len;
+  if (!el.type) {
+    return;
+  }
+  children = el.children;
+  el.type = el.props = el.children = null;
+  HEAP.push(el);
+  if (children != null) {
+    for (_i = 0, _len = children.length; _i < _len; _i++) {
+      child = children[_i];
+      recycle(child);
+    }
+  }
+};
+
+apply = function(el, last, node, parent, index) {
+  var child, childNodes, children, i, key, nextChildren, nextProps, props, ref, same, value, _i, _j, _len, _len1, _ref, _ref1;
+  if (el != null) {
+    if (last == null) {
+      return insert(el, parent, index);
+    } else {
+      same = typeof el === typeof last && last !== null && el !== null && el.type === last.type;
+      if (!same) {
+        remove(node, parent);
+        return insert(el, parent, index);
+      } else {
+        props = last != null ? last.props : void 0;
+        nextProps = el.props;
+        if (props != null) {
+          for (key in props) {
+            if (!nextProps.hasOwnProperty(key)) {
+              unset(node, key);
+            }
+          }
+        }
+        if (nextProps != null) {
+          for (key in nextProps) {
+            value = nextProps[key];
+            if ((ref = props[key]) !== value) {
+              set(node, key, value, ref);
+            }
+          }
+        }
+        children = (_ref = last != null ? last.children : void 0) != null ? _ref : null;
+        nextChildren = el.children;
+        if ((_ref1 = typeof nextChildren) === 'string' || _ref1 === 'number') {
+          if (nextChildren !== children) {
+            node.textContent = nextChildren;
+          }
+        } else if (nextChildren != null) {
+          if (nextChildren.type != null) {
+            apply(nextChildren, children, node.childNodes[0], node, 0);
+          } else {
+            childNodes = node.childNodes;
+            if (children != null) {
+              for (i = _i = 0, _len = nextChildren.length; _i < _len; i = ++_i) {
+                child = nextChildren[i];
+                apply(child, children[i], childNodes[i], node, i);
+              }
+            } else {
+              for (i = _j = 0, _len1 = nextChildren.length; _j < _len1; i = ++_j) {
+                child = nextChildren[i];
+                apply(child, null, childNodes[i], node, i);
+              }
+            }
+          }
+        } else if (children != null) {
+          node.innerHTML = '';
+        }
+        return;
+      }
+    }
+  }
+  if (last != null) {
+    return remove(node, parent);
+  }
+};
+
+insert = function(el, parent, index) {
+  var child, children, i, key, node, value, _i, _len, _ref, _ref1, _ref2;
+  if (index == null) {
+    index = 0;
+  }
+  if ((_ref = typeof el) === 'string' || _ref === 'number') {
+    node = document.createTextNode(el);
+  } else {
+    node = document.createElement(el.type);
+    _ref1 = el.props;
+    for (key in _ref1) {
+      value = _ref1[key];
+      set(node, key, value);
+    }
+  }
+  children = el.children;
+  if ((_ref2 = typeof children) === 'string' || _ref2 === 'number') {
+    node.textContent = children;
+  } else if (children != null) {
+    if (children.type != null) {
+      insert(children, node, 0);
+    } else {
+      for (i = _i = 0, _len = children.length; _i < _len; i = ++_i) {
+        child = children[i];
+        insert(child, node, i);
+      }
+    }
+  }
+  parent.insertBefore(node, parent.childNodes[index]);
+};
+
+remove = function(node, parent) {
+  return parent.removeChild(node);
+};
+
+prop = function(key) {
+  var prefix, prefixes, _i, _len;
+  if (document.documentElement.style[key] != null) {
+    return key;
+  }
+  key = key[0].toUpperCase() + key.slice(1);
+  prefixes = ['webkit', 'moz', 'ms', 'o'];
+  for (_i = 0, _len = prefixes.length; _i < _len; _i++) {
+    prefix = prefixes[_i];
+    if (document.documentElement.style[prefix + key] != null) {
+      return prefix + key;
+    }
+  }
+};
+
+map = {};
+
+_ref = ['transform'];
+for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+  key = _ref[_i];
+  map[key] = prop(key);
+}
+
+set = function(node, key, value, orig) {
+  var k, v, _ref1;
+  if (key === 'style') {
+    for (k in value) {
+      v = value[k];
+      if ((orig != null ? orig[k] : void 0) !== v) {
+        node.style[(_ref1 = map[k]) != null ? _ref1 : k] = v;
+      }
+    }
+    return;
+  }
+  if (node[key] != null) {
+    node[key] = value;
+    return;
+  }
+  if (node instanceof Node) {
+    node.setAttribute(key, value);
+  }
+};
+
+unset = function(node, key) {
+  return node.removeAttribute(key);
+};
+
+module.exports = {
+  element: element,
+  recycle: recycle,
+  apply: apply,
+  hint: hint
+};
+
+
+},{}],28:[function(require,module,exports){
 var Context, Model, Overlay, Primitives, Render, Shaders, Stage, Util;
 
-Overlay = require('./overlay');
-
 Model = require('./model');
+
+Overlay = require('./overlay');
 
 Primitives = require('./primitives');
 
@@ -5761,11 +5804,13 @@ Util = require('./util');
 Context = (function() {
   Context.Namespace = {
     Model: Model,
-    Stage: Stage,
+    Overlay: Overlay,
+    Primitives: Primitives,
     Render: Render,
     Shaders: Shaders,
-    Primitives: Primitives,
-    Util: Util
+    Stage: Stage,
+    Util: Util,
+    DOM: Overlay.Classes.dom
   };
 
   function Context(renderer, scene, camera, script) {
@@ -5782,8 +5827,8 @@ Context = (function() {
     this.canvas = canvas = renderer.domElement;
     this.element = element = canvas.parentNode;
     this.shaders = new Shaders.Factory(Shaders.Snippets);
-    this.renderables = new Render.Factory(renderer, Render.Classes, this.shaders);
-    this.overlays = new Overlay.Factory(element, canvas, Overlay.Classes);
+    this.renderables = new Render.Factory(Render.Classes, renderer, this.shaders);
+    this.overlays = new Overlay.Factory(Overlay.Classes, element, canvas);
     this.scene = this.renderables.make('scene', {
       scene: scene
     });
@@ -5852,7 +5897,7 @@ Context = (function() {
 module.exports = Context;
 
 
-},{"./model":32,"./overlay":38,"./primitives":41,"./render":115,"./shaders":129,"./stage":134,"./util":139}],28:[function(require,module,exports){
+},{"./model":33,"./overlay":39,"./primitives":42,"./render":123,"./shaders":138,"./stage":143,"./util":148}],29:[function(require,module,exports){
 var Context, k, mathBox, v, _ref;
 
 mathBox = function(options) {
@@ -5987,7 +6032,7 @@ THREE.Bootstrap.registerPlugin('mathbox', {
  */
 
 
-},{"../build/shaders":1,"./context":27}],29:[function(require,module,exports){
+},{"../build/shaders":1,"./context":28}],30:[function(require,module,exports){
 
 /*
  Custom attribute model
@@ -6096,7 +6141,9 @@ Data = (function() {
           _ref = [replace, attr.value], attr.value = _ref[0], attr.last = _ref[1];
           short = attr.short;
           flattened[short] = replace;
-          originals[short] = value;
+          if (!ignore) {
+            originals[short] = value;
+          }
           if (!(ignore || equals(key, attr.value, attr.last))) {
             change(key, value);
           }
@@ -6256,7 +6303,7 @@ Data = (function() {
 module.exports = Attributes;
 
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var Group, Node,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -6331,7 +6378,7 @@ Group = (function(_super) {
 module.exports = Group;
 
 
-},{"./node":34}],31:[function(require,module,exports){
+},{"./node":35}],32:[function(require,module,exports){
 var Guard;
 
 Guard = (function() {
@@ -6357,7 +6404,7 @@ Guard = (function() {
 module.exports = Guard;
 
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 exports.Attributes = require('./attributes');
 
 exports.Group = require('./group');
@@ -6369,7 +6416,7 @@ exports.Model = require('./model');
 exports.Node = require('./node');
 
 
-},{"./attributes":29,"./group":30,"./guard":31,"./model":33,"./node":34}],33:[function(require,module,exports){
+},{"./attributes":30,"./group":31,"./guard":32,"./model":34,"./node":35}],34:[function(require,module,exports){
 var ALL, CLASS, ID, Model, TRAIT, TYPE, cssauron, language,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -6667,6 +6714,9 @@ Model = (function() {
       };
     })(this);
     adopt(this.root);
+    this.root.trigger({
+      type: 'added'
+    });
   }
 
   Model.prototype.filter = function(nodes, selector) {
@@ -6824,7 +6874,7 @@ Model = (function() {
 module.exports = Model;
 
 
-},{"cssauron":16}],34:[function(require,module,exports){
+},{"cssauron":16}],35:[function(require,module,exports){
 var Node;
 
 Node = (function() {
@@ -6924,7 +6974,7 @@ THREE.Binder.apply(Node.prototype);
 module.exports = Node;
 
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var Classes;
 
 Classes = {
@@ -6934,23 +6984,14 @@ Classes = {
 module.exports = Classes;
 
 
-},{"./dom":36}],36:[function(require,module,exports){
-var DOM, Overlay, descriptor, id,
+},{"./dom":37}],37:[function(require,module,exports){
+var DOM, Overlay, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Overlay = require('./overlay');
 
-id = 0;
-
-descriptor = function() {
-  return {
-    id: id++,
-    type: null,
-    props: null,
-    children: null
-  };
-};
+Util = require('../util');
 
 DOM = (function(_super) {
   __extends(DOM, _super);
@@ -6959,10 +7000,16 @@ DOM = (function(_super) {
     return DOM.__super__.constructor.apply(this, arguments);
   }
 
+  DOM.prototype.el = Util.VDOM.element;
+
+  DOM.prototype.hint = Util.VDOM.hint;
+
+  DOM.prototype.apply = Util.VDOM.apply;
+
+  DOM.prototype.recycle = Util.VDOM.recycle;
+
   DOM.prototype.init = function(options) {
-    this.heap = [];
-    this.last = null;
-    return this.mount();
+    return this.last = null;
   };
 
   DOM.prototype.dispose = function() {
@@ -6979,38 +7026,18 @@ DOM = (function(_super) {
   };
 
   DOM.prototype.unmount = function(overlay) {
-    this.element.removeChild(overlay);
+    if (overlay.parentNode) {
+      this.element.removeChild(overlay);
+    }
     return this.overlay = null;
   };
 
-  DOM.prototype.el = function(type, props, children) {
-    var el;
-    el = this.heap.length ? this.heap.pop() : descriptor();
-    el.type = type != null ? type : 'div';
-    el.props = props != null ? props : null;
-    el.children = children != null ? children : null;
-    return el;
-  };
-
-  DOM.prototype.recycle = function(el) {
-    var child, children, _i, _len;
-    if (!el.type) {
-      return;
-    }
-    children = el.children;
-    el.type = el.props = el.children = null;
-    this.heap.push(el);
-    if (children != null) {
-      for (_i = 0, _len = children.length; _i < _len; _i++) {
-        child = children[_i];
-        this.recycle(child);
-      }
-    }
-  };
-
   DOM.prototype.render = function(el) {
-    var last, naked, node, overlay, parent;
-    if (typeof el === 'string') {
+    var last, naked, node, overlay, parent, _ref;
+    if (!this.overlay) {
+      this.mount();
+    }
+    if ((_ref = typeof el) === 'string' || _ref === 'number') {
       el = this.el('div', null, el);
     }
     if (el instanceof Array) {
@@ -7025,124 +7052,10 @@ DOM = (function(_super) {
       last = this.el('div');
     }
     this.apply(el, last, node, parent, 0);
+    this.last = el;
     if (last != null) {
       this.recycle(last);
     }
-    this.last = el;
-  };
-
-  DOM.prototype.apply = function(el, last, node, parent, index) {
-    var child, childNodes, children, i, key, nextChildren, nextProps, props, same, value, _i, _j, _len, _len1, _ref;
-    if (el != null) {
-      if (last == null) {
-        return this.insert(el, parent, index);
-      } else {
-        same = typeof el === typeof last && last !== null && el !== null && el.type === last.type;
-        if (!same) {
-          this.remove(node, parent);
-          return this.insert(el, parent, index);
-        } else {
-          props = last != null ? last.props : void 0;
-          nextProps = el.props;
-          if (props != null) {
-            for (key in props) {
-              if (!nextProps.hasOwnProperty(key)) {
-                this.unset(node, key, value);
-              }
-            }
-          }
-          if (nextProps != null) {
-            for (key in nextProps) {
-              value = nextProps[key];
-              if (props[key] !== value) {
-                this.set(node, key, value);
-              }
-            }
-          }
-          children = (_ref = last != null ? last.children : void 0) != null ? _ref : null;
-          nextChildren = el.children;
-          if (typeof nextChildren === 'string') {
-            if (nextChildren !== children) {
-              node.innerText = nextChildren;
-            }
-          } else if (nextChildren != null) {
-            childNodes = node.childNodes;
-            if (children != null) {
-              for (i = _i = 0, _len = nextChildren.length; _i < _len; i = ++_i) {
-                child = nextChildren[i];
-                this.apply(child, children[i], childNodes[i], node, i);
-              }
-            } else {
-              for (i = _j = 0, _len1 = nextChildren.length; _j < _len1; i = ++_j) {
-                child = nextChildren[i];
-                this.apply(child, null, childNodes[i], node, i);
-              }
-            }
-          } else if (children != null) {
-            node.innerHTML = '';
-          }
-          return;
-        }
-      }
-    }
-    if (last != null) {
-      return this.remove(node, parent);
-    }
-  };
-
-  DOM.prototype.insert = function(el, parent, index) {
-    var child, children, i, key, node, value, _i, _len, _ref;
-    if (index == null) {
-      index = 0;
-    }
-    if (typeof el === 'string') {
-      node = document.createTextNode(el);
-    } else {
-      node = document.createElement(el.type);
-      _ref = el.props;
-      for (key in _ref) {
-        value = _ref[key];
-        this.set(node, key, value);
-      }
-    }
-    children = el.children;
-    if (typeof children === 'string') {
-      this.insert(children, node, 0);
-    } else {
-      if (children != null) {
-        for (i = _i = 0, _len = children.length; _i < _len; i = ++_i) {
-          child = children[i];
-          this.insert(child, node, i);
-        }
-      }
-    }
-    parent.insertBefore(node, parent.childNodes[index]);
-  };
-
-  DOM.prototype.remove = function(node, parent) {
-    return parent.removeChild(node);
-  };
-
-  DOM.prototype.set = function(node, key, value) {
-    var k, v;
-    if (key === 'style') {
-      for (k in value) {
-        v = value[k];
-        node.style[k] = v;
-      }
-      return;
-    }
-    if (node[key] != null) {
-      node[key] = value;
-      return;
-    }
-    if (node instanceof Node) {
-      node.setAttribute(key, value);
-    }
-  };
-
-  DOM.prototype.unset = function(node, key, value) {
-    return node.removeAttribute(key);
   };
 
   return DOM;
@@ -7152,15 +7065,15 @@ DOM = (function(_super) {
 module.exports = DOM;
 
 
-},{"./overlay":39}],37:[function(require,module,exports){
+},{"../util":148,"./overlay":40}],38:[function(require,module,exports){
 var OverlayFactory;
 
 OverlayFactory = (function() {
-  function OverlayFactory(element, canvas, classes) {
+  function OverlayFactory(classes, element, canvas) {
     var div;
+    this.classes = classes;
     this.element = element;
     this.canvas = canvas;
-    this.classes = classes;
     div = document.createElement('div');
     div.classList.add('mathbox-overlays');
     this.div = div;
@@ -7189,7 +7102,7 @@ OverlayFactory = (function() {
 module.exports = OverlayFactory;
 
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Classes = require('./classes');
@@ -7197,7 +7110,7 @@ exports.Classes = require('./classes');
 exports.Overlay = require('./overlay');
 
 
-},{"./classes":35,"./factory":37,"./overlay":39}],39:[function(require,module,exports){
+},{"./classes":36,"./factory":38,"./overlay":40}],40:[function(require,module,exports){
 var Overlay;
 
 Overlay = (function() {
@@ -7217,7 +7130,7 @@ Overlay = (function() {
 module.exports = Overlay;
 
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 var PrimitiveFactory, Util;
 
 Util = require('../util');
@@ -7262,7 +7175,7 @@ PrimitiveFactory = (function() {
 module.exports = PrimitiveFactory;
 
 
-},{"../util":139}],41:[function(require,module,exports){
+},{"../util":148}],42:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Primitive = require('./primitive');
@@ -7270,7 +7183,7 @@ exports.Primitive = require('./primitive');
 exports.Types = require('./types');
 
 
-},{"./factory":40,"./primitive":42,"./types":65}],42:[function(require,module,exports){
+},{"./factory":41,"./primitive":43,"./types":69}],43:[function(require,module,exports){
 var Model, Primitive,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -7356,8 +7269,9 @@ Primitive = (function() {
   };
 
   Primitive.prototype._added = function() {
-    this._parent = this.node.parent.controller;
-    this._root = this.node.root.controller;
+    var _ref, _ref1;
+    this._parent = (_ref = this.node.parent) != null ? _ref.controller : void 0;
+    this._root = (_ref1 = this.node.root) != null ? _ref1.controller : void 0;
     this.make();
     this.refresh();
     return this.made();
@@ -7381,6 +7295,7 @@ Primitive = (function() {
     }
     if (object != null) {
       handler = method.bind(self);
+      handler.node = this.node;
       object.on(type, handler);
       this._handlers.listen.push([object, type, handler]);
     }
@@ -7421,19 +7336,25 @@ Primitive = (function() {
     return this._handlers.inherit = {};
   };
 
-  Primitive.prototype._attach = function(selector, trait, method, self) {
+  Primitive.prototype._attach = function(selector, trait, method, self, start) {
     var id, node, parent, previous, selection, watcher;
     if (self == null) {
       self = this;
     }
+    if (start == null) {
+      start = this;
+    }
     if (typeof selector === 'object') {
+      if (selector._up) {
+        selector = selector[0];
+      }
       node = selector;
       if ((node != null) && __indexOf.call(node.traits, trait) >= 0) {
         return node.controller;
       }
     }
     if (selector === '<') {
-      previous = this.node;
+      previous = start.node;
       while (previous) {
         parent = previous.parent;
         if (!parent) {
@@ -7487,7 +7408,7 @@ THREE.Binder.apply(Primitive.prototype);
 module.exports = Primitive;
 
 
-},{"../model":32}],43:[function(require,module,exports){
+},{"../model":33}],44:[function(require,module,exports){
 var Group, Parent,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7501,7 +7422,7 @@ Group = (function(_super) {
     return Group.__super__.constructor.apply(this, arguments);
   }
 
-  Group.traits = ['node', 'object', 'entity'];
+  Group.traits = ['node', 'object', 'entity', 'group'];
 
   Group.prototype.make = function() {
     return this._helpers.object.make();
@@ -7518,7 +7439,7 @@ Group = (function(_super) {
 module.exports = Group;
 
 
-},{"./parent":44}],44:[function(require,module,exports){
+},{"./parent":45}],45:[function(require,module,exports){
 var Parent, Primitive,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7543,7 +7464,7 @@ Parent = (function(_super) {
 module.exports = Parent;
 
 
-},{"../../primitive":42}],45:[function(require,module,exports){
+},{"../../primitive":43}],46:[function(require,module,exports){
 var Parent, Root, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7559,13 +7480,27 @@ Root = (function(_super) {
     return Root.__super__.constructor.apply(this, arguments);
   }
 
-  Root.traits = ['node', 'root', 'scene', 'transform'];
+  Root.traits = ['node', 'root', 'scene', 'transform', 'unit'];
 
   Root.prototype.init = function() {
     this.size = null;
-    return this.event = {
+    this.cameraEvent = {
+      type: 'root.camera'
+    };
+    this.updateEvent = {
       type: 'root.update'
     };
+    return this.postEvent = {
+      type: 'root.post'
+    };
+  };
+
+  Root.prototype.make = function() {
+    return this._helpers.unit.make();
+  };
+
+  Root.prototype.unmake = function() {
+    return this._helpers.unit.unmake();
   };
 
   Root.prototype.adopt = function(renderable) {
@@ -7614,8 +7549,24 @@ Root = (function(_super) {
     return this.size;
   };
 
+  Root.prototype.getUnit = function() {
+    return this._helpers.unit.get();
+  };
+
+  Root.prototype.getUnitUniforms = function() {
+    return this._helpers.unit.uniforms();
+  };
+
+  Root.prototype.pre = function() {
+    return this.getCamera().updateProjectionMatrix();
+  };
+
   Root.prototype.update = function() {
-    return this.trigger(this.event);
+    return this.trigger(this.updateEvent);
+  };
+
+  Root.prototype.post = function() {
+    return this.trigger(this.postEvent);
   };
 
   Root.prototype.getCamera = function() {
@@ -7639,7 +7590,7 @@ Root = (function(_super) {
 module.exports = Root;
 
 
-},{"../../../util":139,"./parent":44}],46:[function(require,module,exports){
+},{"../../../util":148,"./parent":45}],47:[function(require,module,exports){
 var Primitive, Source, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7696,7 +7647,48 @@ Source = (function(_super) {
 module.exports = Source;
 
 
-},{"../../../util":139,"../../primitive":42}],47:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],48:[function(require,module,exports){
+var Parent, Unit, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Parent = require('./parent');
+
+Util = require('../../../util');
+
+Unit = (function(_super) {
+  __extends(Unit, _super);
+
+  function Unit() {
+    return Unit.__super__.constructor.apply(this, arguments);
+  }
+
+  Unit.traits = ['node', 'unit'];
+
+  Unit.prototype.make = function() {
+    return this._helpers.unit.make();
+  };
+
+  Unit.prototype.unmake = function() {
+    return this._helpers.unit.unmake();
+  };
+
+  Unit.prototype.getUnit = function() {
+    return this._helpers.unit.get();
+  };
+
+  Unit.prototype.getUnitUniforms = function() {
+    return this._helpers.unit.uniforms();
+  };
+
+  return Unit;
+
+})(Parent);
+
+module.exports = Unit;
+
+
+},{"../../../util":148,"./parent":45}],49:[function(require,module,exports){
 var Classes;
 
 Classes = {
@@ -7709,6 +7701,7 @@ Classes = {
   surface: require('./draw/surface'),
   ticks: require('./draw/ticks'),
   vector: require('./draw/vector'),
+  label: require('./draw/label'),
   view: require('./view/view'),
   cartesian: require('./view/cartesian'),
   cartesian4: require('./view/cartesian4'),
@@ -7725,6 +7718,9 @@ Classes = {
   area: require('./data/area'),
   voxel: require('./data/voxel'),
   volume: require('./data/volume'),
+  text: require('./data/text'),
+  html: require('./overlay/html'),
+  dom: require('./overlay/dom'),
   join: require('./operator/join'),
   lerp: require('./operator/lerp'),
   memo: require('./operator/memo'),
@@ -7736,15 +7732,15 @@ Classes = {
   transpose: require('./operator/transpose'),
   group: require('./base/group'),
   root: require('./base/root'),
+  unit: require('./base/unit'),
   rtt: require('./rtt/rtt'),
-  compose: require('./rtt/compose'),
-  label: require('./overlay/label')
+  compose: require('./rtt/compose')
 };
 
 module.exports = Classes;
 
 
-},{"./base/group":43,"./base/root":45,"./data/area":48,"./data/array":49,"./data/interval":51,"./data/matrix":52,"./data/volume":53,"./data/voxel":54,"./draw/axis":55,"./draw/face":56,"./draw/grid":57,"./draw/line":58,"./draw/point":59,"./draw/strip":60,"./draw/surface":61,"./draw/ticks":62,"./draw/vector":63,"./operator/join":66,"./operator/lerp":67,"./operator/memo":68,"./operator/repeat":70,"./operator/resample":71,"./operator/split":72,"./operator/spread":73,"./operator/swizzle":74,"./operator/transpose":75,"./overlay/label":76,"./rtt/compose":78,"./rtt/rtt":79,"./transform/transform3":82,"./transform/transform4":83,"./transform/vertex":84,"./view/cartesian":86,"./view/cartesian4":87,"./view/polar":88,"./view/spherical":89,"./view/stereographic":90,"./view/stereographic4":91,"./view/view":92}],48:[function(require,module,exports){
+},{"./base/group":44,"./base/root":46,"./base/unit":48,"./data/area":50,"./data/array":51,"./data/interval":53,"./data/matrix":54,"./data/text":55,"./data/volume":56,"./data/voxel":57,"./draw/axis":58,"./draw/face":59,"./draw/grid":60,"./draw/label":61,"./draw/line":62,"./draw/point":63,"./draw/strip":64,"./draw/surface":65,"./draw/ticks":66,"./draw/vector":67,"./operator/join":70,"./operator/lerp":71,"./operator/memo":72,"./operator/repeat":74,"./operator/resample":75,"./operator/split":76,"./operator/spread":77,"./operator/swizzle":78,"./operator/transpose":79,"./overlay/dom":80,"./overlay/html":81,"./rtt/compose":82,"./rtt/rtt":83,"./transform/transform3":86,"./transform/transform4":87,"./transform/vertex":88,"./view/cartesian":90,"./view/cartesian4":91,"./view/polar":92,"./view/spherical":93,"./view/stereographic":94,"./view/stereographic4":95,"./view/view":96}],50:[function(require,module,exports){
 var Area, Matrix, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7789,12 +7785,11 @@ Area = (function(_super) {
     }
     bX = spanX * inverseX;
     bY = spanY * inverseY;
-    callback = Util.Data.normalizeEmitter(callback, 4);
-    return function(i, j, emit) {
+    return function(emit, i, j) {
       var x, y;
       x = aX + bX * i;
       y = aY + bY * j;
-      return callback(x, y, i, j, emit);
+      return callback(emit, x, y, i, j);
     };
   };
 
@@ -7815,7 +7810,7 @@ Area = (function(_super) {
 module.exports = Area;
 
 
-},{"../../../util":139,"./matrix":52}],49:[function(require,module,exports){
+},{"../../../util":148,"./matrix":54}],51:[function(require,module,exports){
 var Array_, Data, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -7834,15 +7829,17 @@ Array_ = (function(_super) {
   Array_.traits = ['node', 'data', 'source', 'array', 'texture'];
 
   Array_.prototype.init = function() {
-    this.buffer = this.spec = this.emitter = null;
+    this.buffer = this.spec = null;
     this.filled = false;
     this.space = {
       length: 0,
       history: 0
     };
-    return this.used = {
+    this.used = {
       length: 0
     };
+    this.storage = 'arrayBuffer';
+    return Array_.__super__.init.apply(this, arguments);
   };
 
   Array_.prototype.sourceShader = function(shader) {
@@ -7872,7 +7869,7 @@ Array_ = (function(_super) {
   };
 
   Array_.prototype.make = function() {
-    var channels, data, dims, history, items, length, magFilter, minFilter, reserve, space, thunk, type;
+    var channels, data, dims, history, items, length, magFilter, minFilter, reserve, space, type, _base;
     Array_.__super__.make.apply(this, arguments);
     minFilter = this._get('texture.minFilter');
     magFilter = this._get('texture.magFilter');
@@ -7880,7 +7877,7 @@ Array_ = (function(_super) {
     length = this._get('array.length');
     history = this._get('array.history');
     reserve = this._get('array.bufferLength');
-    channels = this._get('data.dimensions');
+    channels = this._get('data.channels');
     items = this._get('data.items');
     dims = this.spec = {
       channels: channels,
@@ -7894,7 +7891,10 @@ Array_ = (function(_super) {
     space = this.space;
     space.length = Math.max(reserve, dims.width || 1);
     space.history = history;
-    this.buffer = this._renderables.make('arrayBuffer', {
+    if ((_base = this.spec).width == null) {
+      _base.width = 1;
+    }
+    return this.buffer = this._renderables.make(this.storage, {
       length: space.length,
       history: space.history,
       channels: channels,
@@ -7903,23 +7903,19 @@ Array_ = (function(_super) {
       magFilter: magFilter,
       type: type
     });
-    if (data != null) {
-      thunk = Util.Data.getThunk(data);
-      return this.emitter = Util.Data.makeEmitter(thunk, items, channels, 1);
-    }
   };
 
   Array_.prototype.unmake = function() {
     Array_.__super__.unmake.apply(this, arguments);
     if (this.buffer) {
       this.buffer.dispose();
-      return this.buffer = this.spec = this.emitter = null;
+      return this.buffer = this.spec = null;
     }
   };
 
   Array_.prototype.change = function(changed, touched, init) {
-    var data, emitter, length;
-    if (touched['texture'] || changed['array.history'] || changed['data.dimensions'] || changed['array.bufferLength']) {
+    var length;
+    if (touched['texture'] || changed['array.history'] || changed['data.dimensions'] || changed['data.items'] || changed['array.bufferLength']) {
       return this.rebuild();
     }
     if (!this.buffer) {
@@ -7932,17 +7928,12 @@ Array_ = (function(_super) {
       }
     }
     if (changed['data.expression'] || changed['data.data'] || init) {
-      emitter = this.emitter;
-      data = this._get('data.data');
-      if (data == null) {
-        emitter = this.callback(this._get('data.expression'));
-      }
-      return this.buffer.setCallback(emitter);
+      return this.buffer.setCallback(this.emitter());
     }
   };
 
   Array_.prototype.callback = function(callback) {
-    return Util.Data.normalizeEmitter(emitter, 1);
+    return callback;
   };
 
   Array_.prototype.update = function() {
@@ -7987,12 +7978,14 @@ Array_ = (function(_super) {
 module.exports = Array_;
 
 
-},{"../../../util":139,"./data":50}],50:[function(require,module,exports){
-var Data, Source,
+},{"../../../util":148,"./data":52}],52:[function(require,module,exports){
+var Data, Source, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
 Source = require('../base/source');
+
+Util = require('../../../util');
 
 Data = (function(_super) {
   __extends(Data, _super);
@@ -8003,7 +7996,32 @@ Data = (function(_super) {
 
   Data.traits = ['node', 'data', 'source', 'texture'];
 
+  Data.prototype.init = function() {
+    this.dataEmitter = null;
+    return this.dataSizes = null;
+  };
+
   Data.prototype.update = function() {};
+
+  Data.prototype.emitter = function() {
+    var channels, data, emitter, items, last, sizes, thunk;
+    data = this._get('data.data');
+    if (data != null) {
+      last = this.dataSizes;
+      sizes = Util.Data.getSizes(data);
+      if (!last || last.length !== sizes.length) {
+        channels = this._get('data.channels');
+        items = this._get('data.items');
+        thunk = Util.Data.getThunk(data);
+        this.dataEmitter = this.callback(Util.Data.makeEmitter(thunk, items, channels));
+        this.dataSizes = sizes;
+      }
+      emitter = this.dataEmitter;
+    } else {
+      emitter = this.callback(this._get('data.expression'));
+    }
+    return emitter;
+  };
 
   Data.prototype.callback = function(callback) {
     return callback != null ? callback : function() {};
@@ -8013,7 +8031,10 @@ Data = (function(_super) {
     return this._listen('root', 'root.update', this.update);
   };
 
-  Data.prototype.unmake = function() {};
+  Data.prototype.unmake = function() {
+    this.dataEmitter = null;
+    return this.dataSizes = null;
+  };
 
   return Data;
 
@@ -8022,7 +8043,7 @@ Data = (function(_super) {
 module.exports = Data;
 
 
-},{"../base/source":46}],51:[function(require,module,exports){
+},{"../../../util":148,"../base/source":47}],53:[function(require,module,exports){
 var Interval, Util, _Array,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8055,11 +8076,10 @@ Interval = (function(_super) {
       inverse = 1 / Math.max(1, length - 1);
     }
     b = span * inverse;
-    callback = Util.Data.normalizeEmitter(callback, 2);
-    return function(i, emit) {
+    return function(emit, i) {
       var x;
       x = a + b * i;
-      return callback(x, i, emit);
+      return callback(emit, x, i);
     };
   };
 
@@ -8080,7 +8100,7 @@ Interval = (function(_super) {
 module.exports = Interval;
 
 
-},{"../../../util":139,"./array":49}],52:[function(require,module,exports){
+},{"../../../util":148,"./array":51}],54:[function(require,module,exports){
 var Data, Matrix, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8099,17 +8119,19 @@ Matrix = (function(_super) {
   Matrix.traits = ['node', 'data', 'source', 'texture', 'matrix'];
 
   Matrix.prototype.init = function() {
-    this.buffer = this.spec = this.emitter = null;
+    this.buffer = this.spec = null;
     this.filled = false;
     this.space = {
       width: 0,
       height: 0,
       history: 0
     };
-    return this.used = {
+    this.used = {
       width: 0,
       height: 0
     };
+    this.storage = 'matrixBuffer';
+    return Matrix.__super__.init.apply(this, arguments);
   };
 
   Matrix.prototype.sourceShader = function(shader) {
@@ -8139,7 +8161,7 @@ Matrix = (function(_super) {
   };
 
   Matrix.prototype.make = function() {
-    var channels, data, dims, height, history, items, magFilter, minFilter, reserveX, reserveY, space, thunk, type, width;
+    var channels, data, dims, height, history, items, magFilter, minFilter, reserveX, reserveY, space, type, width, _base, _base1;
     Matrix.__super__.make.apply(this, arguments);
     minFilter = this._get('texture.minFilter');
     magFilter = this._get('texture.magFilter');
@@ -8149,14 +8171,13 @@ Matrix = (function(_super) {
     history = this._get('matrix.history');
     reserveX = this._get('matrix.bufferWidth');
     reserveY = this._get('matrix.bufferHeight');
-    channels = this._get('data.dimensions');
+    channels = this._get('data.channels');
     items = this._get('data.items');
     dims = this.spec = {
       channels: channels,
       items: items,
       width: width,
-      height: height,
-      depth: history
+      height: height
     };
     this.items = dims.items;
     this.channels = dims.channels;
@@ -8166,7 +8187,13 @@ Matrix = (function(_super) {
     space.width = Math.max(reserveX, dims.width || 1);
     space.height = Math.max(reserveY, dims.height || 1);
     space.history = history;
-    this.buffer = this._renderables.make('matrixBuffer', {
+    if ((_base = this.spec).width == null) {
+      _base.width = 1;
+    }
+    if ((_base1 = this.spec).height == null) {
+      _base1.height = 1;
+    }
+    return this.buffer = this._renderables.make(this.storage, {
       width: space.width,
       height: space.height,
       history: space.history,
@@ -8176,23 +8203,19 @@ Matrix = (function(_super) {
       magFilter: magFilter,
       type: type
     });
-    if (data != null) {
-      thunk = Util.Data.getThunk(data);
-      return this.emitter = Util.Data.makeEmitter(thunk, items, channels, 2);
-    }
   };
 
   Matrix.prototype.unmake = function() {
     Matrix.__super__.unmake.apply(this, arguments);
     if (this.buffer) {
       this.buffer.dispose();
-      return this.buffer = this.spec = this.emitter = null;
+      return this.buffer = this.spec = null;
     }
   };
 
   Matrix.prototype.change = function(changed, touched, init) {
-    var data, emitter, height, width;
-    if (touched['texture'] || changed['matrix.history'] || changed['data.dimensions'] || changed['matrix.bufferWidth'] || changed['matrix.bufferHeight']) {
+    var height, width;
+    if (touched['texture'] || changed['matrix.history'] || changed['data.channels'] || changed['data.items'] || changed['matrix.bufferWidth'] || changed['matrix.bufferHeight']) {
       return this.rebuild();
     }
     if (!this.buffer) {
@@ -8211,21 +8234,16 @@ Matrix = (function(_super) {
       }
     }
     if (changed['data.expression'] || changed['data.data'] || init) {
-      emitter = this.emitter;
-      data = this._get('data.data');
-      if (data == null) {
-        emitter = this.callback(this._get('data.expression'));
-      }
-      return this.buffer.setCallback(emitter);
+      return this.buffer.setCallback(this.emitter());
     }
   };
 
   Matrix.prototype.callback = function(callback) {
-    return Util.Data.normalizeEmitter(emitter, 2);
+    return callback;
   };
 
   Matrix.prototype.update = function() {
-    var data, dims, filled, h, length, rebuild, space, step, used, w, _w;
+    var data, dims, filled, h, length, space, used, w, _w;
     if (!this.buffer) {
       return;
     }
@@ -8240,20 +8258,7 @@ Matrix = (function(_super) {
     h = used.height;
     if (data != null) {
       dims = Util.Data.getDimensions(data, this.spec);
-      rebuild = false;
-      if (dims.width > space.width) {
-        rebuild = true;
-        length = space.width;
-        step = Math.min(128, length);
-        space.width = Math.max(length + step, dims.width);
-      }
-      if (dims.height > space.height) {
-        rebuild = true;
-        length = space.height;
-        step = Math.min(128, length);
-        space.height = Math.max(length + step, dims.height);
-      }
-      if (rebuild) {
+      if (dims.width > space.width || dims.height > space.height) {
         this.rebuild();
       }
       used.width = dims.width;
@@ -8266,6 +8271,9 @@ Matrix = (function(_super) {
       length = this.buffer.update();
       used.width = _w = this.spec.width;
       used.height = Math.ceil(length / _w);
+      if (used.height === 1) {
+        used.width = length;
+      }
     }
     this.filled = true;
     if (used.width !== w || used.height !== h || filled !== this.buffer.getFilled()) {
@@ -8282,7 +8290,110 @@ Matrix = (function(_super) {
 module.exports = Matrix;
 
 
-},{"../../../util":139,"./data":50}],53:[function(require,module,exports){
+},{"../../../util":148,"./data":52}],55:[function(require,module,exports){
+var Text, Util, Voxel,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Voxel = require('./voxel');
+
+Util = require('../../../util');
+
+Text = (function(_super) {
+  __extends(Text, _super);
+
+  function Text() {
+    return Text.__super__.constructor.apply(this, arguments);
+  }
+
+  Text.traits = ['node', 'data', 'source', 'texture', 'voxel', 'text'];
+
+  Text.defaults = {
+    channels: 4,
+    minFilter: 'linear',
+    magFilter: 'linear'
+  };
+
+  Text.prototype.init = function() {
+    Text.__super__.init.apply(this, arguments);
+    return this.atlas = null;
+  };
+
+  Text.prototype.textIsSDF = function() {
+    return this._get('text.expand') > 0;
+  };
+
+  Text.prototype.textHeight = function() {
+    return this._get('text.detail');
+  };
+
+  Text.prototype.textShader = function(shader) {
+    return this.atlas.shader(shader);
+  };
+
+  Text.prototype.make = function() {
+    var detail, expand, font, magFilter, minFilter, style, type;
+    minFilter = this._get('texture.minFilter');
+    magFilter = this._get('texture.magFilter');
+    type = this._get('texture.type');
+    font = this._get('text.font');
+    style = this._get('text.style');
+    detail = this._get('text.detail');
+    expand = this._get('text.expand');
+    this.atlas = this._renderables.make('textAtlas', {
+      font: font,
+      size: detail,
+      style: style,
+      outline: expand,
+      minFilter: minFilter,
+      magFilter: magFilter,
+      type: type
+    });
+    return Text.__super__.make.apply(this, arguments);
+  };
+
+  Text.prototype.unmake = function() {
+    Text.__super__.unmake.apply(this, arguments);
+    if (this.atlas) {
+      this.atlas.dispose();
+      return this.atlas = null;
+    }
+  };
+
+  Text.prototype.update = function() {
+    this.atlas.begin();
+    Text.__super__.update.apply(this, arguments);
+    return this.atlas.end();
+  };
+
+  Text.prototype.change = function(changed, touched, init) {
+    if (touched['text']) {
+      return this.rebuild();
+    }
+    return Text.__super__.change.call(this, changed, touched, init);
+  };
+
+  Text.prototype.callback = function(callback) {
+    var atlas, buffer, text;
+    text = '';
+    atlas = this.atlas;
+    buffer = function(t) {
+      return text = t;
+    };
+    return function(emit, i, j, k, l) {
+      callback(buffer, i, j, k, l);
+      return atlas.map(text, emit);
+    };
+  };
+
+  return Text;
+
+})(Voxel);
+
+module.exports = Text;
+
+
+},{"../../../util":148,"./voxel":57}],56:[function(require,module,exports){
 var Util, Volume, Voxel,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8339,13 +8450,12 @@ Volume = (function(_super) {
     bX = spanX * inverseX;
     bY = spanY * inverseY;
     bZ = spanZ * inverseZ;
-    callback = Util.Data.normalizeEmitter(callback, 6);
-    return function(i, j, k, emit) {
+    return function(emit, i, j, k) {
       var x, y, z;
       x = aX + bX * i;
       y = aY + bY * j;
       z = aZ + bZ * k;
-      return callback(x, y, z, i, j, k, emit);
+      return callback(emit, x, y, z, i, j, k);
     };
   };
 
@@ -8366,7 +8476,7 @@ Volume = (function(_super) {
 module.exports = Volume;
 
 
-},{"../../../util":139,"./voxel":54}],54:[function(require,module,exports){
+},{"../../../util":148,"./voxel":57}],57:[function(require,module,exports){
 var Data, Util, Voxel,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8385,18 +8495,20 @@ Voxel = (function(_super) {
   Voxel.traits = ['node', 'data', 'source', 'texture', 'voxel'];
 
   Voxel.prototype.init = function() {
-    this.buffer = this.spec = this.emitter = null;
+    this.buffer = this.spec = null;
     this.filled = false;
     this.space = {
       width: 0,
       height: 0,
       depth: 0
     };
-    return this.used = {
+    this.used = {
       width: 0,
       height: 0,
       depth: 0
     };
+    this.storage = 'voxelBuffer';
+    return Voxel.__super__.init.apply(this, arguments);
   };
 
   Voxel.prototype.sourceShader = function(shader) {
@@ -8426,7 +8538,7 @@ Voxel = (function(_super) {
   };
 
   Voxel.prototype.make = function() {
-    var channels, data, depth, dims, height, items, magFilter, minFilter, reserveX, reserveY, reserveZ, space, thunk, type, width;
+    var channels, data, depth, dims, height, items, magFilter, minFilter, reserveX, reserveY, reserveZ, space, type, width, _base, _base1, _base2;
     Voxel.__super__.make.apply(this, arguments);
     minFilter = this._get('texture.minFilter');
     magFilter = this._get('texture.magFilter');
@@ -8437,7 +8549,7 @@ Voxel = (function(_super) {
     reserveX = this._get('voxel.bufferWidth');
     reserveY = this._get('voxel.bufferHeight');
     reserveZ = this._get('voxel.bufferDepth');
-    channels = this._get('data.dimensions');
+    channels = this._get('data.channels');
     items = this._get('data.items');
     dims = this.spec = {
       channels: channels,
@@ -8454,7 +8566,16 @@ Voxel = (function(_super) {
     space.width = Math.max(reserveX, dims.width || 1);
     space.height = Math.max(reserveY, dims.height || 1);
     space.depth = Math.max(reserveZ, dims.depth || 1);
-    this.buffer = this._renderables.make('voxelBuffer', {
+    if ((_base = this.spec).width == null) {
+      _base.width = 1;
+    }
+    if ((_base1 = this.spec).height == null) {
+      _base1.height = 1;
+    }
+    if ((_base2 = this.spec).depth == null) {
+      _base2.depth = 1;
+    }
+    return this.buffer = this._renderables.make(this.storage, {
       width: space.width,
       height: space.height,
       depth: space.depth,
@@ -8464,23 +8585,19 @@ Voxel = (function(_super) {
       magFilter: magFilter,
       type: type
     });
-    if (data != null) {
-      thunk = Util.Data.getThunk(data);
-      return this.emitter = Util.Data.makeEmitter(thunk, items, channels, 3);
-    }
   };
 
   Voxel.prototype.unmake = function() {
     Voxel.__super__.unmake.apply(this, arguments);
     if (this.buffer) {
       this.buffer.dispose();
-      return this.buffer = this.spec = this.emitter = null;
+      return this.buffer = this.spec = null;
     }
   };
 
   Voxel.prototype.change = function(changed, touched, init) {
-    var data, depth, emitter, height, width;
-    if (touched['texture'] || changed['data.dimensions'] || changed['voxel.bufferWidth'] || changed['voxel.bufferHeight'] || changed['voxel.bufferDepth']) {
+    var depth, height, width;
+    if (touched['texture'] || changed['data.channels'] || changed['data.items'] || changed['voxel.bufferWidth'] || changed['voxel.bufferHeight'] || changed['voxel.bufferDepth']) {
       return this.rebuild();
     }
     if (!this.buffer) {
@@ -8505,17 +8622,12 @@ Voxel = (function(_super) {
       }
     }
     if (changed['data.expression'] || changed['data.data'] || init) {
-      emitter = this.emitter;
-      data = this._get('data.data');
-      if (data == null) {
-        emitter = this.callback(this._get('data.expression'));
-      }
-      return this.buffer.setCallback(emitter);
+      return this.buffer.setCallback(this.emitter());
     }
   };
 
   Voxel.prototype.callback = function(callback) {
-    return Util.Data.normalizeEmitter(emitter, 3);
+    return callback;
   };
 
   Voxel.prototype.update = function() {
@@ -8550,6 +8662,12 @@ Voxel = (function(_super) {
       used.width = _w = this.spec.width;
       used.height = _h = this.spec.height;
       used.depth = Math.ceil(length / _w / _h);
+      if (used.depth === 1) {
+        used.height = Math.ceil(length / _w);
+        if (used.height === 1) {
+          used.width = length;
+        }
+      }
     }
     this.filled = true;
     if (used.width !== w || used.height !== h || used.depth !== d || filled !== this.buffer.getFilled()) {
@@ -8566,7 +8684,7 @@ Voxel = (function(_super) {
 module.exports = Voxel;
 
 
-},{"../../../util":139,"./data":50}],55:[function(require,module,exports){
+},{"../../../util":148,"./data":52}],58:[function(require,module,exports){
 var Axis, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8586,7 +8704,7 @@ Axis = (function(_super) {
   }
 
   Axis.prototype.make = function() {
-    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, stroke, styleUniforms, uniforms;
+    var arrowUniforms, detail, end, lineUniforms, position, positionUniforms, samples, start, stroke, styleUniforms, uniforms, unitUniforms;
     positionUniforms = {
       axisPosition: this._attributes.make(this._types.vec4()),
       axisStep: this._attributes.make(this._types.vec4())
@@ -8599,13 +8717,14 @@ Axis = (function(_super) {
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
     arrowUniforms = this._helpers.arrow.uniforms();
+    unitUniforms = this._inherit('unit').getUnitUniforms();
     detail = this._get('axis.detail');
     samples = detail + 1;
     this.resolution = 1 / detail;
     start = this._get('arrow.start');
     end = this._get('arrow.end');
     stroke = this._get('line.stroke');
-    uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms);
+    uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms, unitUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
       samples: samples,
@@ -8614,7 +8733,6 @@ Axis = (function(_super) {
       stroke: stroke
     });
     this.arrows = [];
-    uniforms = Util.JS.merge(arrowUniforms, styleUniforms);
     if (start) {
       this.arrows.push(this._renderables.make('arrow', {
         uniforms: uniforms,
@@ -8661,7 +8779,7 @@ Axis = (function(_super) {
 module.exports = Axis;
 
 
-},{"../../../util":139,"../../primitive":42}],56:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],59:[function(require,module,exports){
 var Face, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8686,10 +8804,7 @@ Face = (function(_super) {
       return;
     }
     dims = this.bind.points.getActive();
-    items = dims.items;
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
+    items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
     if (this.face) {
       this.face.geometry.clip(width, height, depth, items);
     }
@@ -8700,23 +8815,24 @@ Face = (function(_super) {
 
   Face.prototype.make = function() {
     var color, depth, dims, height, items, lineUniforms, objects, outline, position, shaded, solid, styleUniforms, swizzle, uniforms, width;
-    this._helpers.bind.make({
-      'geometry.points': 'source',
-      'geometry.colors': 'source'
-    });
+    this._helpers.bind.make([
+      {
+        to: 'geometry.points',
+        trait: 'source'
+      }, {
+        to: 'geometry.colors',
+        trait: 'source'
+      }
+    ]);
     if (this.bind.points == null) {
       return;
     }
-    position = this._shaders.shader();
-    position = this.bind.points.sourceShader(position);
+    position = this.bind.points.sourceShader(this._shaders.shader());
     position = this._helpers.position.pipeline(position);
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
     dims = this.bind.points.getDimensions();
-    items = dims.items;
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
+    items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
     outline = this._get('face.outline');
     shaded = this._get('mesh.shaded');
     solid = this._get('mesh.solid');
@@ -8781,7 +8897,7 @@ Face = (function(_super) {
 module.exports = Face;
 
 
-},{"../../../util":139,"../../primitive":42}],57:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],60:[function(require,module,exports){
 var Grid, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8804,13 +8920,13 @@ Grid = (function(_super) {
     var axis, first, lines, second, stroke;
     axis = (function(_this) {
       return function(first, second) {
-        var buffer, detail, line, lineUniforms, p, position, positionUniforms, resolution, samples, strips, styleUniforms, uniforms, values;
+        var buffer, detail, line, lineUniforms, p, position, positionUniforms, resolution, samples, strips, styleUniforms, uniforms, unitUniforms, values;
         detail = _this._get(first + 'axis.detail');
         samples = detail + 1;
         resolution = 1 / detail;
         strips = _this._helpers.scale.divide(second);
         buffer = _this._renderables.make('dataBuffer', {
-          samples: strips,
+          width: strips,
           channels: 1
         });
         positionUniforms = {
@@ -8824,12 +8940,13 @@ Grid = (function(_super) {
           gridAxis: positionUniforms.gridAxis.value
         };
         p = position = _this._shaders.shader();
-        p.require(buffer.shader(_this._shaders.shader()));
+        p.require(buffer.shader(_this._shaders.shader(), 2));
         p.pipe('grid.position', positionUniforms);
         position = _this._helpers.position.pipeline(p);
         styleUniforms = _this._helpers.style.uniforms();
         lineUniforms = _this._helpers.line.uniforms();
-        uniforms = Util.JS.merge(lineUniforms, styleUniforms);
+        unitUniforms = _this._inherit('unit').getUnitUniforms();
+        uniforms = Util.JS.merge(lineUniforms, styleUniforms, unitUniforms);
         line = _this._renderables.make('line', {
           uniforms: uniforms,
           samples: samples,
@@ -8923,7 +9040,139 @@ Grid = (function(_super) {
 module.exports = Grid;
 
 
-},{"../../../util":139,"../../primitive":42}],58:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],61:[function(require,module,exports){
+var Label, Primitive, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Primitive = require('../../primitive');
+
+Util = require('../../../util');
+
+Label = (function(_super) {
+  __extends(Label, _super);
+
+  function Label() {
+    return Label.__super__.constructor.apply(this, arguments);
+  }
+
+  Label.traits = ['node', 'bind', 'object', 'style', 'label', 'attach', 'geometry', 'position'];
+
+  Label.defaults = {
+    color: '#000000'
+  };
+
+  Label.prototype.make = function() {
+    var color, combine, depth, height, items, labelUniforms, map, pointDims, position, snippet, sprite, styleUniforms, textDims, textIsSDF, uniforms, unitUniforms, width;
+    Label.__super__.make.apply(this, arguments);
+    this._helpers.bind.make([
+      {
+        to: 'label.text',
+        trait: 'text'
+      }, {
+        to: 'geometry.points',
+        trait: 'source'
+      }, {
+        to: 'geometry.colors',
+        trait: 'source'
+      }
+    ]);
+    if (this.bind.points == null) {
+      return;
+    }
+    if (this.bind.text == null) {
+      return;
+    }
+    pointDims = this.bind.points.getDimensions();
+    textDims = this.bind.text.getDimensions();
+    textIsSDF = this.bind.text.textIsSDF();
+    items = Math.min(pointDims.items, textDims.items);
+    width = Math.min(pointDims.width, textDims.width);
+    height = Math.min(pointDims.height, textDims.height);
+    depth = Math.min(pointDims.depth, textDims.depth);
+    position = this.bind.points.sourceShader(this._shaders.shader());
+    position = this._helpers.position.pipeline(position);
+    sprite = this.bind.text.sourceShader(this._shaders.shader());
+    map = this.bind.text.textShader(this._shaders.shader());
+    labelUniforms = {
+      spriteDepth: this.node.attributes['attach.depth'],
+      spriteOffset: this.node.attributes['attach.offset'],
+      spriteSnap: this.node.attributes['attach.snap'],
+      spriteScale: this._attributes.make(this._types.number()),
+      outlineStep: this._attributes.make(this._types.number()),
+      outlineExpand: this._attributes.make(this._types.number()),
+      outlineColor: this.node.attributes['label.background']
+    };
+    this.spriteScale = labelUniforms.spriteScale;
+    this.outlineStep = labelUniforms.outlineStep;
+    this.outlineExpand = labelUniforms.outlineExpand;
+    snippet = textIsSDF ? 'label.outline' : 'label.alpha';
+    combine = this._shaders.shader().pipe(snippet, labelUniforms);
+    if (this.bind.colors) {
+      color = this._shaders.shader();
+      this.bind.colors.sourceShader(color);
+    }
+    styleUniforms = this._helpers.style.uniforms();
+    unitUniforms = this._inherit('unit').getUnitUniforms();
+    uniforms = Util.JS.merge(unitUniforms, styleUniforms, labelUniforms);
+    this.sprite = this._renderables.make('sprite', {
+      uniforms: uniforms,
+      width: width,
+      height: height,
+      depth: depth,
+      items: items,
+      position: position,
+      sprite: sprite,
+      map: map,
+      combine: combine,
+      color: color
+    });
+    return this._helpers.object.make([this.sprite]);
+  };
+
+  Label.prototype.unmake = function() {
+    this._helpers.bind.unmake();
+    this._helpers.object.unmake();
+    return this.sprite = null;
+  };
+
+  Label.prototype.resize = function() {
+    var depth, height, items, pointDims, textDims, width;
+    pointDims = this.bind.points.getActive();
+    textDims = this.bind.text.getActive();
+    items = Math.min(pointDims.items, textDims.items);
+    width = Math.min(pointDims.width, textDims.width);
+    height = Math.min(pointDims.height, textDims.height);
+    depth = Math.min(pointDims.depth, textDims.depth);
+    return this.sprite.geometry.clip(width, height, depth, items);
+  };
+
+  Label.prototype.change = function(changed, touched, init) {
+    var expand, height, outline, scale, size;
+    if (touched['geometry'] || changed['label.text']) {
+      return this.rebuild();
+    }
+    if (this.bind.points == null) {
+      return;
+    }
+    size = this._get('label.size');
+    outline = this._get('label.outline');
+    expand = this._get('label.expand');
+    height = this.bind.text.textHeight();
+    scale = size / height;
+    this.outlineExpand.value = expand / scale * 16 / 255;
+    this.outlineStep.value = outline / scale * 16 / 255;
+    return this.spriteScale.value = scale;
+  };
+
+  return Label;
+
+})(Primitive);
+
+module.exports = Label;
+
+
+},{"../../../util":148,"../../primitive":43}],62:[function(require,module,exports){
 var Line, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -8963,11 +9212,16 @@ Line = (function(_super) {
   };
 
   Line.prototype.make = function() {
-    var arrowUniforms, color, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, stroke, styleUniforms, uniforms;
-    this._helpers.bind.make({
-      'geometry.points': 'source',
-      'geometry.colors': 'source'
-    });
+    var arrowUniforms, color, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, stroke, styleUniforms, uniforms, unitUniforms;
+    this._helpers.bind.make([
+      {
+        to: 'geometry.points',
+        trait: 'source'
+      }, {
+        to: 'geometry.colors',
+        trait: 'source'
+      }
+    ]);
     if (this.bind.points == null) {
       return;
     }
@@ -8977,6 +9231,7 @@ Line = (function(_super) {
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
     arrowUniforms = this._helpers.arrow.uniforms();
+    unitUniforms = this._inherit('unit').getUnitUniforms();
     start = this._get('arrow.start');
     end = this._get('arrow.end');
     stroke = this._get('line.stroke');
@@ -8989,7 +9244,7 @@ Line = (function(_super) {
       color = this._shaders.shader();
       this.bind.colors.sourceShader(color);
     }
-    uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms);
+    uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms, unitUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
       samples: samples,
@@ -9002,7 +9257,6 @@ Line = (function(_super) {
       stroke: stroke
     });
     this.arrows = [];
-    uniforms = Util.JS.merge(arrowUniforms, styleUniforms);
     if (start) {
       this.arrows.push(this._renderables.make('arrow', {
         uniforms: uniforms,
@@ -9052,7 +9306,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../../../util":139,"../../primitive":42}],59:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],63:[function(require,module,exports){
 var Point, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9064,7 +9318,7 @@ Util = require('../../../util');
 Point = (function(_super) {
   __extends(Point, _super);
 
-  Point.traits = ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind', 'renderScale'];
+  Point.traits = ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind'];
 
   function Point(node, context, helpers) {
     Point.__super__.constructor.call(this, node, context, helpers);
@@ -9077,42 +9331,40 @@ Point = (function(_super) {
       return;
     }
     dims = this.bind.points.getActive();
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
-    items = dims.items;
+    items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
     return this.point.geometry.clip(width, height, depth, items);
   };
 
   Point.prototype.make = function() {
-    var color, depth, dims, fill, height, items, pointUniforms, position, renderUniforms, shape, styleUniforms, uniforms, width;
-    this._helpers.bind.make({
-      'geometry.points': 'source',
-      'geometry.colors': 'source'
-    });
+    var color, depth, dims, fill, height, items, pointUniforms, position, shape, styleUniforms, uniforms, unitUniforms, width;
+    this._helpers.bind.make([
+      {
+        to: 'geometry.points',
+        trait: 'source'
+      }, {
+        to: 'geometry.colors',
+        trait: 'source'
+      }
+    ]);
     if (this.bind.points == null) {
       return;
     }
-    this._helpers.renderScale.make();
     position = this._shaders.shader();
     position = this.bind.points.sourceShader(position);
     position = this._helpers.position.pipeline(position);
     dims = this.bind.points.getDimensions();
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
-    items = dims.items;
+    items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
     styleUniforms = this._helpers.style.uniforms();
     pointUniforms = this._helpers.point.uniforms();
-    renderUniforms = this._helpers.renderScale.uniforms();
+    unitUniforms = this._inherit('unit').getUnitUniforms();
     if (this.bind.colors) {
       color = this._shaders.shader();
       this.bind.colors.sourceShader(color);
     }
     shape = this._get('point.shape');
     fill = this._get('point.fill');
-    uniforms = Util.JS.merge(renderUniforms, pointUniforms, styleUniforms);
-    this.point = this._renderables.make('sprite', {
+    uniforms = Util.JS.merge(unitUniforms, pointUniforms, styleUniforms);
+    this.point = this._renderables.make('point', {
       uniforms: uniforms,
       width: width,
       height: height,
@@ -9132,7 +9384,6 @@ Point = (function(_super) {
 
   Point.prototype.unmake = function() {
     this._helpers.bind.unmake();
-    this._helpers.renderScale.unmake();
     this._helpers.object.unmake();
     return this.point = null;
   };
@@ -9150,7 +9401,7 @@ Point = (function(_super) {
 module.exports = Point;
 
 
-},{"../../../util":139,"../../primitive":42}],60:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],64:[function(require,module,exports){
 var Primitive, Strip, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9175,19 +9426,21 @@ Strip = (function(_super) {
       return;
     }
     dims = this.bind.points.getActive();
-    items = dims.items;
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
+    items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
     return this.strip.geometry.clip(width, height, depth, items);
   };
 
   Strip.prototype.make = function() {
     var color, depth, dims, height, items, lineUniforms, position, styleUniforms, uniforms, width;
-    this._helpers.bind.make({
-      'geometry.points': 'source',
-      'geometry.colors': 'source'
-    });
+    this._helpers.bind.make([
+      {
+        to: 'geometry.points',
+        trait: 'source'
+      }, {
+        to: 'geometry.colors',
+        trait: 'source'
+      }
+    ]);
     if (this.bind.points == null) {
       return;
     }
@@ -9197,10 +9450,7 @@ Strip = (function(_super) {
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
     dims = this.bind.points.getDimensions();
-    items = dims.items;
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
+    items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
     if (this.bind.colors) {
       color = this._shaders.shader();
       color = this.bind.colors.sourceShader(color);
@@ -9254,7 +9504,7 @@ Strip = (function(_super) {
 module.exports = Strip;
 
 
-},{"../../../util":139,"../../primitive":42}],61:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],65:[function(require,module,exports){
 var Primitive, Surface, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9295,11 +9545,16 @@ Surface = (function(_super) {
   };
 
   Surface.prototype.make = function() {
-    var color, depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, stroke, styleUniforms, surfaceUniforms, uniforms, width, wireUniforms, wireXY, wireYX, zUnits;
-    this._helpers.bind.make({
-      'geometry.points': 'source',
-      'geometry.colors': 'source'
-    });
+    var color, depth, dims, first, height, layers, lineUniforms, objects, position, second, shaded, solid, stroke, styleUniforms, surfaceUniforms, uniforms, unitUniforms, width, wireUniforms, wireXY, wireYX, zUnits;
+    this._helpers.bind.make([
+      {
+        to: 'geometry.points',
+        trait: 'source'
+      }, {
+        to: 'geometry.colors',
+        trait: 'source'
+      }
+    ]);
     if (this.bind.points == null) {
       return;
     }
@@ -9314,10 +9569,11 @@ Surface = (function(_super) {
     wireUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
     surfaceUniforms = this._helpers.surface.uniforms();
+    unitUniforms = this._inherit('unit').getUnitUniforms();
     wireUniforms.styleColor = this._attributes.make(this._types.color());
-    wireUniforms.styleZIndex = this._attributes.make(this._types.number());
+    wireUniforms.styleZBias = this._attributes.make(this._types.number());
     this.wireColor = wireUniforms.styleColor.value;
-    this.wireZIndex = wireUniforms.styleZIndex;
+    this.wireZBias = wireUniforms.styleZBias;
     this.wireScratch = new THREE.Color;
     dims = this.bind.points.getDimensions();
     width = dims.width;
@@ -9334,7 +9590,7 @@ Surface = (function(_super) {
       color = this._shaders.shader();
       this.bind.colors.sourceShader(color);
     }
-    uniforms = Util.JS.merge(lineUniforms, styleUniforms, wireUniforms);
+    uniforms = Util.JS.merge(unitUniforms, lineUniforms, styleUniforms, wireUniforms);
     zUnits = first || second ? -50 : 0;
     if (first) {
       this.line1 = this._renderables.make('line', {
@@ -9365,7 +9621,7 @@ Surface = (function(_super) {
       objects.push(this.line2);
     }
     if (solid) {
-      uniforms = Util.JS.merge(surfaceUniforms, styleUniforms);
+      uniforms = Util.JS.merge(unitUniforms, surfaceUniforms, styleUniforms);
       this.surface = this._renderables.make('surface', {
         uniforms: uniforms,
         width: width,
@@ -9401,7 +9657,7 @@ Surface = (function(_super) {
     if (changed['style.color'] || changed['mesh.solid'] || init) {
       solid = this._get('mesh.solid');
       color = this._get('style.color');
-      this.wireZIndex.value = this._get('style.zIndex') + 5;
+      this.wireZBias.value = this._get('style.zBias') + 5;
       this.wireColor.copy(color);
       if (solid) {
         c = this.wireScratch;
@@ -9421,7 +9677,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../../util":139,"../../primitive":42}],62:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],66:[function(require,module,exports){
 var Primitive, Ticks, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9441,10 +9697,10 @@ Ticks = (function(_super) {
   }
 
   Ticks.prototype.make = function() {
-    var lineUniforms, p, position, positionUniforms, samples, styleUniforms, uniforms;
+    var lineUniforms, p, position, positionUniforms, samples, styleUniforms, uniforms, unitUniforms;
     this.resolution = samples = this._helpers.scale.divide('');
     this.buffer = this._renderables.make('dataBuffer', {
-      samples: samples,
+      width: samples,
       channels: 1
     });
     positionUniforms = {
@@ -9456,11 +9712,12 @@ Ticks = (function(_super) {
     this.tickNormal = positionUniforms.tickNormal.value;
     p = position = this._shaders.shader();
     p.require(this._helpers.position.pipeline(this._shaders.shader()));
-    p.require(this.buffer.shader(this._shaders.shader()));
+    p.require(this.buffer.shader(this._shaders.shader(), 1));
     p.pipe('ticks.position', positionUniforms);
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
-    uniforms = Util.JS.merge(lineUniforms, styleUniforms);
+    unitUniforms = this._inherit('unit').getUnitUniforms();
+    uniforms = Util.JS.merge(lineUniforms, styleUniforms, unitUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
       samples: 2,
@@ -9502,7 +9759,7 @@ Ticks = (function(_super) {
 module.exports = Ticks;
 
 
-},{"../../../util":139,"../../primitive":42}],63:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],67:[function(require,module,exports){
 var Primitive, Util, Vector,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9542,11 +9799,16 @@ Vector = (function(_super) {
   };
 
   Vector.prototype.make = function() {
-    var arrowUniforms, color, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, stroke, styleUniforms, swizzle, uniforms;
-    this._helpers.bind.make({
-      'geometry.points': 'source',
-      'geometry.colors': 'source'
-    });
+    var arrowUniforms, color, dims, end, layers, lineUniforms, position, ribbons, samples, start, strips, stroke, styleUniforms, swizzle, uniforms, unitUniforms;
+    this._helpers.bind.make([
+      {
+        to: 'geometry.points',
+        trait: 'source'
+      }, {
+        to: 'geometry.colors',
+        trait: 'source'
+      }
+    ]);
     if (this.bind.points == null) {
       return;
     }
@@ -9558,6 +9820,7 @@ Vector = (function(_super) {
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
     arrowUniforms = this._helpers.arrow.uniforms();
+    unitUniforms = this._inherit('unit').getUnitUniforms();
     start = this._get('arrow.start');
     end = this._get('arrow.end');
     stroke = this._get('line.stroke');
@@ -9571,7 +9834,7 @@ Vector = (function(_super) {
       color.pipe(swizzle);
       this.bind.colors.sourceShader(color);
     }
-    uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms);
+    uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms, unitUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
       samples: samples,
@@ -9584,7 +9847,6 @@ Vector = (function(_super) {
       stroke: stroke
     });
     this.arrows = [];
-    uniforms = Util.JS.merge(arrowUniforms, styleUniforms);
     if (start) {
       this.arrows.push(this._renderables.make('arrow', {
         uniforms: uniforms,
@@ -9634,7 +9896,7 @@ Vector = (function(_super) {
 module.exports = Vector;
 
 
-},{"../../../util":139,"../../primitive":42}],64:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],68:[function(require,module,exports){
 var Util, View, helpers,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -9652,17 +9914,28 @@ Helpers are auto-attached to primitives that have the matching trait
 
 helpers = {
   bind: {
-    make: function(map) {
-      var key, name, selector, source, trait;
+    make: function(slots) {
+      var name, selector, slot, source, start, to, trait, unique, _i, _len;
       this.bind = {};
-      for (key in map) {
-        trait = map[key];
-        name = key.split(/\./g).pop();
-        selector = this._get(key);
-        source = selector != null ? this._attach(selector, trait, this.rebuild) : null;
+      this.bound = [];
+      for (_i = 0, _len = slots.length; _i < _len; _i++) {
+        slot = slots[_i];
+        to = slot.to, trait = slot.trait;
+        name = to.split(/\./g).pop();
+        selector = this._get(to);
+        source = null;
+        if (selector != null) {
+          start = this;
+          unique = false;
+          while (!unique) {
+            start = source = this._attach(selector, trait, this.rebuild, this, start);
+            unique = (source == null) || this.bound.indexOf(source) < 0;
+          }
+        }
         if (source != null) {
           this._listen(source, 'source.resize', this.resize);
           this._listen(source, 'source.rebuild', this.rebuild);
+          this.bound.push(source);
         }
         this.bind[name] = source;
       }
@@ -9718,6 +9991,7 @@ helpers = {
       return {
         styleColor: this.node.attributes['style.color'],
         styleOpacity: this.node.attributes['style.opacity'],
+        styleZBias: this.node.attributes['style.zBias'],
         styleZIndex: this.node.attributes['style.zIndex']
       };
     }
@@ -9727,7 +10001,7 @@ helpers = {
       var end, size, space, start, style;
       start = this._get('arrow.start');
       end = this._get('arrow.end');
-      space = this._attributes.make(this._types.number(1 / (start + end)));
+      space = this._attributes.make(this._types.number(1.25 / (start + end)));
       style = this._attributes.make(this._types.vec2(+start, +end));
       size = this.node.attributes['arrow.size'];
       return {
@@ -9742,7 +10016,8 @@ helpers = {
   point: {
     uniforms: function() {
       return {
-        pointSize: this.node.attributes['point.size']
+        pointSize: this.node.attributes['point.size'],
+        pointDepth: this.node.attributes['point.depth']
       };
     }
   },
@@ -9787,8 +10062,6 @@ helpers = {
       if (hasStyle) {
         opacity = this._get('style.opacity');
         blending = this._get('style.blending');
-        zFactor = this._get('style.zFactor');
-        zUnits = this._get('style.zUnits');
         zOrder = this._get('style.zOrder');
         zWrite = this._get('style.zWrite');
         zTest = this._get('style.zTest');
@@ -9806,12 +10079,6 @@ helpers = {
           }
           if (changed['style.blending']) {
             refresh = blending = _this._get('style.blending');
-          }
-          if (changed['style.zFactor']) {
-            refresh = zFactor = _this._get('style.zFactor');
-          }
-          if (changed['style.zUnits']) {
-            refresh = zUnits = _this._get('style.zUnits');
           }
           if (changed['style.zWrite']) {
             refresh = zWrite = _this._get('style.zWrite');
@@ -9842,7 +10109,6 @@ helpers = {
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 o = _ref[_i];
                 o.show(opacity < 1, blending, order);
-                o.polygonOffset(zFactor, zUnits);
                 o.depth(zWrite, zTest);
               }
             } else {
@@ -9904,44 +10170,81 @@ helpers = {
       }
     }
   },
-  renderScale: {
+  unit: {
     make: function() {
-      var aspect, handler, height, root, scale, width;
-      this.renderUniforms = {
-        renderScale: scale = this._attributes.make(this._types.number(0)),
-        renderAspect: aspect = this._attributes.make(this._types.number(0)),
-        renderWidth: width = this._attributes.make(this._types.number(0)),
-        renderHeight: height = this._attributes.make(this._types.number(0))
+      var bottom, handler, pixelRatio, pixelUnit, renderAspect, renderHeight, renderOdd, renderScale, renderScaleInv, renderWidth, root, top, viewHeight, viewWidth, worldUnit, π;
+      π = Math.PI;
+      this.unitUniforms = {
+        renderScaleInv: renderScaleInv = this._attributes.make(this._types.number(1)),
+        renderScale: renderScale = this._attributes.make(this._types.number(1)),
+        renderAspect: renderAspect = this._attributes.make(this._types.number(1)),
+        renderWidth: renderWidth = this._attributes.make(this._types.number(0)),
+        renderHeight: renderHeight = this._attributes.make(this._types.number(0)),
+        viewWidth: viewWidth = this._attributes.make(this._types.number(0)),
+        viewHeight: viewHeight = this._attributes.make(this._types.number(0)),
+        pixelRatio: pixelRatio = this._attributes.make(this._types.number(1)),
+        pixelUnit: pixelUnit = this._attributes.make(this._types.number(1)),
+        worldUnit: worldUnit = this._attributes.make(this._types.number(1)),
+        renderOdd: renderOdd = this._attributes.make(this._types.vec2())
       };
+      top = new THREE.Vector3();
+      bottom = new THREE.Vector3();
       handler = (function(_this) {
         return function() {
-          var size;
-          if ((size = typeof root !== "undefined" && root !== null ? root.getSize() : void 0) != null) {
-            width.value = size.renderWidth / 2;
-            height.value = size.renderHeight / 2;
-            aspect.value = size.aspect;
-            return scale.value = height.value;
+          var camera, dpr, fov, fovtan, isAbsolute, m, map, measure, pixel, rscale, scale, size, world;
+          if ((size = typeof root !== "undefined" && root !== null ? root.getSize() : void 0) == null) {
+            return;
           }
+          π = Math.PI;
+          scale = _this._get('unit.scale');
+          map = _this._get('unit.map');
+          fov = _this._get('unit.fov');
+          isAbsolute = scale === null;
+          measure = 1;
+          if ((camera = typeof root !== "undefined" && root !== null ? root.getCamera() : void 0)) {
+            m = camera.projectionMatrix;
+            top.set(0, -.5, 1).applyProjection(m);
+            bottom.set(0, .5, 1).applyProjection(m);
+            top.sub(bottom);
+            measure = top.y;
+          }
+          dpr = size.renderHeight / size.viewHeight;
+          fovtan = fov != null ? Math.tan(fov * π / 360) / measure : 1;
+          pixel = isAbsolute ? dpr : size.renderHeight / scale * fovtan;
+          rscale = size.renderHeight * measure / 2;
+          world = pixel / rscale;
+          viewWidth.value = size.viewWidth;
+          viewHeight.value = size.viewHeight;
+          renderWidth.value = size.renderWidth;
+          renderHeight.value = size.renderHeight;
+          renderAspect.value = size.aspect;
+          renderScale.value = rscale;
+          renderScaleInv.value = 1 / rscale;
+          pixelRatio.value = dpr;
+          pixelUnit.value = pixel;
+          worldUnit.value = world;
+          return renderOdd.value.set(size.renderWidth % 2, size.renderHeight % 2).multiplyScalar(.5);
         };
       })(this);
-      root = this._listen('root', 'root.resize', handler);
+      root = this.is('root') ? this : this._inherit('root');
+      this._listen(root, 'root.update', handler);
       return handler();
     },
     unmake: function() {
-      return delete this.renderUniforms;
+      return delete this.unitUniforms;
     },
     get: function() {
-      var u;
-      u = this.renderUniforms;
-      return {
-        width: u.renderWidth.value,
-        height: u.renderHeight.value,
-        aspect: u.renderAspect.value,
-        scale: u.renderScale.value
-      };
+      var k, u, v, _ref;
+      u = {};
+      _ref = this.unitUniforms;
+      for (k in _ref) {
+        v = _ref[k];
+        u[k] = v.value;
+      }
+      return u;
     },
     uniforms: function() {
-      return this.renderUniforms;
+      return this.unitUniforms;
     }
   }
 };
@@ -9964,7 +10267,7 @@ module.exports = function(object, traits) {
 };
 
 
-},{"../../util":139,"./view/view":92}],65:[function(require,module,exports){
+},{"../../util":148,"./view/view":96}],69:[function(require,module,exports){
 var Model;
 
 Model = require('../../model');
@@ -9978,7 +10281,7 @@ exports.Traits = require('./traits');
 exports.Helpers = require('./helpers');
 
 
-},{"../../model":32,"./classes":47,"./helpers":64,"./traits":80,"./types":85}],66:[function(require,module,exports){
+},{"../../model":33,"./classes":49,"./helpers":68,"./traits":84,"./types":89}],70:[function(require,module,exports){
 var Join, Operator, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10132,7 +10435,7 @@ Join = (function(_super) {
 module.exports = Join;
 
 
-},{"../../../util":139,"./operator":69}],67:[function(require,module,exports){
+},{"../../../util":148,"./operator":73}],71:[function(require,module,exports){
 var Lerp, Operator,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10149,8 +10452,7 @@ Lerp = (function(_super) {
   Lerp.traits = ['node', 'bind', 'operator', 'source', 'index', 'lerp', 'sampler'];
 
   Lerp.prototype.indexShader = function(shader) {
-    shader.pipe(this.indexer);
-    return Lerp.__super__.indexShader.apply(this, arguments);
+    return shader.pipe(this.indexer);
   };
 
   Lerp.prototype.sourceShader = function(shader) {
@@ -10221,7 +10523,7 @@ Lerp = (function(_super) {
 module.exports = Lerp;
 
 
-},{"./operator":69}],68:[function(require,module,exports){
+},{"./operator":73}],72:[function(require,module,exports){
 var Memo, Operator, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10254,10 +10556,7 @@ Memo = (function(_super) {
     magFilter = this._get('texture.magFilter');
     type = this._get('texture.type');
     dims = this.bind.source.getDimensions();
-    items = dims.items;
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
+    items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
     this.memo = this._renderables.make('memo', {
       items: items,
       width: width,
@@ -10270,7 +10569,7 @@ Memo = (function(_super) {
     operator = this._shaders.shader();
     this.bind.source.sourceShader(operator);
     this.compose = this._renderables.make('memoScreen', {
-      fragment: operator,
+      map: operator,
       items: items,
       width: width,
       height: height,
@@ -10299,9 +10598,7 @@ Memo = (function(_super) {
       return;
     }
     dims = this.bind.source.getActive();
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
+    width = dims.width, height = dims.height, depth = dims.depth;
     this.compose.cover(width, height, depth);
     return Memo.__super__.resize.apply(this, arguments);
   };
@@ -10319,7 +10616,7 @@ Memo = (function(_super) {
 module.exports = Memo;
 
 
-},{"../../../util":139,"./operator":69}],69:[function(require,module,exports){
+},{"../../../util":148,"./operator":73}],73:[function(require,module,exports){
 var Operator, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10355,20 +10652,24 @@ Operator = (function(_super) {
 
   Operator.prototype.make = function() {
     Operator.__super__.make.apply(this, arguments);
-    return this._helpers.bind.make({
-      'operator.source': 'source'
-    });
+    return this._helpers.bind.make([
+      {
+        to: 'operator.source',
+        trait: 'source'
+      }
+    ]);
   };
 
   Operator.prototype.made = function() {
-    return this.resize();
+    this.resize();
+    return Operator.__super__.made.apply(this, arguments);
   };
 
   Operator.prototype.unmake = function() {
     return this._helpers.bind.unmake();
   };
 
-  Operator.prototype.resize = function() {
+  Operator.prototype.resize = function(rebuild) {
     return this.trigger({
       type: 'source.resize'
     });
@@ -10381,7 +10682,7 @@ Operator = (function(_super) {
 module.exports = Operator;
 
 
-},{"../base/source":46}],70:[function(require,module,exports){
+},{"../base/source":47}],74:[function(require,module,exports){
 var Operator, Repeat,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10399,12 +10700,12 @@ Repeat = (function(_super) {
 
   Repeat.prototype.indexShader = function(shader) {
     shader.pipe(this.operator);
-    return Repeat.__super__.indexShader.apply(this, arguments);
+    return Repeat.__super__.indexShader.call(this, shader);
   };
 
   Repeat.prototype.sourceShader = function(shader) {
     shader.pipe(this.operator);
-    return Repeat.__super__.sourceShader.apply(this, arguments);
+    return Repeat.__super__.sourceShader.call(this, shader);
   };
 
   Repeat.prototype.getDimensions = function() {
@@ -10479,7 +10780,7 @@ Repeat = (function(_super) {
 module.exports = Repeat;
 
 
-},{"./operator":69}],71:[function(require,module,exports){
+},{"./operator":73}],75:[function(require,module,exports){
 var Operator, Resample, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10498,7 +10799,8 @@ Resample = (function(_super) {
   Resample.traits = ['node', 'bind', 'operator', 'source', 'index', 'resample', 'sampler'];
 
   Resample.prototype.indexShader = function(shader) {
-    return shader.pipe(this.indexer);
+    shader.pipe(this.indexer);
+    return Resample.__super__.indexShader.call(this, shader);
   };
 
   Resample.prototype.sourceShader = function(shader) {
@@ -10553,7 +10855,7 @@ Resample = (function(_super) {
       return;
     }
     indices = this._get('resample.indices');
-    dimensions = this._get('resample.dimensions');
+    dimensions = this._get('resample.channels');
     shader = this._get('resample.shader');
     map = this._get('resample.map');
     scale = this._get('resample.scale');
@@ -10696,7 +10998,7 @@ Resample = (function(_super) {
 module.exports = Resample;
 
 
-},{"../../../util":139,"./operator":69}],72:[function(require,module,exports){
+},{"../../../util":148,"./operator":73}],76:[function(require,module,exports){
 var Operator, Split, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10725,12 +11027,12 @@ Split = (function(_super) {
 
   Split.prototype.indexShader = function(shader) {
     shader.pipe(this.operator);
-    return Split.__super__.indexShader.apply(this, arguments);
+    return Split.__super__.indexShader.call(this, shader);
   };
 
   Split.prototype.sourceShader = function(shader) {
     shader.pipe(this.operator);
-    return Split.__super__.sourceShader.apply(this, arguments);
+    return Split.__super__.sourceShader.call(this, shader);
   };
 
   Split.prototype.getDimensions = function() {
@@ -10855,7 +11157,7 @@ Split = (function(_super) {
 module.exports = Split;
 
 
-},{"../../../util":139,"./operator":69}],73:[function(require,module,exports){
+},{"../../../util":148,"./operator":73}],77:[function(require,module,exports){
 var Operator, Spread,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10898,17 +11200,17 @@ Spread = (function(_super) {
   };
 
   Spread.prototype.resize = function() {
-    var anchor, d, dims, els, factor, i, id, k, key, matrix, offset, order, spread, v, _i, _j, _len, _ref, _ref1;
+    var align, anchor, d, dims, els, factor, i, k, key, matrix, offset, order, spread, v, _i, _j, _len, _ref, _ref1;
     if (this.bind.source) {
-      anchor = this._get('spread.anchor');
       dims = this.bind.source.getActive();
       matrix = this.spreadMatrix.value;
       els = matrix.elements;
       order = ['width', 'height', 'depth', 'items'];
+      align = ['alignWidth', 'alignHeight', 'alignDepth', 'alignItems'];
       for (i = _i = 0, _len = order.length; _i < _len; i = ++_i) {
         key = order[i];
-        id = "spread." + key;
-        spread = this._get(id);
+        spread = this._get("spread." + key);
+        anchor = this._get("spread." + align[i]);
         factor = 0;
         if (spread != null) {
           d = (_ref = dims[key]) != null ? _ref : 1;
@@ -10939,7 +11241,7 @@ Spread = (function(_super) {
 module.exports = Spread;
 
 
-},{"./operator":69}],74:[function(require,module,exports){
+},{"./operator":73}],78:[function(require,module,exports){
 var Operator, Swizzle, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10958,7 +11260,7 @@ Swizzle = (function(_super) {
   Swizzle.traits = ['node', 'bind', 'operator', 'source', 'index', 'swizzle'];
 
   Swizzle.prototype.sourceShader = function(shader) {
-    Swizzle.__super__.sourceShader.apply(this, arguments);
+    shader = Swizzle.__super__.sourceShader.call(this, shader);
     if (this.swizzler) {
       shader.pipe(this.swizzler);
     }
@@ -10995,7 +11297,7 @@ Swizzle = (function(_super) {
 module.exports = Swizzle;
 
 
-},{"../../../util":139,"./operator":69}],75:[function(require,module,exports){
+},{"../../../util":148,"./operator":73}],79:[function(require,module,exports){
 var Operator, Transpose, Util, labels,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11024,14 +11326,14 @@ Transpose = (function(_super) {
     if (this.swizzler) {
       shader.pipe(this.swizzler);
     }
-    return Transpose.__super__.indexShader.apply(this, arguments);
+    return Transpose.__super__.indexShader.call(this, shader);
   };
 
   Transpose.prototype.sourceShader = function(shader) {
     if (this.swizzler) {
       shader.pipe(this.swizzler);
     }
-    return Transpose.__super__.sourceShader.apply(this, arguments);
+    return Transpose.__super__.sourceShader.call(this, shader);
   };
 
   Transpose.prototype.getDimensions = function() {
@@ -11087,180 +11389,8 @@ Transpose = (function(_super) {
 module.exports = Transpose;
 
 
-},{"../../../util":139,"./operator":69}],76:[function(require,module,exports){
-var Label, Overlay, Util,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Overlay = require('./overlay');
-
-Util = require('../../../util');
-
-Label = (function(_super) {
-  __extends(Label, _super);
-
-  function Label() {
-    return Label.__super__.constructor.apply(this, arguments);
-  }
-
-  Label.traits = ['node', 'bind', 'overlay', 'label', 'position', 'renderScale'];
-
-  Label.prototype.init = function() {
-    this.emitter = this.root = null;
-    return this.active = {};
-  };
-
-  Label.prototype.make = function() {
-    var depth, dims, height, indexer, indexing, isIndexed, items, position, projection, width, _base;
-    Label.__super__.make.apply(this, arguments);
-    this._helpers.bind.make({
-      'label.source': 'source'
-    });
-    if (this.bind.source == null) {
-      return;
-    }
-    indexing = this._get('label.indexing');
-    this.root = this._inherit('root');
-    this._listen('root', 'root.update', this.update);
-    this.offset = this.node.attributes['label.offset'];
-    this.snap = this.node.attributes['label.snap'];
-    dims = this.bind.source.getDimensions();
-    items = dims.items;
-    width = dims.width;
-    height = dims.height;
-    depth = dims.depth;
-    position = this.bind.source.sourceShader(this._shaders.shader());
-    position = this._helpers.position.pipeline(position);
-    projection = this._shaders.shader({
-      globals: ['projectionMatrix']
-    });
-    projection.pipe('project.readback');
-    position.pipe(projection);
-    isIndexed = indexing === this.node.attributes['label.indexing']["enum"].original;
-    indexer = this._shaders.shader();
-    if (isIndexed) {
-      indexer = typeof (_base = this.bind.source).indexShader === "function" ? _base.indexShader(indexer) : void 0;
-    }
-    this.readback = this._renderables.make('readback', {
-      fragment: position,
-      indexer: indexer,
-      items: items,
-      width: width,
-      height: height,
-      depth: depth,
-      channels: 4
-    });
-    this.dom = this._overlays.make('dom', {
-      items: items,
-      width: width,
-      height: height,
-      depth: depth
-    });
-    return this._helpers.renderScale.make();
-  };
-
-  Label.prototype.unmake = function() {
-    this._helpers.renderScale.unmake();
-    this._helpers.bind.unmake();
-    if (this.bind.source != null) {
-      this.memo.unadopt(this.compose);
-      this.memo.dispose();
-      this.memo = this.compose = null;
-      this.root = null;
-      this.emitter = null;
-      return this.active = {};
-    }
-  };
-
-  Label.prototype.update = function() {
-    if (this.readback == null) {
-      return;
-    }
-    this.readback.update(this.root.getCamera());
-    this.readback.iterate();
-    return this.dom.render(this.emitter.nodes());
-  };
-
-  Label.prototype.callback = function(emitter) {
-    var dom, f, height, nodes, offset, snap, uniforms, width;
-    uniforms = this._helpers.renderScale.uniforms();
-    width = uniforms.renderWidth;
-    height = uniforms.renderHeight;
-    offset = this.offset.value;
-    snap = this.snap;
-    dom = this.dom;
-    nodes = [];
-    f = function(i, j, k, l, x, y, z, w, index) {
-      return emitter(i, j, k, l, x, y, z, w, function(label) {
-        var display, props;
-        if (label === +label) {
-          label = "" + label;
-        }
-        x = (x + 1) * width.value + offset.x + 1e-5;
-        y = (y - 1) * height.value + offset.y + 1e-5;
-        if (snap.value) {
-          x = Math.round(x);
-          y = Math.round(y);
-        }
-        display = z < 0 ? 'none' : 'block';
-        props = {
-          className: 'mathbox-label',
-          style: {
-            transform: "translate(-50%, -50%) translate3d(" + x + "px, " + (-y) + "px, " + (-z) + "px)",
-            display: display
-          }
-        };
-        return nodes.push(dom.el('div', props, label));
-      });
-    };
-    f.reset = function() {
-      nodes = [];
-      return typeof emitter.reset === "function" ? emitter.reset() : void 0;
-    };
-    f.nodes = function() {
-      return nodes;
-    };
-    return f;
-  };
-
-  Label.prototype.resize = function() {
-    var depth, height, items, width, _ref;
-    this.active = (_ref = this.bind.source.getActive(), items = _ref.items, width = _ref.width, height = _ref.height, depth = _ref.depth, _ref);
-    return this.readback.setActive(items, width, height, depth);
-  };
-
-  Label.prototype.change = function(changed, touched, init) {
-    var data, emitter;
-    if (changed['label.source']) {
-      return this.rebuild();
-    }
-    if (this.bind.source == null) {
-      return;
-    }
-    if (changed['label.data'] || changed['label.expression'] || init) {
-      data = this._get('label.data');
-      emitter = this._get('label.expression');
-      if (data != null) {
-        emitter = function() {
-          return '';
-        };
-      } else {
-        emitter = Util.Data.normalizeEmitter(emitter, 8);
-      }
-      this.emitter = emitter = this.callback(emitter);
-      return this.readback.setCallback(emitter);
-    }
-  };
-
-  return Label;
-
-})(Overlay);
-
-module.exports = Label;
-
-
-},{"../../../util":139,"./overlay":77}],77:[function(require,module,exports){
-var Overlay, Primitive, Util,
+},{"../../../util":148,"./operator":73}],80:[function(require,module,exports){
+var DOM, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -11268,23 +11398,294 @@ Primitive = require('../../primitive');
 
 Util = require('../../../util');
 
-Overlay = (function(_super) {
-  __extends(Overlay, _super);
+DOM = (function(_super) {
+  __extends(DOM, _super);
 
-  function Overlay() {
-    return Overlay.__super__.constructor.apply(this, arguments);
+  function DOM() {
+    return DOM.__super__.constructor.apply(this, arguments);
   }
 
-  Overlay.traits = ['node', 'overlay'];
+  DOM.traits = ['node', 'bind', 'object', 'overlay', 'dom', 'attach', 'position'];
 
-  return Overlay;
+  DOM.prototype.init = function() {
+    this.emitter = this.root = null;
+    return this.active = {};
+  };
+
+  DOM.prototype.make = function() {
+    var depth, height, htmlDims, indexer, items, pointDims, position, projection, width;
+    DOM.__super__.make.apply(this, arguments);
+    this._helpers.bind.make([
+      {
+        to: 'dom.html',
+        trait: 'html'
+      }, {
+        to: 'dom.points',
+        trait: 'source'
+      }
+    ]);
+    if (!((this.bind.points != null) && (this.bind.html != null))) {
+      return;
+    }
+    this.root = this._inherit('root');
+    this._listen('root', 'root.update', this.update);
+    this._listen('root', 'root.post', this.post);
+    pointDims = this.bind.points.getDimensions();
+    htmlDims = this.bind.html.getDimensions();
+    items = Math.min(pointDims.items, htmlDims.items);
+    width = Math.min(pointDims.width, htmlDims.width);
+    height = Math.min(pointDims.height, htmlDims.height);
+    depth = Math.min(pointDims.depth, htmlDims.depth);
+    position = this.bind.points.sourceShader(this._shaders.shader());
+    position = this._helpers.position.pipeline(position);
+    projection = this._shaders.shader({
+      globals: ['projectionMatrix']
+    });
+    projection.pipe('project.readback');
+    position.pipe(projection);
+    indexer = this._shaders.shader();
+    this.readback = this._renderables.make('readback', {
+      map: position,
+      indexer: indexer,
+      items: items,
+      width: width,
+      height: height,
+      depth: depth,
+      channels: 4
+    });
+    this.dom = this._overlays.make('dom');
+    this.dom.hint(items * width * height * depth * 2);
+    return this.readback.setCallback(this.emitter = this.callback(this.bind.html.nodes()));
+
+    /*
+    dbg = @_renderables.make 'debug',
+            map: @readback.readFloat()
+     *            map: @readback.readByte()
+    scene = @_inherit 'scene'
+    scene.adopt dbg
+     */
+  };
+
+  DOM.prototype.unmake = function() {
+    if (this.readback != null) {
+      this.readback.dispose();
+      this.dom.dispose();
+      this.readback = this.dom = null;
+      this.root = null;
+      this.emitter = null;
+      this.active = {};
+    }
+    return this._helpers.bind.unmake();
+  };
+
+  DOM.prototype.update = function() {
+    var _ref;
+    if (this.readback == null) {
+      return;
+    }
+    return this.readback.update((_ref = this.root) != null ? _ref.getCamera() : void 0);
+  };
+
+  DOM.prototype.post = function() {
+    if (this.readback == null) {
+      return;
+    }
+    this.readback.post();
+    if (this._get('object.visible')) {
+      this.readback.iterate();
+      return this.dom.render(this.emitter.nodes());
+    } else {
+      return this.dom.render([]);
+    }
+  };
+
+  DOM.prototype.callback = function(data) {
+    var attr, color, colorString, depth, el, f, height, nodes, offset, opacity, outline, props, size, snap, strideI, strideJ, strideK, uniforms, width, zoom;
+    uniforms = this._inherit('unit').getUnitUniforms();
+    width = uniforms.viewWidth;
+    height = uniforms.viewHeight;
+    attr = this.node.attributes['dom.attributes'];
+    size = this.node.attributes['dom.size'];
+    zoom = this.node.attributes['dom.zoom'];
+    color = this.node.attributes['dom.color'];
+    outline = this.node.attributes['dom.outline'];
+    opacity = this.node.attributes['overlay.opacity'];
+    offset = this.node.attributes['attach.offset'];
+    depth = this.node.attributes['attach.depth'];
+    snap = this.node.attributes['attach.snap'];
+    el = this.dom.el;
+    nodes = [];
+    props = null;
+    strideI = strideJ = strideK = 0;
+    colorString = '';
+    f = function(x, y, z, w, i, j, k, l) {
+      var a, alpha, clip, flatZ, iw, label, ox, oy, s, scale, v, xx, yy, _ref;
+      label = data[l + strideI * i + strideJ * j + strideK * k];
+      clip = w < 0;
+      iw = 1 / w;
+      flatZ = 1 + (iw - 1) * depth.value;
+      scale = clip ? 0 : flatZ;
+      ox = +offset.value.x * scale;
+      oy = +offset.value.y * scale;
+      xx = (x + 1) * width.value * .5 + ox;
+      yy = (y - 1) * height.value * .5 + oy;
+      xx /= zoom.value;
+      yy /= zoom.value;
+      if (snap.value) {
+        xx = Math.round(xx);
+        yy = Math.round(yy);
+      }
+      alpha = Math.min(.999, clip ? 0 : opacity.value);
+      props = {
+        className: "mathbox-outline-" + (Math.round(outline.value)),
+        style: {
+          fontSize: "" + size.value + "px",
+          zoom: zoom.value,
+          transform: "translate3d(" + xx + "px, " + (-yy) + "px, " + (1 - w) + "px) translate(-50%, -50%) scale(" + scale + "," + scale + ")",
+          opacity: alpha
+        }
+      };
+      a = attr.value;
+      if (a != null) {
+        s = a.style;
+        for (k in a) {
+          v = a[k];
+          if (k !== 'style' && k !== 'className') {
+            props[k] = v;
+          }
+        }
+        if (s != null) {
+          for (k in s) {
+            v = s[k];
+            props.style[k] = v;
+          }
+        }
+      }
+      props.className += ' ' + ((_ref = a != null ? a.className : void 0) != null ? _ref : 'mathbox-label');
+      return nodes.push(el('div', props, label));
+    };
+    f.reset = (function(_this) {
+      return function() {
+        var c, m, _ref;
+        nodes = [];
+        _ref = [_this.strideI, _this.strideJ, _this.strideK], strideI = _ref[0], strideJ = _ref[1], strideK = _ref[2];
+        c = color.value;
+        m = function(x) {
+          return Math.floor(x * 255);
+        };
+        return colorString = c ? "rgb(" + [m(c.x), m(c.y), m(c.z)] + ")" : '';
+      };
+    })(this);
+    f.nodes = function() {
+      return nodes;
+    };
+    return f;
+  };
+
+  DOM.prototype.resize = function() {
+    var depth, height, htmlDims, items, pointDims, sI, sJ, sK, width;
+    if (this.readback == null) {
+      return;
+    }
+    pointDims = this.bind.points.getActive();
+    htmlDims = this.bind.html.getActive();
+    items = Math.min(pointDims.items, htmlDims.items);
+    width = Math.min(pointDims.width, htmlDims.width);
+    height = Math.min(pointDims.height, htmlDims.height);
+    depth = Math.min(pointDims.depth, htmlDims.depth);
+    this.readback.setActive(items, width, height, depth);
+    this.strideI = sI = htmlDims.items;
+    this.strideJ = sJ = sI * htmlDims.width;
+    return this.strideK = sK = sJ * htmlDims.height;
+  };
+
+  DOM.prototype.change = function(changed, touched, init) {
+    if (touched['dom']) {
+      return this.rebuild();
+    }
+  };
+
+  return DOM;
 
 })(Primitive);
 
-module.exports = Overlay;
+module.exports = DOM;
 
 
-},{"../../../util":139,"../../primitive":42}],78:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],81:[function(require,module,exports){
+var HTML, Util, Voxel,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Voxel = require('../data/voxel');
+
+Util = require('../../../util');
+
+HTML = (function(_super) {
+  __extends(HTML, _super);
+
+  function HTML() {
+    return HTML.__super__.constructor.apply(this, arguments);
+  }
+
+  HTML.traits = ['node', 'data', 'voxel', 'html'];
+
+  HTML.defaults = {
+    channels: 1
+  };
+
+  HTML.prototype.init = function() {
+    HTML.__super__.init.apply(this, arguments);
+    return this.storage = 'pushBuffer';
+  };
+
+  HTML.prototype.make = function() {
+    var depth, height, items, width, _ref;
+    HTML.__super__.make.apply(this, arguments);
+    _ref = this.getDimensions(), items = _ref.items, width = _ref.width, height = _ref.height, depth = _ref.depth;
+    this.dom = this._overlays.make('dom');
+    return this.dom.hint(items * width * height * depth);
+  };
+
+  HTML.prototype.unmake = function() {
+    HTML.__super__.unmake.apply(this, arguments);
+    if (dom) {
+      this.dom.dispose();
+      return this.dom = null;
+    }
+  };
+
+  HTML.prototype.update = function() {
+    return HTML.__super__.update.apply(this, arguments);
+  };
+
+  HTML.prototype.change = function(changed, touched, init) {
+    if (touched['html']) {
+      return this.rebuild();
+    }
+    return HTML.__super__.change.call(this, changed, touched, init);
+  };
+
+  HTML.prototype.nodes = function() {
+    return this.buffer.read();
+  };
+
+  HTML.prototype.callback = function(callback) {
+    var el;
+    el = this.dom.el;
+    return function(emit, i, j, k, l) {
+      return callback(emit, el, i, j, k, l);
+    };
+  };
+
+  return HTML;
+
+})(Voxel);
+
+module.exports = HTML;
+
+
+},{"../../../util":148,"../data/voxel":57}],82:[function(require,module,exports){
 var Compose, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11327,9 +11728,12 @@ Compose = (function(_super) {
 
   Compose.prototype.make = function() {
     var alpha, composeUniforms, fragment, resampleUniforms;
-    this._helpers.bind.make({
-      'operator.source': 'source'
-    });
+    this._helpers.bind.make([
+      {
+        to: 'operator.source',
+        trait: 'source'
+      }
+    ]);
     if (this.bind.source == null) {
       return;
     }
@@ -11350,7 +11754,7 @@ Compose = (function(_super) {
     }
     composeUniforms = this._helpers.style.uniforms();
     this.compose = this._renderables.make('screen', {
-      fragment: fragment,
+      map: fragment,
       uniforms: composeUniforms
     });
     return this._helpers.object.make([this.compose]);
@@ -11378,7 +11782,7 @@ Compose = (function(_super) {
 module.exports = Compose;
 
 
-},{"../../../util":139,"../../primitive":42}],79:[function(require,module,exports){
+},{"../../../util":148,"../../primitive":43}],83:[function(require,module,exports){
 var RTT, Root, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11403,7 +11807,7 @@ RTT = (function(_super) {
   };
 
   RTT.prototype.init = function() {
-    this.rtt = this.scene = this.width = this.height = this.history = this.size = null;
+    this.rtt = this.scene = this.width = this.height = this.history = this.rootSize = this.size = null;
     return this.event = {
       type: 'root.update'
     };
@@ -11441,26 +11845,30 @@ RTT = (function(_super) {
   };
 
   RTT.prototype.make = function() {
-    var magFilter, minFilter, type, _ref, _ref1;
+    var aspect, height, history, magFilter, minFilter, type, viewHeight, viewWidth, width;
     this.parentRoot = this._inherit('root');
-    this.size = this.parentRoot.getSize();
+    this.rootSize = this.parentRoot.getSize();
     this._listen(this.parentRoot, 'root.update', this.update);
     this._listen(this.parentRoot, 'root.resize', function(event) {
       return this.resize(event.size);
     });
-    if (this.size == null) {
+    if (this.rootSize == null) {
       return;
     }
     minFilter = this._get('texture.minFilter');
     magFilter = this._get('texture.magFilter');
     type = this._get('texture.type');
-    this.width = (_ref = this._get('rtt.width')) != null ? _ref : this.size.renderWidth;
-    this.height = (_ref1 = this._get('rtt.height')) != null ? _ref1 : this.size.renderHeight;
-    this.history = this._get('rtt.history');
+    width = this._get('rtt.width');
+    height = this._get('rtt.height');
+    history = this._get('rtt.history');
+    this.width = width != null ? width : this.rootSize.renderWidth;
+    this.height = height != null ? height : this.rootSize.renderHeight;
+    this.history = history;
+    this.aspect = aspect = this.width / this.height;
     if (this.scene == null) {
       this.scene = this._renderables.make('scene');
     }
-    return this.rtt = this._renderables.make('renderToTexture', {
+    this.rtt = this._renderables.make('renderToTexture', {
       scene: this.scene,
       width: this.width,
       height: this.height,
@@ -11469,16 +11877,31 @@ RTT = (function(_super) {
       magFilter: magFilter,
       type: type
     });
+    aspect = width || height ? aspect : this.rootSize.aspect;
+    viewWidth = width != null ? width : this.rootSize.viewWidth;
+    viewHeight = height != null ? height : this.rootSize.viewHeight;
+    this.size = {
+      renderWidth: this.width,
+      renderHeight: this.height,
+      aspect: aspect,
+      viewWidth: viewWidth,
+      viewHeight: viewHeight,
+      pixelRatio: this.height / viewHeight
+    };
+    this.rtt.camera.aspect = aspect;
+    return this.rtt.camera.updateProjectionMatrix();
   };
 
   RTT.prototype.made = function() {
     this.trigger({
       type: 'source.rebuild'
     });
-    return this.trigger({
-      type: 'root.resize',
-      size: this.size
-    });
+    if (this.size) {
+      return this.trigger({
+        type: 'root.resize',
+        size: this.size
+      });
+    }
   };
 
   RTT.prototype.unmake = function(rebuild) {
@@ -11497,12 +11920,6 @@ RTT = (function(_super) {
   RTT.prototype.change = function(changed, touched, init) {
     if (touched['texture'] || changed['rtt.width'] || changed['rtt.height']) {
       return this.rebuild();
-    }
-    if (this.size != null) {
-      if (this.rtt != null) {
-        this.rtt.camera.aspect = this.size.aspect;
-      }
-      return this.rtt.camera.updateProjectionMatrix();
     }
   };
 
@@ -11529,8 +11946,13 @@ RTT = (function(_super) {
   };
 
   RTT.prototype.resize = function(size) {
-    this.size = size;
-    return this.rebuild();
+    var height, width;
+    this.rootSize = size;
+    width = this._get('rtt.width');
+    height = this._get('rtt.height');
+    if (!this.rtt || (width == null) || (height == null)) {
+      return this.rebuild();
+    }
   };
 
   RTT.prototype.transform = function(shader, pass) {
@@ -11550,7 +11972,7 @@ RTT = (function(_super) {
 module.exports = RTT;
 
 
-},{"../../../util":139,"../base/root":45}],80:[function(require,module,exports){
+},{"../../../util":148,"../base/root":46}],84:[function(require,module,exports){
 var Traits, Types;
 
 Types = require('./types');
@@ -11566,55 +11988,9 @@ Traits = {
   object: {
     visible: Types.bool(true)
   },
-  style: {
-    opacity: Types.number(1),
-    color: Types.color(),
-    blending: Types.blending(),
-    zWrite: Types.bool(true),
-    zTest: Types.bool(true),
-    zIndex: Types.number(0),
-    zOrder: Types.nullable(Types.int()),
-    zFactor: Types.number(0),
-    zUnits: Types.number(0)
-  },
-  overlay: {
-    opacity: Types.number(1)
-  },
-  html: {
-    element: Types.select()
-  },
-  label: {
-    indexing: Types.indexing(),
-    offset: Types.vec2(0, -20),
-    snap: Types.bool(true),
-    source: Types.select(),
-    data: Types.nullable(Types.object()),
-    expression: Types.nullable(Types.func())
-  },
-  point: {
-    size: Types.number(.01),
-    shape: Types.shape(),
-    fill: Types.bool(true)
-  },
-  line: {
-    width: Types.number(.01),
-    depth: Types.number(1),
-    stroke: Types.stroke()
-  },
-  mesh: {
-    solid: Types.bool(true),
-    shaded: Types.bool(true)
-  },
-  face: {
-    outline: Types.bool(false)
-  },
-  arrow: {
-    size: Types.number(.07),
-    start: Types.bool(false),
-    end: Types.bool(false)
-  },
-  ticks: {
-    size: Types.number(.05)
+  unit: {
+    scale: Types.nullable(Types.number()),
+    fov: Types.nullable(Types.number())
   },
   span: {
     range: Types.nullable(Types.vec2(-1, 1))
@@ -11680,10 +12056,6 @@ Traits = {
   axis: {
     detail: Types.int(1)
   },
-  geometry: {
-    points: Types.select(),
-    colors: Types.nullable(Types.select())
-  },
   source: {
     hint: Types.nullable(Types.string())
   },
@@ -11691,7 +12063,7 @@ Traits = {
     data: Types.nullable(Types.object()),
     expression: Types.nullable(Types.func()),
     live: Types.bool(true),
-    dimensions: Types.int(3),
+    channels: Types.int(3),
     items: Types.int(1)
   },
   sampler: {
@@ -11717,6 +12089,80 @@ Traits = {
     bufferHeight: Types.int(1),
     bufferDepth: Types.int(1)
   },
+  style: {
+    opacity: Types.number(1),
+    color: Types.color(),
+    blending: Types.blending(),
+    zWrite: Types.bool(true),
+    zTest: Types.bool(true),
+    zIndex: Types.absolute(Types.round()),
+    zBias: Types.number(0),
+    zOrder: Types.nullable(Types.int())
+  },
+  geometry: {
+    points: Types.select(),
+    colors: Types.nullable(Types.select())
+  },
+  point: {
+    size: Types.number(4),
+    shape: Types.shape(),
+    fill: Types.bool(true),
+    depth: Types.number(1)
+  },
+  line: {
+    width: Types.number(2),
+    depth: Types.number(1),
+    stroke: Types.stroke()
+  },
+  mesh: {
+    solid: Types.bool(true),
+    shaded: Types.bool(true)
+  },
+  face: {
+    outline: Types.bool(false)
+  },
+  arrow: {
+    size: Types.number(3),
+    start: Types.bool(false),
+    end: Types.bool(false)
+  },
+  ticks: {
+    size: Types.number(.05)
+  },
+  attach: {
+    offset: Types.vec2(0, -20),
+    snap: Types.bool(true),
+    depth: Types.number(0)
+  },
+  text: {
+    font: Types.string(),
+    style: Types.string(),
+    detail: Types.number(24),
+    expand: Types.number(4)
+  },
+  label: {
+    text: Types.select(),
+    size: Types.number(16),
+    outline: Types.number(2),
+    expand: Types.number(0),
+    background: Types.color(1, 1, 1)
+  },
+  overlay: {
+    opacity: Types.number(1)
+  },
+  html: {
+    font: Types.string(),
+    style: Types.string()
+  },
+  dom: {
+    points: Types.select(),
+    html: Types.select(),
+    size: Types.number(16),
+    outline: Types.number(2),
+    zoom: Types.number(1),
+    color: Types.nullable(Types.color()),
+    attributes: Types.nullable(Types.object())
+  },
   texture: {
     minFilter: Types.filter('nearest'),
     magFilter: Types.filter('nearest'),
@@ -11730,7 +12176,10 @@ Traits = {
     width: Types.nullable(Types.vec4()),
     height: Types.nullable(Types.vec4()),
     depth: Types.nullable(Types.vec4()),
-    anchor: Types.number(0)
+    alignItems: Types.anchor(),
+    alignWidth: Types.anchor(),
+    alignHeight: Types.anchor(),
+    alignDepth: Types.anchor()
   },
   split: {
     order: Types.transpose('wxyz'),
@@ -11763,7 +12212,7 @@ Traits = {
   },
   resample: {
     indices: Types.number(4),
-    dimensions: Types.number(4),
+    channels: Types.number(4),
     map: Types.mapping(),
     scale: Types.mapping('absolute'),
     shader: Types.nullable(Types.string()),
@@ -11771,6 +12220,9 @@ Traits = {
     width: Types.nullable(Types.int()),
     height: Types.nullable(Types.int()),
     depth: Types.nullable(Types.int())
+  },
+  readback: {
+    indexed: Types.bool()
   },
   root: {
     camera: Types.nullable(Types.select())
@@ -11788,7 +12240,7 @@ Traits = {
 module.exports = Traits;
 
 
-},{"./types":85}],81:[function(require,module,exports){
+},{"./types":89}],85:[function(require,module,exports){
 var Parent, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11815,7 +12267,7 @@ Transform = (function(_super) {
 module.exports = Transform;
 
 
-},{"../base/parent":44}],82:[function(require,module,exports){
+},{"../base/parent":45}],86:[function(require,module,exports){
 var Transform, Transform3,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11876,7 +12328,7 @@ Transform3 = (function(_super) {
 module.exports = Transform3;
 
 
-},{"./transform":81}],83:[function(require,module,exports){
+},{"./transform":85}],87:[function(require,module,exports){
 var Transform, Transform4,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11934,7 +12386,7 @@ Transform4 = (function(_super) {
 module.exports = Transform4;
 
 
-},{"./transform":81}],84:[function(require,module,exports){
+},{"./transform":85}],88:[function(require,module,exports){
 var Transform, Vertex,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11972,7 +12424,7 @@ Vertex = (function(_super) {
 module.exports = Vertex;
 
 
-},{"./transform":81}],85:[function(require,module,exports){
+},{"./transform":85}],89:[function(require,module,exports){
 var Types,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -12068,10 +12520,30 @@ Types = {
       }
     };
   },
-  nullable: function(type) {
+  absolute: function(type) {
+    var value;
+    value = type.make();
     return {
       make: function() {
-        return null;
+        return value;
+      },
+      uniform: function() {
+        return type.uniform();
+      },
+      validate: function(value, target, invalid) {
+        return Math.abs(+type.validate(value, target, invalid));
+      }
+    };
+  },
+  nullable: function(type, make) {
+    var value;
+    if (make == null) {
+      make = false;
+    }
+    value = make ? type.make() : null;
+    return {
+      make: function() {
+        return value;
       },
       validate: function(value, target, invalid) {
         if (value === null) {
@@ -12180,6 +12652,27 @@ Types = {
     return {
       uniform: function() {
         return 'i';
+      },
+      make: function() {
+        return value;
+      },
+      validate: function(value, target, invalid) {
+        var x;
+        if (value !== (x = +value)) {
+          return invalid();
+        }
+        return Math.round(x) || 0;
+      }
+    };
+  },
+  round: function(value) {
+    if (value == null) {
+      value = 0;
+    }
+    value = +Math.round(value);
+    return {
+      uniform: function() {
+        return 'f';
       },
       make: function() {
         return value;
@@ -12492,7 +12985,10 @@ Types = {
         return 'm4';
       },
       make: function() {
-        return new THREE.Matrix4(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44);
+        var m;
+        m = new THREE.Matrix4;
+        m.set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44);
+        return m;
       },
       validate: function(value, target, invalid) {
         if (value instanceof THREE.Matrix4) {
@@ -12796,13 +13292,40 @@ Types = {
     }
     keys = ['data', 'view', 'world', 'eye'];
     return Types["enum"](value, keys);
+  },
+  anchor: function(value) {
+    var map, _ref;
+    if (value == null) {
+      value = 'middle';
+    }
+    map = {
+      first: 1,
+      middle: 0,
+      last: -1
+    };
+    value = (_ref = map[value]) != null ? _ref : +value;
+    return {
+      uniform: function() {
+        return 'f';
+      },
+      make: function() {
+        return +value;
+      },
+      validate: function(value, target, invalid) {
+        var x;
+        if (value !== (x = +value)) {
+          return invalid();
+        }
+        return x || 0;
+      }
+    };
   }
 };
 
 module.exports = Types;
 
 
-},{}],86:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var Cartesian, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -12876,7 +13399,7 @@ Cartesian = (function(_super) {
 module.exports = Cartesian;
 
 
-},{"./view":92}],87:[function(require,module,exports){
+},{"./view":96}],91:[function(require,module,exports){
 var Cartesian4, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -12957,7 +13480,7 @@ Cartesian4 = (function(_super) {
 module.exports = Cartesian4;
 
 
-},{"./view":92}],88:[function(require,module,exports){
+},{"./view":96}],92:[function(require,module,exports){
 var Polar, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13065,7 +13588,7 @@ Polar = (function(_super) {
 module.exports = Polar;
 
 
-},{"../../../util":139,"./view":92}],89:[function(require,module,exports){
+},{"../../../util":148,"./view":96}],93:[function(require,module,exports){
 var Spherical, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13185,7 +13708,7 @@ Spherical = (function(_super) {
 module.exports = Spherical;
 
 
-},{"../../../util":139,"./view":92}],90:[function(require,module,exports){
+},{"../../../util":148,"./view":96}],94:[function(require,module,exports){
 var Stereographic, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13267,7 +13790,7 @@ Stereographic = (function(_super) {
 module.exports = Stereographic;
 
 
-},{"../../../util":139,"./view":92}],91:[function(require,module,exports){
+},{"../../../util":148,"./view":96}],95:[function(require,module,exports){
 var Stereographic4, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13353,7 +13876,7 @@ Stereographic4 = (function(_super) {
 module.exports = Stereographic4;
 
 
-},{"../../../util":139,"./view":92}],92:[function(require,module,exports){
+},{"../../../util":148,"./view":96}],96:[function(require,module,exports){
 var Transform, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13388,61 +13911,38 @@ View = (function(_super) {
 module.exports = View;
 
 
-},{"../transform/transform":81}],93:[function(require,module,exports){
-var ArrayBuffer_, Buffer, DataTexture, Util,
+},{"../transform/transform":85}],97:[function(require,module,exports){
+var ArrayBuffer_, DataBuffer, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Buffer = require('./buffer');
-
-DataTexture = require('./texture/datatexture');
+DataBuffer = require('./databuffer');
 
 Util = require('../../util');
+
+
+/*
+ * 1D + history array
+ */
 
 ArrayBuffer_ = (function(_super) {
   __extends(ArrayBuffer_, _super);
 
   function ArrayBuffer_(renderer, shaders, options) {
-    this.callback = options.callback || function() {};
     this.length = options.length || 1;
     this.history = options.history || 1;
     this.samples = this.length;
+    options.width = this.length;
+    options.height = this.history;
+    options.depth = 1;
     ArrayBuffer_.__super__.constructor.call(this, renderer, shaders, options);
   }
 
-  ArrayBuffer_.prototype.shader = function(shader) {
-    if (this.items > 1) {
-      shader.pipe('map.xyzw.texture', this.uniforms);
-    } else {
-      shader.pipe(Util.GLSL.truncateVec(4, 2));
-    }
-    return ArrayBuffer_.__super__.shader.call(this, shader);
-  };
-
   ArrayBuffer_.prototype.build = function(options) {
     ArrayBuffer_.__super__.build.apply(this, arguments);
-    this.data = new Float32Array(this.samples * this.channels * this.items);
-    this.texture = new DataTexture(this.gl, this.samples * this.items, this.history, this.channels, options);
     this.index = 0;
-    this.filled = 0;
     this.pad = 0;
-    this.streamer = this.generate(this.data);
-    this.dataPointer = this.uniforms.dataPointer.value;
-    this._adopt(this.texture.uniforms);
-    return this._adopt({
-      textureItems: {
-        type: 'f',
-        value: this.items
-      },
-      textureHeight: {
-        type: 'f',
-        value: 1
-      }
-    });
-  };
-
-  ArrayBuffer_.prototype.getFilled = function() {
-    return this.filled;
+    return this.streamer = this.generate(this.data);
   };
 
   ArrayBuffer_.prototype.setActive = function(i) {
@@ -13459,7 +13959,7 @@ ArrayBuffer_ = (function(_super) {
     reset();
     limit = this.samples - this.pad;
     i = 0;
-    while (!done() && i < limit && callback(i++, emit) !== false) {
+    while (!done() && i < limit && callback(emit, i++) !== false) {
       true;
     }
     return Math.floor(count() / this.items);
@@ -13478,12 +13978,206 @@ ArrayBuffer_ = (function(_super) {
 
   return ArrayBuffer_;
 
-})(Buffer);
+})(DataBuffer);
 
 module.exports = ArrayBuffer_;
 
 
-},{"../../util":139,"./buffer":94,"./texture/datatexture":100}],94:[function(require,module,exports){
+},{"../../util":148,"./databuffer":100}],98:[function(require,module,exports){
+var Atlas, BackedTexture, DataTexture, Renderable, Row, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Renderable = require('../renderable');
+
+Util = require('../../util');
+
+DataTexture = require('./texture/datatexture');
+
+BackedTexture = require('./texture/backedtexture');
+
+
+/*
+ * Dynamic sprite atlas
+ *
+ * - Allocates variable-sized sprites in rows
+ * - Will grow itself when full
+ */
+
+Atlas = (function(_super) {
+  __extends(Atlas, _super);
+
+  function Atlas(renderer, shaders, options) {
+    if (this.width == null) {
+      this.width = options.width || 512;
+    }
+    if (this.height == null) {
+      this.height = options.height || 512;
+    }
+    if (this.channels == null) {
+      this.channels = options.channels || 4;
+    }
+    if (this.backed == null) {
+      this.backed = options.backed || false;
+    }
+    this.samples = this.width * this.height;
+    Atlas.__super__.constructor.call(this, renderer, shaders);
+    this.build(options);
+  }
+
+  Atlas.prototype.shader = function(shader) {
+    shader.pipe("map.2d.data", this.uniforms);
+    shader.pipe("sample.2d", this.uniforms);
+    if (this.channels < 4) {
+      shader.pipe(Util.GLSL.swizzleVec4(['0000', 'x000', 'xw00', 'xyz0'][this.channels]));
+    }
+    return shader;
+  };
+
+  Atlas.prototype.build = function(options) {
+    var klass;
+    this.klass = klass = this.backed ? BackedTexture : DataTexture;
+    this.texture = new klass(this.gl, this.width, this.height, this.channels, options);
+    this.uniforms = {
+      dataPointer: {
+        type: 'v2',
+        value: new THREE.Vector2(0, 0)
+      }
+    };
+    this._adopt(this.texture.uniforms);
+    return this.reset();
+  };
+
+  Atlas.prototype.reset = function() {
+    this.rows = [];
+    return this.bottom = 0;
+  };
+
+  Atlas.prototype.resize = function(width, height) {
+    if (!this.backed) {
+      throw "Cannot resize unbacked texture atlas";
+    }
+    if (width > 2048 && height > 2048) {
+      console.warn("Giant atlas " + width + "x" + height + ".");
+    } else {
+      console.info("Resizing atlas " + width + "x" + height + ".");
+    }
+    this.texture.resize(width, height);
+    this.width = width;
+    this.height = height;
+    return this.samples = width * height;
+  };
+
+  Atlas.prototype.collapse = function(row) {
+    var rows;
+    rows = this.rows;
+    rows.splice(rows.indexOf(row), 1);
+    this.bottom = rows[rows.length - 1].bottom;
+    if (this.last === row) {
+      return this.last = null;
+    }
+  };
+
+  Atlas.prototype.allocate = function(key, width, height, emit) {
+    var bottom, gap, h, i, index, max, row, top, w, _i, _len, _ref;
+    w = this.width;
+    h = this.height;
+    max = height * 2;
+    if (width > w) {
+      this.resize(w * 2, h * 2);
+      this.last = null;
+      return this.allocate(key, width, height, emit);
+    }
+    row = this.last;
+    if (row != null) {
+      if (row.height >= height && row.height < max && row.width + width <= w) {
+        row.append(key, width, height, emit);
+        return;
+      }
+    }
+    bottom = 0;
+    index = -1;
+    top = 0;
+    _ref = this.rows;
+    for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+      row = _ref[i];
+      gap = row.top - bottom;
+      if (gap >= height && index < 0) {
+        index = i;
+        top = bottom;
+      }
+      bottom = row.bottom;
+      if (row.height >= height && row.height < max && row.width + width <= w) {
+        row.append(key, width, height, emit);
+        this.last = row;
+        return;
+      }
+    }
+    if (index >= 0) {
+      row = new Row(top, height);
+      this.rows.splice(index, 0, row);
+    } else {
+      top = bottom;
+      bottom += height;
+      if (bottom >= h) {
+        this.resize(w * 2, h * 2);
+        this.last = null;
+        return this.allocate(key, width, height, emit);
+      }
+      row = new Row(top, height);
+      this.rows.push(row);
+      this.bottom = bottom;
+    }
+    row.append(key, width, height, emit);
+    this.last = row;
+  };
+
+  Atlas.prototype.read = function() {
+    return this.texture.textureObject;
+  };
+
+  Atlas.prototype.write = function(data, x, y, w, h) {
+    return this.texture.write(data, x, y, w, h);
+  };
+
+  Atlas.prototype.dispose = function() {
+    this.texture.dispose();
+    this.data = null;
+    return Atlas.__super__.dispose.apply(this, arguments);
+  };
+
+  return Atlas;
+
+})(Renderable);
+
+Row = (function() {
+  function Row(top, height) {
+    this.top = top;
+    this.bottom = top + height;
+    this.width = 0;
+    this.height = height;
+    this.alive = 0;
+    this.keys = [];
+  }
+
+  Row.prototype.append = function(key, width, height, emit) {
+    var x, y;
+    x = this.width;
+    y = this.top;
+    this.alive++;
+    this.width += width;
+    this.keys.push(key);
+    return emit(this, x, y);
+  };
+
+  return Row;
+
+})();
+
+module.exports = Atlas;
+
+
+},{"../../util":148,"../renderable":135,"./texture/backedtexture":107,"./texture/datatexture":108}],99:[function(require,module,exports){
 var Buffer, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13492,10 +14186,13 @@ Renderable = require('../renderable');
 
 Util = require('../../util');
 
+
+/*
+ * Base class for sample buffers
+ */
+
 Buffer = (function(_super) {
   __extends(Buffer, _super);
-
-  Buffer.iterationLimit = 0xFFFF;
 
   function Buffer(renderer, shaders, options) {
     if (this.items == null) {
@@ -13508,34 +14205,12 @@ Buffer = (function(_super) {
       this.channels = options.channels || 4;
     }
     if (this.callback == null) {
-      this.callback = options.callback || function(x) {};
+      this.callback = options.callback || function() {};
     }
     Buffer.__super__.constructor.call(this, renderer, shaders);
-    this.build(options);
   }
 
-  Buffer.prototype.shader = function(shader) {
-    shader.pipe("map.2d.data", this.uniforms);
-    shader.pipe("sample.2d", this.uniforms);
-    if (this.channels < 4) {
-      shader.pipe(Util.GLSL.swizzleVec4(['0000', 'x000', 'xw00', 'xyz0'][this.channels]));
-    }
-    return shader;
-  };
-
-  Buffer.prototype.build = function() {
-    this.callback = function() {};
-    return this.uniforms = {
-      dataPointer: {
-        type: 'v2',
-        value: new THREE.Vector2()
-      }
-    };
-  };
-
   Buffer.prototype.dispose = function() {
-    this.data = null;
-    this.texture.dispose();
     return Buffer.__super__.dispose.apply(this, arguments);
   };
 
@@ -13544,16 +14219,6 @@ Buffer = (function(_super) {
     n = this.iterate();
     this.write(n);
     return n;
-  };
-
-  Buffer.prototype.copy = function(data) {
-    var d, i, n, _i;
-    n = Math.min(data.length, this.samples * this.channels * this.items);
-    d = this.data;
-    for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
-      d[i] = data[i];
-    }
-    return this.write(Math.floor(n / this.channels / this.items));
   };
 
   Buffer.prototype.setActive = function(i, j, k, l) {};
@@ -13577,47 +14242,8 @@ Buffer = (function(_super) {
 module.exports = Buffer;
 
 
-},{"../../util":139,"../renderable":126}],95:[function(require,module,exports){
-var Buffer, DataBuffer, DataTexture,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Buffer = require('./buffer');
-
-DataTexture = require('./texture/datatexture');
-
-DataBuffer = (function(_super) {
-  __extends(DataBuffer, _super);
-
-  function DataBuffer(renderer, shaders, options) {
-    DataBuffer.__super__.constructor.call(this, renderer, shaders, options);
-  }
-
-  DataBuffer.prototype.build = function(options) {
-    DataBuffer.__super__.build.apply(this, arguments);
-    this.data = new Float32Array(this.samples * this.channels * this.items);
-    this.texture = new DataTexture(this.gl, this.samples * this.items, 1, this.channels, options);
-    this.dataPointer = this.uniforms.dataPointer.value;
-    return this._adopt(this.texture.uniforms);
-  };
-
-  DataBuffer.prototype.write = function(n) {
-    if (n == null) {
-      n = this.samples * this.items;
-    }
-    this.texture.write(this.data, 0, 0, n, 1);
-    return this.dataPointer.set(.5, .5);
-  };
-
-  return DataBuffer;
-
-})(Buffer);
-
-module.exports = DataBuffer;
-
-
-},{"./buffer":94,"./texture/datatexture":100}],96:[function(require,module,exports){
-var Buffer, DataTexture, MatrixBuffer, Util,
+},{"../../util":148,"../renderable":135}],100:[function(require,module,exports){
+var Buffer, DataBuffer, DataTexture, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -13627,41 +14253,61 @@ DataTexture = require('./texture/datatexture');
 
 Util = require('../../util');
 
-MatrixBuffer = (function(_super) {
-  __extends(MatrixBuffer, _super);
 
-  function MatrixBuffer(renderer, shaders, options) {
-    this.callback = options.callback || function() {};
+/*
+ * Data buffer on the GPU
+ * - Stores samples (1-n) x items (1-n) x channels (1-4)
+ * - Provides generic sampler shader
+ * - Provides generic copy/write handler
+ * => specialized into Array/Matrix/VoxelBuffer
+ */
+
+DataBuffer = (function(_super) {
+  __extends(DataBuffer, _super);
+
+  function DataBuffer(renderer, shaders, options) {
     this.width = options.width || 1;
     this.height = options.height || 1;
-    this.history = options.history || 1;
-    this.samples = this.width * this.height;
-    MatrixBuffer.__super__.constructor.call(this, renderer, shaders, options);
+    this.depth = options.depth || 1;
+    if (this.samples == null) {
+      this.samples = this.width * this.height * this.depth;
+    }
+    DataBuffer.__super__.constructor.call(this, renderer, shaders, options);
+    this.build(options);
   }
 
-  MatrixBuffer.prototype.shader = function(shader) {
-    if (this.items > 1 || this.history > 1) {
+  DataBuffer.prototype.shader = function(shader, indices) {
+    if (indices == null) {
+      indices = 4;
+    }
+    if (this.items > 1 || this.depth > 1) {
+      if (indices !== 4) {
+        shader.pipe(Util.GLSL.extendVec(indices, 4));
+      }
       shader.pipe('map.xyzw.texture', this.uniforms);
     } else {
-      shader.pipe(Util.GLSL.truncateVec(4, 2));
+      if (indices !== 2) {
+        shader.pipe(Util.GLSL.truncateVec(indices, 2));
+      }
     }
-    return MatrixBuffer.__super__.shader.call(this, shader);
+    shader.pipe("map.2d.data", this.uniforms);
+    shader.pipe("sample.2d", this.uniforms);
+    if (this.channels < 4) {
+      shader.pipe(Util.GLSL.swizzleVec4(['0000', 'x000', 'xw00', 'xyz0'][this.channels]));
+    }
+    return shader;
   };
 
-  MatrixBuffer.prototype.build = function(options) {
-    MatrixBuffer.__super__.build.apply(this, arguments);
-    this.data = new Float32Array(this.samples * this.items * this.channels);
-    this.texture = new DataTexture(this.gl, this.width * this.items, this.height * this.history, this.channels, options);
-    this.index = 0;
+  DataBuffer.prototype.build = function(options) {
+    this.data = new Float32Array(this.samples * this.channels * this.items);
+    this.texture = new DataTexture(this.gl, this.items * this.width, this.height * this.depth, this.channels, options);
     this.filled = 0;
-    this.pad = {
-      x: 0,
-      y: 0
-    };
-    this.streamer = this.generate(this.data);
-    this.dataPointer = this.uniforms.dataPointer.value;
     this._adopt(this.texture.uniforms);
-    return this._adopt({
+    this._adopt({
+      dataPointer: {
+        type: 'v2',
+        value: new THREE.Vector2()
+      },
       textureItems: {
         type: 'f',
         value: this.items
@@ -13671,6 +14317,84 @@ MatrixBuffer = (function(_super) {
         value: this.height
       }
     });
+    return this.dataPointer = this.uniforms.dataPointer.value;
+  };
+
+  DataBuffer.prototype.dispose = function() {
+    this.data = null;
+    this.texture.dispose();
+    return DataBuffer.__super__.dispose.apply(this, arguments);
+  };
+
+  DataBuffer.prototype.getFilled = function() {
+    return this.filled;
+  };
+
+  DataBuffer.prototype.copy = function(data) {
+    var d, i, n, _i;
+    n = Math.min(data.length, this.samples * this.channels * this.items);
+    d = this.data;
+    for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+      d[i] = data[i];
+    }
+    return this.write(Math.ceil(n / this.channels / this.items));
+  };
+
+  DataBuffer.prototype.write = function(n) {
+    var height, width;
+    if (n == null) {
+      n = this.samples;
+    }
+    height = n / this.width;
+    n *= this.items;
+    width = height < 1 ? n : this.items * this.width;
+    height = Math.ceil(height);
+    this.texture.write(this.data, 0, 0, width, height);
+    this.dataPointer.set(.5, .5);
+    return this.filled = 1;
+  };
+
+  return DataBuffer;
+
+})(Buffer);
+
+module.exports = DataBuffer;
+
+
+},{"../../util":148,"./buffer":99,"./texture/datatexture":108}],101:[function(require,module,exports){
+var DataBuffer, MatrixBuffer, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+DataBuffer = require('./databuffer');
+
+Util = require('../../util');
+
+
+/*
+ * 2D + history array
+ */
+
+MatrixBuffer = (function(_super) {
+  __extends(MatrixBuffer, _super);
+
+  function MatrixBuffer(renderer, shaders, options) {
+    this.width = options.width || 1;
+    this.height = options.height || 1;
+    this.history = options.history || 1;
+    this.samples = this.width * this.height;
+    options.depth = this.history;
+    MatrixBuffer.__super__.constructor.call(this, renderer, shaders, options);
+  }
+
+  MatrixBuffer.prototype.build = function(options) {
+    MatrixBuffer.__super__.build.apply(this, arguments);
+    this.index = 0;
+    this.pad = {
+      x: 0,
+      y: 0
+    };
+    return this.streamer = this.generate(this.data);
   };
 
   MatrixBuffer.prototype.getFilled = function() {
@@ -13694,16 +14418,30 @@ MatrixBuffer = (function(_super) {
     pad = this.pad.x;
     limit = this.samples - this.pad.y * n;
     i = j = k = 0;
-    while (!done() && k < limit) {
-      k++;
-      repeat = callback(i, j, emit);
-      if (++i === n - pad) {
-        skip(pad);
-        i = 0;
-        j++;
+    if (pad) {
+      while (!done() && k < limit) {
+        k++;
+        repeat = callback(emit, i, j);
+        if (++i === n - pad) {
+          skip(pad);
+          i = 0;
+          j++;
+        }
+        if (repeat === false) {
+          break;
+        }
       }
-      if (repeat === false) {
-        break;
+    } else {
+      while (!done() && k < limit) {
+        k++;
+        repeat = callback(emit, i, j);
+        if (++i === n) {
+          i = 0;
+          j++;
+        }
+        if (repeat === false) {
+          break;
+        }
       }
     }
     return Math.floor(count() / this.items);
@@ -13725,12 +14463,12 @@ MatrixBuffer = (function(_super) {
 
   return MatrixBuffer;
 
-})(Buffer);
+})(DataBuffer);
 
 module.exports = MatrixBuffer;
 
 
-},{"../../util":139,"./buffer":94,"./texture/datatexture":100}],97:[function(require,module,exports){
+},{"../../util":148,"./databuffer":100}],102:[function(require,module,exports){
 var Memo, RenderToTexture, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13743,7 +14481,7 @@ Util = require('../../util');
 
 
 /*
-Wrapped RTT for memoizing 4D arrays back to a 2D texture
+ * Wrapped RTT for memoizing 4D arrays back to a 2D texture
  */
 
 Memo = (function(_super) {
@@ -13800,7 +14538,135 @@ Memo = (function(_super) {
 module.exports = Memo;
 
 
-},{"../../util":139,"../renderable":126,"./rendertotexture":99}],98:[function(require,module,exports){
+},{"../../util":148,"../renderable":135,"./rendertotexture":105}],103:[function(require,module,exports){
+var Buffer, PushBuffer, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Buffer = require('./buffer');
+
+Util = require('../../util');
+
+
+/*
+ * Buffer for CPU-side use
+ */
+
+PushBuffer = (function(_super) {
+  __extends(PushBuffer, _super);
+
+  function PushBuffer(renderer, shaders, options) {
+    this.width = options.width || 1;
+    this.height = options.height || 1;
+    this.depth = options.depth || 1;
+    if (this.samples == null) {
+      this.samples = this.width * this.height * this.depth;
+    }
+    PushBuffer.__super__.constructor.call(this, renderer, shaders, options);
+    this.build(options);
+  }
+
+  PushBuffer.prototype.build = function(options) {
+    this.data = [];
+    this.data.length = this.samples;
+    this.filled = 0;
+    this.pad = {
+      x: 0,
+      y: 0,
+      z: 0
+    };
+    return this.streamer = this.generate(this.data);
+  };
+
+  PushBuffer.prototype.dispose = function() {
+    this.data = null;
+    return PushBuffer.__super__.dispose.apply(this, arguments);
+  };
+
+  PushBuffer.prototype.getFilled = function() {
+    return this.filled;
+  };
+
+  PushBuffer.prototype.setActive = function(i, j, k) {
+    var _ref;
+    return _ref = [this.width - i, this.height - j, this.depth - k], this.pad.x = _ref[0], this.pad.y = _ref[1], this.pad.z = _ref[2], _ref;
+  };
+
+  PushBuffer.prototype.read = function() {
+    return this.data;
+  };
+
+  PushBuffer.prototype.copy = function(data) {
+    var d, i, n, _i, _results;
+    n = Math.min(data.length, this.samples * this.channels * this.items);
+    d = this.data;
+    _results = [];
+    for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+      _results.push(d[i] = data[i]);
+    }
+    return _results;
+  };
+
+  PushBuffer.prototype.iterate = function() {
+    var callback, count, done, emit, i, j, k, l, limit, m, n, o, padX, padY, repeat, reset, skip, _ref;
+    callback = this.callback;
+    if (typeof callback.reset === "function") {
+      callback.reset();
+    }
+    _ref = this.streamer, emit = _ref.emit, skip = _ref.skip, count = _ref.count, done = _ref.done, reset = _ref.reset;
+    reset();
+    n = this.width;
+    m = this.height;
+    o = this.depth;
+    padX = this.pad.x;
+    padY = this.pad.y;
+    limit = this.samples - this.pad.z * n * m;
+    i = j = k = l = 0;
+    if (padX > 0 || padY > 0) {
+      while (!done() && l < limit) {
+        l++;
+        repeat = callback(emit, i, j, k);
+        if (++i === n - padX) {
+          skip(padX);
+          i = 0;
+          if (++j === m - padY) {
+            skip(n * padY);
+            j = 0;
+            k++;
+          }
+        }
+        if (repeat === false) {
+          break;
+        }
+      }
+    } else {
+      while (!done() && l < limit) {
+        l++;
+        repeat = callback(emit, i, j, k);
+        if (++i === n) {
+          i = 0;
+          if (++j === m) {
+            j = 0;
+            k++;
+          }
+        }
+        if (repeat === false) {
+          break;
+        }
+      }
+    }
+    this.filled = 1;
+    return Math.floor(count() / this.items);
+  };
+
+  return PushBuffer;
+
+})(Buffer);
+
+module.exports = PushBuffer;
+
+
+},{"../../util":148,"./buffer":99}],104:[function(require,module,exports){
 var Buffer, Memo, MemoScreen, Readback, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13817,7 +14683,7 @@ Util = require('../../util');
 
 
 /*
-Readback up to 4D array of up to 4D data from GL
+ * Readback up to 4D array of up to 4D data from GL
  */
 
 Readback = (function(_super) {
@@ -13858,13 +14724,13 @@ Readback = (function(_super) {
   }
 
   Readback.prototype.build = function(options) {
-    var channels, depth, encoder, fragment, h, height, indexer, isIndexed, items, sampler, stretch, w, width;
-    fragment = options.fragment;
+    var channels, depth, encoder, h, height, indexer, isIndexed, items, map, sampler, stretch, w, width;
+    map = options.map;
     indexer = options.indexer;
     isIndexed = (indexer != null) && !indexer.empty();
     items = this.items, width = this.width, height = this.height, depth = this.depth;
-    sampler = fragment;
-    if (indexer != null) {
+    sampler = map;
+    if (isIndexed) {
       this._adopt({
         indexModulus: {
           type: 'v4',
@@ -13872,13 +14738,8 @@ Readback = (function(_super) {
         }
       });
       sampler = this.shaders.shader();
-      sampler.require(fragment);
-      if (isIndexed) {
-        sampler.require(indexer);
-      }
-      if (!isIndexed) {
-        sampler.require(Util.GLSL.identity('vec4'));
-      }
+      sampler.require(map);
+      sampler.require(indexer);
       sampler.pipe('float.index.pack', this.uniforms);
     }
     if (this.isFloat && this.channels > 1) {
@@ -13892,7 +14753,7 @@ Readback = (function(_super) {
         type: THREE.FloatType
       });
       this.floatCompose = new MemoScreen(this.renderer, this.shaders, {
-        fragment: sampler,
+        map: sampler,
         items: items,
         width: width,
         height: height,
@@ -13933,7 +14794,7 @@ Readback = (function(_super) {
       type: THREE.UnsignedByteType
     });
     this.byteCompose = new MemoScreen(this.renderer, this.shaders, {
-      fragment: sampler,
+      map: sampler,
       items: items * stretch,
       width: width,
       height: height,
@@ -14008,9 +14869,11 @@ Readback = (function(_super) {
     if ((_ref = this.floatMemo) != null) {
       _ref.render(camera);
     }
-    if ((_ref1 = this.byteMemo) != null) {
-      _ref1.render(camera);
-    }
+    return (_ref1 = this.byteMemo) != null ? _ref1.render(camera) : void 0;
+  };
+
+  Readback.prototype.post = function() {
+    this.renderer.setRenderTarget(this.byteMemo.target.write);
     return this.gl.readPixels(0, 0, this.rect.w, this.rect.h, gl.RGBA, gl.UNSIGNED_BYTE, this.bytes);
   };
 
@@ -14030,22 +14893,24 @@ Readback = (function(_super) {
 
   Readback.prototype.callback = function(callback) {
     var f, m, n, o, p;
+    if (!this.isIndexed) {
+      return callback;
+    }
     n = this.width;
     m = this.height;
     o = this.depth;
     p = this.items;
     f = function(x, y, z, w) {
-      var ii, index, jj, kk, ll;
-      index = w;
-      w = w;
-      ll = w % p;
-      w = (w - ll) / p;
-      ii = w % n;
-      w = (w - ii) / n;
-      jj = w % m;
-      w = (w - jj) / m;
-      kk = w;
-      return callback(ii, jj, kk, ll, x, y, z, w, index);
+      var idx, ii, jj, kk, ll;
+      idx = w;
+      ll = idx % p;
+      idx = (idx - ll) / p;
+      ii = idx % n;
+      idx = (idx - ii) / n;
+      jj = idx % m;
+      idx = (idx - jj) / m;
+      kk = idx;
+      return callback(x, y, z, w, ii, jj, kk, ll);
     };
     f.reset = function() {
       return typeof callback.reset === "function" ? callback.reset() : void 0;
@@ -14054,7 +14919,7 @@ Readback = (function(_super) {
   };
 
   Readback.prototype.iterate = function() {
-    var consume, count, done, emit, i, j, k, l, limit, m, n, o, p, padW, padX, padY, padZ, repeat, reset, skip, _ref;
+    var callback, consume, count, done, emit, i, j, k, l, limit, m, n, o, p, padW, padX, padY, padZ, repeat, reset, skip, _ref;
     emit = this.emitter;
     if (typeof emit.reset === "function") {
       emit.reset();
@@ -14070,6 +14935,12 @@ Readback = (function(_super) {
     padZ = this.pad.z | 0;
     padW = this.pad.w | 0;
     limit = n * m * p * (o - padZ);
+    if (!this.isIndexed) {
+      callback = emit;
+      emit = function(x, y, z, w) {
+        return callback(x, y, z, w, i, j, k, l);
+      };
+    }
     i = j = k = l = m = 0;
     while (!done() && m < limit) {
       m++;
@@ -14124,7 +14995,7 @@ Readback = (function(_super) {
 module.exports = Readback;
 
 
-},{"../../util":139,"../meshes/memoscreen":121,"../renderable":126,"./buffer":94,"./memo":97}],99:[function(require,module,exports){
+},{"../../util":148,"../meshes/memoscreen":129,"../renderable":135,"./buffer":99,"./memo":102}],105:[function(require,module,exports){
 var RenderTarget, RenderToTexture, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14137,7 +15008,7 @@ Util = require('../../util');
 
 
 /*
-Render-To-Texture
+ * Render-To-Texture with history
  */
 
 RenderToTexture = (function(_super) {
@@ -14278,7 +15149,306 @@ RenderToTexture = (function(_super) {
 module.exports = RenderToTexture;
 
 
-},{"../../util":139,"../renderable":126,"./texture/rendertarget":101}],100:[function(require,module,exports){
+},{"../../util":148,"../renderable":135,"./texture/rendertarget":109}],106:[function(require,module,exports){
+var Atlas, SCRATCH_SIZE, TextAtlas,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Atlas = require('./atlas');
+
+SCRATCH_SIZE = 512 / 16;
+
+
+/*
+ * Dynamic text atlas
+ * - Stores entire strings as sprites
+ * - Renders alpha mask (fast) or signed distance field (slow)
+ * - Emits (x,y,width,height) pointers into the atlas
+ */
+
+TextAtlas = (function(_super) {
+  __extends(TextAtlas, _super);
+
+  function TextAtlas(renderer, shaders, options) {
+    var ua, _ref, _ref1, _ref2, _ref3;
+    this.font = (_ref = options.font) != null ? _ref : 'sans-serif';
+    this.size = options.size || 24;
+    this.style = (_ref1 = options.style) != null ? _ref1 : 'normal';
+    this.outline = (_ref2 = +((_ref3 = options.outline) != null ? _ref3 : 5)) != null ? _ref2 : 0;
+    options.width || (options.width = 64);
+    options.height || (options.height = 64);
+    options.type = THREE.UnsignedByteType;
+    options.channels = 1;
+    options.backed = true;
+    this.gamma = 1;
+    if (typeof navigator !== 'undefined') {
+      ua = navigator.userAgent;
+      if (ua.match(/Chrome/) && ua.match(/OS X/)) {
+        this.gamma = .5;
+      }
+    }
+    this.scratchW = this.scratchH = 0;
+    TextAtlas.__super__.constructor.call(this, renderer, shaders, options);
+  }
+
+  TextAtlas.prototype.build = function(options) {
+    var canvas, colors, context, dilate, hex, i, lineHeight, maxWidth, scratch, _i;
+    TextAtlas.__super__.build.call(this, options);
+    lineHeight = 16;
+    lineHeight = this.size;
+    lineHeight += 3 + 2 * Math.min(1, this.outline);
+    maxWidth = SCRATCH_SIZE * lineHeight;
+    canvas = document.createElement('canvas');
+    canvas.width = maxWidth;
+    canvas.height = lineHeight;
+    context = canvas.getContext('2d');
+    context.font = "" + this.style + " " + this.size + "px " + this.font;
+    context.fillStyle = '#FF0000';
+    context.textAlign = 'left';
+    context.textBaseline = 'bottom';
+    context.lineJoin = 'round';
+
+    /*
+    document.body.appendChild canvas
+    canvas.setAttribute('style', "position: absolute; top: 0; left: 0; z-index: 100; border: 1px solid red; background: rgba(255,0,255,.25);")
+     */
+    colors = [];
+    dilate = this.outline * 3;
+    for (i = _i = 0; 0 <= dilate ? _i < dilate : _i > dilate; i = 0 <= dilate ? ++_i : --_i) {
+      hex = ('00' + Math.max(0, -i * 8 + 128 - (!i) * 8).toString(16)).slice(-2);
+      colors.push('#' + hex + hex + hex);
+    }
+    scratch = new Uint8Array(maxWidth * lineHeight * 2);
+    this.canvas = canvas;
+    this.context = context;
+    this.lineHeight = lineHeight;
+    this.maxWidth = maxWidth;
+    this.colors = colors;
+    this.scratch = scratch;
+    this._allocate = this.allocate.bind(this);
+    return this._write = this.write.bind(this);
+  };
+
+  TextAtlas.prototype.reset = function() {
+    TextAtlas.__super__.reset.apply(this, arguments);
+    return this.mapped = {};
+  };
+
+  TextAtlas.prototype.begin = function() {
+    var row, _i, _len, _ref, _results;
+    _ref = this.rows;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      row = _ref[_i];
+      _results.push(row.alive = 0);
+    }
+    return _results;
+  };
+
+  TextAtlas.prototype.end = function() {
+    var key, mapped, row, _i, _j, _len, _len1, _ref, _ref1;
+    mapped = this.mapped;
+    _ref = this.rows.slice();
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      row = _ref[_i];
+      if (!(row.alive === 0)) {
+        continue;
+      }
+      _ref1 = row.keys;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        key = _ref1[_j];
+        delete mapped[key];
+      }
+      this.collapse(row);
+    }
+  };
+
+  TextAtlas.prototype.map = function(text, emit) {
+    var allocate, c, data, h, mapped, w, write;
+    mapped = this.mapped;
+    c = mapped[text];
+    if (c != null) {
+      c.row.alive++;
+      return emit(c.x, c.y, c.w, c.h);
+    }
+    this.draw(text);
+    data = this.scratch;
+    w = this.scratchW;
+    h = this.scratchH;
+    allocate = this._allocate;
+    write = this._write;
+    return allocate(text, w, h, function(row, x, y) {
+      mapped[text] = {
+        x: x,
+        y: y,
+        w: w,
+        h: h,
+        row: row
+      };
+      write(data, x, y, w, h);
+      return emit(x, y, w, h);
+    });
+  };
+
+  TextAtlas.prototype.draw = function(text) {
+    var a, b, c, colors, ctx, data, dst, gamma, h, i, imageData, j, m, mask, max, o, w, x, y, _i, _j, _k, _ref, _ref1, _ref2;
+    w = this.width;
+    h = this.lineHeight;
+    o = this.outline;
+    ctx = this.context;
+    dst = this.scratch;
+    max = this.maxWidth;
+    colors = this.colors;
+    x = o + 1;
+    y = Math.round(h * 1.05 - 1);
+    m = ctx.measureText(text);
+    w = Math.min(max, Math.ceil(m.width + 2 * x));
+    ctx.clearRect(0, 0, w, h);
+    if (this.outline === 0) {
+      ctx.fillText(text, x, y);
+      data = (imageData = ctx.getImageData(0, 0, w, h)).data;
+      j = 3;
+      for (i = _i = 0, _ref = data.length / 4; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+        dst[i] = data[j];
+        j += 4;
+      }
+      this.scratchW = w;
+      return this.scratchH = h;
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      for (i = _j = _ref1 = o + 1; _ref1 <= 1 ? _j <= 1 : _j >= 1; i = _ref1 <= 1 ? ++_j : --_j) {
+        j = i > 1 ? i * 2 - 2 : i;
+        ctx.strokeStyle = colors[j - 1];
+        ctx.lineWidth = j;
+        ctx.strokeText(text, x, y);
+      }
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillText(text, x, y);
+      data = (imageData = ctx.getImageData(0, 0, w, h)).data;
+      j = 0;
+      gamma = this.gamma;
+      for (i = _k = 0, _ref2 = data.length / 4; 0 <= _ref2 ? _k < _ref2 : _k > _ref2; i = 0 <= _ref2 ? ++_k : --_k) {
+        a = data[j];
+        mask = a ? data[j + 1] / a : 1;
+        if (gamma === .5) {
+          mask = Math.sqrt(mask);
+        }
+        mask = Math.min(1, Math.max(0, mask));
+        b = 256 - a;
+        c = b + (a - b) * mask;
+        dst[i] = Math.max(0, Math.min(255, c + 2));
+        j += 4;
+      }
+
+      /*
+      j = 0
+      for i in [0...data.length / 4]
+        v = dst[i]
+         *data[j] = v
+         *data[j+1] = v
+        data[j+2] = v
+        data[j+3] = 255
+        j += 4
+      ctx.putImageData imageData, 0, 0
+       */
+      this.scratchW = w;
+      return this.scratchH = h;
+    }
+  };
+
+  return TextAtlas;
+
+})(Atlas);
+
+module.exports = TextAtlas;
+
+
+},{"./atlas":98}],107:[function(require,module,exports){
+var BackedTexture, DataTexture, Util,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Util = require('../../../Util');
+
+DataTexture = require('./datatexture');
+
+
+/*
+Manually allocated GL texture for data streaming, locally backed.
+
+Allows partial updates via subImage.
+Contains local copy of its data to allow quick resizing without gl.copyTexImage2d
+(which requires render-to-framebuffer)
+ */
+
+BackedTexture = (function(_super) {
+  __extends(BackedTexture, _super);
+
+  function BackedTexture(gl, width, height, channels, options) {
+    BackedTexture.__super__.constructor.call(this, gl, width, height, channels, options);
+    this.data = new this.ctor(this.n);
+  }
+
+  BackedTexture.prototype.resize = function(width, height) {
+    var gl, old, oldHeight, oldWidth;
+    old = this.data;
+    oldWidth = this.width;
+    oldHeight = this.height;
+    this.width = width;
+    this.height = height;
+    this.n = width * height * this.channels;
+    this.data = new this.ctor(this.n);
+    gl = this.gl;
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, this.format, width, height, 0, this.format, this.type, this.data);
+    this.uniforms.dataResolution.value.set(1 / width, 1 / height);
+    return this.write(old, 0, 0, oldWidth, oldHeight);
+  };
+
+  BackedTexture.prototype.write = function(src, x, y, w, h) {
+    var channels, dst, i, j, k, n, stride, width, ww, xx, yh, yy;
+    width = this.width;
+    dst = this.data;
+    channels = this.channels;
+    i = 0;
+    if (width === w && x === 0) {
+      j = y * w * channels;
+      n = w * h * channels;
+      while (i < n) {
+        dst[j++] = src[i++];
+      }
+    } else {
+      stride = width * channels;
+      ww = w * channels;
+      xx = x * channels;
+      yy = y;
+      yh = y + h;
+      while (yy < yh) {
+        k = 0;
+        j = xx + yy * stride;
+        while (k++ < ww) {
+          dst[j++] = src[i++];
+        }
+        yy++;
+      }
+    }
+    return BackedTexture.__super__.write.call(this, src, x, y, w, h);
+  };
+
+  BackedTexture.prototype.dispose = function() {
+    this.data = null;
+    return BackedTexture.__super__.dispose.apply(this, arguments);
+  };
+
+  return BackedTexture;
+
+})(DataTexture);
+
+module.exports = BackedTexture;
+
+
+},{"../../../Util":23,"./datatexture":108}],108:[function(require,module,exports){
 var DataTexture, Util;
 
 Util = require('../../../Util');
@@ -14323,7 +15493,7 @@ DataTexture = (function() {
     this.data = new this.ctor(this.n);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.width, this.height, 0, this.format, this.type, this.data);
-    this.textureObject = new THREE.Texture(new Image(), new THREE.UVMapping(), THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.NearestFilter, THREE.NearestFilter);
+    this.textureObject = new THREE.Texture(new Image(), THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.NearestFilter, THREE.NearestFilter);
     this.textureObject.__webglInit = true;
     this.textureObject.__webglTexture = this.texture;
     this.textureObject.format = this.format3;
@@ -14363,7 +15533,7 @@ DataTexture = (function() {
 module.exports = DataTexture;
 
 
-},{"../../../Util":23}],101:[function(require,module,exports){
+},{"../../../Util":23}],109:[function(require,module,exports){
 
 /*
 Virtual RenderTarget that cycles through multiple frames
@@ -14491,61 +15661,30 @@ RenderTarget = (function() {
 module.exports = RenderTarget;
 
 
-},{}],102:[function(require,module,exports){
-var Buffer, DataTexture, Util, VoxelBuffer,
+},{}],110:[function(require,module,exports){
+var DataBuffer, Util, VoxelBuffer,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-Buffer = require('./buffer');
-
-DataTexture = require('./texture/datatexture');
+DataBuffer = require('./databuffer');
 
 Util = require('../../util');
 
 VoxelBuffer = (function(_super) {
   __extends(VoxelBuffer, _super);
 
-  function VoxelBuffer(renderer, shaders, options) {
-    this.callback = options.callback || function() {};
-    this.width = options.width || 1;
-    this.height = options.height || 1;
-    this.depth = options.depth || 1;
-    this.samples = this.width * this.height * this.depth;
-    VoxelBuffer.__super__.constructor.call(this, renderer, shaders, options);
+  function VoxelBuffer() {
+    return VoxelBuffer.__super__.constructor.apply(this, arguments);
   }
-
-  VoxelBuffer.prototype.shader = function(shader) {
-    if (this.items > 1 || this.depth > 1) {
-      shader.pipe('map.xyzw.texture', this.uniforms);
-    } else {
-      shader.pipe(Util.GLSL.truncateVec(4, 2));
-    }
-    return VoxelBuffer.__super__.shader.call(this, shader);
-  };
 
   VoxelBuffer.prototype.build = function(options) {
     VoxelBuffer.__super__.build.apply(this, arguments);
-    this.data = new Float32Array(this.samples * this.items * this.channels);
-    this.texture = new DataTexture(this.gl, this.width * this.items, this.height * this.depth, this.channels, options);
-    this.filled = 0;
     this.pad = {
       x: 0,
       y: 0,
       z: 0
     };
-    this.streamer = this.generate(this.data);
-    this.dataPointer = this.uniforms.dataPointer.value;
-    this._adopt(this.texture.uniforms);
-    return this._adopt({
-      textureItems: {
-        type: 'f',
-        value: this.items
-      },
-      textureHeight: {
-        type: 'f',
-        value: this.height
-      }
-    });
+    return this.streamer = this.generate(this.data);
   };
 
   VoxelBuffer.prototype.getFilled = function() {
@@ -14572,46 +15711,50 @@ VoxelBuffer = (function(_super) {
     padY = this.pad.y;
     limit = this.samples - this.pad.z * n * m;
     i = j = k = l = 0;
-    while (!done() && l < limit) {
-      l++;
-      repeat = callback(i, j, k, emit);
-      if (++i === n - padX) {
-        skip(padX);
-        i = 0;
-        if (++j === m - padY) {
-          skip(n * padY);
-          j = 0;
-          k++;
+    if (padX > 0 || padY > 0) {
+      while (!done() && l < limit) {
+        l++;
+        repeat = callback(emit, i, j, k);
+        if (++i === n - padX) {
+          skip(padX);
+          i = 0;
+          if (++j === m - padY) {
+            skip(n * padY);
+            j = 0;
+            k++;
+          }
+        }
+        if (repeat === false) {
+          break;
         }
       }
-      if (repeat === false) {
-        break;
+    } else {
+      while (!done() && l < limit) {
+        l++;
+        repeat = callback(emit, i, j, k);
+        if (++i === n) {
+          i = 0;
+          if (++j === m) {
+            j = 0;
+            k++;
+          }
+        }
+        if (repeat === false) {
+          break;
+        }
       }
     }
     return Math.floor(count() / this.items);
   };
 
-  VoxelBuffer.prototype.write = function(n) {
-    var height, width;
-    if (n == null) {
-      n = this.samples;
-    }
-    n *= this.items;
-    width = this.width * this.items;
-    height = Math.ceil(n / width);
-    this.texture.write(this.data, 0, 0, width, height);
-    this.dataPointer.set(.5, .5);
-    return this.filled = 1;
-  };
-
   return VoxelBuffer;
 
-})(Buffer);
+})(DataBuffer);
 
 module.exports = VoxelBuffer;
 
 
-},{"../../util":139,"./buffer":94,"./texture/datatexture":100}],103:[function(require,module,exports){
+},{"../../util":148,"./databuffer":100}],111:[function(require,module,exports){
 var Camera, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14651,11 +15794,12 @@ Camera = (function(_super) {
 module.exports = Camera;
 
 
-},{"./renderable":126}],104:[function(require,module,exports){
+},{"./renderable":135}],112:[function(require,module,exports){
 var Classes;
 
 Classes = {
   sprite: require('./meshes/sprite'),
+  point: require('./meshes/point'),
   line: require('./meshes/line'),
   surface: require('./meshes/surface'),
   face: require('./meshes/face'),
@@ -14668,9 +15812,12 @@ Classes = {
   arrayBuffer: require('./buffer/arraybuffer'),
   matrixBuffer: require('./buffer/matrixbuffer'),
   voxelBuffer: require('./buffer/voxelbuffer'),
+  pushBuffer: require('./buffer/pushbuffer'),
   renderToTexture: require('./buffer/rendertotexture'),
   memo: require('./buffer/memo'),
   readback: require('./buffer/readback'),
+  atlas: require('./buffer/atlas'),
+  textAtlas: require('./buffer/textatlas'),
   scene: require('./scene'),
   camera: require('./camera')
 };
@@ -14678,13 +15825,13 @@ Classes = {
 module.exports = Classes;
 
 
-},{"./buffer/arraybuffer":93,"./buffer/databuffer":95,"./buffer/matrixbuffer":96,"./buffer/memo":97,"./buffer/readback":98,"./buffer/rendertotexture":99,"./buffer/voxelbuffer":102,"./camera":103,"./meshes/arrow":116,"./meshes/debug":118,"./meshes/face":119,"./meshes/line":120,"./meshes/memoscreen":121,"./meshes/screen":122,"./meshes/sprite":123,"./meshes/strip":124,"./meshes/surface":125,"./scene":127}],105:[function(require,module,exports){
+},{"./buffer/arraybuffer":97,"./buffer/atlas":98,"./buffer/databuffer":100,"./buffer/matrixbuffer":101,"./buffer/memo":102,"./buffer/pushbuffer":103,"./buffer/readback":104,"./buffer/rendertotexture":105,"./buffer/textatlas":106,"./buffer/voxelbuffer":110,"./camera":111,"./meshes/arrow":124,"./meshes/debug":126,"./meshes/face":127,"./meshes/line":128,"./meshes/memoscreen":129,"./meshes/point":130,"./meshes/screen":131,"./meshes/sprite":132,"./meshes/strip":133,"./meshes/surface":134,"./scene":136}],113:[function(require,module,exports){
 var RenderFactory;
 
 RenderFactory = (function() {
-  function RenderFactory(renderer, classes, shaders) {
-    this.renderer = renderer;
+  function RenderFactory(classes, renderer, shaders) {
     this.classes = classes;
+    this.renderer = renderer;
     this.shaders = shaders;
   }
 
@@ -14703,7 +15850,7 @@ RenderFactory = (function() {
 module.exports = RenderFactory;
 
 
-},{}],106:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 var ArrowGeometry, Geometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14840,7 +15987,7 @@ ArrowGeometry = (function(_super) {
 module.exports = ArrowGeometry;
 
 
-},{"./geometry":108}],107:[function(require,module,exports){
+},{"./geometry":116}],115:[function(require,module,exports){
 var FaceGeometry, Geometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14948,7 +16095,7 @@ FaceGeometry = (function(_super) {
 module.exports = FaceGeometry;
 
 
-},{"./geometry":108}],108:[function(require,module,exports){
+},{"./geometry":116}],116:[function(require,module,exports){
 var Geometry, debug, tick,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15159,7 +16306,7 @@ Geometry = (function(_super) {
 module.exports = Geometry;
 
 
-},{}],109:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 exports.Geometry = require('./geometry');
 
 exports.ArrowGeometry = require('./arrowgeometry');
@@ -15177,7 +16324,7 @@ exports.StripGeometry = require('./stripgeometry');
 exports.SurfaceGeometry = require('./surfacegeometry');
 
 
-},{"./arrowgeometry":106,"./facegeometry":107,"./geometry":108,"./linegeometry":110,"./screengeometry":111,"./spritegeometry":112,"./stripgeometry":113,"./surfacegeometry":114}],110:[function(require,module,exports){
+},{"./arrowgeometry":114,"./facegeometry":115,"./geometry":116,"./linegeometry":118,"./screengeometry":119,"./spritegeometry":120,"./stripgeometry":121,"./surfacegeometry":122}],118:[function(require,module,exports){
 var Geometry, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15295,7 +16442,7 @@ LineGeometry = (function(_super) {
 module.exports = LineGeometry;
 
 
-},{"./geometry":108}],111:[function(require,module,exports){
+},{"./geometry":116}],119:[function(require,module,exports){
 var ScreenGeometry, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15372,7 +16519,7 @@ ScreenGeometry = (function(_super) {
 module.exports = ScreenGeometry;
 
 
-},{"./surfacegeometry":114}],112:[function(require,module,exports){
+},{"./surfacegeometry":122}],120:[function(require,module,exports){
 var Geometry, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15486,7 +16633,7 @@ SpriteGeometry = (function(_super) {
 module.exports = SpriteGeometry;
 
 
-},{"./geometry":108}],113:[function(require,module,exports){
+},{"./geometry":116}],121:[function(require,module,exports){
 var Geometry, StripGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15611,7 +16758,7 @@ StripGeometry = (function(_super) {
 module.exports = StripGeometry;
 
 
-},{"./geometry":108}],114:[function(require,module,exports){
+},{"./geometry":116}],122:[function(require,module,exports){
 var Geometry, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15733,7 +16880,7 @@ SurfaceGeometry = (function(_super) {
 module.exports = SurfaceGeometry;
 
 
-},{"./geometry":108}],115:[function(require,module,exports){
+},{"./geometry":116}],123:[function(require,module,exports){
 exports.Scene = require('./scene');
 
 exports.Factory = require('./factory');
@@ -15743,7 +16890,7 @@ exports.Renderable = require('./scene');
 exports.Classes = require('./classes');
 
 
-},{"./classes":104,"./factory":105,"./scene":127}],116:[function(require,module,exports){
+},{"./classes":112,"./factory":113,"./scene":136}],124:[function(require,module,exports){
 var Arrow, ArrowGeometry, Base,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15756,11 +16903,12 @@ Arrow = (function(_super) {
   __extends(Arrow, _super);
 
   function Arrow(renderer, shaders, options) {
-    var color, f, factory, object, position, uniforms, v, _ref;
+    var color, f, factory, hasStyle, object, position, uniforms, v, _ref;
     Arrow.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
     color = options.color;
+    hasStyle = uniforms.styleColor != null;
     this.geometry = new ArrowGeometry({
       sides: options.sides,
       samples: options.samples,
@@ -15784,13 +16932,17 @@ Arrow = (function(_super) {
     v.pipe('arrow.position', this.uniforms);
     v.pipe('project.position', this.uniforms);
     f = factory.fragment;
-    f.pipe('style.color', this.uniforms);
-    if (color) {
+    if (hasStyle) {
+      f.pipe('style.color', this.uniforms);
+    }
+    if (color && hasStyle) {
+      f.pipe('mesh.fragment.blend', this.uniforms);
+    }
+    if (color && !hasStyle) {
       f.pipe('mesh.fragment.color', this.uniforms);
     }
     f.pipe('fragment.color', this.uniforms);
     this.material = this._material(factory.link({
-      defaultAttributeValues: null,
       index0AttributeName: "position4"
     }));
     object = new THREE.Mesh(this.geometry, this.material);
@@ -15814,7 +16966,7 @@ Arrow = (function(_super) {
 module.exports = Arrow;
 
 
-},{"../geometry":109,"./base":117}],117:[function(require,module,exports){
+},{"../geometry":117,"./base":125}],125:[function(require,module,exports){
 var Base, Renderable,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15895,7 +17047,8 @@ Base = (function(_super) {
   Base.prototype._raw = function(object) {
     object.rotationAutoUpdate = false;
     object.frustumCulled = false;
-    return object.matrixAutoUpdate = false;
+    object.matrixAutoUpdate = false;
+    return object.material.defaultAttributeValues = void 0;
   };
 
   Base.prototype._depth = function(object, write, test) {
@@ -15918,11 +17071,10 @@ Base = (function(_super) {
   };
 
   Base.prototype._show = function(object, transparent, blending, order) {
-    var m, z;
+    var m;
     transparent = true;
-    z = transparent ? order : -order;
     m = object.material;
-    object.renderDepth = z;
+    object.renderOrder = -order;
     object.visible = true;
     m.transparent = transparent;
     m.blending = blending;
@@ -15940,7 +17092,7 @@ Base = (function(_super) {
 module.exports = Base;
 
 
-},{"../renderable":126}],118:[function(require,module,exports){
+},{"../renderable":135}],126:[function(require,module,exports){
 var Base, Debug,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15981,7 +17133,7 @@ Debug = (function(_super) {
 module.exports = Debug;
 
 
-},{"./base":117}],119:[function(require,module,exports){
+},{"./base":125}],127:[function(require,module,exports){
 var Base, Face, FaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15994,12 +17146,13 @@ Face = (function(_super) {
   __extends(Face, _super);
 
   function Face(renderer, shaders, options) {
-    var color, f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
+    var color, f, factory, hasStyle, object, position, shaded, uniforms, v, _ref, _ref1;
     Face.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
     shaded = (_ref1 = options.shaded) != null ? _ref1 : true;
     color = options.color;
+    hasStyle = uniforms.styleColor != null;
     this.geometry = new FaceGeometry({
       items: options.items,
       width: options.width,
@@ -16027,19 +17180,21 @@ Face = (function(_super) {
     v.pass();
     v.pipe('project.position', this.uniforms);
     f = factory.fragment;
-    if (!shaded) {
+    if (!shaded && hasStyle) {
       f.pipe('style.color', this.uniforms);
     }
-    if (shaded) {
+    if (shaded && hasStyle) {
       f.pipe('style.color.shaded', this.uniforms);
     }
-    if (color) {
+    if (color && hasStyle) {
+      f.pipe('mesh.fragment.blend', this.uniforms);
+    }
+    if (color && !hasStyle) {
       f.pipe('mesh.fragment.color', this.uniforms);
     }
     f.pipe('fragment.color', this.uniforms);
     this.material = this._material(factory.link({
       side: THREE.DoubleSide,
-      defaultAttributeValues: null,
       index0AttributeName: "position4"
     }));
     object = new THREE.Mesh(this.geometry, this.material);
@@ -16061,7 +17216,7 @@ Face = (function(_super) {
 module.exports = Face;
 
 
-},{"../geometry":109,"./base":117}],120:[function(require,module,exports){
+},{"../geometry":117,"./base":125}],128:[function(require,module,exports){
 var Base, Line, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16074,7 +17229,7 @@ Line = (function(_super) {
   __extends(Line, _super);
 
   function Line(renderer, shaders, options) {
-    var clip, color, defs, f, factory, object, position, stroke, uniforms, v, _ref;
+    var clip, color, defs, f, factory, hasStyle, object, position, stroke, uniforms, v, _ref;
     Line.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
@@ -16082,6 +17237,7 @@ Line = (function(_super) {
     clip = options.clip;
     stroke = options.stroke;
     stroke = [null, 'dotted', 'dashed'][stroke];
+    hasStyle = uniforms.styleColor != null;
     this.geometry = new LineGeometry({
       samples: options.samples,
       strips: options.strips,
@@ -16116,14 +17272,18 @@ Line = (function(_super) {
     if (clip) {
       f.pipe('fragment.clip.ends', this.uniforms);
     }
-    f.pipe('style.color', this.uniforms);
-    if (color) {
+    if (hasStyle) {
+      f.pipe('style.color', this.uniforms);
+    }
+    if (color && hasStyle) {
+      f.pipe('mesh.fragment.blend', this.uniforms);
+    }
+    if (color && !hasStyle) {
       f.pipe('mesh.fragment.color', this.uniforms);
     }
     f.pipe('fragment.color', this.uniforms);
     this.material = this._material(factory.link({
       side: THREE.DoubleSide,
-      defaultAttributeValues: null,
       index0AttributeName: "position4"
     }));
     object = new THREE.Mesh(this.geometry, this.material);
@@ -16145,7 +17305,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../geometry":109,"./base":117}],121:[function(require,module,exports){
+},{"../geometry":117,"./base":125}],129:[function(require,module,exports){
 var MemoScreen, Screen, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16158,7 +17318,7 @@ MemoScreen = (function(_super) {
   __extends(MemoScreen, _super);
 
   function MemoScreen(renderer, shaders, options) {
-    var depth, fragment, height, items, object, uniforms, width, _i, _len, _ref;
+    var depth, height, items, map, object, uniforms, width, _i, _len, _ref;
     this.memo = (items = options.items, width = options.width, height = options.height, depth = options.depth, options);
     uniforms = {
       remap2DScale: {
@@ -16174,13 +17334,13 @@ MemoScreen = (function(_super) {
         value: new THREE.Vector2(1 / items, 1 / height)
       }
     };
-    fragment = shaders.shader();
-    fragment.pipe('screen.remap.4d.xyzw', uniforms);
-    if (options.fragment != null) {
-      fragment.pipe(options.fragment);
+    map = shaders.shader();
+    map.pipe('screen.remap.4d.xyzw', uniforms);
+    if (options.map != null) {
+      map.pipe(options.map);
     }
     MemoScreen.__super__.constructor.call(this, renderer, shaders, {
-      fragment: fragment
+      map: map
     });
     _ref = this.objects;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -16216,7 +17376,106 @@ MemoScreen = (function(_super) {
 module.exports = MemoScreen;
 
 
-},{"../../util":139,"./screen":122}],122:[function(require,module,exports){
+},{"../../util":148,"./screen":131}],130:[function(require,module,exports){
+var Base, Point, SpriteGeometry,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Base = require('./base');
+
+SpriteGeometry = require('../geometry').SpriteGeometry;
+
+Point = (function(_super) {
+  __extends(Point, _super);
+
+  function Point(renderer, shaders, options) {
+    var alpha, color, edgeFactory, f, fill, fillFactory, hasStyle, mask, pass, passes, position, shape, shapes, uniforms, v, _ref, _ref1, _ref2, _ref3, _ref4;
+    Point.__super__.constructor.call(this, renderer, shaders, options);
+    uniforms = (_ref = options.uniforms) != null ? _ref : {};
+    position = options.position;
+    color = options.color;
+    shape = (_ref1 = +options.shape) != null ? _ref1 : 0;
+    fill = (_ref2 = options.fill) != null ? _ref2 : true;
+    hasStyle = uniforms.styleColor != null;
+    shapes = ['circle', 'square', 'diamond', 'triangle'];
+    passes = ['circle', 'generic', 'generic', 'generic'];
+    mask = (_ref3 = shapes[shape]) != null ? _ref3 : shapes[0];
+    pass = (_ref4 = passes[shape]) != null ? _ref4 : passes[0];
+    alpha = fill ? pass : "" + pass + ".hollow";
+    this.geometry = new SpriteGeometry({
+      items: options.items,
+      width: options.width,
+      height: options.height,
+      depth: options.depth
+    });
+    this._adopt(uniforms);
+    this._adopt(this.geometry.uniforms);
+    v = shaders.shader();
+    if (color) {
+      v.require(color);
+      v.pipe('mesh.vertex.color', this.uniforms);
+    }
+    if (position) {
+      v.require(position);
+    }
+    v.pipe('point.position', this.uniforms);
+    v.pipe('project.position', this.uniforms);
+    edgeFactory = shaders.material();
+    edgeFactory.vertex.pipe(v);
+    f = edgeFactory.fragment;
+    f.pipe('style.color', this.uniforms);
+    if (color) {
+      f.pipe('mesh.fragment.blend', this.uniforms);
+    }
+    f.require("point.mask." + mask, this.uniforms);
+    f.require("point.alpha." + alpha, this.uniforms);
+    f.pipe('point.edge', this.uniforms);
+    fillFactory = shaders.material();
+    fillFactory.vertex.pipe(v);
+    f = fillFactory.fragment;
+    f.pipe('style.color', this.uniforms);
+    if (color) {
+      f.pipe('mesh.fragment.blend', this.uniforms);
+    }
+    f.require("point.mask." + mask, this.uniforms);
+    f.require("point.alpha." + alpha, this.uniforms);
+    f.pipe('point.fill', this.uniforms);
+    this.fillMaterial = this._material(fillFactory.link({
+      side: THREE.DoubleSide,
+      index0AttributeName: "position4"
+    }));
+    this.edgeMaterial = this._material(edgeFactory.link({
+      side: THREE.DoubleSide,
+      index0AttributeName: "position4"
+    }));
+    this.fillObject = new THREE.Mesh(this.geometry, this.fillMaterial);
+    this.edgeObject = new THREE.Mesh(this.geometry, this.edgeMaterial);
+    this._raw(this.fillObject);
+    this._raw(this.edgeObject);
+    this.objects = [this.fillObject, this.edgeObject];
+  }
+
+  Point.prototype.show = function(transparent, blending, order, depth) {
+    this._show(this.edgeObject, true, blending, order, depth);
+    return this._show(this.fillObject, transparent, blending, order, depth);
+  };
+
+  Point.prototype.dispose = function() {
+    this.geometry.dispose();
+    this.edgeMaterial.dispose();
+    this.fillMaterial.dispose();
+    this.objects = this.edgeObject = this.fillObject = this.geometry = this.edgeMaterial = this.fillMaterial = null;
+    return Point.__super__.dispose.apply(this, arguments);
+  };
+
+  return Point;
+
+})(Base);
+
+module.exports = Point;
+
+
+},{"../geometry":117,"./base":125}],131:[function(require,module,exports){
 var Base, Screen, ScreenGeometry, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16231,10 +17490,11 @@ Screen = (function(_super) {
   __extends(Screen, _super);
 
   function Screen(renderer, shaders, options) {
-    var f, factory, fragment, hasStyle, object, uniforms, v, _ref;
+    var combine, f, factory, hasStyle, map, object, uniforms, v, _ref;
     Screen.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
-    fragment = options.fragment;
+    map = options.map;
+    combine = options.combine;
     hasStyle = uniforms.styleColor != null;
     this.geometry = new ScreenGeometry({
       width: options.width,
@@ -16251,16 +17511,20 @@ Screen = (function(_super) {
     v.pipe('screen.position', this.uniforms);
     v.join();
     f = factory.fragment;
-    f.require(options.fragment);
+    f.require(options.map);
     f.pipe('stpq.sample.2d');
     if (hasStyle) {
       f.pipe('style.color', this.uniforms);
-      f.pipe(Util.GLSL.binaryOperator('vec4', '*'));
+      if (combine) {
+        f.pipe(combine);
+      }
+      if (!combine) {
+        f.pipe(Util.GLSL.binaryOperator('vec4', '*'));
+      }
     }
     f.pipe('fragment.color');
     this.material = this._material(factory.link({
       side: THREE.DoubleSide,
-      defaultAttributeValues: null,
       index0AttributeName: "position4"
     }));
     object = new THREE.Mesh(this.geometry, this.material);
@@ -16283,7 +17547,7 @@ Screen = (function(_super) {
 module.exports = Screen;
 
 
-},{"../../util":139,"../geometry":109,"./base":117}],123:[function(require,module,exports){
+},{"../../util":148,"../geometry":117,"./base":125}],132:[function(require,module,exports){
 var Base, Sprite, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16296,18 +17560,15 @@ Sprite = (function(_super) {
   __extends(Sprite, _super);
 
   function Sprite(renderer, shaders, options) {
-    var alpha, color, edgeFactory, f, fill, fillFactory, mask, pass, passes, position, shape, shapes, uniforms, v, _ref, _ref1, _ref2, _ref3, _ref4;
+    var blend, color, combine, edgeFactory, f, factory, fillFactory, hasStyle, map, position, sprite, uniforms, v, _ref;
     Sprite.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
+    sprite = options.sprite;
+    map = options.map;
+    combine = options.combine;
     color = options.color;
-    shape = (_ref1 = +options.shape) != null ? _ref1 : 0;
-    fill = (_ref2 = options.fill) != null ? _ref2 : true;
-    shapes = ['circle', 'square', 'diamond', 'triangle'];
-    passes = ['circle', 'generic', 'generic', 'generic'];
-    mask = (_ref3 = shapes[shape]) != null ? _ref3 : shapes[0];
-    pass = (_ref4 = passes[shape]) != null ? _ref4 : passes[0];
-    alpha = fill ? pass : "" + pass + ".hollow";
+    hasStyle = uniforms.styleColor != null;
     this.geometry = new SpriteGeometry({
       items: options.items,
       width: options.width,
@@ -16316,7 +17577,8 @@ Sprite = (function(_super) {
     });
     this._adopt(uniforms);
     this._adopt(this.geometry.uniforms);
-    v = shaders.shader();
+    factory = shaders.material();
+    v = factory.vertex;
     if (color) {
       v.require(color);
       v.pipe('mesh.vertex.color', this.uniforms);
@@ -16324,43 +17586,60 @@ Sprite = (function(_super) {
     if (position) {
       v.require(position);
     }
+    if (sprite) {
+      v.require(sprite);
+    }
     v.pipe('sprite.position', this.uniforms);
     v.pipe('project.position', this.uniforms);
+    blend = color || hasStyle;
+    f = factory.fragment;
+    if (blend) {
+      f.split();
+    }
+    f.require(map);
+    f.pipe('sprite.fragment', this.uniforms);
+    if (blend) {
+      f.next();
+    }
+    if (hasStyle) {
+      f.pipe('style.color', this.uniforms);
+    }
+    if (color && hasStyle) {
+      f.pipe('mesh.fragment.blend', this.uniforms);
+    }
+    if (color && !hasStyle) {
+      f.pipe('mesh.fragment.color', this.uniforms);
+    }
+    if (blend) {
+      f.join();
+    }
+    if (combine) {
+      f.pipe(combine);
+    }
+    if (!combine) {
+      f.pipe(Util.GLSL.binaryOperator('vec4', '*'));
+    }
     edgeFactory = shaders.material();
     edgeFactory.vertex.pipe(v);
-    f = edgeFactory.fragment;
-    f.pipe('style.color', this.uniforms);
-    if (color) {
-      f.pipe('mesh.fragment.color', this.uniforms);
-    }
-    f.require("sprite.mask." + mask, this.uniforms);
-    f.require("sprite.alpha." + alpha, this.uniforms);
-    f.pipe('sprite.edge', this.uniforms);
+    edgeFactory.fragment.pipe(f);
+    edgeFactory.fragment.pipe('fragment.transparent', this.uniforms);
     fillFactory = shaders.material();
     fillFactory.vertex.pipe(v);
-    f = fillFactory.fragment;
-    f.pipe('style.color', this.uniforms);
-    if (color) {
-      f.pipe('mesh.fragment.color', this.uniforms);
-    }
-    f.require("sprite.mask." + mask, this.uniforms);
-    f.require("sprite.alpha." + alpha, this.uniforms);
-    f.pipe('sprite.fill', this.uniforms);
-    this.edgeMaterial = this._material(edgeFactory.link({
-      side: THREE.DoubleSide,
-      defaultAttributeValues: null,
-      index0AttributeName: "position4"
-    }));
+    fillFactory.fragment.pipe(f);
+    fillFactory.fragment.pipe('fragment.solid', this.uniforms);
     this.fillMaterial = this._material(fillFactory.link({
       side: THREE.DoubleSide,
-      defaultAttributeValues: null,
       index0AttributeName: "position4"
     }));
-    this.edgeObject = new THREE.Mesh(this.geometry, this.edgeMaterial);
+    this.edgeMaterial = this._material(edgeFactory.link({
+      side: THREE.DoubleSide,
+      index0AttributeName: "position4"
+    }));
     this.fillObject = new THREE.Mesh(this.geometry, this.fillMaterial);
-    this._raw(this.edgeObject);
+    this.edgeObject = new THREE.Mesh(this.geometry, this.edgeMaterial);
     this._raw(this.fillObject);
-    this.objects = [this.edgeObject, this.fillObject];
+    this._raw(this.edgeObject);
+    this.objects = [this.fillObject, this.edgeObject];
   }
 
   Sprite.prototype.show = function(transparent, blending, order, depth) {
@@ -16372,7 +17651,7 @@ Sprite = (function(_super) {
     this.geometry.dispose();
     this.edgeMaterial.dispose();
     this.fillMaterial.dispose();
-    this.objects = this.edgeObject = this.fillObject = this.geometry = this.material = null;
+    this.objects = this.geometry = this.edgeMaterial = this.fillMaterial = this.edgeObject = this.fillObject = null;
     return Sprite.__super__.dispose.apply(this, arguments);
   };
 
@@ -16383,7 +17662,7 @@ Sprite = (function(_super) {
 module.exports = Sprite;
 
 
-},{"../geometry":109,"./base":117}],124:[function(require,module,exports){
+},{"../geometry":117,"./base":125}],133:[function(require,module,exports){
 var Base, Strip, StripGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16396,12 +17675,13 @@ Strip = (function(_super) {
   __extends(Strip, _super);
 
   function Strip(renderer, shaders, options) {
-    var color, f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
+    var color, f, factory, hasStyle, object, position, shaded, uniforms, v, _ref, _ref1;
     Strip.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
     shaded = (_ref1 = options.shaded) != null ? _ref1 : true;
     color = options.color;
+    hasStyle = uniforms.styleColor != null;
     this.geometry = new StripGeometry({
       items: options.items,
       width: options.width,
@@ -16429,19 +17709,21 @@ Strip = (function(_super) {
     v.pass();
     v.pipe('project.position', this.uniforms);
     f = factory.fragment;
-    if (!shaded) {
+    if (!shaded && hasStyle) {
       f.pipe('style.color', this.uniforms);
     }
-    if (shaded) {
+    if (shaded && hasStyle) {
       f.pipe('style.color.shaded', this.uniforms);
     }
-    if (color) {
+    if (color && hasStyle) {
+      f.pipe('mesh.fragment.blend', this.uniforms);
+    }
+    if (color && !hasStyle) {
       f.pipe('mesh.fragment.color', this.uniforms);
     }
     f.pipe('fragment.color', this.uniforms);
     this.material = this._material(factory.link({
       side: THREE.DoubleSide,
-      defaultAttributeValues: null,
       index0AttributeName: "position4"
     }));
     object = new THREE.Mesh(this.geometry, this.material);
@@ -16463,7 +17745,7 @@ Strip = (function(_super) {
 module.exports = Strip;
 
 
-},{"../geometry":109,"./base":117}],125:[function(require,module,exports){
+},{"../geometry":117,"./base":125}],134:[function(require,module,exports){
 var Base, Surface, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16476,12 +17758,13 @@ Surface = (function(_super) {
   __extends(Surface, _super);
 
   function Surface(renderer, shaders, options) {
-    var color, f, factory, object, position, shaded, uniforms, v, _ref, _ref1;
+    var color, f, factory, hasStyle, object, position, shaded, uniforms, v, _ref, _ref1;
     Surface.__super__.constructor.call(this, renderer, shaders, options);
     uniforms = (_ref = options.uniforms) != null ? _ref : {};
     position = options.position;
     color = options.color;
     shaded = (_ref1 = options.shaded) != null ? _ref1 : true;
+    hasStyle = uniforms.styleColor != null;
     this.geometry = new SurfaceGeometry({
       width: options.width,
       height: options.height,
@@ -16507,19 +17790,21 @@ Surface = (function(_super) {
     }
     v.pipe('project.position', this.uniforms);
     f = factory.fragment;
-    if (!shaded) {
+    if (!shaded && hasStyle) {
       f.pipe('style.color', this.uniforms);
     }
-    if (shaded) {
+    if (shaded && hasStyle) {
       f.pipe('style.color.shaded', this.uniforms);
     }
-    if (color) {
+    if (color && hasStyle) {
+      f.pipe('mesh.fragment.blend', this.uniforms);
+    }
+    if (color && !hasStyle) {
       f.pipe('mesh.fragment.color', this.uniforms);
     }
     f.pipe('fragment.color', this.uniforms);
     this.material = this._material(factory.link({
       side: THREE.DoubleSide,
-      defaultAttributeValues: null,
       index0AttributeName: "position4"
     }));
     object = new THREE.Mesh(this.geometry, this.material);
@@ -16541,7 +17826,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../geometry":109,"./base":117}],126:[function(require,module,exports){
+},{"../geometry":117,"./base":125}],135:[function(require,module,exports){
 var Renderable;
 
 Renderable = (function() {
@@ -16583,7 +17868,7 @@ Renderable = (function() {
 module.exports = Renderable;
 
 
-},{}],127:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 var MathBox, Renderable, Scene,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16661,8 +17946,10 @@ Scene = (function(_super) {
 module.exports = Scene;
 
 
-},{"./renderable":126}],128:[function(require,module,exports){
-var Factory;
+},{"./renderable":135}],137:[function(require,module,exports){
+var Factory, ShaderGraph;
+
+ShaderGraph = require('../../vendor/shadergraph/src');
 
 Factory = function(snippets) {
   var fetch;
@@ -16686,13 +17973,13 @@ Factory = function(snippets) {
 module.exports = Factory;
 
 
-},{}],129:[function(require,module,exports){
+},{"../../vendor/shadergraph/src":180}],138:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Snippets = MathBox.Shaders;
 
 
-},{"./factory":128}],130:[function(require,module,exports){
+},{"./factory":137}],139:[function(require,module,exports){
 var Animator;
 
 Animator = (function() {
@@ -16709,7 +17996,7 @@ Animator = (function() {
 module.exports = Animator;
 
 
-},{}],131:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 var API;
 
 API = (function() {
@@ -16749,6 +18036,13 @@ API = (function() {
     var targets;
     targets = this._context.model.select(selector, !this.isRoot ? _targets : null);
     return this._push(targets);
+  };
+
+  API.prototype.eq = function(index) {
+    if (this._targets.length > index) {
+      return this._push([this._targets[index]]);
+    }
+    return this._push([]);
   };
 
   API.prototype.each = function(callback) {
@@ -16839,7 +18133,7 @@ API = (function() {
 module.exports = API;
 
 
-},{}],132:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 var Controller;
 
 Controller = (function() {
@@ -16908,7 +18202,7 @@ Controller = (function() {
 module.exports = Controller;
 
 
-},{}],133:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 var Director;
 
 Director = (function() {
@@ -16924,7 +18218,7 @@ Director = (function() {
 module.exports = Director;
 
 
-},{}],134:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 exports.Animator = require('./animator');
 
 exports.API = require('./api');
@@ -16934,7 +18228,7 @@ exports.Controller = require('./controller');
 exports.Director = require('./director');
 
 
-},{"./animator":130,"./api":131,"./controller":132,"./director":133}],135:[function(require,module,exports){
+},{"./animator":139,"./api":140,"./controller":141,"./director":142}],144:[function(require,module,exports){
 exports.setDimension = function(vec, dimension) {
   var w, x, y, z;
   x = dimension === 1 ? 1 : 0;
@@ -16978,7 +18272,7 @@ exports.recenterAxis = (function() {
 })();
 
 
-},{}],136:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 var getSizes;
 
 exports.getSizes = getSizes = function(data) {
@@ -17057,8 +18351,8 @@ exports.getDimensions = function(data, spec) {
   return dims;
 };
 
-exports.makeEmitter = function(thunk, items, channels, indices) {
-  var inner, middle, outer;
+exports.makeEmitter = function(thunk, items, channels) {
+  var inner, outer;
   inner = (function() {
     switch (channels) {
       case 0:
@@ -17091,7 +18385,7 @@ exports.makeEmitter = function(thunk, items, channels, indices) {
         };
     }
   })();
-  middle = (function() {
+  outer = (function() {
     switch (items) {
       case 0:
         return function() {
@@ -17141,195 +18435,9 @@ exports.makeEmitter = function(thunk, items, channels, indices) {
         };
     }
   })();
-  outer = (function() {
-    switch (indices) {
-      case 1:
-        return function(i, emit) {
-          return middle(emit);
-        };
-      case 2:
-        return function(i, j, emit) {
-          return middle(emit);
-        };
-      case 3:
-        return function(i, j, k, emit) {
-          return middle(emit);
-        };
-      case 4:
-        return function(i, j, k, l, emit) {
-          return middle(emit);
-        };
-      case 6:
-        return function(i, j, k, l, m, n, emit) {
-          return middle(emit);
-        };
-      case 8:
-        return function(i, j, k, l, m, n, o, p, emit) {
-          return middle(emit);
-        };
-    }
-  })();
   outer.reset = thunk.reset;
   outer.rebind = thunk.rebind;
   return outer;
-};
-
-exports.normalizeEmitter = function(emitter, indices) {
-  var arity, f;
-  arity = emitter.length - 1;
-  f = (function() {
-    switch (indices) {
-      case 1:
-        switch (arity) {
-          case 0:
-            return function(i, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 2:
-        switch (arity) {
-          case 0:
-            return function(i, j, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 3:
-        switch (arity) {
-          case 0:
-            return function(i, j, k, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, k, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return function(i, j, k, emit) {
-              return emitter(i, j, emit);
-            };
-          case 3:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 4:
-        switch (arity) {
-          case 0:
-            return function(i, j, k, l, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, k, l, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return function(i, j, k, l, emit) {
-              return emitter(i, j, emit);
-            };
-          case 3:
-            return function(i, j, k, l, emit) {
-              return emitter(i, j, k, emit);
-            };
-          case 4:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 6:
-        switch (arity) {
-          case 0:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, j, emit);
-            };
-          case 3:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, j, k, emit);
-            };
-          case 4:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, j, k, l, emit);
-            };
-          case 5:
-            return function(i, j, k, l, m, n, emit) {
-              return emitter(i, j, k, l, m, emit);
-            };
-          case 6:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      case 8:
-        switch (arity) {
-          case 0:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(emit);
-            };
-          case 1:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, emit);
-            };
-          case 2:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, emit);
-            };
-          case 3:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, emit);
-            };
-          case 4:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, l, emit);
-            };
-          case 5:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, l, m, emit);
-            };
-          case 6:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, l, m, n, emit);
-            };
-          case 7:
-            return function(i, j, k, l, m, n, o, p, emit) {
-              return emitter(i, j, k, l, m, n, o, emit);
-            };
-          case 8:
-            return emitter;
-          default:
-            throw "Invalid expression signature: " + emitter;
-        }
-        break;
-      default:
-        throw "Invalid expression signature: " + emitter;
-    }
-  })();
-  f.reset = emitter.reset;
-  f.rebind = emitter.rebind;
-  return f;
 };
 
 exports.getThunk = function(data) {
@@ -17361,11 +18469,12 @@ exports.getThunk = function(data) {
       i = j = 0;
       first = (_ref = data[j]) != null ? _ref : [];
       thunk = function() {
-        var x, _ref1, _ref2;
+        var x, _ref1;
         x = first[i++];
         if (i === a) {
-          _ref1 = [0, j + 1], i = _ref1[0], j = _ref1[1];
-          first = (_ref2 = data[j]) != null ? _ref2 : [];
+          i = 0;
+          j++;
+          first = (_ref1 = data[j]) != null ? _ref1 : [];
         }
         return x;
       };
@@ -17380,15 +18489,17 @@ exports.getThunk = function(data) {
       second = (_ref1 = data[k]) != null ? _ref1 : [];
       first = (_ref2 = second[j]) != null ? _ref2 : [];
       thunk = function() {
-        var x, _ref3, _ref4, _ref5, _ref6;
+        var x, _ref3, _ref4;
         x = first[i++];
         if (i === a) {
-          _ref3 = [0, j + 1], i = _ref3[0], j = _ref3[1];
+          i = 0;
+          j++;
           if (j === b) {
-            _ref4 = [0, k + 1], j = _ref4[0], k = _ref4[1];
-            second = (_ref5 = data[k]) != null ? _ref5 : [];
+            j = 0;
+            k++;
+            second = (_ref3 = data[k]) != null ? _ref3 : [];
           }
-          first = (_ref6 = second[j]) != null ? _ref6 : [];
+          first = (_ref4 = second[j]) != null ? _ref4 : [];
         }
         return x;
       };
@@ -17405,19 +18516,22 @@ exports.getThunk = function(data) {
       second = (_ref4 = third[k]) != null ? _ref4 : [];
       first = (_ref5 = second[j]) != null ? _ref5 : [];
       thunk = function() {
-        var x, _ref10, _ref11, _ref6, _ref7, _ref8, _ref9;
+        var x, _ref6, _ref7, _ref8;
         x = first[i++];
         if (i === a) {
-          _ref6 = [0, j + 1], i = _ref6[0], j = _ref6[1];
+          i = 0;
+          j++;
           if (j === b) {
-            _ref7 = [0, k + 1], j = _ref7[0], k = _ref7[1];
+            j = 0;
+            k++;
             if (k === c) {
-              _ref8 = [0, l + 1], k = _ref8[0], l = _ref8[1];
-              third = (_ref9 = data[l]) != null ? _ref9 : [];
+              k = 0;
+              l++;
+              third = (_ref6 = data[l]) != null ? _ref6 : [];
             }
-            second = (_ref10 = third[k]) != null ? _ref10 : [];
+            second = (_ref7 = third[k]) != null ? _ref7 : [];
           }
-          first = (_ref11 = second[j]) != null ? _ref11 : [];
+          first = (_ref8 = second[j]) != null ? _ref8 : [];
         }
         return x;
       };
@@ -17436,23 +18550,27 @@ exports.getThunk = function(data) {
       second = (_ref8 = third[k]) != null ? _ref8 : [];
       first = (_ref9 = second[j]) != null ? _ref9 : [];
       thunk = function() {
-        var x, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17;
+        var x, _ref10, _ref11, _ref12, _ref13;
         x = first[i++];
         if (i === a) {
-          _ref10 = [0, j + 1], i = _ref10[0], j = _ref10[1];
+          i = 0;
+          j++;
           if (j === b) {
-            _ref11 = [0, k + 1], j = _ref11[0], k = _ref11[1];
+            j = 0;
+            k++;
             if (k === c) {
-              _ref12 = [0, l + 1], k = _ref12[0], l = _ref12[1];
+              k = 0;
+              l++;
               if (l === d) {
-                _ref13 = [0, m + 1], l = _ref13[0], m = _ref13[1];
-                fourth = (_ref14 = data[m]) != null ? _ref14 : [];
+                l = 0;
+                m++;
+                fourth = (_ref10 = data[m]) != null ? _ref10 : [];
               }
-              third = (_ref15 = fourth[l]) != null ? _ref15 : [];
+              third = (_ref11 = fourth[l]) != null ? _ref11 : [];
             }
-            second = (_ref16 = third[k]) != null ? _ref16 : [];
+            second = (_ref12 = third[k]) != null ? _ref12 : [];
           }
-          first = (_ref17 = second[j]) != null ? _ref17 : [];
+          first = (_ref13 = second[j]) != null ? _ref13 : [];
         }
         return x;
       };
@@ -17589,8 +18707,10 @@ exports.getStreamer = function(array, samples, channels, items) {
 };
 
 
-},{}],137:[function(require,module,exports){
-var ease;
+},{}],146:[function(require,module,exports){
+var ease, π;
+
+π = Math.PI;
 
 ease = {
   cosine: function(x) {
@@ -17601,7 +18721,7 @@ ease = {
 module.exports = ease;
 
 
-},{}],138:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 var index, letters, parseOrder, toFloatString, toType,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -17681,6 +18801,9 @@ exports.extendVec = function(from, to, value) {
   if (value == null) {
     value = 0;
   }
+  if (from > to) {
+    return exports.truncateVec(from, to);
+  }
   diff = to - from;
   from = toType(from);
   to = toType(to);
@@ -17702,12 +18825,12 @@ exports.extendVec = function(from, to, value) {
 
 exports.truncateVec = function(from, to) {
   var swizzle;
-  swizzle = '.' + ('xyzw'.substr(0, to));
-  from = 'vec' + from;
-  to = 'vec' + to;
-  if (to === 'vec1') {
-    to = 'float';
+  if (from < to) {
+    return exports.extendVec(from, to);
   }
+  swizzle = '.' + ('xyzw'.substr(0, to));
+  from = toType(from);
+  to = toType(to);
   return "" + to + " truncateVec(" + from + " v) { return v" + swizzle + "; }";
 };
 
@@ -17793,23 +18916,25 @@ exports.identity = function(type) {
 };
 
 
-},{}],139:[function(require,module,exports){
-exports.Data = require('./data');
+},{}],148:[function(require,module,exports){
+exports.Axis = require('./axis');
 
-exports.Ticks = require('./ticks');
+exports.Data = require('./data');
 
 exports.Ease = require('./ease');
 
 exports.GLSL = require('./glsl');
 
-exports.Axis = require('./axis');
-
 exports.JS = require('./js');
 
 exports.Three = require('./three');
 
+exports.Ticks = require('./ticks');
 
-},{"./axis":135,"./data":136,"./ease":137,"./glsl":138,"./js":140,"./three":141,"./ticks":142}],140:[function(require,module,exports){
+exports.VDOM = require('./vdom');
+
+
+},{"./axis":144,"./data":145,"./ease":146,"./glsl":147,"./js":149,"./three":150,"./ticks":151,"./vdom":152}],149:[function(require,module,exports){
 exports.merge = function() {
   var k, obj, v, x, _i, _len;
   x = {};
@@ -17828,7 +18953,7 @@ exports.clone = function(o) {
 };
 
 
-},{}],141:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 exports.paramToGL = function(gl, p) {
   if (p === THREE.RepeatWrapping) {
     return gl.REPEAT;
@@ -17967,7 +19092,7 @@ exports.paramToArrayStorage = function(type) {
 };
 
 
-},{}],142:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 
 /*
  Generate equally spaced ticks in a range at sensible positions.
@@ -18069,4 +19194,6613 @@ exports.linear = linear;
 exports.log = log;
 
 
-},{}]},{},[28])
+},{}],152:[function(require,module,exports){
+var HEAP, apply, descriptor, element, hint, id, insert, key, map, prop, recycle, remove, set, unset, _i, _len, _ref;
+
+HEAP = [];
+
+id = 0;
+
+descriptor = function() {
+  return {
+    id: id++,
+    type: null,
+    props: null,
+    children: null
+  };
+};
+
+hint = function(n) {
+  var i, _i, _results;
+  n *= 2;
+  n = Math.max(0, HEAP.length - n);
+  _results = [];
+  for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+    _results.push(HEAP.push(descriptor()));
+  }
+  return _results;
+};
+
+element = function(type, props, children) {
+  var el;
+  el = HEAP.length ? HEAP.pop() : descriptor();
+  el.type = type != null ? type : 'div';
+  el.props = props != null ? props : null;
+  el.children = children != null ? children : null;
+  return el;
+};
+
+recycle = function(el) {
+  var child, children, _i, _len;
+  if (!el.type) {
+    return;
+  }
+  children = el.children;
+  el.type = el.props = el.children = null;
+  HEAP.push(el);
+  if (children != null) {
+    for (_i = 0, _len = children.length; _i < _len; _i++) {
+      child = children[_i];
+      recycle(child);
+    }
+  }
+};
+
+apply = function(el, last, node, parent, index) {
+  var child, childNodes, children, i, key, nextChildren, nextProps, props, ref, same, value, _i, _j, _len, _len1, _ref, _ref1;
+  if (el != null) {
+    if (last == null) {
+      return insert(el, parent, index);
+    } else {
+      same = typeof el === typeof last && last !== null && el !== null && el.type === last.type;
+      if (!same) {
+        remove(node, parent);
+        return insert(el, parent, index);
+      } else {
+        props = last != null ? last.props : void 0;
+        nextProps = el.props;
+        if (props != null) {
+          for (key in props) {
+            if (!nextProps.hasOwnProperty(key)) {
+              unset(node, key);
+            }
+          }
+        }
+        if (nextProps != null) {
+          for (key in nextProps) {
+            value = nextProps[key];
+            if ((ref = props[key]) !== value) {
+              set(node, key, value, ref);
+            }
+          }
+        }
+        children = (_ref = last != null ? last.children : void 0) != null ? _ref : null;
+        nextChildren = el.children;
+        if ((_ref1 = typeof nextChildren) === 'string' || _ref1 === 'number') {
+          if (nextChildren !== children) {
+            node.textContent = nextChildren;
+          }
+        } else if (nextChildren != null) {
+          if (nextChildren.type != null) {
+            apply(nextChildren, children, node.childNodes[0], node, 0);
+          } else {
+            childNodes = node.childNodes;
+            if (children != null) {
+              for (i = _i = 0, _len = nextChildren.length; _i < _len; i = ++_i) {
+                child = nextChildren[i];
+                apply(child, children[i], childNodes[i], node, i);
+              }
+            } else {
+              for (i = _j = 0, _len1 = nextChildren.length; _j < _len1; i = ++_j) {
+                child = nextChildren[i];
+                apply(child, null, childNodes[i], node, i);
+              }
+            }
+          }
+        } else if (children != null) {
+          node.innerHTML = '';
+        }
+        return;
+      }
+    }
+  }
+  if (last != null) {
+    return remove(node, parent);
+  }
+};
+
+insert = function(el, parent, index) {
+  var child, children, i, key, node, value, _i, _len, _ref, _ref1, _ref2;
+  if (index == null) {
+    index = 0;
+  }
+  if ((_ref = typeof el) === 'string' || _ref === 'number') {
+    node = document.createTextNode(el);
+  } else {
+    node = document.createElement(el.type);
+    _ref1 = el.props;
+    for (key in _ref1) {
+      value = _ref1[key];
+      set(node, key, value);
+    }
+  }
+  children = el.children;
+  if ((_ref2 = typeof children) === 'string' || _ref2 === 'number') {
+    node.textContent = children;
+  } else if (children != null) {
+    if (children.type != null) {
+      insert(children, node, 0);
+    } else {
+      for (i = _i = 0, _len = children.length; _i < _len; i = ++_i) {
+        child = children[i];
+        insert(child, node, i);
+      }
+    }
+  }
+  parent.insertBefore(node, parent.childNodes[index]);
+};
+
+remove = function(node, parent) {
+  return parent.removeChild(node);
+};
+
+prop = function(key) {
+  var prefix, prefixes, _i, _len;
+  if (document.documentElement.style[key] != null) {
+    return key;
+  }
+  key = key[0].toUpperCase() + key.slice(1);
+  prefixes = ['webkit', 'moz', 'ms', 'o'];
+  for (_i = 0, _len = prefixes.length; _i < _len; _i++) {
+    prefix = prefixes[_i];
+    if (document.documentElement.style[prefix + key] != null) {
+      return prefix + key;
+    }
+  }
+};
+
+map = {};
+
+_ref = ['transform'];
+for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+  key = _ref[_i];
+  map[key] = prop(key);
+}
+
+set = function(node, key, value, orig) {
+  var k, v, _ref1;
+  if (key === 'style') {
+    for (k in value) {
+      v = value[k];
+      if ((orig != null ? orig[k] : void 0) !== v) {
+        node.style[(_ref1 = map[k]) != null ? _ref1 : k] = v;
+      }
+    }
+    return;
+  }
+  if (node[key] != null) {
+    node[key] = value;
+    return;
+  }
+  if (node instanceof Node) {
+    node.setAttribute(key, value);
+  }
+};
+
+unset = function(node, key) {
+  return node.removeAttribute(key);
+};
+
+module.exports = {
+  element: element,
+  recycle: recycle,
+  apply: apply,
+  hint: hint
+};
+
+
+},{}],153:[function(require,module,exports){
+
+/*
+  Graph of nodes with outlets
+ */
+var Graph;
+
+Graph = (function() {
+  Graph.index = 0;
+
+  Graph.id = function(name) {
+    return ++Graph.index;
+  };
+
+  Graph.IN = 0;
+
+  Graph.OUT = 1;
+
+  function Graph(nodes, parent) {
+    this.parent = parent != null ? parent : null;
+    this.id = Graph.id();
+    this.nodes = [];
+    nodes && this.add(nodes);
+  }
+
+  Graph.prototype.inputs = function() {
+    var inputs, node, outlet, _i, _j, _len, _len1, _ref, _ref1;
+    inputs = [];
+    _ref = this.nodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      _ref1 = node.inputs;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        outlet = _ref1[_j];
+        if (outlet.input === null) {
+          inputs.push(outlet);
+        }
+      }
+    }
+    return inputs;
+  };
+
+  Graph.prototype.outputs = function() {
+    var node, outlet, outputs, _i, _j, _len, _len1, _ref, _ref1;
+    outputs = [];
+    _ref = this.nodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      _ref1 = node.outputs;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        outlet = _ref1[_j];
+        if (outlet.output.length === 0) {
+          outputs.push(outlet);
+        }
+      }
+    }
+    return outputs;
+  };
+
+  Graph.prototype.getIn = function(name) {
+    var outlet;
+    return ((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.inputs();
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        outlet = _ref[_i];
+        if (outlet.name === name) {
+          _results.push(outlet);
+        }
+      }
+      return _results;
+    }).call(this))[0];
+  };
+
+  Graph.prototype.getOut = function(name) {
+    var outlet;
+    return ((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.outputs();
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        outlet = _ref[_i];
+        if (outlet.name === name) {
+          _results.push(outlet);
+        }
+      }
+      return _results;
+    }).call(this))[0];
+  };
+
+  Graph.prototype.add = function(node, ignore) {
+    var _i, _len, _node;
+    if (node.length) {
+      for (_i = 0, _len = node.length; _i < _len; _i++) {
+        _node = node[_i];
+        this.add(_node);
+      }
+      return;
+    }
+    if (node.graph && !ignore) {
+      throw "Adding node to two graphs at once";
+    }
+    node.graph = this;
+    return this.nodes.push(node);
+  };
+
+  Graph.prototype.remove = function(node, ignore) {
+    var _i, _len, _node;
+    if (node.length) {
+      for (_i = 0, _len = node.length; _i < _len; _i++) {
+        _node = node[_i];
+        this.remove(_node);
+      }
+      return;
+    }
+    if (node.graph !== this) {
+      throw "Removing node from wrong graph.";
+    }
+    ignore || node.disconnect();
+    this.nodes.splice(this.nodes.indexOf(node), 1);
+    return node.graph = null;
+  };
+
+  Graph.prototype.adopt = function(node) {
+    var _i, _len, _node;
+    if (node.length) {
+      for (_i = 0, _len = node.length; _i < _len; _i++) {
+        _node = node[_i];
+        this.adopt(_node);
+      }
+      return;
+    }
+    node.graph.remove(node, true);
+    return this.add(node, true);
+  };
+
+  return Graph;
+
+})();
+
+module.exports = Graph;
+
+
+},{}],154:[function(require,module,exports){
+exports.Graph = require('./graph');
+
+exports.Node = require('./node');
+
+exports.Outlet = require('./outlet');
+
+exports.IN = exports.Graph.IN;
+
+exports.OUT = exports.Graph.OUT;
+
+
+},{"./graph":153,"./node":155,"./outlet":156}],155:[function(require,module,exports){
+var Graph, Node, Outlet;
+
+Graph = require('./graph');
+
+Outlet = require('./outlet');
+
+
+/*
+ Node in graph.
+ */
+
+Node = (function() {
+  Node.index = 0;
+
+  Node.id = function(name) {
+    return ++Node.index;
+  };
+
+  function Node(owner, outlets) {
+    this.owner = owner;
+    this.graph = null;
+    this.inputs = [];
+    this.outputs = [];
+    this.all = [];
+    this.outlets = null;
+    this.id = Node.id();
+    this.setOutlets(outlets);
+  }
+
+  Node.prototype.getIn = function(name) {
+    var outlet;
+    return ((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.inputs;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        outlet = _ref[_i];
+        if (outlet.name === name) {
+          _results.push(outlet);
+        }
+      }
+      return _results;
+    }).call(this))[0];
+  };
+
+  Node.prototype.getOut = function(name) {
+    var outlet;
+    return ((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.outputs;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        outlet = _ref[_i];
+        if (outlet.name === name) {
+          _results.push(outlet);
+        }
+      }
+      return _results;
+    }).call(this))[0];
+  };
+
+  Node.prototype.get = function(name) {
+    return this.getIn(name) || this.getOut(name);
+  };
+
+  Node.prototype.setOutlets = function(outlets) {
+    var existing, hash, key, match, outlet, _i, _j, _k, _len, _len1, _len2, _ref;
+    if (outlets != null) {
+      if (this.outlets == null) {
+        this.outlets = {};
+        for (_i = 0, _len = outlets.length; _i < _len; _i++) {
+          outlet = outlets[_i];
+          if (!(outlet instanceof Outlet)) {
+            outlet = Outlet.make(outlet);
+          }
+          this._add(outlet);
+        }
+        return;
+      }
+      hash = function(outlet) {
+        return [outlet.name, outlet.inout, outlet.type].join('-');
+      };
+      match = {};
+      for (_j = 0, _len1 = outlets.length; _j < _len1; _j++) {
+        outlet = outlets[_j];
+        match[hash(outlet)] = true;
+      }
+      _ref = this.outlets;
+      for (key in _ref) {
+        outlet = _ref[key];
+        key = hash(outlet);
+        if (match[key]) {
+          match[key] = outlet;
+        } else {
+          this._remove(outlet);
+        }
+      }
+      for (_k = 0, _len2 = outlets.length; _k < _len2; _k++) {
+        outlet = outlets[_k];
+        existing = match[hash(outlet)];
+        if (existing instanceof Outlet) {
+          this._morph(existing, outlet);
+        } else {
+          if (!(outlet instanceof Outlet)) {
+            outlet = Outlet.make(outlet);
+          }
+          this._add(outlet);
+        }
+      }
+      this;
+    }
+    return this.outlets;
+  };
+
+  Node.prototype.connect = function(node, empty, force) {
+    var hint, hints, others, outlet, outlets, type, _i, _j, _len, _len1, _ref, _ref1;
+    outlets = {};
+    hints = {};
+    _ref = node.inputs;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      outlet = _ref[_i];
+      if (!force && outlet.input) {
+        continue;
+      }
+      type = outlet.type;
+      hint = [type, outlet.hint].join('-');
+      if (!hints[hint]) {
+        hints[hint] = outlet;
+      }
+      outlets[type] = outlets[type] || [];
+      outlets[type].push(outlet);
+    }
+    _ref1 = this.outputs;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      outlet = _ref1[_j];
+      if (empty && outlet.output.length) {
+        continue;
+      }
+      type = outlet.type;
+      hint = [type, outlet.hint].join('-');
+      others = outlets[type];
+      if (hints[hint]) {
+        hints[hint].connect(outlet);
+        delete hints[hint];
+        others.splice(others.indexOf(outlet), 1);
+        continue;
+      }
+      if (others && others.length) {
+        others.shift().connect(outlet);
+      }
+    }
+    return this;
+  };
+
+  Node.prototype.disconnect = function(node) {
+    var outlet, _i, _j, _len, _len1, _ref, _ref1;
+    _ref = this.inputs;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      outlet = _ref[_i];
+      outlet.disconnect();
+    }
+    _ref1 = this.outputs;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      outlet = _ref1[_j];
+      outlet.disconnect();
+    }
+    return this;
+  };
+
+  Node.prototype._key = function(outlet) {
+    return [outlet.name, outlet.inout].join('-');
+  };
+
+  Node.prototype._add = function(outlet) {
+    var key;
+    key = this._key(outlet);
+    if (outlet.node) {
+      throw "Adding outlet to two nodes at once.";
+    }
+    if (this.outlets[key]) {
+      throw "Adding two identical outlets to same node. (" + key + ")";
+    }
+    outlet.node = this;
+    if (outlet.inout === Graph.IN) {
+      this.inputs.push(outlet);
+    }
+    if (outlet.inout === Graph.OUT) {
+      this.outputs.push(outlet);
+    }
+    this.all.push(outlet);
+    return this.outlets[key] = outlet;
+  };
+
+  Node.prototype._morph = function(existing, outlet) {
+    var key;
+    key = this._key(outlet);
+    delete this.outlets[key];
+    existing.morph(outlet);
+    key = this._key(outlet);
+    return this.outlets[key] = outlet;
+  };
+
+  Node.prototype._remove = function(outlet) {
+    var inout, key;
+    key = this._key(outlet);
+    inout = outlet.inout;
+    if (outlet.node !== this) {
+      throw "Removing outlet from wrong node.";
+    }
+    outlet.disconnect();
+    outlet.node = null;
+    delete this.outlets[key];
+    if (outlet.inout === Graph.IN) {
+      this.inputs.splice(this.inputs.indexOf(outlet), 1);
+    }
+    if (outlet.inout === Graph.OUT) {
+      this.outputs.splice(this.outputs.indexOf(outlet), 1);
+    }
+    this.all.splice(this.all.indexOf(outlet), 1);
+    return this;
+  };
+
+  return Node;
+
+})();
+
+module.exports = Node;
+
+
+},{"./graph":153,"./outlet":156}],156:[function(require,module,exports){
+var Graph, Outlet;
+
+Graph = require('./graph');
+
+
+/*
+  In/out outlet on node
+ */
+
+Outlet = (function() {
+  Outlet.make = function(outlet, extra) {
+    var key, meta, value, _ref;
+    if (extra == null) {
+      extra = {};
+    }
+    meta = extra;
+    if (outlet.meta != null) {
+      _ref = outlet.meta;
+      for (key in _ref) {
+        value = _ref[key];
+        meta[key] = value;
+      }
+    }
+    return new Outlet(outlet.inout, outlet.name, outlet.hint, outlet.type, meta);
+  };
+
+  Outlet.index = 0;
+
+  Outlet.id = function(name) {
+    return "_io_" + (++Outlet.index) + "_" + name;
+  };
+
+  Outlet.hint = function(name) {
+    name = name.replace(/^(_io_[0-9]+_)/, '');
+    return name = name.replace(/(In|Out|Inout|InOut)$/, '');
+  };
+
+  function Outlet(inout, name, hint, type, meta, id) {
+    this.inout = inout;
+    this.name = name;
+    this.hint = hint;
+    this.type = type;
+    this.meta = meta != null ? meta : {};
+    this.id = id;
+    if (this.hint == null) {
+      this.hint = Outlet.hint(name);
+    }
+    this.node = null;
+    this.input = null;
+    this.output = [];
+    if (this.id == null) {
+      this.id = Outlet.id(this.hint);
+    }
+  }
+
+  Outlet.prototype.morph = function(outlet) {
+    this.inout = outlet.inout;
+    this.name = outlet.name;
+    this.hint = outlet.hint;
+    this.type = outlet.type;
+    return this.meta = outlet.meta;
+  };
+
+  Outlet.prototype.dupe = function(name) {
+    var outlet;
+    if (name == null) {
+      name = this.id;
+    }
+    outlet = Outlet.make(this);
+    outlet.name = name;
+    return outlet;
+  };
+
+  Outlet.prototype.connect = function(outlet) {
+    if (this.inout === Graph.IN && outlet.inout === Graph.OUT) {
+      return outlet.connect(this);
+    }
+    if (this.inout !== Graph.OUT || outlet.inout !== Graph.IN) {
+      throw "Can only connect out to in.";
+    }
+    if (outlet.input === this) {
+      return;
+    }
+    outlet.disconnect();
+    outlet.input = this;
+    return this.output.push(outlet);
+  };
+
+  Outlet.prototype.disconnect = function(outlet) {
+    var index, _i, _len, _ref;
+    if (this.input) {
+      this.input.disconnect(this);
+    }
+    if (this.output.length) {
+      if (outlet) {
+        index = this.output.indexOf(outlet);
+        if (index >= 0) {
+          this.output.splice(index, 1);
+          return outlet.input = null;
+        }
+      } else {
+        _ref = this.output;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          outlet = _ref[_i];
+          outlet.input = null;
+        }
+        return this.output = [];
+      }
+    }
+  };
+
+  return Outlet;
+
+})();
+
+module.exports = Outlet;
+
+
+},{"./graph":153}],157:[function(require,module,exports){
+var Block, Graph, Layout, Program, debug;
+
+Graph = require('../graph');
+
+Program = require('../linker').Program;
+
+Layout = require('../linker').Layout;
+
+debug = false;
+
+Block = (function() {
+  Block.previous = function(outlet) {
+    var _ref;
+    return (_ref = outlet.input) != null ? _ref.node.owner : void 0;
+  };
+
+  function Block() {
+    var _ref;
+    if (this.namespace == null) {
+      this.namespace = Program.entry();
+    }
+    this.node = new Graph.Node(this, (_ref = typeof this.makeOutlets === "function" ? this.makeOutlets() : void 0) != null ? _ref : {});
+  }
+
+  Block.prototype.refresh = function() {
+    var _ref;
+    return this.node.setOutlets((_ref = typeof this.makeOutlets === "function" ? this.makeOutlets() : void 0) != null ? _ref : {});
+  };
+
+  Block.prototype.clone = function() {
+    return new Block;
+  };
+
+  Block.prototype.compile = function(language, namespace) {
+    var program;
+    program = new Program(language, namespace != null ? namespace : Program.entry(), this.node.graph);
+    this.call(program, 0);
+    return program.assemble();
+  };
+
+  Block.prototype.link = function(language, namespace) {
+    var layout, module;
+    module = this.compile(language, namespace);
+    layout = new Layout(language, this.node.graph);
+    this._include(module, layout, 0);
+    this["export"](layout, 0);
+    return layout.link(module);
+  };
+
+  Block.prototype.call = function(program, depth) {};
+
+  Block.prototype.callback = function(layout, depth, name, external, outlet) {};
+
+  Block.prototype["export"] = function(layout, depth) {};
+
+  Block.prototype._info = function(suffix) {
+    var string, _ref, _ref1;
+    string = (_ref = (_ref1 = this.node.owner.snippet) != null ? _ref1._name : void 0) != null ? _ref : this.node.owner.namespace;
+    if (suffix != null) {
+      return string += '.' + suffix;
+    }
+  };
+
+  Block.prototype._outlet = function(def, props) {
+    var outlet;
+    outlet = Graph.Outlet.make(def, props);
+    outlet.meta.def = def;
+    return outlet;
+  };
+
+  Block.prototype._call = function(module, program, depth) {
+    return program.call(this.node, module, depth);
+  };
+
+  Block.prototype._require = function(module, program) {
+    return program.require(this.node, module);
+  };
+
+  Block.prototype._inputs = function(module, program, depth) {
+    var arg, outlet, _i, _len, _ref, _ref1, _results;
+    _ref = module.main.signature;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      arg = _ref[_i];
+      outlet = this.node.get(arg.name);
+      _results.push((_ref1 = Block.previous(outlet)) != null ? _ref1.call(program, depth + 1) : void 0);
+    }
+    return _results;
+  };
+
+  Block.prototype._callback = function(module, layout, depth, name, external, outlet) {
+    return layout.callback(this.node, module, depth, name, external, outlet);
+  };
+
+  Block.prototype._include = function(module, layout, depth) {
+    return layout.include(this.node, module, depth);
+  };
+
+  Block.prototype._link = function(module, layout, depth) {
+    var block, ext, key, orig, outlet, parent, _i, _len, _ref, _ref1, _ref2, _results;
+    debug && console.log('block::_link', this.toString(), module.namespace);
+    _ref = module.symbols;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      key = _ref[_i];
+      ext = module.externals[key];
+      outlet = this.node.get(ext.name);
+      if (!outlet) {
+        throw Error("OutletError: External not found on " + (this._info(ext.name)));
+      }
+      if (outlet.meta.child != null) {
+        continue;
+      }
+      _ref1 = [outlet, outlet, null], orig = _ref1[0], parent = _ref1[1], block = _ref1[2];
+      while (!block && parent) {
+        _ref2 = [outlet.meta.parent, parent], parent = _ref2[0], outlet = _ref2[1];
+      }
+      block = Block.previous(outlet);
+      if (!block) {
+        throw Error("OutletError: Missing connection on " + (this._info(ext.name)));
+      }
+      debug && console.log('callback -> ', this.toString(), ext.name, outlet);
+      block.callback(layout, depth + 1, key, ext, outlet.input);
+      _results.push(block != null ? block["export"](layout, depth + 1) : void 0);
+    }
+    return _results;
+  };
+
+  Block.prototype._trace = function(module, layout, depth) {
+    var arg, outlet, _i, _len, _ref, _ref1, _results;
+    debug && console.log('block::_trace', this.toString(), module.namespace);
+    _ref = module.main.signature;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      arg = _ref[_i];
+      outlet = this.node.get(arg.name);
+      _results.push((_ref1 = Block.previous(outlet)) != null ? _ref1["export"](layout, depth + 1) : void 0);
+    }
+    return _results;
+  };
+
+  return Block;
+
+})();
+
+module.exports = Block;
+
+
+},{"../graph":177,"../linker":182}],158:[function(require,module,exports){
+var Block, Call,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Block = require('./block');
+
+Call = (function(_super) {
+  __extends(Call, _super);
+
+  function Call(snippet) {
+    this.snippet = snippet;
+    this.namespace = this.snippet.namespace;
+    Call.__super__.constructor.apply(this, arguments);
+  }
+
+  Call.prototype.clone = function() {
+    return new Call(this.snippet);
+  };
+
+  Call.prototype.makeOutlets = function() {
+    var callbacks, externals, key, main, outlet, params, symbols;
+    main = this.snippet.main.signature;
+    externals = this.snippet.externals;
+    symbols = this.snippet.symbols;
+    params = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = main.length; _i < _len; _i++) {
+        outlet = main[_i];
+        _results.push(this._outlet(outlet, {
+          callback: false
+        }));
+      }
+      return _results;
+    }).call(this);
+    callbacks = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = symbols.length; _i < _len; _i++) {
+        key = symbols[_i];
+        _results.push(this._outlet(externals[key], {
+          callback: true
+        }));
+      }
+      return _results;
+    }).call(this);
+    return params.concat(callbacks);
+  };
+
+  Call.prototype.call = function(program, depth) {
+    this._call(this.snippet, program, depth);
+    return this._inputs(this.snippet, program, depth);
+  };
+
+  Call.prototype["export"] = function(layout, depth) {
+    if (!layout.visit(this.namespace, depth)) {
+      return;
+    }
+    this._link(this.snippet, layout, depth);
+    return this._trace(this.snippet, layout, depth);
+  };
+
+  return Call;
+
+})(Block);
+
+module.exports = Call;
+
+
+},{"./block":157}],159:[function(require,module,exports){
+var Block, Callback, Graph,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Graph = require('../graph');
+
+Block = require('./block');
+
+
+/*
+  Re-use a subgraph as a callback
+ */
+
+Callback = (function(_super) {
+  __extends(Callback, _super);
+
+  function Callback(graph) {
+    this.graph = graph;
+    Callback.__super__.constructor.apply(this, arguments);
+  }
+
+  Callback.prototype.refresh = function() {
+    Callback.__super__.refresh.apply(this, arguments);
+    return delete this.subroutine;
+  };
+
+  Callback.prototype.clone = function() {
+    return new Callback(this.graph);
+  };
+
+  Callback.prototype.makeOutlets = function() {
+    var handle, ins, outlet, outlets, outs, type, _i, _j, _len, _len1, _ref, _ref1;
+    this.make();
+    outlets = [];
+    ins = [];
+    outs = [];
+    handle = (function(_this) {
+      return function(outlet, list) {
+        var dupe, _base;
+        if (outlet.meta.callback) {
+          if (outlet.inout === Graph.IN) {
+            dupe = outlet.dupe();
+            if ((_base = dupe.meta).child == null) {
+              _base.child = outlet;
+            }
+            outlet.meta.parent = dupe;
+            return outlets.push(dupe);
+          }
+        } else {
+          return list.push(outlet.type);
+        }
+      };
+    })(this);
+    _ref = this.graph.inputs();
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      outlet = _ref[_i];
+      handle(outlet, ins);
+    }
+    _ref1 = this.graph.outputs();
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      outlet = _ref1[_j];
+      handle(outlet, outs);
+    }
+    ins = ins.join(',');
+    outs = outs.join(',');
+    type = "(" + ins + ")(" + outs + ")";
+    outlets.push({
+      name: 'callback',
+      type: type,
+      inout: Graph.OUT,
+      meta: {
+        callback: true,
+        def: this.subroutine.main
+      }
+    });
+    return outlets;
+  };
+
+  Callback.prototype.make = function() {
+    return this.subroutine = this.graph.compile(this.namespace);
+  };
+
+  Callback.prototype["export"] = function(layout, depth) {
+    if (!layout.visit(this.namespace, depth)) {
+      return;
+    }
+    this._link(this.subroutine, layout, depth);
+    return this.graph["export"](layout, depth);
+  };
+
+  Callback.prototype.call = function(program, depth) {
+    return this._require(this.subroutine, program, depth);
+  };
+
+  Callback.prototype.callback = function(layout, depth, name, external, outlet) {
+    this._include(this.subroutine, layout, depth);
+    return this._callback(this.subroutine, layout, depth, name, external, outlet);
+  };
+
+  return Callback;
+
+})(Block);
+
+module.exports = Callback;
+
+
+},{"../graph":177,"./block":157}],160:[function(require,module,exports){
+exports.Block = require('./block');
+
+exports.Call = require('./call');
+
+exports.Callback = require('./callback');
+
+exports.Isolate = require('./isolate');
+
+exports.Join = require('./join');
+
+
+},{"./block":157,"./call":158,"./callback":159,"./isolate":161,"./join":162}],161:[function(require,module,exports){
+var Block, Graph, Isolate,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Graph = require('../graph');
+
+Block = require('./block');
+
+
+/*
+  Isolate a subgraph as a single node
+ */
+
+Isolate = (function(_super) {
+  __extends(Isolate, _super);
+
+  function Isolate(graph) {
+    this.graph = graph;
+    Isolate.__super__.constructor.apply(this, arguments);
+  }
+
+  Isolate.prototype.refresh = function() {
+    Isolate.__super__.refresh.apply(this, arguments);
+    return delete this.subroutine;
+  };
+
+  Isolate.prototype.clone = function() {
+    return new Isolate(this.graph);
+  };
+
+  Isolate.prototype.makeOutlets = function() {
+    var done, dupe, name, outlet, outlets, seen, set, _base, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+    this.make();
+    outlets = [];
+    seen = {};
+    done = {};
+    _ref = ['inputs', 'outputs'];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      set = _ref[_i];
+      _ref1 = this.graph[set]();
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        outlet = _ref1[_j];
+        name = void 0;
+        if (((_ref2 = outlet.hint) === 'return' || _ref2 === 'callback') && outlet.inout === Graph.OUT) {
+          name = outlet.hint;
+        }
+        if (seen[name] != null) {
+          name = void 0;
+        }
+        dupe = outlet.dupe(name);
+        if ((_base = dupe.meta).child == null) {
+          _base.child = outlet;
+        }
+        outlet.meta.parent = dupe;
+        if (name != null) {
+          seen[name] = true;
+        }
+        done[outlet.name] = dupe;
+        outlets.push(dupe);
+      }
+    }
+    return outlets;
+  };
+
+  Isolate.prototype.make = function() {
+    return this.subroutine = this.graph.compile(this.namespace);
+  };
+
+  Isolate.prototype.call = function(program, depth) {
+    this._call(this.subroutine, program, depth);
+    return this._inputs(this.subroutine, program, depth);
+  };
+
+  Isolate.prototype["export"] = function(layout, depth) {
+    if (!layout.visit(this.namespace, depth)) {
+      return;
+    }
+    this._link(this.subroutine, layout, depth);
+    this._trace(this.subroutine, layout, depth);
+    return this.graph["export"](layout, depth);
+  };
+
+  Isolate.prototype.callback = function(layout, depth, name, external, outlet) {
+    outlet = outlet.meta.child;
+    return outlet.node.owner.callback(layout, depth, name, external, outlet);
+  };
+
+  return Isolate;
+
+})(Block);
+
+module.exports = Isolate;
+
+
+},{"../graph":177,"./block":157}],162:[function(require,module,exports){
+var Block, Join,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Block = require('./block');
+
+
+/*
+  Join multiple disconnected nodes
+ */
+
+Join = (function(_super) {
+  __extends(Join, _super);
+
+  function Join(nodes) {
+    this.nodes = nodes;
+    Join.__super__.constructor.apply(this, arguments);
+  }
+
+  Join.prototype.clone = function() {
+    return new Join(this.nodes);
+  };
+
+  Join.prototype.makeOutlets = function() {
+    return [];
+  };
+
+  Join.prototype.call = function(program, depth) {
+    var block, node, _i, _len, _ref, _results;
+    _ref = this.nodes;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      block = node.owner;
+      _results.push(block.call(program, depth));
+    }
+    return _results;
+  };
+
+  Join.prototype["export"] = function(layout, depth) {
+    var block, node, _i, _len, _ref, _results;
+    _ref = this.nodes;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      block = node.owner;
+      _results.push(block["export"](layout, depth));
+    }
+    return _results;
+  };
+
+  return Join;
+
+})(Block);
+
+module.exports = Join;
+
+
+},{"./block":157}],163:[function(require,module,exports){
+
+/*
+  Cache decorator  
+  Fetches snippets once, clones for reuse
+  Inline code is hashed to avoid bloat
+ */
+var cache, hash, queue;
+
+queue = require('./queue');
+
+hash = require('./hash');
+
+cache = function(fetch) {
+  var cached, push;
+  cached = {};
+  push = queue(100);
+  return function(name) {
+    var expire, key;
+    key = name.length > 32 ? '##' + hash(name).toString(16) : name;
+    expire = push(key);
+    if (expire != null) {
+      delete cached[expire];
+    }
+    if (cached[key] == null) {
+      cached[key] = fetch(name);
+    }
+    return cached[key].clone();
+  };
+};
+
+module.exports = cache;
+
+
+},{"./hash":165,"./queue":169}],164:[function(require,module,exports){
+var Block, Factory, Graph, State, Visualize;
+
+Graph = require('../graph').Graph;
+
+Block = require('../block');
+
+Visualize = require('../visualize');
+
+
+/*
+  Chainable factory
+  
+  Exposes methods to build a graph incrementally
+ */
+
+Factory = (function() {
+  function Factory(language, fetch, config) {
+    this.language = language;
+    this.fetch = fetch;
+    this.config = config;
+    this.graph();
+  }
+
+  Factory.prototype.pipe = function(name, uniforms, namespace, defines) {
+    if (name instanceof Factory) {
+      this._concat(name);
+    } else {
+      this._call(name, uniforms, namespace, defines);
+    }
+    return this;
+  };
+
+  Factory.prototype.call = function(name, uniforms, namespace, defines) {
+    return this.pipe(name, uniforms, namespace, defines);
+  };
+
+  Factory.prototype.require = function(name, uniforms, namespace, defines) {
+    if (name instanceof Factory) {
+      this._import(name);
+    } else {
+      this.callback();
+      this._call(name, uniforms, namespace, defines);
+      this.end();
+    }
+    return this;
+  };
+
+  Factory.prototype["import"] = function(name, uniforms, namespace, defines) {
+    return this.require(name, uniforms, namespace, defines);
+  };
+
+  Factory.prototype.split = function() {
+    this._group('_combine', true);
+    return this;
+  };
+
+  Factory.prototype.fan = function() {
+    this._group('_combine', false);
+    return this;
+  };
+
+  Factory.prototype.isolate = function() {
+    this._group('_isolate');
+    return this;
+  };
+
+  Factory.prototype.callback = function() {
+    this._group('_callback');
+    return this;
+  };
+
+  Factory.prototype.next = function() {
+    this._next();
+    return this;
+  };
+
+  Factory.prototype.pass = function() {
+    var pass;
+    pass = this._stack[2].end;
+    this.end();
+    this._state.end = this._state.end.concat(pass);
+    return this;
+  };
+
+  Factory.prototype.end = function() {
+    var main, op, sub, _ref;
+    _ref = this._exit(), sub = _ref[0], main = _ref[1];
+    op = sub.op;
+    if (this[op]) {
+      this[op](sub, main);
+    }
+    return this;
+  };
+
+  Factory.prototype.join = function() {
+    return this.end();
+  };
+
+  Factory.prototype.graph = function() {
+    var graph, _ref;
+    while (((_ref = this._stack) != null ? _ref.length : void 0) > 1) {
+      this.end();
+    }
+    if (this._graph) {
+      this._tail(this._state, this._graph);
+    }
+    graph = this._graph;
+    this._graph = new Graph;
+    this._state = new State;
+    this._stack = [this._state];
+    return graph;
+  };
+
+  Factory.prototype.compile = function(namespace) {
+    if (namespace == null) {
+      namespace = 'main';
+    }
+    return this.graph().compile(namespace);
+  };
+
+  Factory.prototype.link = function(namespace) {
+    if (namespace == null) {
+      namespace = 'main';
+    }
+    return this.graph().link(namespace);
+  };
+
+  Factory.prototype.serialize = function() {
+    return Visualize.serialize(this._graph);
+  };
+
+  Factory.prototype.empty = function() {
+    return this._graph.nodes.length === 0;
+  };
+
+  Factory.prototype._concat = function(factory) {
+    var block, error;
+    this._tail(factory._state, factory._graph);
+    try {
+      block = new Block.Isolate(factory._graph);
+    } catch (_error) {
+      error = _error;
+      if (this.config.autoInspect) {
+        Visualize.inspect(error, this._graph, factory);
+      }
+      throw error;
+    }
+    this._auto(block);
+    return this;
+  };
+
+  Factory.prototype._import = function(factory) {
+    var block, error;
+    this._tail(factory._state, factory._graph);
+    try {
+      block = new Block.Callback(factory._graph);
+    } catch (_error) {
+      error = _error;
+      if (this.config.autoInspect) {
+        Visualize.inspect(error, this._graph, factory);
+      }
+      throw error;
+    }
+    this._auto(block);
+    return this;
+  };
+
+  Factory.prototype._combine = function(sub, main) {
+    var from, to, _i, _j, _len, _len1, _ref, _ref1;
+    _ref = sub.start;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      to = _ref[_i];
+      _ref1 = main.end;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        from = _ref1[_j];
+        from.connect(to, sub.multi);
+      }
+    }
+    main.end = sub.end;
+    return main.nodes = main.nodes.concat(sub.nodes);
+  };
+
+  Factory.prototype._isolate = function(sub, main) {
+    var block, error, subgraph;
+    if (sub.nodes.length) {
+      subgraph = this._subgraph(sub);
+      this._tail(sub, subgraph);
+      try {
+        block = new Block.Isolate(subgraph);
+      } catch (_error) {
+        error = _error;
+        if (this.config.autoInspect) {
+          Visualize.inspect(error, this._graph, subgraph);
+        }
+        throw error;
+      }
+      return this._auto(block);
+    }
+  };
+
+  Factory.prototype._callback = function(sub, main) {
+    var block, error, subgraph;
+    if (sub.nodes.length) {
+      subgraph = this._subgraph(sub);
+      this._tail(sub, subgraph);
+      try {
+        block = new Block.Callback(subgraph);
+      } catch (_error) {
+        error = _error;
+        if (this.config.autoInspect) {
+          Visualize.inspect(error, this._graph, subgraph);
+        }
+        throw error;
+      }
+      return this._auto(block);
+    }
+  };
+
+  Factory.prototype._call = function(name, uniforms, namespace, defines) {
+    var block, snippet;
+    snippet = this.fetch(name);
+    snippet.bind(this.config, uniforms, namespace, defines);
+    block = new Block.Call(snippet);
+    return this._auto(block);
+  };
+
+  Factory.prototype._subgraph = function(sub) {
+    var subgraph;
+    subgraph = new Graph;
+    subgraph.adopt(sub.nodes);
+    return subgraph;
+  };
+
+  Factory.prototype._tail = function(state, graph) {
+    var tail;
+    tail = state.end.concat(state.tail);
+    tail = tail.filter(function(node, i) {
+      return tail.indexOf(node) === i;
+    });
+    if (tail.length > 1) {
+      tail = new Block.Join(tail);
+      tail = [tail.node];
+    }
+    graph.tail = tail[0];
+    state.end = tail;
+    state.tail = [];
+    if (!graph.tail) {
+      throw "Cannot finalize empty graph";
+    }
+    graph.compile = (function(_this) {
+      return function(namespace) {
+        var error;
+        if (namespace == null) {
+          namespace = 'main';
+        }
+        try {
+          return graph.tail.owner.compile(_this.language, namespace);
+        } catch (_error) {
+          error = _error;
+          if (_this.config.autoInspect) {
+            graph.inspect(error);
+          }
+          throw error;
+        }
+      };
+    })(this);
+    graph.link = (function(_this) {
+      return function(namespace) {
+        var error;
+        if (namespace == null) {
+          namespace = 'main';
+        }
+        try {
+          return graph.tail.owner.link(_this.language, namespace);
+        } catch (_error) {
+          error = _error;
+          if (_this.config.autoInspect) {
+            graph.inspect(error);
+          }
+          throw error;
+        }
+      };
+    })(this);
+    graph["export"] = (function(_this) {
+      return function(layout, depth) {
+        return graph.tail.owner["export"](layout, depth);
+      };
+    })(this);
+    return graph.inspect = function(message) {
+      if (message == null) {
+        message = null;
+      }
+      return Visualize.inspect(message, graph);
+    };
+  };
+
+  Factory.prototype._group = function(op, multi) {
+    this._push(op, multi);
+    this._push();
+    return this;
+  };
+
+  Factory.prototype._next = function() {
+    var sub;
+    sub = this._pop();
+    this._state.start = this._state.start.concat(sub.start);
+    this._state.end = this._state.end.concat(sub.end);
+    this._state.nodes = this._state.nodes.concat(sub.nodes);
+    this._state.tail = this._state.tail.concat(sub.tail);
+    return this._push();
+  };
+
+  Factory.prototype._exit = function() {
+    this._next();
+    this._pop();
+    return [this._pop(), this._state];
+  };
+
+  Factory.prototype._push = function(op, multi) {
+    this._stack.unshift(new State(op, multi));
+    return this._state = this._stack[0];
+  };
+
+  Factory.prototype._pop = function() {
+    var _ref;
+    this._state = this._stack[1];
+    if (this._state == null) {
+      this._state = new State;
+    }
+    return (_ref = this._stack.shift()) != null ? _ref : new State;
+  };
+
+  Factory.prototype._auto = function(block) {
+    if (block.node.inputs.length) {
+      return this._append(block);
+    } else {
+      return this._insert(block);
+    }
+  };
+
+  Factory.prototype._append = function(block) {
+    var end, node, _i, _len, _ref;
+    node = block.node;
+    this._graph.add(node);
+    _ref = this._state.end;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      end = _ref[_i];
+      end.connect(node);
+    }
+    if (!this._state.start.length) {
+      this._state.start = [node];
+    }
+    this._state.end = [node];
+    this._state.nodes.push(node);
+    if (!node.outputs.length) {
+      return this._state.tail.push(node);
+    }
+  };
+
+  Factory.prototype._prepend = function(block) {
+    var node, start, _i, _len, _ref;
+    node = block.node;
+    this._graph.add(node);
+    _ref = this._state.start;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      start = _ref[_i];
+      node.connect(start);
+    }
+    if (!this._state.end.length) {
+      this._state.end = [node];
+    }
+    this._state.start = [node];
+    this._state.nodes.push(node);
+    if (!node.outputs.length) {
+      return this._state.tail.push(node);
+    }
+  };
+
+  Factory.prototype._insert = function(block) {
+    var node;
+    node = block.node;
+    this._graph.add(node);
+    this._state.start.push(node);
+    this._state.end.push(node);
+    this._state.nodes.push(node);
+    if (!node.outputs.length) {
+      return this._state.tail.push(node);
+    }
+  };
+
+  return Factory;
+
+})();
+
+State = (function() {
+  function State(op, multi, start, end, nodes, tail) {
+    this.op = op != null ? op : null;
+    this.multi = multi != null ? multi : false;
+    this.start = start != null ? start : [];
+    this.end = end != null ? end : [];
+    this.nodes = nodes != null ? nodes : [];
+    this.tail = tail != null ? tail : [];
+  }
+
+  return State;
+
+})();
+
+module.exports = Factory;
+
+
+},{"../block":160,"../graph":177,"../visualize":188}],165:[function(require,module,exports){
+var c1, c2, c3, c4, c5, hash, imul, test;
+
+c1 = 0xcc9e2d51;
+
+c2 = 0x1b873593;
+
+c3 = 0xe6546b64;
+
+c4 = 0x85ebca6b;
+
+c5 = 0xc2b2ae35;
+
+imul = function(a, b) {
+  var ah, al, bh, bl;
+  ah = (a >>> 16) & 0xffff;
+  al = a & 0xffff;
+  bh = (b >>> 16) & 0xffff;
+  bl = b & 0xffff;
+  return (al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0;
+};
+
+if (Math.imul != null) {
+  test = Math.imul(0xffffffff, 5);
+  if (test === -5) {
+    imul = Math.imul;
+  }
+}
+
+hash = function(string) {
+  var h, iterate, j, m, n, next;
+  n = string.length;
+  m = Math.floor(n / 2);
+  j = h = 0;
+  next = function() {
+    return string.charCodeAt(j++);
+  };
+  iterate = function(a, b) {
+    var k;
+    k = a | (b << 16);
+    k ^= k << 9;
+    k = imul(k, c1);
+    k = (k << 15) | (k >>> 17);
+    k = imul(k, c2);
+    h ^= k;
+    h = (h << 13) | (h >>> 19);
+    h = imul(h, 5);
+    return h = (h + c3) | 0;
+  };
+  while (m--) {
+    iterate(next(), next());
+  }
+  if (n & 1) {
+    iterate(next(), 0);
+  }
+  h ^= n;
+  h ^= h >>> 16;
+  h = imul(h, c4);
+  h ^= h >>> 13;
+  h = imul(h, c5);
+  return h ^= h >>> 16;
+};
+
+module.exports = hash;
+
+
+},{}],166:[function(require,module,exports){
+exports.Factory = require('./factory');
+
+exports.Material = require('./material');
+
+exports.library = require('./library');
+
+exports.cache = require('./cache');
+
+exports.queue = require('./queue');
+
+exports.hash = require('./hash');
+
+
+},{"./cache":163,"./factory":164,"./hash":165,"./library":167,"./material":168,"./queue":169}],167:[function(require,module,exports){
+
+/*
+  Snippet library
+  
+  Takes:
+    - Hash of snippets: named library
+    - (name) -> getter: dynamic lookup
+    - nothing:          no library, only pass in inline source code
+  
+  If 'name' contains any of "{;(#" it is assumed to be direct GLSL code.
+ */
+var library;
+
+library = function(language, snippets, load) {
+  var callback, inline;
+  callback = null;
+  if (snippets != null) {
+    if (typeof snippets === 'function') {
+      callback = function(name) {
+        return load(language, name, snippets(name));
+      };
+    } else if (typeof snippets === 'object') {
+      callback = function(name) {
+        if (snippets[name] == null) {
+          throw "Unknown snippet `" + name + "`";
+        }
+        return load(language, name, snippets[name]);
+      };
+    }
+  }
+  inline = function(code) {
+    return load(language, '', code);
+  };
+  if (callback == null) {
+    return inline;
+  }
+  return function(name) {
+    if (name.match(/[{;(#]/)) {
+      return inline(name);
+    }
+    return callback(name);
+  };
+};
+
+module.exports = library;
+
+
+},{}],168:[function(require,module,exports){
+var Material, debug, tick;
+
+debug = false;
+
+tick = function() {
+  var now;
+  now = +(new Date);
+  return function(label) {
+    var delta;
+    delta = +new Date() - now;
+    console.log(label, delta + " ms");
+    return delta;
+  };
+};
+
+Material = (function() {
+  function Material(vertex, fragment) {
+    this.vertex = vertex;
+    this.fragment = fragment;
+    if (debug) {
+      this.tock = tick();
+    }
+  }
+
+  Material.prototype.build = function(options) {
+    return this.link(options);
+  };
+
+  Material.prototype.link = function(options) {
+    var attributes, fragment, key, shader, uniforms, value, varyings, vertex, _i, _len, _ref, _ref1, _ref2, _ref3;
+    if (options == null) {
+      options = {};
+    }
+    uniforms = {};
+    varyings = {};
+    attributes = {};
+    vertex = this.vertex.link('main');
+    fragment = this.fragment.link('main');
+    _ref = [vertex, fragment];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      shader = _ref[_i];
+      _ref1 = shader.uniforms;
+      for (key in _ref1) {
+        value = _ref1[key];
+        uniforms[key] = value;
+      }
+      _ref2 = shader.varyings;
+      for (key in _ref2) {
+        value = _ref2[key];
+        varyings[key] = value;
+      }
+      _ref3 = shader.attributes;
+      for (key in _ref3) {
+        value = _ref3[key];
+        attributes[key] = value;
+      }
+    }
+    options.vertexShader = vertex.code;
+    options.vertexGraph = vertex.graph;
+    options.fragmentShader = fragment.code;
+    options.fragmentGraph = fragment.graph;
+    options.attributes = attributes;
+    options.uniforms = uniforms;
+    options.varyings = varyings;
+    if (debug) {
+      this.tock('Material build');
+    }
+    return options;
+  };
+
+  return Material;
+
+})();
+
+module.exports = Material;
+
+
+},{}],169:[function(require,module,exports){
+var queue;
+
+queue = function(limit) {
+  var add, count, head, map, remove, tail;
+  if (limit == null) {
+    limit = 100;
+  }
+  map = {};
+  head = null;
+  tail = null;
+  count = 0;
+  add = function(item) {
+    item.prev = null;
+    item.next = head;
+    if (head != null) {
+      head.prev = item;
+    }
+    head = item;
+    if (tail == null) {
+      return tail = item;
+    }
+  };
+  remove = function(item) {
+    var next, prev;
+    prev = item.prev;
+    next = item.next;
+    if (prev != null) {
+      prev.next = next;
+    }
+    if (next != null) {
+      next.prev = prev;
+    }
+    if (head === item) {
+      head = next;
+    }
+    if (tail === item) {
+      return tail = prev;
+    }
+  };
+  return function(key) {
+    var dead, item;
+    if (item = map[key] && item !== head) {
+      remove(item);
+      add(item);
+    } else {
+      if (count === limit) {
+        dead = tail.key;
+        remove(tail);
+        delete map[dead];
+      } else {
+        count++;
+      }
+      item = {
+        next: head,
+        prev: null,
+        key: key
+      };
+      add(item);
+      map[key] = item;
+    }
+    return dead;
+  };
+};
+
+module.exports = queue;
+
+
+},{}],170:[function(require,module,exports){
+
+/*
+  Compile snippet back into GLSL, but with certain symbols replaced by prefixes / placeholders
+ */
+var compile, replaced, string_compiler, tick;
+
+compile = function(program) {
+  var assembler, ast, code, placeholders, signatures;
+  ast = program.ast, code = program.code, signatures = program.signatures;
+  placeholders = replaced(signatures);
+  assembler = string_compiler(code, placeholders);
+  return [signatures, assembler];
+};
+
+tick = function() {
+  var now;
+  now = +(new Date);
+  return function(label) {
+    var delta;
+    delta = +new Date() - now;
+    console.log(label, delta + " ms");
+    return delta;
+  };
+};
+
+replaced = function(signatures) {
+  var key, out, s, sig, _i, _j, _len, _len1, _ref, _ref1;
+  out = {};
+  s = function(sig) {
+    return out[sig.name] = true;
+  };
+  s(signatures.main);
+  _ref = ['external', 'internal', 'varying', 'uniform', 'attribute'];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    key = _ref[_i];
+    _ref1 = signatures[key];
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      sig = _ref1[_j];
+      s(sig);
+    }
+  }
+  return out;
+};
+
+
+/*
+String-replacement based compiler
+ */
+
+string_compiler = function(code, placeholders) {
+  var key, re;
+  re = new RegExp('\\b(' + ((function() {
+    var _results;
+    _results = [];
+    for (key in placeholders) {
+      _results.push(key);
+    }
+    return _results;
+  })()).join('|') + ')\\b', 'g');
+  code = code.replace(/\/\/[^\n]*/g, '');
+  code = code.replace(/\/\*([^*]|\*[^\/])*\*\//g, '');
+  return function(prefix, exceptions, defines) {
+    var compiled, defs, replace, value;
+    if (prefix == null) {
+      prefix = '';
+    }
+    if (exceptions == null) {
+      exceptions = {};
+    }
+    if (defines == null) {
+      defines = {};
+    }
+    replace = {};
+    for (key in placeholders) {
+      replace[key] = exceptions[key] != null ? key : prefix + key;
+    }
+    compiled = code.replace(re, function(key) {
+      return replace[key];
+    });
+    defs = (function() {
+      var _results;
+      _results = [];
+      for (key in defines) {
+        value = defines[key];
+        _results.push("#define " + key + " " + value);
+      }
+      return _results;
+    })();
+    if (defs.length) {
+      defs.push('');
+    }
+    return defs.join("\n") + compiled;
+  };
+};
+
+module.exports = compile;
+
+
+},{}],171:[function(require,module,exports){
+module.exports = {
+  SHADOW_ARG: '_i_o',
+  RETURN_ARG: 'return'
+};
+
+
+},{}],172:[function(require,module,exports){
+var Definition, decl, defaults, get, three, threejs, win;
+
+module.exports = decl = {};
+
+decl["in"] = 0;
+
+decl.out = 1;
+
+decl.inout = 2;
+
+get = function(n) {
+  return n.token.data;
+};
+
+decl.node = function(node) {
+  var _ref, _ref1;
+  if (((_ref = node.children[5]) != null ? _ref.type : void 0) === 'function') {
+    return decl["function"](node);
+  } else if (((_ref1 = node.token) != null ? _ref1.type : void 0) === 'keyword') {
+    return decl.external(node);
+  }
+};
+
+decl.external = function(node) {
+  var c, i, ident, list, next, out, quant, storage, struct, type, _i, _len, _ref;
+  c = node.children;
+  storage = get(c[1]);
+  struct = get(c[3]);
+  type = get(c[4]);
+  list = c[5];
+  if (storage !== 'attribute' && storage !== 'uniform' && storage !== 'varying') {
+    storage = 'global';
+  }
+  out = [];
+  _ref = list.children;
+  for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+    c = _ref[i];
+    if (c.type === 'ident') {
+      ident = get(c);
+      next = list.children[i + 1];
+      quant = (next != null ? next.type : void 0) === 'quantifier';
+      out.push({
+        decl: 'external',
+        storage: storage,
+        type: type,
+        ident: ident,
+        quant: !!quant,
+        count: quant
+      });
+    }
+  }
+  return out;
+};
+
+decl["function"] = function(node) {
+  var args, body, c, child, decls, func, ident, storage, struct, type;
+  c = node.children;
+  storage = get(c[1]);
+  struct = get(c[3]);
+  type = get(c[4]);
+  func = c[5];
+  ident = get(func.children[0]);
+  args = func.children[1];
+  body = func.children[2];
+  decls = (function() {
+    var _i, _len, _ref, _results;
+    _ref = args.children;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      child = _ref[_i];
+      _results.push(decl.argument(child));
+    }
+    return _results;
+  })();
+  return [
+    {
+      decl: 'function',
+      storage: storage,
+      type: type,
+      ident: ident,
+      body: !!body,
+      args: decls
+    }
+  ];
+};
+
+decl.argument = function(node) {
+  var c, count, ident, inout, list, quant, storage, type;
+  c = node.children;
+  storage = get(c[1]);
+  inout = get(c[2]);
+  type = get(c[4]);
+  list = c[5];
+  ident = get(list.children[0]);
+  quant = list.children[1];
+  count = quant ? quant.children[0].token.data : void 0;
+  return {
+    decl: 'argument',
+    storage: storage,
+    inout: inout,
+    type: type,
+    ident: ident,
+    quant: !!quant,
+    count: count
+  };
+};
+
+decl.param = function(dir, storage, spec, quant, count) {
+  var f, prefix, suffix;
+  prefix = [];
+  if (storage != null) {
+    prefix.push(storage);
+  }
+  if (spec != null) {
+    prefix.push(spec);
+  }
+  prefix.push('');
+  prefix = prefix.join(' ');
+  suffix = quant ? '[' + count + ']' : '';
+  if (dir !== '') {
+    dir += ' ';
+  }
+  f = function(name, long) {
+    return (long ? dir : '') + ("" + prefix + name + suffix);
+  };
+  f.split = function(dir) {
+    return decl.param(dir, storage, spec, quant, count);
+  };
+  return f;
+};
+
+win = typeof window !== 'undefined';
+
+threejs = win && !!window.THREE;
+
+defaults = {
+  int: 0,
+  float: 0,
+  vec2: threejs ? THREE.Vector2 : null,
+  vec3: threejs ? THREE.Vector3 : null,
+  vec4: threejs ? THREE.Vector4 : null,
+  mat2: null,
+  mat3: threejs ? THREE.Matrix3 : null,
+  mat4: threejs ? THREE.Matrix4 : null,
+  sampler2D: 0,
+  samplerCube: 0
+};
+
+three = {
+  int: 'i',
+  float: 'f',
+  vec2: 'v2',
+  vec3: 'v3',
+  vec4: 'v4',
+  mat2: 'm2',
+  mat3: 'm3',
+  mat4: 'm4',
+  sampler2D: 't',
+  samplerCube: 't'
+};
+
+decl.type = function(name, spec, quant, count, dir, storage) {
+  var dirs, inout, param, storages, type, value, _ref;
+  dirs = {
+    "in": decl["in"],
+    out: decl.out,
+    inout: decl.inout
+  };
+  storages = {
+    "const": 'const'
+  };
+  type = three[spec];
+  if (quant) {
+    type += 'v';
+  }
+  value = defaults[spec];
+  if (value != null ? value.call : void 0) {
+    value = new value;
+  }
+  if (quant) {
+    value = [value];
+  }
+  inout = (_ref = dirs[dir]) != null ? _ref : dirs["in"];
+  storage = storages[storage];
+  param = decl.param(dir, storage, spec, quant, count);
+  return new Definition(name, type, spec, param, value, inout);
+};
+
+Definition = (function() {
+  function Definition(name, type, spec, param, value, inout, meta) {
+    this.name = name;
+    this.type = type;
+    this.spec = spec;
+    this.param = param;
+    this.value = value;
+    this.inout = inout;
+    this.meta = meta;
+  }
+
+  Definition.prototype.split = function() {
+    var dir, inout, isIn, param;
+    isIn = this.meta.shadowed != null;
+    dir = isIn ? 'in' : 'out';
+    inout = isIn ? decl["in"] : decl.out;
+    param = this.param.split(dir);
+    return new Definition(this.name, this.type, this.spec, param, this.value, inout);
+  };
+
+  Definition.prototype.copy = function(name, meta) {
+    var def;
+    return def = new Definition(name != null ? name : this.name, this.type, this.spec, this.param, this.value, this.inout, meta);
+  };
+
+  return Definition;
+
+})();
+
+
+},{}],173:[function(require,module,exports){
+var $, Graph, _;
+
+Graph = require('../graph');
+
+$ = require('./constants');
+
+
+/*
+ GLSL code generator for compiler and linker stubs
+ */
+
+module.exports = _ = {
+  unshadow: function(name) {
+    var real;
+    real = name.replace($.SHADOW_ARG, '');
+    if (real !== name) {
+      return real;
+    } else {
+      return null;
+    }
+  },
+  lines: function(lines) {
+    return lines.join('\n');
+  },
+  list: function(lines) {
+    return lines.join(', ');
+  },
+  statements: function(lines) {
+    return lines.join(';\n');
+  },
+  body: function(entry) {
+    return {
+      entry: entry,
+      type: 'void',
+      params: [],
+      signature: [],
+      "return": '',
+      vars: {},
+      calls: [],
+      post: [],
+      chain: {}
+    };
+  },
+  define: function(a, b) {
+    return "#define " + a + " " + b;
+  },
+  "function": function(type, entry, params, vars, calls) {
+    return "" + type + " " + entry + "(" + params + ") {\n" + vars + calls + "}";
+  },
+  invoke: function(ret, entry, args) {
+    ret = ret ? "" + ret + " = " : '';
+    args = _.list(args);
+    return "  " + ret + entry + "(" + args + ")";
+  },
+  same: function(a, b) {
+    var A, B, i, _i, _len;
+    for (i = _i = 0, _len = a.length; _i < _len; i = ++_i) {
+      A = a[i];
+      B = b[i];
+      if (!B) {
+        return false;
+      }
+      if (A.type !== B.type) {
+        return false;
+      }
+      if ((A.name === $.RETURN_ARG) !== (B.name === $.RETURN_ARG)) {
+        return false;
+      }
+    }
+    return true;
+  },
+  call: function(lookup, dangling, entry, signature, body) {
+    var arg, args, copy, id, inout, isReturn, meta, name, omit, other, ret, rets, shadow, _i, _len, _ref, _ref1;
+    args = [];
+    ret = '';
+    rets = 1;
+    for (_i = 0, _len = signature.length; _i < _len; _i++) {
+      arg = signature[_i];
+      name = arg.name;
+      copy = id = lookup(name);
+      other = null;
+      meta = null;
+      omit = false;
+      inout = arg.inout;
+      isReturn = name === $.RETURN_ARG;
+      if (shadow = (_ref = arg.meta) != null ? _ref.shadowed : void 0) {
+        other = lookup(shadow);
+        if (other) {
+          body.vars[other] = "  " + arg.param(other);
+          body.calls.push("  " + other + " = " + id);
+          if (!dangling(shadow)) {
+            arg = arg.split();
+          } else {
+            meta = {
+              shadowed: other
+            };
+          }
+        }
+      }
+      if (shadow = (_ref1 = arg.meta) != null ? _ref1.shadow : void 0) {
+        other = lookup(shadow);
+        if (other) {
+          if (!dangling(shadow)) {
+            arg = arg.split();
+            omit = true;
+          } else {
+            meta = {
+              shadow: other
+            };
+            continue;
+          }
+        }
+      }
+      if (isReturn) {
+        ret = id;
+      } else if (!omit) {
+        args.push(other != null ? other : id);
+      }
+      if (dangling(name)) {
+        if (isReturn) {
+          if (body["return"] === '') {
+            copy = name;
+            body.type = arg.spec;
+            body["return"] = "  return " + id;
+            body.vars[id] = "  " + arg.param(id);
+          } else {
+            body.vars[id] = "  " + arg.param(id);
+            body.params.push(arg.param(id, true));
+          }
+        } else {
+          body.params.push(arg.param(id, true));
+        }
+        arg = arg.copy(copy, meta);
+        body.signature.push(arg);
+      } else {
+        body.vars[id] = "  " + arg.param(id);
+      }
+    }
+    return body.calls.push(_.invoke(ret, entry, args));
+  },
+  build: function(body, calls) {
+    var a, b, code, decl, entry, params, post, ret, type, v, vars;
+    entry = body.entry;
+    code = null;
+    if (calls && calls.length === 1 && entry !== 'main') {
+      a = body;
+      b = calls[0].module;
+      if (_.same(body.signature, b.main.signature)) {
+        code = _.define(entry, b.entry);
+      }
+    }
+    if (code == null) {
+      vars = (function() {
+        var _ref, _results;
+        _ref = body.vars;
+        _results = [];
+        for (v in _ref) {
+          decl = _ref[v];
+          _results.push(decl);
+        }
+        return _results;
+      })();
+      calls = body.calls;
+      post = body.post;
+      params = body.params;
+      type = body.type;
+      ret = body["return"];
+      calls = calls.concat(post);
+      if (ret !== '') {
+        calls.push(ret);
+      }
+      calls.push('');
+      if (vars.length) {
+        vars.push('');
+        vars = _.statements(vars) + '\n';
+      } else {
+        vars = '';
+      }
+      calls = _.statements(calls);
+      params = _.list(params);
+      code = _["function"](type, entry, params, vars, calls);
+    }
+    return {
+      signature: body.signature,
+      code: code,
+      name: entry
+    };
+  },
+  links: function(links) {
+    var l, out, _i, _len;
+    out = {
+      defs: [],
+      bodies: []
+    };
+    for (_i = 0, _len = links.length; _i < _len; _i++) {
+      l = links[_i];
+      _.link(l, out);
+    }
+    out.defs = _.lines(out.defs);
+    out.bodies = _.statements(out.bodies);
+    if (out.defs === '') {
+      delete out.defs;
+    }
+    if (out.bodies === '') {
+      delete out.bodies;
+    }
+    return out;
+  },
+  link: (function(_this) {
+    return function(link, out) {
+      var arg, entry, external, inner, ins, list, main, map, module, name, other, outer, outs, returnVar, wrapper, _dangling, _i, _j, _len, _len1, _lookup, _name, _ref, _ref1;
+      module = link.module, name = link.name, external = link.external;
+      main = module.main;
+      entry = module.entry;
+      if (_.same(main.signature, external.signature)) {
+        return out.defs.push(_.define(name, entry));
+      }
+      ins = [];
+      outs = [];
+      map = {};
+      returnVar = [module.namespace, $.RETURN_ARG].join('');
+      _ref = external.signature;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        arg = _ref[_i];
+        list = arg.inout === Graph.IN ? ins : outs;
+        list.push(arg);
+      }
+      _ref1 = main.signature;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        arg = _ref1[_j];
+        list = arg.inout === Graph.IN ? ins : outs;
+        other = list.shift();
+        _name = other.name;
+        if (_name === $.RETURN_ARG) {
+          _name = returnVar;
+        }
+        map[arg.name] = _name;
+      }
+      _lookup = function(name) {
+        return map[name];
+      };
+      _dangling = function() {
+        return true;
+      };
+      inner = _.body();
+      _.call(_lookup, _dangling, entry, main.signature, inner);
+      inner.entry = entry;
+      map = {
+        "return": returnVar
+      };
+      _lookup = function(name) {
+        var _ref2;
+        return (_ref2 = map[name]) != null ? _ref2 : name;
+      };
+      outer = _.body();
+      wrapper = _.call(_lookup, _dangling, entry, external.signature, outer);
+      outer.calls = inner.calls;
+      outer.entry = name;
+      out.bodies.push(_.build(inner).code.split(' {')[0]);
+      return out.bodies.push(_.build(outer).code);
+    };
+  })(this),
+  defuse: function(code) {
+    var b, blocks, hash, head, i, j, level, line, re, rest, strip, _i, _j, _len, _len1;
+    re = /([A-Za-z0-9_]+\s+)?[A-Za-z0-9_]+\s+[A-Za-z0-9_]+\s*\([^)]*\)\s*;\s*/mg;
+    strip = function(code) {
+      return code.replace(re, function(m) {
+        return '';
+      });
+    };
+    blocks = code.split(/(?=[{}])/g);
+    level = 0;
+    for (i = _i = 0, _len = blocks.length; _i < _len; i = ++_i) {
+      b = blocks[i];
+      switch (b[0]) {
+        case '{':
+          level++;
+          break;
+        case '}':
+          level--;
+      }
+      if (level === 0) {
+        hash = b.split(/^[ \t]*#/m);
+        for (j = _j = 0, _len1 = hash.length; _j < _len1; j = ++_j) {
+          line = hash[j];
+          if (j > 0) {
+            line = line.split(/\n/);
+            head = line.shift();
+            rest = line.join("\n");
+            hash[j] = [head, strip(rest)].join('\n');
+          } else {
+            hash[j] = strip(line);
+          }
+        }
+        blocks[i] = hash.join('#');
+      }
+    }
+    return code = blocks.join('');
+  },
+  dedupe: function(code) {
+    var map, re;
+    map = {};
+    re = /((attribute|uniform|varying)\s+)[A-Za-z0-9_]+\s+([A-Za-z0-9_]+)\s*(\[[^\]]*\]\s*)?;\s*/mg;
+    return code.replace(re, function(m, qual, type, name, struct) {
+      if (map[name]) {
+        return '';
+      }
+      map[name] = true;
+      return m;
+    });
+  },
+  hoist: function(code) {
+    var defs, line, lines, list, out, re, _i, _len;
+    re = /^#define ([^ ]+ _pg_[0-9]+_|_pg_[0-9]+_ [^ ]+)$/;
+    lines = code.split(/\n/g);
+    defs = [];
+    out = [];
+    for (_i = 0, _len = lines.length; _i < _len; _i++) {
+      line = lines[_i];
+      list = line.match(re) ? defs : out;
+      list.push(line);
+    }
+    return defs.concat(out).join("\n");
+  }
+};
+
+
+},{"../graph":177,"./constants":171}],174:[function(require,module,exports){
+var k, v, _i, _len, _ref;
+
+exports.compile = require('./compile');
+
+exports.parse = require('./parse');
+
+exports.generate = require('./generate');
+
+_ref = require('./constants');
+for (v = _i = 0, _len = _ref.length; _i < _len; v = ++_i) {
+  k = _ref[v];
+  exports[k] = v;
+}
+
+
+},{"./compile":170,"./constants":171,"./generate":173,"./parse":175}],175:[function(require,module,exports){
+var $, collect, debug, decl, extractSignatures, mapSymbols, parse, parseGLSL, parser, processAST, sortSymbols, tick, tokenizer, walk;
+
+tokenizer = require('../../vendor/glsl-tokenizer');
+
+parser = require('../../vendor/glsl-parser');
+
+decl = require('./decl');
+
+$ = require('./constants');
+
+debug = false;
+
+
+/*
+parse GLSL into AST
+extract all global symbols and make type signatures
+ */
+
+parse = function(name, code) {
+  var ast, program;
+  ast = parseGLSL(name, code);
+  return program = processAST(ast, code);
+};
+
+parseGLSL = function(name, code) {
+  var ast, error, errors, tock, _i, _len, _ref, _ref1;
+  if (debug) {
+    tock = tick();
+  }
+  _ref = tokenizer().process(parser(), code), (_ref1 = _ref[0], ast = _ref1[0]), errors = _ref[1];
+  if (debug) {
+    tock('GLSL Tokenize & Parse');
+  }
+  if (!ast || errors.length) {
+    if (!name) {
+      name = '(inline code)';
+    }
+    for (_i = 0, _len = errors.length; _i < _len; _i++) {
+      error = errors[_i];
+      console.error("[ShaderGraph] " + name + " -", error.message);
+    }
+    throw "GLSL parse error";
+  }
+  return ast;
+};
+
+processAST = function(ast, code) {
+  var externals, internals, main, signatures, symbols, tock, _ref;
+  if (debug) {
+    tock = tick();
+  }
+  symbols = [];
+  walk(mapSymbols, collect(symbols), ast, '');
+  _ref = sortSymbols(symbols), main = _ref[0], internals = _ref[1], externals = _ref[2];
+  signatures = extractSignatures(main, internals, externals);
+  if (debug) {
+    tock('GLSL AST');
+  }
+  return {
+    ast: ast,
+    code: code,
+    signatures: signatures
+  };
+};
+
+mapSymbols = function(node, collect) {
+  switch (node.type) {
+    case 'decl':
+      collect(decl.node(node));
+      return false;
+  }
+  return true;
+};
+
+collect = function(out) {
+  return function(value) {
+    var obj, _i, _len, _results;
+    if (value != null) {
+      _results = [];
+      for (_i = 0, _len = value.length; _i < _len; _i++) {
+        obj = value[_i];
+        _results.push(out.push(obj));
+      }
+      return _results;
+    }
+  };
+};
+
+sortSymbols = function(symbols) {
+  var e, externals, found, internals, main, maybe, s, _i, _len;
+  main = null;
+  internals = [];
+  externals = [];
+  maybe = {};
+  found = false;
+  for (_i = 0, _len = symbols.length; _i < _len; _i++) {
+    s = symbols[_i];
+    if (!s.body) {
+      if (s.storage === 'global') {
+        internals.push(s);
+      } else {
+        externals.push(s);
+        maybe[s.ident] = true;
+      }
+    } else {
+      if (maybe[s.ident]) {
+        externals = (function() {
+          var _j, _len1, _results;
+          _results = [];
+          for (_j = 0, _len1 = externals.length; _j < _len1; _j++) {
+            e = externals[_j];
+            if (e.ident !== s.ident) {
+              _results.push(e);
+            }
+          }
+          return _results;
+        })();
+        delete maybe[s.ident];
+      }
+      internals.push(s);
+      if (s.ident === 'main') {
+        main = s;
+        found = true;
+      } else if (!found) {
+        main = s;
+      }
+    }
+  }
+  return [main, internals, externals];
+};
+
+extractSignatures = function(main, internals, externals) {
+  var def, defn, func, sigs, symbol, _i, _j, _len, _len1;
+  sigs = {
+    uniform: [],
+    attribute: [],
+    varying: [],
+    external: [],
+    internal: [],
+    global: [],
+    main: null
+  };
+  defn = function(symbol) {
+    return decl.type(symbol.ident, symbol.type, symbol.quant, symbol.count, symbol.inout, symbol.storage);
+  };
+  func = function(symbol, inout) {
+    var a, arg, b, d, def, ins, outs, signature, type, _i, _len;
+    signature = (function() {
+      var _i, _len, _ref, _results;
+      _ref = symbol.args;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        arg = _ref[_i];
+        _results.push(defn(arg));
+      }
+      return _results;
+    })();
+    for (_i = 0, _len = signature.length; _i < _len; _i++) {
+      d = signature[_i];
+      if (!(d.inout === decl.inout)) {
+        continue;
+      }
+      a = d;
+      b = d.copy();
+      a.inout = decl["in"];
+      b.inout = decl.out;
+      b.meta = {
+        shadow: a.name
+      };
+      b.name += $.SHADOW_ARG;
+      a.meta = {
+        shadowed: b.name
+      };
+      signature.push(b);
+    }
+    if (symbol.type !== 'void') {
+      signature.push(decl.type($.RETURN_ARG, symbol.type, false, '', 'out'));
+    }
+    ins = ((function() {
+      var _j, _len1, _results;
+      _results = [];
+      for (_j = 0, _len1 = signature.length; _j < _len1; _j++) {
+        d = signature[_j];
+        if (d.inout === decl["in"]) {
+          _results.push(d.type);
+        }
+      }
+      return _results;
+    })()).join(',');
+    outs = ((function() {
+      var _j, _len1, _results;
+      _results = [];
+      for (_j = 0, _len1 = signature.length; _j < _len1; _j++) {
+        d = signature[_j];
+        if (d.inout === decl.out) {
+          _results.push(d.type);
+        }
+      }
+      return _results;
+    })()).join(',');
+    type = "(" + ins + ")(" + outs + ")";
+    return def = {
+      name: symbol.ident,
+      type: type,
+      signature: signature,
+      inout: inout,
+      spec: symbol.type
+    };
+  };
+  sigs.main = func(main, decl.out);
+  for (_i = 0, _len = internals.length; _i < _len; _i++) {
+    symbol = internals[_i];
+    sigs.internal.push({
+      name: symbol.ident
+    });
+  }
+  for (_j = 0, _len1 = externals.length; _j < _len1; _j++) {
+    symbol = externals[_j];
+    switch (symbol.decl) {
+      case 'external':
+        def = defn(symbol);
+        sigs[symbol.storage].push(def);
+        break;
+      case 'function':
+        def = func(symbol, decl["in"]);
+        sigs.external.push(def);
+    }
+  }
+  return sigs;
+};
+
+debug = false;
+
+walk = function(map, collect, node, indent) {
+  var child, i, recurse, _i, _len, _ref, _ref1, _ref2;
+  debug && console.log(indent, node.type, (_ref = node.token) != null ? _ref.data : void 0, (_ref1 = node.token) != null ? _ref1.type : void 0);
+  recurse = map(node, collect);
+  if (recurse) {
+    _ref2 = node.children;
+    for (i = _i = 0, _len = _ref2.length; _i < _len; i = ++_i) {
+      child = _ref2[i];
+      walk(map, collect, child, indent + '  ', debug);
+    }
+  }
+  return null;
+};
+
+tick = function() {
+  var now;
+  now = +(new Date);
+  return function(label) {
+    var delta;
+    delta = +new Date() - now;
+    console.log(label, delta + " ms");
+    return delta;
+  };
+};
+
+module.exports = walk;
+
+module.exports = parse;
+
+
+},{"../../vendor/glsl-parser":191,"../../vendor/glsl-tokenizer":195,"./constants":171,"./decl":172}],176:[function(require,module,exports){
+
+/*
+  Graph of nodes with outlets
+ */
+var Graph;
+
+Graph = (function() {
+  Graph.index = 0;
+
+  Graph.id = function(name) {
+    return ++Graph.index;
+  };
+
+  Graph.IN = 0;
+
+  Graph.OUT = 1;
+
+  function Graph(nodes, parent) {
+    this.parent = parent != null ? parent : null;
+    this.id = Graph.id();
+    this.nodes = [];
+    nodes && this.add(nodes);
+  }
+
+  Graph.prototype.inputs = function() {
+    var inputs, node, outlet, _i, _j, _len, _len1, _ref, _ref1;
+    inputs = [];
+    _ref = this.nodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      _ref1 = node.inputs;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        outlet = _ref1[_j];
+        if (outlet.input === null) {
+          inputs.push(outlet);
+        }
+      }
+    }
+    return inputs;
+  };
+
+  Graph.prototype.outputs = function() {
+    var node, outlet, outputs, _i, _j, _len, _len1, _ref, _ref1;
+    outputs = [];
+    _ref = this.nodes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      _ref1 = node.outputs;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        outlet = _ref1[_j];
+        if (outlet.output.length === 0) {
+          outputs.push(outlet);
+        }
+      }
+    }
+    return outputs;
+  };
+
+  Graph.prototype.getIn = function(name) {
+    var outlet;
+    return ((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.inputs();
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        outlet = _ref[_i];
+        if (outlet.name === name) {
+          _results.push(outlet);
+        }
+      }
+      return _results;
+    }).call(this))[0];
+  };
+
+  Graph.prototype.getOut = function(name) {
+    var outlet;
+    return ((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.outputs();
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        outlet = _ref[_i];
+        if (outlet.name === name) {
+          _results.push(outlet);
+        }
+      }
+      return _results;
+    }).call(this))[0];
+  };
+
+  Graph.prototype.add = function(node, ignore) {
+    var _i, _len, _node;
+    if (node.length) {
+      for (_i = 0, _len = node.length; _i < _len; _i++) {
+        _node = node[_i];
+        this.add(_node);
+      }
+      return;
+    }
+    if (node.graph && !ignore) {
+      throw "Adding node to two graphs at once";
+    }
+    node.graph = this;
+    return this.nodes.push(node);
+  };
+
+  Graph.prototype.remove = function(node, ignore) {
+    var _i, _len, _node;
+    if (node.length) {
+      for (_i = 0, _len = node.length; _i < _len; _i++) {
+        _node = node[_i];
+        this.remove(_node);
+      }
+      return;
+    }
+    if (node.graph !== this) {
+      throw "Removing node from wrong graph.";
+    }
+    ignore || node.disconnect();
+    this.nodes.splice(this.nodes.indexOf(node), 1);
+    return node.graph = null;
+  };
+
+  Graph.prototype.adopt = function(node) {
+    var _i, _len, _node;
+    if (node.length) {
+      for (_i = 0, _len = node.length; _i < _len; _i++) {
+        _node = node[_i];
+        this.adopt(_node);
+      }
+      return;
+    }
+    node.graph.remove(node, true);
+    return this.add(node, true);
+  };
+
+  return Graph;
+
+})();
+
+module.exports = Graph;
+
+
+},{}],177:[function(require,module,exports){
+exports.Graph = require('./graph');
+
+exports.Node = require('./node');
+
+exports.Outlet = require('./outlet');
+
+exports.IN = exports.Graph.IN;
+
+exports.OUT = exports.Graph.OUT;
+
+
+},{"./graph":176,"./node":178,"./outlet":179}],178:[function(require,module,exports){
+var Graph, Node, Outlet;
+
+Graph = require('./graph');
+
+Outlet = require('./outlet');
+
+
+/*
+ Node in graph.
+ */
+
+Node = (function() {
+  Node.index = 0;
+
+  Node.id = function(name) {
+    return ++Node.index;
+  };
+
+  function Node(owner, outlets) {
+    this.owner = owner;
+    this.graph = null;
+    this.inputs = [];
+    this.outputs = [];
+    this.all = [];
+    this.outlets = null;
+    this.id = Node.id();
+    this.setOutlets(outlets);
+  }
+
+  Node.prototype.getIn = function(name) {
+    var outlet;
+    return ((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.inputs;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        outlet = _ref[_i];
+        if (outlet.name === name) {
+          _results.push(outlet);
+        }
+      }
+      return _results;
+    }).call(this))[0];
+  };
+
+  Node.prototype.getOut = function(name) {
+    var outlet;
+    return ((function() {
+      var _i, _len, _ref, _results;
+      _ref = this.outputs;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        outlet = _ref[_i];
+        if (outlet.name === name) {
+          _results.push(outlet);
+        }
+      }
+      return _results;
+    }).call(this))[0];
+  };
+
+  Node.prototype.get = function(name) {
+    return this.getIn(name) || this.getOut(name);
+  };
+
+  Node.prototype.setOutlets = function(outlets) {
+    var existing, hash, key, match, outlet, _i, _j, _k, _len, _len1, _len2, _ref;
+    if (outlets != null) {
+      if (this.outlets == null) {
+        this.outlets = {};
+        for (_i = 0, _len = outlets.length; _i < _len; _i++) {
+          outlet = outlets[_i];
+          if (!(outlet instanceof Outlet)) {
+            outlet = Outlet.make(outlet);
+          }
+          this._add(outlet);
+        }
+        return;
+      }
+      hash = function(outlet) {
+        return [outlet.name, outlet.inout, outlet.type].join('-');
+      };
+      match = {};
+      for (_j = 0, _len1 = outlets.length; _j < _len1; _j++) {
+        outlet = outlets[_j];
+        match[hash(outlet)] = true;
+      }
+      _ref = this.outlets;
+      for (key in _ref) {
+        outlet = _ref[key];
+        key = hash(outlet);
+        if (match[key]) {
+          match[key] = outlet;
+        } else {
+          this._remove(outlet);
+        }
+      }
+      for (_k = 0, _len2 = outlets.length; _k < _len2; _k++) {
+        outlet = outlets[_k];
+        existing = match[hash(outlet)];
+        if (existing instanceof Outlet) {
+          this._morph(existing, outlet);
+        } else {
+          if (!(outlet instanceof Outlet)) {
+            outlet = Outlet.make(outlet);
+          }
+          this._add(outlet);
+        }
+      }
+      this;
+    }
+    return this.outlets;
+  };
+
+  Node.prototype.connect = function(node, empty, force) {
+    var hint, hints, others, outlet, outlets, type, _i, _j, _len, _len1, _ref, _ref1;
+    outlets = {};
+    hints = {};
+    _ref = node.inputs;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      outlet = _ref[_i];
+      if (!force && outlet.input) {
+        continue;
+      }
+      type = outlet.type;
+      hint = [type, outlet.hint].join('-');
+      if (!hints[hint]) {
+        hints[hint] = outlet;
+      }
+      outlets[type] = outlets[type] || [];
+      outlets[type].push(outlet);
+    }
+    _ref1 = this.outputs;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      outlet = _ref1[_j];
+      if (empty && outlet.output.length) {
+        continue;
+      }
+      type = outlet.type;
+      hint = [type, outlet.hint].join('-');
+      others = outlets[type];
+      if (hints[hint]) {
+        hints[hint].connect(outlet);
+        delete hints[hint];
+        others.splice(others.indexOf(outlet), 1);
+        continue;
+      }
+      if (others && others.length) {
+        others.shift().connect(outlet);
+      }
+    }
+    return this;
+  };
+
+  Node.prototype.disconnect = function(node) {
+    var outlet, _i, _j, _len, _len1, _ref, _ref1;
+    _ref = this.inputs;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      outlet = _ref[_i];
+      outlet.disconnect();
+    }
+    _ref1 = this.outputs;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      outlet = _ref1[_j];
+      outlet.disconnect();
+    }
+    return this;
+  };
+
+  Node.prototype._key = function(outlet) {
+    return [outlet.name, outlet.inout].join('-');
+  };
+
+  Node.prototype._add = function(outlet) {
+    var key;
+    key = this._key(outlet);
+    if (outlet.node) {
+      throw "Adding outlet to two nodes at once.";
+    }
+    if (this.outlets[key]) {
+      throw "Adding two identical outlets to same node. (" + key + ")";
+    }
+    outlet.node = this;
+    if (outlet.inout === Graph.IN) {
+      this.inputs.push(outlet);
+    }
+    if (outlet.inout === Graph.OUT) {
+      this.outputs.push(outlet);
+    }
+    this.all.push(outlet);
+    return this.outlets[key] = outlet;
+  };
+
+  Node.prototype._morph = function(existing, outlet) {
+    var key;
+    key = this._key(outlet);
+    delete this.outlets[key];
+    existing.morph(outlet);
+    key = this._key(outlet);
+    return this.outlets[key] = outlet;
+  };
+
+  Node.prototype._remove = function(outlet) {
+    var inout, key;
+    key = this._key(outlet);
+    inout = outlet.inout;
+    if (outlet.node !== this) {
+      throw "Removing outlet from wrong node.";
+    }
+    outlet.disconnect();
+    outlet.node = null;
+    delete this.outlets[key];
+    if (outlet.inout === Graph.IN) {
+      this.inputs.splice(this.inputs.indexOf(outlet), 1);
+    }
+    if (outlet.inout === Graph.OUT) {
+      this.outputs.splice(this.outputs.indexOf(outlet), 1);
+    }
+    this.all.splice(this.all.indexOf(outlet), 1);
+    return this;
+  };
+
+  return Node;
+
+})();
+
+module.exports = Node;
+
+
+},{"./graph":176,"./outlet":179}],179:[function(require,module,exports){
+var Graph, Outlet;
+
+Graph = require('./graph');
+
+
+/*
+  In/out outlet on node
+ */
+
+Outlet = (function() {
+  Outlet.make = function(outlet, extra) {
+    var key, meta, value, _ref;
+    if (extra == null) {
+      extra = {};
+    }
+    meta = extra;
+    if (outlet.meta != null) {
+      _ref = outlet.meta;
+      for (key in _ref) {
+        value = _ref[key];
+        meta[key] = value;
+      }
+    }
+    return new Outlet(outlet.inout, outlet.name, outlet.hint, outlet.type, meta);
+  };
+
+  Outlet.index = 0;
+
+  Outlet.id = function(name) {
+    return "_io_" + (++Outlet.index) + "_" + name;
+  };
+
+  Outlet.hint = function(name) {
+    name = name.replace(/^(_io_[0-9]+_)/, '');
+    return name = name.replace(/(In|Out|Inout|InOut)$/, '');
+  };
+
+  function Outlet(inout, name, hint, type, meta, id) {
+    this.inout = inout;
+    this.name = name;
+    this.hint = hint;
+    this.type = type;
+    this.meta = meta != null ? meta : {};
+    this.id = id;
+    if (this.hint == null) {
+      this.hint = Outlet.hint(name);
+    }
+    this.node = null;
+    this.input = null;
+    this.output = [];
+    if (this.id == null) {
+      this.id = Outlet.id(this.hint);
+    }
+  }
+
+  Outlet.prototype.morph = function(outlet) {
+    this.inout = outlet.inout;
+    this.name = outlet.name;
+    this.hint = outlet.hint;
+    this.type = outlet.type;
+    return this.meta = outlet.meta;
+  };
+
+  Outlet.prototype.dupe = function(name) {
+    var outlet;
+    if (name == null) {
+      name = this.id;
+    }
+    outlet = Outlet.make(this);
+    outlet.name = name;
+    return outlet;
+  };
+
+  Outlet.prototype.connect = function(outlet) {
+    if (this.inout === Graph.IN && outlet.inout === Graph.OUT) {
+      return outlet.connect(this);
+    }
+    if (this.inout !== Graph.OUT || outlet.inout !== Graph.IN) {
+      throw "Can only connect out to in.";
+    }
+    if (outlet.input === this) {
+      return;
+    }
+    outlet.disconnect();
+    outlet.input = this;
+    return this.output.push(outlet);
+  };
+
+  Outlet.prototype.disconnect = function(outlet) {
+    var index, _i, _len, _ref;
+    if (this.input) {
+      this.input.disconnect(this);
+    }
+    if (this.output.length) {
+      if (outlet) {
+        index = this.output.indexOf(outlet);
+        if (index >= 0) {
+          this.output.splice(index, 1);
+          return outlet.input = null;
+        }
+      } else {
+        _ref = this.output;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          outlet = _ref[_i];
+          outlet.input = null;
+        }
+        return this.output = [];
+      }
+    }
+  };
+
+  return Outlet;
+
+})();
+
+module.exports = Outlet;
+
+
+},{"./graph":176}],180:[function(require,module,exports){
+var Block, Factory, GLSL, Graph, Linker, ShaderGraph, Snippet, Visualize, cache, inspect, library, merge, visualize;
+
+Block = require('./block');
+
+Factory = require('./factory');
+
+GLSL = require('./glsl');
+
+Graph = require('./graph');
+
+Linker = require('./linker');
+
+Visualize = require('./visualize');
+
+library = Factory.library;
+
+cache = Factory.cache;
+
+visualize = Visualize.visualize;
+
+inspect = Visualize.inspect;
+
+Snippet = Linker.Snippet;
+
+merge = function(a, b) {
+  var key, out, value, _ref;
+  if (b == null) {
+    b = {};
+  }
+  out = {};
+  for (key in a) {
+    value = a[key];
+    out[key] = (_ref = b[key]) != null ? _ref : a[key];
+  }
+  return out;
+};
+
+ShaderGraph = (function() {
+  function ShaderGraph(snippets, config) {
+    var defaults;
+    if (!(this instanceof ShaderGraph)) {
+      return new ShaderGraph(snippets, config);
+    }
+    defaults = {
+      globalUniforms: false,
+      globalVaryings: true,
+      globalAttributes: true,
+      globals: [],
+      autoInspect: false
+    };
+    this.config = merge(defaults, config);
+    this.fetch = cache(library(GLSL, snippets, Snippet.load));
+  }
+
+  ShaderGraph.prototype.shader = function(config) {
+    var _config;
+    if (config == null) {
+      config = {};
+    }
+    _config = merge(this.config, config);
+    return new Factory.Factory(GLSL, this.fetch, _config);
+  };
+
+  ShaderGraph.prototype.material = function(config) {
+    return new Factory.Material(this.shader(config), this.shader(config));
+  };
+
+  ShaderGraph.prototype.overlay = function(shader) {
+    return ShaderGraph.overlay(shader);
+  };
+
+  ShaderGraph.prototype.visualize = function(shader) {
+    return ShaderGraph.visualize(shader);
+  };
+
+  ShaderGraph.Block = Block;
+
+  ShaderGraph.Factory = Factory;
+
+  ShaderGraph.GLSL = GLSL;
+
+  ShaderGraph.Graph = Graph;
+
+  ShaderGraph.Linker = Linker;
+
+  ShaderGraph.Visualize = Visualize;
+
+  ShaderGraph.inspect = function(shader) {
+    return inspect(shader);
+  };
+
+  ShaderGraph.visualize = function(shader) {
+    return visualize(shader);
+  };
+
+  return ShaderGraph;
+
+})();
+
+module.exports = ShaderGraph;
+
+if (typeof window !== 'undefined') {
+  window.ShaderGraph = ShaderGraph;
+}
+
+
+},{"./block":160,"./factory":166,"./glsl":174,"./graph":177,"./linker":182,"./visualize":188}],181:[function(require,module,exports){
+var Graph, Priority, assemble;
+
+Graph = require('../graph');
+
+Priority = require('./priority');
+
+
+/*
+  Program assembler
+
+  Builds composite program that can act as new module/snippet
+  Unconnected input/outputs and undefined callbacks are exposed in the new global/main scope
+  If there is only one call with an identical call signature, a #define is output instead.
+ */
+
+assemble = function(language, namespace, calls, requires) {
+  var adopt, attributes, externals, generate, handle, include, isDangling, library, lookup, process, required, symbols, uniforms, varyings;
+  generate = language.generate;
+  externals = {};
+  symbols = [];
+  uniforms = {};
+  varyings = {};
+  attributes = {};
+  library = {};
+  process = function() {
+    var body, code, includes, lib, main, ns, r, sorted, _ref;
+    for (ns in requires) {
+      r = requires[ns];
+      required(r.node, r.module);
+    }
+    _ref = handle(calls), body = _ref[0], calls = _ref[1];
+    if (namespace != null) {
+      body.entry = namespace;
+    }
+    main = generate.build(body, calls);
+    sorted = ((function() {
+      var _results;
+      _results = [];
+      for (ns in library) {
+        lib = library[ns];
+        _results.push(lib);
+      }
+      return _results;
+    })()).sort(function(a, b) {
+      return Priority.compare(a.priority, b.priority);
+    });
+    includes = sorted.map(function(x) {
+      return x.code;
+    });
+    includes.push(main.code);
+    code = generate.lines(includes);
+    return {
+      namespace: main.name,
+      library: library,
+      body: main.code,
+      code: code,
+      main: main,
+      entry: main.name,
+      symbols: symbols,
+      externals: externals,
+      uniforms: uniforms,
+      varyings: varyings,
+      attributes: attributes
+    };
+  };
+  handle = (function(_this) {
+    return function(calls) {
+      var body, c, call, ns, _i, _len;
+      calls = (function() {
+        var _results;
+        _results = [];
+        for (ns in calls) {
+          c = calls[ns];
+          _results.push(c);
+        }
+        return _results;
+      })();
+      calls.sort(function(a, b) {
+        return b.priority - a.priority;
+      });
+      call = function(node, module, priority) {
+        var entry, main, _dangling, _lookup;
+        include(node, module, priority);
+        main = module.main;
+        entry = module.entry;
+        _lookup = function(name) {
+          return lookup(node, name);
+        };
+        _dangling = function(name) {
+          return isDangling(node, name);
+        };
+        return generate.call(_lookup, _dangling, entry, main.signature, body);
+      };
+      body = generate.body();
+      for (_i = 0, _len = calls.length; _i < _len; _i++) {
+        c = calls[_i];
+        call(c.node, c.module, c.priority);
+      }
+      return [body, calls];
+    };
+  })(this);
+  adopt = function(namespace, code, priority) {
+    var record;
+    record = library[namespace];
+    if (record != null) {
+      return record.priority = Priority.max(record.priority, priority);
+    } else {
+      return library[namespace] = {
+        code: code,
+        priority: priority
+      };
+    }
+  };
+  include = function(node, module, priority) {
+    var def, key, lib, ns, _ref, _ref1, _ref2, _ref3;
+    priority = Priority.make(priority);
+    _ref = module.library;
+    for (ns in _ref) {
+      lib = _ref[ns];
+      adopt(ns, lib.code, Priority.nest(priority, lib.priority));
+    }
+    adopt(module.namespace, module.body, priority);
+    _ref1 = module.uniforms;
+    for (key in _ref1) {
+      def = _ref1[key];
+      uniforms[key] = def;
+    }
+    _ref2 = module.varyings;
+    for (key in _ref2) {
+      def = _ref2[key];
+      varyings[key] = def;
+    }
+    _ref3 = module.attributes;
+    for (key in _ref3) {
+      def = _ref3[key];
+      attributes[key] = def;
+    }
+    return required(node, module);
+  };
+  required = function(node, module) {
+    var copy, ext, k, key, v, _i, _len, _ref, _results;
+    _ref = module.symbols;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      key = _ref[_i];
+      ext = module.externals[key];
+      if (isDangling(node, ext.name)) {
+        copy = {};
+        for (k in ext) {
+          v = ext[k];
+          copy[k] = v;
+        }
+        copy.name = lookup(node, ext.name);
+        externals[key] = copy;
+        _results.push(symbols.push(key));
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+  isDangling = function(node, name) {
+    var outlet;
+    outlet = node.get(name);
+    if (outlet.inout === Graph.IN) {
+      return outlet.input === null;
+    } else if (outlet.inout === Graph.OUT) {
+      return outlet.output.length === 0;
+    }
+  };
+  lookup = function(node, name) {
+    var outlet;
+    outlet = node.get(name);
+    if (!outlet) {
+      return null;
+    }
+    if (outlet.input) {
+      outlet = outlet.input;
+    }
+    name = outlet.name;
+    return outlet.id;
+  };
+  return process();
+};
+
+module.exports = assemble;
+
+
+},{"../graph":177,"./priority":185}],182:[function(require,module,exports){
+exports.Snippet = require('./snippet');
+
+exports.Program = require('./program');
+
+exports.Layout = require('./layout');
+
+exports.assemble = require('./assemble');
+
+exports.link = require('./link');
+
+exports.priority = require('./priority');
+
+exports.load = exports.Snippet.load;
+
+
+},{"./assemble":181,"./layout":183,"./link":184,"./priority":185,"./program":186,"./snippet":187}],183:[function(require,module,exports){
+var Layout, Snippet, debug, link;
+
+Snippet = require('./snippet');
+
+link = require('./link');
+
+debug = false;
+
+
+/*
+  Program linkage layout
+  
+  Entry points are added to its dependency graph
+  Callbacks are linked either with a go-between function
+  or a #define if the signatures are identical.
+ */
+
+Layout = (function() {
+  function Layout(language, graph) {
+    this.language = language;
+    this.graph = graph;
+    this.links = [];
+    this.includes = [];
+    this.modules = {};
+    this.visits = {};
+  }
+
+  Layout.prototype.callback = function(node, module, priority, name, external) {
+    return this.links.push({
+      node: node,
+      module: module,
+      priority: priority,
+      name: name,
+      external: external
+    });
+  };
+
+  Layout.prototype.include = function(node, module, priority) {
+    var m;
+    if ((m = this.modules[module.namespace]) != null) {
+      return m.priority = Math.max(priority, m.priority);
+    } else {
+      this.modules[module.namespace] = true;
+      return this.includes.push({
+        node: node,
+        module: module,
+        priority: priority
+      });
+    }
+  };
+
+  Layout.prototype.visit = function(namespace) {
+    debug && console.log('Visit', namespace, !this.visits[namespace]);
+    if (this.visits[namespace]) {
+      return false;
+    }
+    return this.visits[namespace] = true;
+  };
+
+  Layout.prototype.link = function(module) {
+    var data, key, snippet;
+    data = link(this.language, this.links, this.includes, module);
+    snippet = new Snippet;
+    for (key in data) {
+      snippet[key] = data[key];
+    }
+    snippet.graph = this.graph;
+    return snippet;
+  };
+
+  return Layout;
+
+})();
+
+module.exports = Layout;
+
+
+},{"./link":184,"./snippet":187}],184:[function(require,module,exports){
+var Graph, Priority, link;
+
+Graph = require('../graph');
+
+Priority = require('./priority');
+
+
+/*
+ Callback linker
+ 
+ Imports given modules and generates linkages for registered callbacks.
+
+ Builds composite program with single module as exported entry point
+ */
+
+link = function(language, links, modules, exported) {
+  var adopt, attributes, externals, generate, include, includes, isDangling, library, process, symbols, uniforms, varyings;
+  generate = language.generate;
+  includes = [];
+  symbols = [];
+  externals = {};
+  uniforms = {};
+  attributes = {};
+  varyings = {};
+  library = {};
+  process = function() {
+    var code, e, exports, header, lib, m, ns, sorted, _i, _len;
+    exports = generate.links(links);
+    header = [];
+    if (exports.defs != null) {
+      header.push(exports.defs);
+    }
+    if (exports.bodies != null) {
+      header.push(exports.bodies);
+    }
+    for (_i = 0, _len = modules.length; _i < _len; _i++) {
+      m = modules[_i];
+      include(m.node, m.module, m.priority);
+    }
+    sorted = ((function() {
+      var _results;
+      _results = [];
+      for (ns in library) {
+        lib = library[ns];
+        _results.push(lib);
+      }
+      return _results;
+    })()).sort(function(a, b) {
+      return Priority.compare(a.priority, b.priority);
+    });
+    includes = sorted.map(function(x) {
+      return x.code;
+    });
+    code = generate.lines(includes);
+    code = generate.defuse(code);
+    if (header.length) {
+      code = [generate.lines(header), code].join("\n");
+    }
+    code = generate.hoist(code);
+    code = generate.dedupe(code);
+    e = exported;
+    return {
+      namespace: e.main.name,
+      code: code,
+      main: e.main,
+      entry: e.main.name,
+      externals: externals,
+      uniforms: uniforms,
+      attributes: attributes,
+      varyings: varyings
+    };
+  };
+  adopt = function(namespace, code, priority) {
+    var record;
+    record = library[namespace];
+    if (record != null) {
+      return record.priority = Priority.max(record.priority, priority);
+    } else {
+      return library[namespace] = {
+        code: code,
+        priority: priority
+      };
+    }
+  };
+  include = function(node, module, priority) {
+    var def, ext, key, lib, ns, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _results;
+    priority = Priority.make(priority);
+    _ref = module.library;
+    for (ns in _ref) {
+      lib = _ref[ns];
+      adopt(ns, lib.code, Priority.nest(priority, lib.priority));
+    }
+    adopt(module.namespace, module.body, priority);
+    _ref1 = module.uniforms;
+    for (key in _ref1) {
+      def = _ref1[key];
+      uniforms[key] = def;
+    }
+    _ref2 = module.varyings;
+    for (key in _ref2) {
+      def = _ref2[key];
+      varyings[key] = def;
+    }
+    _ref3 = module.attributes;
+    for (key in _ref3) {
+      def = _ref3[key];
+      attributes[key] = def;
+    }
+    _ref4 = module.symbols;
+    _results = [];
+    for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+      key = _ref4[_i];
+      ext = module.externals[key];
+      if (isDangling(node, ext.name)) {
+        externals[key] = ext;
+        _results.push(symbols.push(key));
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+  isDangling = function(node, name) {
+    var module, outlet, _ref, _ref1;
+    outlet = node.get(name);
+    if (!outlet) {
+      module = (_ref = (_ref1 = node.owner.snippet) != null ? _ref1._name : void 0) != null ? _ref : node.owner.namespace;
+      throw "Unable to link program. Unlinked callback `" + name + "` on `" + module + "`";
+    }
+    if (outlet.inout === Graph.IN) {
+      return outlet.input === null;
+    } else if (outlet.inout === Graph.OUT) {
+      return outlet.output.length === 0;
+    }
+  };
+  return process();
+};
+
+module.exports = link;
+
+
+},{"../graph":177,"./priority":185}],185:[function(require,module,exports){
+exports.make = function(x) {
+  if (x == null) {
+    x = [];
+  }
+  if (!(x instanceof Array)) {
+    x = [+x != null ? +x : 0];
+  }
+  return x;
+};
+
+exports.nest = function(a, b) {
+  return a.concat(b);
+};
+
+exports.compare = function(a, b) {
+  var i, n, p, q, _i;
+  n = Math.min(a.length, b.length);
+  for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+    p = a[i];
+    q = b[i];
+    if (p > q) {
+      return -1;
+    }
+    if (p < q) {
+      return 1;
+    }
+  }
+  a = a.length;
+  b = b.length;
+  if (a > b) {
+    return -1;
+  } else if (a < b) {
+    return 1;
+  } else {
+    return 0;
+  }
+};
+
+exports.max = function(a, b) {
+  if (exports.compare(a, b) > 0) {
+    return b;
+  } else {
+    return a;
+  }
+};
+
+
+},{}],186:[function(require,module,exports){
+var Program, Snippet, assemble;
+
+Snippet = require('./snippet');
+
+assemble = require('./assemble');
+
+
+/*
+  Program assembly model
+  
+  Snippets are added to its queue, registering calls and code includes.
+  Calls are de-duped and scheduled at the earliest point required for correct data flow.
+  
+  When assemble() is called, it builds a main() function to
+  execute all calls in final order.
+  
+  The result is a new instance of Snippet that acts as if it
+  was parsed from the combined source of the component
+  nodes.
+ */
+
+Program = (function() {
+  Program.index = 0;
+
+  Program.entry = function() {
+    return "_pg_" + (++Program.index) + "_";
+  };
+
+  function Program(language, namespace, graph) {
+    this.language = language;
+    this.namespace = namespace;
+    this.graph = graph;
+    this.calls = {};
+    this.requires = {};
+  }
+
+  Program.prototype.call = function(node, module, priority) {
+    var exists, ns;
+    ns = module.namespace;
+    if (exists = this.calls[ns]) {
+      exists.priority = Math.max(exists.priority, priority);
+    } else {
+      this.calls[ns] = {
+        node: node,
+        module: module,
+        priority: priority
+      };
+    }
+    return this;
+  };
+
+  Program.prototype.require = function(node, module) {
+    var ns;
+    ns = module.namespace;
+    return this.requires[ns] = {
+      node: node,
+      module: module
+    };
+  };
+
+  Program.prototype.assemble = function() {
+    var data, key, snippet, _ref;
+    data = assemble(this.language, (_ref = this.namespace) != null ? _ref : Program.entry, this.calls, this.requires);
+    snippet = new Snippet;
+    for (key in data) {
+      snippet[key] = data[key];
+    }
+    snippet.graph = this.graph;
+    return snippet;
+  };
+
+  return Program;
+
+})();
+
+module.exports = Program;
+
+
+},{"./assemble":181,"./snippet":187}],187:[function(require,module,exports){
+var Snippet;
+
+Snippet = (function() {
+  Snippet.index = 0;
+
+  Snippet.namespace = function() {
+    return "_sn_" + (++Snippet.index) + "_";
+  };
+
+  Snippet.load = function(language, name, code) {
+    var compiler, program, sigs, _ref;
+    program = language.parse(name, code);
+    _ref = language.compile(program), sigs = _ref[0], compiler = _ref[1];
+    return new Snippet(language, sigs, compiler, name, code);
+  };
+
+  function Snippet(language, _signatures, _compiler, _name, _original) {
+    var _ref;
+    this.language = language;
+    this._signatures = _signatures;
+    this._compiler = _compiler;
+    this._name = _name;
+    this._original = _original;
+    this.namespace = null;
+    this.code = null;
+    this.main = null;
+    this.entry = null;
+    this.uniforms = null;
+    this.externals = null;
+    this.symbols = null;
+    this.attributes = null;
+    this.varyings = null;
+    if (!this.language) {
+      delete this.language;
+    }
+    if (!this._signatures) {
+      delete this._signatures;
+    }
+    if (!this._compiler) {
+      delete this._compiler;
+    }
+    if (!this._original) {
+      delete this._original;
+    }
+    if (!this._name) {
+      this._name = (_ref = this._signatures) != null ? _ref.main.name : void 0;
+    }
+  }
+
+  Snippet.prototype.clone = function() {
+    return new Snippet(this.language, this._signatures, this._compiler, this._name, this._original);
+  };
+
+  Snippet.prototype.bind = function(config, uniforms, namespace, defines) {
+    var a, def, e, exceptions, exist, global, key, local, name, redef, u, v, x, _a, _e, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _u, _v;
+    if (uniforms === '' + uniforms) {
+      _ref = [uniforms, namespace != null ? namespace : {}, defines != null ? defines : {}], namespace = _ref[0], uniforms = _ref[1], defines = _ref[2];
+    } else if (namespace !== '' + namespace) {
+      _ref1 = [namespace != null ? namespace : {}, void 0], defines = _ref1[0], namespace = _ref1[1];
+    }
+    this.main = this._signatures.main;
+    this.namespace = (_ref2 = namespace != null ? namespace : this.namespace) != null ? _ref2 : Snippet.namespace();
+    this.entry = this.namespace + this.main.name;
+    this.uniforms = {};
+    this.varyings = {};
+    this.attributes = {};
+    this.externals = {};
+    this.symbols = [];
+    exist = {};
+    exceptions = {};
+    global = function(name) {
+      exceptions[name] = true;
+      return name;
+    };
+    local = (function(_this) {
+      return function(name) {
+        return _this.namespace + name;
+      };
+    })(this);
+    if (config.globals) {
+      _ref3 = config.globals;
+      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+        key = _ref3[_i];
+        global(key);
+      }
+    }
+    _u = config.globalUniforms ? global : local;
+    _v = config.globalVaryings ? global : local;
+    _a = config.globalAttributes ? global : local;
+    _e = local;
+    x = (function(_this) {
+      return function(def) {
+        return exist[def.name] = true;
+      };
+    })(this);
+    u = (function(_this) {
+      return function(def, name) {
+        return _this.uniforms[_u(name != null ? name : def.name)] = def;
+      };
+    })(this);
+    v = (function(_this) {
+      return function(def) {
+        return _this.varyings[_v(def.name)] = def;
+      };
+    })(this);
+    a = (function(_this) {
+      return function(def) {
+        return _this.attributes[_a(def.name)] = def;
+      };
+    })(this);
+    e = (function(_this) {
+      return function(def) {
+        var name;
+        name = _e(def.name);
+        _this.externals[name] = def;
+        return _this.symbols.push(name);
+      };
+    })(this);
+    redef = function(def) {
+      return {
+        type: def.type,
+        name: def.name,
+        value: def.value
+      };
+    };
+    _ref4 = this._signatures.uniform;
+    for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
+      def = _ref4[_j];
+      x(def);
+    }
+    _ref5 = this._signatures.uniform;
+    for (_k = 0, _len2 = _ref5.length; _k < _len2; _k++) {
+      def = _ref5[_k];
+      u(redef(def));
+    }
+    _ref6 = this._signatures.varying;
+    for (_l = 0, _len3 = _ref6.length; _l < _len3; _l++) {
+      def = _ref6[_l];
+      v(redef(def));
+    }
+    _ref7 = this._signatures.external;
+    for (_m = 0, _len4 = _ref7.length; _m < _len4; _m++) {
+      def = _ref7[_m];
+      e(def);
+    }
+    _ref8 = this._signatures.attribute;
+    for (_n = 0, _len5 = _ref8.length; _n < _len5; _n++) {
+      def = _ref8[_n];
+      a(redef(def));
+    }
+    for (name in uniforms) {
+      def = uniforms[name];
+      if (exist[name]) {
+        u(def, name);
+      }
+    }
+    this.body = this.code = this._compiler(this.namespace, exceptions, defines);
+    return null;
+  };
+
+  return Snippet;
+
+})();
+
+module.exports = Snippet;
+
+
+},{}],188:[function(require,module,exports){
+var Graph, markup, merge, resolve, serialize, visualize;
+
+Graph = require('../Graph').Graph;
+
+exports.serialize = serialize = require('./serialize');
+
+exports.markup = markup = require('./markup');
+
+visualize = function(graph) {
+  var data;
+  if (!graph) {
+    return;
+  }
+  if (!graph.nodes) {
+    return graph;
+  }
+  data = serialize(graph);
+  return markup.process(data);
+};
+
+resolve = function(arg) {
+  if (arg == null) {
+    return arg;
+  }
+  if (arg instanceof Array) {
+    return arg.map(resolve);
+  }
+  if ((arg.vertex != null) && (arg.fragment != null)) {
+    return [resolve(arg.vertex, resolve(arg.fragment))];
+  }
+  if (arg._graph != null) {
+    return arg._graph;
+  }
+  return arg;
+};
+
+merge = function(args) {
+  var arg, out, _i, _len;
+  out = [];
+  for (_i = 0, _len = args.length; _i < _len; _i++) {
+    arg = args[_i];
+    if (arg instanceof Array) {
+      out = out.concat(merge(arg));
+    } else if (arg != null) {
+      out.push(arg);
+    }
+  }
+  return out;
+};
+
+exports.visualize = function() {
+  var graph, list;
+  list = merge(resolve([].slice.call(arguments)));
+  return markup.merge((function() {
+    var _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = list.length; _i < _len; _i++) {
+      graph = list[_i];
+      if (graph) {
+        _results.push(visualize(graph));
+      }
+    }
+    return _results;
+  })());
+};
+
+exports.inspect = function() {
+  var contents, element;
+  contents = exports.visualize.apply(null, arguments);
+  element = markup.overlay(contents);
+  document.body.appendChild(element);
+  contents.update();
+  return element;
+};
+
+
+},{"../Graph":154,"./markup":189,"./serialize":190}],189:[function(require,module,exports){
+var connect, cssColor, escapeText, hash, hashColor, makeSVG, merge, overlay, path, process, sqr, trim, wrap, _activate, _markup, _order;
+
+hash = require('../factory/hash');
+
+trim = function(string) {
+  return ("" + string).replace(/^\s+|\s+$/g, '');
+};
+
+cssColor = function(r, g, b, alpha) {
+  return 'rgba(' + [r, g, b, alpha].join(', ') + ')';
+};
+
+hashColor = function(string, alpha) {
+  var b, color, g, max, min, norm, r;
+  if (alpha == null) {
+    alpha = 1;
+  }
+  color = hash(string) ^ 0x123456;
+  r = color & 0xFF;
+  g = (color >>> 8) & 0xFF;
+  b = (color >>> 16) & 0xFF;
+  max = Math.max(r, g, b);
+  norm = 140 / max;
+  min = Math.round(max / 3);
+  r = Math.min(255, Math.round(norm * Math.max(r, min)));
+  g = Math.min(255, Math.round(norm * Math.max(g, min)));
+  b = Math.min(255, Math.round(norm * Math.max(b, min)));
+  return cssColor(r, g, b, alpha);
+};
+
+escapeText = function(string) {
+  string = string != null ? string : "";
+  return string.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+};
+
+process = function(data) {
+  var el, links;
+  links = [];
+  el = _markup(data, links);
+  el.update = function() {
+    return connect(el, links);
+  };
+  _activate(el);
+  return el;
+};
+
+_activate = function(el) {
+  var code, codes, _i, _len, _results;
+  codes = el.querySelectorAll('.shadergraph-code');
+  _results = [];
+  for (_i = 0, _len = codes.length; _i < _len; _i++) {
+    code = codes[_i];
+    _results.push((function() {
+      var popup;
+      popup = code;
+      popup.parentNode.classList.add('shadergraph-has-code');
+      return popup.parentNode.addEventListener('click', function(event) {
+        return popup.style.display = {
+          block: 'none',
+          none: 'block'
+        }[popup.style.display || 'none'];
+      });
+    })());
+  }
+  return _results;
+};
+
+_order = function(data) {
+  var link, linkMap, node, nodeMap, recurse, _i, _j, _k, _len, _len1, _len2, _name, _ref, _ref1, _ref2;
+  nodeMap = {};
+  linkMap = {};
+  _ref = data.nodes;
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    node = _ref[_i];
+    nodeMap[node.id] = node;
+  }
+  _ref1 = data.links;
+  for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+    link = _ref1[_j];
+    if (linkMap[_name = link.from] == null) {
+      linkMap[_name] = [];
+    }
+    linkMap[link.from].push(link);
+  }
+  recurse = function(node, depth) {
+    var next, _k, _len2, _ref2;
+    if (depth == null) {
+      depth = 0;
+    }
+    node.depth = Math.max((_ref2 = node.depth) != null ? _ref2 : 0, depth);
+    if (next = linkMap[node.id]) {
+      for (_k = 0, _len2 = next.length; _k < _len2; _k++) {
+        link = next[_k];
+        recurse(nodeMap[link.to], depth + 1);
+      }
+    }
+    return null;
+  };
+  _ref2 = data.nodes;
+  for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+    node = _ref2[_k];
+    if (node.depth == null) {
+      recurse(node);
+    }
+  }
+  return null;
+};
+
+_markup = function(data, links) {
+  var addOutlet, block, clear, color, column, columns, div, link, node, outlet, outlets, wrapper, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1, _ref2, _ref3;
+  _order(data);
+  wrapper = document.createElement('div');
+  wrapper.classList.add('shadergraph-graph');
+  columns = [];
+  outlets = {};
+  _ref = data.nodes;
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    node = _ref[_i];
+    block = document.createElement('div');
+    block.classList.add("shadergraph-node");
+    block.classList.add("shadergraph-node-" + node.type);
+    block.innerHTML = "<div class=\"shadergraph-header\">" + (escapeText(node.name)) + "</div>";
+    addOutlet = function(outlet, inout) {
+      var color, div;
+      color = hashColor(outlet.type);
+      div = document.createElement('div');
+      div.classList.add('shadergraph-outlet');
+      div.classList.add("shadergraph-outlet-" + inout);
+      div.innerHTML = "<div class=\"shadergraph-point\" style=\"background: " + color + "\"></div>\n<div class=\"shadergraph-type\" style=\"color: " + color + "\">" + (escapeText(outlet.type)) + "</div>\n<div class=\"shadergraph-name\">" + (escapeText(outlet.name)) + "</div>";
+      block.appendChild(div);
+      return outlets[outlet.id] = div.querySelector('.shadergraph-point');
+    };
+    _ref1 = node.inputs;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      outlet = _ref1[_j];
+      addOutlet(outlet, 'in');
+    }
+    _ref2 = node.outputs;
+    for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+      outlet = _ref2[_k];
+      addOutlet(outlet, 'out');
+    }
+    if (node.graph != null) {
+      block.appendChild(_markup(node.graph, links));
+    } else {
+      clear = document.createElement('div');
+      clear.classList.add('shadergraph-clear');
+      block.appendChild(clear);
+    }
+    if (node.code != null) {
+      div = document.createElement('div');
+      div.classList.add('shadergraph-code');
+      div.innerHTML = escapeText(trim(node.code));
+      block.appendChild(div);
+    }
+    column = columns[node.depth];
+    if (column == null) {
+      column = document.createElement('div');
+      column.classList.add('shadergraph-column');
+      columns[node.depth] = column;
+    }
+    column.appendChild(block);
+  }
+  for (_l = 0, _len3 = columns.length; _l < _len3; _l++) {
+    column = columns[_l];
+    if (column != null) {
+      wrapper.appendChild(column);
+    }
+  }
+  _ref3 = data.links;
+  for (_m = 0, _len4 = _ref3.length; _m < _len4; _m++) {
+    link = _ref3[_m];
+    color = hashColor(link.type);
+    links.push({
+      color: color,
+      out: outlets[link.out],
+      "in": outlets[link["in"]]
+    });
+  }
+  return wrapper;
+};
+
+sqr = function(x) {
+  return x * x;
+};
+
+path = function(x1, y1, x2, y2) {
+  var d, dx, dy, f, h, mx, my, vert;
+  dx = x2 - x1;
+  dy = y2 - y1;
+  d = Math.sqrt(sqr(dx) + sqr(dy));
+  vert = Math.abs(dy) > Math.abs(dx);
+  if (vert) {
+    mx = (x1 + x2) / 2;
+    my = (y1 + y2) / 2;
+    f = dy > 0 ? .3 : -.3;
+    h = Math.min(Math.abs(dx) / 2, 20 + d / 8);
+    return ['M', x1, y1, 'C', x1 + h, y1 + ',', mx, my - d * f, mx, my, 'C', mx, my + d * f, x2 - h, y2 + ',', x2, y2].join(' ');
+  } else {
+    h = Math.min(Math.abs(dx) / 2.5, 20 + d / 4);
+    return ['M', x1, y1, 'C', x1 + h, y1 + ',', x2 - h, y2 + ',', x2, y2].join(' ');
+  }
+};
+
+makeSVG = function(tag) {
+  if (tag == null) {
+    tag = 'svg';
+  }
+  return document.createElementNS('http://www.w3.org/2000/svg', tag);
+};
+
+connect = function(element, links) {
+  var a, b, box, c, line, link, ref, svg, _i, _j, _len, _len1;
+  if (element.parentNode == null) {
+    return;
+  }
+  ref = element.getBoundingClientRect();
+  for (_i = 0, _len = links.length; _i < _len; _i++) {
+    link = links[_i];
+    a = link.out.getBoundingClientRect();
+    b = link["in"].getBoundingClientRect();
+    link.coords = {
+      x1: (a.left + a.right) / 2 - ref.left,
+      y1: (a.top + a.bottom) / 2 - ref.top,
+      x2: (b.left + b.right) / 2 - ref.left,
+      y2: (b.top + b.bottom) / 2 - ref.top
+    };
+  }
+  svg = element.querySelector('svg');
+  if (svg != null) {
+    element.removeChild(svg);
+  }
+  box = element;
+  while (box.parentNode && box.offsetHeight === 0) {
+    box = box.parentNode;
+  }
+  svg = makeSVG();
+  svg.setAttribute('width', box.offsetWidth);
+  svg.setAttribute('height', box.offsetHeight);
+  for (_j = 0, _len1 = links.length; _j < _len1; _j++) {
+    link = links[_j];
+    c = link.coords;
+    line = makeSVG('path');
+    line.setAttribute('d', path(c.x1, c.y1, c.x2, c.y2));
+    line.setAttribute('stroke', link.color);
+    line.setAttribute('stroke-width', 3);
+    line.setAttribute('fill', 'transparent');
+    svg.appendChild(line);
+  }
+  return element.appendChild(svg);
+};
+
+overlay = function(contents) {
+  var close, div, inside, view;
+  div = document.createElement('div');
+  div.setAttribute('class', 'shadergraph-overlay');
+  close = document.createElement('div');
+  close.setAttribute('class', 'shadergraph-close');
+  close.innerHTML = '&times;';
+  view = document.createElement('div');
+  view.setAttribute('class', 'shadergraph-view');
+  inside = document.createElement('div');
+  inside.setAttribute('class', 'shadergraph-inside');
+  inside.appendChild(contents);
+  view.appendChild(inside);
+  div.appendChild(view);
+  div.appendChild(close);
+  close.addEventListener('click', function() {
+    return div.parentNode.removeChild(div);
+  });
+  return div;
+};
+
+wrap = function(markup) {
+  var div;
+  if (markup instanceof Node) {
+    return markup;
+  }
+  div = document.createElement('div');
+  div.innerText = markup != null ? markup : '';
+  return div;
+};
+
+merge = function(markup) {
+  var div, el, _i, _len;
+  if (markup.length !== 1) {
+    div = document.createElement('div');
+    for (_i = 0, _len = markup.length; _i < _len; _i++) {
+      el = markup[_i];
+      div.appendChild(wrap(el));
+    }
+    div.update = function() {
+      var _j, _len1, _results;
+      _results = [];
+      for (_j = 0, _len1 = markup.length; _j < _len1; _j++) {
+        el = markup[_j];
+        _results.push(typeof el.update === "function" ? el.update() : void 0);
+      }
+      return _results;
+    };
+    return div;
+  } else {
+    return wrap(markup[0]);
+  }
+};
+
+module.exports = {
+  process: process,
+  merge: merge,
+  overlay: overlay
+};
+
+
+},{"../factory/hash":165}],190:[function(require,module,exports){
+var Block, isCallback, serialize;
+
+Block = require('../block');
+
+isCallback = function(outlet) {
+  return outlet.type[0] === '(';
+};
+
+serialize = function(graph) {
+  var block, format, inputs, links, node, nodes, other, outlet, outputs, record, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3;
+  nodes = [];
+  links = [];
+  _ref = graph.nodes;
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    node = _ref[_i];
+    record = {
+      id: node.id,
+      name: null,
+      type: null,
+      depth: null,
+      graph: null,
+      inputs: [],
+      outputs: []
+    };
+    nodes.push(record);
+    inputs = record.inputs;
+    outputs = record.outputs;
+    block = node.owner;
+    if (block instanceof Block.Call) {
+      record.name = block.snippet._name;
+      record.type = 'call';
+      record.code = block.snippet._original;
+    } else if (block instanceof Block.Callback) {
+      record.name = "Callback";
+      record.type = 'callback';
+      record.graph = serialize(block.graph);
+    } else if (block instanceof Block.Isolate) {
+      record.name = 'Isolate';
+      record.type = 'isolate';
+      record.graph = serialize(block.graph);
+    } else if (block instanceof Block.Join) {
+      record.name = 'Join';
+      record.type = 'join';
+    }
+    format = function(type) {
+      type = type.replace(")(", ")→(");
+      return type = type.replace("()", "");
+    };
+    _ref1 = node.inputs;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      outlet = _ref1[_j];
+      inputs.push({
+        id: outlet.id,
+        name: outlet.name,
+        type: format(outlet.type),
+        open: outlet.input == null
+      });
+    }
+    _ref2 = node.outputs;
+    for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+      outlet = _ref2[_k];
+      outputs.push({
+        id: outlet.id,
+        name: outlet.name,
+        type: format(outlet.type),
+        open: !outlet.output.length
+      });
+      _ref3 = outlet.output;
+      for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+        other = _ref3[_l];
+        links.push({
+          from: node.id,
+          out: outlet.id,
+          to: other.node.id,
+          "in": other.id,
+          type: format(outlet.type)
+        });
+      }
+    }
+  }
+  return {
+    nodes: nodes,
+    links: links
+  };
+};
+
+module.exports = serialize;
+
+
+},{"../block":160}],191:[function(require,module,exports){
+module.exports = require('./lib/index')
+
+},{"./lib/index":193}],192:[function(require,module,exports){
+var state
+  , token
+  , tokens
+  , idx
+
+var original_symbol = {
+    nud: function() { return this.children && this.children.length ? this : fail('unexpected')() }
+  , led: fail('missing operator')
+}
+
+var symbol_table = {}
+
+function itself() {
+  return this
+}
+
+symbol('(ident)').nud = itself
+symbol('(keyword)').nud = itself
+symbol('(builtin)').nud = itself
+symbol('(literal)').nud = itself
+symbol('(end)')
+
+symbol(':')
+symbol(';')
+symbol(',')
+symbol(')')
+symbol(']')
+symbol('}')
+
+infixr('&&', 30)
+infixr('||', 30)
+infix('|', 43)
+infix('^', 44)
+infix('&', 45)
+infix('==', 46)
+infix('!=', 46)
+infix('<', 47)
+infix('<=', 47)
+infix('>', 47)
+infix('>=', 47)
+infix('>>', 48)
+infix('<<', 48)
+infix('+', 50)
+infix('-', 50)
+infix('*', 60)
+infix('/', 60)
+infix('%', 60)
+infix('?', 20, function(left) {
+  this.children = [left, expression(0), (advance(':'), expression(0))]
+  this.type = 'ternary'
+  return this
+})
+infix('.', 80, function(left) {
+  token.type = 'literal'
+  state.fake(token)
+  this.children = [left, token]
+  advance()
+  return this
+})
+infix('[', 80, function(left) {
+  this.children = [left, expression(0)]
+  this.type = 'binary'
+  advance(']')
+  return this
+})
+infix('(', 80, function(left) {
+  this.children = [left]
+  this.type = 'call'
+
+  if(token.data !== ')') while(1) {
+    this.children.push(expression(0))
+    if(token.data !== ',') break
+    advance(',')
+  }
+  advance(')')
+  return this
+})
+
+prefix('-')
+prefix('+')
+prefix('!')
+prefix('~')
+prefix('defined')
+prefix('(', function() {
+  this.type = 'group'
+  this.children = [expression(0)]
+  advance(')')
+  return this 
+})
+prefix('++')
+prefix('--')
+suffix('++')
+suffix('--')
+
+assignment('=')
+assignment('+=')
+assignment('-=')
+assignment('*=')
+assignment('/=')
+assignment('%=')
+assignment('&=')
+assignment('|=')
+assignment('^=')
+assignment('>>=')
+assignment('<<=')
+
+module.exports = function(incoming_state, incoming_tokens) {
+  state = incoming_state
+  tokens = incoming_tokens
+  idx = 0
+  var result
+
+  if(!tokens.length) return
+
+  advance()
+  result = expression(0)
+  result.parent = state[0]
+  emit(result)
+
+  if(idx < tokens.length) {
+    throw new Error('did not use all tokens')
+  }
+
+  result.parent.children = [result]
+
+  function emit(node) {
+    state.unshift(node, false)
+    for(var i = 0, len = node.children.length; i < len; ++i) {
+      emit(node.children[i])
+    }
+    state.shift()
+  }
+
+}
+
+function symbol(id, binding_power) {
+  var sym = symbol_table[id]
+  binding_power = binding_power || 0
+  if(sym) {
+    if(binding_power > sym.lbp) {
+      sym.lbp = binding_power
+    }
+  } else {
+    sym = Object.create(original_symbol)
+    sym.id = id 
+    sym.lbp = binding_power
+    symbol_table[id] = sym
+  }
+  return sym
+}
+
+function expression(rbp) {
+  var left, t = token
+  advance()
+
+  left = t.nud()
+  while(rbp < token.lbp) {
+    t = token
+    advance()
+    left = t.led(left)
+  }
+  return left
+}
+
+function infix(id, bp, led) {
+  var sym = symbol(id, bp)
+  sym.led = led || function(left) {
+    this.children = [left, expression(bp)]
+    this.type = 'binary'
+    return this
+  }
+}
+
+function infixr(id, bp, led) {
+  var sym = symbol(id, bp)
+  sym.led = led || function(left) {
+    this.children = [left, expression(bp - 1)]
+    this.type = 'binary'
+    return this
+  }
+  return sym
+}
+
+function prefix(id, nud) {
+  var sym = symbol(id)
+  sym.nud = nud || function() {
+    this.children = [expression(70)]
+    this.type = 'unary'
+    return this
+  }
+  return sym
+}
+
+function suffix(id) {
+  var sym = symbol(id, 150)
+  sym.led = function(left) {
+    this.children = [left]
+    this.type = 'suffix'
+    return this
+  }
+}
+
+function assignment(id) {
+  return infixr(id, 10, function(left) {
+    this.children = [left, expression(9)]
+    this.assignment = true
+    this.type = 'assign'
+    return this
+  })
+}
+
+function advance(id) {
+  var next
+    , value
+    , type
+    , output
+
+  if(id && token.data !== id) {
+    return state.unexpected('expected `'+ id + '`, got `'+token.data+'`')
+  }
+
+  if(idx >= tokens.length) {
+    token = symbol_table['(end)']
+    return
+  }
+
+  next = tokens[idx++]
+  value = next.data
+  type = next.type
+
+  if(type === 'ident') {
+    output = state.scope.find(value) || state.create_node()
+    type = output.type
+  } else if(type === 'builtin') {
+    output = symbol_table['(builtin)']
+  } else if(type === 'keyword') {
+    output = symbol_table['(keyword)']
+  } else if(type === 'operator') {
+    output = symbol_table[value]
+    if(!output) {
+      return state.unexpected('unknown operator `'+value+'`')
+    }
+  } else if(type === 'float' || type === 'integer') {
+    type = 'literal'
+    output = symbol_table['(literal)']
+  } else {
+    return state.unexpected('unexpected token.')
+  }
+
+  if(output) {
+    if(!output.nud) { output.nud = itself }
+    if(!output.children) { output.children = [] }
+  }
+
+  output = Object.create(output)
+  output.token = next
+  output.type = type
+  if(!output.data) output.data = value
+
+  return token = output
+}
+
+function fail(message) {
+  return function() { return state.unexpected(message) }
+}
+
+},{}],193:[function(require,module,exports){
+module.exports = parser
+
+var through = require('../../through')
+  , full_parse_expr = require('./expr')
+  , Scope = require('./scope')
+
+// singleton!
+var Advance = new Object
+
+var DEBUG = false
+
+var _ = 0
+  , IDENT = _++
+  , STMT = _++
+  , STMTLIST = _++
+  , STRUCT = _++
+  , FUNCTION = _++
+  , FUNCTIONARGS = _++
+  , DECL = _++
+  , DECLLIST = _++
+  , FORLOOP = _++
+  , WHILELOOP = _++
+  , IF = _++
+  , EXPR = _++
+  , PRECISION = _++
+  , COMMENT = _++
+  , PREPROCESSOR = _++
+  , KEYWORD = _++
+  , KEYWORD_OR_IDENT = _++
+  , RETURN = _++
+  , BREAK = _++
+  , CONTINUE = _++
+  , DISCARD = _++
+  , DOWHILELOOP = _++
+  , PLACEHOLDER = _++
+  , QUANTIFIER = _++
+
+var DECL_ALLOW_ASSIGN = 0x1
+  , DECL_ALLOW_COMMA = 0x2
+  , DECL_REQUIRE_NAME = 0x4
+  , DECL_ALLOW_INVARIANT = 0x8
+  , DECL_ALLOW_STORAGE = 0x10
+  , DECL_NO_INOUT = 0x20
+  , DECL_ALLOW_STRUCT = 0x40
+  , DECL_STATEMENT = 0xFF
+  , DECL_FUNCTION = DECL_STATEMENT & ~(DECL_ALLOW_ASSIGN | DECL_ALLOW_COMMA | DECL_NO_INOUT | DECL_ALLOW_INVARIANT | DECL_REQUIRE_NAME)
+  , DECL_STRUCT = DECL_STATEMENT & ~(DECL_ALLOW_ASSIGN | DECL_ALLOW_INVARIANT | DECL_ALLOW_STORAGE | DECL_ALLOW_STRUCT)
+
+var QUALIFIERS = ['const', 'attribute', 'uniform', 'varying']
+
+var NO_ASSIGN_ALLOWED = false
+  , NO_COMMA_ALLOWED = false
+
+// map of tokens to stmt types
+var token_map = {
+    'block-comment': COMMENT
+  , 'line-comment': COMMENT
+  , 'preprocessor': PREPROCESSOR
+}
+
+// map of stmt types to human
+var stmt_type = _ = [ 
+    'ident'
+  , 'stmt'
+  , 'stmtlist'
+  , 'struct'
+  , 'function'
+  , 'functionargs'
+  , 'decl'
+  , 'decllist'
+  , 'forloop'
+  , 'whileloop'
+  , 'i'+'f'
+  , 'expr'
+  , 'precision'
+  , 'comment'
+  , 'preprocessor'
+  , 'keyword'
+  , 'keyword_or_ident'
+  , 'return'
+  , 'break'
+  , 'continue'
+  , 'discard'
+  , 'do-while'
+  , 'placeholder'
+  , 'quantifier'
+]
+
+function parser() {
+  var stmtlist = n(STMTLIST)
+    , stmt = n(STMT)
+    , decllist = n(DECLLIST)
+    , precision = n(PRECISION)
+    , ident = n(IDENT)
+    , keyword_or_ident = n(KEYWORD_OR_IDENT)
+    , fn = n(FUNCTION)
+    , fnargs = n(FUNCTIONARGS)
+    , forstmt = n(FORLOOP)
+    , ifstmt = n(IF)
+    , whilestmt = n(WHILELOOP)
+    , returnstmt = n(RETURN)
+    , dowhilestmt = n(DOWHILELOOP)
+    , quantifier = n(QUANTIFIER)
+
+  var parse_struct
+    , parse_precision
+    , parse_quantifier
+    , parse_forloop
+    , parse_if
+    , parse_return
+    , parse_whileloop
+    , parse_dowhileloop
+    , parse_function
+    , parse_function_args
+
+  var stream = through(write, end)
+    , check = arguments.length ? [].slice.call(arguments) : []
+    , depth = 0
+    , state = []
+    , tokens = []
+    , whitespace = []
+    , errored = false
+    , program
+    , token
+    , node
+
+  // setup state
+  state.shift = special_shift
+  state.unshift = special_unshift
+  state.fake = special_fake
+  state.unexpected = unexpected
+  state.scope = new Scope(state)
+  state.create_node = function() {
+    var n = mknode(IDENT, token)
+    n.parent = stream.program
+    return n
+  }
+
+  setup_stative_parsers()
+
+  // setup root node
+  node = stmtlist()
+  node.expecting = '(eof)'
+  node.mode = STMTLIST
+  node.token = {type: '(program)', data: '(program)'}
+  program = node
+
+  stream.program = program
+  stream.scope = function(scope) {
+    if(arguments.length === 1) {
+      state.scope = scope
+    }
+    return state.scope
+  }
+
+  state.unshift(node)
+  return stream
+
+  // stream functions ---------------------------------------------
+
+  function write(input) {
+    if(input.type === 'whitespace' || input.type === 'line-comment' || input.type === 'block-comment') {
+
+      whitespace.push(input)
+      return
+    }
+    tokens.push(input)
+    token = token || tokens[0]
+
+    if(token && whitespace.length) {
+      token.preceding = token.preceding || []
+      token.preceding = token.preceding.concat(whitespace)
+      whitespace = []
+    }
+
+    while(take()) switch(state[0].mode) {
+      case STMT: parse_stmt(); break
+      case STMTLIST: parse_stmtlist(); break
+      case DECL: parse_decl(); break
+      case DECLLIST: parse_decllist(); break
+      case EXPR: parse_expr(); break
+      case STRUCT: parse_struct(true, true); break
+      case PRECISION: parse_precision(); break
+      case IDENT: parse_ident(); break
+      case KEYWORD: parse_keyword(); break
+      case KEYWORD_OR_IDENT: parse_keyword_or_ident(); break
+      case FUNCTION: parse_function(); break
+      case FUNCTIONARGS: parse_function_args(); break
+      case FORLOOP: parse_forloop(); break
+      case WHILELOOP: parse_whileloop(); break
+      case DOWHILELOOP: parse_dowhileloop(); break
+      case RETURN: parse_return(); break
+      case IF: parse_if(); break
+      case QUANTIFIER: parse_quantifier(); break
+    }
+  }
+  
+  function end(tokens) {
+    if(arguments.length) {
+      write(tokens)
+    }
+
+    if(state.length > 1) {
+      unexpected('unexpected EOF')
+      return
+    }
+
+    stream.emit('end')
+  }
+
+  function take() {
+    if(errored || !state.length)
+      return false
+
+    return (token = tokens[0]) && !stream.paused
+  }
+
+  // ----- state manipulation --------
+
+  function special_fake(x) {
+    state.unshift(x)
+    state.shift()
+  }
+
+  function special_unshift(_node, add_child) {
+    _node.parent = state[0]
+
+    var ret = [].unshift.call(this, _node)
+
+    add_child = add_child === undefined ? true : add_child
+
+    if(DEBUG) {
+      var pad = ''
+      for(var i = 0, len = this.length - 1; i < len; ++i) {
+        pad += ' |'
+      }
+      console.log(pad, '\\'+_node.type, _node.token.data)
+    }
+
+    if(add_child && node !== _node) node.children.push(_node)
+    node = _node
+
+    return ret
+  }
+
+  function special_shift() {
+    var _node = [].shift.call(this)
+      , okay = check[this.length]
+      , emit = false
+
+    if(DEBUG) {
+      var pad = ''
+      for(var i = 0, len = this.length; i < len; ++i) {
+        pad += ' |'
+      }
+      console.log(pad, '/'+_node.type)
+    }
+
+    if(check.length) { 
+      if(typeof check[0] === 'function') {
+        emit = check[0](_node)
+      } else if(okay !== undefined) {
+        emit = okay.test ? okay.test(_node.type) : okay === _node.type
+      }
+    } else {
+      emit = true
+    }
+
+    if(emit) stream.emit('data', _node) 
+  
+    node = _node.parent
+    return _node
+  }
+
+  // parse states ---------------
+
+  function parse_stmtlist() {
+    // determine the type of the statement
+    // and then start parsing
+    return stative(
+      function() { state.scope.enter(); return Advance }
+    , normal_mode
+    )()
+
+    function normal_mode() {
+      if(token.data === state[0].expecting) {
+        return state.scope.exit(), state.shift()
+      }
+      switch(token.type) {
+        case 'preprocessor':
+          state.fake(adhoc())
+          tokens.shift()
+        return
+        default:
+          state.unshift(stmt())
+        return 
+      }
+    }
+  }
+
+  function parse_stmt() {
+    if(state[0].brace) {
+      if(token.data !== '}') {
+        return unexpected('expected `}`, got '+token.data)
+      }
+      state[0].brace = false
+      return tokens.shift(), state.shift()
+    }
+    switch(token.type) {
+      case 'eof': return state.shift()
+      case 'keyword': 
+        switch(token.data) {
+          case 'for': return state.unshift(forstmt());
+          case 'if': return state.unshift(ifstmt());
+          case 'while': return state.unshift(whilestmt());
+          case 'do': return state.unshift(dowhilestmt());
+          case 'break': return state.fake(mknode(BREAK, token)), tokens.shift()
+          case 'continue': return state.fake(mknode(CONTINUE, token)), tokens.shift()
+          case 'discard': return state.fake(mknode(DISCARD, token)), tokens.shift()
+          case 'return': return state.unshift(returnstmt());
+          case 'precision': return state.unshift(precision());
+        }
+        return state.unshift(decl(DECL_STATEMENT))
+      case 'ident':
+        var lookup
+        if(lookup = state.scope.find(token.data)) {
+          if(lookup.parent.type === 'struct') {
+            // this is strictly untrue, you could have an
+            // expr that starts with a struct constructor.
+            //      ... sigh
+            return state.unshift(decl(DECL_STATEMENT))
+          }
+          return state.unshift(expr(';'))
+        }
+      case 'operator':
+        if(token.data === '{') {
+          state[0].brace = true
+          var n = stmtlist()
+          n.expecting = '}'
+          return tokens.shift(), state.unshift(n)
+        }
+        if(token.data === ';') {
+          return tokens.shift(), state.shift()
+        }
+      default: return state.unshift(expr(';'))
+    }
+  }
+
+  function parse_decl() {
+    var stmt = state[0]
+
+    return stative(
+      invariant_or_not,
+      storage_or_not,
+      parameter_or_not,
+      precision_or_not,
+      struct_or_type,
+      maybe_name,
+      maybe_lparen,     // lparen means we're a function
+      is_decllist,
+      done
+    )()
+
+    function invariant_or_not() {
+      if(token.data === 'invariant') {
+        if(stmt.flags & DECL_ALLOW_INVARIANT) {
+          state.unshift(keyword())
+          return Advance
+        } else {
+          return unexpected('`invariant` is not allowed here') 
+        }
+      } else {
+        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
+        return Advance
+      }
+    }
+
+    function storage_or_not() {
+      if(is_storage(token)) {
+        if(stmt.flags & DECL_ALLOW_STORAGE) {
+          state.unshift(keyword()) 
+          return Advance
+        } else {
+          return unexpected('storage is not allowed here') 
+        }
+      } else {
+        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
+        return Advance
+      }
+    }
+
+    function parameter_or_not() {
+      if(is_parameter(token)) {
+        if(!(stmt.flags & DECL_NO_INOUT)) {
+          state.unshift(keyword()) 
+          return Advance
+        } else {
+          return unexpected('parameter is not allowed here') 
+        }
+      } else {
+        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
+        return Advance
+      }
+    }
+
+    function precision_or_not() {
+      if(is_precision(token)) {
+        state.unshift(keyword())
+        return Advance
+      } else {
+        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
+        return Advance
+      }
+    }
+
+    function struct_or_type() {
+      if(token.data === 'struct') {
+        if(!(stmt.flags & DECL_ALLOW_STRUCT)) {
+          return unexpected('cannot nest structs')
+        }
+        state.unshift(struct())
+        return Advance
+      }
+
+      if(token.type === 'keyword') {
+        state.unshift(keyword())
+        return Advance
+      }
+
+      var lookup = state.scope.find(token.data)
+
+      if(lookup) {
+        state.fake(Object.create(lookup))
+        tokens.shift()
+        return Advance  
+      }
+      return unexpected('expected user defined type, struct or keyword, got '+token.data)
+    }
+
+    function maybe_name() {
+      if(token.data === ',' && !(stmt.flags & DECL_ALLOW_COMMA)) {
+        return state.shift()
+      }
+
+      if(token.data === '[') {
+        // oh lord.
+        state.unshift(quantifier())
+        return
+      }
+
+      if(token.data === ')') return state.shift()
+
+      if(token.data === ';') {
+        return stmt.stage + 3
+      }
+
+      if(token.type !== 'ident') {
+        console.log(token);
+        return unexpected('expected identifier, got '+token.data)
+      }
+
+      stmt.collected_name = tokens.shift()
+      return Advance      
+    }
+
+    function maybe_lparen() {
+      if(token.data === '(') {
+        tokens.unshift(stmt.collected_name)
+        delete stmt.collected_name
+        state.unshift(fn())
+        return stmt.stage + 2 
+      }
+      return Advance
+    }
+
+    function is_decllist() {
+      tokens.unshift(stmt.collected_name)
+      delete stmt.collected_name
+      state.unshift(decllist())
+      return Advance
+    }
+
+    function done() {
+      return state.shift()
+    }
+  }
+  
+  function parse_decllist() {
+    // grab ident
+
+    if(token.type === 'ident') {
+      var name = token.data
+      state.unshift(ident())
+      state.scope.define(name)
+      return
+    }
+
+    if(token.type === 'operator') {
+
+      if(token.data === ',') {
+        // multi-decl!
+        if(!(state[1].flags & DECL_ALLOW_COMMA)) {
+          return state.shift()
+        }
+
+        return tokens.shift()
+      } else if(token.data === '=') {
+        if(!(state[1].flags & DECL_ALLOW_ASSIGN)) return unexpected('`=` is not allowed here.')
+
+        tokens.shift()
+
+        state.unshift(expr(',', ';'))
+        return
+      } else if(token.data === '[') {
+        state.unshift(quantifier())
+        return
+      }
+    }
+    return state.shift()
+  }
+
+  function parse_keyword_or_ident() {
+    if(token.type === 'keyword') {
+      state[0].type = 'keyword'
+      state[0].mode = KEYWORD
+      return
+    }
+
+    if(token.type === 'ident') {
+      state[0].type = 'ident'
+      state[0].mode = IDENT
+      return
+    }
+
+    return unexpected('expected keyword or user-defined name, got '+token.data)
+  }
+
+  function parse_keyword() {
+    if(token.type !== 'keyword') {
+      return unexpected('expected keyword, got '+token.data)
+    }
+
+    return state.shift(), tokens.shift()
+  }
+
+  function parse_ident() {
+    if(token.type !== 'ident') {
+      return unexpected('expected user-defined name, got '+token.data)
+    }
+
+    state[0].data = token.data
+    return state.shift(), tokens.shift()
+  }
+
+
+  function parse_expr() {
+    var expecting = state[0].expecting
+
+    state[0].tokens = state[0].tokens || []
+
+    if(state[0].parenlevel === undefined) {
+      state[0].parenlevel = 0
+      state[0].bracelevel = 0
+    }
+    if(state[0].parenlevel < 1 && expecting.indexOf(token.data) > -1) {
+      return parseexpr(state[0].tokens)
+    }
+    if(token.data === '(') {
+      ++state[0].parenlevel
+    } else if(token.data === ')') {
+      --state[0].parenlevel
+    }
+
+    switch(token.data) {
+      case '{': ++state[0].bracelevel; break
+      case '}': --state[0].bracelevel; break
+      case '(': ++state[0].parenlevel; break
+      case ')': --state[0].parenlevel; break
+    }
+
+    if(state[0].parenlevel < 0) return unexpected('unexpected `)`')
+    if(state[0].bracelevel < 0) return unexpected('unexpected `}`')
+
+    state[0].tokens.push(tokens.shift())
+    return
+
+    function parseexpr(tokens) {
+      return full_parse_expr(state, tokens), state.shift()
+    }
+  }
+
+  // node types ---------------
+
+  function n(type) {
+    // this is a function factory that suffices for most kinds of expressions and statements
+    return function() {
+      return mknode(type, token)
+    }
+  }
+
+  function adhoc() {
+    return mknode(token_map[token.type], token, node)
+  }
+
+  function decl(flags) {
+    var _ = mknode(DECL, token, node)
+    _.flags = flags
+
+    return _
+  }
+
+  function struct(allow_assign, allow_comma) {
+    var _ = mknode(STRUCT, token, node)
+    _.allow_assign = allow_assign === undefined ? true : allow_assign
+    _.allow_comma = allow_comma === undefined ? true : allow_comma
+    return _
+  }
+
+  function expr() {
+    var n = mknode(EXPR, token, node)
+
+    n.expecting = [].slice.call(arguments)
+    return n
+  }
+  
+  function keyword(default_value) {
+    var t = token
+    if(default_value) {
+      t = {'type': '(implied)', data: '(default)', position: t.position} 
+    }
+    return mknode(KEYWORD, t, node)
+  }
+
+  // utils ----------------------------
+
+  function unexpected(str) {
+    errored = true
+    stream.emit('error', new Error(
+      (str || 'unexpected '+state) +
+      ' at line '+state[0].token.line
+    ))
+  }
+
+  function assert(type, data) {
+    return 1,
+      assert_null_string_or_array(type, token.type) && 
+      assert_null_string_or_array(data, token.data)
+  }
+
+  function assert_null_string_or_array(x, y) {
+    switch(typeof x) {
+      case 'string': if(y !== x) {
+        unexpected('expected `'+x+'`, got '+y+'\n'+token.data);
+      } return !errored
+
+      case 'object': if(x && x.indexOf(y) === -1) {
+        unexpected('expected one of `'+x.join('`, `')+'`, got '+y);
+      } return !errored
+    }
+    return true
+  }
+
+  // stative ----------------------------
+
+  function stative() {
+    var steps = [].slice.call(arguments)
+      , step
+      , result
+
+    return function() {
+      var current = state[0]
+
+      current.stage || (current.stage = 0)
+
+      step = steps[current.stage]
+      if(!step) return unexpected('parser in undefined state!')
+
+      result = step()
+
+      if(result === Advance) return ++current.stage
+      if(result === undefined) return
+      current.stage = result
+    } 
+  }
+
+  function advance(op, t) {
+    t = t || 'operator'
+    return function() {
+      if(!assert(t, op)) return
+
+      var last = tokens.shift()
+        , children = state[0].children
+        , last_node = children[children.length - 1]
+
+      if(last_node && last_node.token && last.preceding) {
+        last_node.token.succeeding = last_node.token.succeeding || []
+        last_node.token.succeeding = last_node.token.succeeding.concat(last.preceding)
+      }
+      return Advance
+    }
+  }
+
+  function advance_expr(until) {
+    return function() { return state.unshift(expr(until)), Advance }
+  }
+
+  function advance_ident(declare) {
+    return declare ? function() {
+      var name = token.data
+      return assert('ident') && (state.unshift(ident()), state.scope.define(name), Advance)
+    } :  function() {
+      if(!assert('ident')) return
+
+      var s = Object.create(state.scope.find(token.data))
+      s.token = token
+
+      return (tokens.shift(), Advance)
+    }
+  }
+
+  function advance_stmtlist() {
+    return function() {
+      var n = stmtlist()
+      n.expecting = '}'
+      return state.unshift(n), Advance
+    }
+  }
+
+  function maybe_stmtlist(skip) {
+    return function() {
+      var current = state[0].stage
+      if(token.data !== '{') { return state.unshift(stmt()), current + skip }
+      return tokens.shift(), Advance
+    }
+  }
+
+  function popstmt() {
+    return function() { return state.shift(), state.shift() }
+  }
+
+
+  function setup_stative_parsers() {
+
+    // could also be
+    // struct { } decllist
+    parse_struct =
+        stative(
+          advance('struct', 'keyword')
+        , function() {
+            if(token.data === '{') {
+              state.fake(mknode(IDENT, {data:'', position: token.position, type:'ident'}))
+              return Advance
+            }
+
+            return advance_ident(true)()
+          }
+        , function() { state.scope.enter(); return Advance }
+        , advance('{')
+        , function() {
+            if(token.data === '}') {
+              state.scope.exit()
+              tokens.shift()
+              return state.shift()
+            }
+            if(token.data === ';') { tokens.shift(); return }
+            state.unshift(decl(DECL_STRUCT))
+          }
+        )
+
+    parse_precision =
+        stative(
+          function() { return tokens.shift(), Advance }
+        , function() { 
+            return assert(
+            'keyword', ['lowp', 'mediump', 'highp']
+            ) && (state.unshift(keyword()), Advance) 
+          }
+        , function() { return (state.unshift(keyword()), Advance) }
+        , function() { return state.shift() } 
+        )
+
+    parse_quantifier =
+        stative(
+          advance('[')
+        , advance_expr(']')
+        , advance(']')
+        , function() { return state.shift() }
+        )
+
+    parse_forloop = 
+        stative(
+          advance('for', 'keyword')
+        , advance('(')
+        , function() {
+            var lookup
+            if(token.type === 'ident') {
+              if(!(lookup = state.scope.find(token.data))) {
+                lookup = state.create_node()
+              }
+             
+              if(lookup.parent.type === 'struct') {
+                return state.unshift(decl(DECL_STATEMENT)), Advance
+              }
+            } else if(token.type === 'builtin' || token.type === 'keyword') {
+              return state.unshift(decl(DECL_STATEMENT)), Advance
+            }
+            return advance_expr(';')()
+          }
+        , advance(';')
+        , advance_expr(';')
+        , advance(';')
+        , advance_expr(')')
+        , advance(')')
+        , maybe_stmtlist(3)
+        , advance_stmtlist()
+        , advance('}')
+        , popstmt()
+        )
+
+    parse_if = 
+        stative(
+          advance('if', 'keyword')
+        , advance('(')
+        , advance_expr(')')
+        , advance(')')
+        , maybe_stmtlist(3)
+        , advance_stmtlist()
+        , advance('}')
+        , function() {
+            if(token.data === 'else') {
+              return tokens.shift(), state.unshift(stmt()), Advance
+            }
+            return popstmt()()
+          }
+        , popstmt()
+        )
+
+    parse_return =
+        stative(
+          advance('return', 'keyword')
+        , function() {
+            if(token.data === ';') return Advance
+            return state.unshift(expr(';')), Advance
+          }
+        , function() { tokens.shift(), popstmt()() } 
+        )
+
+    parse_whileloop =
+        stative(
+          advance('while', 'keyword')
+        , advance('(')
+        , advance_expr(')')
+        , advance(')')
+        , maybe_stmtlist(3)
+        , advance_stmtlist()
+        , advance('}')
+        , popstmt()
+        )
+
+    parse_dowhileloop = 
+      stative(
+        advance('do', 'keyword')
+      , maybe_stmtlist(3)
+      , advance_stmtlist()
+      , advance('}')
+      , advance('while', 'keyword')
+      , advance('(')
+      , advance_expr(')')
+      , advance(')')
+      , popstmt()
+      )
+
+    parse_function =
+      stative(
+        function() {
+          for(var i = 1, len = state.length; i < len; ++i) if(state[i].mode === FUNCTION) {
+            return unexpected('function definition is not allowed within another function')
+          }
+
+          return Advance
+        }
+      , function() {
+          if(!assert("ident")) return
+
+          var name = token.data
+            , lookup = state.scope.find(name)
+
+          state.unshift(ident())
+          state.scope.define(name)
+
+          state.scope.enter(lookup ? lookup.scope : null)
+          return Advance
+        }
+      , advance('(')
+      , function() { return state.unshift(fnargs()), Advance }
+      , advance(')')
+      , function() { 
+          // forward decl
+          if(token.data === ';') {
+            return state.scope.exit(), state.shift(), state.shift()
+          }
+          return Advance
+        }
+      , advance('{')
+      , advance_stmtlist()
+      , advance('}')
+      , function() { state.scope.exit(); return Advance } 
+      , function() { return state.shift(), state.shift(), state.shift() }
+      )
+
+    parse_function_args =
+      stative(
+        function() {
+          if(token.data === 'void') { state.fake(keyword()); tokens.shift(); return Advance }
+          if(token.data === ')') { state.shift(); return }
+          if(token.data === 'struct') {
+            state.unshift(struct(NO_ASSIGN_ALLOWED, NO_COMMA_ALLOWED))
+            return Advance
+          }
+          state.unshift(decl(DECL_FUNCTION))
+          return Advance
+        }
+      , function() {
+          if(token.data === ',') { tokens.shift(); return 0 }
+          if(token.data === ')') { state.shift(); return }
+          unexpected('expected one of `,` or `)`, got '+token.data)
+        }
+      )
+  }
+}
+
+function mknode(mode, sourcetoken) {
+  return {
+      mode: mode
+    , token: sourcetoken
+    , children: []
+    , type: stmt_type[mode]
+//    , id: (Math.random() * 0xFFFFFFFF).toString(16)
+  }
+}
+
+function is_storage(token) {
+  return token.data === 'const' ||
+         token.data === 'attribute' ||
+         token.data === 'uniform' ||
+         token.data === 'varying'
+}
+
+function is_parameter(token) {
+  return token.data === 'in' ||
+         token.data === 'inout' ||
+         token.data === 'out'
+}
+
+function is_precision(token) {
+  return token.data === 'highp' ||
+         token.data === 'mediump' ||
+         token.data === 'lowp'
+}
+
+},{"../../through":199,"./expr":192,"./scope":194}],194:[function(require,module,exports){
+module.exports = scope
+
+function scope(state) {
+  if(this.constructor !== scope)
+    return new scope(state)
+
+  this.state = state
+  this.scopes = []
+  this.current = null
+}
+
+var cons = scope
+  , proto = cons.prototype
+
+proto.enter = function(s) {
+  this.scopes.push(
+    this.current = this.state[0].scope = s || {}
+  )
+}
+
+proto.exit = function() {
+  this.scopes.pop()
+  this.current = this.scopes[this.scopes.length - 1]
+}
+
+proto.define = function(str) {
+  this.current[str] = this.state[0]
+}
+
+proto.find = function(name, fail) {
+  for(var i = this.scopes.length - 1; i > -1; --i) {
+    if(this.scopes[i].hasOwnProperty(name)) {
+      return this.scopes[i][name]
+    }
+  }
+
+  return null
+}
+
+},{}],195:[function(require,module,exports){
+module.exports = tokenize
+
+var through = require('../through')
+
+var literals = require('./lib/literals')
+  , operators = require('./lib/operators')
+  , builtins = require('./lib/builtins')
+
+var NORMAL = 999          // <-- never emitted
+  , TOKEN = 9999          // <-- never emitted 
+  , BLOCK_COMMENT = 0 
+  , LINE_COMMENT = 1
+  , PREPROCESSOR = 2
+  , OPERATOR = 3
+  , INTEGER = 4
+  , FLOAT = 5
+  , IDENT = 6
+  , BUILTIN = 7
+  , KEYWORD = 8
+  , WHITESPACE = 9
+  , EOF = 10 
+  , HEX = 11
+
+var map = [
+    'block-comment'
+  , 'line-comment'
+  , 'preprocessor'
+  , 'operator'
+  , 'integer'
+  , 'float'
+  , 'ident'
+  , 'builtin'
+  , 'keyword'
+  , 'whitespace'
+  , 'eof'
+  , 'integer'
+]
+
+function tokenize() {
+  var stream = through(write, end)
+
+  var i = 0
+    , total = 0
+    , mode = NORMAL 
+    , c
+    , last
+    , content = []
+    , token_idx = 0
+    , token_offs = 0
+    , line = 1
+    , start = 0
+    , isnum = false
+    , isoperator = false
+    , input = ''
+    , len
+
+  return stream
+
+  function token(data) {
+    if(data.length) {
+      stream.queue({
+        type: map[mode]
+      , data: data
+      , position: start
+      , line: line
+      })
+    }
+  }
+
+  function write(chunk) {
+    i = 0
+    input += chunk.toString()
+    len = input.length
+
+    while(c = input[i], i < len) switch(mode) {
+      case BLOCK_COMMENT: i = block_comment(); break
+      case LINE_COMMENT: i = line_comment(); break
+      case PREPROCESSOR: i = preprocessor(); break 
+      case OPERATOR: i = operator(); break
+      case INTEGER: i = integer(); break
+      case HEX: i = hex(); break
+      case FLOAT: i = decimal(); break
+      case TOKEN: i = readtoken(); break
+      case WHITESPACE: i = whitespace(); break
+      case NORMAL: i = normal(); break
+    }
+
+    total += i
+    input = input.slice(i)
+  } 
+
+  function end(chunk) {
+    if(content.length) {
+      token(content.join(''))
+    }
+
+    mode = EOF
+    token('(eof)')
+
+    stream.queue(null)
+  }
+
+  function normal() {
+    content = content.length ? [] : content
+
+    if(last === '/' && c === '*') {
+      start = total + i - 1
+      mode = BLOCK_COMMENT
+      last = c
+      return i + 1
+    }
+
+    if(last === '/' && c === '/') {
+      start = total + i - 1
+      mode = LINE_COMMENT
+      last = c
+      return i + 1
+    }
+
+    if(c === '#') {
+      mode = PREPROCESSOR
+      start = total + i
+      return i
+    }
+
+    if(/\s/.test(c)) {
+      mode = WHITESPACE
+      start = total + i
+      return i
+    }
+
+    isnum = /\d/.test(c)
+    isoperator = /[^\w_]/.test(c)
+
+    start = total + i
+    mode = isnum ? INTEGER : isoperator ? OPERATOR : TOKEN
+    return i
+  }
+
+  function whitespace() {
+    if(c === '\n') ++line
+
+    if(/[^\s]/g.test(c)) {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function preprocessor() {
+    if(c === '\n') ++line
+
+    if(c === '\n' && last !== '\\') {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function line_comment() {
+    return preprocessor()
+  }
+
+  function block_comment() {
+    if(c === '/' && last === '*') {
+      content.push(c)
+      token(content.join(''))
+      mode = NORMAL
+      return i + 1
+    }
+
+    if(c === '\n') ++line
+
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function operator() {
+    if(last === '.' && /\d/.test(c)) {
+      mode = FLOAT
+      return i
+    }
+
+    if(last === '/' && c === '*') {
+      mode = BLOCK_COMMENT
+      return i
+    }
+
+    if(last === '/' && c === '/') {
+      mode = LINE_COMMENT
+      return i
+    }
+
+    if(c === '.' && content.length) {
+      while(determine_operator(content));
+      
+      mode = FLOAT
+      return i
+    }
+
+    if(c === ';') {
+      if(content.length) while(determine_operator(content));
+      token(c)
+      mode = NORMAL
+      return i + 1
+    }
+
+    var is_composite_operator = content.length === 2 && c !== '='
+    if(/[\w_\d\s]/.test(c) || is_composite_operator) {
+      while(determine_operator(content));
+      mode = NORMAL
+      return i
+    }
+
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function determine_operator(buf) {
+    var j = 0
+      , k = buf.length
+      , idx
+
+    do {
+      idx = operators.indexOf(buf.slice(0, buf.length + j).join(''))
+      if(idx === -1) { 
+        j -= 1
+        k -= 1
+        if (k < 0) return 0
+        continue
+      }
+      
+      token(operators[idx])
+
+      start += operators[idx].length
+      content = content.slice(operators[idx].length)
+      return content.length
+    } while(1)
+  }
+
+  function hex() {
+    if(/[^a-fA-F0-9]/.test(c)) {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+
+    content.push(c)
+    last = c
+    return i + 1    
+  }
+
+  function integer() {
+    if(c === '.') {
+      content.push(c)
+      mode = FLOAT
+      last = c
+      return i + 1
+    }
+
+    if(/[eE]/.test(c)) {
+      content.push(c)
+      mode = FLOAT
+      last = c
+      return i + 1
+    }
+
+    if(c === 'x' && content.length === 1 && content[0] === '0') {
+      mode = HEX
+      content.push(c)
+      last = c
+      return i + 1
+    }
+
+    if(/[^\d]/.test(c)) {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function decimal() {
+    if(c === 'f') {
+      content.push(c)
+      last = c
+      i += 1
+    }
+
+    if(/[eE]/.test(c)) {
+      content.push(c)
+      last = c
+      return i + 1
+    }
+
+    if(/[^\d]/.test(c)) {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function readtoken() {
+    if(/[^\d\w_]/.test(c)) {
+      var contentstr = content.join('')
+      if(literals.indexOf(contentstr) > -1) {
+        mode = KEYWORD
+      } else if(builtins.indexOf(contentstr) > -1) {
+        mode = BUILTIN
+      } else {
+        mode = IDENT
+      }
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+    content.push(c)
+    last = c
+    return i + 1
+  }
+}
+
+},{"../through":199,"./lib/builtins":196,"./lib/literals":197,"./lib/operators":198}],196:[function(require,module,exports){
+module.exports = [
+    'gl_Position'
+  , 'gl_PointSize'
+  , 'gl_ClipVertex'
+  , 'gl_FragCoord'
+  , 'gl_FrontFacing'
+  , 'gl_FragColor'
+  , 'gl_FragData'
+  , 'gl_FragDepth'
+  , 'gl_Color'
+  , 'gl_SecondaryColor'
+  , 'gl_Normal'
+  , 'gl_Vertex'
+  , 'gl_MultiTexCoord0'
+  , 'gl_MultiTexCoord1'
+  , 'gl_MultiTexCoord2'
+  , 'gl_MultiTexCoord3'
+  , 'gl_MultiTexCoord4'
+  , 'gl_MultiTexCoord5'
+  , 'gl_MultiTexCoord6'
+  , 'gl_MultiTexCoord7'
+  , 'gl_FogCoord'
+  , 'gl_MaxLights'
+  , 'gl_MaxClipPlanes'
+  , 'gl_MaxTextureUnits'
+  , 'gl_MaxTextureCoords'
+  , 'gl_MaxVertexAttribs'
+  , 'gl_MaxVertexUniformComponents'
+  , 'gl_MaxVaryingFloats'
+  , 'gl_MaxVertexTextureImageUnits'
+  , 'gl_MaxCombinedTextureImageUnits'
+  , 'gl_MaxTextureImageUnits'
+  , 'gl_MaxFragmentUniformComponents'
+  , 'gl_MaxDrawBuffers'
+  , 'gl_ModelViewMatrix'
+  , 'gl_ProjectionMatrix'
+  , 'gl_ModelViewProjectionMatrix'
+  , 'gl_TextureMatrix'
+  , 'gl_NormalMatrix'
+  , 'gl_ModelViewMatrixInverse'
+  , 'gl_ProjectionMatrixInverse'
+  , 'gl_ModelViewProjectionMatrixInverse'
+  , 'gl_TextureMatrixInverse'
+  , 'gl_ModelViewMatrixTranspose'
+  , 'gl_ProjectionMatrixTranspose'
+  , 'gl_ModelViewProjectionMatrixTranspose'
+  , 'gl_TextureMatrixTranspose'
+  , 'gl_ModelViewMatrixInverseTranspose'
+  , 'gl_ProjectionMatrixInverseTranspose'
+  , 'gl_ModelViewProjectionMatrixInverseTranspose'
+  , 'gl_TextureMatrixInverseTranspose'
+  , 'gl_NormalScale'
+  , 'gl_DepthRangeParameters'
+  , 'gl_DepthRange'
+  , 'gl_ClipPlane'
+  , 'gl_PointParameters'
+  , 'gl_Point'
+  , 'gl_MaterialParameters'
+  , 'gl_FrontMaterial'
+  , 'gl_BackMaterial'
+  , 'gl_LightSourceParameters'
+  , 'gl_LightSource'
+  , 'gl_LightModelParameters'
+  , 'gl_LightModel'
+  , 'gl_LightModelProducts'
+  , 'gl_FrontLightModelProduct'
+  , 'gl_BackLightModelProduct'
+  , 'gl_LightProducts'
+  , 'gl_FrontLightProduct'
+  , 'gl_BackLightProduct'
+  , 'gl_FogParameters'
+  , 'gl_Fog'
+  , 'gl_TextureEnvColor'
+  , 'gl_EyePlaneS'
+  , 'gl_EyePlaneT'
+  , 'gl_EyePlaneR'
+  , 'gl_EyePlaneQ'
+  , 'gl_ObjectPlaneS'
+  , 'gl_ObjectPlaneT'
+  , 'gl_ObjectPlaneR'
+  , 'gl_ObjectPlaneQ'
+  , 'gl_FrontColor'
+  , 'gl_BackColor'
+  , 'gl_FrontSecondaryColor'
+  , 'gl_BackSecondaryColor'
+  , 'gl_TexCoord'
+  , 'gl_FogFragCoord'
+  , 'gl_Color'
+  , 'gl_SecondaryColor'
+  , 'gl_TexCoord'
+  , 'gl_FogFragCoord'
+  , 'gl_PointCoord'
+  , 'radians'
+  , 'degrees'
+  , 'sin'
+  , 'cos'
+  , 'tan'
+  , 'asin'
+  , 'acos'
+  , 'atan'
+  , 'pow'
+  , 'exp'
+  , 'log'
+  , 'exp2'
+  , 'log2'
+  , 'sqrt'
+  , 'inversesqrt'
+  , 'abs'
+  , 'sign'
+  , 'floor'
+  , 'ceil'
+  , 'fract'
+  , 'mod'
+  , 'min'
+  , 'max'
+  , 'clamp'
+  , 'mix'
+  , 'step'
+  , 'smoothstep'
+  , 'length'
+  , 'distance'
+  , 'dot'
+  , 'cross'
+  , 'normalize'
+  , 'faceforward'
+  , 'reflect'
+  , 'refract'
+  , 'matrixCompMult'
+  , 'lessThan'
+  , 'lessThanEqual'
+  , 'greaterThan'
+  , 'greaterThanEqual'
+  , 'equal'
+  , 'notEqual'
+  , 'any'
+  , 'all'
+  , 'not'
+  , 'texture2D'
+  , 'texture2DProj'
+  , 'texture2DLod'
+  , 'texture2DProjLod'
+  , 'textureCube'
+  , 'textureCubeLod'
+]
+
+},{}],197:[function(require,module,exports){
+module.exports = [
+  // current
+    'precision'
+  , 'highp'
+  , 'mediump'
+  , 'lowp'
+  , 'attribute'
+  , 'const'
+  , 'uniform'
+  , 'varying'
+  , 'break'
+  , 'continue'
+  , 'do'
+  , 'fo'+'r'
+  , 'whi'+'le'
+  , 'i'+'f'
+  , 'else'
+  , 'in'
+  , 'out'
+  , 'inout'
+  , 'float'
+  , 'int'
+  , 'void'
+  , 'bool'
+  , 'true'
+  , 'false'
+  , 'discard'
+  , 'return'
+  , 'mat2'
+  , 'mat3'
+  , 'mat4'
+  , 'vec2'
+  , 'vec3'
+  , 'vec4'
+  , 'ivec2'
+  , 'ivec3'
+  , 'ivec4'
+  , 'bvec2'
+  , 'bvec3'
+  , 'bvec4'
+  , 'sampler1D'
+  , 'sampler2D'
+  , 'sampler3D'
+  , 'samplerCube'
+  , 'sampler1DShadow'
+  , 'sampler2DShadow'
+  , 'struct'
+
+  // future
+  , 'asm'
+  , 'class'
+  , 'union'
+  , 'enum'
+  , 'typedef'
+  , 'template'
+  , 'this'
+  , 'packed'
+  , 'goto'
+  , 'switch'
+  , 'default'
+  , 'inline'
+  , 'noinline'
+  , 'volatile'
+  , 'public'
+  , 'static'
+  , 'extern'
+  , 'external'
+  , 'interface'
+  , 'long'
+  , 'short'
+  , 'double'
+  , 'half'
+  , 'fixed'
+  , 'unsigned'
+  , 'input'
+  , 'output'
+  , 'hvec2'
+  , 'hvec3'
+  , 'hvec4'
+  , 'dvec2'
+  , 'dvec3'
+  , 'dvec4'
+  , 'fvec2'
+  , 'fvec3'
+  , 'fvec4'
+  , 'sampler2DRect'
+  , 'sampler3DRect'
+  , 'sampler2DRectShadow'
+  , 'sizeof'
+  , 'cast'
+  , 'namespace'
+  , 'using'
+]
+
+},{}],198:[function(require,module,exports){
+module.exports = [
+    '<<='
+  , '>>='
+  , '++'
+  , '--'
+  , '<<'
+  , '>>'
+  , '<='
+  , '>='
+  , '=='
+  , '!='
+  , '&&'
+  , '||'
+  , '+='
+  , '-='
+  , '*='
+  , '/='
+  , '%='
+  , '&='
+  , '^='
+  , '|='
+  , '('
+  , ')'
+  , '['
+  , ']'
+  , '.'
+  , '!'
+  , '~'
+  , '*'
+  , '/'
+  , '%'
+  , '+'
+  , '-'
+  , '<'
+  , '>'
+  , '&'
+  , '^'
+  , '|'
+  , '?'
+  , ':'
+  , '='
+  , ','
+  , ';'
+  , '{'
+  , '}'
+]
+
+},{}],199:[function(require,module,exports){
+var through;
+
+through = function(write, end) {
+  var errors, output;
+  output = [];
+  errors = [];
+  return {
+    output: output,
+    parser: null,
+    write: write,
+    end: end,
+    process: function(parser, data) {
+      this.parser = parser;
+      write(data);
+      this.flush();
+      return this.parser.flush();
+    },
+    flush: function() {
+      end();
+      return [output, errors];
+    },
+    queue: function(obj) {
+      var _ref;
+      if (obj != null) {
+        return (_ref = this.parser) != null ? _ref.write(obj) : void 0;
+      }
+    },
+    emit: function(type, node) {
+      if (type === 'data') {
+        if (node.parent == null) {
+          output.push(node);
+        }
+      }
+      if (type === 'error') {
+        return errors.push(node);
+      }
+    }
+  };
+};
+
+module.exports = through;
+
+
+},{}]},{},[29])

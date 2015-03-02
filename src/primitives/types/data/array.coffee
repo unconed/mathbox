@@ -14,7 +14,9 @@ class Array_ extends Data
 
     @used =
       length:  0
-    
+
+    @storage = 'arrayBuffer'
+
     super
 
   sourceShader: (shader) ->
@@ -48,7 +50,7 @@ class Array_ extends Data
     length   = @_get 'array.length'
     history  = @_get 'array.history'
     reserve  = @_get 'array.bufferLength'
-    channels = @_get 'data.dimensions'
+    channels = @_get 'data.channels'
     items    = @_get 'data.items'
 
     dims = @spec = {channels, items, width: length}
@@ -67,7 +69,7 @@ class Array_ extends Data
     @spec.width  ?= 1
 
     # Create array buffer
-    @buffer = @_renderables.make 'arrayBuffer',
+    @buffer = @_renderables.make @storage,
               length:    space.length
               history:   space.history
               channels:  channels

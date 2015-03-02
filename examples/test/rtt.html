@@ -49,12 +49,12 @@
         y = Math.sin(x + three.Time.now) * .7;
         emit(x, y);
       },
-      dimensions: 2,
+      channels: 2,
     })
     .line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 0.02,
+      width: 20,
     });
 
     mathbox.compose({

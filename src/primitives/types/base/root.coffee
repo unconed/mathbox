@@ -2,13 +2,17 @@ Parent = require './parent'
 Util   = require '../../../util'
 
 class Root extends Parent
-  @traits = ['node', 'root', 'scene', 'transform']
+  @traits = ['node', 'root', 'scene', 'transform', 'unit']
 
   init: () ->
     @size = null
 
+    @cameraEvent = type: 'root.camera'
     @updateEvent = type: 'root.update'
     @postEvent   = type: 'root.post'
+
+  make:   () -> @_helpers.unit.make()
+  unmake: () -> @_helpers.unit.unmake()
 
   adopt:   (renderable) -> @_context.scene.add    object for object in renderable.objects
   unadopt: (renderable) -> @_context.scene.remove object for object in renderable.objects
@@ -29,6 +33,9 @@ class Root extends Parent
       size: size
 
   getSize: () -> @size
+
+  getUnit:         () -> @_helpers.unit.get()
+  getUnitUniforms: () -> @_helpers.unit.uniforms()
 
   pre:    () -> @getCamera().updateProjectionMatrix()
   update: () -> @trigger @updateEvent

@@ -3,10 +3,11 @@ uniform mat4 projectionMatrix;
 
 vec4 readbackPosition(vec3 position) {
   vec4 pos = projectionMatrix * vec4(position, 1.0);
-  if (pos.w < 0.0) {
-    return vec4(0.0, 0.0, -1.0, 0.0);
+  vec3 final = pos.xyz / pos.w;
+  if (final.z < -1.0) {
+    return vec4(0.0, 0.0, 0.0, -1.0);
   }
   else {
-    return pos / pos.w;
+    return vec4(final, -position.z);
   }
 }

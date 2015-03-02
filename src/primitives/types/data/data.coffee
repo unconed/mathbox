@@ -19,7 +19,7 @@ class Data extends Source
       sizes    = Util.Data.getSizes data
 
       if !last or last.length != sizes.length        
-        channels = @_get 'data.dimensions'
+        channels = @_get 'data.channels'
         items    = @_get 'data.items'
 
         # Create data thunk to copy (multi-)array

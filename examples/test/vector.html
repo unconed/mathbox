@@ -14,15 +14,18 @@
       controls: {
         klass: THREE.OrbitControls
       },
+      camera: {
+        fov: 90,
+      },
     });
     three = mathbox.three;
 
-    three.camera.position.set(0, 0, 3);
+    three.camera.position.set(0, 0, 1);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     time = 0
     three.on('update', function () {
-      time = three.Time.clock
+      time = three.Time.clock / 100
     });
 
     view = mathbox.cartesian({
@@ -39,13 +42,13 @@
         emit(x, -y);
       },
       items: 2,
-      dimensions: 2,
+      channels: 2,
     });
 
     view.vector({
       points: '#sampler',
       color: 0x3090FF,
-      width: 0.01,
+      width: 4,
       start: true,
     });
 

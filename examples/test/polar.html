@@ -63,21 +63,21 @@
       expression: function (emit, x, i) {
         emit(x, .5 + .5 * Math.sin(x + time));
       },
-      dimensions: 2,
+      channels: 2,
     });
     view.grid({
       divideX: 20,
       detailX: 48,
-      width: 0.005,
+      width: 5,
       opacity: 0.5,
       unitX: π,
       baseX: 2,
-      zIndex: -5,
+      zBias: -5,
     });
     view.line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 0.01,
+      width: 10,
     });
 
   </script>

@@ -42,7 +42,7 @@
     });
     view.grid({
       axes: [1, 3],
-      width: 0.004,
+      width: 4,
     });
 
     view.axis({
@@ -87,11 +87,11 @@
 
         emit(x, y, z, w);
       },
-      dimensions: 4,
+      channels: 4,
     });
     view.line({
       color: 0x3080FF,
-      width: 0.01,
+      width: 10,
     });
 
     // Manual 4D -> 3D
@@ -125,11 +125,11 @@
         s = .577
         emit(x + w * s, y + w * s, z + w * s, 0);
       },
-      dimensions: 4,
+      channels: 4,
     });
     view.point({
       color: 0xc02050,
-      size: 0.02,
+      size: 20,
     });
 
   </script>

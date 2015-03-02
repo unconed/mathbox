@@ -19,6 +19,10 @@ class API
     targets = @_context.model.select selector, if !@isRoot then _targets else null
     @_push targets
 
+  eq: (index) ->
+    return @_push [@_targets[index]] if @_targets.length > index
+    @_push []
+
   each: (callback) ->
     callback @[i], i, @ for i in [0...@length]
     @

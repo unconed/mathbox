@@ -15,6 +15,7 @@ Classes =
   arrayBuffer:     require('./buffer/arraybuffer')
   matrixBuffer:    require('./buffer/matrixbuffer')
   voxelBuffer:     require('./buffer/voxelbuffer')
+  pushBuffer:      require('./buffer/pushbuffer')
   renderToTexture: require('./buffer/rendertotexture')
   memo:            require('./buffer/memo')
   readback:        require('./buffer/readback')

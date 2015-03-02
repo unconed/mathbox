@@ -2,14 +2,13 @@ Overlay = require './overlay'
 Util    = require '../util'
 
 class DOM extends Overlay
-  el:      Util.DOM.element
-  hint:    Util.DOM.hint
-  apply:   Util.DOM.apply
-  recycle: Util.DOM.recycle
+  el:      Util.VDOM.element
+  hint:    Util.VDOM.hint
+  apply:   Util.VDOM.apply
+  recycle: Util.VDOM.recycle
 
   init: (options) ->
     @last = null
-    @mount()
 
   dispose: () ->
     @unmount()
@@ -22,12 +21,15 @@ class DOM extends Overlay
     @overlay = overlay
 
   unmount: (overlay) ->
-    @element.removeChild overlay
+    @element.removeChild overlay if overlay.parentNode
     @overlay = null
 
   render: (el) ->
+    # Lazy mounting
+    @mount() if !@overlay
+
     # Wrap naked string or array in a div
-    el      = @el 'div', null, el if typeof el == 'string'
+    el      = @el 'div', null, el if typeof el in ['string', 'number']
     el      = @el 'div', null, el if el instanceof Array
 
     # See if it can be mounted directly

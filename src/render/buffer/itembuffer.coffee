@@ -1,10 +1,13 @@
 DataBuffer  = require './databuffer'
 Util        = require '../../util'
 
+###
+# 4D array
+###
 class ItemBuffer extends DataBuffer
   build: (options) ->
     super
-    @pad      = {x: 0, y: 0, z: 0}
+    @pad      = {x: 0, y: 0, z: 0, w: 0}
     @streamer = @generate @data
 
   getFilled: () -> @filled

@@ -68,8 +68,8 @@ class Primitive
 
   # This node has been inserted
   _added: () ->
-    @_parent   = @node.parent.controller
-    @_root     = @node.root  .controller
+    @_parent   = @node.parent?.controller
+    @_root     = @node.root  ?.controller
 
     @make()
     @refresh()

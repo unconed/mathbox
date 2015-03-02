@@ -70,7 +70,7 @@
         emit(b);
       },
       items: 2,
-      dimensions: 1,
+      channels: 1,
     });
     view.swizzle({
       order: 'yx',
@@ -84,7 +84,6 @@
       width: [π/31, 0, 0, 0],
       height: [π, 0, 0, 0],
       depth: [0, 0, 1/10, 0],
-      anchor: 0,
     });
     view.transpose({
       order: 'zwxy'

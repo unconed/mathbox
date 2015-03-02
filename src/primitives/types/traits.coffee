@@ -11,36 +11,9 @@ Traits =
   object:
     visible:           Types.bool(true)
 
-  style:
-    opacity:           Types.number(1)
-    color:             Types.color()
-    blending:          Types.blending()
-    zWrite:            Types.bool(true)
-    zTest:             Types.bool(true)
-    zIndex:            Types.number(0)
-    zOrder:            Types.nullable(Types.int())
-    zFactor:           Types.number(0)
-    zUnits:            Types.number(0)
-
-  point:
-    size:              Types.number(.01)
-    shape:             Types.shape()
-    fill:              Types.bool(true)
-  line:
-    width:             Types.number(.01)
-    depth:             Types.number(1)
-    stroke:            Types.stroke()
-  mesh:
-    solid:             Types.bool(true)
-    shaded:            Types.bool(true)
-  face:
-    outline:           Types.bool(false)
-  arrow:
-    size:              Types.number(.07)
-    start:             Types.bool(false)
-    end:               Types.bool(false)
-  ticks:
-    size:              Types.number(.05)
+  unit:
+    scale:             Types.nullable(Types.number())
+    fov:               Types.nullable(Types.number())
 
   span:
     range:             Types.nullable(Types.vec2(-1, 1))
@@ -103,10 +76,6 @@ Traits =
   axis:
     detail:            Types.int(1)
 
-  geometry:
-    points:            Types.select()
-    colors:            Types.nullable(Types.select())
-
   source:
     hint:              Types.nullable(Types.string())
 
@@ -114,7 +83,7 @@ Traits =
     data:              Types.nullable(Types.object())
     expression:        Types.nullable(Types.func())
     live:              Types.bool(true)
-    dimensions:        Types.int(3)
+    channels:          Types.int(3)
     items:             Types.int(1)
   sampler:
     centered:          Types.bool(false)
@@ -136,20 +105,69 @@ Traits =
     bufferHeight:      Types.int(1)
     bufferDepth:       Types.int(1)
 
-  text:
-    font:              Types.string()
-    outline:           Types.number(0)
-  label:
+  style:
+    opacity:           Types.number(1)
+    color:             Types.color()
+    blending:          Types.blending()
+    zWrite:            Types.bool(true)
+    zTest:             Types.bool(true)
+    zIndex:            Types.absolute(Types.round())
+    zBias:             Types.number(0)
+    zOrder:            Types.nullable(Types.int())
+
+  geometry:
     points:            Types.select()
-    text:              Types.select()
     colors:            Types.nullable(Types.select())
+  point:
+    size:              Types.number(4)
+    shape:             Types.shape()
+    fill:              Types.bool(true)
+    depth:             Types.number(1)
+  line:
+    width:             Types.number(2)
+    depth:             Types.number(1)
+    stroke:            Types.stroke()
+  mesh:
+    solid:             Types.bool(true)
+    shaded:            Types.bool(true)
+  face:
+    outline:           Types.bool(false)
+  arrow:
+    size:              Types.number(3)
+    start:             Types.bool(false)
+    end:               Types.bool(false)
+  ticks:
+    size:              Types.number(.05)
+  attach:
     offset:            Types.vec2(0, -20)
     snap:              Types.bool(true)
-    alignItems:        Types.anchor()
-    alignWidth:        Types.anchor()
-    alignHeight:       Types.anchor()
-    alignDepth:        Types.anchor()
-    outlineColor:      Types.color(1, 1, 1)
+    depth:             Types.number(0)
+    
+  text:
+    font:              Types.string()
+    style:             Types.string()
+    detail:            Types.number(24)
+    expand:            Types.number(4)
+  label:
+    text:              Types.select()
+    size:              Types.number(16)
+    outline:           Types.number(2)
+    expand:            Types.number(0)
+    background:        Types.color(1, 1, 1)
+
+  overlay:
+    opacity:           Types.number(1)
+  html:
+    font:              Types.string()
+    style:             Types.string()
+  dom:
+    points:            Types.select()
+    html:              Types.select()
+    size:              Types.number(16)
+    outline:           Types.number(2)
+    zoom:              Types.number(1)
+    color:             Types.nullable(Types.color())
+    attributes:        Types.nullable(Types.object())
 
   texture:
     minFilter:         Types.filter('nearest')
@@ -192,7 +210,7 @@ Traits =
     depth:             Types.nullable(Types.int())
   resample:
     indices:           Types.number(4)
-    dimensions:        Types.number(4)
+    channels:          Types.number(4)
     map:               Types.mapping()
     scale:             Types.mapping('absolute')
     shader:            Types.nullable(Types.string())
@@ -202,18 +220,6 @@ Traits =
     depth:             Types.nullable(Types.int())
   readback:
     indexed:           Types.bool()
-
-  overlay:
-    opacity:           Types.number(1)
-  html:
-    element:           Types.select()
-  div:
-    attributes:        Types.nullable(Types.object())
-    data:              Types.nullable(Types.object())
-    expression:        Types.nullable(Types.func())
-    indexing:          Types.indexing()
-    offset:            Types.vec2(0, -20)
-    snap:              Types.bool(true)
 
   root:
     camera:            Types.nullable(Types.select())

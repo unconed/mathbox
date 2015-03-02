@@ -17,6 +17,8 @@ class Matrix extends Data
       width:   0
       height:  0
     
+    @storage = 'matrixBuffer'
+    
     super
 
   sourceShader: (shader) ->
@@ -52,7 +54,7 @@ class Matrix extends Data
     history  = @_get 'matrix.history'
     reserveX = @_get 'matrix.bufferWidth'
     reserveY = @_get 'matrix.bufferHeight'
-    channels = @_get 'data.dimensions'
+    channels = @_get 'data.channels'
     items    = @_get 'data.items'
 
     dims = @spec = {channels, items, width, height}
@@ -73,7 +75,7 @@ class Matrix extends Data
     @spec.height ?= 1
 
     # Create matrix buffer
-    @buffer = @_renderables.make 'matrixBuffer',
+    @buffer = @_renderables.make @storage,
               width:     space.width
               height:    space.height
               history:   space.history
@@ -92,7 +94,7 @@ class Matrix extends Data
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
                          changed['matrix.history'] or
-                         changed['data.dimensions'] or
+                         changed['data.channels'] or
                          changed['data.items'] or
                          changed['matrix.bufferWidth'] or
                          changed['matrix.bufferHeight']

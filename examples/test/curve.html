@@ -44,9 +44,9 @@
 
     view.grid({
       divideX: 30,
-      width: 0.01,
+      width: 5,
       opacity: 0.5,
-      zIndex: -5,
+      zBias: -5,
     });
 
     view.interval({
@@ -56,13 +56,13 @@
         y = Math.sin(x + time) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
       },
-      dimensions: 2,
+      channels: 2,
     });
 
     view.line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 0.02,
+      width: 10,
     });
 
     view.transform({
@@ -70,7 +70,7 @@
     }).line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 0.02,
+      width: 10,
       stroke: 'dotted',
     });
 
@@ -79,7 +79,7 @@
     }).line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 0.02,
+      width: 10,
       stroke: 'dashed',
     });
 

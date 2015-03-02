@@ -58,19 +58,19 @@ class Point extends Base
     f.require "point.alpha.#{alpha}",  @uniforms
     f.pipe 'point.fill',               @uniforms
 
-    @edgeMaterial = @_material edgeFactory.link
+    @fillMaterial = @_material fillFactory.link
       side: THREE.DoubleSide
       index0AttributeName: "position4"
 
-    @fillMaterial = @_material fillFactory.link
+    @edgeMaterial = @_material edgeFactory.link
       side: THREE.DoubleSide
       index0AttributeName: "position4"
   
     @fillObject = new THREE.Mesh @geometry, @fillMaterial
     @edgeObject = new THREE.Mesh @geometry, @edgeMaterial
 
-    @_raw @edgeObject
     @_raw @fillObject
+    @_raw @edgeObject
 
     @objects = [@fillObject, @edgeObject]
 

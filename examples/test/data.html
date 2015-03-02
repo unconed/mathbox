@@ -72,12 +72,11 @@
     view.axis({
       axis: 1,
       end: true,
-      width: 0.003,
+      width: 3,
       depth: 1,
-      size: 0.02,
       color: 0xffffff,
       opacity: .5,
-      zIndex: -1,
+      zBias: -1,
       blending: THREE.AdditiveBlending,
     });
 
@@ -86,14 +85,13 @@
       length: 100,
       data: data,
       items: 2,
-      dimensions: 3,
+      channels: 3,
     });
     view.vector({
       color: 0x707070,
-      width: 0.004,
+      width: 4,
       depth: 1,
       opacity: .25,
-      size:  0.02,
       end: true,
       zWrite: false,
       blending: THREE.AdditiveBlending,
@@ -104,13 +102,12 @@
       length: 100,
       data: [[]],
       items: 2,
-      dimensions: 3,
+      channels: 3,
     });
     view.vector({
       color: 0x3090FF,
-      width: 0.004,
+      width: 4,
       depth: 1,
-      size:  0.02,
       end: true,
       zWrite: false,
       blending: THREE.AdditiveBlending,
@@ -121,13 +118,12 @@
       length: 100,
       data: [[]],
       items: 2,
-      dimensions: 3,
+      channels: 3,
     });
     view.vector({
       color: 0x903000,
-      width: 0.004,
+      width: 4,
       depth: 1,
-      size:  0.02,
       end: true,
       zWrite: false,
       blending: THREE.AdditiveBlending,

@@ -4,15 +4,16 @@ Util = require '../../../util'
 class Text extends Voxel
   @traits = ['node', 'data', 'source', 'texture', 'voxel', 'text']
   @defaults =
-    dimensions:       4
+    channels:       4
     minFilter: 'linear'
     magFilter: 'linear'
 
   init: () ->
     super
-    @atlas = @isOutlined = null
+    @atlas = null
 
-  textIsOutlined: () -> @isOutlined
+  textIsSDF:  () -> @_get('text.expand') > 0
+  textHeight: () -> @_get('text.detail')
 
   textShader: (shader) ->
     @atlas.shader shader
@@ -25,17 +26,20 @@ class Text extends Voxel
 
     # Read font parameters
     font    = @_get 'text.font'
-    outline = @_get 'text.outline'
+    style   = @_get 'text.style'
+    detail  = @_get 'text.detail'
+    expand  = @_get 'text.expand'
 
     # Prepare text atlas
     @atlas = @_renderables.make 'textAtlas',
-               font:    font
-               outline: outline
+               font:      font
+               size:      detail
+               style:     style
+               outline:   expand
                minFilter: minFilter
                magFilter: magFilter
                type:      type
 
-    @isOutlined = outline > 0
     # DEBUG
     #dbg = @_renderables.make 'debug',
     #        map: @atlas.read()
@@ -57,7 +61,7 @@ class Text extends Voxel
     @atlas.end()
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['text.font']
+    return @rebuild() if touched['text']
     super changed, touched, init
 
   callback: (callback) ->

@@ -42,8 +42,16 @@ Types =
       return array.validate value, target, invalid
     equals: (a, b) -> array.equals a, b
 
-  nullable: (type) ->
-    make: () -> null
+  absolute: (type) ->
+    value = type.make()
+    make: () -> value
+    uniform: () -> type.uniform()
+    validate: (value, target, invalid) ->
+      Math.abs +type.validate value, target, invalid
+
+  nullable: (type, make = false) ->
+    value = if make then type.make() else null
+    make: () -> value
     validate: (value, target, invalid) ->
       return value if value == null
       if target == null
@@ -87,6 +95,14 @@ Types =
   int: (value = 0) ->
     value = +Math.round(value)
     uniform: () -> 'i'
+    make: () -> value
+    validate: (value, target, invalid) ->
+      return invalid() if value != (x = +value)
+      Math.round(x) || 0
+
+  round: (value = 0) ->
+    value = +Math.round(value)
+    uniform: () -> 'f'
     make: () -> value
     validate: (value, target, invalid) ->
       return invalid() if value != (x = +value)

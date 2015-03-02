@@ -47,22 +47,43 @@ class Sprite extends Base
     f.join()                                        if blend
     f.pipe combine                                  if combine
     f.pipe Util.GLSL.binaryOperator 'vec4', '*'     if !combine
-    f.pipe 'fragment.color',           @uniforms
 
-    @material = @_material factory.link
+    # Split fragment into edge and fill pass for better z layering
+    edgeFactory = shaders.material()
+    edgeFactory.vertex.pipe v
+    edgeFactory.fragment.pipe f
+    edgeFactory.fragment.pipe 'fragment.transparent', @uniforms
+
+    fillFactory = shaders.material()
+    fillFactory.vertex.pipe v
+    fillFactory.fragment.pipe f
+    fillFactory.fragment.pipe 'fragment.solid', @uniforms
+
+    @fillMaterial = @_material fillFactory.link
       side: THREE.DoubleSide
       index0AttributeName: "position4"
 
-    @object = new THREE.Mesh @geometry, @material
+    @edgeMaterial = @_material edgeFactory.link
+      side: THREE.DoubleSide
+      index0AttributeName: "position4"
 
-    @_raw @object
+    @fillObject = new THREE.Mesh @geometry, @fillMaterial
+    @edgeObject = new THREE.Mesh @geometry, @edgeMaterial
 
-    @objects = [@object]
+    @_raw @fillObject
+    @_raw @edgeObject
+
+    @objects = [@fillObject, @edgeObject]
+
+  show: (transparent, blending, order, depth) ->
+    @_show @edgeObject, true,        blending, order, depth
+    @_show @fillObject, transparent, blending, order, depth
 
   dispose: () ->
     @geometry.dispose()
-    @material.dispose()
-    @objects = @geometry = @material = null
+    @edgeMaterial.dispose()
+    @fillMaterial.dispose()
+    @objects = @geometry = @edgeMaterial = @fillMaterial = @edgeObject = @fillObject = null
     super
 
 module.exports = Sprite
