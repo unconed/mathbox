@@ -8,7 +8,7 @@ Util       = require './util'
 
 class Context
   # Export for extending
-  @Namespace = { Model, Overlay, Primitives, Render, Shaders, Stage, Util, DOM: Overlay.Classes.dom }
+  @Namespace = { Model, Overlay, Primitives, Render, Shaders, Stage, Util, DOM: Util.VDOM.Types }
 
   # Set up entire environment
   constructor: (renderer, scene = null, camera = null, script = []) ->

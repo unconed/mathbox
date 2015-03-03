@@ -88,19 +88,14 @@ class DOM extends Primitive
 
   update: () ->
     return unless @readback?
-
-    @readback.update @root?.getCamera()
+    if @_get 'object.visible'
+      @readback.update @root?.getCamera()
+      @readback.post()
+      @readback.iterate()
 
   post: () ->
     return unless @readback?
-
-    @readback.post()
-
-    if @_get 'object.visible'
-      @readback.iterate()
-      @dom.render @emitter.nodes()
-    else
-      @dom.render []
+    @dom.render if @_get 'object.visible' then @emitter.nodes() else []
 
   callback: (data) ->
     # Create static consumer for the readback
@@ -124,10 +119,11 @@ class DOM extends Primitive
     
     strideI = strideJ = strideK = 0
     colorString = ''
-
+    
     f = (x, y, z, w, i, j, k, l) ->
-      # HTML item offset
-      label = data[l + strideI * i + strideJ * j + strideK * k]
+      # Get HTML item by offset
+      index    = l + strideI * i + strideJ * j + strideK * k
+      children = data[index]
       
       # Clip behind camera or when invisible
       clip = w < 0
@@ -173,7 +169,7 @@ class DOM extends Primitive
       props.className += ' ' + (a?.className ? 'mathbox-label')
         
       # Push node onto list
-      nodes.push el 'div', props, label
+      nodes.push el 'div', props, children
 
     f.reset = () =>
       nodes = []
@@ -206,6 +202,7 @@ class DOM extends Primitive
     @strideK = sK = sJ * htmlDims.height
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['dom']
+    return @rebuild() if changed['dom.html'] or
+                         changed['dom.points']
 
 module.exports = DOM

@@ -77,10 +77,12 @@
     });
 
     view.repeat({
-      height: 5
+      height: 5,
+      depth:  2,
     });
     view.spread({
-      height: [0, 0, .25, 0],
+      height: [0, 0, .25],
+      depth: [0, .25, 0],
     });
 
     view
@@ -94,6 +96,7 @@
       style: 'bold',
       width:  16,
       height: 5,
+      depth:  2,
       //expand: 0,
       expression: function (emit, i, j) {
         //emit('QxAfjldgざおぎぼアプヸ⾤⾘⿕⿒');

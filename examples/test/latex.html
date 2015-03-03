@@ -2,13 +2,23 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - HTML Label</title>
+  <title>MathBox - LaTeX Label (KaTeX)</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.js"></script>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
+  
+    MathBox.DOM.latex = {
+      render: function (el, props, children) {
+        props.innerHTML = katex.renderToString(children);
+        return el('span', props);
+      }
+    };
+  
     mathbox = mathBox({
       plugins: ['core', 'controls', 'cursor', 'stats'],
       controls: {
@@ -61,7 +71,7 @@
     });
 
     view.interval({
-      length: 16,
+      length: 8,
       expression: function (emit, x, i) {
         y = Math.sin(x + time / 4) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
@@ -70,12 +80,12 @@
     });
 
     view.repeat({
-      height: 5,
+      height: 3,
       depth:  2,
     });
     view.spread({
-      height: [0, 0, .25],
-      depth: [0, .25, 0],
+      height: [0, 0, .5],
+      depth: [0, .5, 0],
     });
 
     view
@@ -85,18 +95,11 @@
     })
 
     .html({
-      width: 16,
-      height: 5,
+      width: 8,
+      height: 3,
       depth:  2,
       expression: function (emit, el, i, j) {
-        var color = ['#c02050','#50c020'][i%2];
-        emit([
-          el('span', {style: {color: color}}, Math.floor(time * 2 + i / 8)),
-          el('strong', null,
-            String.fromCharCode(j + 65) + 
-            String.fromCharCode(i + 0x8000 + Math.floor(time + i/8)%100 * 3)
-          )
-        ]);
+        emit(el('latex', null, 'c = \\pm\\sqrt{' + i + ' a^2 + ' + j + ' b^2}'));
       },
     })
     .dom({
@@ -105,6 +108,7 @@
       depth: .5,
       size: 24,
       zoom: 1,
+      outline: 2,
     });
 
   </script>

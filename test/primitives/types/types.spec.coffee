@@ -2,6 +2,11 @@ Types = MathBox.Primitives.Types.Types
 
 describe "primitives.types.types", () ->
 
+  called = 0
+  invalid = () -> called = 1
+  prime = () -> called = 0
+  check = (x) -> expect(called).toBe(x)
+
   it 'validates axes', () ->
 
     axis = Types.axis('y')
@@ -10,7 +15,9 @@ describe "primitives.types.types", () ->
     expect(value).toBe(2)
 
     for i in [1..4]
-      x = axis.validate i, value
+      prime()
+      x = axis.validate i, value, invalid
+      check(0)
       value = x if x != undefined
       expect(value).toBe(i)
 
@@ -26,24 +33,26 @@ describe "primitives.types.types", () ->
       items:  4
 
     for key, i of map
-      x = axis.validate key, value
+      prime()
+      x = axis.validate key, value, invalid
+      check(0)
       value = x if x != undefined
       expect(value).toBe(i)
 
+    prime()
     value = 3
-    x = axis.validate 0, value
-    value = x if x != undefined
-    expect(value).toBe(3)
+    axis.validate 0, value, invalid
+    check(1)
 
+    prime()
     value = 3
-    x = axis.validate 5, value
-    value = x if x != undefined
-    expect(value).toBe(3)
+    axis.validate 5, value, invalid
+    check(1)
 
+    prime()
     value = 3
-    x = axis.validate 'null', value
-    value = x if x != undefined
-    expect(value).toBe(3)
+    x = axis.validate 'null', value, invalid
+    check(1)
 
   it 'validates zero axes', () ->
 
@@ -53,9 +62,11 @@ describe "primitives.types.types", () ->
     expect(value).toBe(3)
 
     for i in [0..4]
-      x = axis.validate i, value
+      prime()
+      x = axis.validate i, value, invalid
       value = x if x != undefined
       expect(value).toBe(i)
+      check(0)
 
     map =
       x: 1
@@ -70,19 +81,21 @@ describe "primitives.types.types", () ->
       items:  4
 
     for key, i of map
-      x = axis.validate key, value
+      prime()
+      x = axis.validate key, value, invalid
       value = x if x != undefined
       expect(value).toBe(i)
+      check(0)
 
+    prime()
     value = 3
-    x = axis.validate -1, value
-    value = x if x != undefined
-    expect(value).toBe(3)
+    axis.validate -1, value, invalid
+    check(1)
 
+    prime()
     value = 3
-    x = axis.validate 5, value
-    value = x if x != undefined
-    expect(value).toBe(3)
+    x = axis.validate 5, value, invalid
+    check(1)
 
   it 'validates transpose', () ->
 
@@ -91,30 +104,39 @@ describe "primitives.types.types", () ->
 
     expect(value).toEqual([1, 2, 3, 4])
 
+    prime()
     value = [1, 2, 3, 4]
-    x = transpose.validate 'wxyz', value
+    x = transpose.validate 'wxyz', value, invalid
     value = x if x != undefined
     expect(value).toEqual([4, 1, 2, 3])
+    check(0)
 
+    prime()
     value = [2, 3, 4, 1]
-    x = transpose.validate 'yxz', value
+    x = transpose.validate 'yxz', value, invalid
     value = x if x != undefined
     expect(value).toEqual([2, 1, 3, 4])
+    check(0)
 
+    prime()
     value = [3, 4, 1, 2]
-    x = transpose.validate [2, 4, 1, 3], value
+    x = transpose.validate [2, 4, 1, 3], value, invalid
     value = x if x != undefined
     expect(value).toEqual([2, 4, 1, 3])
+    check(0)
 
+    prime()
     value = [4, 1, 2, 3]
-    x = transpose.validate [2, 4, 1, 2], value
+    x = transpose.validate [2, 4, 1, 2], value, invalid
     value = x if x != undefined
-    expect(value).toEqual([4, 1, 2, 3])
+    check(1)
 
+    prime()
     value = [1, 2, 3, 4]
-    x = transpose.validate [2, 4, 1], value
+    x = transpose.validate [2, 4, 1], value, invalid
     value = x if x != undefined
     expect(value).toEqual([2, 4, 1, 3])
+    check(0)
 
   it 'validates swizzle', () ->
 
@@ -123,27 +145,36 @@ describe "primitives.types.types", () ->
 
     expect(value).toEqual([1, 2, 3, 4])
 
+    prime()
     value = [1, 2, 3, 4]
-    x = swizzle.validate 'wxyz', value
+    x = swizzle.validate 'wxyz', value, invalid
     value = x if x != undefined
     expect(value).toEqual([4, 1, 2, 3])
+    check(0)
 
+    prime()
     value = [2, 3, 4, 1]
-    x = swizzle.validate 'yxz', value
+    x = swizzle.validate 'yxz', value, invalid
     value = x if x != undefined
     expect(value).toEqual([2, 1, 3, 0])
+    check(0)
 
+    prime()
     value = [3, 4, 1, 2]
-    x = swizzle.validate [2, 4, 1, 2], value
+    x = swizzle.validate [2, 4, 1, 2], value, invalid
     value = x if x != undefined
     expect(value).toEqual([2, 4, 1, 2])
+    check(0)
 
+    prime()
     value = [4, 1, 2, 3]
-    x = swizzle.validate [2, 4, 1], value
+    x = swizzle.validate [2, 4, 1], value, invalid
     value = x if x != undefined
     expect(value).toEqual([2, 4, 1, 0])
+    check(0)
 
+    prime()
     value = [1, 2, 3, 4]
-    x = swizzle.validate [7, 8, 5, 6], value
+    x = swizzle.validate [7, 8, 5, 6], value, invalid
     value = x if x != undefined
-    expect(value).toEqual([1, 2, 3, 4])
+    check(1)

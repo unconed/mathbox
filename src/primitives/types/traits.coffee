@@ -157,9 +157,6 @@ Traits =
 
   overlay:
     opacity:           Types.number(1)
-  html:
-    font:              Types.string()
-    style:             Types.string()
   dom:
     points:            Types.select()
     html:              Types.select()

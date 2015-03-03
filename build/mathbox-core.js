@@ -5580,18 +5580,30 @@ exports.log = log;
 
 
 },{}],27:[function(require,module,exports){
-var HEAP, apply, descriptor, element, hint, id, insert, key, map, prop, recycle, remove, set, unset, _i, _len, _ref;
+var HEAP, Types, apply, descriptor, element, hint, id, insert, key, map, prop, recycle, remove, set, unset, _i, _len, _ref;
 
 HEAP = [];
 
 id = 0;
+
+Types = {
+
+  /*
+   * el('example', props, children);
+  example: {
+    render: (el, props, children) ->
+      return el('span', { className: "foo" }, "Hello World")
+  }
+   */
+};
 
 descriptor = function() {
   return {
     id: id++,
     type: null,
     props: null,
-    children: null
+    children: null,
+    render: null
   };
 };
 
@@ -5632,7 +5644,7 @@ recycle = function(el) {
 };
 
 apply = function(el, last, node, parent, index) {
-  var child, childNodes, children, i, key, nextChildren, nextProps, props, ref, same, value, _i, _j, _len, _len1, _ref, _ref1;
+  var child, childNodes, children, dirty, i, key, nextChildren, nextProps, props, ref, same, type, value, _i, _j, _len, _len1, _ref, _ref1, _ref2;
   if (el != null) {
     if (last == null) {
       return insert(el, parent, index);
@@ -5642,48 +5654,78 @@ apply = function(el, last, node, parent, index) {
         remove(node, parent);
         return insert(el, parent, index);
       } else {
+        type = Types[el.type];
         props = last != null ? last.props : void 0;
         nextProps = el.props;
-        if (props != null) {
-          for (key in props) {
-            if (!nextProps.hasOwnProperty(key)) {
-              unset(node, key);
-            }
-          }
-        }
-        if (nextProps != null) {
-          for (key in nextProps) {
-            value = nextProps[key];
-            if ((ref = props[key]) !== value) {
-              set(node, key, value, ref);
-            }
-          }
-        }
         children = (_ref = last != null ? last.children : void 0) != null ? _ref : null;
         nextChildren = el.children;
-        if ((_ref1 = typeof nextChildren) === 'string' || _ref1 === 'number') {
-          if (nextChildren !== children) {
-            node.textContent = nextChildren;
-          }
-        } else if (nextChildren != null) {
-          if (nextChildren.type != null) {
-            apply(nextChildren, children, node.childNodes[0], node, 0);
-          } else {
-            childNodes = node.childNodes;
-            if (children != null) {
-              for (i = _i = 0, _len = nextChildren.length; _i < _len; i = ++_i) {
-                child = nextChildren[i];
-                apply(child, children[i], childNodes[i], node, i);
-              }
-            } else {
-              for (i = _j = 0, _len1 = nextChildren.length; _j < _len1; i = ++_j) {
-                child = nextChildren[i];
-                apply(child, null, childNodes[i], node, i);
+        if (type != null) {
+          dirty = false;
+          if (props != null) {
+            for (key in props) {
+              if (!nextProps.hasOwnProperty(key)) {
+                dirty = true;
               }
             }
           }
-        } else if (children != null) {
-          node.innerHTML = '';
+          if (nextProps != null) {
+            for (key in nextProps) {
+              value = nextProps[key];
+              if ((ref = props[key]) !== value) {
+                dirty = true;
+              }
+            }
+          }
+          if (children !== nextChildren) {
+            dirty = true;
+          }
+          if (dirty) {
+            el = el.render = type.render(element, (_ref1 = el.props) != null ? _ref1 : {}, el.children);
+            return apply(el, last.render, node, parent, index);
+          }
+          return;
+        } else {
+          if (props != null) {
+            for (key in props) {
+              if (!nextProps.hasOwnProperty(key)) {
+                unset(node, key, props[key]);
+              }
+            }
+          }
+          if (nextProps != null) {
+            for (key in nextProps) {
+              value = nextProps[key];
+              if ((ref = props[key]) !== value) {
+                set(node, key, value, ref);
+              }
+            }
+          }
+          if (nextChildren != null) {
+            if ((_ref2 = typeof nextChildren) === 'string' || _ref2 === 'number') {
+              if (nextChildren !== children) {
+                node.textContent = nextChildren;
+              }
+            } else {
+              if (nextChildren.type != null) {
+                apply(nextChildren, children, node.childNodes[0], node, 0);
+              } else {
+                childNodes = node.childNodes;
+                if (children != null) {
+                  for (i = _i = 0, _len = nextChildren.length; _i < _len; i = ++_i) {
+                    child = nextChildren[i];
+                    apply(child, children[i], childNodes[i], node, i);
+                  }
+                } else {
+                  for (i = _j = 0, _len1 = nextChildren.length; _j < _len1; i = ++_j) {
+                    child = nextChildren[i];
+                    apply(child, null, childNodes[i], node, i);
+                  }
+                }
+              }
+            }
+          } else if (children != null) {
+            node.innerHTML = '';
+          }
         }
         return;
       }
@@ -5695,30 +5737,36 @@ apply = function(el, last, node, parent, index) {
 };
 
 insert = function(el, parent, index) {
-  var child, children, i, key, node, value, _i, _len, _ref, _ref1, _ref2;
+  var child, children, i, key, node, type, value, _i, _len, _ref, _ref1, _ref2, _ref3;
   if (index == null) {
     index = 0;
   }
-  if ((_ref = typeof el) === 'string' || _ref === 'number') {
+  type = Types[el.type];
+  if (type != null) {
+    el = el.render = type.render(element, (_ref = el.props) != null ? _ref : {}, el.children);
+    return insert(el, parent, index);
+  } else if ((_ref1 = typeof el) === 'string' || _ref1 === 'number') {
     node = document.createTextNode(el);
   } else {
     node = document.createElement(el.type);
-    _ref1 = el.props;
-    for (key in _ref1) {
-      value = _ref1[key];
+    _ref2 = el.props;
+    for (key in _ref2) {
+      value = _ref2[key];
       set(node, key, value);
     }
   }
   children = el.children;
-  if ((_ref2 = typeof children) === 'string' || _ref2 === 'number') {
-    node.textContent = children;
-  } else if (children != null) {
-    if (children.type != null) {
-      insert(children, node, 0);
+  if (children != null) {
+    if ((_ref3 = typeof children) === 'string' || _ref3 === 'number') {
+      node.textContent = children;
     } else {
-      for (i = _i = 0, _len = children.length; _i < _len; i = ++_i) {
-        child = children[i];
-        insert(child, node, i);
+      if (children.type != null) {
+        insert(children, node, 0);
+      } else {
+        for (i = _i = 0, _len = children.length; _i < _len; i = ++_i) {
+          child = children[i];
+          insert(child, node, i);
+        }
       }
     }
   }
@@ -5772,15 +5820,29 @@ set = function(node, key, value, orig) {
   }
 };
 
-unset = function(node, key) {
-  return node.removeAttribute(key);
+unset = function(node, key, orig) {
+  var k, v, _ref1;
+  if (key === 'style') {
+    for (k in orig) {
+      v = orig[k];
+      node.style[(_ref1 = map[k]) != null ? _ref1 : k] = '';
+    }
+    return;
+  }
+  if (node[key] != null) {
+    node[key] = void 0;
+  }
+  if (node instanceof Node) {
+    node.removeAttribute(key);
+  }
 };
 
 module.exports = {
   element: element,
   recycle: recycle,
   apply: apply,
-  hint: hint
+  hint: hint,
+  Types: Types
 };
 
 
@@ -5810,7 +5872,7 @@ Context = (function() {
     Shaders: Shaders,
     Stage: Stage,
     Util: Util,
-    DOM: Overlay.Classes.dom
+    DOM: Util.VDOM.Types
   };
 
   function Context(renderer, scene, camera, script) {
@@ -7026,8 +7088,8 @@ DOM = (function(_super) {
   };
 
   DOM.prototype.unmount = function(overlay) {
-    if (overlay.parentNode) {
-      this.element.removeChild(overlay);
+    if (this.overlay.parentNode) {
+      this.element.removeChild(this.overlay);
     }
     return this.overlay = null;
   };
@@ -11483,20 +11545,18 @@ DOM = (function(_super) {
     if (this.readback == null) {
       return;
     }
-    return this.readback.update((_ref = this.root) != null ? _ref.getCamera() : void 0);
+    if (this._get('object.visible')) {
+      this.readback.update((_ref = this.root) != null ? _ref.getCamera() : void 0);
+      this.readback.post();
+      return this.readback.iterate();
+    }
   };
 
   DOM.prototype.post = function() {
     if (this.readback == null) {
       return;
     }
-    this.readback.post();
-    if (this._get('object.visible')) {
-      this.readback.iterate();
-      return this.dom.render(this.emitter.nodes());
-    } else {
-      return this.dom.render([]);
-    }
+    return this.dom.render(this._get('object.visible') ? this.emitter.nodes() : []);
   };
 
   DOM.prototype.callback = function(data) {
@@ -11519,8 +11579,9 @@ DOM = (function(_super) {
     strideI = strideJ = strideK = 0;
     colorString = '';
     f = function(x, y, z, w, i, j, k, l) {
-      var a, alpha, clip, flatZ, iw, label, ox, oy, s, scale, v, xx, yy, _ref;
-      label = data[l + strideI * i + strideJ * j + strideK * k];
+      var a, alpha, children, clip, flatZ, index, iw, ox, oy, s, scale, v, xx, yy, _ref;
+      index = l + strideI * i + strideJ * j + strideK * k;
+      children = data[index];
       clip = w < 0;
       iw = 1 / w;
       flatZ = 1 + (iw - 1) * depth.value;
@@ -11562,7 +11623,7 @@ DOM = (function(_super) {
         }
       }
       props.className += ' ' + ((_ref = a != null ? a.className : void 0) != null ? _ref : 'mathbox-label');
-      return nodes.push(el('div', props, label));
+      return nodes.push(el('div', props, children));
     };
     f.reset = (function(_this) {
       return function() {
@@ -11600,7 +11661,7 @@ DOM = (function(_super) {
   };
 
   DOM.prototype.change = function(changed, touched, init) {
-    if (touched['dom']) {
+    if (changed['dom.html'] || changed['dom.points']) {
       return this.rebuild();
     }
   };
@@ -11649,14 +11710,10 @@ HTML = (function(_super) {
 
   HTML.prototype.unmake = function() {
     HTML.__super__.unmake.apply(this, arguments);
-    if (dom) {
+    if (this.dom != null) {
       this.dom.dispose();
       return this.dom = null;
     }
-  };
-
-  HTML.prototype.update = function() {
-    return HTML.__super__.update.apply(this, arguments);
   };
 
   HTML.prototype.change = function(changed, touched, init) {
@@ -12149,10 +12206,6 @@ Traits = {
   },
   overlay: {
     opacity: Types.number(1)
-  },
-  html: {
-    font: Types.string(),
-    style: Types.string()
   },
   dom: {
     points: Types.select(),
@@ -19195,18 +19248,30 @@ exports.log = log;
 
 
 },{}],152:[function(require,module,exports){
-var HEAP, apply, descriptor, element, hint, id, insert, key, map, prop, recycle, remove, set, unset, _i, _len, _ref;
+var HEAP, Types, apply, descriptor, element, hint, id, insert, key, map, prop, recycle, remove, set, unset, _i, _len, _ref;
 
 HEAP = [];
 
 id = 0;
+
+Types = {
+
+  /*
+   * el('example', props, children);
+  example: {
+    render: (el, props, children) ->
+      return el('span', { className: "foo" }, "Hello World")
+  }
+   */
+};
 
 descriptor = function() {
   return {
     id: id++,
     type: null,
     props: null,
-    children: null
+    children: null,
+    render: null
   };
 };
 
@@ -19247,7 +19312,7 @@ recycle = function(el) {
 };
 
 apply = function(el, last, node, parent, index) {
-  var child, childNodes, children, i, key, nextChildren, nextProps, props, ref, same, value, _i, _j, _len, _len1, _ref, _ref1;
+  var child, childNodes, children, dirty, i, key, nextChildren, nextProps, props, ref, same, type, value, _i, _j, _len, _len1, _ref, _ref1, _ref2;
   if (el != null) {
     if (last == null) {
       return insert(el, parent, index);
@@ -19257,48 +19322,78 @@ apply = function(el, last, node, parent, index) {
         remove(node, parent);
         return insert(el, parent, index);
       } else {
+        type = Types[el.type];
         props = last != null ? last.props : void 0;
         nextProps = el.props;
-        if (props != null) {
-          for (key in props) {
-            if (!nextProps.hasOwnProperty(key)) {
-              unset(node, key);
-            }
-          }
-        }
-        if (nextProps != null) {
-          for (key in nextProps) {
-            value = nextProps[key];
-            if ((ref = props[key]) !== value) {
-              set(node, key, value, ref);
-            }
-          }
-        }
         children = (_ref = last != null ? last.children : void 0) != null ? _ref : null;
         nextChildren = el.children;
-        if ((_ref1 = typeof nextChildren) === 'string' || _ref1 === 'number') {
-          if (nextChildren !== children) {
-            node.textContent = nextChildren;
-          }
-        } else if (nextChildren != null) {
-          if (nextChildren.type != null) {
-            apply(nextChildren, children, node.childNodes[0], node, 0);
-          } else {
-            childNodes = node.childNodes;
-            if (children != null) {
-              for (i = _i = 0, _len = nextChildren.length; _i < _len; i = ++_i) {
-                child = nextChildren[i];
-                apply(child, children[i], childNodes[i], node, i);
-              }
-            } else {
-              for (i = _j = 0, _len1 = nextChildren.length; _j < _len1; i = ++_j) {
-                child = nextChildren[i];
-                apply(child, null, childNodes[i], node, i);
+        if (type != null) {
+          dirty = false;
+          if (props != null) {
+            for (key in props) {
+              if (!nextProps.hasOwnProperty(key)) {
+                dirty = true;
               }
             }
           }
-        } else if (children != null) {
-          node.innerHTML = '';
+          if (nextProps != null) {
+            for (key in nextProps) {
+              value = nextProps[key];
+              if ((ref = props[key]) !== value) {
+                dirty = true;
+              }
+            }
+          }
+          if (children !== nextChildren) {
+            dirty = true;
+          }
+          if (dirty) {
+            el = el.render = type.render(element, (_ref1 = el.props) != null ? _ref1 : {}, el.children);
+            return apply(el, last.render, node, parent, index);
+          }
+          return;
+        } else {
+          if (props != null) {
+            for (key in props) {
+              if (!nextProps.hasOwnProperty(key)) {
+                unset(node, key, props[key]);
+              }
+            }
+          }
+          if (nextProps != null) {
+            for (key in nextProps) {
+              value = nextProps[key];
+              if ((ref = props[key]) !== value) {
+                set(node, key, value, ref);
+              }
+            }
+          }
+          if (nextChildren != null) {
+            if ((_ref2 = typeof nextChildren) === 'string' || _ref2 === 'number') {
+              if (nextChildren !== children) {
+                node.textContent = nextChildren;
+              }
+            } else {
+              if (nextChildren.type != null) {
+                apply(nextChildren, children, node.childNodes[0], node, 0);
+              } else {
+                childNodes = node.childNodes;
+                if (children != null) {
+                  for (i = _i = 0, _len = nextChildren.length; _i < _len; i = ++_i) {
+                    child = nextChildren[i];
+                    apply(child, children[i], childNodes[i], node, i);
+                  }
+                } else {
+                  for (i = _j = 0, _len1 = nextChildren.length; _j < _len1; i = ++_j) {
+                    child = nextChildren[i];
+                    apply(child, null, childNodes[i], node, i);
+                  }
+                }
+              }
+            }
+          } else if (children != null) {
+            node.innerHTML = '';
+          }
         }
         return;
       }
@@ -19310,30 +19405,36 @@ apply = function(el, last, node, parent, index) {
 };
 
 insert = function(el, parent, index) {
-  var child, children, i, key, node, value, _i, _len, _ref, _ref1, _ref2;
+  var child, children, i, key, node, type, value, _i, _len, _ref, _ref1, _ref2, _ref3;
   if (index == null) {
     index = 0;
   }
-  if ((_ref = typeof el) === 'string' || _ref === 'number') {
+  type = Types[el.type];
+  if (type != null) {
+    el = el.render = type.render(element, (_ref = el.props) != null ? _ref : {}, el.children);
+    return insert(el, parent, index);
+  } else if ((_ref1 = typeof el) === 'string' || _ref1 === 'number') {
     node = document.createTextNode(el);
   } else {
     node = document.createElement(el.type);
-    _ref1 = el.props;
-    for (key in _ref1) {
-      value = _ref1[key];
+    _ref2 = el.props;
+    for (key in _ref2) {
+      value = _ref2[key];
       set(node, key, value);
     }
   }
   children = el.children;
-  if ((_ref2 = typeof children) === 'string' || _ref2 === 'number') {
-    node.textContent = children;
-  } else if (children != null) {
-    if (children.type != null) {
-      insert(children, node, 0);
+  if (children != null) {
+    if ((_ref3 = typeof children) === 'string' || _ref3 === 'number') {
+      node.textContent = children;
     } else {
-      for (i = _i = 0, _len = children.length; _i < _len; i = ++_i) {
-        child = children[i];
-        insert(child, node, i);
+      if (children.type != null) {
+        insert(children, node, 0);
+      } else {
+        for (i = _i = 0, _len = children.length; _i < _len; i = ++_i) {
+          child = children[i];
+          insert(child, node, i);
+        }
       }
     }
   }
@@ -19387,15 +19488,29 @@ set = function(node, key, value, orig) {
   }
 };
 
-unset = function(node, key) {
-  return node.removeAttribute(key);
+unset = function(node, key, orig) {
+  var k, v, _ref1;
+  if (key === 'style') {
+    for (k in orig) {
+      v = orig[k];
+      node.style[(_ref1 = map[k]) != null ? _ref1 : k] = '';
+    }
+    return;
+  }
+  if (node[key] != null) {
+    node[key] = void 0;
+  }
+  if (node instanceof Node) {
+    node.removeAttribute(key);
+  }
 };
 
 module.exports = {
   element: element,
   recycle: recycle,
   apply: apply,
-  hint: hint
+  hint: hint,
+  Types: Types
 };
 
 

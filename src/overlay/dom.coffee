@@ -21,7 +21,7 @@ class DOM extends Overlay
     @overlay = overlay
 
   unmount: (overlay) ->
-    @element.removeChild overlay if overlay.parentNode
+    @element.removeChild @overlay if @overlay.parentNode
     @overlay = null
 
   render: (el) ->

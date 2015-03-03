@@ -22,12 +22,9 @@ class HTML extends Voxel
 
   unmake: () ->
     super
-    if dom
+    if @dom?
       @dom.dispose()
       @dom = null
-
-  update: () ->
-    super
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['html']

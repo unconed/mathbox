@@ -1,3 +1,20 @@
+# Property types
+#
+# The weird calling convention is for double-buffering the values,
+# with compound types like arrays and nullables.
+#
+# validate: (value, target, invalid) ->
+#
+#   # Option 1: Call invalid() to reject
+#   return invalid() if value < 0
+#
+#   # Option 2: Replace in place
+#   target.set(value)
+#   return # don't return anything
+#
+#   # Option 3: Return new value
+#   return +value
+#
 Types =
 
   array: (type, size, value = null) ->
