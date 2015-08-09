@@ -7,6 +7,62 @@
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
+
+<script type="application/glsl" id="map-rotate">
+uniform vec3 dataResolution;
+uniform vec3 dataSize;
+const float COS = .995;
+const float SIN = .01;
+vec4 getSample(vec3 xyz);
+vec4 getFramesSample(vec3 xyz) {
+  vec2 pos = xyz.xy * dataResolution.xy - .5;
+  pos = ((pos * vec2(16.0, 9.0)) * mat2(COS, SIN, -SIN, COS) * .99) / vec2(16.0, 9.0);
+  xyz.xy = (pos + .5) * dataSize.xy;
+  return getSample(xyz) - .01;
+}
+</script>
+
+<script type="application/glsl" id="map-temporal-blur">
+vec4 getSample(vec3 xyz);
+vec4 getFramesSample(vec3 xyz) {
+  vec4 color = (
+    getSample(xyz) +
+    getSample(xyz + vec3(0.0, 0.0, 1.0)) +
+    getSample(xyz + vec3(0.0, 0.0, 2.0)) +
+    getSample(xyz + vec3(0.0, 0.0, 3.0))
+  ) / 4.0;
+  float v = color.x + color.y + color.z;
+  return vec4(vec3(v * v) / 8.0, 1.0);
+} 
+</script>
+
+<script type="application/glsl" id="map-xy-to-xyz">
+vec3 getSample(vec3 xyz);
+vec3 getFramesSample(vec3 xyz) {
+  vec3 c = getSample(xyz);
+  vec2 uv = (xyz.xy - vec2(32.0, 18.0)) / vec2(32.0, 18.0) * vec2(16.0 / 9.0, 1.0);
+  float f = xyz.z * 2.0 - 1.0;
+  return vec3(uv, (c.x + c.y + c.z) * .1 * f);
+}
+</script>
+
+<script type="application/glsl" id="map-z-to-color">
+vec4 getSample(vec2 xy);
+vec4 getFramesSample(vec2 xy) {
+  vec4 c = getSample(xy);
+  return vec4(c.z * vec3(c.z * vec2(c.z, 1.0), 1.0), 1.0);
+}
+</script>
+
+<script type="application/glsl" id="map-z-to-color-2">
+vec4 getSample(vec2 xy);
+vec4 getFramesSample(vec2 xy) {
+  vec4 c = getSample(xy);
+  vec3 rgb = (c.z * vec3(c.z * vec2(c.z, 1.0), 1.0));
+  return vec4(sqrt(rgb.yxz) + .2, 1.0);
+}
+</script>
+
 <body>
   <script>
     mathbox = mathBox({
@@ -43,7 +99,9 @@
     });
 
     mathbox
-
+      .set({
+        scale: 720
+      })
       .rtt({
         id: 'render',
         width: 64*4,
@@ -78,22 +136,13 @@
         height: 36*4,
         type: 'unsignedByte',
       })
+        .shader({
+          code: '#map-rotate'
+        })
         .resample({
           id: 'resample1',
           indices:    3,
           channels: 4,
-          shader: [
-            "uniform vec3 dataResolution;",
-            "uniform vec3 dataSize;",
-            "const float COS = .995;",
-            "const float SIN = .01;",
-            "vec4 getSample(vec3 xyz);",
-            "vec4 getFramesSample(vec3 xyz) {",
-            "  vec2 pos = xyz.xy * dataResolution.xy - .5;",
-            "  pos = ((pos * vec2(16.0, 9.0)) * mat2(COS, SIN, -SIN, COS) * .99) / vec2(16.0, 9.0);",
-            "  xyz.xy = (pos + .5) * dataSize.xy;",
-            "  return getSample(xyz) - .01;",
-            "}"].join("\n")
         })
         .compose({
           color: '#ffffff',
@@ -115,18 +164,14 @@
         height: 36*4,
         type: 'unsignedByte',
       })
+        .shader({
+          code: '#map-temporal-blur'
+        })
         .resample({
           id: 'resample2',
           source: '#rtt1',
           indices:    3,
-          channels: 4,
-          shader: [
-            "vec4 getSample(vec3 xyz);",
-            "vec4 getFramesSample(vec3 xyz) {",
-            "  vec4 color = (getSample(xyz) + getSample(xyz + vec3(0.0, 0.0, 1.0)) + getSample(xyz + vec3(0.0, 0.0, 2.0)) + getSample(xyz + vec3(0.0, 0.0, 3.0))) / 4.0;",
-            "  float v = color.x + color.y + color.z;",
-            "  return vec4(vec3(v * v) / 8.0, 1.0);",
-            "}"].join("\n")
+          channels: 4
         })
         .compose({
           color: '#fff',
@@ -142,19 +187,14 @@
         id: 'lerp',
       })
 
-      .resample({
-        indices:    3,
-        channels: 3,
-        shader: [
-          "vec3 getSample(vec3 xyz);",
-          "vec3 getFramesSample(vec3 xyz) {",
-          "  vec3 c = getSample(xyz);",
-          "  vec2 uv = (xyz.xy - vec2(32.0, 18.0)) / vec2(32.0, 18.0) * vec2(16.0 / 9.0, 1.0);",
-          "  float f = xyz.z * 2.0 - 1.0;",
-          "  return vec3(uv, (c.x + c.y + c.z) * .1 * f);",
-          "}"
-        ].join("\n")
+      .shader({
+        code: '#map-xy-to-xyz'
       })
+      .resample({
+        indices:  3,
+        channels: 3,
+      })
+
       .transpose({
         order: 'xywz',
         id: 'transpose',
@@ -165,32 +205,25 @@
         order: 'xywz',
         id: 'color',
       })
+
+      .shader({
+        code: '#map-z-to-color'
+      })
       .resample({
         source: '#color',
         id: 'color1',
         indices:    2,
         channels: 4,
-        shader: [
-          "vec4 getSample(vec2 xy);",
-          "vec4 getFramesSample(vec2 xy) {",
-          "  vec4 c = getSample(xy);",
-          "  return vec4(c.z * vec3(c.z * vec2(c.z, 1.0), 1.0), 1.0);",
-          "}"
-        ].join("\n")
+      })
+
+      .shader({
+        code: '#map-z-to-color-2'
       })
       .resample({
         source: '#color',
         id: 'color2',
         indices:    2,
         channels: 4,
-        shader: [
-          "vec4 getSample(vec2 xy);",
-          "vec4 getFramesSample(vec2 xy) {",
-          "  vec4 c = getSample(xy);",
-          "  vec3 rgb = (c.z * vec3(c.z * vec2(c.z, 1.0), 1.0));",
-          "  return vec4(sqrt(rgb.yxz) + .2, 1.0);",
-          "}"
-        ].join("\n")
       })
 
 

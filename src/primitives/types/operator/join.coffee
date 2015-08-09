@@ -22,8 +22,8 @@ class Join extends Operator
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
 
-  getActive: () ->
-    @_resample @bind.source.getActive()
+  getActiveDimensions: () ->
+    @_resample @bind.source.getActiveDimensions()
 
   _resample: (dims) ->
     order   = @order
@@ -54,9 +54,9 @@ class Join extends Operator
     super
     return unless @bind.source?
 
-    order   = @_get 'join.order'
-    axis    = @_get 'join.axis'
-    overlap = @_get 'join.overlap'
+    order   = @props.order
+    axis    = @props.axis
+    overlap = @props.overlap
 
     ###
     Calculate index transform
@@ -84,6 +84,7 @@ class Join extends Operator
     ###
 
     permute = order.join ''
+    axis   ?= order[0]
     index   = permute.indexOf axis
     rest    = permute.replace(axis, '00').substring(0, 4)
 

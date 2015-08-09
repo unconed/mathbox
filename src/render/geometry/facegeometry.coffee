@@ -1,4 +1,4 @@
-Geometry = require './geometry'
+ClipGeometry = require './clipgeometry'
 
 ###
 (flat) Triangle fans arranged in items, columns and rows
@@ -16,17 +16,12 @@ Geometry = require './geometry'
 +-+-+   +-+-+   +-+-+   +-+-+   
 ###
 
-class FaceGeometry extends Geometry
+class FaceGeometry extends ClipGeometry
 
   constructor: (options) ->
     super options
 
-    @geometryClip = new THREE.Vector4
-
-    @uniforms ?= {}
-    @uniforms.geometryClip =
-      type: 'v4'
-      value: @geometryClip
+    @_clipUniforms()
 
     @items    = items   = +options.items   || 2
     @width    = width   = +options.width   || 1
@@ -70,15 +65,10 @@ class FaceGeometry extends Geometry
 
     sides = Math.max 0, items - 2
 
-    @geometryClip.set width, height, depth, items
+    @_clipGeometry   width, height, depth, items
+    @_clipOffsets    3,
+                     width, height,  depth,   sides,
+                     @width, @height, @depth, @sides
 
-    dims  = [ depth,  height,  width,  sides]
-    maxs  = [@depth, @height, @width, @sides]
-    tris  = @_reduce dims, maxs
-
-    @_offsets [
-      start: 0
-      count: tris * 3
-    ]
 
 module.exports = FaceGeometry

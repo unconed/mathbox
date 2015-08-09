@@ -32,7 +32,7 @@ class RTT extends Root
     height: @height
     depth:  @history
 
-  getActive: () -> @getDimensions()
+  getActiveDimensions: () -> @getDimensions()
 
   make: () ->
     @parentRoot = @_inherit 'root'
@@ -43,19 +43,19 @@ class RTT extends Root
 
     return unless @rootSize?
 
-    minFilter = @_get 'texture.minFilter'
-    magFilter = @_get 'texture.magFilter'
-    type      = @_get 'texture.type'
+    minFilter = @props.minFilter
+    magFilter = @props.magFilter
+    type      = @props.type
 
-    width     = @_get 'rtt.width'
-    height    = @_get 'rtt.height'
-    history   = @_get 'rtt.history'
-    
+    width     = @props.width
+    height    = @props.height
+    history   = @props.history
+
     @width    = width  ? @rootSize.renderWidth
     @height   = height ? @rootSize.renderHeight
     @history  = history
     @aspect   = aspect = @width / @height
-    
+
     @scene ?= @_renderables.make 'scene'
     @rtt    = @_renderables.make 'renderToTexture',
       scene:     @scene
@@ -112,10 +112,10 @@ class RTT extends Root
 
   resize: (size) ->
     @rootSize = size
-    
-    width  = @_get 'rtt.width'
-    height = @_get 'rtt.height'
-    
+
+    width  = @props.width
+    height = @props.height
+
     return @rebuild() if !@rtt or !width? or !height?
 
   # End transform chain here

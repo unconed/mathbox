@@ -34,11 +34,11 @@ class PushBuffer extends Buffer
   read: () -> @data
 
   copy: (data) ->
-    n    = Math.min data.length, @samples * @channels * @items
+    n    = Math.min data.length, @samples
     d    = @data
     d[i] = data[i] for i in [0...n]
 
-  iterate: () ->
+  fill: () ->
     callback = @callback
     callback.reset?()
 
@@ -79,6 +79,6 @@ class PushBuffer extends Buffer
           break
 
     @filled = 1
-    Math.floor count() / @items
-    
+    count()
+
 module.exports = PushBuffer

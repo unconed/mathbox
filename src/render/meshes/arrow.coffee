@@ -8,6 +8,7 @@ class Arrow extends Base
     uniforms = options.uniforms ? {}
     position = options.position
     color    = options.color
+    mask     = options.mask
 
     hasStyle = uniforms.styleColor?
 
@@ -26,17 +27,17 @@ class Arrow extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    if color
-      v.require color
-      v.pipe 'mesh.vertex.color',   @uniforms
+
+    @_vertexColor v, color, mask
+
     v.require position if position
     v.pipe 'arrow.position',        @uniforms
     v.pipe 'project.position',      @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',           @uniforms    if hasStyle
-    f.pipe 'mesh.fragment.blend',   @uniforms    if color && hasStyle
-    f.pipe 'mesh.fragment.color',   @uniforms    if color && !hasStyle
+
+    @_fragmentColor f, hasStyle, false, color, mask
+
     f.pipe 'fragment.color',        @uniforms
 
     @material = @_material factory.link

@@ -12,7 +12,7 @@ class Surface extends Primitive
   resize: () ->
     return unless @bind.points?
 
-    dims = @bind.points.getActive()
+    dims = @bind.points.getActiveDimensions()
     width  = dims.width
     height = dims.height
     depth  = dims.depth
@@ -38,13 +38,6 @@ class Surface extends Primitive
     position = @bind.points.sourceShader position
     position = @_helpers.position.pipeline position
 
-    # Samplers for XY / YX wires
-    wireXY = position
-
-    wireYX = @_shaders.shader()
-    wireYX.pipe Util.GLSL.swizzleVec4 'yxzw'
-    wireYX.pipe position
-
     # Prepare bound uniforms
     styleUniforms   = @_helpers.style.uniforms()
     wireUniforms    = @_helpers.style.uniforms()
@@ -68,11 +61,11 @@ class Surface extends Primitive
     layers = dims.items
 
     # Get display properties
-    shaded = @_get 'mesh.shaded'
-    solid  = @_get 'mesh.solid'
-    first  = @_get 'grid.first'
-    second = @_get 'grid.second'
-    stroke = @_get 'line.stroke'
+    shaded = @props.shaded
+    solid  = @props.solid
+    first  = @props.first
+    second = @props.second
+    stroke = @props.stroke
 
     objects = []
 
@@ -80,6 +73,20 @@ class Surface extends Primitive
     if @bind.colors
       color = @_shaders.shader()
       @bind.colors.sourceShader color
+
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
+
+    # Samplers for XY / YX wires
+    wireXY = position
+
+    wireYX = @_shaders.shader()
+    wireYX.pipe Util.GLSL.swizzleVec4 'yxzw'
+    wireYX.pipe position
+
+    maskYX = @_shaders.shader()
+    maskYX.pipe Util.GLSL.swizzleVec4 'yxzw'
+    maskYX.pipe mask
 
     # Make line and surface renderables
     uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms, wireUniforms
@@ -95,6 +102,7 @@ class Surface extends Primitive
                 color:    color
                 zUnits:   -zUnits
                 stroke:   stroke
+                mask:     mask
       objects.push @line1
 
     if second
@@ -108,6 +116,7 @@ class Surface extends Primitive
                 color:    color
                 zUnits:   -zUnits
                 stroke:   stroke
+                mask:     maskYX
       objects.push @line2
 
     if solid
@@ -123,6 +132,7 @@ class Surface extends Primitive
                 shaded:   shaded
                 zUnits:   zUnits
                 stroke:   stroke
+                mask:     mask
       objects.push @surface
 
     @_helpers.object.make objects

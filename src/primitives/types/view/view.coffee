@@ -10,6 +10,6 @@ class View extends Transform
     @_helpers.object.unmake()
 
   axis: (dimension) ->
-    @_get('view.range')[dimension - 1]
+    @props.range[dimension - 1]
 
 module.exports = View

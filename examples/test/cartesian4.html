@@ -63,7 +63,7 @@
       rangeY: [-1, 1],
       width: 32,
       height: 8,
-      expression: function (emit, x, y, i, j) {
+      map: function (emit, x, y, i, j) {
         θ = π / 2 * (
               Math.cos(time * .31 + Math.cos(time * .481 - Math.sin(time * .318)) + Math.sin(time * 1.179))
             + Math.cos(time * .61 - Math.sin(time * .305 - Math.cos(time * .573)) + Math.cos(time * 0.962))
@@ -100,7 +100,7 @@
       rangeY: [-1, 1],
       width: 96,
       height: 8,
-      expression: function (emit, x, y, i, j) {
+      map: function (emit, x, y, i, j) {
         θ = π / 2 * (
               Math.cos(time * .31 + Math.cos(time * .481 - Math.sin(time * .318)) + Math.sin(time * 1.179))
             + Math.cos(time * .61 - Math.sin(time * .305 - Math.cos(time * .573)) + Math.cos(time * 0.962))

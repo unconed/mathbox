@@ -1,4 +1,4 @@
-Geometry = require './geometry'
+ClipGeometry = require './clipgeometry'
 
 ###
 Cones to attach as arrowheads on line strips
@@ -10,17 +10,12 @@ Cones to attach as arrowheads on line strips
 .....> .....> .....> .....>
 ###
 
-class ArrowGeometry extends Geometry
+class ArrowGeometry extends ClipGeometry
 
   constructor: (options) ->
     super options
 
-    @geometryClip = new THREE.Vector4
-
-    @uniforms ?= {}
-    @uniforms.geometryClip =
-      type: 'v4'
-      value: @geometryClip
+    @_clipUniforms()
 
     @sides    = sides   = +options.sides   || 12
     @samples  = samples = +options.samples || 2
@@ -102,14 +97,14 @@ class ArrowGeometry extends Geometry
     return
 
   clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
+
     segments = Math.max 0, samples - 1
 
-    @geometryClip.set segments, strips, ribbons, layers
+    @_clipGeometry   samples, strips, ribbons, layers
 
     if samples > @anchor
       dims  = [ layers,  ribbons,  strips]
       maxs  = [@layers, @ribbons, @strips]
-
       quads = @sides * @_reduce dims, maxs
     else
       quads = 0

@@ -23,10 +23,10 @@ class Cartesian extends View
 
     return unless touched['view'] or touched['view3'] or init
 
-    o = @_get 'view3.position'
-    s = @_get 'view3.scale'
-    q = @_get 'view3.rotation'
-    r = @_get 'view.range'
+    o = @props.position
+    s = @props.scale
+    q = @props.rotation
+    r = @props.range
 
     x = r[0].x
     y = r[1].x

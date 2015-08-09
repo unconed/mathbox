@@ -6,11 +6,9 @@ class Operator extends Source
   indexShader:   (shader)   -> @bind.source?.indexShader?   shader
   sourceShader:  (shader)   -> @bind.source?.sourceShader?  shader
 
-  getDimensions: () ->
-    @bind.source.getDimensions()
-
-  getActive: () ->
-    @bind.source.getActive()
+  getDimensions: () ->       @bind.source.getDimensions()
+  getActiveDimensions: () -> @bind.source.getActiveDimensions()
+  getIndexDimensions:  () -> @bind.source.getIndexDimensions()
 
   make: () ->
     super

@@ -13,14 +13,14 @@ helpers =
 
   bind:
     make: (slots) ->
-      @bind = {}
-      @bound = []
+      @bind  ?= {}
+      @bound ?= []
 
       # Fetch attached objects and bind to them
       # Attach rebuild watcher for DOM changes to bound nodes
       for slot in slots
-        {to, trait} = slot
-        
+        {to, trait, optional} = slot
+
         name     = to.split(/\./g).pop()
         selector = @_get to
 
@@ -31,13 +31,13 @@ helpers =
           unique   = false
           while !unique
             # Keep scanning back until a new node is found
-            start  = source = @_attach selector, trait, @rebuild, @, start
+            start  = source = @_attach selector, trait, @rebuild, @, start, optional
             unique = !source? or @bound.indexOf(source) < 0
 
         # Monitor source for reallocation / resize
         if source?
-          @_listen source, 'source.resize',  @resize
-          @_listen source, 'source.rebuild', @rebuild
+          @_listen source, 'source.resize',  @resize  if @resize?
+          @_listen source, 'source.rebuild', @rebuild if @rebuild?
           @bound.push source
 
         @bind[name] = source
@@ -47,6 +47,7 @@ helpers =
     unmake: () ->
       return unless @bind
       delete @bind
+      delete @bound
 
   span:
     make: () ->
@@ -97,8 +98,8 @@ helpers =
   arrow:
     # Return bound arrow style uniforms
     uniforms: () ->
-      start   = @_get 'arrow.start'
-      end     = @_get 'arrow.end'
+      start   = @props.start
+      end     = @props.end
 
       space = @_attributes.make @_types.number 1.25 / (start + end)
       style = @_attributes.make @_types.vec2 +start, +end
@@ -147,26 +148,26 @@ helpers =
 
       hasStyle = 'style' in @traits
       opacity  = 1
-      visible  = @_get 'object.visible'
+      visible  = @props.visible
       blending = THREE.NormalBlending
       zWrite   = true
       zTest    = true
 
       if hasStyle
-        opacity  = @_get 'style.opacity'
-        blending = @_get 'style.blending'
-        zOrder   = @_get 'style.zOrder'
-        zWrite   = @_get 'style.zWrite'
-        zTest    = @_get 'style.zTest'
+        opacity  = @props.opacity
+        blending = @props.blending
+        zOrder   = @props.zOrder
+        zWrite   = @props.zWrite
+        zTest    = @props.zTest
 
       onChange = (event) =>
         changed  = event.changed
         refresh  = null
-        refresh  = visible  = @_get 'object.visible' if changed['object.visible']
-        refresh  = opacity  = @_get 'style.opacity'  if changed['style.opacity']
-        refresh  = blending = @_get 'style.blending' if changed['style.blending']
-        refresh  = zWrite   = @_get 'style.zWrite'   if changed['style.zWrite']
-        refresh  = zTest    = @_get 'style.zTest'    if changed['style.zTest']
+        refresh  = visible  = @props.visible  if changed['object.visible']
+        refresh  = opacity  = @props.opacity  if changed['style.opacity']
+        refresh  = blending = @props.blending if changed['style.blending']
+        refresh  = zWrite   = @props.zWrite   if changed['style.zWrite']
+        refresh  = zTest    = @props.zTest    if changed['style.zTest']
         onVisible() if refresh?
 
       last = null
@@ -207,6 +208,10 @@ helpers =
       objectScene.unadopt object for object in @objects
       object.dispose() for object in @objects if dispose
 
+    mask: () ->
+      return unless mask = @_inherit('mask')
+      shader = mask.mask shader
+
   unit:
     make: () ->
       π = Math.PI
@@ -222,9 +227,10 @@ helpers =
         pixelRatio:       pixelRatio      = @_attributes.make @_types.number 1
         pixelUnit:        pixelUnit       = @_attributes.make @_types.number 1
         worldUnit:        worldUnit       = @_attributes.make @_types.number 1
+        focusDepth:       focusDepth      = @_attributes.make @_types.number 1
         renderOdd:        renderOdd       = @_attributes.make @_types.vec2()
       }
-      
+
       top    = new THREE.Vector3()
       bottom = new THREE.Vector3()
 
@@ -232,13 +238,13 @@ helpers =
         return unless (size = root?.getSize())?
 
         π = Math.PI
-        
-        scale = @_get 'unit.scale'
-        map   = @_get 'unit.map'
-        fov   = @_get 'unit.fov'
+
+        scale = @props.scale
+        fov   = @props.fov
+        focus = @props.focus
 
         isAbsolute = scale == null
-        
+
         # Measure live FOV to be able to accurately predict anti-aliasing in perspective
         measure = 1
         if (camera = root?.getCamera())
@@ -248,22 +254,22 @@ helpers =
           bottom.set(0,  .5, 1).applyProjection(m)
           top.sub bottom
           measure = top.y
-          
+
         # Calculate device pixel ratio
         dpr      = size.renderHeight / size.viewHeight
 
         # Calculate correction for fixed on-screen size regardless of FOV
-        fovtan   = if fov? then Math.tan(fov * π / 360) / measure else 1
+        fovtan   = if fov? then measure * Math.tan(fov * π / 360) else 1
 
         # Calculate device pixels per virtual pixel
         pixel    = if isAbsolute then dpr else size.renderHeight / scale * fovtan
 
         # Calculate device pixels per world unit
         rscale   = size.renderHeight * measure / 2
-        
+
         # Calculate world units per virtual pixel
         world    = pixel / rscale
-        
+
         viewWidth     .value = size.viewWidth
         viewHeight    .value = size.viewHeight
         renderWidth   .value = size.renderWidth
@@ -274,6 +280,7 @@ helpers =
         pixelRatio    .value = dpr
         pixelUnit     .value = pixel
         worldUnit     .value = world
+        focusDepth    .value = focus
 
         renderOdd     .value.set(size.renderWidth % 2, size.renderHeight % 2).multiplyScalar(.5);
 
@@ -284,9 +291,9 @@ helpers =
       #@_listen root, 'root.camera', handler
       #@_listen @node, 'change:unit', handler
       @_listen root,  'root.update', handler
-      
+
       handler()
-      
+
     unmake: () ->
       delete @unitUniforms
 

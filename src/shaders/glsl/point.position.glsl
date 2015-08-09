@@ -4,7 +4,9 @@ uniform float pointDepth;
 uniform float pixelUnit;
 uniform float renderScale;
 uniform float renderScaleInv;
+uniform float focusDepth;
 
+uniform vec4 geometryClip;
 attribute vec4 position4;
 attribute vec2 sprite;
 
@@ -15,13 +17,14 @@ varying float vPixelSize;
 vec3 getPosition(vec4 xyzw);
 
 vec3 getPointPosition() {
-  vec3 center = getPosition(position4);
+  vec4 p = min(geometryClip, position4);
+  vec3 center = getPosition(p);
 
   // Depth blending
   // TODO: orthographic camera
   // Workaround: set depth = 0
   float z = -center.z;
-  float depth = mix(z, 1.0, pointDepth);
+  float depth = mix(z, focusDepth, pointDepth);
   
   // Match device/unit mapping 
   // Sprite goes from -1..1, width = 2.

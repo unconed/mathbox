@@ -2,35 +2,36 @@ Source = require '../base/source'
 Util = require '../../../util'
 
 class Data extends Source
-  @traits = ['node', 'data', 'source', 'texture']
+  @traits = ['node', 'data', 'source', 'index']
 
   init: () ->
     @dataEmitter = null
     @dataSizes   = null
 
-  update: () ->
+  emitter: (channels, items) ->
+    data = @props.data
+    bind = @props.resolve
+    expr = @props.map
 
-  emitter: () ->
-    data = @_get 'data.data'
-    
     if data?
       # Make new emitter if data geometry doesn't match
       last     = @dataSizes
       sizes    = Util.Data.getSizes data
 
-      if !last or last.length != sizes.length        
-        channels = @_get 'data.channels'
-        items    = @_get 'data.items'
-
+      if !last or last.length != sizes.length
         # Create data thunk to copy (multi-)array
         thunk        = Util.Data.getThunk    data
         @dataEmitter = @callback Util.Data.makeEmitter thunk, items, channels
         @dataSizes   = sizes
 
       emitter = @dataEmitter
+    else if resolve?
+      # Hook up data-bound expression to its source
+      resolve = @_inherit 'resolve'
+      emitter = @callback resolve.callback bind
     else
-      # Convert given expression to appropriate callback
-      emitter = @callback @_get 'data.expression'
+      # Convert given free expression to appropriate callback
+      emitter = @callback expr
 
     emitter
 
@@ -43,6 +44,5 @@ class Data extends Source
   unmake: () ->
     @dataEmitter = null
     @dataSizes   = null
-
 
 module.exports = Data

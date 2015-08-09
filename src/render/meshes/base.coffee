@@ -1,4 +1,5 @@
 Renderable = require '../renderable'
+Util       = require '../../util'
 
 class Base extends Renderable
   constructor: (renderer, shaders, options) ->
@@ -66,5 +67,33 @@ class Base extends Renderable
 
   _hide: (object) ->
     object.visible = false
+
+  _vertexColor: (shader, color, mask) ->
+    v = shader
+
+    if color
+      v.require color
+      v.pipe 'mesh.vertex.color', @uniforms
+
+    if mask
+      v.require mask
+      v.pipe 'mesh.vertex.mask',  @uniforms
+
+    return v
+
+  _fragmentColor: (shader, hasStyle, shaded, color, mask) ->
+    f = shader
+
+    if hasStyle
+      f.pipe 'style.color',             @uniforms if !shaded
+      f.pipe 'style.color.shaded',      @uniforms if  shaded
+
+    if color
+      f.pipe 'mesh.fragment.color',     @uniforms
+      f.pipe Util.GLSL.binaryOperator 'vec4', '*' if hasStyle
+
+    if mask
+      f.pipe 'mesh.fragment.mask',      @uniforms
+      f.pipe Util.GLSL.binaryOperator 'vec4', '*' if hasStyle || color
 
 module.exports = Base

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Source extends Primitive
-  @traits = ['node', 'data', 'source', 'index']
+  @traits = ['node', 'source', 'index']
 
   made: () ->
     # Notify of buffer reallocation
@@ -18,12 +18,12 @@ class Source extends Primitive
     height: 1
     depth:  1
 
-  getActive: () ->
+  getActiveDimensions: () ->
     items:  1
     width:  1
     height: 1
     depth:  1
 
-
+  getIndexDimensions: () -> @getActiveDimensions()
 
 module.exports = Source

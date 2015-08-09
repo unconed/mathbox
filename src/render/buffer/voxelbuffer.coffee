@@ -10,11 +10,11 @@ class VoxelBuffer extends DataBuffer
     @pad      = {x: 0, y: 0, z: 0}
     @streamer = @generate @data
 
-  getFilled: () -> @filled
+  setActive: (i, j, k) -> [@pad.x, @pad.y, @pad.z] = [
+    Math.max(0, @width - i), Math.max(0, @height - j), Math.max(0, @depth - k)
+  ]
 
-  setActive: (i, j, k) -> [@pad.x, @pad.y, @pad.z] = [@width - i, @height - j, @depth - k]
-
-  iterate: () ->
+  fill: () ->
     callback = @callback
     callback.reset?()
 
@@ -56,5 +56,48 @@ class VoxelBuffer extends DataBuffer
 
     Math.floor count() / @items
 
+  through: (callback, target) ->
+    # must be identical sized buffers w/ identical active areas
+
+    {consume, done} = src = @streamer
+    {emit}          = dst = target.streamer
+
+    pipe = () -> consume (x, y, z, w) -> callback emit, x, y, z, w
+    pipe = Util.Data.repeatCall pipe, @items
+
+    () =>
+      src.reset()
+      dst.reset()
+
+      n     = @width
+      m     = @height
+      o     = @depth
+      padX  = @pad.x
+      padY  = @pad.y
+      limit = @samples - @pad.z * n * m
+
+      i = j = k = l = 0
+      if padX > 0 or padY > 0
+        while !done() && l < limit
+          l++
+          pipe()
+          if ++i == n - padX
+            skip padX
+            i = 0
+            if ++j == m - padY
+              skip n * padY
+              j = 0
+              k++
+      else
+        while !done() && l < limit
+          l++
+          pipe()
+          if ++i == n
+            i = 0
+            if ++j == m
+              j = 0
+              k++
+
+      return src.count()
 
 module.exports = VoxelBuffer

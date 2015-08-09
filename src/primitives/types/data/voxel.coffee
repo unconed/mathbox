@@ -1,12 +1,11 @@
-Data = require './data'
+Buffer = require './buffer'
 Util = require '../../../util'
 
-class Voxel extends Data
-  @traits = ['node', 'data', 'source', 'texture', 'voxel']
+class Voxel extends Buffer
+  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'voxel', 'raw']
 
   init: () ->
     @buffer = @spec = null
-    @filled = false
 
     @space =
       width:  0
@@ -17,47 +16,45 @@ class Voxel extends Data
       width:  0
       height: 0
       depth:  0
-    
+
     @storage = 'voxelBuffer'
-    
+
     super
 
   sourceShader: (shader) ->
     @buffer.shader shader
 
   getDimensions: () ->
-    space = @space
-
     items:  @items
-    width:  space.width
-    height: space.height
-    depth:  space.depth
+    width:  @space.width
+    height: @space.height
+    depth:  @space.depth
 
-  getActive: () ->
-    used = @used
-
+  getActiveDimensions: () ->
     items:  @items
-    width:  used.width
-    height: used.height
-    depth:  used.depth * @buffer.getFilled()
+    width:  @used.width
+    height: @used.height
+    depth:  @used.depth * @buffer.getFilled()
+
+  getRawDimensions: () -> @getDimensions()
 
   make: () ->
     super
 
     # Read sampling parameters
-    minFilter = @_get 'texture.minFilter'
-    magFilter = @_get 'texture.magFilter'
-    type      = @_get 'texture.type'
+    minFilter = @minFilter ? @props.minFilter
+    magFilter = @magFilter ? @props.magFilter
+    type      = @type      ? @props.type
 
     # Read given dimensions
-    width    = @_get 'voxel.width'
-    height   = @_get 'voxel.height'
-    depth    = @_get 'voxel.depth'
-    reserveX = @_get 'voxel.bufferWidth'
-    reserveY = @_get 'voxel.bufferHeight'
-    reserveZ = @_get 'voxel.bufferDepth'
-    channels = @_get 'data.channels'
-    items    = @_get 'data.items'
+    width    = @props.width
+    height   = @props.height
+    depth    = @props.depth
+    reserveX = @props.bufferWidth
+    reserveY = @props.bufferHeight
+    reserveZ = @props.bufferDepth
+    channels = @props.channels
+    items    = @props.items
 
     dims = @spec = {channels, items, width, height, depth}
 
@@ -65,7 +62,7 @@ class Voxel extends Data
     @channels = dims.channels
 
     # Init to right size if data supplied
-    data = @_get 'data.data'
+    data = @props.data
     dims = Util.Data.getDimensions data, dims
 
     space = @space
@@ -96,8 +93,8 @@ class Voxel extends Data
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
-                         changed['data.channels'] or
-                         changed['data.items'] or
+                         changed['buffer.channels'] or
+                         changed['buffer.items'] or
                          changed['voxel.bufferWidth'] or
                          changed['voxel.bufferHeight'] or
                          changed['voxel.bufferDepth']
@@ -105,19 +102,20 @@ class Voxel extends Data
     return unless @buffer
 
     if changed['voxel.width']
-      width = @_get 'voxel.width'
+      width = @props.width
       return @rebuild() if width  > @space.width
 
     if changed['voxel.height']
-      height = @_get 'voxel.height'
+      height = @props.height
       return @rebuild() if height > @space.height
 
     if changed['voxel.depth']
-      depth = @_get 'voxel.depth'
+      depth = @props.depth
       return @rebuild() if depth  > @space.depth
 
-    if changed['data.expression'] or
+    if changed['data.map'] or
        changed['data.data'] or
+       changed['data.resolve'] or
        init
 
       @buffer.setCallback @emitter()
@@ -126,13 +124,14 @@ class Voxel extends Data
 
   update: () ->
     return unless @buffer
-    return unless !@filled or @_get 'data.live'
 
-    data = @_get 'data.data'
+    filled   = @buffer.getFilled()
+    return unless !filled or @props.live
+
+    data = @props.data
 
     space    = @space
     used     = @used
-    filled   = @buffer.getFilled()
 
     w = used.width
     h = used.height
@@ -165,9 +164,7 @@ class Voxel extends Data
 
       if used.depth == 1
         used.height = Math.ceil length / _w
-        used.width  = length if used.height == 1          
-
-    @filled = true
+        used.width  = length if used.height == 1
 
     if used.width  != w or
        used.height != h or

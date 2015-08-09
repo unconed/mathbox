@@ -26,11 +26,11 @@ class Stereographic4 extends View
 
     return unless touched['view'] or touched['view4'] or touched['stereographic'] or init
 
-    @bend = bend = @_get 'stereographic.bend'
+    @bend = bend = @props.bend
 
-    p = @_get 'view4.position'
-    s = @_get 'view4.scale'
-    r = @_get 'view.range'
+    p = @props.position
+    s = @props.scale
+    r = @props.range
 
     x = r[0].x
     y = r[1].x

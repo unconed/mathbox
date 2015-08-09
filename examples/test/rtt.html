@@ -45,7 +45,7 @@
     .interval({
       id: 'sampler',
       length: 64,
-      expression: function (emit, x, i) {
+      map: function (emit, x, i) {
         y = Math.sin(x + three.Time.now) * .7;
         emit(x, y);
       },

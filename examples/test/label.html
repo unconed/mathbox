@@ -69,7 +69,7 @@
 
     view.interval({
       length: 16,
-      expression: function (emit, x, i) {
+      map: function (emit, x, i) {
         y = Math.sin(x + time / 4) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
       },
@@ -98,7 +98,7 @@
       height: 5,
       depth:  2,
       //expand: 0,
-      expression: function (emit, i, j) {
+      map: function (emit, i, j) {
         //emit('QxAfjldgざおぎぼアプヸ⾤⾘⿕⿒');
         emit(
           Math.floor(time * 2 + i / 8)

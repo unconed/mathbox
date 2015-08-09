@@ -14,6 +14,9 @@ class Grid extends Primitive
 
   make: () ->
 
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
+
     axis = (first, second) =>
       # Prepare data buffer of tick positions
       detail     = @_get first + 'axis.detail'
@@ -61,16 +64,17 @@ class Grid extends Primitive
                 strips:   strips
                 position: position
                 stroke:   stroke
+                mask:     mask
 
       # Store axis object for manipulation later
       {first, second, resolution, samples, line, buffer, values}
 
     # Generate both line sets
-    first  = @_get 'grid.first'
-    second = @_get 'grid.second'
+    first  = @props.first
+    second = @props.second
 
     # Stroke style
-    stroke  = @_get 'line.stroke'
+    stroke  = @props.stroke
 
     @axes = []
     first  && @axes.push axis 'x.', 'y.'
@@ -80,7 +84,7 @@ class Grid extends Primitive
     lines = (axis.line for axis in @axes)
     @_helpers.object.make lines
     @_helpers.span.make()
-    
+
   unmake: () ->
     @_helpers.object.unmake()
     @_helpers.span.unmake()
@@ -125,13 +129,13 @@ class Grid extends Primitive
        init
 
       # Fetch grid range in both dimensions
-      axes   = @_get 'area.axes'
+      axes   = @props.axes
       range1 = @_helpers.span.get 'x.', axes[0]
       range2 = @_helpers.span.get 'y.', axes[1]
 
       # Update both line sets
-      first  = @_get 'grid.first'
-      second = @_get 'grid.second'
+      first  = @props.first
+      second = @props.second
 
       if first
         axis axes[0], axes[1], range1, range2, @axes[0]

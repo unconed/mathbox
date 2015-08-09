@@ -17,7 +17,7 @@ class Buffer extends Renderable
     super
 
   update: () ->
-    n = @iterate()
+    n = @fill()
     @write n
     n
 
@@ -25,7 +25,7 @@ class Buffer extends Renderable
   setCallback: (@callback) ->
 
   write: () ->
-  iterate: () ->
+  fill:  () ->
   generate: (data) -> Util.Data.getStreamer data, @samples, @channels, @items
 
 module.exports = Buffer

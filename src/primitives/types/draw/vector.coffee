@@ -11,7 +11,7 @@ class Vector extends Primitive
 
   resize: () ->
     return unless @bind.points?
-    dims = @bind.points.getActive()
+    dims = @bind.points.getActiveDimensions()
 
     samples = dims.items
     strips  = dims.width
@@ -48,11 +48,11 @@ class Vector extends Primitive
     unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Clip start/end for terminating arrow
-    start   = @_get 'arrow.start'
-    end     = @_get 'arrow.end'
+    start   = @props.start
+    end     = @props.end
 
     # Stroke style
-    stroke  = @_get 'line.stroke'
+    stroke  = @props.stroke
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
@@ -67,6 +67,9 @@ class Vector extends Primitive
       color.pipe swizzle
       @bind.colors.sourceShader color
 
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
+
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
     @line = @_renderables.make 'line',
@@ -79,6 +82,7 @@ class Vector extends Primitive
               color:    color
               clip:     start or end
               stroke:   stroke
+              mask:     mask
 
     # Make arrow renderables
     @arrows = []

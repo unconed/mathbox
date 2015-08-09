@@ -1,8 +1,9 @@
 uniform float worldUnit;
 uniform float lineWidth;
 uniform float lineDepth;
-uniform vec4 geometryClip;
+uniform float focusDepth;
 
+uniform vec4 geometryClip;
 attribute vec2 line;
 attribute vec4 position4;
 
@@ -26,7 +27,7 @@ attribute vec2 strip;
 
 varying vec2 vClipEnds;
 
-void clipEnds(vec4 xyzw, vec3 center, vec3 pos, float depth) {
+void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
 
   // Sample end of line strip
   vec4 xyzwE = vec4(strip.y, xyzw.yzw);
@@ -36,20 +37,32 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos, float depth) {
   vec4 xyzwS = vec4(strip.x, xyzw.yzw);
   vec3 start = getPosition(xyzwS);
 
-  // Absolute arrow length (=2.5x radius)
-  float size = clipRange * lineWidth * worldUnit * depth * 1.25;
-
-  // Measure length and adjust clip range
-  // Approach linear scaling with cubic ease the smaller we get
+  // Measure length
   vec3 diff = end - start;
   float l = length(diff) * clipSpace;
-  float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);
-  float scale = 1.0 - mini * mini * mini; 
-  float invrange = 1.0 / (size * scale);
-  
+
+  // Arrow length (=2.5x radius)
+  float arrowSize = 1.25 * clipRange * lineWidth * worldUnit;
+
   vClipEnds = vec2(1.0);
 
   if (clipStyle.y > 0.0) {
+    // Depth blend end
+    float depth = focusDepth;
+    if (lineDepth < 1.0) {
+      float z = max(0.00001, -end.z);
+      depth = mix(z, focusDepth, lineDepth);
+    }
+    
+    // Absolute arrow length
+    float size = arrowSize * depth;
+
+    // Adjust clip range
+    // Approach linear scaling with cubic ease the smaller we get
+    float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);
+    float scale = 1.0 - mini * mini * mini; 
+    float invrange = 1.0 / (size * scale);
+  
     // Clip end
     diff = normalize(end - center);
     float d = dot(end - pos, diff);
@@ -57,6 +70,22 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos, float depth) {
   }
 
   if (clipStyle.x > 0.0) {
+    // Depth blend start
+    float depth = focusDepth;
+    if (lineDepth < 1.0) {
+      float z = max(0.00001, -start.z);
+      depth = mix(z, focusDepth, lineDepth);
+    }
+    
+    // Absolute arrow length
+    float size = arrowSize * depth;
+
+    // Adjust clip range
+    // Approach linear scaling with cubic ease the smaller we get
+    float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);
+    float scale = 1.0 - mini * mini * mini; 
+    float invrange = 1.0 / (size * scale);
+  
     // Clip start 
     diff = normalize(center - start);
     float d = dot(pos - start, diff);
@@ -173,6 +202,7 @@ vec3 getLinePosition() {
   float offset = line.y;
 
   vec4 p = min(geometryClip, position4);
+  edge += max(0.0, position4.x - geometryClip.x);
 
   // Get position + adjacent neighbours
   getLineGeometry(p, edge, left, center, right);
@@ -189,13 +219,13 @@ vec3 getLinePosition() {
   // Divide line width up/down
   float width = lineWidth * 0.5;
 
-  float depth = 1.0;
+  float depth = focusDepth;
   if (lineDepth < 1.0) {
     // Depth blending
     float z = max(0.00001, -center.z);
-    depth = mix(z, 1.0, lineDepth);
-    width *= depth;
+    depth = mix(z, focusDepth, lineDepth);
   }
+  width *= depth;
 
   // Convert to world units
   width *= worldUnit;
@@ -209,7 +239,7 @@ vec3 getLinePosition() {
   vec3 pos = center + join * offset * width;
 
 #ifdef LINE_CLIP
-  clipEnds(position4, center, pos, depth);
+  clipEnds(p, center, pos);
 #endif
 
   return pos;

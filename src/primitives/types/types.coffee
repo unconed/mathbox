@@ -24,14 +24,15 @@ Types =
       return [] if !size
       (type.make() for i in [0...size])
     validate: (value, target, invalid) ->
-      if value.constructor? and value.constructor == Array
-        l = target.length = if size then size else value.length
-        for i in [0...l]
-          input = value[i] ? type.make()
-          replace = type.validate input, target[i], invalid
-          target[i] = replace if replace != undefined
-      else
-        invalid()
+      if !value.constructor? or value.constructor != Array
+        value = [value]
+
+      l = target.length = if size then size else value.length
+      for i in [0...l]
+        input = value[i] ? type.make()
+        replace = type.validate input, target[i], invalid
+        target[i] = replace if replace != undefined
+
       return
     equals: (a, b) ->
       al = a.length
@@ -156,6 +157,9 @@ Types =
     make:
       () -> new THREE.Vector2 x, y
     validate: (value, target, invalid) ->
+      if value == +value
+        value = [value]
+
       if value instanceof THREE.Vector2
         target.copy value
       else if value?.constructor == Array
@@ -185,6 +189,9 @@ Types =
     make:
       () -> new THREE.Vector3 x, y, z
     validate: (value, target, invalid) ->
+      if value == +value
+        value = [value]
+
       if value instanceof THREE.Vector3
         target.copy value
       else if value?.constructor == Array
@@ -216,6 +223,9 @@ Types =
     make:
       () -> new THREE.Vector4 x, y, z, w
     validate: (value, target, invalid) ->
+      if value == +value
+        value = [value]
+
       if value instanceof THREE.Vector4
         target.copy value
       else if value?.constructor == Array
@@ -242,6 +252,24 @@ Types =
       target.z = Math.round target.z
       target.w = Math.round target.w
       return
+
+  mat3: (n11 = 1, n12 = 0, n13 = 0, n21 = 0, n22 = 1, n23 = 0, n31 = 0, n32 = 0, n33 = 1) ->
+    defaults = [n11, n12, n13, n21, n22, n23, n31, n32, n33]
+
+    uniform: () -> 'm4'
+    make:
+      () ->
+        m = new THREE.Matrix3
+        m.set n11, n12, n13, n21, n22, n23, n31, n32, n33
+        m
+    validate: (value, target, invalid) ->
+      if value instanceof THREE.Matrix3
+        target.copy value
+      else if value?.constructor == Array
+        value = value.concat defaults.slice value.length
+        target.set.apply target, value
+      else
+        return invalid()
 
   mat4: (n11 = 1, n12 = 0, n13 = 0, n14 = 0, n21 = 0, n22 = 1, n23 = 0, n24 = 0, n31 = 0, n32 = 0, n33 = 1, n34 = 0, n41 = 0, n42 = 0, n43 = 0, n44 = 1) ->
     defaults = [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44]
@@ -419,13 +447,27 @@ Types =
       first:   1
       middle:  0
       last:   -1
-    value = map[value] ? +value
+
+    _enum = Types.enum value, [], map
 
     uniform: () -> 'f'
-    make: () -> +value
+    make: () -> _enum.make() ? +value
     validate: (value, target, invalid) ->
-      return invalid() if value != (x = +value)
-      x || 0
-    
+      return value if value == +value
+      _enum.validate value, target, invalid
+
+  transitionState: (value = 'enter') ->
+    map =
+      enter:  -1
+      visible: 0
+      exit:    1
+
+    _enum = Types.enum value, [], map
+
+    uniform: () -> 'f'
+    make: () -> _enum.make() ? +value
+    validate: (value, target, invalid) ->
+      return value if value == +value
+      _enum.validate value, target, invalid
 
 module.exports = Types

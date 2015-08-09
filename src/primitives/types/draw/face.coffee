@@ -11,7 +11,7 @@ class Face extends Primitive
 
   resize: () ->
     return unless @bind.points?
-    dims = @bind.points.getActive()
+    dims = @bind.points.getActiveDimensions()
     {items, width, height, depth} = dims
 
     @face.geometry.clip width, height, depth, items if @face
@@ -39,14 +39,17 @@ class Face extends Primitive
     {items, width, height, depth} = dims
 
     # Get display properties
-    outline = @_get 'face.outline'
-    shaded  = @_get 'mesh.shaded'
-    solid   = @_get 'mesh.solid'
+    outline = @props.outline
+    shaded  = @props.shaded
+    solid   = @props.solid
 
     # Build color lookup
     if @bind.colors
       color = @_shaders.shader()
       @bind.colors.sourceShader color
+
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
 
     objects = []
 
@@ -66,6 +69,7 @@ class Face extends Primitive
                 layers:   depth
                 position: swizzle
                 color:    color
+                mask:     mask
       objects.push @line
 
     # Make face renderable
@@ -80,6 +84,7 @@ class Face extends Primitive
                 position: position
                 color:    color
                 shaded:   shaded
+                mask:     mask
       objects.push @face
 
     @_helpers.object.make objects

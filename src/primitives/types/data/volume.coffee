@@ -2,16 +2,17 @@ Voxel = require './voxel'
 Util = require '../../../util'
 
 class Volume extends Voxel
-  @traits = ['node', 'data', 'source', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z']
+  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z', 'raw']
 
   callback: (callback) ->
-    dimensions = @_get 'volume.axes'
-    width      = @_get 'voxel.width'
-    height     = @_get 'voxel.height'
-    depth      = @_get 'voxel.depth'
-    centeredX  = @_get 'x.sampler.centered'
-    centeredY  = @_get 'y.sampler.centered'
-    centeredZ  = @_get 'z.sampler.centered'
+    dimensions = @props.axes
+    width      = @props.width
+    height     = @props.height
+    depth      = @props.depth
+
+    centeredX  = @props.centeredX
+    centeredY  = @props.centeredY
+    centeredZ  = @props.centeredZ
 
     rangeX     = @_helpers.span.get 'x.', dimensions[0]
     rangeY     = @_helpers.span.get 'y.', dimensions[1]

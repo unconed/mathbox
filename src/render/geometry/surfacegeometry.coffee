@@ -1,4 +1,4 @@
-Geometry = require './geometry'
+ClipGeometry = require './clipgeometry'
 
 ###
 Grid Surface
@@ -16,25 +16,20 @@ Grid Surface
 +----+----+----+----+
 ###
 
-class SurfaceGeometry extends Geometry
+class SurfaceGeometry extends ClipGeometry
 
   constructor: (options) ->
     super options
 
-    @geometryClip = new THREE.Vector4
-
-    @uniforms ?= {}
-    @uniforms.geometryClip =
-      type: 'v4'
-      value: @geometryClip
+    @_clipUniforms()
 
     @width    = width    = +options.width    || 2
     @height   = height   = +options.height   || 2
     @surfaces = surfaces = +options.surfaces || 1
     @layers   = layers   = +options.layers   || 1
 
-    @segmentsX = segmentsX = width  - 1
-    @segmentsY = segmentsY = height - 1
+    @segmentsX = segmentsX = Math.max 0, width  - 1
+    @segmentsY = segmentsY = Math.max 0, height - 1
 
     points    = width     * height    * surfaces * layers
     quads     = segmentsX * segmentsY * surfaces * layers
@@ -85,18 +80,12 @@ class SurfaceGeometry extends Geometry
 
   clip: (width = @width, height = @height, surfaces = @surfaces, layers = @layers) ->
 
-    segmentsX = Math.max 0, width  - 1
-    segmentsY = Math.max 0, height - 1
+    segmentsX = Math.max 0, width    - 1
+    segmentsY = Math.max 0, height   - 1
 
-    @geometryClip.set segmentsX, segmentsY, surfaces, layers
-
-    dims  = [ layers,  surfaces,  segmentsY,  segmentsX]
-    maxs  = [@layers, @surfaces, @segmentsY, @segmentsX]
-    quads = @_reduce dims, maxs
-
-    @_offsets [
-      start: 0
-      count: quads * 6
-    ]
+    @_clipGeometry   width, height, surfaces, layers
+    @_clipOffsets    6,
+                     segmentsX,  segmentsY,  surfaces,  layers,
+                     @segmentsX, @segmentsY, @surfaces, @layers
 
 module.exports = SurfaceGeometry

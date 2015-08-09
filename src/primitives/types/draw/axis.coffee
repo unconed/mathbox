@@ -3,6 +3,8 @@ Util      = require '../../../util'
 
 class Axis extends Primitive
   @traits = ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
+  @defaults =
+    end: true
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -30,16 +32,19 @@ class Axis extends Primitive
     unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Line geometry
-    detail  = @_get 'axis.detail'
+    detail  = @props.detail
     samples = detail + 1
     @resolution = 1 / detail
 
     # Clip start/end for terminating arrow
-    start   = @_get 'arrow.start'
-    end     = @_get 'arrow.end'
+    start   = @props.start
+    end     = @props.end
 
     # Stroke style
-    stroke  = @_get 'line.stroke'
+    stroke  = @props.stroke
+
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
 
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
@@ -49,6 +54,7 @@ class Axis extends Primitive
               position: position
               clip:     start or end
               stroke:   stroke
+              mask:     mask
 
     # Make arrow renderables
     @arrows = []
@@ -58,12 +64,14 @@ class Axis extends Primitive
                 flip:     true
                 samples:  samples
                 position: position
+                mask:     mask
 
     if end
       @arrows.push @_renderables.make 'arrow',
                 uniforms: uniforms
                 samples:  samples
                 position: position
+                mask:     mask
 
     # Object and span traits
     @_helpers.object.make @arrows.concat [@line]
@@ -82,7 +90,7 @@ class Axis extends Primitive
        touched['view']     or
        init
 
-      dimension = @_get 'interval.axis'
+      dimension = @props.axis
       range = @_helpers.span.get '', dimension
 
       min = range.x

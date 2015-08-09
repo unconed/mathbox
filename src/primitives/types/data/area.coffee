@@ -2,14 +2,14 @@ Matrix = require './matrix'
 Util = require '../../../util'
 
 class Area extends Matrix
-  @traits = ['node', 'data', 'source', 'matrix', 'texture', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
+  @traits = ['node', 'buffer', 'data', 'source', 'index', 'matrix', 'texture', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
 
   callback: (callback) ->
-    dimensions = @_get 'area.axes'
-    width      = @_get 'matrix.width'
-    height     = @_get 'matrix.height'
-    centeredX  = @_get 'x.sampler.centered'
-    centeredY  = @_get 'y.sampler.centered'
+    dimensions = @props.axes
+    width      = @props.width
+    height     = @props.height
+    centeredX  = @props.centeredX
+    centeredY  = @props.centeredY
 
     rangeX     = @_helpers.span.get 'x.', dimensions[0]
     rangeY     = @_helpers.span.get 'y.', dimensions[1]

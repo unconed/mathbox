@@ -25,7 +25,11 @@
       time = three.Time.clock / 4
     });
 
-    view = mathbox.polar({
+    view = mathbox
+    .set({
+      focus: 3
+    })
+    .polar({
       bend: .25,
       range: [[-π, π], [0, 1], [-1, 1]],
       scale: [2, 1, 1],
@@ -36,11 +40,21 @@
     }).axis({
       detail: 30,
     })
-    .ticks({
-      classes: ['foo', 'bar'],
+    .scale({
       divide: 10,
       unit: π,
       base: 2,
+    })
+    .ticks({
+      width: 2,
+      classes: ['foo', 'bar'],
+    })
+    .ticks({
+      opacity: .5,
+      width: 1,
+      size: 50,
+      normal: [0, 1, 0],
+      classes: ['foo', 'bar'],
     });
 
     view.axis({
@@ -60,15 +74,15 @@
     view.interval({
       id: 'sampler',
       length: 128,
-      expression: function (emit, x, i) {
+      map: function (emit, x, i) {
         emit(x, .5 + .5 * Math.sin(x + time));
       },
       channels: 2,
     });
     view.grid({
-      divideX: 20,
+      divideX: 5,
       detailX: 48,
-      width: 5,
+      width: 1,
       opacity: 0.5,
       unitX: π,
       baseX: 2,
@@ -77,7 +91,7 @@
     view.line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 10,
+      width: 5,
     });
 
   </script>

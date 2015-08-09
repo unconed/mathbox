@@ -8,6 +8,7 @@ class Line extends Base
     uniforms = options.uniforms ? {}
     position = options.position
     color    = options.color
+    mask     = options.mask
     clip     = options.clip
     stroke   = options.stroke
 
@@ -32,9 +33,9 @@ class Line extends Base
     defs.LINE_CLIP   = '' if clip
 
     v = factory.vertex
-    if color
-      v.require color
-      v.pipe 'mesh.vertex.color',     @uniforms
+
+    @_vertexColor v, color, mask
+
     v.require position if position
     v.pipe 'line.position',           @uniforms, defs
     v.pipe 'project.position',        @uniforms
@@ -42,9 +43,9 @@ class Line extends Base
     f = factory.fragment
     f.pipe "fragment.clip.#{stroke}", @uniforms if stroke
     f.pipe 'fragment.clip.ends',      @uniforms if clip
-    f.pipe 'style.color',             @uniforms if hasStyle
-    f.pipe 'mesh.fragment.blend',     @uniforms if color && hasStyle
-    f.pipe 'mesh.fragment.color',     @uniforms if color && !hasStyle
+
+    @_fragmentColor f, hasStyle, false, color, mask
+
     f.pipe 'fragment.color',          @uniforms
 
     @material = @_material factory.link

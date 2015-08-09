@@ -35,11 +35,10 @@ class Strip extends Base
     v.pipe 'project.position',        @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',            @uniforms if !shaded && hasStyle
-    f.pipe 'style.color.shaded',     @uniforms if  shaded && hasStyle
-    f.pipe 'mesh.fragment.blend',    @uniforms if color   && hasStyle
-    f.pipe 'mesh.fragment.color',    @uniforms if color   && !hasStyle
-    f.pipe 'fragment.color',         @uniforms
+
+    @_fragmentColor f, hasStyle, shaded, color, mask
+
+    f.pipe 'fragment.color',          @uniforms
 
     @material = @_material factory.link
       side: THREE.DoubleSide

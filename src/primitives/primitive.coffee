@@ -4,8 +4,11 @@ class Primitive
   @Node  = Model.Node
   @Group = Model.Group
 
-  @model = @Node
-  @traits = []
+  # Class default
+  @model    = @Node
+  @traits   = []
+  @props    = {}
+  @freeform = false
 
   constructor: (@node, @_context, helpers) ->
     @_attributes  = @_context.attributes
@@ -14,19 +17,18 @@ class Primitive
     @_overlays    = @_context.overlays
     @_types       = @_attributes.types
 
+    # Link up node 1-to-1
     @node.controller = @
-    @traits = @node.traits
 
     # This node has been inserted/removed
-    @node.on 'added', (event) =>
-      @_added()
+    @node.on 'added',   (event) => @_added()
+    @node.on 'removed', (event) => @_removed()
 
-    @node.on 'removed', (event) =>
-      @_removed()
+    # Property change (if mounted)
+    @node.on 'change',  (event) => @change event.changed, event.touched if @_root
 
-    # Property change
-    @node.on 'change', (event) =>
-      @change event.changed, event.touched if @_root
+    # Store local refs
+    @reconfigure()
 
     # Attribute getter / helpers
     @_get = @node.get.bind @node
@@ -44,8 +46,7 @@ class Primitive
   is: (trait) ->
     @traits.hash[trait]
 
-  # Renderables lifecycle
-
+  # Primitive lifecycle
   init:   () ->
   make:   () ->
   made:   () ->
@@ -53,6 +54,10 @@ class Primitive
   unmade: () ->
   change: (changed, touched, init) ->
 
+  # Force property reinit
+  refresh: () -> @change {}, {}, true
+
+  # Destroy and create cycle
   rebuild: () ->
     if @_root
       @unmake true
@@ -64,7 +69,12 @@ class Primitive
       @refresh()
       @made()
 
-  refresh: () -> @change {}, {}, true
+  # Reconfigure traits/props
+  reconfigure: (config) ->
+    @node.configure config, @_attributes if config?
+
+    @traits = @node.traits
+    @props  = @node.props
 
   # This node has been inserted
   _added: () ->
@@ -117,7 +127,7 @@ class Primitive
     @_handlers.inherit = {}
 
   # Attach to controller by trait
-  _attach: (selector, trait, method, self = @, start = @) ->
+  _attach: (selector, trait, method, self = @, start = @, optional = false) ->
 
     # Direct JS binding, no watcher.
     if typeof selector == 'object'
@@ -153,7 +163,7 @@ class Primitive
         return node.controller
 
     id = "#" + @node.id if @node.id?
-    throw "Could not find #{trait} `#{selector}` on `#{@node.type}#{id ? ''}`"
+    throw "Could not find #{trait} `#{selector}` on `#{@node.type}#{id ? ''}`" if !optional
     null
 
   # Remove attachments

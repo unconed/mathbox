@@ -12,7 +12,7 @@ class Strip extends Primitive
   resize: () ->
     return unless @bind.points?
 
-    dims = @bind.points.getActive()
+    dims = @bind.points.getActiveDimensions()
     {items, width, height, depth} = dims
 
     #console.log 'strip', dims
@@ -41,6 +41,11 @@ class Strip extends Primitive
     styleUniforms = @_helpers.style.uniforms()
     lineUniforms  = @_helpers.line.uniforms()
 
+    # Get display properties
+    outline = @props.outline
+    shaded  = @props.shaded
+    solid   = @props.solid
+
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
     {items, width, height, depth} = dims
@@ -50,33 +55,41 @@ class Strip extends Primitive
       color = @_shaders.shader()
       color = @bind.colors.sourceShader color
 
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
+
+    objects = []
+
     # Make line renderable
-    ###
-    uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms
-    @line = @_renderables.make 'line',
-              uniforms: uniforms
-              samples:  samples
-              ribbons:  ribbons
-              strips:   strips
-              layers:   layers
-              position: position
-              color:    color
-              clip:     start or end
-    ###
+    if outline
+      uniforms = Util.JS.merge lineUniforms, styleUniforms
+      @line = @_renderables.make 'line',
+                uniforms: uniforms
+                samples:  items
+                ribbons:  width
+                strips:   height
+                layers:   depth
+                position: position
+                color:    color
+                mask:     mask
+      objects.push @line
 
     # Make strip renderable
-    uniforms = Util.JS.merge styleUniforms, {}
+    if solid
+      uniforms = Util.JS.merge styleUniforms, {}
 
-    @strip = @_renderables.make 'strip',
-              uniforms: uniforms
-              width:    width
-              height:   height
-              depth:    depth
-              items:    items
-              position: position
-              color:    color
+      @strip = @_renderables.make 'strip',
+                uniforms: uniforms
+                width:    width
+                height:   height
+                depth:    depth
+                items:    items
+                position: position
+                color:    color
+                shaded:   shaded
+      objects.push @strip
 
-    @_helpers.object.make [@strip]
+    @_helpers.object.make objects
 
   made: () -> @resize()
 

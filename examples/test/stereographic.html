@@ -36,7 +36,9 @@
       spherical.set('rotation', q2);
     });
 
-    stereo = mathbox.stereographic({
+    stereo = mathbox.set({
+      focus: 10
+    }).stereographic({
       scale: [2, 2, 2],
       bend: 1,
     });

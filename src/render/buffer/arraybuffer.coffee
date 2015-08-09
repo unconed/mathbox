@@ -23,9 +23,9 @@ class ArrayBuffer_ extends DataBuffer
     @pad      = 0
     @streamer = @generate @data
 
-  setActive: (i) -> @pad = @length - i
+  setActive: (i) -> @pad = Math.max 0, @length - i
 
-  iterate: () ->
+  fill: () ->
     callback = @callback
     callback.reset?()
 
@@ -46,5 +46,23 @@ class ArrayBuffer_ extends DataBuffer
     @dataPointer.set .5, @index + .5
     @index = (@index + @history - 1) % @history
     @filled = Math.min @history, @filled + 1
+
+  through: (callback, target) ->
+    {consume, done} = src = @streamer
+    {emit}          = dst = target.streamer
+
+    pipe = () -> consume (x, y, z, w) -> callback emit, x, y, z, w
+    pipe = Util.Data.repeatCall pipe, @items
+
+    () =>
+      src.reset()
+      dst.reset()
+      limit = @samples - @pad
+      i = 0
+      while !done() && i < limit
+        pipe()
+        i++
+
+      return src.count()
 
 module.exports = ArrayBuffer_

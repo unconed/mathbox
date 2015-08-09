@@ -29,10 +29,12 @@ Classes =
   voxel:             require './data/voxel'
   volume:            require './data/volume'
   text:              require './data/text'
+  scale:             require './data/scale'
 
   html:              require './overlay/html'
   dom:               require './overlay/dom'
 
+  format:            require './operator/format'
   join:              require './operator/join'
   lerp:              require './operator/lerp'
   memo:              require './operator/memo'
@@ -43,11 +45,14 @@ Classes =
   split:             require './operator/split'
   transpose:         require './operator/transpose'
 
+  shader:            require './base/shader'
   group:             require './base/group'
   root:              require './base/root'
   unit:              require './base/unit'
 
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
+
+  transition:        require './fx/transition'
 
 module.exports = Classes

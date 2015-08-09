@@ -1,5 +1,6 @@
 Base            = require './base'
 SurfaceGeometry = require('../geometry').SurfaceGeometry
+Util            = require '../../util'
 
 class Surface extends Base
   constructor: (renderer, shaders, options) ->
@@ -8,6 +9,7 @@ class Surface extends Base
     uniforms = options.uniforms ? {}
     position = options.position
     color    = options.color
+    mask     = options.mask
     shaded   = options.shaded ? true
 
     hasStyle = uniforms.styleColor?
@@ -24,20 +26,19 @@ class Surface extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    if color
-      v.require color
-      v.pipe 'mesh.vertex.color',       @uniforms
+
+    @_vertexColor v, color, mask
+
     v.require position if position
     v.pipe 'surface.position',          @uniforms if !shaded
     v.pipe 'surface.position.normal',   @uniforms if  shaded
     v.pipe 'project.position',          @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',            @uniforms if !shaded && hasStyle
-    f.pipe 'style.color.shaded',     @uniforms if  shaded && hasStyle
-    f.pipe 'mesh.fragment.blend',    @uniforms if color   && hasStyle
-    f.pipe 'mesh.fragment.color',    @uniforms if color   && !hasStyle
-    f.pipe 'fragment.color',         @uniforms
+
+    @_fragmentColor f, hasStyle, shaded, color, mask
+
+    f.pipe 'fragment.color',          @uniforms
 
     @material = @_material factory.link
       side: THREE.DoubleSide

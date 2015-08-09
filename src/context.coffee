@@ -18,7 +18,7 @@ class Context
     @element     = element = canvas.parentNode
 
     # Rendering factory
-    @shaders     = new Shaders.Factory    Shaders.Snippets                   
+    @shaders     = new Shaders.Factory    Shaders.Snippets
     @renderables = new Render .Factory    Render .Classes, renderer, @shaders
     @overlays    = new Overlay.Factory    Overlay.Classes, element,  canvas
 
@@ -43,9 +43,12 @@ class Context
     # Public API
     @api         = new Stage.API          @
 
+    # Global clock
+    @time        = { now: 0, clock: 0, step: 0 }
+
     # Debug
-    window.model = @model
-    window.root  = @model.root
+    #window.model = @model
+    #window.root  = @model.root
 
   init: () ->
     @scene.inject()
@@ -58,7 +61,8 @@ class Context
   resize: (size) ->
     @root.controller.resize size
 
-  pre: () ->
+  pre: (time) ->
+    @time = time if time?
     @root.controller.pre?()
 
   update: () ->

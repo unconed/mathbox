@@ -17,17 +17,15 @@ class Transform4 extends Transform
     return @rebuild() if changed['transform4.pass']
     return unless touched['transform4'] or init
 
-    @pass = @_get 'transform4.pass'
-
-    s = @_get 'transform4.scale'
-    m = @_get 'transform4.matrix'
+    s = @props.scale
+    m = @props.matrix
 
     t = @transformMatrix
     t.copy  m
     t.scale s
 
   transform: (shader, pass) ->
-    shader.pipe 'transform4.position', @uniforms if pass == @pass
+    shader.pipe 'transform4.position', @uniforms if pass == @props.pass
     super shader, pass
 
 module.exports = Transform4

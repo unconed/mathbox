@@ -2,7 +2,7 @@ Voxel = require '../data/voxel'
 Util = require '../../../util'
 
 class HTML extends Voxel
-  @traits = ['node', 'data', 'voxel', 'html']
+  @traits = ['node', 'buffer', 'data', 'voxel', 'html']
   @defaults =
     channels: 1
 

@@ -7,7 +7,9 @@ Factory = (snippets) ->
     return s if s?
 
     # Load from <script> tags by ID
-    element = document.getElementById name
+    ref = name[0] in ['#', '.', ':', '[']
+    sel = if ref then name else "##{name}"
+    element = document.querySelector sel
     if element? and element.tagName == 'SCRIPT'
       return (element.textContent || element.innerText)
 
@@ -15,6 +17,5 @@ Factory = (snippets) ->
 
   new ShaderGraph fetch,
     autoInspect: true
-
 
 module.exports = Factory

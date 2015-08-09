@@ -35,13 +35,13 @@ class Spherical extends View
 
     return unless touched['view'] or touched['view3'] or touched['spherical'] or init
 
-    @bend  = bend  = @_get 'spherical.bend'
+    @bend  = bend  = @props.bend
     @focus = focus = if bend > 0 then 1 / bend - 1 else 0
 
-    o = @_get 'view3.position'
-    s = @_get 'view3.scale'
-    q = @_get 'view3.rotation'
-    r = @_get 'view.range'
+    o = @props.position
+    s = @props.scale
+    q = @props.rotation
+    r = @props.range
 
     x = r[0].x
     y = r[1].x
@@ -103,7 +103,7 @@ class Spherical extends View
     super shader, pass
 
   axis: (dimension) ->
-    range = @_get('view.range')[dimension - 1]
+    range = @props.range[dimension - 1]
     min = range.x
     max = range.y
 

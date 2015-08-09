@@ -11,6 +11,7 @@ Types = {
   # el('example', props, children);
   example: {
     render: (el, props, children) ->
+      # VDOM node
       return el('span', { className: "foo" }, "Hello World")
   }
   ###
@@ -21,7 +22,7 @@ descriptor = () ->
   type:     null
   props:    null
   children: null
-  render:   null
+  rendered: null
 
 hint = (n) ->
   n *= 2
@@ -55,10 +56,15 @@ apply = (el, last, node, parent, index) ->
       # New node
       return insert el, parent, index
     else
-      # Check compatibility
-      same = typeof el == typeof last    and
-             last != null and el != null and
-             el.type == last.type
+      # Literal DOM node
+      if el instanceof Node
+        same = el == last
+        return if same
+      else
+        # Check compatibility
+        same = typeof el == typeof last    and
+               last != null and el != null and
+               el.type == last.type
 
       if !same
         # Not compatible: remove and reinsert
@@ -66,7 +72,7 @@ apply = (el, last, node, parent, index) ->
         return insert el, parent, index
       else
         # Check if it's a component
-        type = Types[el.type]
+        type = if el.type?.render? then el.type else Types[el.type]
 
         # Prepare to diff props and children
         props     = last?.props
@@ -83,12 +89,12 @@ apply = (el, last, node, parent, index) ->
           dirty = true if children != nextChildren
 
           if dirty
-            el = el.render = type.render element, el.props ? {}, el.children
-            return apply el, last.render, node, parent, index
+            el = el.rendered = type.render element, el.props ? {}, el.children
+            return apply el, last.rendered, node, parent, index
           return
 
         else
-          # DOM node
+          # VDOM node
           unset node, key, props[key] for key        of props     when !nextProps.hasOwnProperty key if props?
           set   node, key, value, ref for key, value of nextProps when (ref = props[key]) != value   if nextProps?
 
@@ -120,32 +126,36 @@ apply = (el, last, node, parent, index) ->
     return remove node, parent
 
 insert = (el, parent, index = 0) ->
-  type = Types[el.type]
+  type = if el.type?.render? then el.type else Types[el.type]
 
-  if type?
-    # Component
-    el = el.render = type.render element, el.props ? {}, el.children
-    return insert el, parent, index
-  else if typeof el in ['string', 'number']
-    # Text
-    node = document.createTextNode el
+  # Literal DOM node
+  if el instanceof Node
+    node = el
   else
-    # DOM Node
-    node = document.createElement el.type
-    set node, key, value for key, value of el.props
+    if type?
+      # Component
+      el = el.rendered = type.render element, el.props ? {}, el.children
+      return insert el, parent, index
+    else if typeof el in ['string', 'number']
+      # Text
+      node = document.createTextNode el
+    else
+      # VDOM Node
+      node = document.createElement el.type
+      set node, key, value for key, value of el.props
 
-  children = el.children
-  if children?
-    if typeof children in ['string', 'number']
-      # Insert text directly
-      node.textContent = children
-    else 
-      if children.type?
-        # Single child
-        insert children, node, 0
-      else
-        # Insert children
-        insert child, node, i for child, i in children
+    children = el.children
+    if children?
+      if typeof children in ['string', 'number']
+        # Insert text directly
+        node.textContent = children
+      else 
+        if children.type?
+          # Single child
+          insert children, node, 0
+        else
+          # Insert children
+          insert child, node, i for child, i in children
 
   parent.insertBefore node, parent.childNodes[index]
   return

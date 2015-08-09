@@ -1,4 +1,4 @@
-Geometry = require './geometry'
+ClipGeometry = require './clipgeometry'
 
 ###
 Line strips arranged in columns and rows
@@ -10,17 +10,12 @@ Line strips arranged in columns and rows
 +----+ +----+ +----+ +----+
 ###
 
-class LineGeometry extends Geometry
+class LineGeometry extends ClipGeometry
 
   constructor: (options) ->
     super options
 
-    @geometryClip = new THREE.Vector4
-
-    @uniforms ?= {}
-    @uniforms.geometryClip =
-      type: 'v4'
-      value: @geometryClip
+    @_clipUniforms()
 
     @samples  = samples = +options.samples || 2
     @strips   = strips  = +options.strips  || 1
@@ -81,17 +76,11 @@ class LineGeometry extends Geometry
     return
 
   clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
-    segments = samples - 1
+    segments  = Math.max 0, samples - 1
 
-    @geometryClip.set segments, strips - 1, ribbons - 1, layers - 1
-
-    dims  = [ layers,  ribbons,  strips,  segments]
-    maxs  = [@layers, @ribbons, @strips, @segments]
-    quads = @_reduce dims, maxs
-
-    @_offsets [
-      start: 0
-      count: quads * 6
-    ]
+    @_clipGeometry   samples, strips, ribbons, layers
+    @_clipOffsets    6,
+                     segments,  strips,  ribbons,  layers,
+                     @segments, @strips, @ribbons, @layers
 
 module.exports = LineGeometry

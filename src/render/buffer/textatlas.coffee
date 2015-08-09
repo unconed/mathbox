@@ -14,9 +14,9 @@ class TextAtlas extends Atlas
     @size    = options.size || 24
     @style   = options.style ? 'normal'
     @outline = +(options.outline ? 5) ? 0
-    
-    options.width    ||= 64
-    options.height   ||= 64
+
+    options.width    ||= 256
+    options.height   ||= 256
 
     options.type     = THREE.UnsignedByteType
     options.channels = 1
@@ -39,7 +39,7 @@ class TextAtlas extends Atlas
     lineHeight = @size
     lineHeight += 3 + 2 * Math.min 1, @outline
     maxWidth = SCRATCH_SIZE * lineHeight
-    
+
     # Prepare scratch canvas
     canvas = document.createElement 'canvas'
     canvas.width  = maxWidth
@@ -57,7 +57,7 @@ class TextAtlas extends Atlas
     document.body.appendChild canvas
     canvas.setAttribute('style', "position: absolute; top: 0; left: 0; z-index: 100; border: 1px solid red; background: rgba(255,0,255,.25);")
     ###
-    
+
     # Cache hex colors for distance field rendering
     colors = []
     dilate = @outline * 3
@@ -65,9 +65,9 @@ class TextAtlas extends Atlas
       # 8 rgb levels = 1 step = .5 pixel increase
       hex = ('00' + Math.max(0, -i * 8 + 128 - (!i)*8).toString 16).slice -2
       colors.push '#' + hex + hex + hex
-    
+
     scratch = new Uint8Array maxWidth * lineHeight * 2
-    
+
     @canvas     = canvas
     @context    = context
     @lineHeight = lineHeight
@@ -84,7 +84,7 @@ class TextAtlas extends Atlas
 
   begin: () ->
     row.alive = 0 for row in @rows
-  
+
   end: () ->
     mapped = @mapped
     for row in @rows.slice() when row.alive == 0
@@ -149,7 +149,7 @@ class TextAtlas extends Atlas
 
     else
       # Signed distance field sprite (approximation) (slow)
-    
+
       # Draw strokes of decreasing width to create nested outlines (absolute distance)
       ctx.globalCompositeOperation = 'source-over'
       for i in [o+1..1]
@@ -177,7 +177,7 @@ class TextAtlas extends Atlas
 
         # Blend between positive/outside and negative/inside
         b     = 256 - a
-        c = b + (a - b) * mask
+        c     = b + (a - b) * mask
 
         # Clamp
         # (slight expansion to hide errors around the transition)
@@ -199,6 +199,6 @@ class TextAtlas extends Atlas
 
       @scratchW = w
       @scratchH = h
-      
+
 
 module.exports = TextAtlas

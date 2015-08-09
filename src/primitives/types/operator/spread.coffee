@@ -30,7 +30,7 @@ class Spread extends Operator
 
   resize: () ->
     if @bind.source
-      dims = @bind.source.getActive()
+      dims = @bind.source.getActiveDimensions()
 
       matrix = @spreadMatrix.value
       els = matrix.elements
@@ -39,8 +39,8 @@ class Spread extends Operator
       align = ['alignWidth', 'alignHeight', 'alignDepth', 'alignItems']
 
       for key, i in order
-        spread = @_get "spread.#{key}"
-        anchor = @_get "spread.#{align[i]}"
+        spread = @props[key]
+        anchor = @props[align[i]]
 
         factor = 0
         if spread?

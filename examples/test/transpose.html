@@ -48,7 +48,7 @@
       width: 33,
       height: 33,
       axes: [1, 3],
-      expression: function (emit, x, z, i, j) {
+      map: function (emit, x, z, i, j) {
         var y1 = .75 + .5 * (Math.sin(x + time) * Math.sin(z + time));
         var y2 = .5 + .5 * (Math.sin(x * 1.25 + Math.sin(z + time) - time * 1.34) * Math.sin(z * 1.17 - time * .79));
         emit(x, y1, z);

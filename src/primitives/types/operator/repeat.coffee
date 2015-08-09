@@ -14,8 +14,8 @@ class Repeat extends Operator
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
 
-  getActive: () ->
-    @_resample @bind.source.getActive()
+  getActiveDimensions: () ->
+    @_resample @bind.source.getActiveDimensions()
 
   _resample: (dims) ->
     r = @resample
@@ -46,7 +46,7 @@ class Repeat extends Operator
 
   resize: () ->
     if @bind.source?
-      dims = @bind.source.getActive()
+      dims = @bind.source.getActiveDimensions()
       @repeatModulus.value.set dims.width, dims.height, dims.depth, dims.items
 
     super
@@ -58,7 +58,6 @@ class Repeat extends Operator
     if init
 
       for key in ['items', 'width', 'height', 'depth']
-        id = "repeat.#{key}"
-        @resample[key] = @_get id
+        @resample[key] = @props[key]
 
 module.exports = Repeat

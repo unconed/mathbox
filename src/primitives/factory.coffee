@@ -9,21 +9,13 @@ class PrimitiveFactory
     Object.keys @classes
 
   make: (type, options = {}) ->
-    klass        = @classes[type]
-    throw "Unknown primitive class `#{type}`" unless klass
+    klass = @classes[type]
+    throw "Unknown primitive class `#{type}`" unless klass?
 
-    modelKlass   = klass.model
+    options   = Util.JS.merge klass.defaults, options
+    node      = new klass.model options, type, klass, @context.attributes
+    primitive = new klass node, @context, @helpers
 
-    options      = Util.JS.merge klass.defaults, options
-    model        = new modelKlass options, type, klass.traits, @context.attributes
-    controller   = new klass model, @context, @helpers
-
-    ###
-    guard        = @context.guard
-    guard.apply    model
-    guard.apply    controller
-    ###
-
-    model
+    node
 
 module.exports = PrimitiveFactory

@@ -23,8 +23,8 @@ class Attributes
     type:  type.uniform?() # for three.js
     value: type.make()
 
-  apply: (object, traits = []) ->
-    new Data object, traits, @
+  apply: (object, traits = [], props = {}, freeform = false) ->
+    new Data object, traits, props, freeform, @
 
   queue: (callback) ->
     @pending.push callback
@@ -40,7 +40,10 @@ class Attributes
 
 
 class Data
-  constructor: (object, traits = [], attributes) ->
+  constructor: (object, traits = [], props, freeform, _attributes) ->
+
+    # Save existing (original) values if re-applying
+    old = object.props if object.set? and object.get? and object.orig?
 
     # Flattened and original values
     flattened = {}
@@ -57,9 +60,18 @@ class Data
     get = (key) => @[key]?.value ? @[to(key)]?.value
     set = (key, value, ignore) =>
       key = to(key)
-      throw "Setting unknown property '#{key}'" unless validators[key]?
 
-      attr = @[key]
+      # Look for defined attribute
+      unless (attr = @[key])?
+        throw "Setting unknown property '#{key}'" unless freeform
+
+        # Define attribute on the fly
+        attr = @[key] =
+          short: key
+          type:  null
+          last:  null
+          value: null
+        validators[key] = (v) -> v
 
       # Validate new value
       valid   = true
@@ -79,17 +91,26 @@ class Data
 
       return valid
 
-    object.get = (key, original) =>
-      if key? and key != true
-        if original then originals[to(key)] else get(key)
+    object.props = flattened
+
+    object.orig = (key) =>
+      if key?
+        originals[to(key)]
       else
-        if key or original then originals else flattened
+        originals
+
+    object.get = (key) =>
+      if key?
+        get(key)
+      else
+        flattened
 
     object.set = (key, value, ignore) ->
-      if key? and value?
+      if typeof key == 'string'
         set(key, value, ignore)
       else
         options = key
+        ignore  = value
         set(key, value, ignore) for key, value of options
       return
 
@@ -116,7 +137,7 @@ class Data
     change = (key, value) =>
       if !dirty
         dirty = true
-        attributes.queue digest
+        _attributes.queue digest
 
       trait = getNS key
 
@@ -155,41 +176,52 @@ class Data
       parts.unshift suffix
       parts.reduce (a, b) -> a + b.charAt(0).toUpperCase() + b.substring(1)
 
-    # Add in traits
-    list   = []
-    values = {}
-    for trait in traits
-      [trait, ns] = trait.split ':'
-      name = if ns then [ns, trait].join '.' else trait
-      spec = attributes.getTrait trait
-      list.push trait
-
-      continue unless spec
-
-      for key, options of spec
+    # Define attributes for given trait spec by namespace
+    addSpec = (name, spec) =>
+      for key, type of spec
         key = [name, key].join '.'
         short = shorthand key
 
         # Make attribute object
         @[key] = attr =
+          ns:    name
           short: short
-          enum:  options.enum?()
-          type:  options.uniform?()
-          last:  options.make()
-          value: value = options.make()
+          enum:  type.enum?()
+          type:  type.uniform?()
+          last:  type.make()
+          value: value = type.make()
 
         # Define flat namespace alias
         define key, short
         flattened[short] = value
 
         # Collect makers, validators and comparators
-        makers[key]      = options.make
-        validators[key]  = options.validate ?    (v) -> v
-        equalors[key]    = options.equals   ? (a, b) -> a == b
+        makers[key]      = type.make
+        validators[key]  = type.validate ?    (v) -> v
+        equalors[key]    = type.equals   ? (a, b) -> a == b
+
+    # Add in traits
+    list   = []
+    values = {}
+    for trait in traits
+      [trait, ns] = trait.split ':'
+      name = if ns then [ns, trait].join '.' else trait
+      spec = _attributes.getTrait trait
+      list.push trait
+
+      addSpec name, spec if spec?
+
+    # Add custom props by namespace
+    if props?
+      for ns, spec of props
+        addSpec ns, spec
 
     # Store array of traits
     unique = list.filter (object, i) -> list.indexOf(object) == i
     object.traits = unique
+
+    # Set previous values if applicable
+    object.set old, true if old?
 
     null
 

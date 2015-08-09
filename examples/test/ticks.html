@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Axis</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+      camera: {
+        fov: 45,
+      }
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(0, 0, 3);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    view = mathbox
+    .set({
+      scale: 720,
+      focus: 3
+    })
+    .transform4({
+      matrix: [
+        1, 0, 0, .577,
+        0, 1, 0, .577,
+        0, 0, 1, .577,
+        0, 0, 0, 1,
+      ],
+    })
+    .cartesian4({
+      range: [[-2, 2], [-1, 1], [-1, 1], [-1, 1]],
+      scale: [2, 1, 1, 1],
+    });
+    view.axis({
+      end: true,
+      width: 5,
+    });
+    view.axis({
+      axis: 2,
+      end: true,
+      width: 5,
+    });
+    view.axis({
+      axis: 3,
+      end: true,
+      width: 5,
+    });
+    view.axis({
+      axis: 4,
+      end: true,
+      width: 5,
+    });
+    
+    view.scale({
+      divide: 10,
+    });
+    view.ticks({
+      width: 5,
+      size: 15,
+      classes: ['foo', 'bar'],
+      color: 'red',
+      zBias: 1,
+    });
+
+    view.scale({
+      axis: 2,
+      divide: 5,
+    });
+    view.ticks({
+      width: 5,
+      size: 15,
+      classes: ['foo', 'bar'],
+      color: 'green',
+      zBias: 2,
+    });
+    
+    view.scale({
+      axis: 3,
+      divide: 5,
+    });
+    view.ticks({
+      width: 5,
+      size: 15,
+      classes: ['foo', 'bar'],
+      color: 'blue',
+      zBias: 3,
+    });
+
+    view.scale({
+      axis: 4,
+      divide: 5,
+    });
+    view.ticks({
+      width: 5,
+      size: 15,
+      classes: ['foo', 'bar'],
+      color: 'purple',
+      zBias: 4,
+    });
+
+    var depthObj = mathbox.select('axis');
+
+  </script>
+</body>
+</html>

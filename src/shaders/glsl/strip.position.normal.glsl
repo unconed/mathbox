@@ -1,3 +1,4 @@
+uniform vec4 geometryClip;
 attribute vec4 position4;
 attribute vec3 strip;
 
@@ -22,7 +23,9 @@ void getStripGeometry(vec4 xyzw, vec3 strip, out vec3 pos, out vec3 normal) {
 vec3 getStripPositionNormal() {
   vec3 center, normal;
 
-  getStripGeometry(position4, strip, center, normal);
+  vec4 p = min(geometryClip, position4);
+
+  getStripGeometry(p, strip, center, normal);
   vNormal   = normal;
   vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);
   vPosition = -center;

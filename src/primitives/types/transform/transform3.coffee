@@ -16,19 +16,17 @@ class Transform3 extends Transform
     return @rebuild() if changed['transform3.pass']
     return unless touched['transform3'] or init
 
-    @pass = @_get 'transform3.pass'
-
-    p = @_get 'transform3.position'
-    q = @_get 'transform3.rotation'
-    s = @_get 'transform3.scale'
-    m = @_get 'transform3.matrix'
+    p = @props.position
+    q = @props.rotation
+    s = @props.scale
+    m = @props.matrix
 
     t = @transformMatrix
     t.compose p, q, s
     t.multiplyMatrices t, m if m?
 
   transform: (shader, pass) ->
-    shader.pipe 'transform3.position', @uniforms if pass == @pass
+    shader.pipe 'transform3.position', @uniforms if pass == @props.pass
     super shader, pass
 
 module.exports = Transform3

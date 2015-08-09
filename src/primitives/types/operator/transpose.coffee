@@ -21,8 +21,8 @@ class Transpose extends Operator
   getDimensions: () ->
     @_remap @transpose, @bind.source.getDimensions()
 
-  getActive: () ->
-    @_remap @transpose, @bind.source.getActive()
+  getActiveDimensions: () ->
+    @_remap @transpose, @bind.source.getActiveDimensions()
 
   _remap: (transpose, dims) ->
     # Map dimensions onto their new axis
@@ -40,7 +40,7 @@ class Transpose extends Operator
     return unless @bind.source?
 
     # Transposition order
-    order = @_get 'transpose.order'
+    order = @props.order
     @swizzler = Util.GLSL.invertSwizzleVec4 order if order.join() != '1234'
     @transpose = order
 

@@ -18,7 +18,7 @@ class Compose extends Primitive
   resize: () ->
     return unless @compose and @bind.source
 
-    dims = @bind.source.getActive()
+    dims = @bind.source.getActiveDimensions()
     width  = dims.width
     height = dims.height
     depth  = dims.depth
@@ -41,7 +41,7 @@ class Compose extends Primitive
 
     # Build fragment shader
     fragment = @_shaders.shader()
-    alpha    = @_get 'compose.alpha'
+    alpha    = @props.alpha
 
     if @bind.source.is 'image'
       # Sample image directly in 2D

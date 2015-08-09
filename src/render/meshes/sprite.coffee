@@ -11,6 +11,7 @@ class Sprite extends Base
     map      = options.map
     combine  = options.combine
     color    = options.color
+    mask     = options.mask
 
     hasStyle = uniforms.styleColor?
 
@@ -26,24 +27,26 @@ class Sprite extends Base
     # Shared vertex shader
     factory = shaders.material()
     v = factory.vertex
-    if color
-      v.require color
-      v.pipe 'mesh.vertex.color',   @uniforms
+
+    @_vertexColor v, color, mask
+
     v.require position if position
     v.require sprite   if sprite
     v.pipe 'sprite.position',       @uniforms
     v.pipe 'project.position',      @uniforms
 
-    blend = color || hasStyle
-
+    # Shared fragment shader
     f = factory.fragment
+
+    blend = color || mask || hasStyle
+
     f.split()                                       if blend
     f  .require map
-    f  .pipe 'sprite.fragment',        @uniforms 
+    f  .pipe 'sprite.fragment',        @uniforms
     f.next()                                        if blend
-    f  .pipe 'style.color',            @uniforms    if hasStyle
-    f  .pipe 'mesh.fragment.blend',    @uniforms    if color && hasStyle
-    f  .pipe 'mesh.fragment.color',    @uniforms    if color && !hasStyle
+
+    @_fragmentColor f, hasStyle, false, color, mask
+
     f.join()                                        if blend
     f.pipe combine                                  if combine
     f.pipe Util.GLSL.binaryOperator 'vec4', '*'     if !combine

@@ -8,6 +8,17 @@
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
+  <script type="application/glsl" id="rtt-water">
+    vec4 getSample(vec3 xyz);
+    vec4 getFramesSample(vec3 xyz) {
+      vec4 c = getSample(xyz + vec3( 0.0, 0.0, 1.0));
+      vec3 t = getSample(xyz + vec3( 0.0, 1.0, 0.0)).xyz;
+      vec3 b = getSample(xyz + vec3( 0.0,-1.0, 0.0)).xyz;
+      vec3 l = getSample(xyz + vec3(-1.0, 0.0, 0.0)).xyz;
+      vec3 r = getSample(xyz + vec3( 1.0, 0.0, 0.0)).xyz;
+      return vec4((t + b + l + r) / 2.0 - c.xyz, c.w);
+    }
+  </script>
   <script>
     mathbox = mathBox({
       plugins: ['core', 'controls', 'cursor'],
@@ -44,19 +55,12 @@
         history: 2,
         type: 'unsignedByte',
       })
+        .shader({
+          code: '#rtt-water',
+        })
         .resample({
           indices:    3,
           channels: 4,
-          shader:
-            "vec4 getSample(vec3 xyz);\n"+
-            "vec4 getFramesSample(vec3 xyz) {\n"+
-            "  vec4 c = getSample(xyz + vec3( 0.0, 0.0, 1.0));\n"+
-            "  vec3 t = getSample(xyz + vec3( 0.0, 1.0, 0.0)).xyz;\n"+
-            "  vec3 b = getSample(xyz + vec3( 0.0,-1.0, 0.0)).xyz;\n"+
-            "  vec3 l = getSample(xyz + vec3(-1.0, 0.0, 0.0)).xyz;\n"+
-            "  vec3 r = getSample(xyz + vec3( 1.0, 0.0, 0.0)).xyz;\n"+
-            "  return vec4((t + b + l + r) / 2.0 - c.xyz, c.w);\n"+
-            "}",
         })
         .compose({
           color: '#ffffff',
@@ -72,6 +76,7 @@
             zBias: 10,
             opacity: .25,
             color: 0xc0e0ff,
+            width: 5,
           })
         .end()
       .end()

@@ -2,12 +2,12 @@ _Array = require './array'
 Util = require '../../../util'
 
 class Interval extends _Array
-  @traits = ['node', 'data', 'source', 'texture', 'array', 'span', 'interval', 'sampler']
+  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'array', 'span', 'interval', 'sampler', 'raw']
 
   callback: (callback) ->
-    dimension = @_get 'interval.axis'
-    length    = @_get 'array.length'
-    centered  = @_get 'sampler.centered'
+    dimension = @props.axis
+    length    = @props.length
+    centered  = @props.centered
 
     range     = @_helpers.span.get '', dimension
 

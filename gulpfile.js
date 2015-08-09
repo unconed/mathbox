@@ -56,7 +56,7 @@ var test = bundle.concat([
 
 gulp.task('glsl', function () {
   return gulp.src(glsls)
-    .pipe(jsify("shaders.js", "window.MathBox.Shaders"))
+    .pipe(jsify("shaders.js", "module.exports"))
     .pipe(gulp.dest('./build/'))
 });
 

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Line extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind', 'attach']
+  @traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -11,7 +11,7 @@ class Line extends Primitive
 
   resize: () ->
     return unless @bind.points?
-    dims = @bind.points.getActive()
+    dims = @bind.points.getActiveDimensions()
 
     samples = dims.width
     strips  = dims.height
@@ -46,11 +46,11 @@ class Line extends Primitive
     unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Clip start/end for terminating arrow
-    start   = @_get 'arrow.start'
-    end     = @_get 'arrow.end'
+    start   = @props.start
+    end     = @props.end
 
     # Stroke style
-    stroke  = @_get 'line.stroke'
+    stroke  = @props.stroke
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
@@ -64,6 +64,9 @@ class Line extends Primitive
       color = @_shaders.shader()
       @bind.colors.sourceShader color
 
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
+
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
     @line = @_renderables.make 'line',
@@ -76,6 +79,7 @@ class Line extends Primitive
               color:    color
               clip:     start or end
               stroke:   stroke
+              mask:     mask
 
     # Make arrow renderables
     @arrows = []
@@ -89,6 +93,7 @@ class Line extends Primitive
                 layers:   layers
                 position: position
                 color:    color
+                mask:     mask
 
     if end
       @arrows.push @_renderables.make 'arrow',
@@ -99,6 +104,7 @@ class Line extends Primitive
                 layers:   layers
                 position: position
                 color:    color
+                mask:     mask
 
     @_helpers.object.make @arrows.concat [@line]
 

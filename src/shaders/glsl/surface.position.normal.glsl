@@ -1,3 +1,4 @@
+uniform vec4 geometryClip;
 attribute vec4 position4;
 attribute vec2 surface;
 
@@ -42,7 +43,9 @@ varying vec3 vPosition;
 vec3 getSurfacePositionNormal() {
   vec3 left, center, right, up, down;
 
-  getSurfaceGeometry(position4, surface.x, surface.y, left, center, right, up, down);
+  vec4 p = min(geometryClip, position4);
+
+  getSurfaceGeometry(p, surface.x, surface.y, left, center, right, up, down);
   vNormal   = getSurfaceNormal(left, center, right, up, down);
   vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);// - center);
   vPosition = -center;

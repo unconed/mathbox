@@ -88,7 +88,7 @@
       rangeY: [-π/2, π/2],
       width: 127,
       height: 63,
-      expression: function (emit, x, y, i, j) {
+      map: function (emit, x, y, i, j) {
         ϕ = y
         θ = angle
         hopf(emit, ϕ, θ, x);
@@ -108,7 +108,7 @@
       rangeY: [-.6, .6],
       width: 127,
       height: 63,
-      expression: function (emit, x, y, i, j) {
+      map: function (emit, x, y, i, j) {
         ϕ = y + time
         θ = angle
         hopf(emit, ϕ, θ, x);
@@ -129,7 +129,7 @@
       height: 16,
       centeredX: false,
       centeredY: true,
-      expression: function (emit, x, y, i, j) {
+      map: function (emit, x, y, i, j) {
         ϕ = y
         θ = angle
         hopf(emit, ϕ, θ, x);

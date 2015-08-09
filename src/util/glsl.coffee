@@ -186,3 +186,10 @@ exports.identity = (type) ->
       return x;
     }
     """
+
+exports.constant = (type, value) ->
+  """
+  #{type} constant() {
+    return #{value};
+  }
+  """

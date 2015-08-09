@@ -36,6 +36,7 @@ class DataBuffer extends Buffer
     @data    = new Float32Array @samples * @channels * @items
     @texture = new DataTexture  @gl, @items * @width, @height * @depth, @channels, options
     @filled  = 0
+    @used    = 0
 
     @_adopt @texture.uniforms
     @_adopt
@@ -45,12 +46,15 @@ class DataBuffer extends Buffer
 
     @dataPointer = @uniforms.dataPointer.value
 
+    @streamer = @generate @data
+
   dispose: () ->
     @data = null
     @texture.dispose()
     super
 
   getFilled: () -> @filled
+  setCallback: (@callback) -> @filled = 0
 
   copy: (data) ->
     n    = Math.min data.length, @samples * @channels * @items
@@ -63,9 +67,29 @@ class DataBuffer extends Buffer
     n *= @items
     width = if height < 1 then n else @items * @width
     height = Math.ceil height
-    
+
     @texture.write @data, 0, 0, width, height
     @dataPointer.set .5, .5
-    @filled  = 1
+
+    @filled = 1
+    @used   = n
+
+  through: (callback, target) ->
+    {consume, done} = src = @streamer
+    {emit}          = dst = target.streamer
+
+    pipe = () -> consume (x, y, z, w) -> callback emit, x, y, z, w
+    pipe = Util.Data.repeatCall pipe, @items
+
+    () =>
+      src.reset()
+      dst.reset()
+      limit = @used
+      i = 0
+      while !done() && i < limit
+        pipe()
+        i++
+
+      return src.count()
 
 module.exports = DataBuffer

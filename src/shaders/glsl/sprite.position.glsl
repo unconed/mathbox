@@ -7,7 +7,9 @@ uniform vec2 renderOdd;
 uniform float renderScale;
 uniform float renderScaleInv;
 uniform float pixelUnit;
+uniform float focusDepth;
 
+uniform vec4 geometryClip;
 attribute vec4 position4;
 attribute vec2 sprite;
 
@@ -19,8 +21,10 @@ vec3 getPosition(vec4 xyzw);
 vec4 getSprite(vec4 xyzw);
 
 vec3 getSpritePosition() {
-  vec3 center = getPosition(position4);
-  vec4 atlas = getSprite(position4);
+  vec4 p = min(geometryClip, position4);
+
+  vec3 center = getPosition(p);
+  vec4 atlas = getSprite(p);
 
   // Sprite goes from -1..1, width = 2.
   // -1..1 -> -0.5..0.5
@@ -33,8 +37,11 @@ vec3 getSpritePosition() {
   // Depth blending
   // TODO: orthographic camera
   // Workaround: set depth = 0
-  float z = -center.z;
-  float depth = mix(z, 1.0, spriteDepth);
+  float depth = focusDepth, z;
+  if (spriteDepth < 1.0) {
+    z = -center.z;
+    depth = mix(z, focusDepth, spriteDepth);
+  }
   
   // Match device/unit mapping 
   float size = pixelUnit * spriteScale;
@@ -48,8 +55,8 @@ vec3 getSpritePosition() {
   vec2 atlasOdd = fract(atlas.zw / 2.0);
   vec2 offset = (spriteOffset + halfSprite * atlas.zw) * depthSize;
   if (spriteSnap > 0.5) {
-    // Snap to pixel
-    return vec3(((floor(center.xy / center.z * renderScale) + renderOdd + atlasOdd) * center.z + offset) * renderScaleInv, center.z);
+    // Snap to pixel (w/ epsilon shift to avoid jitter)
+    return vec3(((floor(center.xy / center.z * renderScale + 0.001) + renderOdd + atlasOdd) * center.z + offset) * renderScaleInv, center.z);
   }
   else {
     // Place directly

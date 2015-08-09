@@ -37,14 +37,15 @@
     });
 
     mathbox
+      .set({
+        scale: 720
+      })
       .rtt({
         history: 2,
         type: 'unsignedByte',
       })
-        .resample({
-          indices:    3,
-          channels: 4,
-          shader:
+        .shader({
+          code:
             "vec4 getSample(vec3 xyz);\n"+
             "vec4 getFramesSample(vec3 xyz) {\n"+
             "  vec4 c = getSample(xyz + vec3( 0.0, 0.0, 1.0));\n"+
@@ -54,6 +55,10 @@
             "  vec3 r = getSample(xyz + vec3( 1.0, 0.0, 0.0)).xyz;\n"+
             "  return vec4((t + b + l + r) / 2.0 - c.xyz, c.w);\n"+
             "}",
+        })
+        .resample({
+          indices:    3,
+          channels: 4,
         })
         .compose({
           color: '#ffffff',

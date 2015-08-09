@@ -48,6 +48,39 @@ exports.getDimensions = (data, spec = {}) ->
 
   dims
 
+exports.repeatCall = (call, times) ->
+  switch times
+    when 0 then () -> true
+    when 1 then () ->
+      call()
+    when 2 then () ->
+      call()
+      call()
+    when 3 then () ->
+      call()
+      call()
+      call()
+      call()
+    when 4 then () ->
+      call()
+      call()
+      call()
+      call()
+    when 6 then () ->
+      call()
+      call()
+      call()
+      call()
+      call()
+      call()
+    when 8 then () ->
+      call()
+      call()
+      call()
+      call()
+      call()
+      call()
+
 exports.makeEmitter = (thunk, items, channels) ->
   inner = switch channels
     when 0 then () -> true

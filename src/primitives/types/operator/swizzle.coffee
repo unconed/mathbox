@@ -14,7 +14,7 @@ class Swizzle extends Operator
     return unless @bind.source?
 
     # Swizzling order
-    order = @_get 'swizzle.order'
+    order = @props.order
     @swizzler = Util.GLSL.swizzleVec4 order, 4 if order.join() != '1234'
 
   unmake: () ->

@@ -65,21 +65,12 @@ class DOM extends Primitive
     # Prepare readback consumer
     @readback.setCallback @emitter = @callback @bind.html.nodes()
 
-    # DEBUG
-    ###
-    dbg = @_renderables.make 'debug',
-            map: @readback.readFloat()
-#            map: @readback.readByte()
-    scene = @_inherit 'scene'
-    scene.adopt dbg
-    ###
-
   unmake: () ->
     if @readback?
       @readback.dispose()
       @dom.dispose()
       @readback = @dom = null
-      
+
       @root = null
       @emitter = null
       @active = {}
@@ -88,14 +79,14 @@ class DOM extends Primitive
 
   update: () ->
     return unless @readback?
-    if @_get 'object.visible'
+    if @props.visible
       @readback.update @root?.getCamera()
       @readback.post()
       @readback.iterate()
 
   post: () ->
     return unless @readback?
-    @dom.render if @_get 'object.visible' then @emitter.nodes() else []
+    @dom.render if @props.visible then @emitter.nodes() else []
 
   callback: (data) ->
     # Create static consumer for the readback
@@ -108,26 +99,29 @@ class DOM extends Primitive
     zoom    = @node.attributes['dom.zoom']
     color   = @node.attributes['dom.color']
     outline = @node.attributes['dom.outline']
+    pointer = @node.attributes['dom.pointerEvents']
     opacity = @node.attributes['overlay.opacity']
+    zIndex  = @node.attributes['overlay.zIndex']
     offset  = @node.attributes['attach.offset']
     depth   = @node.attributes['attach.depth']
     snap    = @node.attributes['attach.snap']
     el      = @dom.el
-    
-    nodes   = []
-    props   = null
-    
+
+    nodes     = []
+    styles    = null
+    className = null
+
     strideI = strideJ = strideK = 0
     colorString = ''
-    
+
     f = (x, y, z, w, i, j, k, l) ->
       # Get HTML item by offset
       index    = l + strideI * i + strideJ * j + strideK * k
       children = data[index]
-      
+
       # Clip behind camera or when invisible
       clip = w < 0
-      
+
       # Depth blending
       iw    = 1 / w
       flatZ = 1 + (iw - 1) * depth.value
@@ -153,31 +147,39 @@ class DOM extends Primitive
 
       # Generate div
       props =
-        className:    "mathbox-outline-#{Math.round outline.value}"
+        className:       className
         style:
-          fontSize:   "#{size.value}px"
-          zoom:       zoom.value
-          transform:  "translate3d(#{xx}px, #{-yy}px, #{1-w}px) translate(-50%, -50%) scale(#{scale},#{scale})"
-          opacity:    alpha
-    
+          transform:     "translate3d(#{xx}px, #{-yy}px, #{1-w}px) translate(-50%, -50%) scale(#{scale},#{scale})"
+          opacity:       alpha
+      props.style[k]   = v for k, v of styles
+
       # Merge in external attributes
       a = attr.value
       if a?
         s = a.style
-        props[k]       = v for k, v of a when k !in ['style','className']
+        props[k]       = v for k, v of a when k !in ['style', 'className']
         props.style[k] = v for k, v of s if s?
       props.className += ' ' + (a?.className ? 'mathbox-label')
-        
+
       # Push node onto list
       nodes.push el 'div', props, children
 
     f.reset = () =>
       nodes = []
       [strideI, strideJ, strideK] = [@strideI, @strideJ, @strideK]
+
       c = color.value
       m = (x) -> Math.floor(x * 255)
       colorString = if c then "rgb(#{[m(c.x), m(c.y), m(c.z)]})" else ''
-  
+
+      className = "mathbox-outline-#{Math.round outline.value}"
+      styles = {}
+      styles.color         = colorString   if c
+      styles.fontSize      =  "#{size.value}px"
+      styles.zoom          = zoom.value    if zoom.value != 1
+      styles.zIndex        = zIndex.value  if zIndex.value > 0
+      styles.pointerEvents = 'auto' if pointer.value
+
     f.nodes = () -> nodes
     f
 
@@ -185,8 +187,8 @@ class DOM extends Primitive
     return unless @readback?
 
     # Fetch geometry/html dimensions
-    pointDims = @bind.points.getActive()
-    htmlDims  = @bind.html.getActive()
+    pointDims = @bind.points.getActiveDimensions()
+    htmlDims  = @bind.html.getActiveDimensions()
 
     items  = Math.min pointDims.items,  htmlDims.items
     width  = Math.min pointDims.width,  htmlDims.width

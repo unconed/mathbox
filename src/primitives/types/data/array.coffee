@@ -1,12 +1,11 @@
-Data = require './data'
+Buffer = require './buffer'
 Util = require '../../../util'
 
-class Array_ extends Data
-  @traits = ['node', 'data', 'source', 'array', 'texture']
+class Array_ extends Buffer
+  @traits = ['node', 'buffer', 'data', 'source', 'index', 'array', 'texture', 'raw']
 
   init: () ->
     @buffer = @spec = null
-    @filled = false
 
     @space =
       length:  0
@@ -23,35 +22,37 @@ class Array_ extends Data
     @buffer.shader shader
 
   getDimensions: () ->
-    space = @space
-
     items:  @items
-    width:  space.length
-    height: space.history
+    width:  @space.length
+    height: @space.history
     depth:  1
 
-  getActive: () ->
-    used = @used
-
+  getActiveDimensions: () ->
     items:  @items
-    width:  used.length
+    width:  @used.length
     height: @buffer.getFilled()
+    depth:  1
+
+  getRawDimensions: () ->
+    items:  @items
+    width:  space.length
+    height: 1
     depth:  1
 
   make: () ->
     super
 
     # Read sampling parameters
-    minFilter = @_get 'texture.minFilter'
-    magFilter = @_get 'texture.magFilter'
-    type      = @_get 'texture.type'
+    minFilter = @minFilter ? @props.minFilter
+    magFilter = @magFilter ? @props.magFilter
+    type      = @type      ? @props.type
 
     # Read given dimensions
-    length   = @_get 'array.length'
-    history  = @_get 'array.history'
-    reserve  = @_get 'array.bufferLength'
-    channels = @_get 'data.channels'
-    items    = @_get 'data.items'
+    length   = @props.length
+    history  = @props.history
+    reserve  = @props.bufferLength
+    channels = @props.channels
+    items    = @props.items
 
     dims = @spec = {channels, items, width: length}
 
@@ -59,7 +60,7 @@ class Array_ extends Data
     @channels = dims.channels
 
     # Init to right size if data supplied
-    data = @_get 'data.data'
+    data = @props.data
     dims = Util.Data.getDimensions data, dims
 
     space = @space
@@ -87,18 +88,19 @@ class Array_ extends Data
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
                          changed['array.history'] or
-                         changed['data.dimensions'] or
-                         changed['data.items'] or
+                         changed['buffer.channels'] or
+                         changed['buffer.items'] or
                          changed['array.bufferLength']
 
     return unless @buffer
 
     if changed['array.length']
-      length = @_get 'array.length'
+      length = @props.length
       return @rebuild() if length > @space.length
 
-    if changed['data.expression'] or
+    if changed['data.map'] or
        changed['data.data'] or
+       changed['data.resolve'] or
        init
 
       @buffer.setCallback @emitter()
@@ -107,13 +109,14 @@ class Array_ extends Data
 
   update: () ->
     return unless @buffer
-    return unless !@filled or @_get 'data.live'
 
-    data = @_get 'data.data'
+    filled   = @buffer.getFilled()
+    return unless !filled or @props.live
+
+    data = @props.data
 
     space    = @space
     used     = @used
-    filled   = @buffer.getFilled()
 
     l = used.length
 
@@ -134,8 +137,6 @@ class Array_ extends Data
 
       length = @buffer.update()
       used.length = length
-
-    @filled = true
 
     if used.length != l or
        filled != @buffer.getFilled()

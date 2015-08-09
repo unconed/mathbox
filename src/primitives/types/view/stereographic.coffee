@@ -26,12 +26,12 @@ class Stereographic extends View
 
     return unless touched['view'] or touched['view3'] or touched['stereographic'] or init
 
-    @bend = bend = @_get 'stereographic.bend'
+    @bend = bend = @props.bend
 
-    o = @_get 'view3.position'
-    s = @_get 'view3.scale'
-    q = @_get 'view3.rotation'
-    r = @_get 'view.range'
+    o = @props.position
+    s = @props.scale
+    q = @props.rotation
+    r = @props.range
 
     x = r[0].x
     y = r[1].x

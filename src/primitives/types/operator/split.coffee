@@ -23,8 +23,8 @@ class Split extends Operator
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
 
-  getActive: () ->
-    @_resample @bind.source.getActive()
+  getActiveDimensions: () ->
+    @_resample @bind.source.getActiveDimensions()
 
   _resample: (dims) ->
     order   = @order
@@ -54,10 +54,10 @@ class Split extends Operator
     super
     return unless @bind.source?
 
-    order   = @_get 'split.order'
-    axis    = @_get 'split.axis'
-    overlap = @_get 'split.overlap'
-    length  = @_get 'split.length'
+    order   = @props.order
+    axis    = @props.axis
+    overlap = @props.overlap
+    length  = @props.length
 
     ###
     Calculate index transform
@@ -93,6 +93,7 @@ class Split extends Operator
     ###
 
     permute = order.join ''
+    axis   ?= order[0]
 
     index   = permute.indexOf axis
     split   = permute[index] + (permute[index + 1] ? 0)

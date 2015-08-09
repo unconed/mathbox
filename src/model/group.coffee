@@ -1,8 +1,8 @@
 Node = require('./node')
 
 class Group extends Node
-  constructor: (options, type, traits, attributes) ->
-    super options, type, traits, attributes
+  constructor: (options, type, config, attributes) ->
+    super options, type, config, attributes
 
     @children = []
     @on 'reindex', (event) => child.trigger event for child in @children

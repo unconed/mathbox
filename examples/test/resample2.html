@@ -7,6 +7,25 @@
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
+<script type="application/glsl" id="map-color">
+uniform float modulate1;
+uniform float modulate2;
+vec4 getSample(vec3 xyz);
+vec4 getFramesSample(vec3 xyz) {
+  vec4 color = (
+    getSample(xyz) +
+    getSample(xyz + vec3(0.0, 0.0, 1.0)) +
+    getSample(xyz + vec3(0.0, 0.0, 2.0)) +
+    getSample(xyz + vec3(0.0, 0.0, 3.0))
+  ) / 4.0;
+  color = color * color * color * 1.15;
+  float v = color.x + color.y + color.z;
+  vec3 c = vec3(v*v + color.x * .2, v*v, v*v*v + color.z) * .333;
+  c = mix(c, mix(sqrt(c.yzx * c), c.zxy, modulate1), modulate2);
+  c = mix(c, mix(c.yzx, c.zxy, modulate1), modulate2);
+  return vec4(c, 1.0);
+}
+</script>
 <body>
   <script>
     mathbox = mathBox({
@@ -26,17 +45,28 @@
       time = three.Time.clock;
       x = Math.cos(time) * 3;
       z = Math.sin(time) * 3;
+      
+      m1 = Math.cos(time * .417) * .5 + .5;
+      m2 = Math.cos(time * .617 + Math.sin(time * .133)) * .5 + .5;
 
-      if (rtt)
+      if (rtt) {
         c = rtt[0].controller.rtt.camera;
         if (c) {
           c.position.set(x, 0, z);
           c.lookAt(origin);
         }
+      }
+      
+      if (colormap) {
+        colormap.set('modulate1', m1);
+        colormap.set('modulate2', m2);
+      }
     });
 
     mathbox
-
+      .set({
+        scale: 720
+      })
       .rtt({
         id: 'render',
         minFilter: 'nearest',
@@ -68,11 +98,8 @@
         minFilter: 'linear',
         magFilter: 'linear',
       })
-        .resample({
-          id: 'resample1',
-          indices:    3,
-          channels: 4,
-          shader: [
+        .shader({
+          code: [
             "uniform vec3 dataResolution;",
             "uniform vec3 dataSize;",
             "const float COS = .995;",
@@ -90,16 +117,16 @@
             "  return vec4((t + b + l + r) / 2.0 - c.xyz, c.w);",
             "}"].join("\n")
         })
-        /**/
-        .compose({
-          color: '#ffffff',
-          zWrite: false,
+        .resample({
+          id: 'resample1',
+          indices:    3,
+          channels: 4,
         })
+        /**/
+        .compose()
         .compose({
           source: '#render',
           blending: THREE.AdditiveBlending,
-          color: '#ffffff',
-          zWrite: false,
         })
       .end()
       .rtt({
@@ -107,43 +134,38 @@
         magFilter: 'linear',
         type: 'unsignedByte',
       })
+        .shader({
+          id: "colormap",
+          code: '#map-color',
+        })
         .resample({
           id: 'resample2',
           source: '#rtt1',
           indices:    3,
           channels: 4,
-          shader: [
-            "vec4 getSample(vec3 xyz);",
-            "vec4 getFramesSample(vec3 xyz) {",
-            "  vec4 color = (getSample(xyz) + getSample(xyz + vec3(0.0, 0.0, 1.0)) + getSample(xyz + vec3(0.0, 0.0, 2.0)) + getSample(xyz + vec3(0.0, 0.0, 3.0))) / 4.0;",
-            "  color = color * color * color * 1.15;",
-            "  float v = color.x + color.y + color.z;",
-            "  return vec4(vec3(v*v + color.x * .2, v*v, v*v*v + color.z) * .333, 1.0);",
-            "}"].join("\n")
         })
-        .compose({
-          color: '#fff',
-          zWrite: false,
-        })
+        .compose()
       .end()
+      .shader({
+        code: [
+          "vec4 getSample(vec2 xy);",
+          "vec4 getFramesSample(vec2 xy) {",
+          "  return getSample(xy + vec2(0.5, 0.5));",
+          "}"
+        ].join("\n")
+      })
       .resample({
         id: 'resample3',
         indices:    2,
         channels: 4,
-        shader: [
-          "vec4 getSample(vec2 xy);",
-          "vec4 getFramesSample(vec2 xy) {",
-          "  return getSample(xy + vec2(0.5, 0.5));",
-          "}"].join("\n")
       })
       .compose({
-        color: '#fff',
-        zWrite: false,
         source: '#resample2',
       })
 
 
     var rtt = mathbox.select('rtt')
+    var colormap = mathbox.select('#colormap')
 
   </script>
 </body>

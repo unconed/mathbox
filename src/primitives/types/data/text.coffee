@@ -2,9 +2,9 @@ Voxel = require './voxel'
 Util = require '../../../util'
 
 class Text extends Voxel
-  @traits = ['node', 'data', 'source', 'texture', 'voxel', 'text']
+  @traits = ['node', 'buffer', 'data', 'texture', 'voxel', 'text']
   @defaults =
-    channels:       4
+    channels:         4
     minFilter: 'linear'
     magFilter: 'linear'
 
@@ -12,23 +12,23 @@ class Text extends Voxel
     super
     @atlas = null
 
-  textIsSDF:  () -> @_get('text.expand') > 0
-  textHeight: () -> @_get('text.detail')
-
   textShader: (shader) ->
     @atlas.shader shader
 
+  textIsSDF:  () -> @props.expand > 0
+  textHeight: () -> @props.detail
+
   make: () ->
     # Read sampling parameters
-    minFilter = @_get 'texture.minFilter'
-    magFilter = @_get 'texture.magFilter'
-    type      = @_get 'texture.type'
+    minFilter = @props.minFilter
+    magFilter = @props.magFilter
+    type      = @props.type
 
     # Read font parameters
-    font    = @_get 'text.font'
-    style   = @_get 'text.style'
-    detail  = @_get 'text.detail'
-    expand  = @_get 'text.expand'
+    font    = @props.font
+    style   = @props.style
+    detail  = @props.detail
+    expand  = @props.expand
 
     # Prepare text atlas
     @atlas = @_renderables.make 'textAtlas',
@@ -40,14 +40,17 @@ class Text extends Voxel
                magFilter: magFilter
                type:      type
 
-    # DEBUG
-    #dbg = @_renderables.make 'debug',
-    #        map: @atlas.read()
-    #scene = @_inherit 'scene'
-    #scene.adopt dbg
-    #dbg.objects[0].quaternion.set Math.sin(π / 2), 0, 0, Math.cos(π / 2)
-    
+    # Underlying data buffer needs no filtering
+    @minFilter = THREE.NearestFilter
+    @magFilter = THREE.NearestFilter
+    @type      = THREE.FloatType
+
     super
+
+    # Hook buffer emitter to map atlas text
+    atlas = @atlas
+    emit  = @buffer.streamer.emit
+    @buffer.streamer.emit = (t) -> atlas.map t, emit
 
   unmake: () ->
     super
@@ -63,14 +66,5 @@ class Text extends Voxel
   change: (changed, touched, init) ->
     return @rebuild() if touched['text']
     super changed, touched, init
-
-  callback: (callback) ->
-    text = ''
-    atlas = @atlas
-
-    buffer = (t) -> text = t    
-    (emit, i, j, k, l) ->
-      callback  buffer, i, j, k, l
-      atlas.map text, emit
 
 module.exports = Text

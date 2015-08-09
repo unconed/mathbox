@@ -36,7 +36,7 @@ class Atlas extends Renderable
         type: 'v2'
         value: new THREE.Vector2(0, 0)
     @_adopt @texture.uniforms
-    
+
     @reset()
 
   reset: () ->
@@ -46,12 +46,12 @@ class Atlas extends Renderable
   resize: (width, height) ->
     throw "Cannot resize unbacked texture atlas" if !@backed
     if width > 2048 and height > 2048
-      console.warn "Giant atlas #{width}x#{height}."   
+      console.warn "Giant text atlas #{width}x#{height}."
     else
-      console.info "Resizing atlas #{width}x#{height}."
+      console.info "Resizing text atlas #{width}x#{height}."
 
     @texture.resize width, height
-    
+
     @width   = width
     @height  = height
     @samples = width * height
@@ -80,7 +80,7 @@ class Atlas extends Renderable
       if row.height >= height and row.height < max and row.width + width <= w
         row.append key, width, height, emit
         return
-    
+
     # Scan all rows and append to the first suitable one (slower code path)
     bottom = 0
     index  = -1
@@ -90,7 +90,7 @@ class Atlas extends Renderable
       # Note suitable holes for later
       gap    = row.top - bottom
       if gap >= height and index < 0
-        index = i 
+        index = i
         top   = bottom
       bottom = row.bottom
 
@@ -121,7 +121,7 @@ class Atlas extends Renderable
       row = new Row top, height
       @rows.push row
       @bottom = bottom
-    
+
     row.append key, width, height, emit
     @last = row
     return
@@ -130,7 +130,7 @@ class Atlas extends Renderable
     @texture.textureObject
 
   write: (data, x, y, w, h) ->
-    @texture.write data, x, y, w, h    
+    @texture.write data, x, y, w, h
 
   dispose: () ->
     @texture.dispose()

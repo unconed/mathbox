@@ -12,8 +12,8 @@ class Lerp extends Operator
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
 
-  getActive: () ->
-    @_resample @bind.source.getActive()
+  getActiveDimensions: () ->
+    @_resample @bind.source.getActiveDimensions()
 
   _resample: (dims) ->
     r = @resample
@@ -33,7 +33,7 @@ class Lerp extends Operator
     indexer   = @_shaders.shader()
 
     # Sampler behavior
-    centered = @_get 'sampler.centered'
+    centered = @props.centered
 
     # Resampling ratios
     @resample = {}
@@ -42,7 +42,7 @@ class Lerp extends Operator
     dims = @bind.source.getDimensions()
     for key of dims
       id = "lerp.#{key}"
-      size = @_get(id) ? dims[key]
+      size = @props[key] ? dims[key]
 
       @resample[key] = size / dims[key]
 

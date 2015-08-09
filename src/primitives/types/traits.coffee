@@ -14,6 +14,7 @@ Traits =
   unit:
     scale:             Types.nullable(Types.number())
     fov:               Types.nullable(Types.number())
+    focus:             Types.number(1)
 
   span:
     range:             Types.nullable(Types.vec2(-1, 1))
@@ -29,7 +30,7 @@ Traits =
 
   vertex:
     pass:              Types.vertexPass()
-    shader:            Types.nullable(Types.string())
+    shader:            Types.select()
 
   transform3:
     pass:              Types.vertexPass()
@@ -76,13 +77,12 @@ Traits =
   axis:
     detail:            Types.int(1)
 
-  source:
-    hint:              Types.nullable(Types.string())
-
   data:
     data:              Types.nullable(Types.object())
-    expression:        Types.nullable(Types.func())
+    map:               Types.nullable(Types.func())
+    bind:              Types.nullable(Types.func())
     live:              Types.bool(true)
+  buffer:
     channels:          Types.int(3)
     items:             Types.int(1)
   sampler:
@@ -104,6 +104,10 @@ Traits =
     bufferWidth:       Types.int(1)
     bufferHeight:      Types.int(1)
     bufferDepth:       Types.int(1)
+
+  resolve:
+    map:               Types.nullable(Types.func())
+    items:             Types.int(1)
 
   style:
     opacity:           Types.number(1)
@@ -130,6 +134,8 @@ Traits =
   mesh:
     solid:             Types.bool(true)
     shaded:            Types.bool(true)
+  strip:
+    outline:           Types.bool(false)
   face:
     outline:           Types.bool(false)
   arrow:
@@ -137,17 +143,22 @@ Traits =
     start:             Types.bool(false)
     end:               Types.bool(false)
   ticks:
-    size:              Types.number(.05)
+    normal:            Types.vec3(0, 0, 1)
+    size:              Types.number(10)
   attach:
     offset:            Types.vec2(0, -20)
-    snap:              Types.bool(true)
+    snap:              Types.bool(false)
     depth:             Types.number(0)
-    
+
+  format:
+    digits:            Types.nullable(Types.number(3))
+    expr:              Types.nullable(Types.func())
+    live:              Types.bool(true)
   text:
-    font:              Types.string()
+    font:              Types.string('sans-serif')
     style:             Types.string()
     detail:            Types.number(24)
-    expand:            Types.number(4)
+    expand:            Types.number(5)
   label:
     text:              Types.select()
     size:              Types.number(16)
@@ -157,6 +168,7 @@ Traits =
 
   overlay:
     opacity:           Types.number(1)
+    zIndex:            Types.absolute(Types.round(0))
   dom:
     points:            Types.select()
     html:              Types.select()
@@ -165,11 +177,17 @@ Traits =
     zoom:              Types.number(1)
     color:             Types.nullable(Types.color())
     attributes:        Types.nullable(Types.object())
+    pointerEvents:     Types.bool(false)
 
   texture:
     minFilter:         Types.filter('nearest')
     magFilter:         Types.filter('nearest')
     type:              Types.type('float')
+
+  shader:
+    language:          Types.string('glsl')
+    code:              Types.string()
+    uniforms:          Types.nullable(Types.object())
 
   operator:
     source:            Types.select()
@@ -184,12 +202,12 @@ Traits =
     alignDepth:        Types.anchor()
   split:
     order:             Types.transpose('wxyz')
-    axis:              Types.axis()
+    axis:              Types.nullable(Types.axis())
     length:            Types.int(1)
     overlap:           Types.int(0)
   join:
     order:             Types.transpose('wxyz')
-    axis:              Types.axis()
+    axis:              Types.nullable(Types.axis())
     overlap:           Types.int(0)
   swizzle:
     order:             Types.swizzle()
@@ -210,7 +228,7 @@ Traits =
     channels:          Types.number(4)
     map:               Types.mapping()
     scale:             Types.mapping('absolute')
-    shader:            Types.nullable(Types.string())
+    shader:            Types.select()
     items:             Types.nullable(Types.int())
     width:             Types.nullable(Types.int())
     height:            Types.nullable(Types.int())
@@ -227,5 +245,14 @@ Traits =
     history:           Types.int(1)
   compose:
     alpha:             Types.bool(false)
+
+  transition:
+    flip:              Types.vec4()
+    stagger:           Types.vec4()
+    enter:             Types.number(0)
+    exit:              Types.number(1)
+    from:              Types.vec4()
+    to:                Types.vec4()
+    pass:              Types.vertexPass()
 
 module.exports = Traits

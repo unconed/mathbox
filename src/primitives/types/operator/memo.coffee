@@ -14,9 +14,9 @@ class Memo extends Operator
     @_listen 'root', 'root.update', @update
 
     # Read sampling parameters
-    minFilter = @_get 'texture.minFilter'
-    magFilter = @_get 'texture.magFilter'
-    type      = @_get 'texture.type'
+    minFilter = @props.minFilter
+    magFilter = @props.magFilter
+    type      = @props.type
 
     # Fetch geometry dimensions
     dims   = @bind.source.getDimensions()
@@ -45,12 +45,6 @@ class Memo extends Operator
                  depth:  depth
     @memo.adopt @compose
 
-    # DEBUG
-    #dbg = @_renderables.make 'debug',
-    #        map: @memo.read()
-    #scene = @_inherit 'scene'
-    #scene.adopt dbg
-
   unmake: () ->
     super
 
@@ -67,7 +61,7 @@ class Memo extends Operator
     return unless @bind.source?
 
     # Fetch geometry dimensions
-    dims   = @bind.source.getActive()
+    dims   = @bind.source.getActiveDimensions()
     {width, height, depth} = dims
 
     # Cover only part of the RTT viewport

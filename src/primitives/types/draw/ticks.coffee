@@ -2,39 +2,32 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Ticks extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'ticks', 'interval', 'span', 'scale', 'position']
+  @traits = ['node', 'object', 'style', 'line', 'ticks', 'geometry', 'position', 'bind']
 
-  constructor: (node, context, helpers) ->
-    super node, context, helpers
+  init: () ->
+    @tickStrip = @line = null
 
-    @tickAxis = @tickNormal = @resolution = @line = null
+  resize: () ->
+    return unless @bind.points?
+    dims = @bind.points.getActiveDimensions()
+
+    active  = +(dims.items > 0)
+    strips  = dims.width  * active
+    ribbons = dims.height * active
+    layers  = dims.depth  * active
+
+    @line.geometry.clip 2, strips, ribbons, layers
+    @tickStrip.set 0, strips - 1
 
   make: () ->
 
-    # Prepare data buffer of tick positions
-    @resolution = samples = @_helpers.scale.divide ''
+    # Bind to attached data sources
+    @_helpers.bind.make [
+      { to: 'geometry.points', trait: 'source' }
+      { to: 'geometry.colors', trait: 'source' }
+    ]
 
-    @buffer = @_renderables.make 'dataBuffer',
-              width:    samples
-              channels: 1
-
-    # Prepare position shader
-    positionUniforms =
-      tickSize:    @node.attributes['ticks.size']
-      tickAxis:    @_attributes.make @_types.vec4()
-      tickNormal:  @_attributes.make @_types.vec4()
-
-    @tickAxis   = positionUniforms.tickAxis.value
-    @tickNormal = positionUniforms.tickNormal.value
-
-    # Build transform chain
-    p = position = @_shaders.shader()
-    # Require view transform as callback
-    p.require @_helpers.position.pipeline @_shaders.shader()
-    # Require buffer sampler as callback
-    p.require @buffer.shader @_shaders.shader(), 1
-    # Link to tick shader
-    p.pipe 'ticks.position', positionUniforms
+    return unless @bind.points?
 
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
@@ -42,45 +35,74 @@ class Ticks extends Primitive
     unitUniforms  = @_inherit('unit').getUnitUniforms()
     uniforms      = Util.JS.merge lineUniforms, styleUniforms, unitUniforms
 
+    # Prepare position shader
+    positionUniforms =
+      tickSize:    @node.attributes['ticks.size']
+      tickNormal:  @node.attributes['ticks.normal']
+      tickStrip:   @_attributes.make @_types.vec2 0, 0
+      worldUnit:   uniforms.worldUnit
+      focusDepth:  uniforms.focusDepth
+
+    @tickStrip = positionUniforms.tickStrip.value
+
+    # Build transform chain
+    p = position = @_shaders.shader()
+
+    # Require buffer sampler as callback
+    p.require @bind.points.sourceShader @_shaders.shader()
+
+    # Require view transform as callback
+    p.require @_helpers.position.pipeline @_shaders.shader()
+
+    # Link to tick shader
+    p.pipe 'ticks.position', positionUniforms
+
+    # Stroke style
+    stroke  = @props.stroke
+
+    # Fetch geometry dimensions
+    dims    = @bind.points.getDimensions()
+    strips  = dims.width
+    ribbons = dims.height
+    layers  = dims.depth
+
+    # Build color lookup
+    if @bind.colors
+      color = @_shaders.shader()
+      @bind.colors.sourceShader color
+
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
+    if mask
+      s = @_shaders.shader()
+      s.pipe Util.GLSL.swizzleVec4 'yzwx'
+      mask = s.pipe mask
+
     # Make line renderable
     @line = @_renderables.make 'line',
               uniforms: uniforms
               samples:  2
-              strips:   samples
+              strips:   strips
+              ribbons:  ribbons
+              layers:   layers
               position: position
+              color:    color
+              stroke:   stroke
+              mask:     mask
 
     @_helpers.object.make [@line]
-    @_helpers.span.make()
+
+  made: () -> @resize()
 
   unmake: () ->
-    @line = @tickAxis = @tickNormal = null
+    @line = null
 
     @_helpers.object.unmake()
-    @_helpers.span.unmake()
+
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['scale.divide']
+    return @rebuild() if changed['geometry.points'] or
+                         changed['line.stroke']
 
-    if touched['view']     or
-       touched['interval'] or
-       touched['span']     or
-       touched['scale']    or
-       init
-
-      # Fetch range along axis
-      dimension = @_get 'interval.axis'
-      range     = @_helpers.span.get '', dimension
-
-      # Calculate scale along axis
-      min   = range.x
-      max   = range.y
-      ticks = @_helpers.scale.generate '', @buffer, min, max
-
-      Util.Axis.setDimension       @tickAxis,   dimension
-      Util.Axis.setDimensionNormal @tickNormal, dimension
-
-      # Clip to number of ticks
-      n = ticks.length
-      @line.geometry.clip 2, n
 
 module.exports = Ticks

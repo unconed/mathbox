@@ -4,6 +4,7 @@ mathBox = (options) ->
 
   three = THREE.Bootstrap options
   three.install 'mathbox' if !three.MathBox?
+
   three.mathbox ? three
 
 # Just because
@@ -14,9 +15,6 @@ window.τ = π * 2
 window.MathBox = exports
 window.mathBox = exports.mathBox = mathBox
 exports.version = '2'
-
-# Inject shaders
-require '../build/shaders'
 
 # Load context and export namespace
 Context = require './context'
@@ -45,8 +43,10 @@ THREE.Bootstrap.registerPlugin 'mathbox',
         script = options?.script || @options.script
 
         @context = new Context three.renderer, scene, camera, script
-        @context.api.three = three
-        three.mathbox = @context.api
+
+        # Enable handy destructuring
+        @context.api.three   = three.three   = three
+        @context.api.mathbox = three.mathbox = @context.api
 
         @context.init()
         @context.resize three.Size
@@ -77,7 +77,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
     @context?.resize three.Size
 
   pre: (event, three) ->
-    @context?.pre()
+    @context?.pre(three.Time)
 
   update: (event, three) ->
     @context?.update()
@@ -101,7 +101,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
       info = three.renderer.info.render
       console.log(fmt(info.faces) + ' faces  ',
                   fmt(info.vertices) + ' vertices  ',
-                  fmt(info.calls) + ' calls');
+                  fmt(info.calls) + ' draw calls');
 
 
 ###

@@ -1,15 +1,23 @@
 class Node
-  constructor: (options, @type, traits = [], attributes) ->
-    @attributes = attributes.apply @, traits
+  constructor: (options, @type, config, attributes) ->
+    @configure config, attributes
     @parent = @root = @path = @index = null
 
-    @set options, null, true
+    @set options, true
 
   toString: () ->
     out = @type
     out += '#' + @id if @id
     out += '.' + @classes.join '.' if @classes?.length
     out
+
+  configure: (config, attributes) ->
+    {traits, props, freeform} = config
+    traits   ?= @_config.traits   ? []
+    props    ?= @_config.props    ? {}
+    freeform ?= @_config.freeform ? false
+    @attributes = attributes.apply @, traits, props, freeform
+    @_config    = {traits, props, freeform}
 
   # Add/removal callback
   _added: (parent) ->

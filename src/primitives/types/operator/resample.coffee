@@ -14,8 +14,8 @@ class Resample extends Operator
   getDimensions: () ->
     @_resample @bind.source.getDimensions()
 
-  getActive: () ->
-    @_resample @bind.source.getActive()
+  getActiveDimensions: () ->
+    @_resample @bind.source.getActiveDimensions()
 
   _resample: (dims) ->
     r = @resampled
@@ -35,10 +35,15 @@ class Resample extends Operator
     super
     return unless @bind.source?
 
+    # Bind to attached shader
+    @_helpers.bind.make [
+      { to: 'resample.shader', trait: 'shader', optional: true }
+    ]
+
     # Get custom shader
     indices    = @_get 'resample.indices'
     dimensions = @_get 'resample.channels'
-    shader     = @_get 'resample.shader'
+    shader     = @bind.shader
 
     # Get resampled dimensions (if any)
     map    = @_get 'resample.map'
@@ -107,7 +112,7 @@ class Resample extends Operator
       operator.pipe Util.GLSL.truncateVec 4, dimensions          if dimensions != 4
       operator.join()
 
-      operator.pipe shader, uniforms
+      operator.pipe @bind.shader.shaderBind uniforms             if @bind.shader?
 
       operator.pipe Util.GLSL.extendVec dimensions, 4            if dimensions != 4
     else
@@ -127,8 +132,8 @@ class Resample extends Operator
   resize: () ->
     return unless @bind.source?
 
-    dims   = @bind.source.getActive()
-    target = @getActive()
+    dims   = @bind.source.getActiveDimensions()
+    target = @getActiveDimensions()
 
     if @centered
       ri = dims.items  / Math.max 1, target.items

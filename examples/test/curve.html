@@ -25,7 +25,11 @@
       time = three.Time.clock
     });
 
-    view = mathbox.cartesian({
+    view = mathbox
+    .set({
+      focus: 3,
+    })
+    .cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
@@ -37,14 +41,18 @@
     view.axis({
       axis: 2,
     });
+    
+    view.scale({
+      divide: 10,
+    })
     view.ticks({
       classes: ['foo', 'bar'],
-      divide: 10,
+      width: 2
     });
 
     view.grid({
       divideX: 30,
-      width: 5,
+      width: 1,
       opacity: 0.5,
       zBias: -5,
     });
@@ -52,7 +60,7 @@
     view.interval({
       id: 'sampler',
       length: 64,
-      expression: function (emit, x, i) {
+      map: function (emit, x, i) {
         y = Math.sin(x + time) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
       },
@@ -62,7 +70,7 @@
     view.line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 10,
+      width: 5,
     });
 
     view.transform({
@@ -70,7 +78,7 @@
     }).line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 10,
+      width: 5,
       stroke: 'dotted',
     });
 
@@ -79,7 +87,7 @@
     }).line({
       points: '#sampler',
       color: 0x3090FF,
-      width: 10,
+      width: 5,
       stroke: 'dashed',
     });
 

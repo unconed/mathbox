@@ -1,7 +1,9 @@
 uniform float worldUnit;
 uniform float lineDepth;
 uniform float lineWidth;
+uniform float focusDepth;
 
+uniform vec4 geometryClip;
 uniform float arrowSize;
 uniform float arrowSpace;
 
@@ -20,11 +22,11 @@ void getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 
 
 mat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {
 
-  float depth = 1.0;
+  float depth = focusDepth;
   if (lineDepth < 1.0) {
     // Depth blending
     float z = max(0.00001, -right.z);
-    depth = mix(z, 1.0, lineDepth);
+    depth = mix(z, focusDepth, lineDepth);
   }
     
   vec3 diff = left - right;
@@ -63,7 +65,9 @@ mat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {
 vec3 getArrowPosition() {
   vec3 left, right, start;
   
-  getArrowGeometry(position4, attach.x, attach.y, left, right, start);
+  vec4 p = min(geometryClip, position4);
+  
+  getArrowGeometry(p, attach.x, attach.y, left, right, start);
   mat4 matrix = getArrowMatrix(left, right, start);
   return (matrix * vec4(arrow.xyz, 1.0)).xyz;
 

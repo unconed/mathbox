@@ -36,7 +36,7 @@
     view.interval({
       id: 'sampler',
       length: 64,
-      expression: function (emit, x, i) {
+      map: function (emit, x, i) {
         y = Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
         emit(x, -y);

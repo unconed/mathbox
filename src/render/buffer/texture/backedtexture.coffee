@@ -31,7 +31,7 @@ class BackedTexture extends DataTexture
     @uniforms.dataResolution.value.set 1 / width, 1 / height
 
     @write old, 0, 0, oldWidth, oldHeight
-              
+
   write: (src, x, y, w, h) ->
     width    = @width
     dst      = @data

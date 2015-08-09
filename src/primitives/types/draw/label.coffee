@@ -23,7 +23,7 @@ class Label extends Primitive
     pointDims = @bind.points.getDimensions()
     textDims  = @bind.text.getDimensions()
     textIsSDF = @bind.text.textIsSDF()
-    
+
     items  = Math.min pointDims.items,  textDims.items
     width  = Math.min pointDims.width,  textDims.width
     height = Math.min pointDims.height, textDims.height
@@ -39,7 +39,7 @@ class Label extends Primitive
 
     # Build shader to sample text image data
     map      = @bind.text.textShader @_shaders.shader()
-    
+
     # Build shader to resolve text data
     labelUniforms =
       spriteDepth:   @node.attributes['attach.depth']
@@ -49,7 +49,7 @@ class Label extends Primitive
       outlineStep:   @_attributes.make @_types.number()
       outlineExpand: @_attributes.make @_types.number()
       outlineColor:  @node.attributes['label.background']
-    
+
     @spriteScale   = labelUniforms.spriteScale
     @outlineStep   = labelUniforms.outlineStep
     @outlineExpand = labelUniforms.outlineExpand
@@ -61,6 +61,9 @@ class Label extends Primitive
     if @bind.colors
       color = @_shaders.shader()
       @bind.colors.sourceShader color
+
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
 
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
@@ -79,6 +82,7 @@ class Label extends Primitive
               map:      map
               combine:  combine
               color:    color
+              mask:     mask
 
     @_helpers.object.make [@sprite]
 
@@ -90,14 +94,14 @@ class Label extends Primitive
 
   resize: () ->
     # Fetch geometry/text dimensions
-    pointDims = @bind.points.getActive()
-    textDims  = @bind.text.getActive()
+    pointDims = @bind.points.getActiveDimensions()
+    textDims  = @bind.text.getActiveDimensions()
 
     items  = Math.min pointDims.items,  textDims.items
     width  = Math.min pointDims.width,  textDims.width
     height = Math.min pointDims.height, textDims.height
     depth  = Math.min pointDims.depth,  textDims.depth
-    
+
     @sprite.geometry.clip width, height, depth, items
 
   change: (changed, touched, init) ->
@@ -105,9 +109,9 @@ class Label extends Primitive
                          changed['label.text']
     return unless @bind.points?
 
-    size    = @_get 'label.size'
-    outline = @_get 'label.outline'
-    expand  = @_get 'label.expand'
+    size    = @props.size
+    outline = @props.outline
+    expand  = @props.expand
     height  = @bind.text.textHeight()
     scale   = size / height
 

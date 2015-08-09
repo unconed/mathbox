@@ -14,7 +14,7 @@ class ItemBuffer extends DataBuffer
 
   setActive: (i, j, k, l) -> [@pad.x, @pad.y, @pad.z, @pad.w] = [@width - i, @height - j, @depth - k, @items - l]
 
-  iterate: () ->
+  fill: () ->
     callback = @callback
     callback.reset?()
 

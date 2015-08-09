@@ -1,12 +1,11 @@
-Data = require './data'
+Buffer = require './buffer'
 Util = require '../../../util'
 
-class Matrix extends Data
-  @traits = ['node', 'data', 'source', 'texture', 'matrix']
+class Matrix extends Buffer
+  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'matrix', 'raw']
 
   init: () ->
     @buffer = @spec = null
-    @filled = false
 
     @space =
       width:   0
@@ -16,46 +15,48 @@ class Matrix extends Data
     @used =
       width:   0
       height:  0
-    
+
     @storage = 'matrixBuffer'
-    
+
     super
 
   sourceShader: (shader) ->
     @buffer.shader shader
 
   getDimensions: () ->
-    space = @space
-
     items:  @items
-    width:  space.width
-    height: space.height
-    depth:  space.history
+    width:  @space.width
+    height: @space.height
+    depth:  @space.history
 
-  getActive: () ->
-    used = @used
-
+  getActiveDimensions: () ->
     items:  @items
-    width:  used.width
-    height: used.height
+    width:  @used.width
+    height: @used.height
     depth:  @buffer.getFilled()
+
+  getRawDimensions: () ->
+    items:  @items
+    width:  @space.width
+    height: @space.height
+    depth:  1
 
   make: () ->
     super
 
     # Read sampling parameters
-    minFilter = @_get 'texture.minFilter'
-    magFilter = @_get 'texture.magFilter'
-    type      = @_get 'texture.type'
+    minFilter = @minFilter ? @props.minFilter
+    magFilter = @magFilter ? @props.magFilter
+    type      = @type      ? @props.type
 
     # Read given dimensions
-    width    = @_get 'matrix.width'
-    height   = @_get 'matrix.height'
-    history  = @_get 'matrix.history'
-    reserveX = @_get 'matrix.bufferWidth'
-    reserveY = @_get 'matrix.bufferHeight'
-    channels = @_get 'data.channels'
-    items    = @_get 'data.items'
+    width    = @props.width
+    height   = @props.height
+    history  = @props.history
+    reserveX = @props.bufferWidth
+    reserveY = @props.bufferHeight
+    channels = @props.channels
+    items    = @props.items
 
     dims = @spec = {channels, items, width, height}
 
@@ -63,7 +64,7 @@ class Matrix extends Data
     @channels = dims.channels
 
     # Init to right size if data supplied
-    data = @_get 'data.data'
+    data = @props.data
     dims = Util.Data.getDimensions data, dims
 
     space = @space
@@ -94,23 +95,24 @@ class Matrix extends Data
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
                          changed['matrix.history'] or
-                         changed['data.channels'] or
-                         changed['data.items'] or
+                         changed['buffer.channels'] or
+                         changed['buffer.items'] or
                          changed['matrix.bufferWidth'] or
                          changed['matrix.bufferHeight']
 
     return unless @buffer
 
     if changed['matrix.width']
-      width = @_get 'matrix.width'
+      width = @props.width
       return @rebuild() if width  > @space.width
 
     if changed['matrix.height']
-      height = @_get 'matrix.height'
+      height = @props.height
       return @rebuild() if height > @space.height
 
-    if changed['data.expression'] or
+    if changed['data.map'] or
        changed['data.data'] or
+       changed['data.resolve'] or
        init
 
       @buffer.setCallback @emitter()
@@ -119,13 +121,14 @@ class Matrix extends Data
 
   update: () ->
     return unless @buffer
-    return unless !@filled or @_get 'data.live'
 
-    data = @_get 'data.data'
+    filled   = @buffer.getFilled()
+    return unless !filled or @props.live
+
+    data = @props.data
 
     space    = @space
     used     = @used
-    filled   = @buffer.getFilled()
 
     w = used.width
     h = used.height
@@ -152,8 +155,6 @@ class Matrix extends Data
       used.width  = _w = @spec.width
       used.height = Math.ceil length / _w
       used.width  = length if used.height == 1
-
-    @filled = true
 
     if used.width  != w or
        used.height != h or

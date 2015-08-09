@@ -14,28 +14,46 @@
       controls: {
         klass: THREE.OrbitControls
       },
+      camera: {
+        fov: 45,
+      }
     });
     three = mathbox.three;
 
-    three.camera.position.set(2.3, 1, 2);
+    three.camera.position.set(-.05, .05, 1.2);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    view = mathbox.cartesian({
+    three.on('update', function () {
+      var d = .5 + .5 * Math.sin(three.Time.now * .5);
+      depthObj.set('depth', d);
+    });
+
+    view = mathbox
+    .set({
+      scale: 720,
+      focus: 1
+    })
+    .cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
     view.axis({
-      detail: 20,
       end: true,
+      width: 5,
     });
     view.axis({
       axis: 2,
       end: true,
+      width: 5,
     });
-    view.ticks({
-      classes: ['foo', 'bar'],
-      divide: 10,
+    view.axis({
+      axis: 3,
+      end: true,
+      width: 5,
     });
+
+    var depthObj = mathbox.select('axis');
+
   </script>
 </body>
 </html>

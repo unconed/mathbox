@@ -24,9 +24,11 @@ class MatrixBuffer extends DataBuffer
 
   getFilled: () -> @filled
 
-  setActive: (i, j) -> [@pad.x, @pad.y] = [@width - i, @height - j]
+  setActive: (i, j) -> [@pad.x, @pad.y] = [
+    Math.max(0, @width - i), Math.max(0, @height - j)
+  ]
 
-  iterate: () ->
+  fill: () ->
     callback = @callback
     callback.reset?()
 
@@ -69,6 +71,40 @@ class MatrixBuffer extends DataBuffer
     @dataPointer.set .5, @index * @height + .5
     @index = (@index + @history - 1) % @history
     @filled = Math.min @history, @filled + 1
+
+  through: (callback, target) ->
+    {consume, done} = src = @streamer
+    {emit}          = dst = target.streamer
+
+    pipe = () -> consume (x, y, z, w) -> callback emit, x, y, z, w
+    pipe = Util.Data.repeatCall pipe, @items
+
+    () =>
+      src.reset()
+      dst.reset()
+
+      n     = @width
+      pad   = @pad.x
+      limit = @samples - @pad.y * n
+
+      i = j = k = 0
+      if pad
+        while !done() && k < limit
+          k++
+          pipe()
+          if ++i == n - pad
+            skip pad
+            i = 0
+            j++
+      else
+        while !done() && k < limit
+          k++
+          pipe()
+          if ++i == n
+            i = 0
+            j++
+
+      return src.count()
 
 
 module.exports = MatrixBuffer

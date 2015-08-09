@@ -12,7 +12,7 @@ class Point extends Primitive
   resize: () ->
     return unless @bind.points?
 
-    dims = @bind.points.getActive()
+    dims = @bind.points.getActiveDimensions()
     {items, width, height, depth} = dims
 
     @point.geometry.clip width, height, depth, items
@@ -47,9 +47,12 @@ class Point extends Primitive
       color = @_shaders.shader()
       @bind.colors.sourceShader color
 
+    # Build transition mask lookup
+    mask = @_helpers.object.mask()
+
     # Point style
-    shape  = @_get 'point.shape'
-    fill   = @_get 'point.fill'
+    shape  = @props.shape
+    fill   = @props.fill
 
     # Make point renderable
     uniforms = Util.JS.merge unitUniforms, pointUniforms, styleUniforms
@@ -63,6 +66,7 @@ class Point extends Primitive
               color:    color
               shape:    shape
               fill:     fill
+              mask:     mask
 
     @_helpers.object.make [@point]
 

@@ -9,6 +9,7 @@ class Face extends Base
     position = options.position
     shaded   = options.shaded ? true
     color    = options.color
+    mask     = options.mask
 
     hasStyle = uniforms.styleColor?
 
@@ -24,9 +25,9 @@ class Face extends Base
     factory = shaders.material()
 
     v = factory.vertex
-    if color
-      v.require color
-      v.pipe 'mesh.vertex.color',    @uniforms
+
+    @_vertexColor v, color, mask
+
     v.require position if position
     v.split()
     v  .pipe 'face.position',        @uniforms if !shaded
@@ -35,10 +36,9 @@ class Face extends Base
     v.pipe 'project.position',       @uniforms
 
     f = factory.fragment
-    f.pipe 'style.color',            @uniforms if !shaded && hasStyle
-    f.pipe 'style.color.shaded',     @uniforms if  shaded && hasStyle
-    f.pipe 'mesh.fragment.blend',    @uniforms if color   && hasStyle
-    f.pipe 'mesh.fragment.color',    @uniforms if color   && !hasStyle
+
+    @_fragmentColor f, hasStyle, shaded, color, mask
+
     f.pipe 'fragment.color',         @uniforms
 
     @material = @_material factory.link

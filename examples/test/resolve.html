@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Resolve</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(0, 0, 2);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    data = [
+      { key: "a", name: "A", x: .3,  y: .5 },
+      { key: "b", name: "B", x: .1,  y: -.45 },
+      { key: "c", name: "C", x: -.4, y: .7 },
+      { key: "d", name: "D", x: -.8, y: -.9 },
+    ];
+
+    view = mathbox.cartesian({
+      range: [[-2, 2], [-1, 1], [-1, 1]],
+      scale: [2, 1, 1],
+    });
+
+    view.axis({
+      detail: 30,
+    });
+
+    view.axis({
+      axis: 2,
+    });
+
+    view.grid({
+      divideX: 30,
+      width: 5,
+      opacity: 0.5,
+      zBias: -5,
+    });
+
+    view.resolve({
+      data: data,
+    })
+      .array({
+        resolve: function (emit, data) {
+          emit(data.x, data.y);
+        },
+        channels: 2,
+      })
+      .points({
+        color: 0x3090FF,
+        width: 10,
+      })
+      .text({
+        resolve: function (emit, data) {
+          emit(data.name);
+        },
+      })
+      .label({
+        
+      });
+      
+
+
+  </script>
+</body>
+</html>

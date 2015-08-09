@@ -1,4 +1,4 @@
-Geometry = require './geometry'
+ClipGeometry = require './clipgeometry'
 
 ###
 Render points as quads
@@ -17,17 +17,12 @@ Render points as quads
 
 ###
 
-class SpriteGeometry extends Geometry
+class SpriteGeometry extends ClipGeometry
 
   constructor: (options) ->
     super options
 
-    @geometryClip = new THREE.Vector4
-
-    @uniforms ?= {}
-    @uniforms.geometryClip =
-      type: 'v4'
-      value: @geometryClip
+    @_clipUniforms()
 
     @items    = items   = +options.items   || 2
     @width    = width   = +options.width   || 1
@@ -83,15 +78,9 @@ class SpriteGeometry extends Geometry
 
   clip: (width = @width, height = @height, depth = @depth, items = @items) ->
 
-    @geometryClip.set width, height, depth, items
-
-    dims  = [ depth,  height,  width,  items]
-    maxs  = [@depth, @height, @width, @items]
-    quads = @_reduce dims, maxs
-
-    @_offsets [
-      start: 0
-      count: quads * 6
-    ]
+    @_clipGeometry   width, height, depth, items
+    @_clipOffsets    6,
+                     width,  height,  depth,  items,
+                     @width, @height, @depth, @items
 
 module.exports = SpriteGeometry
