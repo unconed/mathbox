@@ -9,7 +9,7 @@ class Format extends Operator
 
   init: () ->
     super
-    @atlas = @buffer = @spec = null
+    @atlas = @buffer = @used = null
     @filled = false
 
   sourceShader: (shader) ->
@@ -100,13 +100,18 @@ class Format extends Operator
 
     return if (@filled and !@props.live) or !@through
 
+    used = @used
+
     @atlas.begin()
-    n = @through()
-    @buffer.write n
+    @used = @through()
+    @buffer.write @used
     @atlas.end()
 
-
     @filled = true
+
+    if used != @used
+      @trigger
+        type: 'source.resize'
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['text']

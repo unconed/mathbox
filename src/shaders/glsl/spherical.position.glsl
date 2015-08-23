@@ -6,7 +6,7 @@ uniform float sphericalScaleY;
 
 uniform mat4 viewMatrix;
 
-vec4 getSphericalPosition(vec4 position) {
+vec4 getSphericalPosition(vec4 position, inout vec4 stpq) {
   if (sphericalBend > 0.0001) {
 
     vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);

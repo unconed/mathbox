@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util    = require '../../../util'
 
 class Label extends Primitive
-  @traits = ['node', 'bind', 'object', 'style', 'label', 'attach', 'geometry', 'position']
+  @traits = ['node', 'bind', 'object', 'visible', 'style', 'label', 'attach', 'geometry', 'position']
   @defaults =
     color: '#000000'
 
@@ -84,10 +84,12 @@ class Label extends Primitive
               color:    color
               mask:     mask
 
+    @_helpers.visible.make()
     @_helpers.object.make [@sprite]
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
     @sprite = null

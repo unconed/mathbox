@@ -2,10 +2,14 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Grid extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'grid', 'area', 'position',
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'grid:x', 'grid:y', 'area', 'position',
             'axis:x',  'axis:y',
             'scale:x', 'scale:y',
             'span:x',  'span:y']
+  @defaults =
+    width: 1
+    zBias: -2
+    zOrder: -2
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -70,8 +74,8 @@ class Grid extends Primitive
       {first, second, resolution, samples, line, buffer, values}
 
     # Generate both line sets
-    first  = @props.first
-    second = @props.second
+    first  = @props.lineX
+    second = @props.lineY
 
     # Stroke style
     stroke  = @props.stroke
@@ -82,10 +86,12 @@ class Grid extends Primitive
 
     # Register lines
     lines = (axis.line for axis in @axes)
+    @_helpers.visible.make()
     @_helpers.object.make lines
     @_helpers.span.make()
 
   unmake: () ->
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
     @_helpers.span.unmake()
 
@@ -98,8 +104,8 @@ class Grid extends Primitive
 
     return @rebuild() if changed['x.axis.detail'] or
                          changed['y.axis.detail'] or
-                         changed['grid.first']    or
-                         changed['grid.second']   or
+                         changed['x.grid.line']   or
+                         changed['y.grid.line']   or
                          changed['line.stroke']
 
     axis = (x, y, range1, range2, axis) =>
@@ -134,8 +140,8 @@ class Grid extends Primitive
       range2 = @_helpers.span.get 'y.', axes[1]
 
       # Update both line sets
-      first  = @props.first
-      second = @props.second
+      first  = @props.lineX
+      second = @props.lineY
 
       if first
         axis axes[0], axes[1], range1, range2, @axes[0]

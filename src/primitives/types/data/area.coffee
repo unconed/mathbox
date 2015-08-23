@@ -4,7 +4,7 @@ Util = require '../../../util'
 class Area extends Matrix
   @traits = ['node', 'buffer', 'data', 'source', 'index', 'matrix', 'texture', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
 
-  callback: (callback) ->
+  updateSpan: () ->
     dimensions = @props.axes
     width      = @props.width
     height     = @props.height
@@ -14,8 +14,8 @@ class Area extends Matrix
     rangeX     = @_helpers.span.get 'x.', dimensions[0]
     rangeY     = @_helpers.span.get 'y.', dimensions[1]
 
-    aX = rangeX.x
-    aY = rangeY.x
+    @aX = rangeX.x
+    @aY = rangeY.x
 
     spanX = rangeX.y - rangeX.x
     spanY = rangeY.y - rangeY.x
@@ -32,17 +32,30 @@ class Area extends Matrix
     else
       inverseY  = 1 / Math.max 1, height - 1
 
-    bX = spanX * inverseX
-    bY = spanY * inverseY
+    @bX = spanX * inverseX
+    @bY = spanY * inverseY
 
-    (emit, i, j) ->
-      x = aX + bX * i
-      y = aY + bY * j
-      callback emit, x, y, i, j
+  callback: (callback) ->
+    @updateSpan()
+
+    return @_callback if @last == callback
+    @last = callback
+
+    if callback.length <= 5
+      @_callback = (emit, i, j) =>
+        x = @aX + @bX * i
+        y = @aY + @bY * j
+        callback emit, x, y, i, j
+    else
+      @_callback = (emit, i, j) =>
+        x = @aX + @bX * i
+        y = @aY + @bY * j
+        callback emit, x, y, i, j, @_context.time.clock, @_context.time.delta
 
   make: () ->
     super
     @_helpers.span.make()
+    @_listen @, 'span.range', @updateSpan
 
   unmake: () ->
     super

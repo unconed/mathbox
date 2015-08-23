@@ -31,6 +31,7 @@ class Sprite extends Base
     @_vertexColor v, color, mask
 
     v.require position if position
+    v.require 'mesh.vertex.stpq',   @uniforms
     v.require sprite   if sprite
     v.pipe 'sprite.position',       @uniforms
     v.pipe 'project.position',      @uniforms

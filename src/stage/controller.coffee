@@ -1,11 +1,7 @@
+Util = require '../util'
+
 class Controller
   constructor: (@model, @primitives) ->
-
-  _name: (node) ->
-    n = node.type
-    n += "##{node.id}" if node.id
-    n += ".#{node.classes.join '.'}" if node.classes.length
-    "[#{n}]"
 
   getRoot: () ->
     @model.getRoot()
@@ -13,17 +9,32 @@ class Controller
   getTypes: () ->
     @primitives.getTypes()
 
-  make: (type, options) ->
-    @primitives.make type, options
+  make: (type, options, binds) ->
+    @primitives.make type, options, binds
 
-  get: (node) ->
-    node.get()
+  get: (node, key) ->
+    node.get(key)
 
   set: (node, key, value) ->
     try
       node.set key, value
     catch e
-      console.warn @_name(node), e
+      @inspect node, 'warn'
+      console.error e
+
+  bind: (node, key, expr) ->
+    try
+      node.bind key, expr
+    catch e
+      @inspect node, 'warn'
+      console.error e
+
+  unbind: (node, key) ->
+    try
+      node.unbind key
+    catch e
+      @inspect node, 'warn'
+      console.error e
 
   add: (node, target = @model.getRoot()) ->
     target.add node
@@ -31,5 +42,9 @@ class Controller
   remove: (node) ->
     target = node.parent
     target.remove node if target
+
+  inspect: (node, level = 'info') ->
+    [markup, args] = Util.Pretty.markup node.toMarkup()
+    console[level].apply console, [markup].concat args
 
 module.exports = Controller

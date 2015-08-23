@@ -37,4 +37,17 @@ class Scene extends Renderable
   dispose: () ->
     @unject() if @root.parent?
 
+  warmup: () ->
+    {children} = @root
+
+    # Force everything visible
+    visible = children.map (o) -> v = o.visible
+    children.map (o) -> o.visible = true
+
+    # Render everything and throw away
+    @renderer.render @scene, new THREE.PerspectiveCamera()
+
+    # Restore visibility
+    children.map (o, i) -> o.visible = visible[i]
+
 module.exports = Scene

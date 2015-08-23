@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Compose extends Primitive
-  @traits = ['node', 'bind', 'object', 'operator', 'style', 'compose']
+  @traits = ['node', 'bind', 'object', 'visible', 'operator', 'style', 'compose']
   @defaults =
     zWrite: false
     zTest:  false
@@ -60,12 +60,14 @@ class Compose extends Primitive
                  map: fragment
                  uniforms: composeUniforms
 
+    @_helpers.visible.make()
     @_helpers.object.make [@compose]
 
   made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
   change: (changed, touched, init) ->

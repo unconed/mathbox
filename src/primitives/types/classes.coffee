@@ -50,9 +50,16 @@ Classes =
   root:              require './base/root'
   unit:              require './base/unit'
 
+  camera:            require './camera/camera'
+
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
 
-  transition:        require './fx/transition'
+  clock:             require './present/clock'
+  present:           require './present/present'
+  slide:             require './present/slide'
+  steps:             require './present/steps'
+  track:             require './present/track'
+  transition:        require './present/transition'
 
 module.exports = Classes

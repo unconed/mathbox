@@ -95,7 +95,7 @@ vec4 getFramesSample(vec2 xy) {
       c2 = Math.cos(time / 11.71) * 1.71;
       s2 = Math.sin(time / 11.71) * 1.71;
 
-      view.set('rotation', [s * s2, s * c2, 0, c]);
+      view.set('quaternion', [s * s2, s * c2, 0, c]);
     });
 
     mathbox

@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Surface</title>
+  <title>MathBox - Transition</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -22,7 +22,7 @@
 //    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
     function pingpong(t) {
-      return Math.sin(Math.min(1, Math.max(-1, .9*Math.asin(Math.sin(t/5))))*τ/4);
+      return Math.sin(t)
     }
 
     time = 0
@@ -33,7 +33,7 @@
       
       enter = 1.0 - Math.pow(1.0 - enter, 2);
       exit  = 1.0 - Math.pow(1.0 - exit,  2);
-            
+      
       transition.set({ enter: enter, exit: exit })
     });
 
@@ -101,14 +101,17 @@
     });
 
     var transition = view.transition({
-      stagger: [10, 10, 0, 0]
+      stagger: [1,  0, 0, 0],
+      from:    [1,  0, 0, 0],
+      to:      [-1, 0, 0, 0],
+      pass:    'data'
     });
     
     transition.surface({
       points: sampler,
       colors: '#color',
       color: 0xFFFFFF,
-      width: 5,
+      width: 5
     });
 
   </script>

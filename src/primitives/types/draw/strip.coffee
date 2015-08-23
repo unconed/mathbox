@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Strip extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -89,12 +89,14 @@ class Strip extends Primitive
                 shaded:   shaded
       objects.push @strip
 
+    @_helpers.visible.make()
     @_helpers.object.make objects
 
   made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
     @strip = null

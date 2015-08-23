@@ -117,7 +117,12 @@ class Matrix extends Buffer
 
       @buffer.setCallback @emitter()
 
-  callback: (callback) -> callback
+  callback: (callback) ->
+    if callback.length <= 3
+      callback
+    else
+      (emit, i, j) =>
+        callback emit, i, j, @_context.time.clock, @_context.time.delta
 
   update: () ->
     return unless @buffer

@@ -13,10 +13,12 @@
 ###
 
 class Attributes
-  constructor: (definitions) ->
+  constructor: (definitions, @context) ->
     @traits  = definitions.Traits
     @types   = definitions.Types
     @pending = []
+    @bound   = []
+    @last    = null
 
   make: (type) ->
     enum:  type.enum?()
@@ -26,24 +28,46 @@ class Attributes
   apply: (object, traits = [], props = {}, freeform = false) ->
     new Data object, traits, props, freeform, @
 
-  queue: (callback) ->
+  bind:   (callback) -> @bound.push callback
+  unbind: (callback) -> @bound = (cb for cb in @bound when cb != callback)
+
+  queue: (callback, object, key, value) ->
+    @lastObject = object
+    @lastKey    = key
+    @lastValue  = value
     @pending.push callback
+
+  compute: () ->
+    cb @context.time.clock, @context.time.delta for cb in @bound if @bound.length
+    return
 
   digest: () ->
     return false if !@pending.length
+
     [calls, @pending] = [@pending, []]
     callback() for callback in calls
+
     true
 
   getTrait: (name) ->
     @traits[name]
 
+  getLastTrigger: () -> "#{@lastObject.toString()} - #{@lastKey}=`#{@lastValue}`"
+
 
 class Data
   constructor: (object, traits = [], props, freeform, _attributes) ->
 
+    @object = object
+
     # Save existing (original) values if re-applying
-    old = object.props if object.set? and object.get? and object.orig?
+    oldProps = object.props      if object.set?  and object.get? and object.orig?
+    oldOrig  = object.orig()     if object.set?  and object.get? and object.orig?
+    oldExpr  = object.expr       if object.bind? and object.unbind?
+    oldReads = object.readonly() if object.bind? and object.unbind?
+
+    # Dispose of old attributes/bindings
+    object.attributes?.dispose()
 
     # Flattened and original values
     flattened = {}
@@ -53,19 +77,19 @@ class Data
     mapTo = {}
     to   = (name) -> mapTo[name]   ? name
     define = (name, alias) ->
-      throw "Duplicate property `#{alias}`" if mapTo[alias]
+      throw new Error "#{object.toString()} - Duplicate property `#{alias}`" if mapTo[alias]
       mapTo[alias]  = name
 
     # Get/set
     get = (key) => @[key]?.value ? @[to(key)]?.value
-    set = (key, value, ignore) =>
+    set = (key, value, ignore, initial) =>
       key = to(key)
 
       # Look for defined attribute
       unless (attr = @[key])?
-        throw "Setting unknown property '#{key}'" unless freeform
+        throw new Error "#{object.toString()} - Setting unknown property `#{key}={#{value}}`" unless freeform
 
-        # Define attribute on the fly
+        # Define attribute on the fly (placeholder)
         attr = @[key] =
           short: key
           type:  null
@@ -73,24 +97,67 @@ class Data
           value: null
         validators[key] = (v) -> v
 
+      if !ignore
+        # See if prop isn't bound
+        if expr[key]
+          throw new Error "#{object.toString()} - Setting bound property `#{key}={#{value}}`"
+
+        # See if prop isn't readonly
+        if reads[key]
+          throw new Error "#{object.toString()} - Setting readonly property `#{key}={#{value}}`"
+
       # Validate new value
-      valid   = true
-      replace = validate key, value, attr.last, () -> valid = false; null
-      replace = attr.last if replace == undefined
+      valid = true
+      validated = validate key, value, attr.last, () -> valid = false; null
 
       # Accept and insert into flattened/original list
       if valid
-        [attr.value, attr.last] = [replace, attr.value]
+        [attr.value, attr.last] = [validated, attr.value]
 
+        # Remember in flattened dict
         short = attr.short
-        flattened[short] = replace
-        originals[short] = value   if !ignore
+        flattened[short] = validated
+        originals[short] = value if !ignore # Remember original unvalidated value
 
-        # Compare to last value
-        change key, value unless ignore or equals key, attr.value, attr.last
+        # Compare to last value unless setting initial value
+        change key, value unless initial or equals key, attr.value, attr.last
 
       return valid
 
+    # Expression binding
+    bound = {}
+    expr  = {}
+    reads = {}
+
+    bind = (key, _expr, readonly = false) ->
+      if typeof _expr != 'function'
+        throw new Error "#{object.toString()} - Expression `#{key}=>{#{expr}}` is not a function"
+      if expr[key]
+        throw new Error "#{object.toString()} - Property `#{key}=>{#{expr}}` is already bound"
+      if readonly[key]
+        throw new Error "#{object.toString()} - Property `#{key}` is read-only"
+
+      reads[key] = _expr if readonly
+      expr[key]  = _expr if !readonly
+
+      _expr = _expr.bind object
+      bound[key] = (t, d) -> object.set key, _expr(t, d), true
+      _attributes.bind bound[key]
+
+    unbind = (key, readonly = false) ->
+      return unless (if readonly then expr[key] else reads[key])
+      _attributes.unbind bound[key]
+      delete bound[key]
+      delete expr[key]
+      delete reads[key]
+
+    # Public interface
+    object.readonly = () ->
+      out = {}
+      out[k] = v for k,v of reads
+      out
+
+    object.expr  = expr
     object.props = flattened
 
     object.orig = (key) =>
@@ -105,14 +172,31 @@ class Data
       else
         flattened
 
-    object.set = (key, value, ignore) ->
+    object.set = (key, value, ignore, initial) ->
       if typeof key == 'string'
-        set(key, value, ignore)
+        set(key, value, ignore, initial)
       else
-        options = key
+        initial = ignore
         ignore  = value
-        set(key, value, ignore) for key, value of options
+        options = key
+        set(key, value, ignore, initial) for key, value of options
       return
+
+    object.bind = (key, expr, readonly) ->
+      if typeof key == 'string'
+        bind(key, expr, readonly)
+      else
+        readonly = expr
+        binds = key
+        bind(key, expr, readonly) for key, expr of binds
+
+    object.unbind = (key, readonly) ->
+      if typeof key == 'string'
+        unbind(key, readonly)
+      else
+        unbind(key, readonly) for key of expr
+
+    object.attribute = (key) => @[to(key)]
 
     # Validate value for key
     makers     = {}
@@ -126,8 +210,8 @@ class Data
       key  = to(key)
       make = makers[key]
       target = make() if make?
-      replace = validate key, value, target, () -> throw "Invalid value for `#{key}`"
-      if replace != undefined then replace else target
+      target = validate key, value, target, () ->
+        throw new Error "#{object.toString()} - Invalid value `#{key}={#{value}}`"
 
     # Accumulate changes
     dirty = false
@@ -137,7 +221,7 @@ class Data
     change = (key, value) =>
       if !dirty
         dirty = true
-        _attributes.queue digest
+        _attributes.queue digest, key, value
 
       trait = getNS key
 
@@ -184,6 +268,7 @@ class Data
 
         # Make attribute object
         @[key] = attr =
+          T:     type
           ns:    name
           short: short
           enum:  type.enum?()
@@ -197,8 +282,8 @@ class Data
 
         # Collect makers, validators and comparators
         makers[key]      = type.make
-        validators[key]  = type.validate ?    (v) -> v
-        equalors[key]    = type.equals   ? (a, b) -> a == b
+        validators[key]  = type.validate ? (a) -> a
+        equalors[key]    = type.equals ? (a, b) -> a == b
 
     # Add in traits
     list   = []
@@ -221,8 +306,19 @@ class Data
     object.traits = unique
 
     # Set previous values if applicable
-    object.set old, true if old?
+    object.set oldProps, true,  true if oldProps?
+    object.set oldOrig,  false, true if oldOrig?
+
+    # Bind previous expressions if applicable
+    object.bind oldReads, true if oldReads?
+    object.bind oldExpr, false if oldExpr?
+
+    # Destructor
+    @dispose = () ->
+      unbind(key, true)  for key of reads
+      unbind(key, false) for key of expr
 
     null
+
 
 module.exports = Attributes

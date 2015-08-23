@@ -35,7 +35,7 @@
       f = t / 8;
       c = Math.cos(f);
       s = Math.sin(f);
-      view.set('rotation', [0, -s, 0, c]);
+      view.set('quaternion', [0, -s, 0, c]);
 
       t = Math.max(clock - 4, 0) / 2
       t = t < .5 ? t * t : t - .25
@@ -45,7 +45,7 @@
       s = Math.sin(f);
 
       if (objs)
-        objs.set('rotation', [-s, 0, 0, c]);
+        objs.set('quaternion', [-s, 0, 0, c]);
     });
 
     view = mathbox
@@ -146,7 +146,7 @@
         zBias: 2,
         color: 0x1550FF,
         solid: false,
-        first: false,
+        lineX: false,
       });
 
     view
@@ -158,8 +158,8 @@
       .surface({
         width: 2,
         color: 0x2070FF,
-        first: false,
-        second: false,
+        lineX: false,
+        lineY: false,
       });
 
     objs = mathbox.select('transform.surface');

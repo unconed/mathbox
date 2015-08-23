@@ -4,7 +4,7 @@ uniform vec4 basisOffset;
 uniform mat4 viewMatrix;
 uniform vec2 view4D;
 
-vec4 getStereographic4Position(vec4 position) {
+vec4 getStereographic4Position(vec4 position, inout vec4 stpq) {
   
   vec4 transformed;
   if (stereoBend > 0.0001) {

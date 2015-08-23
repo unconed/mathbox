@@ -4,7 +4,7 @@ Util = require '../../../util'
 class Volume extends Voxel
   @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z', 'raw']
 
-  callback: (callback) ->
+  updateSpan: () ->
     dimensions = @props.axes
     width      = @props.width
     height     = @props.height
@@ -18,9 +18,9 @@ class Volume extends Voxel
     rangeY     = @_helpers.span.get 'y.', dimensions[1]
     rangeZ     = @_helpers.span.get 'z.', dimensions[2]
 
-    aX = rangeX.x
-    aY = rangeY.x
-    aZ = rangeZ.x
+    @aX = rangeX.x
+    @aY = rangeY.x
+    @aZ = rangeZ.x
 
     spanX = rangeX.y - rangeX.x
     spanY = rangeY.y - rangeY.x
@@ -28,35 +28,49 @@ class Volume extends Voxel
 
     if centeredX
       inverseX  = 1 / Math.max 1, width
-      aX += spanX * inverseX / 2
+      @aX += spanX * inverseX / 2
     else
       inverseX  = 1 / Math.max 1, width - 1
 
     if centeredY
       inverseY  = 1 / Math.max 1, height
-      aY += spanY * inverseY / 2
+      @aY += spanY * inverseY / 2
     else
       inverseY  = 1 / Math.max 1, height - 1
 
     if centeredZ
       inverseZ  = 1 / Math.max 1, depth
-      aZ += spanZ * inverseZ / 2
+      @aZ += spanZ * inverseZ / 2
     else
       inverseZ  = 1 / Math.max 1, depth - 1
 
-    bX = spanX * inverseX
-    bY = spanY * inverseY
-    bZ = spanZ * inverseZ
+    @bX = spanX * inverseX
+    @bY = spanY * inverseY
+    @bZ = spanZ * inverseZ
 
-    (emit, i, j, k) ->
-      x = aX + bX * i
-      y = aY + bY * j
-      z = aZ + bZ * k
-      callback emit, x, y, z, i, j, k
+  callback: (callback) ->
+    @updateSpan()
+
+    return @_callback if @last == callback
+    @last = callback
+
+    if callback.length <= 7
+      @_callback = (emit, i, j, k) =>
+        x = @aX + @bX * i
+        y = @aY + @bY * j
+        z = @aZ + @bZ * k
+        callback emit, x, y, z, i, j, k
+    else
+      @_callback = (emit, i, j, k) =>
+        x = @aX + @bX * i
+        y = @aY + @bY * j
+        z = @aZ + @bZ * k
+        callback emit, x, y, z, i, j, k, @_context.time.clock, @_context.time.delta
 
   make: () ->
     super
     @_helpers.span.make()
+    @_listen @, 'span.range', @updateSpan
 
   unmake: () ->
     super

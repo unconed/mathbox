@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Vector extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -33,9 +33,7 @@ class Vector extends Primitive
     # Build transform chain
     position = @_shaders.shader()
 
-    # Fetch position (swizzle x into items, inv(wxyz) = yzwx)
-    swizzle = Util.GLSL.swizzleVec4 'yzwx'
-    position.pipe swizzle
+    # Fetch position
     @bind.points.sourceShader position
 
     # Transform position to view
@@ -69,6 +67,12 @@ class Vector extends Primitive
 
     # Build transition mask lookup
     mask = @_helpers.object.mask()
+
+    # Swizzle vector to line
+    {swizzle, swizzle2} = @_helpers.position
+    position = swizzle2 position, 'yzwx', 'yzwx'
+    color    = swizzle  color,    'yzwx'
+    mask     = swizzle  mask,     'yzwx'
 
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
@@ -107,12 +111,14 @@ class Vector extends Primitive
                 position: position
                 color:    color
 
+    @_helpers.visible.make()
     @_helpers.object.make @arrows.concat [@line]
 
   made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
     @line = @arrows = null

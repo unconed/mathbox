@@ -22,8 +22,10 @@ Traits =
     range:             Types.array(Types.vec2(-1, 1), 4)
   view3:
     position:          Types.vec3()
-    rotation:          Types.quat()
+    quaternion:        Types.quat()
+    rotation:          Types.vec3()
     scale:             Types.vec3(1, 1, 1)
+    eulerOrder:        Types.swizzle('xyz')
   view4:
     position:          Types.vec4()
     scale:             Types.vec4(1, 1, 1, 1)
@@ -35,20 +37,36 @@ Traits =
   transform3:
     pass:              Types.vertexPass()
     position:          Types.vec3()
-    rotation:          Types.quat()
+    quaternion:        Types.quat()
+    rotation:          Types.vec3()
+    eulerOrder:        Types.swizzle('xyz')
     scale:             Types.vec3(1, 1, 1)
     matrix:            Types.mat4(1, 0, 0, 0,
-                            0, 1, 0, 0,
-                            0, 0, 1, 0,
-                            0, 0, 0, 1)
+                                  0, 1, 0, 0,
+                                  0, 0, 1, 0,
+                                  0, 0, 0, 1)
   transform4:
     pass:              Types.vertexPass()
     position:          Types.vec4()
     scale:             Types.vec4(1, 1, 1, 1)
     matrix:            Types.mat4(1, 0, 0, 0,
-                            0, 1, 0, 0,
-                            0, 0, 1, 0,
-                            0, 0, 0, 1)
+                                  0, 1, 0, 0,
+                                  0, 0, 1, 0,
+                                  0, 0, 0, 1)
+
+  camera:
+    position:          Types.vec3()
+    quaternion:        Types.nullable(Types.quat())
+    rotation:          Types.nullable(Types.vec3())
+    lookAt:            Types.nullable(Types.vec3())
+    eulerOrder:        Types.swizzle('xyz')
+  ###
+  perspective:
+    fov:               Types.number(60)
+    aspect:            Types.nullable(Types.number(1))
+  ortho:
+    range:             Types.array(Types.vec2(-1, 1), 2)
+  ###
 
   polar:
     bend:              Types.number(1)
@@ -70,10 +88,13 @@ Traits =
     unit:              Types.number(1)
     base:              Types.number(10)
     mode:              Types.scale()
+    start:             Types.bool(true)
+    end:               Types.bool(true)
+    zero:              Types.bool(true)
+    bias:              Types.number(0)
 
   grid:
-    first:             Types.bool(true)
-    second:            Types.bool(true)
+    line:              Types.bool(true)
   axis:
     detail:            Types.int(1)
 
@@ -145,6 +166,7 @@ Traits =
   ticks:
     normal:            Types.vec3(0, 0, 1)
     size:              Types.number(10)
+    epsilon:           Types.number(0.001)
   attach:
     offset:            Types.vec2(0, -20)
     snap:              Types.bool(false)
@@ -237,7 +259,7 @@ Traits =
     indexed:           Types.bool()
 
   root:
-    camera:            Types.nullable(Types.select())
+    camera:            Types.select('[camera]')
 
   rtt:
     width:             Types.nullable(Types.int())
@@ -247,12 +269,52 @@ Traits =
     alpha:             Types.bool(false)
 
   transition:
-    flip:              Types.vec4()
     stagger:           Types.vec4()
-    enter:             Types.number(0)
-    exit:              Types.number(1)
+    enter:             Types.nullable(Types.number(1))
+    exit:              Types.nullable(Types.number(1))
     from:              Types.vec4()
     to:                Types.vec4()
-    pass:              Types.vertexPass()
+    pass:              Types.vertexPass('data')
+    delay:             Types.number(0)
+    delayEnter:        Types.number(0)
+    delayExit:         Types.number(0)
+    duration:          Types.number(.3)
+    durationEnter:     Types.number(0)
+    durationExit:      Types.number(0)
+  slide:
+    steps:             Types.number(1)
+    enter:             Types.nullable(Types.number(1))
+    exit:              Types.nullable(Types.number(1))
+    enters:            Types.bool(true)
+    exits:             Types.bool(true)
+    order:             Types.nullable(Types.int(0))
+    stay:              Types.int(1)
+  present:
+    index:             Types.int(1)
+    directed:          Types.bool(true)
+    length:            Types.number(0)
+  track:
+    target:            Types.select('<')
+    expr:              Types.nullable(Types.func())
+    script:            Types.nullable(Types.object())
+    seek:              Types.nullable(Types.number(0))
+    ease:              Types.ease('cosine')
+  steps:
+    playback:          Types.ease('linear')
+    stops:             Types.nullable(Types.array(Types.number()))
+    delay:             Types.number(0)
+    duration:          Types.number(.3)
+    pace:              Types.number(0)
+    speed:             Types.number(1)
+    rewind:            Types.number(3)
+    skip:              Types.bool(true)
+    trigger:           Types.nullable(Types.number(1), true)
+  clock:
+    delay:             Types.number(0)
+    pace:              Types.number(1)
+    speed:             Types.number(1)
+    start:             Types.number(0)
+    end:               Types.number(Infinity)
+    trigger:           Types.nullable(Types.number(1), true)
 
 module.exports = Traits

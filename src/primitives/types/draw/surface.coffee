@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Surface extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid:x', 'grid:y', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -63,8 +63,8 @@ class Surface extends Primitive
     # Get display properties
     shaded = @props.shaded
     solid  = @props.solid
-    first  = @props.first
-    second = @props.second
+    first  = @props.lineX
+    second = @props.lineY
     stroke = @props.stroke
 
     objects = []
@@ -77,18 +77,8 @@ class Surface extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
-    # Samplers for XY / YX wires
-    wireXY = position
-
-    wireYX = @_shaders.shader()
-    wireYX.pipe Util.GLSL.swizzleVec4 'yxzw'
-    wireYX.pipe position
-
-    maskYX = @_shaders.shader()
-    maskYX.pipe Util.GLSL.swizzleVec4 'yxzw'
-    maskYX.pipe mask
-
     # Make line and surface renderables
+    {swizzle, swizzle2}  = @_helpers.position
     uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms, wireUniforms
     zUnits = if first or second then -50 else 0
     if first
@@ -98,7 +88,7 @@ class Surface extends Primitive
                 strips:   height
                 ribbons:  depth
                 layers:   layers
-                position: wireXY
+                position: position
                 color:    color
                 zUnits:   -zUnits
                 stroke:   stroke
@@ -112,11 +102,11 @@ class Surface extends Primitive
                 strips:   width
                 ribbons:  depth
                 layers:   layers
-                position: wireYX
-                color:    color
+                position: swizzle2 position, 'yxzw', 'yxzw'
+                color:    swizzle  color,    'yxzw'
                 zUnits:   -zUnits
                 stroke:   stroke
-                mask:     maskYX
+                mask:     swizzle  mask,     'yxzw'
       objects.push @line2
 
     if solid
@@ -135,12 +125,14 @@ class Surface extends Primitive
                 mask:     mask
       objects.push @surface
 
+    @_helpers.visible.make()
     @_helpers.object.make objects
 
   made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
     @line1 = @line2 = @surface = null

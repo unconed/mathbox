@@ -2,7 +2,7 @@ uniform float stereoBend;
 
 uniform mat4 viewMatrix;
 
-vec4 getStereoPosition(vec4 position) {
+vec4 getStereoPosition(vec4 position, inout vec4 stpq) {
   if (stereoBend > 0.0001) {
 
     vec3 pos = position.xyz;

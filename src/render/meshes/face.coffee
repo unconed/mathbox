@@ -5,11 +5,10 @@ class Face extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    uniforms = options.uniforms ? {}
-    position = options.position
-    shaded   = options.shaded ? true
-    color    = options.color
-    mask     = options.mask
+    {uniforms, position, color, mask, shaded} = options
+
+    uniforms ?= {}
+    shaded   ?= true
 
     hasStyle = uniforms.styleColor?
 
@@ -29,17 +28,16 @@ class Face extends Base
     @_vertexColor v, color, mask
 
     v.require position if position
-    v.split()
-    v  .pipe 'face.position',        @uniforms if !shaded
-    v  .pipe 'face.position.normal', @uniforms if  shaded
-    v.pass()
-    v.pipe 'project.position',       @uniforms
+    v.require 'mesh.vertex.stpq',   @uniforms
+    v.pipe 'face.position',         @uniforms if !shaded
+    v.pipe 'face.position.normal',  @uniforms if  shaded
+    v.pipe 'project.position',      @uniforms
 
     f = factory.fragment
 
     @_fragmentColor f, hasStyle, shaded, color, mask
 
-    f.pipe 'fragment.color',         @uniforms
+    f.pipe 'fragment.color',        @uniforms
 
     @material = @_material factory.link
       side: THREE.DoubleSide

@@ -7,7 +7,6 @@ varying float vPixelSize;
 const float PIXEL_STEP = 255.0 / 16.0;
 
 vec4 getLabelOutlineColor(vec4 sample, vec4 color) {
-  //return vec4(color.xyz, 1.0);
   float ps = vPixelSize * PIXEL_STEP;
   float os = outlineStep;
 

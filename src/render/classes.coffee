@@ -23,6 +23,5 @@ Classes =
   textAtlas:       require('./buffer/textatlas')
 
   scene:           require('./scene')
-  camera:          require('./camera')
 
 module.exports = Classes

@@ -1,13 +1,13 @@
 Transform = require '../transform/transform'
 
 class View extends Transform
-  @traits = ['node', 'object', 'view', 'transform']
+  @traits = ['node', 'object', 'visible', 'view', 'transform']
 
   make: () ->
-    @_helpers.object.make()
+    @_helpers.visible.make()
 
   unmake: () ->
-    @_helpers.object.unmake()
+    @_helpers.visible.unmake()
 
   axis: (dimension) ->
     @props.range[dimension - 1]

@@ -15,6 +15,7 @@ class Primitive
     @_renderables = @_context.renderables
     @_shaders     = @_context.shaders
     @_overlays    = @_context.overlays
+    @_animator    = @_context.animator
     @_types       = @_attributes.types
 
     # Link up node 1-to-1
@@ -89,12 +90,17 @@ class Primitive
     @unmake()
     @_unlisten()
     @_unattach()
+    @_unreadonly()
 
     @_root     = null
     @_parent   = null
 
   # Bind event listeners to methods
   _listen: (object, type, method, self = @) ->
+    return @__listen o,      type, method, self for o in object if object instanceof Array
+    return @__listen object, type, method, self
+
+  __listen: (object, type, method, self = @) ->
     object  = @_inherit object if typeof object == 'string'
 
     if object?
@@ -127,16 +133,32 @@ class Primitive
     @_handlers.inherit = {}
 
   # Attach to controller by trait
-  _attach: (selector, trait, method, self = @, start = @, optional = false) ->
+  _attach: (selector, trait, method, self = @, start = @, optional = false, multiple = false) ->
+
+    filter = (node) -> node.controller if node? and trait in node.traits
+    map    = (node) -> node?.controller
 
     # Direct JS binding, no watcher.
     if typeof selector == 'object'
-      selector = selector[0] if selector._up    # Unwrap an API object
-      node = selector
-      return node.controller if node? and trait in node.traits
+      if !multiple
+        node       = selector
+        node       = node[0] if node._up              # Unwrap an API object
+        node       = node[0] if node instanceof Array # Unwrap an array
+        controller = map node if filter node
+        return controller  if controller?
+      else
+        nodes = selector
+        nodes = [].slice.call nodes if nodes._up   # Convert API object to array
+        controllers = selector.filter(filter).map(map)
+        return controllers if controllers.length
 
     # Auto-link selector '<'
-    if selector == '<'
+    if typeof selector == 'string' and selector[0] == '<'
+      discard = 0
+      discard = +match[1] - 1 if match = selector.match /^<([0-9])+$/
+      discard = +selector.length - 1  if selector.match /^<+$/
+
+      controllers = []
 
       # Implicitly associated node (scan backwards until we find one)
       previous = start.node
@@ -146,11 +168,18 @@ class Primitive
         break if !parent
         previous = parent.children[previous.index - 1]
 
-        # If we reached the first child, ascend
-        previous = parent if !previous
+        # If we reached the first child, ascend if nothing found yet
+        previous = parent unless previous or controllers.length
 
-        # See if matched
-        return previous.controller if previous? and trait in previous.traits
+        # Include if matched
+        controller = map previous   if filter previous
+        controllers.push controller if controller? && discard-- <= 0
+
+        # Return solo match
+        return controllers[0] if !multiple and controllers.length
+
+      # Return list match
+      return controllers if multiple and controllers.length
 
     # Selector binding
     else if typeof selector == 'string'
@@ -158,13 +187,16 @@ class Primitive
       @_handlers.watch.push watcher
 
       selection = @_root.watch selector, watcher
-      node = selection[0]
-      if node? and trait in node.traits
-        return node.controller
+      if !multiple
+        controller = map selection[0] if filter selection[0]
+        return controller if controller?
+      else
+        controllers = selection.filter(filter).map(map)
+        return controllers if controllers.length
 
     id = "#" + @node.id if @node.id?
-    throw "Could not find #{trait} `#{selector}` on `#{@node.type}#{id ? ''}`" if !optional
-    null
+    throw new Error "#{@node.toString()} - Could not find #{trait} `#{selector}`" if !optional
+    if multiple then [] else null
 
   # Remove attachments
   _unattach: () ->
@@ -172,6 +204,16 @@ class Primitive
 
     watcher?.unwatch() for watcher in @_handlers.watch
     @_handlers.watch = []
+
+  # Make a read only prop
+  _readonly: (key, expr) ->
+    @_handlers.readonly ?= []
+    @_handlers.readonly.push key
+    @node.bind key, expr, true
+
+  _unreadonly: () ->
+    return unless @_handlers.readonly.length
+    @node.unbind key, true for key of @_handlers.readonly
 
 THREE.Binder.apply Primitive::
 

@@ -53,7 +53,7 @@
       s = .7 + b1;
 
       // Use slerped q as rotation
-      wrapper.set('rotation', q2);
+      wrapper.set('quaternion', q2);
 
       // Use target as projection offset
       view.set('position', [q1.x * s, q1.y * s, q1.z * s, q1.w * s]);

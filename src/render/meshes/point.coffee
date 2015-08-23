@@ -5,19 +5,18 @@ class Point extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    uniforms = options.uniforms ? {}
-    position = options.position
-    color    = options.color
-    mask     = options.mask
-    _shape    = +options.shape   ? 0
-    fill     = options.fill ? true
+    {uniforms, position, color, mask, shape, fill} = options
+
+    uniforms ?= {}
+    shape     = +shape ? 0
+    fill     ?= true
 
     hasStyle = uniforms.styleColor?
 
     shapes   = ['circle', 'square', 'diamond', 'triangle']
     passes   = ['circle', 'generic', 'generic', 'generic']
-    shape    = shapes[_shape] ? shapes[0]
-    pass     = passes[_shape] ? passes[0]
+    pass     = passes[shape] ? passes[0]
+    _shape   = shapes[shape] ? shapes[0]
     alpha    = if fill then pass else "#{pass}.hollow"
 
     @geometry = new SpriteGeometry
@@ -36,6 +35,7 @@ class Point extends Base
     @_vertexColor v, color, mask
 
     v.require position if position
+    v.require 'mesh.vertex.stpq',   @uniforms
     v.pipe 'point.position',        @uniforms
     v.pipe 'project.position',      @uniforms
 
@@ -48,14 +48,14 @@ class Point extends Base
     edgeFactory = shaders.material()
     edgeFactory.vertex.pipe v
     f = edgeFactory.fragment.pipe factory.fragment
-    f.require "point.mask.#{shape}",   @uniforms
+    f.require "point.mask.#{_shape}",  @uniforms
     f.require "point.alpha.#{alpha}",  @uniforms
     f.pipe 'point.edge',               @uniforms
 
     fillFactory = shaders.material()
     fillFactory.vertex.pipe v
     f = fillFactory.fragment.pipe factory.fragment
-    f.require "point.mask.#{shape}",   @uniforms
+    f.require "point.mask.#{_shape}",  @uniforms
     f.require "point.alpha.#{alpha}",  @uniforms
     f.pipe 'point.fill',               @uniforms
 

@@ -33,6 +33,8 @@ class Model
     @watchers = []
     @fire     = false
 
+    @lastNode = null
+
     @event = type: 'update'
 
     # Init CSSauron
@@ -79,12 +81,16 @@ class Model
 
     check = (node) =>
       for watcher in @watchers
-        @fire ||= watcher.fire ||= (watcher.match != watcher.matcher node)
+        fire = watcher.fire ||= (watcher.match != watcher.matcher node)
+        @lastNode = node if fire
+        @fire ||= fire
       null
 
     force = (node) =>
       for watcher in @watchers
-        @fire ||= watcher.fire ||= watcher.matcher node
+        fire = watcher.fire ||= watcher.matcher node
+        @lastNode = node if fire
+        @fire ||= fire
       null
 
     @digest = () =>
@@ -218,7 +224,7 @@ class Model
   # Query model by (scoped) selector
   select: (selector, parents) ->
     matches = @_select selector
-    matches = @ancestry unique, parents if parents?
+    matches = @ancestry matches, parents if parents?
     matches.sort (a, b) -> b.order - a.order
     return matches
 
@@ -286,5 +292,7 @@ class Model
 
   getRoot: () ->
     @root
+
+  getLastTrigger: () -> @lastNode.toString()
 
 module.exports = Model

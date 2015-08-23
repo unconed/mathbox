@@ -55,9 +55,9 @@
       c = Math.cos(t);
       s = Math.sin(t);
       if (!three.VR.active)
-        view.set('rotation', [0, -s, 0, c]);
+        view.set('quaternion', [0, -s, 0, c]);
       else
-        view.set('rotation', [0, .866, 0, .5]);
+        view.set('quaternion', [0, .866, 0, .5]);
 
       t = Math.max(three.Time.clock, 0) / 3
       t = t < .5 ? t * t : t - .25

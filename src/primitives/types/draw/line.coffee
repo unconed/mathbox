@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Line extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -106,12 +106,14 @@ class Line extends Primitive
                 color:    color
                 mask:     mask
 
+    @_helpers.visible.make()
     @_helpers.object.make @arrows.concat [@line]
 
   made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
     @line = @arrows = null

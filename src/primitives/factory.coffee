@@ -8,12 +8,11 @@ class PrimitiveFactory
   getTypes: () ->
     Object.keys @classes
 
-  make: (type, options = {}) ->
+  make: (type, options = {}, binds = null) ->
     klass = @classes[type]
     throw "Unknown primitive class `#{type}`" unless klass?
 
-    options   = Util.JS.merge klass.defaults, options
-    node      = new klass.model options, type, klass, @context.attributes
+    node      = new klass.model type, klass.defaults, options, binds, klass, @context.attributes
     primitive = new klass node, @context, @helpers
 
     node

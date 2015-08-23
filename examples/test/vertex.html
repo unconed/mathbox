@@ -12,7 +12,7 @@
   uniform float time;
   uniform float intensity;
 
-  vec4 warpVertex(vec4 xyzw) {
+  vec4 warpVertex(vec4 xyzw, inout vec4 stpq) {
     xyzw +=   0.2 * intensity * (sin(xyzw.yzwx * 1.91 + time + sin(xyzw.wxyz * 1.74 + time)));
     xyzw +=   0.1 * intensity * (sin(xyzw.yzwx * 4.03 + time + sin(xyzw.wxyz * 2.74 + time)));
     xyzw +=  0.05 * intensity * (sin(xyzw.yzwx * 8.39 + time + sin(xyzw.wxyz * 4.18 + time)));
@@ -41,13 +41,13 @@
     var time = 0, intensity = 0;
     three.on('update', function () {
       time = three.Time.clock / 4;
-      intensity = .5 + .5 * Math.cos(time / 5);
+      intensity = .5 + .5 * Math.cos(time / 3);
       intensity = 1.0 - Math.pow(intensity, 4);
       warpShader.set({ time: time, intensity: intensity * 2 });
 
       time *= 2;
-      var enter = Math.min(1,  1 + pingpong(time));
-      var exit  = Math.min(1,  1 - pingpong(time));
+      var enter = Math.min(1,  (1 + pingpong(time))*2);
+      var exit  = Math.min(1,  (1 - pingpong(time))*2);
       
       enter = 1.0 - Math.pow(1.0 - enter, 2);
       exit  = 1.0 - Math.pow(1.0 - exit,  2);
@@ -98,7 +98,11 @@
       unit: π,
       base: 2,
     })
-    .format({ expr: function (x) { return x ? (x / π).toPrecision(2) + 'π' : 0} })
+    .format({
+      expr: function (x) {
+        return x ? (x / π).toPrecision(2) + 'π' : 0
+      }
+    })
     .label({
       depth: .5,
       zIndex: 1

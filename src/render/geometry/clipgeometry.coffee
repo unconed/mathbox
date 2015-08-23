@@ -26,8 +26,11 @@ class ClipGeometry extends Geometry
       value: @geometryResolution
 
   _clipGeometry: (width, height, depth, items) ->
-    @geometryClip.set width - 1, height - 1, depth - 1, items - 1
-    @geometryResolution.set 1 / (width - 1), 1 / (height - 1), 1 / (depth - 1), 1 / (items - 1)
+    c = (x) -> Math.max 0, x - 1
+    r = (x) -> 1 / Math.max 1, x - 1
+
+    @geometryClip.set       c(width), c(height), c(depth), c(items)
+    @geometryResolution.set r(width), r(height), r(depth), r(items)
 
   _clipOffsets: (factor, width, height, depth, items, _width, _height, _depth, _items) ->
     dims  = [ items,  depth,  height,  width]

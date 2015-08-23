@@ -105,7 +105,12 @@ class Array_ extends Buffer
 
       @buffer.setCallback @emitter()
 
-  callback: (callback) -> callback
+  callback: (callback) ->
+    if callback.length <= 2
+      callback
+    else
+      (emit, i) =>
+        callback emit, i, @_context.time.clock, @_context.time.delta
 
   update: () ->
     return unless @buffer

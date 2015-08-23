@@ -11,7 +11,7 @@ class Context
   @Namespace = { Model, Overlay, Primitives, Render, Shaders, Stage, Util, DOM: Util.VDOM.Types }
 
   # Set up entire environment
-  constructor: (renderer, scene = null, camera = null, script = []) ->
+  constructor: (renderer, scene = null, camera = null) ->
 
     # DOM container
     @canvas      = canvas  = renderer.domElement
@@ -23,10 +23,10 @@ class Context
     @overlays    = new Overlay.Factory    Overlay.Classes, element,  canvas
 
     @scene       = @renderables.make      'scene',  scene: scene
-    @camera      = @renderables.make      'camera', camera: camera
+    @camera      = @defaultCamera =       camera ? new THREE.PerspectiveCamera()
 
     # Primitives factory
-    @attributes  = new Model.Attributes   Primitives.Types
+    @attributes  = new Model.Attributes   Primitives.Types, @
     @primitives  = new Primitives.Factory Primitives.Types, @
 
     @root        = @primitives.make       'root'
@@ -37,18 +37,13 @@ class Context
 
     # Scene controllers
     @controller  = new Stage.Controller   @model, @primitives
-    @animator    = new Stage.Animator     @model
-    @director    = new Stage.Director     @controller, @animator, script
+    @animator    = new Stage.Animator     @
 
     # Public API
     @api         = new Stage.API          @
 
     # Global clock
-    @time        = { now: 0, clock: 0, step: 0 }
-
-    # Debug
-    #window.model = @model
-    #window.root  = @model.root
+    @time        = { now: +new Date() / 1000, clock: 0, step: 0 }
 
   init: () ->
     @scene.inject()
@@ -66,18 +61,28 @@ class Context
     @root.controller.pre?()
 
   update: () ->
-    @animator.update()
 
-    @guard.iterate () =>
-      change   = @attributes.digest()
-      change ||= @model     .digest()
+    @attributes.compute()
+    @animator.update @time
+
+    @guard.iterate
+      step: () =>
+        change   = @attributes.digest()
+        change ||= @model     .digest()
+      last: () ->
+        {attribute: @attributes.getLastTrigger(), model: @attributes.getLastTrigger()}
 
     @root.controller.update?()
+
+    @camera = @root.controller.getCamera()
 
   render: () ->
     @root.controller.render?()
 
   post: () ->
     @root.controller.post?()
+
+  warmup: () ->
+    @scene.warmup()
 
 module.exports = Context

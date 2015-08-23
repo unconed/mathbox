@@ -2,9 +2,11 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Axis extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
   @defaults =
     end: true
+    zBias: -1
+    zOrder: -1
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -73,11 +75,13 @@ class Axis extends Primitive
                 position: position
                 mask:     mask
 
-    # Object and span traits
+    # Visible, object and span traits
+    @_helpers.visible.make()
     @_helpers.object.make @arrows.concat [@line]
     @_helpers.span.make()
 
   unmake: () ->
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
     @_helpers.span.unmake()
 

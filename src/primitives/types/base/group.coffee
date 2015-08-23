@@ -1,14 +1,14 @@
 Parent = require './parent'
 
 class Group extends Parent
-  @traits = ['node', 'object', 'entity', 'group']
+  @traits = ['node', 'object', 'entity', 'visible', 'active']
 
   make: () ->
-    @_helpers.object.make()
-    #@_helpers.entity.make()
+    @_helpers.visible.make()
+    @_helpers.active.make()
 
   unmake: () ->
-    @_helpers.object.unmake()
-    #@_helpers.entity.make()
+    @_helpers.visible.unmake()
+    @_helpers.active.unmake()
 
 module.exports = Group

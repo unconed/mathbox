@@ -120,7 +120,12 @@ class Voxel extends Buffer
 
       @buffer.setCallback @emitter()
 
-  callback: (callback) -> callback
+  callback: (callback) ->
+    if callback.length <= 4
+      callback
+    else
+      (emit, i) =>
+        callback emit, i, j, k, @_context.time.clock, @_context.time.delta
 
   update: () ->
     return unless @buffer

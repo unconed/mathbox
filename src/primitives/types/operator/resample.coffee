@@ -141,10 +141,10 @@ class Resample extends Operator
       rh = dims.height / Math.max 1, target.height
       rd = dims.depth  / Math.max 1, target.depth
     else
-      ri = (dims.items  - 1) / Math.max 1, target.items  - 1
-      rw = (dims.width  - 1) / Math.max 1, target.width  - 1
-      rh = (dims.height - 1) / Math.max 1, target.height - 1
-      rd = (dims.depth  - 1) / Math.max 1, target.depth  - 1
+      ri = Math.max(1, dims.items  - 1) / Math.max 1, target.items  - 1
+      rw = Math.max(1, dims.width  - 1) / Math.max 1, target.width  - 1
+      rh = Math.max(1, dims.height - 1) / Math.max 1, target.height - 1
+      rd = Math.max(1, dims.depth  - 1) / Math.max 1, target.depth  - 1
 
     if @indices == 1
       @dataResolution  .value = 1 / dims.width

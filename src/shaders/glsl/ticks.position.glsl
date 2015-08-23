@@ -1,16 +1,17 @@
 uniform float worldUnit;
 uniform float focusDepth;
 uniform float tickSize;
+uniform float tickEpsilon;
 uniform vec3  tickNormal;
 uniform vec2  tickStrip;
 
 vec4 getSample(vec4 xyzw);
 
-vec3 transformPosition(vec4 value);
+vec3 transformPosition(vec4 position, vec4 stpq);
 
-vec3 getTickPosition(vec4 xyzw) {
+vec3 getTickPosition(vec4 xyzw, vec4 stpq) {
 
-  const float epsilon = 0.0001;
+  float epsilon = tickEpsilon;
 
   // determine tick direction
   float leftX  = max(tickStrip.x, xyzw.y - 1.0);
@@ -31,8 +32,8 @@ vec3 getTickPosition(vec4 xyzw) {
   vec4 a = center;
   vec4 b = center + delta;
 
-  vec3 c = transformPosition(a);
-  vec3 d = transformPosition(b);
+  vec3 c = transformPosition(a, stpq);
+  vec3 d = transformPosition(b, stpq);
   
   // sample on either side to create line
   float line = xyzw.x - .5;

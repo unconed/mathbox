@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Present</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  
+  <script>
+    mathbox = mathBox({
+      plugins: ['core'],
+    });
+    three = mathbox.three;
+
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    time = 0
+    three.on('update', function () {
+      time = three.Time.frames / 200
+    });
+
+    setInterval
+        () -> view.set 'index', (view.get('index') + 1) % (view.get('length') + 1)
+      , 1000
+
+    view = mathbox.cartesian({
+      range: [[-1, 1], [-1, 1], [-1, 1]],
+      scale: [1, 1, 1],
+    })
+    .present({
+      index: 1
+    })
+
+    var camera = view.camera({
+      lookAt: [0, 0, 0],
+    }, {
+      position: function () { return [-3 * Math.cos(three.Time.now), .4 + .2 * Math.cos(three.Time.now * .381), -3 * Math.sin(three.Time.now)] },
+    });
+
+    view
+      .slide()
+        .transition({
+          duration: 2
+        })
+          .transform({
+            position: [0, 1, 0]
+          })
+            .grid({
+              axes: [1, 3],
+              width: 2,
+              color: 0xb0b0b0,
+              depth: .5
+            })
+          .end()
+        .end()
+          .slide().transition({
+            stagger: [1, 1, 0, 0]
+          })
+            .transform({
+              position: [0, .75, 0]
+            })
+              .grid({
+                axes: [1, 3],
+                width: 2,
+                color: 0x2fff90,
+                depth: .5
+              })
+            .end()
+          .end().end()
+          .slide().transition({
+            from: [1, 0, 0, 0]
+          })
+            .transform({
+              position: [0, .5, 0]
+            })
+              .grid({
+                axes: [1, 3],
+                width: 2,
+                color: 0x2f9ff0,
+                depth: .5
+              })
+
+    view
+      .slide().transition()
+        .transform({
+          position: [0, .25, 0]
+        })
+        .grid({
+          axes: [1, 3],
+          width: 2,
+          color: 0xff4f90,
+          depth: .5
+        });
+
+    view
+      .slide().transition()
+        .transform({
+          position: [0, 0, 0]
+        })
+          .grid({
+            axes: [1, 3],
+            width: 2,
+            color: 0xff2f90,
+            depth: .5
+          })
+        .end()
+        .end()
+        .slide().transition()
+          .transform({
+            position: [0, -.25, 0]
+          })
+          .grid({
+            axes: [1, 3],
+            width: 2,
+            color: 0x9f2ff0,
+            depth: .5
+          })
+          .end()
+
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Point extends Primitive
-  @traits = ['node', 'object', 'style', 'point', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'point', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -68,12 +68,14 @@ class Point extends Primitive
               fill:     fill
               mask:     mask
 
+    @_helpers.visible.make()
     @_helpers.object.make [@point]
 
   made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
     @point = null

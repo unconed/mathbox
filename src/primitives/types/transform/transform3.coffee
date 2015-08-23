@@ -17,7 +17,8 @@ class Transform3 extends Transform
     return unless touched['transform3'] or init
 
     p = @props.position
-    q = @props.rotation
+    q = @props.quaternion
+    r = @props.rotation
     s = @props.scale
     m = @props.matrix
 

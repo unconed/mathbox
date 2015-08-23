@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Ticks extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'ticks', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'ticks', 'geometry', 'position', 'bind']
 
   init: () ->
     @tickStrip = @line = null
@@ -37,6 +37,7 @@ class Ticks extends Primitive
 
     # Prepare position shader
     positionUniforms =
+      tickEpsilon: @node.attributes['ticks.epsilon']
       tickSize:    @node.attributes['ticks.size']
       tickNormal:  @node.attributes['ticks.normal']
       tickStrip:   @_attributes.make @_types.vec2 0, 0
@@ -73,12 +74,9 @@ class Ticks extends Primitive
 
     # Build transition mask lookup
     mask = @_helpers.object.mask()
-    if mask
-      s = @_shaders.shader()
-      s.pipe Util.GLSL.swizzleVec4 'yzwx'
-      mask = s.pipe mask
 
     # Make line renderable
+    swizzle = @_helpers.position.swizzle
     @line = @_renderables.make 'line',
               uniforms: uniforms
               samples:  2
@@ -88,8 +86,9 @@ class Ticks extends Primitive
               position: position
               color:    color
               stroke:   stroke
-              mask:     mask
+              mask:     swizzle mask, 'yzwx'
 
+    @_helpers.visible.make()
     @_helpers.object.make [@line]
 
   made: () -> @resize()
@@ -97,6 +96,7 @@ class Ticks extends Primitive
   unmake: () ->
     @line = null
 
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
 

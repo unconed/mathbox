@@ -2,7 +2,7 @@ View = require('./view')
 Util = require '../../../util'
 
 class Stereographic4 extends View
-  @traits = ['node', 'object', 'view', 'view4', 'stereographic', 'transform']
+  @traits = ['node', 'object', 'visible', 'view', 'view4', 'stereographic', 'transform']
 
   make: () ->
     super
@@ -30,16 +30,16 @@ class Stereographic4 extends View
 
     p = @props.position
     s = @props.scale
-    r = @props.range
+    g = @props.range
 
-    x = r[0].x
-    y = r[1].x
-    z = r[2].x
-    w = r[3].x
-    dx = (r[0].y - x) || 1
-    dy = (r[1].y - y) || 1
-    dz = (r[2].y - z) || 1
-    dw = (r[3].y - w) || 1
+    x = g[0].x
+    y = g[1].x
+    z = g[2].x
+    w = g[3].x
+    dx = (g[0].y - x) || 1
+    dy = (g[1].y - y) || 1
+    dz = (g[2].y - z) || 1
+    dw = (g[3].y - w) || 1
 
     mult = (a, b) ->
       a.x *= b.x

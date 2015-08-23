@@ -18,22 +18,37 @@
 Types =
 
   array: (type, size, value = null) ->
+    lerp =
+      if type.lerp
+        (a, b, target, f) ->
+          l = Math.min a.length, b.length
+          for i in [0...l]
+            target[i] = type.lerp a[i], b[i], target[i], f
+          target
+
+    op =
+      if type.op
+        (a, b, target, op) ->
+          l = Math.min a.length, b.length
+          for i in [0...l]
+            target[i] = type.op a[i], b[i], target[i], op
+          target
+
     uniform: () -> if type.uniform then type.uniform() + 'v' else undefined
     make: () ->
       return value.slice() if value?
       return [] if !size
       (type.make() for i in [0...size])
     validate: (value, target, invalid) ->
-      if !value.constructor? or value.constructor != Array
+      if value !instanceof Array
         value = [value]
 
       l = target.length = if size then size else value.length
       for i in [0...l]
         input = value[i] ? type.make()
-        replace = type.validate input, target[i], invalid
-        target[i] = replace if replace != undefined
+        target[i] = type.validate input, target[i], invalid
 
-      return
+      target
     equals: (a, b) ->
       al = a.length
       bl = b.length
@@ -43,6 +58,9 @@ Types =
       for i in [0...l]
         return false if !type.equals? a[i], b[i]
       true
+    lerp: lerp
+    op: op
+    clone: (v) -> type.clone(x) for x in v
 
   letters: (type, size, value = null) ->
     if value?
@@ -57,8 +75,9 @@ Types =
     validate: (value, target, invalid) ->
       if value == "" + value
         value = value.split ''
-      return array.validate value, target, invalid
+      array.validate value, target, invalid
     equals: (a, b) -> array.equals a, b
+    clone: array.clone
 
   absolute: (type) ->
     value = type.make()
@@ -69,21 +88,40 @@ Types =
 
   nullable: (type, make = false) ->
     value = if make then type.make() else null
+
+    lerp =
+      if type.lerp
+        (a, b, target, f) ->
+          if a == null or b == null
+            return if f < .5 then a else b
+          target ?= type.make()
+          value = type.lerp a, b, target, f
+          target
+
+    op =
+      if type.op
+        (a, b, target, op) ->
+          return null if a == null or b == null
+          target ?= type.make()
+          value = type.op a, b, target, op
+          value
+
     make: () -> value
     validate: (value, target, invalid) ->
       return value if value == null
       if target == null
         target = type.make()
-      value = type.validate value, target, invalid
-      if value != undefined then value else target
+      type.validate value, target, invalid
     equals: (a, b) ->
       an = a == null
       bn = b == null
       return true  if an and bn
       return false if an ^   bn
       return type.equals?(a, b) ? a == b
+    lerp: lerp
+    op: op
 
-  enum: (value, keys, map = {}) ->
+  enum: (value, keys = [], map = {}) ->
     values = {}
     map[key] ?= i    for key, i in keys
     values[i] = true for key, i of map
@@ -94,21 +132,33 @@ Types =
     validate: (value, target, invalid) ->
       v = if values[value] then value else map[value]
       return v if v?
-      return invalid()
+      invalid()
+
+  enumber: (value, keys, map = {}) ->
+    _enum = Types.enum value, keys, map
+
+    enum: _enum.enum
+    uniform: () -> 'f'
+    make: () -> _enum.make() ? +value
+    validate: (value, target, invalid) ->
+      return value if value == +value
+      _enum.validate value, target, invalid
+    op: (a, b, target, op) -> op a, b
 
   select: (value = '<') ->
+    value
     make: () -> value
     validate: (value, target, invalid) ->
       return value if typeof value == 'string'
       return value if typeof value == 'object'
-      return invalid()
+      invalid()
 
   bool: (value) ->
     value = !!value
     uniform: () -> 'f'
     make: () -> value
     validate: (value, target, invalid) ->
-      return value if value == true or value == false
+      !!value
 
   int: (value = 0) ->
     value = +Math.round(value)
@@ -150,6 +200,7 @@ Types =
     validate: (value, target, invalid) ->
       return value if typeof value == 'object'
       return invalid()
+    clone: (v) -> JSON.parse JSON.stringify v
 
   vec2: (x = 0, y = 0) ->
     defaults = [x, y]
@@ -162,7 +213,7 @@ Types =
 
       if value instanceof THREE.Vector2
         target.copy value
-      else if value?.constructor == Array
+      else if value instanceof Array
         value = value.concat defaults.slice value.length
         target.set.apply target, value
       else if value?
@@ -171,8 +222,13 @@ Types =
         target.set xx, yy
       else
         return invalid()
-      return
+      target
+
     equals: (a, b) -> a.x == b.x and a.y == b.y
+    op: (a, b, target, op) ->
+      target.x = op a.x, b.x
+      target.y = op a.y, b.y
+      target
 
   ivec2: (x = 0, y = 0) ->
     vec2 = Types.vec2(x, y)
@@ -181,7 +237,8 @@ Types =
       validate value, target, invalid
       target.x = Math.round target.x
       target.y = Math.round target.y
-      return
+      target
+    vec2
 
   vec3: (x = 0, y = 0, z = 0) ->
     defaults = [x, y, z]
@@ -194,7 +251,7 @@ Types =
 
       if value instanceof THREE.Vector3
         target.copy value
-      else if value?.constructor == Array
+      else if value instanceof Array
         value = value.concat defaults.slice value.length
         target.set.apply target, value
       else if value?
@@ -204,8 +261,14 @@ Types =
         target.set xx, yy, zz
       else
         return invalid()
-      return
+      target
+
     equals: (a, b) -> a.x == b.x and a.y == b.y and a.z == b.z
+    op: (a, b, target, op) ->
+      target.x = op a.x, b.x
+      target.y = op a.y, b.y
+      target.z = op a.z, b.z
+      target
 
   ivec3: (x = 0, y = 0, z = 0) ->
     vec3 = Types.vec3(x, y, z)
@@ -215,7 +278,8 @@ Types =
       target.x = Math.round target.x
       target.y = Math.round target.y
       target.z = Math.round target.z
-      return
+      target
+    vec3
 
   vec4: (x = 0, y = 0, z = 0, w = 0) ->
     defaults = [x, y, z, w]
@@ -228,7 +292,7 @@ Types =
 
       if value instanceof THREE.Vector4
         target.copy value
-      else if value?.constructor == Array
+      else if value instanceof Array
         value = value.concat defaults.slice value.length
         target.set.apply target, value
       else if value?
@@ -239,8 +303,14 @@ Types =
         target.set xx, yy, zz, ww
       else
         return invalid()
-      return
+      target
     equals: (a, b) -> a.x == b.x and a.y == b.y and a.z == b.z and a.w == b.w
+    op: (a, b, target, op) ->
+      target.x = op a.x, b.x
+      target.y = op a.y, b.y
+      target.z = op a.z, b.z
+      target.w = op a.w, b.w
+      target
 
   ivec4: (x = 0, y = 0, z = 0, w = 0) ->
     vec4 = Types.vec4(x, y, z, w)
@@ -251,7 +321,8 @@ Types =
       target.y = Math.round target.y
       target.z = Math.round target.z
       target.w = Math.round target.w
-      return
+      target
+    vec4
 
   mat3: (n11 = 1, n12 = 0, n13 = 0, n21 = 0, n22 = 1, n23 = 0, n31 = 0, n32 = 0, n33 = 1) ->
     defaults = [n11, n12, n13, n21, n22, n23, n31, n32, n33]
@@ -265,11 +336,12 @@ Types =
     validate: (value, target, invalid) ->
       if value instanceof THREE.Matrix3
         target.copy value
-      else if value?.constructor == Array
+      else if value instanceof Array
         value = value.concat defaults.slice value.length
         target.set.apply target, value
       else
         return invalid()
+      target
 
   mat4: (n11 = 1, n12 = 0, n13 = 0, n14 = 0, n21 = 0, n22 = 1, n23 = 0, n24 = 0, n31 = 0, n32 = 0, n33 = 1, n34 = 0, n41 = 0, n42 = 0, n43 = 0, n44 = 1) ->
     defaults = [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44]
@@ -283,11 +355,12 @@ Types =
     validate: (value, target, invalid) ->
       if value instanceof THREE.Matrix4
         target.copy value
-      else if value?.constructor == Array
+      else if value instanceof Array
         value = value.concat defaults.slice value.length
         target.set.apply target, value
       else
         return invalid()
+      target
 
   quat: (x = 0, y = 0, z = 0, w = 1) ->
     vec4 = Types.vec4(x, y, z, w)
@@ -298,10 +371,21 @@ Types =
     validate: (value, target, invalid) ->
       if value instanceof THREE.Quaternion
         target.copy value
-      else ret = vec4.validate value, target, invalid
-      (ret ? target).normalize()
-      return ret
+      else
+        target = vec4.validate value, target, invalid
+      target.normalize()
+      target
     equals: (a, b) -> a.x == b.x and a.y == b.y and a.z == b.z and a.w == b.w
+    op: (a, b, target, op) ->
+      target.x = op a.x, b.x
+      target.y = op a.y, b.y
+      target.z = op a.z, b.z
+      target.w = op a.w, b.w
+      target.normalize()
+      target
+    lerp: (a, b, target, f) ->
+      THREE.Quaternion.slerp a, b, target, f
+      target
 
   color: (r = .5, g = .5, b = .5) ->
     vec3 = Types.vec3(r, g, b)
@@ -319,8 +403,14 @@ Types =
                    value.g,
                    value.b
       else return vec3.validate value, target, invalid
+      target
 
     equals: (a, b) -> a.x == b.x and a.y == b.y and a.z == b.z
+    op: (a, b, target, op) ->
+      target.x = op a.x, b.x
+      target.y = op a.y, b.y
+      target.z = op a.z, b.z
+      target
 
   axis: (value = 1, allowZero = false) ->
     map =
@@ -362,10 +452,11 @@ Types =
       if unique.indexOf(false) < 0
         return axesArray.validate temp, target, invalid
       return invalid()
+    equals: axesArray.equals
+    clone:  axesArray.clone
 
-    equals: (a, b) -> axesArray.equals a, b
-
-  swizzle: (order = [1, 2, 3, 4], size = 4) ->
+  swizzle: (order = [1, 2, 3, 4], size = null) ->
+    size ?= order.length
     order = order.slice 0, size
     looseArray = Types.letters(Types.axis(null, false), 0, order)
     axesArray  = Types.letters(Types.axis(null, true), size, order)
@@ -379,7 +470,8 @@ Types =
         temp = temp.concat([0, 0, 0, 0]).slice(0, size)
 
       return axesArray.validate temp, target, invalid
-    equals: (a, b) -> axesArray.equals a, b
+    equals: axesArray.equals
+    clone:  axesArray.clone
 
   classes: () ->
     stringArray = Types.array(Types.string())
@@ -389,7 +481,8 @@ Types =
       value = value.split ' ' if (value == "" + value)
       value = value.filter (x) -> !!x.length
       return stringArray.validate value, target, invalid
-    equals: (a, b) -> stringArray.equals a, b
+    equals: stringArray.equals
+    clone:  stringArray.clone
 
   blending: (value = 'normal') ->
     keys = ['no', 'normal', 'add', 'subtract', 'multiply', 'custom']
@@ -442,19 +535,17 @@ Types =
     keys = ['data', 'view', 'world', 'eye']
     Types.enum value, keys
 
+  ease: (value = 'linear') ->
+    keys = ['linear', 'cosine']
+    Types.enum value, keys
+
   anchor: (value = 'middle') ->
     map =
       first:   1
       middle:  0
       last:   -1
 
-    _enum = Types.enum value, [], map
-
-    uniform: () -> 'f'
-    make: () -> _enum.make() ? +value
-    validate: (value, target, invalid) ->
-      return value if value == +value
-      _enum.validate value, target, invalid
+    Types.enumber value, [], map
 
   transitionState: (value = 'enter') ->
     map =
@@ -462,12 +553,17 @@ Types =
       visible: 0
       exit:    1
 
-    _enum = Types.enum value, [], map
+    Types.enumber value, [], map
 
-    uniform: () -> 'f'
-    make: () -> _enum.make() ? +value
-    validate: (value, target, invalid) ->
-      return value if value == +value
-      _enum.validate value, target, invalid
+decorate = (types) ->
+  for k, type of types
+    types[k] = do (type) -> () ->
+      t = type.apply type, arguments
+      t.validate ?= (v) -> v
+      t.equals   ?= (a, b) -> a == b
+      t.op       ?= (a, b, target, op) -> op a, b
+      t.clone    ?= (v) -> v?.clone?() ? v
+      t
+  types
 
-module.exports = Types
+module.exports = decorate Types

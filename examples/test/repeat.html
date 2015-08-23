@@ -39,7 +39,7 @@
       r = t * 2;
       c = Math.cos(r);
       s = Math.sin(r);
-      view.set('rotation', [0, s, 0, c]);
+      view.set('quaternion', [0, s, 0, c]);
 
       view.set('bend', lerp(0.005, .721 - p * .1, o));
       view.set('helix', o * .1);
@@ -50,7 +50,7 @@
       r = (m) * .1;
       cc = Math.cos(r);
       ss = Math.sin(r);
-      surface.set('rotation', [s*cc, 0, s*ss, c]);
+      surface.set('quaternion', [s*cc, 0, s*ss, c]);
     });
 
     view = mathbox.polar({

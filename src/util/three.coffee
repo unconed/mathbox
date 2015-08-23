@@ -58,3 +58,6 @@ exports.paramToArrayStorage = (type) ->
     when THREE.IntType           then Int32Array
     when THREE.UnsignedIntType   then Uint32Array
     when THREE.FloatType         then Float32Array
+
+exports.swizzleToEulerOrder = (swizzle) ->
+  swizzle.map((i) -> ['', 'X', 'Y', 'Z'][i]).join ''

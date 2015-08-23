@@ -1,7 +1,7 @@
-Primitive = require '../../primitive'
-Util      = require '../../../util'
+Source = require '../base/source'
+Util   = require '../../../util'
 
-class Scale extends Primitive
+class Scale extends Source
   @traits = ['node', 'source', 'index', 'interval', 'span', 'scale', 'raw']
 
   init: () ->
@@ -10,7 +10,6 @@ class Scale extends Primitive
   rawBuffer: () -> @buffer
 
   sourceShader: (shader) -> shader.pipe @sampler
-  indexShader:  (shader) -> shader.pipe Util.GLSL.identity 'vec4'
 
   getDimensions: () ->
     items:  1

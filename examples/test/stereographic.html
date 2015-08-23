@@ -33,7 +33,7 @@
       q1.normalize();
 
       q2.slerp(q1, .05);
-      spherical.set('rotation', q2);
+      spherical.set('quaternion', q2);
     });
 
     stereo = mathbox.set({

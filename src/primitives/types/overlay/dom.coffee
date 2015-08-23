@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class DOM extends Primitive
-  @traits = ['node', 'bind', 'object', 'overlay', 'dom', 'attach', 'position']
+  @traits = ['node', 'bind', 'object', 'visible', 'overlay', 'dom', 'attach', 'position']
 
   init: () ->
     @emitter = @root = null
@@ -65,6 +65,8 @@ class DOM extends Primitive
     # Prepare readback consumer
     @readback.setCallback @emitter = @callback @bind.html.nodes()
 
+    @_helpers.visible.make()
+
   unmake: () ->
     if @readback?
       @readback.dispose()
@@ -76,6 +78,7 @@ class DOM extends Primitive
       @active = {}
 
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
 
   update: () ->
     return unless @readback?
@@ -86,7 +89,7 @@ class DOM extends Primitive
 
   post: () ->
     return unless @readback?
-    @dom.render if @props.visible then @emitter.nodes() else []
+    @dom.render if @isVisible then @emitter.nodes() else []
 
   callback: (data) ->
     # Create static consumer for the readback

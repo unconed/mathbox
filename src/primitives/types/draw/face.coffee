@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Face extends Primitive
-  @traits = ['node', 'object', 'style', 'line', 'mesh', 'face', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'face', 'geometry', 'position', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -87,12 +87,14 @@ class Face extends Primitive
                 mask:     mask
       objects.push @face
 
+    @_helpers.visible.make()
     @_helpers.object.make objects
 
   made: () -> @resize()
 
   unmake: () ->
     @_helpers.bind.unmake()
+    @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
     @face = @line = null

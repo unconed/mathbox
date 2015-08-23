@@ -2,7 +2,7 @@ View = require './view'
 Util = require '../../../util'
 
 class Polar extends View
-  @traits = ['node', 'object', 'view', 'view3', 'polar', 'transform']
+  @traits = ['node', 'object', 'visible', 'view', 'view3', 'polar', 'transform']
 
   make: () ->
     super
@@ -18,6 +18,8 @@ class Polar extends View
     @viewMatrix          = @uniforms.viewMatrix.value
     @objectMatrix        = new THREE.Matrix4()
 
+    @euler               = new THREE.Euler
+
     @aspect = 1
 
   unmake: () ->
@@ -29,7 +31,6 @@ class Polar extends View
     delete @uniforms
 
   change: (changed, touched, init) ->
-
     return unless touched['view'] or touched['view3'] or touched['polar'] or init
 
     @helix = helix = @props.helix
@@ -39,15 +40,16 @@ class Polar extends View
 
     o = @props.position
     s = @props.scale
-    q = @props.rotation
-    r = @props.range
+    q = @props.quaternion
+    r = @props.rotation
+    g = @props.range
 
-    x = r[0].x
-    y = r[1].x
-    z = r[2].x
-    dx = (r[0].y - x) || 1
-    dy = (r[1].y - y) || 1
-    dz = (r[2].y - z) || 1
+    x = g[0].x
+    y = g[1].x
+    z = g[2].x
+    dx = (g[0].y - x) || 1
+    dy = (g[1].y - y) || 1
+    dz = (g[2].y - z) || 1
     sx = s.x
     sy = s.y
     sz = s.z
@@ -60,7 +62,7 @@ class Polar extends View
 
     # Adjust viewport range for polar transform.
     # As the viewport goes polar, the X-range is interpolated to the Y-range instead,
-    # creating a perfectly circular viewport.
+    # creating a square/circular viewport.
     ady = Math.abs dy
     fdx = dx + (ady * idx - dx) * bend
     sdx = fdx / sx
@@ -77,6 +79,12 @@ class Polar extends View
       0, 0, 2/dz,  -(2*z+dz)/dz,
       0, 0, 0, 1 #,
     )
+
+    @euler.setFromVector3 r, Util.Three.swizzleToEulerOrder @props.eulerOrder
+    @objectMatrix.identity()
+    @objectMatrix.makeRotationFromEuler @euler
+    @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
+
     @objectMatrix.compose o, q, s
     @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
 
@@ -96,7 +104,7 @@ class Polar extends View
     # Correct Y extents during polar warp.
     if dimension == 2 && @bend > 0
       max = Math.max Math.abs(max), Math.abs(min)
-      min = Math.max -@focus / @aspect + .001, min
+      min = Math.max -@focus / @aspect, min
 
     return new THREE.Vector2 min, max
 

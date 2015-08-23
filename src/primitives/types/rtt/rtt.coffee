@@ -120,8 +120,8 @@ class RTT extends Root
 
   # End transform chain here
   transform: (shader, pass) ->
-    return shader.pipe 'view.position'            if pass == 2
-    return shader.pipe Util.GLSL.truncateVec 4, 3 if pass == 3
+    return shader.pipe 'view.position' if pass == 2
+    return shader.pipe 'root.position' if pass == 3
     shader
 
 module.exports = RTT

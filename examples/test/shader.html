@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Axis</title>
+  <title>MathBox - Shader Block</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -21,7 +21,7 @@
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     mathbox.shader({
-      code: "uniform float floatUniform; uniform int intUniform; uniform vec3 vec3Uniforms;"+
+      code: "uniform float floatUniform; uniform int intUniform; uniform vec3 vec3Uniform;"+
             "vec4 main(vec4 xyzw) { return xyzw; };"
     });
   </script>

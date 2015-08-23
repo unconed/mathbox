@@ -96,4 +96,5 @@ class Base extends Renderable
       f.pipe 'mesh.fragment.mask',      @uniforms
       f.pipe Util.GLSL.binaryOperator 'vec4', '*' if hasStyle || color
 
+
 module.exports = Base

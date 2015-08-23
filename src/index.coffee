@@ -10,6 +10,7 @@ mathBox = (options) ->
 # Just because
 window.π = Math.PI
 window.τ = π * 2
+window.e = Math.E
 
 # Namespace
 window.MathBox = exports
@@ -24,6 +25,7 @@ exports[k] = v for k, v of Context.Namespace
 THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:
     init: true
+    inspect: true
 
   listen: ['ready', 'pre', 'render', 'update', 'post', 'resize'],
 
@@ -40,9 +42,8 @@ THREE.Bootstrap.registerPlugin 'mathbox',
 
         scene  = options?.scene  || @options.scene  || three.scene
         camera = options?.camera || @options.camera || three.camera
-        script = options?.script || @options.script
 
-        @context = new Context three.renderer, scene, camera, script
+        @context = new Context three.renderer, scene, camera
 
         # Enable handy destructuring
         @context.api.three   = three.three   = three
@@ -72,6 +73,26 @@ THREE.Bootstrap.registerPlugin 'mathbox',
     if @options.init
       three.MathBox.init()
 
+      setTimeout () =>
+        @context.warmup()
+        @inspect three if @options.inspect
+
+  inspect: (three) ->
+    three.mathbox.inspect()
+
+    fmt = (x) ->
+      out = []
+      while x >= 1000
+        out.unshift ("000" + (x % 1000)).slice(-3)
+        x = Math.floor(x / 1000)
+      out.unshift x
+      out.join ','
+
+    info = three.renderer.info.render
+    console.log(fmt(info.faces) + ' faces  ',
+                fmt(info.vertices) + ' vertices  ',
+                fmt(info.calls) + ' draw calls');
+
   # Hook up context events
   resize: (event, three) ->
     @context?.resize three.Size
@@ -82,27 +103,13 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   update: (event, three) ->
     @context?.update()
 
+    if (camera = @context?.camera) and
+       camera != three.camera
+
+      three.camera = camera
+
   render: (event, three) ->
     @context?.render()
 
   post: (event, three) ->
     @context?.post()
-
-    if @first
-      fmt = (x) ->
-        out = []
-        while x >= 1000
-          out.unshift ("000" + (x % 1000)).slice(-3)
-          x = Math.floor(x / 1000)
-        out.unshift x
-        out.join ','
-
-      @first = false
-      info = three.renderer.info.render
-      console.log(fmt(info.faces) + ' faces  ',
-                  fmt(info.vertices) + ' vertices  ',
-                  fmt(info.calls) + ' draw calls');
-
-
-###
-###

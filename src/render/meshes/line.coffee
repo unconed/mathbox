@@ -5,13 +5,9 @@ class Line extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    uniforms = options.uniforms ? {}
-    position = options.position
-    color    = options.color
-    mask     = options.mask
-    clip     = options.clip
-    stroke   = options.stroke
+    {uniforms, position, color, mask, clip, stroke} = options
 
+    uniforms ?= {}
     stroke   = [null, 'dotted', 'dashed'][stroke]
 
     hasStyle = uniforms.styleColor?
@@ -37,6 +33,7 @@ class Line extends Base
     @_vertexColor v, color, mask
 
     v.require position if position
+    v.require 'mesh.vertex.stpq',     @uniforms
     v.pipe 'line.position',           @uniforms, defs
     v.pipe 'project.position',        @uniforms
 

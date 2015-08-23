@@ -5,11 +5,13 @@
  @param n - Desired number of ticks in range
  @param unit - Base unit of scale (e.g. 1 or π).
  @param scale - Division scale (e.g. 2 = binary division, or 10 = decimal division).
- @param inclusive - Whether to add ticks at the edges
  @param bias - Integer to bias divisions one or more levels up or down (to create nested scales)
+ @param start - Whether to include a tick at the start
+ @param end - Whether to include a tick at the end
+ @param zero - Whether to include zero as a tick
 ###
 
-linear = (min, max, n, unit, base, inclusive, bias) ->
+linear = (min, max, n, unit, base, bias, start, end, zero) ->
 
   # Desired
   n ||= 10
@@ -45,45 +47,29 @@ linear = (min, max, n, unit, base, inclusive, bias) ->
   , ref
 
   # Renormalize min/max onto aligned steps.
-  edge = +!inclusive
-  min = (Math.ceil(min / step) + edge) * step
-  max = (Math.floor(max / step) - edge) * step
+  min = (Math.ceil (min / step) + +!start) * step
+  max = (Math.floor(max / step) - +!end  ) * step
   n = Math.ceil((max - min) / step)
 
   # Generate equally spaced ticks
-  min + i * step for i in [0..n]
+  ticks = (min + i * step for i in [0..n])
+  ticks = ticks.filter((x) -> x != 0) if !zero
+  ticks
 
 ###
  Generate logarithmically spaced ticks in a range at sensible positions.
 ###
 
-log = (min, max, n, unit, base, inclusive, bias) ->
+log = (min, max, n, unit, base, bias, start, end, zero) ->
   throw "Log ticks not yet implemented."
-  ###
-  base = Math.log(base)
-  ibase = 1 / base
-  l = (x) -> Math.log(x) * ibase
-
-  # Generate linear scale in log space at (base - 1) divisions
-  ticks = Linear(l(min), l(max), n, unit, Math.max(2, scale - 1), inclusive, bias)
-
-  # Remap ticks within each order of magnitude
-  for tick in ticks
-    floor = Math.floor tick
-    frac = tick - floor
-
-    ref = Math.exp floor * base
-    value = ref * Math.round 1 + (base - 1) * frac
-
-  ###
 
 LINEAR = 0
 LOG    = 1
 
-make = (type, min, max, ticks, unit, base, inclusive, bias) ->
+make = (type, min, max, n, unit, base, bias, start, end, zero) ->
   switch type
-    when LINEAR then linear min, max, ticks, unit, base, inclusive, bias
-    when LOG    then log    min, max, ticks, unit, base, inclusive, bias
+    when LINEAR then linear min, max, n, unit, base, bias, start, end, zero
+    when LOG    then log    min, max, n, unit, base, bias, start, end, zero
 
 exports.make = make
 exports.linear = linear

@@ -35,7 +35,11 @@ class HTML extends Voxel
   callback: (callback) ->
     el = @dom.el
 
-    (emit, i, j, k, l) ->
-      callback emit, el, i, j, k, l
+    if callback.length <= 6
+      (emit, i, j, k, l) ->
+        callback emit, el, i, j, k, l
+    else
+      (emit, i, j, k, l) ->
+        callback emit, el, i, j, k, l, @_context.time.clock, @_context.time.delta
 
 module.exports = HTML
