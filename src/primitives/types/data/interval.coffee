@@ -8,8 +8,11 @@ class Interval extends _Array
     dimension = @props.axis
     length    = @props.length
     centered  = @props.centered
+    pad       = @props.padding
 
     range     = @_helpers.span.get '', dimension
+
+    length += pad * 2
 
     @a = range.x
     span = range.y - range.x
@@ -21,6 +24,8 @@ class Interval extends _Array
       inverse   = 1 / Math.max 1, length - 1
 
     @b = span * inverse
+
+    @a += pad * @b
 
   callback: (callback) ->
     @updateSpan()

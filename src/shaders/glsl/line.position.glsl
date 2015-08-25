@@ -7,6 +7,11 @@ uniform vec4 geometryClip;
 attribute vec2 line;
 attribute vec4 position4;
 
+#ifdef LINE_PROXIMITY
+uniform float lineProximity;
+varying float vClipProximity;
+#endif
+
 #ifdef LINE_STROKE
 varying float vClipStrokeWidth;
 varying float vClipStrokeIndex;
@@ -138,8 +143,12 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
   if (l1 + l2 > 0.0) {
     
     if (edge > 0.5 || l2 == 0.0) {
-      vec2 nl = normalize(l - c);
+      vec2 nl = normalize(d.xy);
       vec2 tl = vec2(nl.y, -nl.x);
+
+#ifdef LINE_PROXIMITY
+      vClipProximity = 1.0;
+#endif
 
 #ifdef LINE_STROKE
       vClipStrokeEven = vClipStrokeOdd = normalize(left - center);
@@ -147,8 +156,12 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
       join = tl;
     }
     else if (edge < -0.5 || l1 == 0.0) {
-      vec2 nr = normalize(c - r);
+      vec2 nr = normalize(d.zw);
       vec2 tr = vec2(nr.y, -nr.x);
+
+#ifdef LINE_PROXIMITY
+      vClipProximity = 1.0;
+#endif
 
 #ifdef LINE_STROKE
       vClipStrokeEven = vClipStrokeOdd = normalize(center - right);
@@ -158,19 +171,35 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
     else {
       // Limit join stretch for tiny segments
       float lmin2 = min(l1, l2) / (width * width);
+
+      // Hide line segment if ratio of leg lengths exceeds promixity threshold
+#ifdef LINE_PROXIMITY
+      float lr     = l1 / l2;
+      float rl     = l2 / l1;
+      float ratio  = max(lr, rl);
+      float thresh = lineProximity + 1.0;
+      vClipProximity = (ratio > thresh * thresh) ? 1.0 : 0.0;
+#endif
       
+      // Calculate normals/tangents
       vec2 nl = normalize(d.xy);
       vec2 nr = normalize(d.zw);
 
       vec2 tl = vec2(nl.y, -nl.x);
       vec2 tr = vec2(nr.y, -nr.x);
 
+#ifdef LINE_PROXIMITY
+      // Mix tangents according to leg lengths
+      vec2 tc = normalize(mix(tl, tr, l1/(l1+l2)));
+#else
+      // Average tangent
       vec2 tc = normalize(tl + tr);
+#endif
     
-      float cosA = dot(nl, tc);
-      float sinA = max(0.1, abs(dot(tl, tc)));
+      float cosA   = dot(nl, tc);
+      float sinA   = max(0.1, abs(dot(tl, tc)));
       float factor = cosA / sinA;
-      float scale = sqrt(1.0 + min(lmin2, factor * factor));
+      float scale  = sqrt(1.0 + min(lmin2, factor * factor));
 
 #ifdef LINE_STROKE
       vec3 stroke1 = normalize(left - center);

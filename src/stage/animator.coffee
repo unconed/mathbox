@@ -73,7 +73,10 @@ class Animation
 
   immediate: (value, options) ->
     {duration, delay, ease, step, complete} = options
-    start = @time.clock + delay
+
+    time = if @options.realTime then @realTime() else @time.clock
+
+    start = time + delay
     end   = start + duration
 
     invalid = false
@@ -84,12 +87,14 @@ class Animation
     @cancel start
     @queue.push {from: null, to: target, start, end, ease, step, complete}
 
+  realTime: () -> +new Date() / 1000
+
   update: (@time) ->
     if @queue.length == 0
       @notify() if @options.live
       return true
 
-    {clock} = @time
+    clock = if @options.realTime then @realTime() else @time.clock
     {value, queue} = @
 
     active = false
@@ -97,6 +102,7 @@ class Animation
       {from, to, start, end, step, complete, ease} = stage = queue[0]
 
       from = stage.from = @type.clone @value if !from?
+
       f = Ease.clamp(((clock - start) / (end - start)) || 0, 0, 1)
       return if f == 0 # delayed animation not yet active
 

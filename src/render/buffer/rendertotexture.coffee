@@ -51,8 +51,8 @@ class RenderToTexture extends Renderable
 
     @filled = 0
 
-  adopt:   (renderable) -> @scene.add    object for object in renderable.objects
-  unadopt: (renderable) -> @scene.remove object for object in renderable.objects
+  adopt:   (renderable) -> @scene.add    object for object in renderable.renders
+  unadopt: (renderable) -> @scene.remove object for object in renderable.renders
 
   render: (camera = @camera) ->
     @renderer.render @scene.scene ? @scene, camera, @target.write

@@ -1,6 +1,8 @@
 Util = require '../util'
 
 class API
+  v2: () -> @
+
   constructor: (@_context, @_up, @_targets) ->
     root = @_context.controller.getRoot()
 
@@ -55,8 +57,11 @@ class API
     @_context.controller.set target, key, value for target in @_targets
     @
 
-  get: (key) ->
+  getAll: (key) ->
     @_context.controller.get target, key for target in @_targets
+
+  get: (key) ->
+    @_targets[0]?.get key
 
   bind: (key, value) ->
     @_context.controller.bind target, key, value for target in @_targets
@@ -74,27 +79,63 @@ class API
 
   map: (callback) -> @_targets.map callback
 
+  "on": () ->
+    args = arguments
+    @_targets.map (x) -> x.on.apply x, args
+    @
+
+  "off": () ->
+    args = arguments
+    @_targets.map (x) -> x.on.apply x, args
+    @
+
+  toString: () ->
+    tags = @_targets.map (x) -> x.toString()
+    if @_targets.length > 1 then "[#{tags.join ", "}]" else tags[0]
+
+  toMarkup: () ->
+    tags = @_targets.map (x) -> x.toMarkup()
+    if @_targets.length > 1 then tags else tags[0]
+
+  print: () ->
+    @_targets.map (x) -> Util.Pretty.print x.toMarkup()
+    @
+
   inspect: () ->
+
+    # Recurse tree and extract all inserted renderables
     map     = (node) -> node.controller?.objects ? []
     recurse = self = (node, list = []) ->
       list.push map node
       self child, list for child in node.children if node.children?
       list
+
+    # Flatten arrays
     flatten = (list) -> list.reduce ((a, b) -> a.concat b), []
 
+    # Fake descriptor for pretty printing
+    make = (renderable, render) ->
+      d = {}
+      d.owner      = renderable
+      d.geometry   = render.geometry
+      d.material   = render.material
+      d.vertex     = render.material.vertexGraph
+      d.fragment   = render.material.fragmentGraph
+      d
+
+    # Inspect all targets
     for target in @_targets
       @_context.controller.inspect target, 'info'
 
       renderables = flatten recurse target
-      objects     = flatten renderables.map (x) -> x.objects
-      shaders     = flatten objects.map (x) -> [x.material.vertexGraph, x.material.fragmentGraph]
+      renders     = flatten renderables.map (x) -> x.renders
+      shaders     = flatten renderables.map (x) -> x.renders.map (r) -> make x, r
 
-      console.info 'Renderables', renderables
-      console.info 'Objects',     objects
-      console.info 'Shaders',     shaders
+      console.log 'Renderables', renderables
+      console.log 'Renders',     renders
+      console.log 'Shaders',     shaders
 
-  toString: () ->
-    tags = @_targets.map (x) -> x.toString()
-    if @_targets.length > 1 then "[#{tags.join ", "}]" else tags[0]
+    @
+
 
 module.exports = API

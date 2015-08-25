@@ -56,6 +56,7 @@ class DOM extends Primitive
                   height:   height
                   depth:    depth
                   channels: 4
+                  stpq:     true
 
     # Prepare overlay container VDOM
     @dom = @_overlays.make 'dom'

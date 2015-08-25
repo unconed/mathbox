@@ -1,7 +1,7 @@
 # Quick'n'dirty Virtual DOM diffing
-# with a poor man's React for stateless components
+# with a poor man's React for components
 #
-# This is for rendering only, no events, no component lifecycle, etc.
+# This is mainly for rendering only. See DOM examples.
 HEAP = []
 id = 0
 
@@ -9,11 +9,11 @@ id = 0
 Types = {
   ###
   # el('example', props, children);
-  example: {
+  example: MathBox.DOM.createClass({
     render: (el, props, children) ->
       # VDOM node
       return el('span', { className: "foo" }, "Hello World")
-  }
+  })
   ###
 }
 
@@ -23,12 +23,12 @@ descriptor = () ->
   props:    null
   children: null
   rendered: null
+  instance: null
 
 hint = (n) ->
   n *= 2
   n = Math.max 0, HEAP.length - n
   HEAP.push descriptor() for i in [0...n]
-  
 element = (type, props, children) ->
   el = if HEAP.length then HEAP.pop() else descriptor()
 
@@ -43,7 +43,7 @@ recycle = (el) ->
   return unless el.type
 
   children = el.children
-  el.type  = el.props = el.children = null
+  el.type  = el.props = el.children = el.instance = null
 
   HEAP.push el
 
@@ -54,7 +54,7 @@ apply = (el, last, node, parent, index) ->
   if el?
     if !last?
       # New node
-      return insert el, parent, index
+      return mount el, parent, index
     else
       # Literal DOM node
       if el instanceof Node
@@ -67,12 +67,16 @@ apply = (el, last, node, parent, index) ->
                el.type == last.type
 
       if !same
-        # Not compatible: remove and reinsert
-        remove node, parent
-        return insert el, parent, index
+        # Not compatible: unmount and remount
+        unmount last.instance, node
+        node.remove()
+        return mount el, parent, index
       else
+        # Maintain component ref
+        el.instance = last.instance
+
         # Check if it's a component
-        type = if el.type?.render? then el.type else Types[el.type]
+        type = if el.type?.isComponentClass then el.type else Types[el.type]
 
         # Prepare to diff props and children
         props     = last?.props
@@ -83,14 +87,40 @@ apply = (el, last, node, parent, index) ->
         # Component
         if type?
           # See if it changed
-          dirty = false
-          dirty = true for key        of props     when !nextProps.hasOwnProperty key if props?
-          dirty = true for key, value of nextProps when (ref = props[key]) != value   if nextProps?
+          dirty = node._COMPONENT_DIRTY
+
+          dirty = true if props? != nextProps?
           dirty = true if children != nextChildren
 
+          if props? and nextProps?
+            dirty = true for key        of props     when !nextProps.hasOwnProperty key if !dirty
+            dirty = true for key, value of nextProps when (ref = props[key]) != value   if !dirty
+
           if dirty
-            el = el.rendered = type.render element, el.props ? {}, el.children
-            return apply el, last.rendered, node, parent, index
+            comp = last.instance
+            el.props    ?= {}
+            el.props[k] ?= v for k, v of comp.defaultProps
+            el.props.children = el.children
+
+            comp.willReceiveProps? el.props
+            should = node._COMPONENT_FORCE || (comp.shouldUpdate?(el.props) ? true)
+
+            if should
+              nextState = comp.getNextState()
+              comp.willUpdate? el.props, nextState
+
+            prevProps = comp.props
+            prevState = comp.applyNextState()
+
+            comp.props    = el.props
+            comp.children = el.children
+
+            if should
+              el   = el.rendered = comp.render? element, el.props, el.children
+              apply el, last.rendered, node, parent, index
+
+              comp.didUpdate? prevProps, prevState
+
           return
 
         else
@@ -104,7 +134,7 @@ apply = (el, last, node, parent, index) ->
               # Insert text directly
               if nextChildren != children
                 node.textContent = nextChildren
-            else 
+            else
               if nextChildren.type?
                 # Single child
                 apply nextChildren, children, node.childNodes[0], node, 0
@@ -116,6 +146,9 @@ apply = (el, last, node, parent, index) ->
                 else
                   apply child, null,        childNodes[i], node, i for child, i in nextChildren
           else if children?
+            # Unmount all child components
+            unmount null, node
+
             # Remove all children
             node.innerHTML = ''
 
@@ -123,10 +156,11 @@ apply = (el, last, node, parent, index) ->
 
   if last?
     # Removed node
-    return remove node, parent
+    unmount last.instance, node
+    last.node.remove()
 
-insert = (el, parent, index = 0) ->
-  type = if el.type?.render? then el.type else Types[el.type]
+mount = (el, parent, index = 0) ->
+  type = if el.type?.isComponentClass then el.type else Types[el.type]
 
   # Literal DOM node
   if el instanceof Node
@@ -134,8 +168,36 @@ insert = (el, parent, index = 0) ->
   else
     if type?
       # Component
-      el = el.rendered = type.render element, el.props ? {}, el.children
-      return insert el, parent, index
+      ctor = if el.type?.isComponentClass then el.type else Types[el.type]
+
+      # No component class found
+      if !ctor
+        el = el.rendered = element 'noscript'
+        node = mount el, parent, index
+        return node
+
+      # Construct component class
+      el.instance  = comp = new ctor parent
+      el.props    ?= {}
+      el.props[k] ?= v for k, v of comp.defaultProps
+      el.props.children = el.children
+
+      # Do initial state transition
+      comp.props    = el.props
+      comp.children = el.children
+      comp.setState comp.getInitialState?()
+      comp.willMount?()
+
+      # Render
+      el = el.rendered = comp.render? element, el.props, el.children
+      node = mount el, parent, index
+
+      # Finish mounting and remember component/node association
+      comp.didMount? el
+      node._COMPONENT = comp
+
+      return node
+
     else if typeof el in ['string', 'number']
       # Text
       node = document.createTextNode el
@@ -149,19 +211,25 @@ insert = (el, parent, index = 0) ->
       if typeof children in ['string', 'number']
         # Insert text directly
         node.textContent = children
-      else 
+      else
         if children.type?
           # Single child
-          insert children, node, 0
+          mount children, node, 0
         else
           # Insert children
-          insert child, node, i for child, i in children
+          mount child, node, i for child, i in children
 
   parent.insertBefore node, parent.childNodes[index]
-  return
+  return node
 
-remove = (node, parent) ->
-  parent.removeChild node
+unmount = (comp, node) ->
+  if comp
+    comp.willUnmount?()
+    delete comp[k] for k of comp
+
+  for child in node.childNodes
+    unmount child._COMPONENT, child
+    delete child._COMPONENT
 
 prop = (key) ->
   return key if document.documentElement.style[key]?
@@ -192,12 +260,59 @@ unset = (node, key, orig) ->
     for k, v of orig
       node.style[map[k] ? k] = ''
     return
-  
+
   if node[key]?
     node[key] = undefined
-  
+
   if node instanceof Node
     node.removeAttribute key
     return
 
-module.exports = {element, recycle, apply, hint, Types}
+createClass = (prototype) ->
+  aliases = {
+    willMount:        'componentWillMount'
+    didMount:         'componentDidMount'
+    willReceiveProps: 'componentWillReceiveProps'
+    shouldUpdate:     'shouldComponentUpdate'
+    willUpdate:       'componentWillUpdate'
+    didUpdate:        'componentDidUpdate'
+    willUnmount:      'componentWillUnmount'
+  }
+  prototype[a] ?= prototype[b] for a, b of aliases
+
+  class Component
+    constructor: (node, @props = {}, @state = null, @children = null) ->
+      bind = (f, self) -> if typeof f == 'function' then f.bind self else f
+      @[k] = bind v, @ for k, v of prototype
+
+      nextState = null
+
+      @setState = (state) ->
+        nextState ?= if state then nextState ? {} else null
+        nextState[k] = v for k, v of state
+        node._COMPONENT_DIRTY = true
+        return
+
+      @forceUpdate  = () ->
+        node._COMPONENT_FORCE = node._COMPONENT_DIRTY = true
+
+        el = node
+        while el = el.parentNode
+          if el._COMPONENT
+            el._COMPONENT_FORCE = true
+
+      @getNextState = () -> nextState
+
+      @applyNextState = () ->
+        node._COMPONENT_FORCE = node._COMPONENT_DIRTY = false
+        prevState = @state
+        [nextState, @state] = [null, nextState]
+        prevState
+
+      return
+
+  Component.isComponentClass = true
+  Component.prototype.defaultProps = prototype.getDefaultProps?() ? {}
+  Component
+
+module.exports = {element, recycle, apply, hint, Types, createClass}

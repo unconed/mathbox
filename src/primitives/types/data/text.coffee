@@ -11,6 +11,9 @@ class Text extends Voxel
   init: () ->
     super
     @atlas = null
+    @_final 'channels',  4,      
+    @_final 'minFilter', 'linear'
+    @_final 'magFilter', 'linear'
 
   textShader: (shader) ->
     @atlas.shader shader
@@ -20,21 +23,18 @@ class Text extends Voxel
 
   make: () ->
     # Read sampling parameters
-    minFilter = @props.minFilter
-    magFilter = @props.magFilter
-    type      = @props.type
+    {minFilter, magFilter, type} = @props
 
     # Read font parameters
-    font    = @props.font
-    style   = @props.style
-    detail  = @props.detail
-    expand  = @props.expand
+    {font, style, variant, weight, detail, expand} = @props
 
     # Prepare text atlas
     @atlas = @_renderables.make 'textAtlas',
                font:      font
                size:      detail
                style:     style
+               variant:   variant
+               weight:    weight
                outline:   expand
                minFilter: minFilter
                magFilter: magFilter

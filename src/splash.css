@@ -1,0 +1,125 @@
+.mathbox-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  
+  padding: 10px;
+}
+
+.mathbox-progress {
+  height: 10px;
+  border-radius: 5px;
+  margin: 0 10px;
+  background: #ccc;
+  overflow: hidden;
+}
+
+.mathbox-progress > div {
+  display: block;
+  width: 0px;
+  height: 10px;
+  background: #808080;
+}
+
+.mathbox-logo {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 30px;
+  -webkit-perspective: 200px;
+  perspective: 200px;
+}
+
+.mathbox-logo > div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  -webkit-transform-style: preserve-3d;
+  transform-style:         preserve-3d;
+}
+
+.mathbox-logo > :nth-child(1) {
+  -webkit-transform: rotateZ(22deg) rotateX(24deg) rotateY(30deg);
+  transform:         rotateZ(22deg) rotateX(24deg) rotateY(30deg);
+}
+
+.mathbox-logo > :nth-child(2) {
+  -webkit-transform: rotateZ(11deg) rotateX(12deg) rotateY(15deg) scale3d(.6, .6, .6);
+  transform:         rotateZ(11deg) rotateX(12deg) rotateY(15deg) scale3d(.6, .6, .6);
+}
+
+.mathbox-logo > div > div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -100px;
+  margin-top: -100px;
+  width: 200px;
+  height: 200px;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+
+.mathbox-logo > div > :nth-child(1) {
+  -webkit-transform: scale(0.5, 0.5);
+  transform:         rotateX(30deg) scale(0.5, 0.5);
+}
+
+.mathbox-logo > div > :nth-child(2) {
+  -webkit-transform: rotateX(90deg) scale(0.42, 0.42);
+  transform:         rotateX(90deg) scale(0.42, 0.42);
+}
+
+.mathbox-logo > div > :nth-child(3) {
+  -webkit-transform: rotateY(90deg) scale(0.35, 0.35);
+  transform:         rotateY(90deg) scale(0.35, 0.35);
+}
+
+.mathbox-logo > :nth-child(1) > :nth-child(1) {
+  border: 16px solid #808080;
+}
+.mathbox-logo > :nth-child(1) > :nth-child(2) {
+  border: 19px solid #A0A0A0;
+}
+.mathbox-logo > :nth-child(1) > :nth-child(3) {
+  border: 23px solid #C0C0C0;
+}
+.mathbox-logo > :nth-child(2) > :nth-child(1) {
+  border: 27px solid #808080;
+}
+.mathbox-logo > :nth-child(2) > :nth-child(2) {
+  border: 32px solid #A0A0A0;
+}
+.mathbox-logo > :nth-child(2) > :nth-child(3) {
+  border: 38px solid #C0C0C0;
+}
+
+.mathbox-splash-blue .mathbox-progress > div {
+  background: #1979e7;
+  background: #18487F;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(1) > :nth-child(1) {
+  border-color: #1979e7;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(1) > :nth-child(2) {
+  border-color: #33b0ff;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(1) > :nth-child(3) {
+  border-color: #75eaff;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(2) > :nth-child(1) {
+  border-color: #18487F;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(2) > :nth-child(2) {
+  border-color: #33b0ff;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(2) > :nth-child(3) {
+  border-color: #75eaff;
+}  
+
+
+

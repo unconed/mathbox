@@ -1,6 +1,6 @@
 Track = require './track'
 
-class Steps extends Track
+class Step extends Track
   @traits = ['node', 'track', 'steps', 'bind']
 
   make: () ->
@@ -8,6 +8,7 @@ class Steps extends Track
 
     @lastIndex = 0
     @animate = @_animator.make @_types.number(0),
+      realTime: @props.realTime
       step: (value) =>
         @playhead = value
         @update()
@@ -17,6 +18,8 @@ class Steps extends Track
     # Update playhead in response to slide change
     @_listen 'slide', 'slide.step', (e) =>
       {delay, duration, pace, speed, playback, rewind, skip, trigger} = @props
+
+      #console.log 'slide.step', @node.toString(), {index: e.index, trigger, diff: e.index - trigger}
 
       # Note: enter phase is from 0 to 1, subtract default trigger 1 to not animate instantly
       i = Math.max 0, Math.min @stops.length - 1, e.index - trigger
@@ -30,7 +33,7 @@ class Steps extends Track
       factor = speed * if e.step >= 0 then 1 else rewind
 
       # Pass through multiple steps at faster rate if skip is enabled
-      factor *= if skip then Math.max 1, step else 1
+      factor *= if skip then Math.max 1, step * step else 1
 
       # Apply pace
       duration += Math.abs(to - from) * pace / factor
@@ -47,7 +50,7 @@ class Steps extends Track
     super
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['steps.stops']
+    return @rebuild() if changed['steps.stops'] or changed['steps.realTime']
     super changed, touched, init
 
-module.exports = Steps
+module.exports = Step

@@ -30,6 +30,12 @@ Traits =
     position:          Types.vec4()
     scale:             Types.vec4(1, 1, 1, 1)
 
+  layer:
+    depth:             Types.number(1)
+    fit:               Types.fit('y')
+    origin:            Types.vec2(0, 0)
+    unit:              Types.mapping()
+
   vertex:
     pass:              Types.vertexPass()
     shader:            Types.select()
@@ -94,24 +100,31 @@ Traits =
     bias:              Types.number(0)
 
   grid:
-    line:              Types.bool(true)
+    lineX:             Types.bool(true)
+    lineY:             Types.bool(true)
+    crossed:           Types.bool(false)
   axis:
     detail:            Types.int(1)
+    origin:            Types.vec4()
+    crossed:           Types.bool(false)
 
   data:
     data:              Types.nullable(Types.object())
-    map:               Types.nullable(Types.func())
+    expr:              Types.nullable(Types.func())
     bind:              Types.nullable(Types.func())
     live:              Types.bool(true)
   buffer:
     channels:          Types.int(3)
     items:             Types.int(1)
+    fps:               Types.nullable(Types.int(60), true)
+    hurry:             Types.int(5)
   sampler:
     centered:          Types.bool(false)
+    padding:           Types.number(0)
   array:
     length:            Types.nullable(Types.int(1))
-    history:           Types.int(1)
     bufferLength:      Types.int(1)
+    history:           Types.int(1)
   matrix:
     width:             Types.nullable(Types.int(1))
     height:            Types.nullable(Types.int(1))
@@ -127,7 +140,7 @@ Traits =
     bufferDepth:       Types.int(1)
 
   resolve:
-    map:               Types.nullable(Types.func())
+    expr:              Types.nullable(Types.func())
     items:             Types.int(1)
 
   style:
@@ -152,8 +165,9 @@ Traits =
     width:             Types.number(2)
     depth:             Types.number(1)
     stroke:            Types.stroke()
+    proximity:         Types.nullable(Types.number(Infinity))
   mesh:
-    solid:             Types.bool(true)
+    fill:              Types.bool(true)
     shaded:            Types.bool(true)
   strip:
     outline:           Types.bool(false)
@@ -174,11 +188,14 @@ Traits =
 
   format:
     digits:            Types.nullable(Types.number(3))
+    data:              Types.nullable(Types.object())
     expr:              Types.nullable(Types.func())
     live:              Types.bool(true)
   text:
-    font:              Types.string('sans-serif')
+    font:              Types.font('sans-serif')
     style:             Types.string()
+    variant:           Types.string()
+    weight:            Types.string()
     detail:            Types.number(24)
     expand:            Types.number(5)
   label:
@@ -214,6 +231,7 @@ Traits =
   operator:
     source:            Types.select()
   spread:
+    unit:              Types.mapping()
     items:             Types.nullable(Types.vec4())
     width:             Types.nullable(Types.vec4())
     height:            Types.nullable(Types.vec4())
@@ -235,11 +253,21 @@ Traits =
     order:             Types.swizzle()
   transpose:
     order:             Types.transpose()
+  clip:
+    items:             Types.vec2(1)
+    width:             Types.vec2(1)
+    height:            Types.vec2(1)
+    depth:             Types.vec2(1)
   repeat:
     items:             Types.number(1)
     width:             Types.number(1)
     height:            Types.number(1)
     depth:             Types.number(1)
+  slice:
+    items:             Types.nullable(Types.vec2())
+    width:             Types.nullable(Types.vec2())
+    height:            Types.nullable(Types.vec2())
+    depth:             Types.nullable(Types.vec2())
   lerp:
     items:             Types.nullable(Types.int())
     width:             Types.nullable(Types.int())
@@ -249,7 +277,7 @@ Traits =
     indices:           Types.number(4)
     channels:          Types.number(4)
     map:               Types.mapping()
-    scale:             Types.mapping('absolute')
+    unit:              Types.mapping('absolute')
     shader:            Types.select()
     items:             Types.nullable(Types.int())
     width:             Types.nullable(Types.int())
@@ -260,6 +288,7 @@ Traits =
 
   root:
     camera:            Types.select('[camera]')
+    speed:             Types.number(1)
 
   rtt:
     width:             Types.nullable(Types.int())
@@ -272,15 +301,15 @@ Traits =
     stagger:           Types.vec4()
     enter:             Types.nullable(Types.number(1))
     exit:              Types.nullable(Types.number(1))
-    from:              Types.vec4()
-    to:                Types.vec4()
+    from:              Types.nullable(Types.vec4())
+    to:                Types.nullable(Types.vec4())
     pass:              Types.vertexPass('data')
     delay:             Types.number(0)
-    delayEnter:        Types.number(0)
-    delayExit:         Types.number(0)
+    delayEnter:        Types.nullable(Types.number(0))
+    delayExit:         Types.nullable(Types.number(0))
     duration:          Types.number(.3)
-    durationEnter:     Types.number(0)
-    durationExit:      Types.number(0)
+    durationEnter:     Types.nullable(Types.number(0))
+    durationExit:      Types.nullable(Types.number(0))
   slide:
     steps:             Types.number(1)
     enter:             Types.nullable(Types.number(1))
@@ -309,6 +338,7 @@ Traits =
     rewind:            Types.number(3)
     skip:              Types.bool(true)
     trigger:           Types.nullable(Types.number(1), true)
+    realTime:          Types.bool(false)
   clock:
     delay:             Types.number(0)
     pace:              Types.number(1)
@@ -316,5 +346,6 @@ Traits =
     start:             Types.number(0)
     end:               Types.number(Infinity)
     trigger:           Types.nullable(Types.number(1), true)
+    realTime:          Types.bool(false)
 
 module.exports = Traits

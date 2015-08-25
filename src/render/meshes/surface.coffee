@@ -6,7 +6,7 @@ class Surface extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, position, color, mask, shaded} = options
+    {uniforms, position, color, mask, shaded, map} = options
 
     uniforms ?= {}
     shaded   ?= true
@@ -43,17 +43,16 @@ class Surface extends Base
 
     @material = @_material factory.link
       side: THREE.DoubleSide
-      index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material
 
     @_raw object
-    @objects = [object]
+    @renders = [object]
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @objects = @geometry = @material = null
+    @renders = @geometry = @material = null
     super
 
 module.exports = Surface

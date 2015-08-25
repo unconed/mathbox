@@ -1,16 +1,18 @@
+Util = require '../../util'
+
 # Property types
 #
-# The weird calling convention is for double-buffering the values,
-# with compound types like arrays and nullables.
+# The weird calling convention is for double-buffering the values
+# while validating compound types like arrays and nullables. 
 #
 # validate: (value, target, invalid) ->
 #
 #   # Option 1: Call invalid() to reject
 #   return invalid() if value < 0
 #
-#   # Option 2: Replace in place
+#   # Option 2: Change target in-place
 #   target.set(value)
-#   return # don't return anything
+#   return target
 #
 #   # Option 3: Return new value
 #   return +value
@@ -34,14 +36,15 @@ Types =
             target[i] = type.op a[i], b[i], target[i], op
           target
 
+    value = [value] if value? and value !instanceof Array
+
     uniform: () -> if type.uniform then type.uniform() + 'v' else undefined
     make: () ->
       return value.slice() if value?
       return [] if !size
       (type.make() for i in [0...size])
     validate: (value, target, invalid) ->
-      if value !instanceof Array
-        value = [value]
+      value = [value] if value !instanceof Array
 
       l = target.length = if size then size else value.length
       for i in [0...l]
@@ -112,6 +115,7 @@ Types =
       if target == null
         target = type.make()
       type.validate value, target, invalid
+    uniform: () -> type.uniform?()
     equals: (a, b) ->
       an = a == null
       bn = b == null
@@ -539,6 +543,10 @@ Types =
     keys = ['linear', 'cosine']
     Types.enum value, keys
 
+  fit: (value = 'contain') ->
+    keys = ['x', 'y', 'contain', 'cover']
+    Types.enum value, keys
+
   anchor: (value = 'middle') ->
     map =
       first:   1
@@ -554,6 +562,23 @@ Types =
       exit:    1
 
     Types.enumber value, [], map
+
+  font: (value = 'sans-serif') ->
+    parse = Util.JS.parseQuoted
+    value = parse value if value !instanceof Array
+    stringArray = Types.array Types.string(), 0, value
+
+    make: () -> stringArray.make()
+    validate: (value, target, invalid) ->
+      try
+        value = parse value if value !instanceof Array
+      catch
+        return invalid()
+
+      value = value.filter (x) -> !!x.length
+      return stringArray.validate value, target, invalid
+    equals: stringArray.equals
+    clone:  stringArray.clone
 
 decorate = (types) ->
   for k, type of types

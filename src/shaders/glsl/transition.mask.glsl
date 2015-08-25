@@ -17,8 +17,8 @@ float getTransitionSDFMask(vec4 stpq) {
   float factor  = 1.0 + skew;
   float offset  = dot(vec4(1.0), stpq * scale + bias);
 
-  float d1 = enter * factor - offset;
-  float d2 = exit  * factor + offset - skew;
-
-  return min(d1, d2);
+  vec2 d = vec2(enter, exit) * factor + vec2(-offset, offset - skew);
+  if (exit  == 1.0) return d.x;
+  if (enter == 1.0) return d.y;
+  return min(d.x, d.y);
 }

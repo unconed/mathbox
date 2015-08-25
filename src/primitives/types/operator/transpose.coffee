@@ -18,11 +18,10 @@ class Transpose extends Operator
     shader.pipe @swizzler if @swizzler
     super shader
 
-  getDimensions: () ->
-    @_remap @transpose, @bind.source.getDimensions()
-
-  getActiveDimensions: () ->
-    @_remap @transpose, @bind.source.getActiveDimensions()
+  getDimensions:       () -> @_remap @transpose, @bind.source.getDimensions()
+  getActiveDimensions: () -> @_remap @transpose, @bind.source.getActiveDimensions()
+  getFutureDimensions: () -> @_remap @transpose, @bind.source.getFutureDimensions()
+  getIndexDimensions:  () -> @_remap @transpose, @bind.source.getIndexDimensions()
 
   _remap: (transpose, dims) ->
     # Map dimensions onto their new axis

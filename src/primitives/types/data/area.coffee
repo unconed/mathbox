@@ -2,14 +2,18 @@ Matrix = require './matrix'
 Util = require '../../../util'
 
 class Area extends Matrix
-  @traits = ['node', 'buffer', 'data', 'source', 'index', 'matrix', 'texture', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
+  @traits = ['node', 'buffer', 'data', 'source', 'index', 'matrix', 'texture', 'raw', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
 
   updateSpan: () ->
     dimensions = @props.axes
     width      = @props.width
     height     = @props.height
+
     centeredX  = @props.centeredX
     centeredY  = @props.centeredY
+
+    padX       = @props.paddingX
+    padY       = @props.paddingY
 
     rangeX     = @_helpers.span.get 'x.', dimensions[0]
     rangeY     = @_helpers.span.get 'y.', dimensions[1]
@@ -20,20 +24,26 @@ class Area extends Matrix
     spanX = rangeX.y - rangeX.x
     spanY = rangeY.y - rangeY.x
 
+    width  += padX * 2
+    height += padY * 2
+
     if centeredX
       inverseX  = 1 / Math.max 1, width
-      aX += spanX * inverseX / 2
+      @aX += spanX * inverseX / 2
     else
       inverseX  = 1 / Math.max 1, width - 1
 
     if centeredY
       inverseY  = 1 / Math.max 1, height
-      aY += spanY * inverseY / 2
+      @aY += spanY * inverseY / 2
     else
       inverseY  = 1 / Math.max 1, height - 1
 
     @bX = spanX * inverseX
     @bY = spanY * inverseY
+
+    @aX += padX * @bX
+    @aY += padY * @bY
 
   callback: (callback) ->
     @updateSpan()

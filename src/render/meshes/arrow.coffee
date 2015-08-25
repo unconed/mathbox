@@ -41,20 +41,19 @@ class Arrow extends Base
 
     f.pipe 'fragment.color',        @uniforms
 
-    @material = @_material factory.link
-      index0AttributeName: "position4"
+    @material = @_material factory.link {}
 
     object = new THREE.Mesh @geometry, @material
     object.frustumCulled = false;
     object.matrixAutoUpdate = false;
 
     @_raw object
-    @objects = [object]
+    @renders = [object]
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @objects = @geometry = @material = null
+    @renders = @geometry = @material = null
     super
 
 module.exports = Arrow

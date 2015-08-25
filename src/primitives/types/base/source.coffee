@@ -18,12 +18,9 @@ class Source extends Primitive
     height: 1
     depth:  1
 
-  getActiveDimensions: () ->
-    items:  1
-    width:  1
-    height: 1
-    depth:  1
+  getActiveDimensions: () -> @getDimensions()
 
-  getIndexDimensions: () -> @getActiveDimensions()
+  getIndexDimensions:  () -> @getActiveDimensions()
+  getFutureDimensions: () -> @getActiveDimensions()
 
 module.exports = Source

@@ -37,8 +37,10 @@ class Attributes
     @lastValue  = value
     @pending.push callback
 
+  invoke: (callback) -> callback @context.time.clock, @context.time.delta
+
   compute: () ->
-    cb @context.time.clock, @context.time.delta for cb in @bound if @bound.length
+    @invoke cb for cb in @bound if @bound.length
     return
 
   digest: () ->
@@ -65,6 +67,7 @@ class Data
     oldOrig  = object.orig()     if object.set?  and object.get? and object.orig?
     oldExpr  = object.expr       if object.bind? and object.unbind?
     oldReads = object.readonly() if object.bind? and object.unbind?
+    oldFinal = object.final()    if object.bind? and object.unbind?
 
     # Dispose of old attributes/bindings
     object.attributes?.dispose()
@@ -125,11 +128,12 @@ class Data
       return valid
 
     # Expression binding
-    bound = {}
-    expr  = {}
-    reads = {}
+    bound  = {}
+    expr   = {}
+    reads  = {}
+    finals = {}
 
-    bind = (key, _expr, readonly = false) ->
+    bind = (key, _expr, readonly = false, final = false) ->
       if typeof _expr != 'function'
         throw new Error "#{object.toString()} - Expression `#{key}=>{#{expr}}` is not a function"
       if expr[key]
@@ -137,40 +141,31 @@ class Data
       if readonly[key]
         throw new Error "#{object.toString()} - Property `#{key}` is read-only"
 
-      reads[key] = _expr if readonly
-      expr[key]  = _expr if !readonly
+      list = if final then finals else if readonly then reads else expr
+      list[key] = _expr
 
       _expr = _expr.bind object
       bound[key] = (t, d) -> object.set key, _expr(t, d), true
-      _attributes.bind bound[key]
+      _attributes.invoke bound[key] if  final
+      _attributes.bind   bound[key] if !final
 
-    unbind = (key, readonly = false) ->
-      return unless (if readonly then expr[key] else reads[key])
+    unbind = (key, readonly = false, final = true) ->
+      list = if final then finals else if readonly then reads else expr
+      return unless list[key]
       _attributes.unbind bound[key]
       delete bound[key]
-      delete expr[key]
-      delete reads[key]
+      delete list[key]
 
-    # Public interface
-    object.readonly = () ->
+    shallowCopy = (x) ->
       out = {}
-      out[k] = v for k,v of reads
+      out[k] = v for k, v of x
       out
 
+    # Public interface
     object.expr  = expr
     object.props = flattened
 
-    object.orig = (key) =>
-      if key?
-        originals[to(key)]
-      else
-        originals
-
-    object.get = (key) =>
-      if key?
-        get(key)
-      else
-        flattened
+    object.get = (key) => if key? then get(key) else flattened
 
     object.set = (key, value, ignore, initial) ->
       if typeof key == 'string'
@@ -182,13 +177,13 @@ class Data
         set(key, value, ignore, initial) for key, value of options
       return
 
-    object.bind = (key, expr, readonly) ->
+    object.bind = (key, expr, readonly, final) ->
       if typeof key == 'string'
-        bind(key, expr, readonly)
+        bind(key, expr, readonly, final)
       else
         readonly = expr
         binds = key
-        bind(key, expr, readonly) for key, expr of binds
+        bind(key, expr, readonly, final) for key, expr of binds
 
     object.unbind = (key, readonly) ->
       if typeof key == 'string'
@@ -196,7 +191,11 @@ class Data
       else
         unbind(key, readonly) for key of expr
 
-    object.attribute = (key) => @[to(key)]
+    object.attribute = (key) => if key? then         @[to key] else @
+    object.final     = (key) => if key? then    finals[to key] else shallowCopy finals
+    object.readonly  = (key) => if key? then     reads[to key] else shallowCopy reads
+    object.orig      = (key) => if key? then originals[to key] else shallowCopy originals
+
 
     # Validate value for key
     makers     = {}
@@ -306,12 +305,13 @@ class Data
     object.traits = unique
 
     # Set previous values if applicable
-    object.set oldProps, true,  true if oldProps?
-    object.set oldOrig,  false, true if oldOrig?
+    object.set  oldProps,  true,  true  if oldProps?
+    object.set  oldOrig,   false, true  if oldOrig?
 
     # Bind previous expressions if applicable
-    object.bind oldReads, true if oldReads?
-    object.bind oldExpr, false if oldExpr?
+    object.bind oldFinals, true,  true  if oldFinals?
+    object.bind oldReads,  true         if oldReads?
+    object.bind oldExpr,   false        if oldExpr?
 
     # Destructor
     @dispose = () ->

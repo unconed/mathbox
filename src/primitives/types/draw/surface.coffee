@@ -2,25 +2,22 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Surface extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid:x', 'grid:y', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
 
-    @line1 = @line2 = @surface = null
+    @lineX = @lineY = @surface = null
 
   resize: () ->
     return unless @bind.points?
 
     dims = @bind.points.getActiveDimensions()
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
-    layers = dims.items
+    {width, height, depth, items} = dims
 
-    @surface.geometry.clip width, height, depth, layers if @surface
-    @line1  .geometry.clip width, height, depth, layers if @line1
-    @line2  .geometry.clip height, width, depth, layers if @line2
+    @surface.geometry.clip width, height, depth, items if @surface
+    @lineX  .geometry.clip width, height, depth, items if @lineX
+    @lineY  .geometry.clip height, width, depth, items if @lineY
 
   make: () ->
     # Bind to attached data sources
@@ -55,17 +52,10 @@ class Surface extends Primitive
 
     # Fetch geometry dimensions
     dims   = @bind.points.getDimensions()
-    width  = dims.width
-    height = dims.height
-    depth  = dims.depth
-    layers = dims.items
+    {width, height, depth, items} = dims
 
     # Get display properties
-    shaded = @props.shaded
-    solid  = @props.solid
-    first  = @props.lineX
-    second = @props.lineY
-    stroke = @props.stroke
+    {shaded, fill, lineX, lineY, stroke, crossed} = @props
 
     objects = []
 
@@ -80,43 +70,43 @@ class Surface extends Primitive
     # Make line and surface renderables
     {swizzle, swizzle2}  = @_helpers.position
     uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms, wireUniforms
-    zUnits = if first or second then -50 else 0
-    if first
-      @line1 = @_renderables.make 'line',
+    zUnits = if lineX or lineY then -50 else 0
+    if lineX
+      @lineX = @_renderables.make 'line',
                 uniforms: uniforms
                 samples:  width
                 strips:   height
                 ribbons:  depth
-                layers:   layers
+                layers:   items
                 position: position
                 color:    color
                 zUnits:   -zUnits
                 stroke:   stroke
                 mask:     mask
-      objects.push @line1
+      objects.push @lineX
 
-    if second
-      @line2 = @_renderables.make 'line',
+    if lineY
+      @lineY = @_renderables.make 'line',
                 uniforms: uniforms
                 samples:  height
                 strips:   width
                 ribbons:  depth
-                layers:   layers
+                layers:   items
                 position: swizzle2 position, 'yxzw', 'yxzw'
                 color:    swizzle  color,    'yxzw'
                 zUnits:   -zUnits
                 stroke:   stroke
-                mask:     swizzle  mask,     'yxzw'
-      objects.push @line2
+                mask:     swizzle  mask,     if crossed then 'xyzw' else 'yxzw'
+      objects.push @lineY
 
-    if solid
+    if fill
       uniforms = Util.JS.merge unitUniforms, surfaceUniforms, styleUniforms
       @surface = @_renderables.make 'surface',
                 uniforms: uniforms
                 width:    width
                 height:   height
                 surfaces: depth
-                layers:   layers
+                layers:   items
                 position: position
                 color:    color
                 shaded:   shaded
@@ -135,25 +125,25 @@ class Surface extends Primitive
     @_helpers.visible.unmake()
     @_helpers.object.unmake()
 
-    @line1 = @line2 = @surface = null
+    @lineX = @lineY = @surface = null
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['geometry.points'] or
                          changed['mesh.shaded'] or
-                         changed['mesh.solid'] or
+                         changed['mesh.fill'] or
                          changed['line.stroke'] or
                          touched['grid']
 
     if changed['style.color'] or
-       changed['mesh.solid'] or
+       changed['mesh.fill'] or
        init
 
-      solid  = @_get 'mesh.solid'
+      fill   = @_get 'mesh.fill'
       color  = @_get 'style.color'
 
       @wireZBias.value = @_get('style.zBias') + 5
       @wireColor.copy color
-      if solid
+      if fill
         c = @wireScratch
         c.setRGB color.x, color.y, color.z
         c

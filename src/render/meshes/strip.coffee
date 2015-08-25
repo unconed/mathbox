@@ -41,17 +41,16 @@ class Strip extends Base
 
     @material = @_material factory.link
       side: THREE.DoubleSide
-      index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material
 
     @_raw object
-    @objects = [object]
+    @renders = [object]
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @objects = @geometry = @material = null
+    @renders = @geometry = @material = null
     super
 
 module.exports = Strip

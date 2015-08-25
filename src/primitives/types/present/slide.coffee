@@ -21,10 +21,10 @@ class Slide extends Parent
                        changed['slide.exits'] or
                        changed['slide.stay']
 
-  slideReset: () ->            @_instant    false
   slideEnter: (step) ->        @_transition true,    step
   slideExit:  (step) ->        @_transition false,   step
-  slideStep:  (index, step) -> @_step       index, step
+  slideStep:  (index, step) -> @_step       index,   step
+  slideReset: () ->            @_instant    false
 
   _transition: (enabled, step) ->
     #console.log 'slide:transition', enabled, step
@@ -47,6 +47,6 @@ class Slide extends Parent
     @trigger
       'type': 'slide.step'
       'index': index
-      'step': step
+      'step':   step
 
 module.exports = Slide

@@ -1,7 +1,7 @@
 Operator = require './operator'
 
 class Lerp extends Operator
-  @traits = ['node', 'bind', 'operator', 'source', 'index', 'lerp', 'sampler']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'lerp', 'sampler:width', 'sampler:height', 'sampler:depth', 'sampler:items']
 
   indexShader: (shader) ->
     shader.pipe @indexer
@@ -9,11 +9,10 @@ class Lerp extends Operator
   sourceShader: (shader) ->
     shader.pipe @operator
 
-  getDimensions: () ->
-    @_resample @bind.source.getDimensions()
-
-  getActiveDimensions: () ->
-    @_resample @bind.source.getActiveDimensions()
+  getDimensions:       () -> @_resample @bind.source.getDimensions()
+  getActiveDimensions: () -> @_resample @bind.source.getActiveDimensions()
+  getFutureDimensions: () -> @_resample @bind.source.getFutureDimensions()
+  getIndexDimensions:  () -> @_resample @bind.source.getIndexDimensions()
 
   _resample: (dims) ->
     r = @resample
@@ -32,9 +31,6 @@ class Lerp extends Operator
     # Build index-only shader
     indexer   = @_shaders.shader()
 
-    # Sampler behavior
-    centered = @props.centered
-
     # Resampling ratios
     @resample = {}
 
@@ -46,13 +42,19 @@ class Lerp extends Operator
 
       @resample[key] = size / dims[key]
 
+      centered = @_get "#{key}.sampler.centered"
+      padding  = @_get "#{key}.sampler.padding"
+
+      size += padding * 2
+
       if size != dims[key]
         ratio = if centered
                   dims[key] / Math.max 1, size
                 else
-                  (dims[key] - 1) / Math.max 1, size - 1
+                  Math.max(1, dims[key] - 1) / Math.max 1, size - 1
         uniforms =
           sampleRatio: @_attributes.make @_types.number ratio
+          sampleBias:  @_attributes.make @_types.number ratio * padding
 
         transform = @_shaders.shader().require transform
         transform.pipe id, uniforms

@@ -11,7 +11,7 @@ class Data extends Source
   emitter: (channels, items) ->
     data = @props.data
     bind = @props.resolve
-    expr = @props.map
+    expr = @props.expr
 
     if data?
       # Make new emitter if data geometry doesn't match
@@ -29,9 +29,12 @@ class Data extends Source
       # Hook up data-bound expression to its source
       resolve = @_inherit 'resolve'
       emitter = @callback resolve.callback bind
-    else
+    else if expr?
       # Convert given free expression to appropriate callback
       emitter = @callback expr
+    else
+      # Passthrough
+      emitter = @callback @passthrough
 
     emitter
 

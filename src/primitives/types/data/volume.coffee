@@ -14,6 +14,10 @@ class Volume extends Voxel
     centeredY  = @props.centeredY
     centeredZ  = @props.centeredZ
 
+    padX  = @props.paddingX
+    padY  = @props.paddingY
+    padZ  = @props.paddingZ
+
     rangeX     = @_helpers.span.get 'x.', dimensions[0]
     rangeY     = @_helpers.span.get 'y.', dimensions[1]
     rangeZ     = @_helpers.span.get 'z.', dimensions[2]
@@ -25,6 +29,10 @@ class Volume extends Voxel
     spanX = rangeX.y - rangeX.x
     spanY = rangeY.y - rangeY.x
     spanZ = rangeZ.y - rangeZ.x
+
+    width  += padX * 2
+    height += padY * 2
+    depth  += padZ * 2
 
     if centeredX
       inverseX  = 1 / Math.max 1, width
@@ -47,6 +55,10 @@ class Volume extends Voxel
     @bX = spanX * inverseX
     @bY = spanY * inverseY
     @bZ = spanZ * inverseZ
+
+    @aX += @bX * padX
+    @aY += @bY * padY
+    @aZ += @bZ * padY
 
   callback: (callback) ->
     @updateSpan()

@@ -46,11 +46,11 @@ class Line extends Primitive
     unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Clip start/end for terminating arrow
-    start   = @props.start
-    end     = @props.end
+    {start, end} = @props
 
     # Stroke style
-    stroke  = @props.stroke
+    {stroke, proximity} = @props
+    @proximity = proximity
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
@@ -70,16 +70,17 @@ class Line extends Primitive
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
     @line = @_renderables.make 'line',
-              uniforms: uniforms
-              samples:  samples
-              strips:   strips
-              ribbons:  ribbons
-              layers:   layers
-              position: position
-              color:    color
-              clip:     start or end
-              stroke:   stroke
-              mask:     mask
+              uniforms:  uniforms
+              samples:   samples
+              strips:    strips
+              ribbons:   ribbons
+              layers:    layers
+              position:  position
+              color:     color
+              clip:      start or end
+              stroke:    stroke
+              proximity: proximity
+              mask:      mask
 
     # Make arrow renderables
     @arrows = []
@@ -123,5 +124,8 @@ class Line extends Primitive
                          changed['line.stroke'] or
                          changed['arrow.start'] or
                          changed['arrow.end']
+
+    if changed['line.proximity']
+      return @rebuild() if @proximity? != @props.proximity?
 
 module.exports = Line

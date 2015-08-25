@@ -2,7 +2,7 @@ Operator = require './operator'
 Util     = require '../../../util'
 
 class Resample extends Operator
-  @traits = ['node', 'bind', 'operator', 'source', 'index', 'resample', 'sampler']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'resample', 'sampler:width', 'sampler:height', 'sampler:depth', 'sampler:items']
 
   indexShader:  (shader) ->
     shader.pipe @indexer
@@ -11,11 +11,10 @@ class Resample extends Operator
   sourceShader: (shader) ->
     shader.pipe @operator
 
-  getDimensions: () ->
-    @_resample @bind.source.getDimensions()
-
-  getActiveDimensions: () ->
-    @_resample @bind.source.getActiveDimensions()
+  getDimensions:       () -> @_resample @bind.source.getDimensions()
+  getActiveDimensions: () -> @_resample @bind.source.getActiveDimensions()
+  getFutureDimensions: () -> @_resample @bind.source.getFutureDimensions()
+  getIndexDimensions:  () -> @_resample @bind.source.getIndexDimensions()
 
   _resample: (dims) ->
     r = @resampled
@@ -47,16 +46,15 @@ class Resample extends Operator
 
     # Get resampled dimensions (if any)
     map    = @_get 'resample.map'
-    scale  = @_get 'resample.scale'
+    unit   = @_get 'resample.unit'
     items  = @_get 'resample.items'
     width  = @_get 'resample.width'
     height = @_get 'resample.height'
     depth  = @_get 'resample.depth'
 
     # Sampler behavior
-    centered = @_get 'sampler.centered'
-    relativeMap   = map   == @node.attributes['resample.map']  .enum.relative
-    relativeScale = scale == @node.attributes['resample.scale'].enum.relative
+    relativeMap  = map  == @node.attributes['resample.map'] .enum.relative
+    relativeUnit = unit == @node.attributes['resample.unit'].enum.relative
 
     @resampled = {}
     @resampled.items  = items  if items?
@@ -79,23 +77,37 @@ class Resample extends Operator
       targetResolution: @_attributes.make type(0, 0, 0, 0)
       targetOffset:     @_attributes.make @_types.vec2(.5, .5)
 
-      resampleFactor:   @_attributes.make type(0, 0, 0, 0)
+      resampleFactor:   @_attributes.make @_types.vec4(0, 0, 0, 0)
+      resampleBias:     @_attributes.make @_types.vec4(0, 0, 0, 0)
 
     @dataResolution   = uniforms.dataResolution
     @dataSize         = uniforms.dataSize
     @targetResolution = uniforms.targetResolution
     @targetSize       = uniforms.targetSize
     @resampleFactor   = uniforms.resampleFactor
+    @resampleBias     = uniforms.resampleBias
 
     shifted = false
+
+    # Add padding
+    operator.pipe 'resample.padding', uniforms
+
+    # Add centered sampling offset
+    vec = []
+    any = false
+    for key, i in ['width', 'height', 'depth', 'items']
+      centered = @_get "#{key}.sampler.centered"
+      any || = centered
+      vec[i] = if centered then "0.5" else "0.0"
+
+    if any
+      shifted = true
+      vec = "vec4(#{vec})"
+      operator.pipe Util.GLSL.binaryOperator 4, '+', vec4
 
     if relativeMap
       # Addressing relative to target
       if items? or width? or height? or depth?
-        if centered
-          shifted = true
-          operator.pipe Util.GLSL.binaryOperator 'vec4', '+', '.5'
-          indexer .pipe Util.GLSL.binaryOperator 'vec4', '+', '.5'
         operator.pipe 'resample.relative', uniforms
         indexer .pipe 'resample.relative', uniforms
       else
@@ -103,11 +115,10 @@ class Resample extends Operator
 
     if shader?
       operator.pipe Util.GLSL.truncateVec 4, indices             if indices != 4
-      operator.pipe Util.GLSL.binaryOperator indices, '+', '.5'  if centered and !shifted
 
       operator.callback()
-      operator.pipe Util.GLSL.binaryOperator indices, '-', '.5'  if shifted
       operator.pipe Util.GLSL.extendVec indices, 4               if indices != 4
+      operator.pipe Util.GLSL.binaryOperator 4, '-', vec         if shifted
       operator.pipe @bind.source.sourceShader @_shaders.shader()
       operator.pipe Util.GLSL.truncateVec 4, dimensions          if dimensions != 4
       operator.join()
@@ -116,14 +127,13 @@ class Resample extends Operator
 
       operator.pipe Util.GLSL.extendVec dimensions, 4            if dimensions != 4
     else
-      operator.pipe Util.GLSL.binaryOperator 'vec4', '-', '.5'   if shifted
+      operator.pipe Util.GLSL.binaryOperator 4, '-', vec         if shifted
       operator.pipe @bind.source.sourceShader @_shaders.shader()
 
     @operator = operator
     @indexer  = indexer
     @indices  = indices
-    @centered = centered
-    @scaled   = relativeScale
+    @scaled   = relativeUnit
 
   unmake: () ->
     super
@@ -135,16 +145,23 @@ class Resample extends Operator
     dims   = @bind.source.getActiveDimensions()
     target = @getActiveDimensions()
 
-    if @centered
-      ri = dims.items  / Math.max 1, target.items
-      rw = dims.width  / Math.max 1, target.width
-      rh = dims.height / Math.max 1, target.height
-      rd = dims.depth  / Math.max 1, target.depth
-    else
-      ri = Math.max(1, dims.items  - 1) / Math.max 1, target.items  - 1
-      rw = Math.max(1, dims.width  - 1) / Math.max 1, target.width  - 1
-      rh = Math.max(1, dims.height - 1) / Math.max 1, target.height - 1
-      rd = Math.max(1, dims.depth  - 1) / Math.max 1, target.depth  - 1
+    axis = (key) =>
+      centered = @_get "#{key}.sampler.centered"
+      pad      = @_get "#{key}.sampler.padding"
+
+      target[key] += pad * 2
+
+      res =
+        if centered
+          dims[key] / Math.max 1, target[key]
+        else
+          Math.max(1, dims[key] - 1) / Math.max 1, target[key] - 1
+      [res, pad]
+
+    [rw, bw] = axis 'width'
+    [rh, bh] = axis 'height'
+    [rd, bd] = axis 'depth'
+    [ri, bi] = axis 'items'
 
     if @indices == 1
       @dataResolution  .value = 1 / dims.width
@@ -154,6 +171,7 @@ class Resample extends Operator
       @targetSize.value       = target.width
 
       @resampleFactor.value   = rw
+      @resampleBias.value     = bw
 
     else
       @dataResolution  .value.set 1 / dims.width, 1 / dims.height, 1 / dims.depth, 1 / dims.items
@@ -163,6 +181,7 @@ class Resample extends Operator
       @targetSize .value.set      target.width, target.height, target.depth, target.items
 
       @resampleFactor.value.set   rw, rh, rd, ri
+      @resampleBias.value.set     bw, bh, bd, bi
 
     super
 

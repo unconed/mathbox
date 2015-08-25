@@ -18,6 +18,7 @@ class Voxel extends Buffer
       depth:  0
 
     @storage = 'voxelBuffer'
+    @passthrough = (emit, x, y, z) -> emit x, y, z, 0
 
     super
 
@@ -127,49 +128,48 @@ class Voxel extends Buffer
       (emit, i) =>
         callback emit, i, j, k, @_context.time.clock, @_context.time.delta
 
-  update: () ->
+  update: () =>
     return unless @buffer
 
-    filled   = @buffer.getFilled()
-    return unless !filled or @props.live
-
-    data = @props.data
-
-    space    = @space
-    used     = @used
-
+    {data} = @props
+    {space, used} = @
     w = used.width
     h = used.height
     d = used.depth
 
-    if data?
-      dims = Util.Data.getDimensions data, @spec
+    filled = @buffer.getFilled()
 
-      # Grow dimensions if needed
-      if dims.width  > space.width  or
-         dims.height > space.height or
-         dims.depth  > space.depth
-        @rebuild()
+    @syncBuffer (abort) =>
 
-      used.width  = dims.width
-      used.height = dims.height
-      used.depth  = dims.depth
+      if data?
+        dims = Util.Data.getDimensions data, @spec
 
-      @buffer.setActive used.width, used.height, used.depth
-      @buffer.callback.rebind data
-      @buffer.update()
-    else
-      @buffer.setActive @spec.width, @spec.height, @spec.depth
+        # Grow dimensions if needed
+        if dims.width  > space.width  or
+           dims.height > space.height or
+           dims.depth  > space.depth
+          abort()
+          return @rebuild()
 
-      length = @buffer.update()
+        used.width  = dims.width
+        used.height = dims.height
+        used.depth  = dims.depth
 
-      used.width  = _w = @spec.width
-      used.height = _h = @spec.height
-      used.depth  = Math.ceil length / _w / _h
+        @buffer.setActive used.width, used.height, used.depth
+        @buffer.callback.rebind data
+        @buffer.update()
+      else
+        @buffer.setActive @spec.width, @spec.height, @spec.depth
 
-      if used.depth == 1
-        used.height = Math.ceil length / _w
-        used.width  = length if used.height == 1
+        length = @buffer.update()
+
+        used.width  = _w = @spec.width
+        used.height = _h = @spec.height
+        used.depth  = Math.ceil length / _w / _h
+
+        if used.depth == 1
+          used.height = Math.ceil length / _w
+          used.width  = length if used.height == 1
 
     if used.width  != w or
        used.height != h or

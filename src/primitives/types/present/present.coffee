@@ -42,9 +42,9 @@ class Present extends Parent
   slideReset: (controller) ->              controller.slideReset()
   slideEnter: (controller, step) ->        controller.slideEnter step
   slideExit:  (controller, step) ->        controller.slideExit  step
-  slideStep:  (controller, index, step) -> controller.slideStep  index, step
+  slideStep:  (controller, index, step) -> controller.slideStep  @mapIndex(controller, index), step
 
-  mapIndex: (node, index) -> index - node.controller.slideIndex
+  mapIndex: (controller, index) -> index - controller.slideIndex
 
   process: (nodes) ->
 
@@ -113,8 +113,9 @@ class Present extends Parent
 
     tag = (steps) ->
       for step, i in steps
-        parent = (step[1]?.controller.slideIndex || 0)
-        step[0].controller.slideIndex = i + 1 - parent
+        #parent = (step[1]?.controller.slideIndex || 0)
+        #step[0].controller.slideIndex = i + 1 - parent
+        step[0].controller.slideIndex = i
       steps
 
     builds = (steps) ->

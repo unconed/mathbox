@@ -144,8 +144,6 @@ class Track extends Primitive
       props = {}
       props[k] = map k, from.props[k], to.props[k] for k, v of from.props
 
-      console.log @node.toString(), 'node.set', props, @playhead, f, from.props, to.props, start, end if @node.id == 'enterexit2'
-
       node.set props, true
 
     {expr} = @props

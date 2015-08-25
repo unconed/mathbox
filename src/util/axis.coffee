@@ -1,5 +1,11 @@
-exports.setDimension = (vec, dimension) ->
+exports.addOrigin = (vec, dimension, origin) ->
+  x = vec.x + if dimension == 1 then 0 else origin.x
+  y = vec.y + if dimension == 2 then 0 else origin.y
+  z = vec.z + if dimension == 3 then 0 else origin.z
+  w = vec.w + if dimension == 4 then 0 else origin.w
+  vec.set x, y, z, w
 
+exports.setDimension = (vec, dimension) ->
   x = if dimension == 1 then 1 else 0
   y = if dimension == 2 then 1 else 0
   z = if dimension == 3 then 1 else 0

@@ -44,7 +44,7 @@ class Strip extends Primitive
     # Get display properties
     outline = @props.outline
     shaded  = @props.shaded
-    solid   = @props.solid
+    fill    = @props.fill
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
@@ -75,7 +75,7 @@ class Strip extends Primitive
       objects.push @line
 
     # Make strip renderable
-    if solid
+    if fill
       uniforms = Util.JS.merge styleUniforms, {}
 
       @strip = @_renderables.make 'strip',
@@ -102,6 +102,6 @@ class Strip extends Primitive
     @strip = null
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['geometry.points']
+    return @rebuild() if changed['geometry.points'] or touched['mesh']
 
 module.exports = Strip

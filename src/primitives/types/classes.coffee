@@ -21,6 +21,7 @@ Classes =
   transform:         require './transform/transform3'
   transform4:        require './transform/transform4'
   vertex:            require './transform/vertex'
+  layer:             require './transform/layer'
 
   array:             require './data/array'
   interval:          require './data/interval'
@@ -43,6 +44,7 @@ Classes =
   swizzle:           require './operator/swizzle'
   spread:            require './operator/spread'
   split:             require './operator/split'
+  slice:             require './operator/slice'
   transpose:         require './operator/transpose'
 
   shader:            require './base/shader'
@@ -58,7 +60,7 @@ Classes =
   clock:             require './present/clock'
   present:           require './present/present'
   slide:             require './present/slide'
-  steps:             require './present/steps'
+  step:              require './present/step'
   track:             require './present/track'
   transition:        require './present/transition'
 

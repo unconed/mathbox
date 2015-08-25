@@ -65,11 +65,11 @@ class RTT extends Root
       minFilter: minFilter
       magFilter: magFilter
       type:      type
-  
+
     aspect     = if width or height then aspect else @rootSize.aspect
     viewWidth  = width  ? @rootSize.viewWidth
     viewHeight = height ? @rootSize.viewHeight
-  
+
     @size =
       renderWidth:  @width
       renderHeight: @height
@@ -89,7 +89,7 @@ class RTT extends Root
     if @size
       @trigger
         type: 'root.resize'
-        size: @size          
+        size: @size
 
   unmake: (rebuild) ->
     @parentRoot.off 'root.update', @updateHandler
@@ -107,8 +107,8 @@ class RTT extends Root
                          changed['rtt.width']  or
                          changed['rtt.height']
 
-  adopt:   (renderable) -> @scene.add    object for object in renderable.objects
-  unadopt: (renderable) -> @scene.remove object for object in renderable.objects
+  adopt:   (renderable) -> @scene.add    object for object in renderable.renders
+  unadopt: (renderable) -> @scene.remove object for object in renderable.renders
 
   resize: (size) ->
     @rootSize = size

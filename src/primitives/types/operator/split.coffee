@@ -20,11 +20,10 @@ class Split extends Operator
     shader.pipe @operator
     super shader
 
-  getDimensions: () ->
-    @_resample @bind.source.getDimensions()
-
-  getActiveDimensions: () ->
-    @_resample @bind.source.getActiveDimensions()
+  getDimensions:       () -> @_resample @bind.source.getDimensions()
+  getActiveDimensions: () -> @_resample @bind.source.getActiveDimensions()
+  getFutureDimensions: () -> @_resample @bind.source.getFutureDimensions()
+  getIndexDimensions:  () -> @_resample @bind.source.getIndexDimensions()
 
   _resample: (dims) ->
     order   = @order

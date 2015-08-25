@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Grid extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'grid:x', 'grid:y', 'area', 'position',
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'grid', 'area', 'position',
             'axis:x',  'axis:y',
             'scale:x', 'scale:y',
             'span:x',  'span:y']
@@ -21,7 +21,7 @@ class Grid extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
-    axis = (first, second) =>
+    axis = (first, second, transpose) =>
       # Prepare data buffer of tick positions
       detail     = @_get first + 'axis.detail'
       samples    = detail + 1
@@ -45,6 +45,10 @@ class Grid extends Primitive
 
       # Build transform chain
       p = position = @_shaders.shader()
+
+      # Align second grid with first in mask space if requested
+      if transpose? and mask?
+        mask = @_helpers.position.swizzle mask, transpose
 
       # Require buffer sampler as callback
       p.require buffer.shader @_shaders.shader(), 2
@@ -74,15 +78,15 @@ class Grid extends Primitive
       {first, second, resolution, samples, line, buffer, values}
 
     # Generate both line sets
-    first  = @props.lineX
-    second = @props.lineY
+    {lineX, lineY, crossed, axes} = @props
+    transpose = ['0000', 'x000', 'y000', 'z000', 'w000'][axes[1]]
 
     # Stroke style
-    stroke  = @props.stroke
+    {stroke}  = @props
 
     @axes = []
-    first  && @axes.push axis 'x.', 'y.'
-    second && @axes.push axis 'y.', 'x.'
+    lineX && @axes.push axis 'x.', 'y.', null
+    lineY && @axes.push axis 'y.', 'x.', if crossed then null else transpose
 
     # Register lines
     lines = (axis.line for axis in @axes)
@@ -104,9 +108,11 @@ class Grid extends Primitive
 
     return @rebuild() if changed['x.axis.detail'] or
                          changed['y.axis.detail'] or
-                         changed['x.grid.line']   or
-                         changed['y.grid.line']   or
-                         changed['line.stroke']
+                         changed['grid.lineX']    or
+                         changed['grid.lineY']    or
+                         changed['line.stroke']   or
+                         changed['grid.crossed']  or
+                         (changed['grid.axes']    and @props.crossed)
 
     axis = (x, y, range1, range2, axis) =>
       {first, second, resolution, samples, line, buffer, values} = axis
@@ -135,17 +141,16 @@ class Grid extends Primitive
        init
 
       # Fetch grid range in both dimensions
-      axes   = @props.axes
+      {axes} = @props
       range1 = @_helpers.span.get 'x.', axes[0]
       range2 = @_helpers.span.get 'y.', axes[1]
 
       # Update both line sets
-      first  = @props.lineX
-      second = @props.lineY
+      {lineX, lineY} = @props
 
-      if first
+      if lineX
         axis axes[0], axes[1], range1, range2, @axes[0]
-      if second
-        axis axes[1], axes[0], range2, range1, @axes[+first]
+      if lineY
+        axis axes[1], axes[0], range2, range1, @axes[+lineX]
 
 module.exports = Grid

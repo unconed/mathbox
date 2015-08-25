@@ -17,6 +17,7 @@ class Matrix extends Buffer
       height:  0
 
     @storage = 'matrixBuffer'
+    @passthrough = (emit, x, y) -> emit x, y, 0, 0
 
     super
 
@@ -34,6 +35,12 @@ class Matrix extends Buffer
     width:  @used.width
     height: @used.height
     depth:  @buffer.getFilled()
+
+  getFutureDimensions: () ->
+    items:  @items
+    width:  @used.width
+    height: @used.height
+    depth:  @space.history
 
   getRawDimensions: () ->
     items:  @items
@@ -127,39 +134,38 @@ class Matrix extends Buffer
   update: () ->
     return unless @buffer
 
-    filled   = @buffer.getFilled()
-    return unless !filled or @props.live
-
-    data = @props.data
-
-    space    = @space
-    used     = @used
-
+    {data} = @props
+    {space, used} = @
     w = used.width
     h = used.height
 
-    if data?
-      dims = Util.Data.getDimensions data, @spec
+    filled = @buffer.getFilled()
 
-      # Grow if needed
-      if dims.width  > space.width or
-         dims.height > space.height
-        @rebuild()
+    @syncBuffer (abort) =>
 
-      used.width  = dims.width
-      used.height = dims.height
+      if data?
+        dims = Util.Data.getDimensions data, @spec
 
-      @buffer.setActive used.width, used.height
-      @buffer.callback.rebind data
-      @buffer.update()
-    else
-      @buffer.setActive @spec.width, @spec.height
+        # Grow if needed
+        if dims.width  > space.width or
+           dims.height > space.height
+          abort()
+          return @rebuild()
 
-      length = @buffer.update()
+        used.width  = dims.width
+        used.height = dims.height
 
-      used.width  = _w = @spec.width
-      used.height = Math.ceil length / _w
-      used.width  = length if used.height == 1
+        @buffer.setActive used.width, used.height
+        @buffer.callback.rebind data
+        @buffer.update()
+      else
+        @buffer.setActive @spec.width, @spec.height
+
+        length = @buffer.update()
+
+        used.width  = _w = @spec.width
+        used.height = Math.ceil length / _w
+        used.width  = length if used.height == 1
 
     if used.width  != w or
        used.height != h or

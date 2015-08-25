@@ -44,7 +44,6 @@ class Controller
     target.remove node if target
 
   inspect: (node, level = 'info') ->
-    [markup, args] = Util.Pretty.markup node.toMarkup()
-    console[level].apply console, [markup].concat args
+    Util.Pretty.print node.toMarkup()
 
 module.exports = Controller

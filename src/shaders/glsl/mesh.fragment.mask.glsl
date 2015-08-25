@@ -2,7 +2,7 @@ varying float vMask;
 
 float ease(float t) {
   t = clamp(t, 0.0, 1.0);
-  return (2.0 - t) * t;
+  return t * t * (3.0 - 2.0 * t);
 }
 
 vec4 maskColor() {

@@ -46,11 +46,11 @@ class Vector extends Primitive
     unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Clip start/end for terminating arrow
-    start   = @props.start
-    end     = @props.end
+    {start, end} = @props
 
     # Stroke style
-    stroke  = @props.stroke
+    {stroke, proximity} = @props
+    @proximity = proximity
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
@@ -62,7 +62,6 @@ class Vector extends Primitive
     # Build color lookup
     if @bind.colors
       color = @_shaders.shader()
-      color.pipe swizzle
       @bind.colors.sourceShader color
 
     # Build transition mask lookup
@@ -86,6 +85,7 @@ class Vector extends Primitive
               color:    color
               clip:     start or end
               stroke:   stroke
+              proximity: proximity
               mask:     mask
 
     # Make arrow renderables
@@ -100,6 +100,7 @@ class Vector extends Primitive
                 layers:   layers
                 position: position
                 color:    color
+                mask:     mask
 
     if end
       @arrows.push @_renderables.make 'arrow',
@@ -110,6 +111,7 @@ class Vector extends Primitive
                 layers:   layers
                 position: position
                 color:    color
+                mask:     mask
 
     @_helpers.visible.make()
     @_helpers.object.make @arrows.concat [@line]
@@ -125,7 +127,11 @@ class Vector extends Primitive
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['geometry.points'] or
+                         changed['line.stroke']     or
                          changed['arrow.start']     or
                          changed['arrow.end']
+
+    if changed['line.proximity']
+      return @rebuild() if @proximity? != @props.proximity?
 
 module.exports = Vector

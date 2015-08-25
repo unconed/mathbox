@@ -5,7 +5,7 @@ class Line extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, position, color, mask, clip, stroke} = options
+    {uniforms, position, color, mask, clip, stroke, proximity} = options
 
     uniforms ?= {}
     stroke   = [null, 'dotted', 'dashed'][stroke]
@@ -25,8 +25,9 @@ class Line extends Base
     factory = shaders.material()
 
     defs = {}
-    defs.LINE_STROKE = '' if stroke
-    defs.LINE_CLIP   = '' if clip
+    defs.LINE_STROKE    = '' if stroke
+    defs.LINE_CLIP      = '' if clip
+    defs.LINE_PROXIMITY = '' if proximity?
 
     v = factory.vertex
 
@@ -40,6 +41,7 @@ class Line extends Base
     f = factory.fragment
     f.pipe "fragment.clip.#{stroke}", @uniforms if stroke
     f.pipe 'fragment.clip.ends',      @uniforms if clip
+    f.pipe 'fragment.clip.proximity', @uniforms if proximity?
 
     @_fragmentColor f, hasStyle, false, color, mask
 
@@ -47,17 +49,16 @@ class Line extends Base
 
     @material = @_material factory.link
       side: THREE.DoubleSide
-      index0AttributeName: "position4"
 
     object = new THREE.Mesh @geometry, @material
 
     @_raw object
-    @objects = [object]
+    @renders = [object]
 
   dispose: () ->
     @geometry.dispose()
     @material.dispose()
-    @objects = @geometry = @material = null
+    @renders = @geometry = @material = null
     super
 
 module.exports = Line

@@ -39,14 +39,19 @@ class Axis extends Primitive
     @resolution = 1 / detail
 
     # Clip start/end for terminating arrow
-    start   = @props.start
-    end     = @props.end
+    {start, end} = @props
 
     # Stroke style
-    stroke  = @props.stroke
+    {stroke} = @props
 
     # Build transition mask lookup
     mask = @_helpers.object.mask()
+
+    # Indexing by fixed or by given axis
+    {crossed, axis} = @props
+    if crossed and mask?
+      swizzle = ['x000', 'y000', 'z000', 'w000'][@props.axis]
+      mask = @_helpers.position.swizzle mask, swizzle
 
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
@@ -86,22 +91,27 @@ class Axis extends Primitive
     @_helpers.span.unmake()
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['axis.detail'] or
-                         changed['line.stroke']
+    return @rebuild() if changed['axis.detail']   or
+                         changed['line.stroke']   or
+                         changed['axis.crossed']  or
+                         (changed['interval.axis'] and @props.crossed)
 
     if touched['interval'] or
        touched['span']     or
        touched['view']     or
        init
 
-      dimension = @props.axis
-      range = @_helpers.span.get '', dimension
+      {axis, origin} = @props
+
+      range = @_helpers.span.get '', axis
 
       min = range.x
       max = range.y
 
-      Util.Axis.setDimension(@axisPosition, dimension).multiplyScalar(min)
-      Util.Axis.setDimension(@axisStep, dimension).multiplyScalar((max - min) * @resolution)
+      Util.Axis.setDimension(@axisPosition, axis).multiplyScalar(min)
+      Util.Axis.setDimension(@axisStep, axis).multiplyScalar((max - min) * @resolution)
+
+      Util.Axis.addOrigin(@axisPosition, axis, origin)
 
 
 module.exports = Axis

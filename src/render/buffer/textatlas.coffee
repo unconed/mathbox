@@ -10,9 +10,11 @@ SCRATCH_SIZE = 512 / 16
 ###
 class TextAtlas extends Atlas
   constructor: (renderer, shaders, options) ->
-    @font    = options.font ? 'sans-serif'
+    @font    = options.font ? ['sans-serif']
     @size    = options.size || 24
     @style   = options.style ? 'normal'
+    @variant = options.variant ? 'normal'
+    @weight  = options.weight ? 'normal'
     @outline = +(options.outline ? 5) ? 0
 
     options.width    ||= 256
@@ -37,7 +39,7 @@ class TextAtlas extends Atlas
     # Prepare line-height with room for outline
     lineHeight = 16
     lineHeight = @size
-    lineHeight += 3 + 2 * Math.min 1, @outline
+    lineHeight += 4 + 2 * Math.min 1, @outline
     maxWidth = SCRATCH_SIZE * lineHeight
 
     # Prepare scratch canvas
@@ -45,8 +47,12 @@ class TextAtlas extends Atlas
     canvas.width  = maxWidth
     canvas.height = lineHeight
 
+    # Font string
+    quote = (str) -> "\"#{str.replace /(['"\\])/g, '\\$1'}\""
+    font  = @font.map(quote).join ", "
+
     context = canvas.getContext '2d'
-    context.font         = "#{@style} #{@size}px #{@font}"
+    context.font         = "#{@style} #{@variant} #{@weight} #{@size}px #{@font}"
     context.fillStyle    = '#FF0000'
     context.textAlign    = 'left'
     context.textBaseline = 'bottom'

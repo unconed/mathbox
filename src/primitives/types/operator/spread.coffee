@@ -30,7 +30,8 @@ class Spread extends Operator
 
   resize: () ->
     if @bind.source
-      dims = @bind.source.getActiveDimensions()
+      # Size to fit to include future history
+      dims = @bind.source.getFutureDimensions()
 
       matrix = @spreadMatrix.value
       els = matrix.elements
@@ -38,27 +39,38 @@ class Spread extends Operator
       order = ['width', 'height', 'depth', 'items']
       align = ['alignWidth', 'alignHeight', 'alignDepth', 'alignItems']
 
+      {unit} = @props
+      unitEnum = @node.attributes['spread.unit'].enum
+
+      map =
+        switch unit
+          when unitEnum.relative
+            (key, i, k, v) -> els[i*4+k] = v / Math.max 1, dims[key] - 1
+          when unitEnum.absolute
+            (key, i, k, v) -> els[i*4+k] = v
+
       for key, i in order
         spread = @props[key]
         anchor = @props[align[i]]
 
-        factor = 0
         if spread?
           d = dims[key] ? 1
           offset = -(d - 1) * (.5 - anchor * .5)
         else
           offset = 0
-
-        for k in [0...4]
-          v = spread?.getComponent(k) ? 0
-          els[i*4+k] = v * 2
-
         @spreadOffset.value.setComponent i, offset
+
+        for k in [0..3]
+          v = spread?.getComponent(k) ? 0
+          els[i*4+k] = map key, i, k, v
 
     super
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator']
+
+    if touched['spread']
+      @update()
 
 
 module.exports = Spread

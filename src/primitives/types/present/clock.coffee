@@ -6,9 +6,18 @@ class Clock extends Track
   init: () ->
     super
     @clock = null
+    @last  = -1
 
   reset: (go = true) ->
     @clock = if go then -@props.delay * @props.speed / @props.pace else null
+
+  realTime: () -> +new Date() / 1000
+
+  realDelta: () ->
+    time = @realTime()
+    delta =  if @last then time - @last else 0
+    @last = time
+    delta
 
   make: () ->
     super
@@ -25,7 +34,8 @@ class Clock extends Track
       {start, end, speed, pace} = @props
       @playhead =
         if @clock?
-          @clock += @_context.time.delta * speed / pace
+          delta = if @props.realTime then @realDelta() else @_context.time.delta
+          @clock += delta * speed / pace
           @playhead = Math.min end, start + Math.max 0, @clock
         else
           0
@@ -35,7 +45,7 @@ class Clock extends Track
     super
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['clock.trigger']
+    return @rebuild() if changed['clock.trigger'] or changed['clock.realTime']
     super changed, touched, init
 
 module.exports = Clock

@@ -21,33 +21,25 @@ class Format extends Operator
   textIsSDF:  () -> @props.expand > 0
   textHeight: () -> @props.detail
 
-  getDimensions: () -> @bind.source.getDimensions()
-  getActiveDimensions: () -> @bind.source.getActiveDimensions()
-
   make: () ->
     # Bind to attached data sources    # super
     @_helpers.bind.make [
       { to: 'operator.source', trait: 'raw' }
     ]
 
-    return unless @bind.source?
-
     # Read sampling parameters
-    minFilter = @props.minFilter
-    magFilter = @props.magFilter
-    type      = @props.type
+    {minFilter, magFilter, type} = @props
 
     # Read font parameters
-    font    = @props.font
-    style   = @props.style
-    detail  = @props.detail
-    expand  = @props.expand
+    {font, style, variant, weight, detail, expand} = @props
 
     # Prepare text atlas
     @atlas = @_renderables.make 'textAtlas',
                font:      font
                size:      detail
                style:     style
+               variant:   variant
+               weight:    weight
                outline:   expand
                minFilter: minFilter
                magFilter: magFilter
@@ -116,20 +108,33 @@ class Format extends Operator
   change: (changed, touched, init) ->
     return @rebuild() if touched['text']
 
-    if changed['format.expr'] or
+    if changed['format.expr']   or
        changed['format.digits'] or
+       changed['format.data']   or
        init
 
-      {digits, expr} = @props
+      {digits, expr, data} = @props
 
       unless expr?
-        expr = (x) -> x
+        if data?
+          expr = (x, y, z, w, i) -> data[i]
+        else
+          expr = (x) -> x
+
+      timed = expr.length > 8
 
       if digits?
-        expr = do (expr) -> (x, y, z, w) -> +(expr x, y, z, w).toPrecision digits
+        expr = do (expr) ->
+          (x, y, z, w, i, j, k, l, t, d) -> +(expr x, y, z, w, i, j, k, l, t, d).toPrecision digits
 
       # Stream raw source data and format it with expression
-      map = (emit, x, y, z, w) -> emit expr x, y, z, w
+      if timed
+        map = (emit, x, y, z, w, i, j, k, l) =>
+          emit expr x, y, z, w, i, j, k, l, @_context.time.clock, @_context.time.delta
+      else
+        map = (emit, x, y, z, w, i, j, k, l) =>
+          emit expr x, y, z, w, i, j, k, l
+
       @through = @bind.source.rawBuffer().through map, @buffer
 
 module.exports = Format

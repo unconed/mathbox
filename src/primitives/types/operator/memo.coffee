@@ -14,9 +14,7 @@ class Memo extends Operator
     @_listen 'root', 'root.update', @update
 
     # Read sampling parameters
-    minFilter = @props.minFilter
-    magFilter = @props.magFilter
-    type      = @props.type
+    {minFilter, magFilter, type} = @props
 
     # Fetch geometry dimensions
     dims   = @bind.source.getDimensions()

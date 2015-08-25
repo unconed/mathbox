@@ -8,7 +8,7 @@ Util       = require './util'
 
 class Context
   # Export for extending
-  @Namespace = { Model, Overlay, Primitives, Render, Shaders, Stage, Util, DOM: Util.VDOM.Types }
+  @Namespace = { Model, Overlay, Primitives, Render, Shaders, Stage, Util, DOM: Util.VDOM }
 
   # Set up entire environment
   constructor: (renderer, scene = null, camera = null) ->
@@ -44,6 +44,7 @@ class Context
 
     # Global clock
     @time        = { now: +new Date() / 1000, clock: 0, step: 0 }
+    @speed       = 1
 
   init: () ->
     @scene.inject()
@@ -75,14 +76,19 @@ class Context
     @root.controller.update?()
 
     @camera = @root.controller.getCamera()
+    @speed  = @root.controller.getSpeed()
 
   render: () ->
     @root.controller.render?()
+    @scene.render()
 
   post: () ->
     @root.controller.post?()
 
-  warmup: () ->
-    @scene.warmup()
+  warmup: (active) ->
+    @scene.warmup active
+
+  getPending: () ->
+    @scene.pending.length
 
 module.exports = Context

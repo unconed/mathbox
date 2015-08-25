@@ -130,8 +130,9 @@ helpers =
   line:
     # Return bound line style uniforms
     uniforms: () ->
-      lineWidth:   @node.attributes['line.width']
-      lineDepth:   @node.attributes['line.depth']
+      lineWidth:     @node.attributes['line.width']
+      lineDepth:     @node.attributes['line.depth']
+      lineProximity: @node.attributes['line.proximity']
 
   surface:
     # Return bound surface style uniforms
@@ -218,6 +219,10 @@ helpers =
     # Track visibility from parent and notify children
     # Track blends / transparency for three.js materials
     make: (@objects = []) ->
+
+      # Aggregate rendered three objects for reference
+      @renders = @objects.reduce ((a, b) -> a.concat b.renders), []
+
       objectScene  = @_inherit 'scene'
 
       opacity = blending = zOrder = zUnits = zFactor = null

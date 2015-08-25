@@ -51,7 +51,9 @@ class ArrayBuffer_ extends DataBuffer
     {consume, done} = src = @streamer
     {emit}          = dst = target.streamer
 
-    pipe = () -> consume (x, y, z, w) -> callback emit, x, y, z, w
+    i = 0
+
+    pipe = () -> consume (x, y, z, w) -> callback emit, x, y, z, w, i
     pipe = Util.Data.repeatCall pipe, @items
 
     () =>

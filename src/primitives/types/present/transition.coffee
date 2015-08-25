@@ -5,9 +5,8 @@ class Transition extends Parent
   @traits = ['node', 'transition', 'transform', 'mask', 'visible', 'active']
 
   init: () ->
-    @transitionSkew = @transitionBias = @transitionScale = @transitionActive = @transitionEnter = @transitionExit = null
-
     @animate = null
+    @uniforms = null
 
     @state =
       isVisible: true
@@ -17,11 +16,12 @@ class Transition extends Parent
 
     @latched = null
     @locked  = null
+    @zero = new THREE.Vector4
 
   make: () ->
     @uniforms =
-      transitionFrom:     @node.attributes['transition.from']
-      transitionTo:       @node.attributes['transition.to']
+      transitionFrom:     @_attributes.make @_types.vec4()
+      transitionTo:       @_attributes.make @_types.vec4()
 
       transitionActive:   @_attributes.make @_types.bool()
       transitionScale:    @_attributes.make @_types.vec4()
@@ -29,13 +29,6 @@ class Transition extends Parent
       transitionEnter:    @_attributes.make @_types.number()
       transitionExit:     @_attributes.make @_types.number()
       transitionSkew:     @_attributes.make @_types.number()
-
-    @transitionScale  = @uniforms.transitionScale.value
-    @transitionBias   = @uniforms.transitionBias.value
-    @transitionActive = @uniforms.transitionActive
-    @transitionEnter  = @uniforms.transitionEnter
-    @transitionExit   = @uniforms.transitionExit
-    @transitionSkew   = @uniforms.transitionSkew
 
     slideParent   = @_inherit('slide')
     visibleParent = @_inherit('visible')
@@ -52,6 +45,8 @@ class Transition extends Parent
         @state.exit      = value.y
         @update()
       complete: () => @complete()
+
+    @move = @props.from? or @props.to?
 
   unmake: () ->
     @animate.dispose()
@@ -84,13 +79,17 @@ class Transition extends Parent
       visible = state.isVisible
       [enter, exit] = if visible then [1, 1] else if forward then [1, 0] else [0, 1]
 
-      # Total duration
+      # Get duration
       {duration, durationEnter, durationExit} = @props
-      duration += visible * durationEnter + !visible * durationExit
+      durationEnter ?= duration
+      durationExit  ?= duration
+      duration = visible * durationEnter + !visible * durationExit
 
-      # Total delay
+      # Get delay
       {delay, delayEnter, delayExit} = @props
-      delay += visible * delayEnter + !visible * delayExit
+      delayEnter ?= delay
+      delayExit  ?= delay
+      delay = visible * delayEnter + !visible * delayExit
 
       # Animate enter/exit
       @animate.immediate {x: enter, y: exit}, {duration, delay, ease: 'linear'}
@@ -119,9 +118,9 @@ class Transition extends Parent
     visible = level > 0
     partial = level < 1
 
-    @transitionEnter .value = enter
-    @transitionExit  .value = exit
-    @transitionActive.value = partial
+    @uniforms.transitionEnter .value = enter
+    @uniforms.transitionExit  .value = exit
+    @uniforms.transitionActive.value = partial
 
     # Resolve visibility state
     visible = !!(@state.isVisible or @locked?.isVisible) if visible
@@ -141,6 +140,18 @@ class Transition extends Parent
 
 
   change: (changed, touched, init) ->
+
+
+    if changed['transition.from'] or
+       changed['transition.to']   or
+       init
+
+      move = @props.from? or @props.to?
+      return @rebuild if move != @move
+
+      # Replace null with zero
+      @uniforms.transitionFrom.value.copy @props.from ? @zero
+      @uniforms.transitionTo  .value.copy @props.to   ? @zero
 
     if changed['transition.enter'] or
        changed['transition.exit']  or
@@ -165,17 +176,17 @@ class Transition extends Parent
       staggerZ = Math.abs stagger.z
       staggerW = Math.abs stagger.w
 
-      @transitionSkew.value = staggerX + staggerY + staggerZ + staggerW
+      @uniforms.transitionSkew.value = staggerX + staggerY + staggerZ + staggerW
 
-      @transitionScale.set (1 - flipX * 2) * staggerX,
-                           (1 - flipY * 2) * staggerY,
-                           (1 - flipZ * 2) * staggerZ,
-                           (1 - flipW * 2) * staggerW
+      @uniforms.transitionScale.value.set (1 - flipX * 2) * staggerX,
+                                          (1 - flipY * 2) * staggerY,
+                                          (1 - flipZ * 2) * staggerZ,
+                                          (1 - flipW * 2) * staggerW
 
-      @transitionBias.set  flipX * staggerX,
-                           flipY * staggerY,
-                           flipZ * staggerZ,
-                           flipW * staggerW
+      @uniforms.transitionBias.value.set  flipX * staggerX,
+                                          flipY * staggerY,
+                                          flipZ * staggerZ,
+                                          flipW * staggerW
 
   mask: (shader) ->
     if shader
@@ -194,7 +205,7 @@ class Transition extends Parent
     @_inherit('mask')?.mask(s) ? s
 
   transform: (shader, pass) ->
-    shader.pipe 'transition.position', @uniforms if pass == @props.pass
+    shader.pipe 'transition.position', @uniforms if @move and (pass == @props.pass)
     @_inherit('transform')?.transform(shader, pass) ? shader
 
 module.exports = Transition

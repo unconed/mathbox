@@ -11,8 +11,8 @@ class Primitive
   @freeform = false
 
   constructor: (@node, @_context, helpers) ->
-    @_attributes  = @_context.attributes
     @_renderables = @_context.renderables
+    @_attributes  = @_context.attributes
     @_shaders     = @_context.shaders
     @_overlays    = @_context.overlays
     @_animator    = @_context.animator
@@ -36,7 +36,7 @@ class Primitive
     @_helpers = helpers @, @node.traits
 
     # Keep track of various handlers to do auto-cleanup on unmake()
-    @_handlers = inherit: {}, listen: [], watch: []
+    @_handlers = inherit: {}, listen: [], watch: [], prop: []
 
     # Detached initially
     @_root = @_parent = null
@@ -61,14 +61,8 @@ class Primitive
   # Destroy and create cycle
   rebuild: () ->
     if @_root
-      @unmake true
-      @_unlisten()
-      @_unattach()
-      @unmade()
-
-      @make()
-      @refresh()
-      @made()
+      @_removed true
+      @_added()
 
   # Reconfigure traits/props
   reconfigure: (config) ->
@@ -82,15 +76,23 @@ class Primitive
     @_parent   = @node.parent?.controller
     @_root     = @node.root  ?.controller
 
-    @make()
-    @refresh()
-    @made()
+    try
+      try
+        @make()
+      catch e
+        @node.print 'warn'
+        throw e
+      @refresh()
+      @made()
+    catch e
+      try @_removed()
+      console.error e
 
-  _removed: () ->
-    @unmake()
+  _removed: (rebuild = false) ->
+    @unmake rebuild
     @_unlisten()
     @_unattach()
-    @_unreadonly()
+    @_unbind()
 
     @_root     = null
     @_parent   = null
@@ -132,7 +134,7 @@ class Primitive
   _uninherit: () ->
     @_handlers.inherit = {}
 
-  # Attach to controller by trait
+  # Attach to controller by trait and watch the selector
   _attach: (selector, trait, method, self = @, start = @, optional = false, multiple = false) ->
 
     filter = (node) -> node.controller if node? and trait in node.traits
@@ -195,25 +197,31 @@ class Primitive
         return controllers if controllers.length
 
     id = "#" + @node.id if @node.id?
-    throw new Error "#{@node.toString()} - Could not find #{trait} `#{selector}`" if !optional
+    if !optional
+      console.warn @node.toMarkup()
+      throw new Error "#{@node.toString()} - Could not find #{trait} `#{selector}`"
     if multiple then [] else null
 
-  # Remove attachments
+  # Remove watcher attachments
   _unattach: () ->
     return unless @_handlers.watch.length
 
     watcher?.unwatch() for watcher in @_handlers.watch
     @_handlers.watch = []
 
-  # Make a read only prop
-  _readonly: (key, expr) ->
-    @_handlers.readonly ?= []
-    @_handlers.readonly.push key
-    @node.bind key, expr, true
+  # Bind a computed or final value to a prop
+  _readonly: (key, expr) -> @_bind key, false, expr
+  _final:    (key, expr) -> @_bind key, true,  expr
 
-  _unreadonly: () ->
-    return unless @_handlers.readonly.length
-    @node.unbind key, true for key of @_handlers.readonly
+  _bind: (key, final, expr) ->
+    @_handlers.bind.push {key, final}
+    @node.bind key, expr, true, final
+
+  # Remove prop bindings
+  _unbind: () ->
+    return unless @_handlers.bind.length
+    for [key, final] in @_handlers.bind
+      @node.unbind key, true, final
 
 THREE.Binder.apply Primitive::
 

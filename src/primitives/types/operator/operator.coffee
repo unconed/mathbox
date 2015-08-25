@@ -7,6 +7,7 @@ class Operator extends Source
   sourceShader:  (shader)   -> @bind.source?.sourceShader?  shader
 
   getDimensions: () ->       @bind.source.getDimensions()
+  getFutureDimensions: () -> @bind.source.getFutureDimensions()
   getActiveDimensions: () -> @bind.source.getActiveDimensions()
   getIndexDimensions:  () -> @bind.source.getIndexDimensions()
 

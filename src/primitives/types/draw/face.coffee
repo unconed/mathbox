@@ -41,7 +41,7 @@ class Face extends Primitive
     # Get display properties
     outline = @props.outline
     shaded  = @props.shaded
-    solid   = @props.solid
+    fill    = @props.fill
 
     # Build color lookup
     if @bind.colors
@@ -73,7 +73,7 @@ class Face extends Primitive
       objects.push @line
 
     # Make face renderable
-    if solid
+    if fill
       uniforms = Util.JS.merge styleUniforms, {}
       @face = @_renderables.make 'face',
                 uniforms: uniforms
@@ -100,6 +100,6 @@ class Face extends Primitive
     @face = @line = null
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['geometry.points']
+    return @rebuild() if changed['geometry.points'] or touched['mesh']
 
 module.exports = Face

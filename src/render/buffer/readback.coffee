@@ -15,6 +15,7 @@ class Readback extends Renderable
     @height   ?= options.height   || 1
     @depth    ?= options.depth    || 1
     @type     ?= options.type     || THREE.FloatType
+    @stpq     ?= options.stpq     || false
     @isFloat   = @type == THREE.FloatType
 
     @active = @sampled = @rect = @pad = null
@@ -36,7 +37,7 @@ class Readback extends Renderable
     indexer   = options.indexer
     isIndexed = indexer? and !indexer.empty()
 
-    {items, width, height, depth} = @
+    {items, width, height, depth, stpq} = @
 
     sampler = map
     if isIndexed
@@ -69,8 +70,12 @@ class Readback extends Renderable
         width:    width
         height:   height
         depth:    depth
+        stpq:     stpq
 
       @floatMemo.adopt @floatCompose
+
+      # Second pass won't need texture coordinates
+      stpq = false
 
       # Replace sampler with memoized sampler
       sampler = @shaders.shader()
@@ -118,6 +123,7 @@ class Readback extends Renderable
       width:    width
       height:   height
       depth:    depth
+      stpq:     stpq
 
     @byteMemo.adopt @byteCompose
 

@@ -15,6 +15,7 @@ class Array_ extends Buffer
       length:  0
 
     @storage = 'arrayBuffer'
+    @passthrough = (emit, x) -> emit x, 0, 0, 0
 
     super
 
@@ -31,6 +32,12 @@ class Array_ extends Buffer
     items:  @items
     width:  @used.length
     height: @buffer.getFilled()
+    depth:  1
+
+  getFutureDimensions: () ->
+    items:  @items
+    width:  @used.length
+    height: @space.history
     depth:  1
 
   getRawDimensions: () ->
@@ -87,7 +94,7 @@ class Array_ extends Buffer
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or
-                         changed['array.history'] or
+                         changed['history.history'] or
                          changed['buffer.channels'] or
                          changed['buffer.items'] or
                          changed['array.bufferLength']
@@ -115,33 +122,32 @@ class Array_ extends Buffer
   update: () ->
     return unless @buffer
 
-    filled   = @buffer.getFilled()
-    return unless !filled or @props.live
-
-    data = @props.data
-
-    space    = @space
-    used     = @used
-
+    {data} = @props
+    {space, used} = @
     l = used.length
 
-    if data?
-      dims = Util.Data.getDimensions data, @spec
+    filled = @buffer.getFilled()
 
-      # Grow length if needed
-      if dims.width > space.length
-        @rebuild()
+    @syncBuffer (abort) =>
 
-      used.length = dims.width
+      if data?
+        dims = Util.Data.getDimensions data, @spec
 
-      @buffer.setActive used.length
-      @buffer.callback.rebind data
-      @buffer.update()
-    else
-      @buffer.setActive @spec.width
+        # Grow length if needed
+        if dims.width > space.length
+          abort()
+          return @rebuild()
 
-      length = @buffer.update()
-      used.length = length
+        used.length = dims.width
+
+        @buffer.setActive used.length
+        @buffer.callback.rebind data
+        @buffer.update()
+      else
+        @buffer.setActive @spec.width
+
+        length = @buffer.update()
+        used.length = length
 
     if used.length != l or
        filled != @buffer.getFilled()

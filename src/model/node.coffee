@@ -1,21 +1,17 @@
 Util = require '../util'
 
-formatNumber = Util.Pretty.number {compact: false}
+nodeIndex = 0
 
 class Node
   constructor: (@type, defaults, options, binds, config, attributes) ->
+    @_id = (++nodeIndex).toString()
+
     @configure config, attributes
     @parent = @root = @path = @index = null
 
     @set  defaults, true, true
     @set  options, false, true
     @bind binds, false
-
-  toString: () ->
-    out = @type
-    out += '#' + @id if @id
-    out += '.' + @classes.join '.' if @classes?.length
-    out
 
   configure: (config, attributes) ->
     {traits, props, freeform} = config
@@ -88,32 +84,33 @@ class Node
     a
 
   toString: () ->
-    n = @type ? 'node'
-    n += "##{@id}"               if @id
-    n += ".#{@classes.join '.'}" if @classes?.length
-    if @children? then "<#{n}></#{n}>" else "<#{n} />"
+    id = @id ? @_id
+
+    tag  = @type ? 'node'
+    id   = tag
+    id  += "##{id}"
+    id  += ".#{@classes.join '.'}" if @classes?.length
+
+
+    if @children?
+      if count = @children.length
+        "<#{id}>…(#{count})…</#{tag}>"
+      else
+        "<#{id}></#{tag}>"
+    else
+      "<#{id} />"
 
   toMarkup: (indent = '') ->
-    wrap  = (v) -> if v.match '\n*"' then v else "{#{v}}"
-    value = (v) ->
-      return "[#{v.map(value).join ','}]" if v instanceof Array
-
-      switch typeof v
-              when 'string'
-                if v.match "\n" then "\n\"#{v}\"\n" else "\"#{v}\""
-              when 'function'
-                v = "#{v}"
-                if v.match "\n" then "\n#{v}\n" else "#{v}"
-              when 'number'
-                formatNumber v
-              else
-                if v._up? then value v.map (v) -> v
-                else if v instanceof Node then v.toString()
-                else "#{JSON.stringify v}"
 
     tag   = @type ? 'node'
-    props = (k + "="  + wrap value v for k, v of @orig?() when !@expr[k])
-    expr  = (k + "=>" + wrap value v for k, v of @expr)
+    expr  = @expr
+
+    # Ensure generated ID goes first
+    orig  = {id: @_id}
+    orig[k] = v for k, v of @orig?()
+
+    props = (Util.Pretty.JSX.prop k, v for k, v of orig when !@expr[k])
+    expr  = (Util.Pretty.JSX.prop k, v for k, v of expr)
 
     attr = ['']
     attr = attr.concat props if props.length
@@ -129,6 +126,10 @@ class Node
       ].join "\n"
     else
       "#{indent}<#{tag}#{attr} />"
+
+  print: (level) ->
+    Util.Pretty.print @toMarkup(), level
+
 
 THREE.Binder.apply Node::
 

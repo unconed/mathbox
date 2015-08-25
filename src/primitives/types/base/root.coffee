@@ -26,8 +26,8 @@ class Root extends Parent
       @_attach @props.camera, 'camera', @setCamera, @, @, true
       @setCamera()
 
-  adopt:   (renderable) -> @_context.scene.add    object for object in renderable.objects
-  unadopt: (renderable) -> @_context.scene.remove object for object in renderable.objects
+  adopt:   (renderable) -> @_context.scene.add    object for object in renderable.renders
+  unadopt: (renderable) -> @_context.scene.remove object for object in renderable.renders
 
   select: (selector) ->
     @node.model.select selector
@@ -44,7 +44,8 @@ class Root extends Parent
       type: 'root.resize'
       size: size
 
-  getSize: () -> @size
+  getSize:  () -> @size
+  getSpeed: () -> @props.speed
 
   getUnit:         () -> @_helpers.unit.get()
   getUnitUniforms: () -> @_helpers.unit.uniforms()
@@ -55,7 +56,12 @@ class Root extends Parent
   update: () -> @trigger @updateEvent
   post:   () -> @trigger @postEvent
 
-  setCamera: () -> @camera = @select(@props.camera)[0]?.controller
+  setCamera: () ->
+    camera = @select(@props.camera)[0]?.controller
+    if @camera != camera
+      @camera = camera
+      @trigger {type: 'root.camera'}
+
   getCamera: () -> @camera?.getCamera() ? @_context.defaultCamera
 
   # End transform chain here

@@ -193,3 +193,5 @@ exports.constant = (type, value) ->
     return #{value};
   }
   """
+
+exports.toType = toType

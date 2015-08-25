@@ -7,27 +7,49 @@ class Base extends Renderable
     @zUnits = options.zUnits ? 0
 
   raw: () ->
-    @_raw object for object in @objects
+    @_raw object for object in @renders
     null
 
   depth: (write, test) ->
-    @_depth object, write, test for object in @objects
+    @_depth object, write, test for object in @renders
     null
 
   polygonOffset: (factor, units) ->
-    @_polygonOffset object, factor, units for object in @objects
+    @_polygonOffset object, factor, units for object in @renders
     null
 
   show: (transparent, blending, order) ->
-    @_show object, transparent, blending, order for object in @objects
+    @_show object, transparent, blending, order for object in @renders
 
   hide: () ->
-    @_hide object for object in @objects
+    @_hide object for object in @renders
     null
 
   _material: (options) ->
-    material = new THREE.ShaderMaterial options
+    precision = @renderer.getPrecision()
+
+    vertexPrefix = """
+    precision #{precision} float;
+    precision #{precision} int;
+		uniform mat4 modelMatrix;
+		uniform mat4 modelViewMatrix;
+		uniform mat4 projectionMatrix;
+		uniform mat4 viewMatrix;
+		uniform mat3 normalMatrix;
+		uniform vec3 cameraPosition;
+    """
+
+    fragmentPrefix = """
+    precision #{precision} float;
+    precision #{precision} int;
+		uniform mat4 viewMatrix;
+		uniform vec3 cameraPosition;
+    """
+
+    material = new THREE.RawShaderMaterial options
     material[key] = options[key] for key in ['vertexGraph', 'fragmentGraph']
+    material.vertexShader   = [vertexPrefix,   material.vertexShader  ].join '\n'
+    material.fragmentShader = [fragmentPrefix, material.fragmentShader].join '\n'
     material
 
   _raw: (object) ->
@@ -68,7 +90,7 @@ class Base extends Renderable
   _hide: (object) ->
     object.visible = false
 
-  _vertexColor: (shader, color, mask) ->
+  _vertexColor: (shader, color, mask, map) ->
     v = shader
 
     if color
@@ -79,9 +101,12 @@ class Base extends Renderable
       v.require mask
       v.pipe 'mesh.vertex.mask',  @uniforms
 
+    if map
+      v.pipe 'mesh.vertex.map',   @uniforms
+
     return v
 
-  _fragmentColor: (shader, hasStyle, shaded, color, mask) ->
+  _fragmentColor: (shader, hasStyle, shaded, color, mask, map) ->
     f = shader
 
     if hasStyle
@@ -95,6 +120,10 @@ class Base extends Renderable
     if mask
       f.pipe 'mesh.fragment.mask',      @uniforms
       f.pipe Util.GLSL.binaryOperator 'vec4', '*' if hasStyle || color
+
+    if map
+      f.pipe 'mesh.fragment.map',       @uniforms
+      f.pipe Util.GLSL.binaryOperator 'vec4', '*' if hasStyle || color || mask
 
 
 module.exports = Base

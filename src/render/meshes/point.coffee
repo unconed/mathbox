@@ -61,11 +61,9 @@ class Point extends Base
 
     @fillMaterial = @_material fillFactory.link
       side: THREE.DoubleSide
-      index0AttributeName: "position4"
 
     @edgeMaterial = @_material edgeFactory.link
       side: THREE.DoubleSide
-      index0AttributeName: "position4"
 
     @fillObject = new THREE.Mesh @geometry, @fillMaterial
     @edgeObject = new THREE.Mesh @geometry, @edgeMaterial
@@ -73,7 +71,7 @@ class Point extends Base
     @_raw @fillObject
     @_raw @edgeObject
 
-    @objects = [@fillObject, @edgeObject]
+    @renders = [@fillObject, @edgeObject]
 
   show: (transparent, blending, order, depth) ->
     @_show @edgeObject, true,        blending, order, depth
@@ -83,7 +81,7 @@ class Point extends Base
     @geometry.dispose()
     @edgeMaterial.dispose()
     @fillMaterial.dispose()
-    @objects = @edgeObject = @fillObject = @geometry = @edgeMaterial = @fillMaterial = null
+    @renders = @edgeObject = @fillObject = @geometry = @edgeMaterial = @fillMaterial = null
     super
 
 module.exports = Point
