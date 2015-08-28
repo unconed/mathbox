@@ -192,7 +192,7 @@ class Track extends Primitive
               values[1] = animator.lerp attr.T, _from, toP, getLerpFactor(), values[1]
 
         # Lerp between a constant and an expression
-        else if to.E
+        else if toE
           do (values, from, to) ->
             (time, delta) ->
               values[0] = _to = attr.T.validate toE(time, delta), values[0], invalid
