@@ -60,7 +60,7 @@
     view.interval({
       id: 'sampler',
       length: 64,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         y = Math.sin(x + time) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
       },

@@ -33,7 +33,7 @@
     view.interval({
       id: 'sampler',
       length: 32,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         y = Math.sin(x + time) + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
       },
@@ -41,6 +41,7 @@
     });
 
     view.spread({
+      unit: 'absolute',
       height: [0, .05, 0, 0],
     });
 

@@ -138,7 +138,7 @@
       width:  12,
       height: 12,
       depth:  12,
-      map: expression,
+      expr: expression,
       items: 2,
       channels: 3,
     });
@@ -153,7 +153,7 @@
 
     view.array({
       length: 1,
-      map: function (emit, i) {
+      expr: function (emit, i) {
         emit(0, 0, 0);
         emit(m.x / 2000, m.y / 2000, m.z / 2000);
       },

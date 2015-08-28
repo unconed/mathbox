@@ -1,7 +1,7 @@
 Track = require './track'
 
 class Clock extends Track
-  @traits = ['node', 'track', 'clock', 'bind']
+  @traits = ['node', 'track', 'play', 'bind']
 
   init: () ->
     super
@@ -10,14 +10,6 @@ class Clock extends Track
 
   reset: (go = true) ->
     @clock = if go then -@props.delay * @props.speed / @props.pace else null
-
-  realTime: () -> +new Date() / 1000
-
-  realDelta: () ->
-    time = @realTime()
-    delta =  if @last then time - @last else 0
-    @last = time
-    delta
 
   make: () ->
     super
@@ -31,12 +23,12 @@ class Clock extends Track
 
     # Update clock before change notifications fire
     @_listen 'root', 'root.pre', () =>
-      {start, end, speed, pace} = @props
+      {from, to, speed, pace} = @props
       @playhead =
         if @clock?
-          delta = if @props.realTime then @realDelta() else @_context.time.delta
+          delta = if @props.realtime then @_context.time.delta else @_context.time.step
           @clock += delta * speed / pace
-          @playhead = Math.min end, start + Math.max 0, @clock
+          @playhead = Math.min to, from + Math.max 0, @clock
         else
           0
       @update()
@@ -45,7 +37,7 @@ class Clock extends Track
     super
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['clock.trigger'] or changed['clock.realTime']
+    return @rebuild() if changed['clock.trigger'] or changed['clock.realtime']
     super changed, touched, init
 
 module.exports = Clock

@@ -60,7 +60,7 @@ class Area extends Matrix
       @_callback = (emit, i, j) =>
         x = @aX + @bX * i
         y = @aY + @bY * j
-        callback emit, x, y, i, j, @_context.time.clock, @_context.time.delta
+        callback emit, x, y, i, j, @bufferClock, @bufferStep
 
   make: () ->
     super

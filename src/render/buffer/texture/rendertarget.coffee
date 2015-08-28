@@ -1,7 +1,7 @@
 ###
 Virtual RenderTarget that cycles through multiple frames
 Provides easy access to past rendered frames
-@reads[] and @write contain THREE.WebGLRenderTargets whose internal pointers are rotated automatically
+@reads[] and @write contain WebGLRenderTargets whose internal pointers are rotated automatically
 ###
 class RenderTarget
   constructor: (@gl, width, height, frames, options = {}) ->

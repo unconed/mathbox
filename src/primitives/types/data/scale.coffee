@@ -2,7 +2,7 @@ Source = require '../base/source'
 Util   = require '../../../util'
 
 class Scale extends Source
-  @traits = ['node', 'source', 'index', 'interval', 'span', 'scale', 'raw']
+  @traits = ['node', 'source', 'index', 'interval', 'span', 'scale', 'raw', 'origin']
 
   init: () ->
     @used = @space = @scaleAxis = @sampler = null
@@ -38,8 +38,10 @@ class Scale extends Source
     # Prepare position shader
     positionUniforms =
       scaleAxis:    @_attributes.make @_types.vec4()
+      scaleOffset:  @_attributes.make @_types.vec4()
 
-    @scaleAxis = positionUniforms.scaleAxis.value
+    @scaleAxis   = positionUniforms.scaleAxis.value
+    @scaleOffset = positionUniforms.scaleOffset.value
 
     # Build sampler
     p = @sampler = @_shaders.shader()
@@ -67,15 +69,16 @@ class Scale extends Source
       used = @used
 
       # Fetch range along axis
-      dimension = @props.axis
-      range     = @_helpers.span.get '', dimension
+      {axis, origin} = @props
+      range = @_helpers.span.get '', axis
 
       # Calculate scale along axis
       min   = range.x
       max   = range.y
       ticks = @_helpers.scale.generate '', @buffer, min, max
 
-      Util.Axis.setDimension @scaleAxis, dimension
+      Util.Axis.setDimension @scaleAxis,   axis
+      Util.Axis.setOrigin    @scaleOffset, axis, origin
 
       # Clip to number of ticks
       @used = ticks.length

@@ -62,7 +62,7 @@
     view.interval({
       length: 32,
       centered: false,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         var a = Math.sin(x + time) * .5 - 1;
         var b = Math.cos(x - time * .917) * .25 - 1
 
@@ -81,6 +81,7 @@
     });
     view.spread({
       id: 'spread',
+      unit: 'absolute',
       width: [π/31, 0, 0, 0],
       height: [π, 0, 0, 0],
       depth: [0, 0, 1/10, 0],

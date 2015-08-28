@@ -1,9 +1,10 @@
 # Global constructor
 mathBox = (options) ->
-  options ?= {}
-
   three = THREE.Bootstrap options
-  three.install 'mathbox' if !three.MathBox?
+
+  if !three.fallback
+    three.install 'time'                if !three.Time
+    three.install ['mathbox', 'splash'] if !three.MathBox
 
   three.mathbox ? three
 
@@ -21,16 +22,18 @@ exports.version = '2'
 Context = require './context'
 exports[k] = v for k, v of Context.Namespace
 
+# Splash screen plugin
+require './splash'
+
 # Threestrap plugin
 THREE.Bootstrap.registerPlugin 'mathbox',
   defaults:
     init:    true
-    warmup:  5
+    warmup:  2
     inspect: true
     splash:  true
-    color:   'mono'
 
-  listen: ['ready', 'pre', 'render', 'update', 'post', 'resize'],
+  listen: ['ready', 'pre', 'update', 'post', 'resize'],
 
   # Install meta-API
   install: (three) ->
@@ -57,20 +60,19 @@ THREE.Bootstrap.registerPlugin 'mathbox',
         @context.resize three.Size
 
         # Set warmup mode and track pending objects
-        @context.warmup @options.warmup
+        @context.setWarmup @options.warmup
         @pending = 0
-        @remain  = 0
-        @warm    = false
+        @warm    = !@options.warmup
 
-        # Minimal splash screen to distract from the blocking native shader compilation
-        @makeSplash if @options.splash
-
-        console.log "MathBox", MathBox.version
+        console.log 'MathBox', MathBox.version
+        three.trigger {type: 'mathbox/init', version: MathBox.version, context: @context}
 
       # Destroy the mathbox context
       destroy: () =>
         return if !inited
         inited = false
+
+        three.trigger {type: 'mathbox/destroy', context: @context}
 
         @context.destroy()
 
@@ -112,83 +114,6 @@ THREE.Bootstrap.registerPlugin 'mathbox',
                 fmt(info.vertices) + ' vertices  ',
                 fmt(info.calls) + ' draw calls  ');
 
-  # Warmup progress changed
-  progress: (remain, three) ->
-    return unless remain or @pending
-
-    # Latch max value until queue is emptied to get a total
-    pending = Math.max remain + @options.warmup, @pending
-    pending = 0 if remain == 0
-
-    # Check if changed
-    if @remain != remain or @pending != pending
-      @pending = pending
-      @remain  = remain
-
-      # Send events for external progress reporting
-      current = pending - remain
-      total   = pending
-      three.trigger {type: 'mathbox.progress', current: pending - remain, total: pending}
-
-      # Update splash screen
-      @updateSplash current, total if @splash
-
-      # Report once when loaded
-      if current == 0 and !@warm
-        @warm = true
-        @info three if @options.inspect
-
-  # Update splash screen state and animation
-  updateSplash: (current, total) ->
-
-    # Display splash screen
-    visible = current > 0
-    @splashElement.display = if visible then 'block' else 'none'
-
-    # Update splash progress
-    width = if pending then Math.round(100 * current / total) + '%' else '100%'
-    @splashProgress.width = width
-
-    # Spinny gyros
-    weights = @splashRandom
-
-    # Lerp clock speed
-    f = Context.Namespace.Util.Ease.clamp three.Time.now - @splashStart, 0, 1
-    increment = (transform, j = 0) ->
-      transform.replace /([0-9.]+)deg/g, (_, n) -> (+n + weights[j++] * f) + 'deg'
-
-    for el, i in @splashGyro
-      @splashForms[i] = t = increment @splashForms[i]
-      el.style.transform = el.style.WebkitTransform = t
-
-  # Default splash screen
-  makeSplash: (three) ->
-    {color} = @options
-    html = """
-    <div class="mathbox-loader mathbox-splash-#{color}">
-      <div class="mathbox-logo">
-        <div> <div></div><div></div><div></div> </div>
-        <div> <div></div><div></div><div></div> </div>
-      </div>
-      <div class="mathbox-progress"><div></div></div>
-    </div>
-    """
-
-    div = document.createElement 'div'
-    div.innerHTML = html
-    three.element.appendChild div
-
-    @splash         = div
-    @splashElement  = div.querySelector   ('.mathbox-loader')        .style
-    @splashProgress = div.querySelector   ('.mathbox-progress > div').style
-    @splashGyro     = div.querySelectorAll('.mathbox-logo > div')
-    @splashForms    = [
-      "rotateZ(22deg) rotateX(24deg) rotateY(30deg)"
-      "rotateZ(11deg) rotateX(12deg) rotateY(15deg) scale3d(.6, .6, .6)"
-    ]
-    @splashRandom   = [Math.random(), Math.random(), Math.random()]
-    @splashStart    = three.Time.now
-
   # Hook up context events
   resize: (event, three) ->
     @context?.resize three.Size
@@ -201,15 +126,35 @@ THREE.Bootstrap.registerPlugin 'mathbox',
 
     if (camera = @context?.camera) and
        camera != three.camera
-
       three.camera = camera
 
     three.Time.set {speed: @context.speed}
 
     @progress @context.getPending(), three
 
-  render: (event, three) ->
+    # Call render here instead of on:render because it renders off screen material
+    # that needs to be available for rendering the actual frame.
     @context?.render()
 
   post: (event, three) ->
     @context?.post()
+
+  # Warmup progress changed
+  progress: (remain, three) ->
+    return unless remain or @pending
+
+    # Latch max value until queue is emptied to get a total
+    pending = Math.max remain + @options.warmup, @pending
+
+    # Send events for external progress reporting
+    current = pending - remain
+    total   = pending
+    three.trigger {type: 'mathbox/progress', current: pending - remain, total: pending}
+
+    pending = 0 if remain == 0
+    @pending = pending
+
+    # Report once when loaded
+    if current == total and !@warm
+      @warm = true
+      @info three if @options.inspect

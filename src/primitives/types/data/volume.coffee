@@ -77,7 +77,7 @@ class Volume extends Voxel
         x = @aX + @bX * i
         y = @aY + @bY * j
         z = @aZ + @bZ * k
-        callback emit, x, y, z, i, j, k, @_context.time.clock, @_context.time.delta
+        callback emit, x, y, z, i, j, k, @bufferClock, @bufferStep
 
   make: () ->
     super

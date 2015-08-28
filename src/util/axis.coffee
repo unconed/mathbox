@@ -1,9 +1,16 @@
-exports.addOrigin = (vec, dimension, origin) ->
-  x = vec.x + if dimension == 1 then 0 else origin.x
-  y = vec.y + if dimension == 2 then 0 else origin.y
-  z = vec.z + if dimension == 3 then 0 else origin.z
-  w = vec.w + if dimension == 4 then 0 else origin.w
+exports.setOrigin = (vec, dimensions, origin) ->
+  dimensions = [dimensions] if +dimensions == dimensions
+  x = if 1 in dimensions then 0 else origin.x
+  y = if 2 in dimensions then 0 else origin.y
+  z = if 3 in dimensions then 0 else origin.z
+  w = if 4 in dimensions then 0 else origin.w
   vec.set x, y, z, w
+
+exports.addOrigin = do ->
+  v = new THREE.Vector4
+  (vec, dimension, origin) ->
+    exports.setOrigin v, dimension, origin
+    vec.add v
 
 exports.setDimension = (vec, dimension) ->
   x = if dimension == 1 then 1 else 0

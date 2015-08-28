@@ -10,6 +10,8 @@ class Context
   # Export for extending
   @Namespace = { Model, Overlay, Primitives, Render, Shaders, Stage, Util, DOM: Util.VDOM }
 
+  #-------------------------------------------------------------------
+
   # Set up entire environment
   constructor: (renderer, scene = null, camera = null) ->
 
@@ -42,9 +44,16 @@ class Context
     # Public API
     @api         = new Stage.API          @
 
-    # Global clock
-    @time        = { now: +new Date() / 1000, clock: 0, step: 0 }
+    # Global clocks, one real-time and one adjustable
     @speed       = 1
+    @time        = {
+      now: +new Date() / 1000,
+      time: 0,  delta: 0,
+      clock: 0, step: 0
+    }
+
+  #-------------------------------------------------------------------
+  # Lifecycle
 
   init: () ->
     @scene.inject()
@@ -55,16 +64,49 @@ class Context
     @overlays.unject()
 
   resize: (size) ->
+    ###
+    {
+      viewWidth, viewHeight, renderWidth, renderHeight, aspect, pixelRatio
+    }
+    ###
     @root.controller.resize size
 
+  frame: (time) ->
+    ###
+    {
+      now, clock, step
+    }
+    ###
+    @pre time
+    @update()
+    @render()
+    @post()
+
+  #-------------------------------------------------------------------
+  # Broken down update/render cycle, for manual scheduling/invocation
+
   pre: (time) ->
-    @time = time if time?
+    #time = null
+    if !time
+      time = {
+        now: +new Date() / 1000,
+        time: 0,  delta: 0,
+        clock: 0, step: 0
+      }
+
+      time.delta = if @time.now? then time.now - @time.now else 0
+      time.step  = time.delta * @speed
+
+      time.time  = @time.time  + time.delta
+      time.clock = @time.clock + time.step
+
+    @time = time
     @root.controller.pre?()
 
   update: () ->
 
-    @attributes.compute()
     @animator.update @time
+    @attributes.compute()
 
     @guard.iterate
       step: () =>
@@ -85,8 +127,11 @@ class Context
   post: () ->
     @root.controller.post?()
 
-  warmup: (active) ->
-    @scene.warmup active
+  #-------------------------------------------------------------------
+  # Warmup mode, inserts only n objects into the scene per frame
+  # Will render objects to offscreen 1x1 buffer to ensure shader is compiled even if invisible
+  setWarmup: (n) ->
+    @scene.warmup n
 
   getPending: () ->
     @scene.pending.length

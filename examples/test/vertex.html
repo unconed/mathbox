@@ -66,10 +66,10 @@
       intensity: 1,
     });
     
-    var transition = mathbox.transition({
+    var transition = mathbox.reveal({
       stagger: [10, 0, 0, 0],
     });
-    
+
     var view = transition.vertex({
       pass: 'view'
     })
@@ -130,7 +130,7 @@
     view.interval({
       id: 'sampler',
       length: 512,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         emit(x, .5 + .25 * Math.sin(x + time) + .25 * Math.sin(x * 1.91 + time * 1.81));
       },
       channels: 2,

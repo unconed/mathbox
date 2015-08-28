@@ -7,6 +7,8 @@ class Slide extends Parent
     @_helpers.visible.make()
     @_helpers.active.make()
 
+    throw new Error "#{@node.toString()} must be placed inside <present></present>" if !@_inherit 'present'
+
     @_inherit('present').adopt @
 
   unmake: () ->
@@ -16,37 +18,41 @@ class Slide extends Parent
     @_inherit('present') unadopt @
 
   change: (changed, touched, init) ->
-    return @rebuild if changed['slide.stay'] or
-                       changed['slide.enters'] or
-                       changed['slide.exits'] or
-                       changed['slide.stay']
+    return @rebuild if changed['slide.early'] or
+                       changed['slide.late']  or
+                       changed['slide.steps'] or
+                       changed['slide.from']  or
+                       changed['slide.to']
 
-  slideEnter: (step) ->        @_transition true,    step
-  slideExit:  (step) ->        @_transition false,   step
-  slideStep:  (index, step) -> @_step       index,   step
-  slideReset: () ->            @_instant    false
-
-  _transition: (enabled, step) ->
-    #console.log 'slide:transition', enabled, step
+  slideLatch: (enabled, step) ->
+    #console.log 'slide:latch', @node.toString(), enabled, step
     @trigger
       'type': 'transition.latch'
       'step': step
 
-    @_instant enabled
+    @_instant enabled if enabled?
 
-    @trigger
-      'type': 'transition.release'
-
-  _instant: (enabled) ->
-    #console.log 'slide:instant', enabled
-    @setVisible enabled
-    @setActive  enabled
-
-  _step: (index, step) ->
-    #console.log 'slide:step', index, step
+  slideStep: (index, step) ->
+    #console.log 'slide:step', @node.toString(), index, step
     @trigger
       'type': 'slide.step'
       'index': index
-      'step':   step
+      'step':  step
+
+  slideRelease: () ->
+    #console.log 'slide:release', @node.toString()
+    @trigger
+      'type': 'transition.release'
+
+  slideReset: () ->
+    @_instant false
+    @trigger
+      'type': 'slide.reset'
+
+  _instant: (enabled) ->
+    #console.log 'slide:instant', @node.toString(), enabled
+    @setVisible enabled
+    @setActive  enabled
+
 
 module.exports = Slide

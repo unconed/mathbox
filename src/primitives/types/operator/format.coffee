@@ -130,7 +130,7 @@ class Format extends Operator
       # Stream raw source data and format it with expression
       if timed
         map = (emit, x, y, z, w, i, j, k, l) =>
-          emit expr x, y, z, w, i, j, k, l, @_context.time.clock, @_context.time.delta
+          emit expr x, y, z, w, i, j, k, l, @_context.time.clock, @_context.time.step
       else
         map = (emit, x, y, z, w, i, j, k, l) =>
           emit expr x, y, z, w, i, j, k, l

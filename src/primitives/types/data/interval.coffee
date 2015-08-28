@@ -40,7 +40,7 @@ class Interval extends _Array
     else
       @_callback = (emit, i) =>
         x = @a + @b * i
-        callback emit, x, i, @_context.time.clock, @_context.time.delta
+        callback emit, x, i, @bufferClock, @bufferStep
 
   make: () ->
     super

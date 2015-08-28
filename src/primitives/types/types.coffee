@@ -126,9 +126,12 @@ Types =
     op: op
 
   enum: (value, keys = [], map = {}) ->
+    i = 0
     values = {}
-    map[key] ?= i    for key, i in keys
-    values[i] = true for key, i of map
+    map[key]   ?= i++  for key    in keys when key != +key
+    values[key] = key  for key    in keys when key == +key
+    values[i]   = true for key, i of map
+
     value = map[value] if !values[value]?
 
     enum: () -> map
@@ -186,6 +189,14 @@ Types =
     validate: (value, target, invalid) ->
       return invalid() if value != (x = +value)
       x || 0
+
+  positive: (type, strict = false) ->
+    uniform: type.uniform
+    make:    type.make
+    validate: (value, target, invalid) ->
+      value = type.validate value, target, invalid
+      return invalid() if (value < 0) or (strict and value <= 0)
+      value
 
   string: (value = '') ->
     make: () -> "" + value
@@ -422,7 +433,11 @@ Types =
       y: 2
       z: 3
       w: 4
-      i: 4
+      W: 1
+      H: 2
+      D: 3
+      I: 4
+      zero:   0
       null:   0
       width:  1
       height: 2

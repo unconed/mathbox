@@ -73,6 +73,8 @@ vec4 getFramesSample(vec2 xy) {
     three.camera.position.set(.3, .1, 2);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
+    gl = three.renderer.getContext()
+
     view = null
     time = 0;
     origin = new THREE.Vector3();
@@ -148,7 +150,6 @@ vec4 getFramesSample(vec2 xy) {
           color: '#ffffff',
           zWrite: false,
         })
-
         .compose({
           source: '#render',
           blending: THREE.AdditiveBlending,
@@ -210,7 +211,7 @@ vec4 getFramesSample(vec2 xy) {
         code: '#map-z-to-color'
       })
       .resample({
-        source: '#color',
+        source: '#lerp',
         id: 'color1',
         indices:    2,
         channels: 4,
@@ -220,7 +221,7 @@ vec4 getFramesSample(vec2 xy) {
         code: '#map-z-to-color-2'
       })
       .resample({
-        source: '#color',
+        source: '#lerp',
         id: 'color2',
         indices:    2,
         channels: 4,
@@ -231,7 +232,6 @@ vec4 getFramesSample(vec2 xy) {
         range: [[-16/9-.001, 16/9+.001], [-1, 1], [-1, 1]],
         scale: [16/9, 1, 1],
       })
-
         .vector({
           points: '#transpose',
           colors: '#color1',

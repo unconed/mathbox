@@ -4,14 +4,29 @@
   left: 50%;
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
-  
   padding: 10px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.mathbox-loader.mathbox-exit {
+  opacity: 0;
+  -webkit-transition:
+    opacity .15s ease-in-out;
+  transition:
+    opacity .15s ease-in-out;
 }
 
 .mathbox-progress {
   height: 10px;
   border-radius: 5px;
-  margin: 0 10px;
+  width: 80px;
+  margin: 0 auto 10px;
+  box-shadow:
+     1px  1px 1px rgba(255, 255, 255, .2),
+     1px -1px 1px rgba(255, 255, 255, .2),
+    -1px  1px 1px rgba(255, 255, 255, .2),
+    -1px -1px 1px rgba(255, 255, 255, .2);
   background: #ccc;
   overflow: hidden;
 }
@@ -20,14 +35,14 @@
   display: block;
   width: 0px;
   height: 10px;
-  background: #808080;
+  background: #888;
 }
 
 .mathbox-logo {
   position: relative;
-  width: 100px;
+  width: 140px;
   height: 100px;
-  margin: 0 auto 30px;
+  margin: 0 auto 20px;
   -webkit-perspective: 200px;
   perspective: 200px;
 }
@@ -98,9 +113,11 @@
   border: 38px solid #C0C0C0;
 }
 
+.mathbox-splash-blue .mathbox-progress {
+  background: #def;
+}
 .mathbox-splash-blue .mathbox-progress > div {
   background: #1979e7;
-  background: #18487F;
 }
 .mathbox-splash-blue .mathbox-logo > :nth-child(1) > :nth-child(1) {
   border-color: #1979e7;

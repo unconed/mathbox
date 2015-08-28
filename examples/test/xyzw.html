@@ -32,7 +32,7 @@
 
     view.interval({
       length: 128,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         var d = Math.sin((x + time) * 2);
 
         emit(x, 0);

@@ -51,7 +51,7 @@
       centeredX: true,
       centeredY: true,
       axes: [1, 3],
-      map: function (emit, x, y, i, j) {
+      expr: function (emit, x, y, i, j) {
         emit(x, .5 + .5 * (Math.sin(x + time) * Math.sin(y + time)), y);
       },
       channels: 3,

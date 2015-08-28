@@ -18,11 +18,14 @@
     label = document.querySelector('#label')
 
     // Define local DOM handler to clone real DOM elements
-    var clone = {
+    var clone = MathBox.DOM.createClass({
       render: function (el, props, children) {
-        return children.cloneNode(true);
+        var button = children.cloneNode(true);
+        button.value += " (" + props.i + ", " + props.j + ")"
+        button.onclick = function () { alert("You clicked (" + props.i + ", " + props.j + ").")}
+        return button;
       },
-    };
+    });
     
     mathbox = mathBox({
       plugins: ['core', 'controls', 'cursor', 'stats'],
@@ -77,7 +80,7 @@
 
     view.interval({
       length: 8,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         y = Math.sin(x + time / 4) * .7;
         emit(x, y);
       },
@@ -89,6 +92,7 @@
       depth:  2,
     });
     view.spread({
+      unit: 'absolute',
       height: [0, 0, .5],
       depth: [0, .5, 0],
     });
@@ -100,12 +104,12 @@
     })
 
     .html({
-      width: 8,
-      height: 3,
+      width: 2,
+      height: 2,
       depth:  2,
-      map: function (emit, el, i, j) {
+      expr: function (emit, el, i, j) {
         // Emit copies of the label
-        emit(el(clone, null, label));
+        emit(el(clone, {i: i + 1, j: j + 1}, label));
       },
     })
     .dom({

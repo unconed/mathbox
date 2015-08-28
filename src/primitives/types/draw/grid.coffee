@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Grid extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'grid', 'area', 'position',
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'grid', 'area', 'position', 'origin'
             'axis:x',  'axis:y',
             'scale:x', 'scale:y',
             'span:x',  'span:y']
@@ -123,6 +123,9 @@ class Grid extends Primitive
       Util.Axis.setDimension(values.gridPosition, x).multiplyScalar(min)
       Util.Axis.setDimension(values.gridStep,     x).multiplyScalar((max - min) * resolution)
 
+      # Add origin on remaining two axes
+      Util.Axis.addOrigin values.gridPosition, axes, origin
+
       # Calculate scale along second axis
       min    = range2.x
       max    = range2.y
@@ -141,7 +144,7 @@ class Grid extends Primitive
        init
 
       # Fetch grid range in both dimensions
-      {axes} = @props
+      {axes, origin} = @props
       range1 = @_helpers.span.get 'x.', axes[0]
       range2 = @_helpers.span.get 'y.', axes[1]
 
@@ -152,5 +155,6 @@ class Grid extends Primitive
         axis axes[0], axes[1], range1, range2, @axes[0]
       if lineY
         axis axes[1], axes[0], range2, range1, @axes[+lineX]
+
 
 module.exports = Grid

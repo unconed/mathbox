@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Axis extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position', 'origin']
   @defaults =
     end: true
     zBias: -1
@@ -49,8 +49,8 @@ class Axis extends Primitive
 
     # Indexing by fixed or by given axis
     {crossed, axis} = @props
-    if crossed and mask?
-      swizzle = ['x000', 'y000', 'z000', 'w000'][@props.axis]
+    if !crossed and mask? and axis > 1
+      swizzle = ['x000', 'y000', 'z000', 'w000'][axis]
       mask = @_helpers.position.swizzle mask, swizzle
 
     # Make line renderable

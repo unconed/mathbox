@@ -172,7 +172,7 @@ helpers =
 
       onVisible = () =>
         last       = @isVisible
-        self       = visible ? @_get 'object.visible' ? true
+        self       = visible ? @_get('object.visible') ? true
         self     &&= visibleParent.isVisible if visibleParent?
         @isVisible = self
         @trigger e if last != @isVisible
@@ -198,7 +198,7 @@ helpers =
 
       onActive = () =>
         last      = @isActive
-        self      = active ? @_get 'entity.active' ? true
+        self      = active ? @_get('entity.active') ? true
         self    &&= activeParent.isActive if activeParent?
         @isActive = self
         @trigger e if last != @isActive
@@ -281,6 +281,14 @@ helpers =
 
     mask: () ->
       return unless mask = @_inherit('mask')
+      shader = mask.mask shader
+
+    albedo: () ->
+      return unless mask = @_inherit('albedo')
+      shader = mask.mask shader
+
+    light: () ->
+      return unless mask = @_inherit('light')
       shader = mask.mask shader
 
   unit:

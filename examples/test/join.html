@@ -32,7 +32,7 @@
 
     view.interval({
       length: 16,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         var d = Math.sin(x + time);
 
         emit(.5);
@@ -47,6 +47,7 @@
       order: 'yx',
     });
     view.spread({
+      unit: 'absolute',
       width: [.1, 0, 0, 0],
     });
 

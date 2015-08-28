@@ -35,6 +35,9 @@
       view.set('quaternion', [0, -s, 0, c]);
     });
 
+    mathbox.set({ scale: 500 });
+    
+    
     view = mathbox.cartesian({
       range: [[-1, 1], [-1, 1], [-1, 1]],
       scale: [1, 1, 1],
@@ -103,7 +106,7 @@
       width:  32,
       height: 32,
       depth:  32,
-      map: function (emit, x, y, z, i, j, k) {
+      expr: function (emit, x, y, z, i, j, k) {
         var u = Math.cos((i + j*j + k*k*k) * 100.681 + time) * .05;
         var v = Math.cos((i*i*i + j + k*k) * 120.681 + time) * .05;
         var w = Math.cos((i*i + j*j*j + k) * 140.681 + time) * .05;

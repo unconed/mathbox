@@ -14,13 +14,14 @@ class Node
     @bind binds, false
 
   configure: (config, attributes) ->
-    {traits, props, freeform} = config
-    traits   ?= @_config.traits   ? []
-    props    ?= @_config.props    ? {}
-    freeform ?= @_config.freeform ? false
+    {traits, props, finals, freeform} = config
+    traits   ?= @_config?.traits   ? []
+    props    ?= @_config?.props    ? {}
+    finals   ?= @_config?.finals   ? {}
+    freeform ?= @_config?.freeform ? false
 
-    @attributes = attributes.apply @, traits, props, freeform
-    @_config    = {traits, props, freeform}
+    @_config    = {traits, props, finals, freeform}
+    @attributes = attributes.apply @, @_config
 
   dispose: () ->
     @attributes.dispose()
@@ -84,11 +85,11 @@ class Node
     a
 
   toString: () ->
-    id = @id ? @_id
+    _id = @id ? @_id
 
     tag  = @type ? 'node'
     id   = tag
-    id  += "##{id}"
+    id  += "##{_id}"
     id  += ".#{@classes.join '.'}" if @classes?.length
 
 

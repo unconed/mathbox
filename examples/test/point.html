@@ -56,7 +56,7 @@
       width: 32,
       height: 32,
       axes: [1, 3],
-      map: function (emit, x, y, i, j) {
+      expr: function (emit, x, y, i, j) {
         emit(x, .25 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);
       },
     });
@@ -85,7 +85,7 @@
 
     view.matrix({
       id: 'color',
-      map: function (emit, i, j) {
+      expr: function (emit, i, j) {
         var r = .5 + Math.cos(time * .873) * j;
         var g = .5 + Math.sin(time) * i;
         var b = 1;

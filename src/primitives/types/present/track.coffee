@@ -8,9 +8,9 @@ class Track extends Primitive
     @handlers = {}
     @script   = null
     @values   = null
-    @animate  = null
     @playhead = 0
-    @paused   = null
+    @section  = null
+    @expr     = null
 
   make: () ->
     # Bind to attached data sources
@@ -21,16 +21,27 @@ class Track extends Primitive
     {script} = @props
     {node} = @bind.target
 
-    [@script, @values, @start, @end] = @_process node, script if script?
+    @targetNode = node
+    [@script, @values, @start, @end] = @_process node, script
 
   unmake: () ->
+    @unbind()
     @_helpers.bind.unmake()
-    @script = null
+    @script = @values = @start = @end = @section = @expr = null
+    @playhead = 0
+
+  # Bind animated expressions
+  bindExpr: (expr) ->
+    @unbindExpr()
+    @expr = expr
+    @targetNode.bind expr, true
+
+  unbindExpr: () ->
+    @targetNode.unbind @expr, true if @expr?
+    @expr = null
 
   # Process script steps by filling out missing props
   _process: (object, script) ->
-
-    clone = (o) -> JSON.parse JSON.stringify o
 
     if script instanceof Array
       # Normalize array to numbered dict
@@ -41,20 +52,34 @@ class Track extends Primitive
     # Normalize keyed steps to array of step objects
     s = []
     for key, step of script
+      step ?= []
+
       if step instanceof Array
         # [props, expr] array
-        s.push {key: +key, props: step[0] ? {}, expr: step[1] ? {}}
+        step = {key: +key, props: step[0] ? {}, expr: step[1] ? {}}
       else
-        # Direct props object
-        step = {props: step} if !step.key? and !step.props and !step.expr
+        # Direct props object (iffy, but people will do this anyhow)
+        if !step.key? and !step.props and !step.expr
+          step = {props: step}
+        else
+          step = JSON.parse JSON.stringify step
 
         # Prepare step object
         step.key = if step.key? then +step.key else +key
         step.props ?= {}
         step.expr  ?= {}
 
-        s.push step
+      s.push step
+
+      # Connect steps
+      last.next = step if last?
+      last = step
+
+    # Last step leads to itself
+    last.next = last
     script = s
+
+    return [[], {}, 0, 0] if !script.length
 
     # Sort by keys
     script.sort (a, b) -> a.key - b.key
@@ -68,10 +93,15 @@ class Track extends Primitive
     props[k]  = true         for k, v of step.expr  for key, step of script
     props[k]  = object.get k for k    of props
     try
-      values[k] = object.attribute(k).T.make()
+      # Need two sources and one destination value for correct mixing of live expressions
+      values[k] = [
+        object.attribute(k).T.make(),
+        object.attribute(k).T.make(),
+        object.attribute(k).T.make(),
+      ] for k of props
     catch
       console.warn @node.toMarkup()
-      message = "#{@node} - Unknown property `#{k}` = `#{props[k]}` in script"
+      message = "#{@node} - Target #{object} has no `#{k}` property"
       throw new Error message
 
     result = []
@@ -91,65 +121,98 @@ class Track extends Primitive
     [result, values, start, end]
 
   update: () ->
-    {playhead, script, paused} = @
-    {ease} = @props
+    {playhead, script} = @
+    {ease, seek} = @props
     {node} = @bind.target
 
-    playhead = paused if paused?
+    playhead = seek if seek?
     time  = @_context.time.clock
-    delta = @_context.time.delta
+    delta = @_context.time.step
 
     if script.length
-      last = null
-      for step, i in script
-        break if step.key > playhead
-        last = step
+      find = () ->
+        last = script[0]
+        for step, i in script
+          break if step.key > playhead
+          last = step
+        last
 
-      if last
-        from  = last
-        start = last.key
-      if step
-        to    = step
-        end   = step.key
+      section = @section
+      section = find script, playhead if !section or playhead < section.key or playhead > section.next.key
 
-      from  ?= to
-      to    ?= from
-      start ?= end
-      end   ?= start
+      return if section == @section
+      @section = section
 
-      # Easing of interpolation along track
-      f = Ease.clamp (playhead - start) / Math.max(0.0001, end - start), 0, 1
-      method = switch ease
-        when 'linear', 0 then null
+      from  = section
+      to    = section.next
+      start = from.key
+      end   = to.key
+
+      # Easing of playhead along track
+      easeMethod = switch ease
+        when 'linear', 0 then Ease.clamp
         when 'cosine', 1 then Ease.cosine
         else                  Ease.cosine
-      f = method f if method?
 
-      # Interpolate prop on track
-      map = (key, from, to) =>
-        attr = node.attribute key
-        @values[key] = @_animator.lerp attr.T, from, to, f, @values[key]
-        #console.log "@_animator.lerp", attr.T, from, to, f, @values[key]
-        #@values[key]
+      # Callback for live playhead interpolator
+      getPlayhead   = () => @playhead
+      getLerpFactor = do ->
+        scale = 1 / Math.max(0.0001, end - start)
+        () -> easeMethod (getPlayhead() - start) * scale, 0, 1
 
-      # Live prop expressions
-      from.props[k] = node.validate k, expr(time, delta, playhead) for k, expr of from.expr
-      to  .props[k] = node.validate k, expr(time, delta, playhead) for k, expr of to  .expr if from != to
+      # Create prop expression interpolator
+      live = (key) =>
 
-      # Live
-      live = !!(Object.keys(from.expr).length + Object.keys(to.expr).length)
-      @animate.options.live = live if @animate?
+        fromE = from.expr[key]
+        toE   = to  .expr[key]
+        fromP = from.props[key]
+        toP   = to  .props[key]
 
-      # Calculate current values
-      props = {}
-      props[k] = map k, from.props[k], to.props[k] for k, v of from.props
+        invalid = () ->
+          console.warn node.toMarkup()
+          throw new Error "#{@node} - Invalid expression result on track `#{key}`"
 
-      node.set props, true
+        attr = node.attribute(key)
+        values = @values[key]
+        animator = @_animator
 
-    {expr} = @props
-    if expr?
-      props = expr.call node, playhead, time, delta
-      node.set props if typeof props == 'object'
+        # Lerp between two expressions
+        if fromE and toE
+          do (values, from, to) ->
+            (time, delta) ->
+              values[0] = _from = attr.T.validate fromE(time, delta), values[0], invalid
+              values[1] = _to   = attr.T.validate   toE(time, delta), values[1], invalid
+              values[2] = animator.lerp attr.T, _from, _to, getLerpFactor(), values[2]
+
+        # Lerp between an expression and a constant
+        else if fromE
+          do (values, from, to) ->
+            (time, delta) ->
+              values[0] = _from = attr.T.validate fromE(time, delta), values[0], invalid
+              values[1] = animator.lerp attr.T, _from, toP, getLerpFactor(), values[1]
+
+        # Lerp between a constant and an expression
+        else if to.E
+          do (values, from, to) ->
+            (time, delta) ->
+              values[0] = _to = attr.T.validate toE(time, delta), values[0], invalid
+              values[1] = animator.lerp attr.T, fromP, _to, getLerpFactor(), values[1]
+
+        # Lerp between two constants
+        else
+          do (values, from, to) ->
+            (time, delta) ->
+              values[0] = animator.lerp attr.T, fromP, toP, getLerpFactor(), values[0]
+
+      # Handle expr / props on both ends
+      expr = {}
+      expr[k] ?= live k for k of from.expr
+      expr[k] ?= live k for k of to  .expr
+      expr[k] ?= live k for k of from.props
+      expr[k] ?= live k for k of to  .props
+
+      # Bind node props
+      @bindExpr expr
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['track.target'] or
@@ -159,9 +222,6 @@ class Track extends Primitive
     if changed['track.seek'] or
        init
 
-      {seek} = @props
-      if seek?
-        @paused = seek
-        @update()
+      @update()
 
 module.exports = Track

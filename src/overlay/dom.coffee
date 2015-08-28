@@ -1,11 +1,11 @@
 Overlay = require './overlay'
-Util    = require '../util'
+{VDOM}  = require '../util'
 
 class DOM extends Overlay
-  el:      Util.VDOM.element
-  hint:    Util.VDOM.hint
-  apply:   Util.VDOM.apply
-  recycle: Util.VDOM.recycle
+  el:      VDOM.element
+  hint:    VDOM.hint
+  apply:   VDOM.apply
+  recycle: VDOM.recycle
 
   init: (options) ->
     @last = null

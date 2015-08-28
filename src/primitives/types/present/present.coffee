@@ -15,7 +15,7 @@ class Present extends Parent
     @dirty  = []
 
     @_listen 'root', 'root.update', @update
-    @_readonly 'present.length', (() => @length)
+    @_compute 'present.length', () => @length
 
   adopt: (controller) ->
     node = controller.node
@@ -32,41 +32,30 @@ class Present extends Parent
 
     @slideReset controller for controller in @dirty
 
-    @steps  = @process @nodes
+    [@steps, @indices] = @process @nodes
+
     @length = @steps.length
     @index  = null
     @go @props.index
 
     @dirty = []
 
-  slideReset: (controller) ->              controller.slideReset()
-  slideEnter: (controller, step) ->        controller.slideEnter step
-  slideExit:  (controller, step) ->        controller.slideExit  step
-  slideStep:  (controller, index, step) -> controller.slideStep  @mapIndex(controller, index), step
+  slideLatch:   (controller, enabled, step) -> controller.slideLatch enabled, step
+  slideStep:    (controller, index, step) ->   controller.slideStep  @mapIndex(controller, index), step
+  slideRelease: (controller, step) ->          controller.slideRelease()
+  slideReset:   (controller) ->                controller.slideReset()
 
-  mapIndex: (controller, index) -> index - controller.slideIndex
+  mapIndex: (controller, index) -> index - @indices[controller.node._id]
 
   process: (nodes) ->
 
-    # Sort in document order
-    nodes.sort (a, b) -> b.order - a.order
-
-    isSlide = (el) -> nodes.indexOf(el) >= 0
-    #isBuild = (el) -> el.get 'slide.build'
-
-    slides   = (els) -> parents(el).filter isSlide for el in els
+    # Grab nodes' path of slide parents
+    slides   = (nodes) -> parents(el).filter isSlide for el in nodes
     traverse = (map) -> (el) -> ref while el and ([el, ref] = [map(el), el])
     parents  = traverse (el) -> if el.parent.traits.hash.present then null else el.parent
 
-    ###
-    prevs    = traverse (el) -> el.parent?.children[el.index - 1]
-    assemble = (els) -> step.concat builds step for step in slides els
-    builds   = (els) -> flatten(prevs(el).slice(1).filter isBuild for el in els)
-    flatten  = (list, x = []) ->
-      x = x.concat y for y in list
-      x
-    ###
-
+    # Helpers
+    isSlide = (el) -> nodes.indexOf(el) >= 0
     isSibling = (a, b) ->
       # Different tree level
       c = a.length
@@ -81,77 +70,81 @@ class Present extends Parent
 
       return true
 
-    compare = (a, b) ->
-      # Different tree level
+    # Order paths (leaf -> parent slide -> ...)
+    order = (paths) -> paths.sort (a, b) ->
+      # Path lengths
       c = a.length
       d = b.length
-      e = c - d
-      return e if e != 0
 
       # Compare from outside in
       e = Math.min c, d
-      for i in [e - 1..0] # inclusive end
-        c = a[i]
-        d = b[i]
+      for i in [1..e] # inclusive end
+        nodeA = a[c - i]
+        nodeB = b[d - i]
 
         # Explicit sibling order (natural)
-        f = c.props.order
-        g = d.props.order
+        f = nodeA.props.order
+        g = nodeB.props.order
         if f? or g?
           return e     if f? and g? and ((e = f - g) != 0)
           return -1    if f?
           return 1     if g?
 
         # Document sibling order (inverted)
-        return d.order - c.order if d.order != c.order
+        return nodeB.order - nodeA.order if nodeB.order != nodeA.order
+
+      # Different tree level
+      e = c - d
+      return e if e != 0
 
       # Equal
       return 0
 
-    order = (steps) ->
-      steps.sort compare
+    split = (steps) ->
+      relative = []
+      absolute = []
+      (if (node = step[0]).props.steps? then relative else absolute).push step for step in steps
+      [relative, absolute]
 
-    tag = (steps) ->
-      for step, i in steps
-        #parent = (step[1]?.controller.slideIndex || 0)
-        #step[0].controller.slideIndex = i + 1 - parent
-        step[0].controller.slideIndex = i
-      steps
+    expand = (lists) ->
+      [relative, absolute] = lists
 
-    builds = (steps) ->
-      out = steps.slice()
+      indices = {}
+      steps   = []
+      slide = (step, index) ->
+        {props} = node = step[0]
+        parent         = step[1]
 
-      # Spread non-entering/exiting/sticky slides to adjacent steps
-      for step, i in steps
-        leaf = step[0]
-        {stay, enters, exits} = leaf.props
-        before = if enters then 1                else Infinity
-        after  = if exits  then Math.max 1, stay else Infinity
+        parentIndex = if parent? then indices[parent._id] else 0
+        throw "parent index missing" if !parentIndex?
+        childIndex  = index
 
-        if before
-          for j in [i - 1...i - before]
-            break if !isSibling steps[j], step
-            out[j] = (out[j] ? []).concat step
+        from = if props.from? then parentIndex + props.from else childIndex - props.early
+        to   = if props.to?   then parentIndex + props.to   else childIndex + props.steps + props.late
 
-        if after
-          for j in [i + 1...i + after]
-            break if !isSibling steps[j], step
-            out[j] = (out[j] ? []).concat step
+        indices[node._id] ?= from
+        steps[i] = (steps[i] ?= []).concat step for i in [from...to]
 
-      # Dedupe
-      for step, i in out
-        out[i] = step.filter (x, j) -> step.indexOf(x) == j
+        props.steps
 
-      out
+      i = 0
+      i += slide step, i for step in relative
+      slide      step, 0 for step in absolute
 
-    steps = slides nodes
-    steps = order  steps
-    steps = tag    steps
-    steps = builds steps
+      # Dedupe and order
+      steps = (finalize dedupe step for step in steps)
 
-    #console.log 'process',  {nodes, steps}
+      [steps, indices]
 
-    steps
+    # Remove duplicates
+    dedupe = (step) -> node for node, i in step when step.indexOf(node) == i
+
+    # Finalize individual step by document order
+    finalize = (step) -> step.sort (a, b) -> a.order - b.order
+
+    paths = slides nodes
+    steps = order  paths
+    expand split steps
 
   go: (index) ->
     # Pad with an empty slide before and after for initial enter/final exit
@@ -167,18 +160,24 @@ class Present extends Parent
     stay  = (node for node in active when enter .indexOf(node) < 0 and
                                           exit  .indexOf(node) < 0)
 
-    # Enter in document order (parent -> child), exit in opposite order (child -> parent)
-    enter.sort (n) ->  n.order
-    stay.sort  (n) ->  n.order
-    exit.sort  (n) -> -n.order
+    ascend   = (nodes) -> nodes.sort (a, b) ->  a.order - b.order
+    descend  = (nodes) -> nodes.sort (a, b) ->  b.order - a.order
 
-    #console.log 'go',  {enter, stay, exit}
+    toStr = (x) -> x.toString()
+    #console.log '============================================================'
+    #console.log 'go',  index, {enter: enter.map(toStr), stay: stay.map(toStr), exit: exit.map(toStr)}
 
-    @slideEnter node.controller, step        for node in enter
-    @slideStep  node.controller, index, step for node in enter
-    @slideStep  node.controller, index, step for node in stay
-    @slideStep  node.controller, index, step for node in exit
-    @slideExit  node.controller, step        for node in exit
+    @slideLatch   node.controller, true,  step for node in ascend enter
+    @slideLatch   node.controller, null,  step for node in ascend stay
+    @slideLatch   node.controller, false, step for node in ascend exit
+
+    @slideStep    node.controller, index, step for node in enter
+    @slideStep    node.controller, index, step for node in stay
+    @slideStep    node.controller, index, step for node in exit
+
+    @slideRelease node.controller              for node in descend enter
+    @slideRelease node.controller              for node in descend stay
+    @slideRelease node.controller              for node in descend exit
 
     @last = active
     return

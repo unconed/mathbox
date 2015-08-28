@@ -129,7 +129,7 @@ class Matrix extends Buffer
       callback
     else
       (emit, i, j) =>
-        callback emit, i, j, @_context.time.clock, @_context.time.delta
+        callback emit, i, j, @bufferClock, @bufferStep
 
   update: () ->
     return unless @buffer

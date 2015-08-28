@@ -25,8 +25,8 @@ class Attributes
     type:  type.uniform?() # for three.js
     value: type.make()
 
-  apply: (object, traits = [], props = {}, freeform = false) ->
-    new Data object, traits, props, freeform, @
+  apply: (object, config) ->
+    new Data object, config, @
 
   bind:   (callback) -> @bound.push callback
   unbind: (callback) -> @bound = (cb for cb in @bound when cb != callback)
@@ -37,7 +37,7 @@ class Attributes
     @lastValue  = value
     @pending.push callback
 
-  invoke: (callback) -> callback @context.time.clock, @context.time.delta
+  invoke: (callback) -> callback @context.time.clock, @context.time.step
 
   compute: () ->
     @invoke cb for cb in @bound if @bound.length
@@ -56,21 +56,25 @@ class Attributes
 
   getLastTrigger: () -> "#{@lastObject.toString()} - #{@lastKey}=`#{@lastValue}`"
 
+shallowCopy = (x) ->
+  out = {}
+  out[k] = v for k, v of x
+  out
 
 class Data
-  constructor: (object, traits = [], props, freeform, _attributes) ->
-
-    @object = object
+  constructor: (object, config, _attributes) ->
+    {traits, props, finals, freeform} = config
+    data = @
 
     # Save existing (original) values if re-applying
-    oldProps = object.props      if object.set?  and object.get? and object.orig?
-    oldOrig  = object.orig()     if object.set?  and object.get? and object.orig?
-    oldExpr  = object.expr       if object.bind? and object.unbind?
-    oldReads = object.readonly() if object.bind? and object.unbind?
-    oldFinal = object.final()    if object.bind? and object.unbind?
+    if object.props? and object.expr? and object.orig? and object.computed? and object.attributes?
+      oldProps    = shallowCopy object.props
+      oldExpr     = shallowCopy object.expr
+      oldOrig     = object.orig()
+      oldComputed = object.computed()
 
-    # Dispose of old attributes/bindings
-    object.attributes?.dispose()
+      # Dispose of old attributes/bindings
+      object.attributes?.dispose()
 
     # Flattened and original values
     flattened = {}
@@ -84,16 +88,16 @@ class Data
       mapTo[alias]  = name
 
     # Get/set
-    get = (key) => @[key]?.value ? @[to(key)]?.value
-    set = (key, value, ignore, initial) =>
+    get = (key) -> data[key]?.value ? data[to(key)]?.value
+    set = (key, value, ignore, initial) ->
       key = to(key)
 
       # Look for defined attribute
-      unless (attr = @[key])?
+      unless (attr = data[key])?
         throw new Error "#{object.toString()} - Setting unknown property `#{key}={#{value}}`" unless freeform
 
         # Define attribute on the fly (placeholder)
-        attr = @[key] =
+        attr = data[key] =
           short: key
           type:  null
           last:  null
@@ -102,12 +106,16 @@ class Data
 
       if !ignore
         # See if prop isn't bound
-        if expr[key]
-          throw new Error "#{object.toString()} - Setting bound property `#{key}={#{value}}`"
+        if _expr[key]
+          throw new Error "#{object.toString()} - Can't set bound property `#{key}={#{value}}`"
 
-        # See if prop isn't readonly
-        if reads[key]
-          throw new Error "#{object.toString()} - Setting readonly property `#{key}={#{value}}`"
+        # See if prop isn't computed
+        if _computed[key]
+          throw new Error "#{object.toString()} - Can't set computed property `#{key}={#{value}}`"
+
+        # See if prop isn't final
+        if _finals[key]
+          throw new Error "#{object.toString()} - Can't set final property `#{key}={#{value}}`"
 
       # Validate new value
       valid = true
@@ -127,45 +135,70 @@ class Data
 
       return valid
 
-    # Expression binding
-    bound  = {}
-    expr   = {}
-    reads  = {}
-    finals = {}
+    constant = (key, value, initial) ->
+      key = to(key)
 
-    bind = (key, _expr, readonly = false, final = false) ->
-      if typeof _expr != 'function'
+      set key, value, true, initial
+      finals[key] = true
+
+    # Prop/expression binding
+    expr  = {}
+
+    _bound    = {}
+    _expr     = {}
+    _computed = {}
+    _finals   = {}
+
+    bind = (key, expression, computed = false) ->
+      key = to key
+
+      if typeof expression != 'function'
         throw new Error "#{object.toString()} - Expression `#{key}=>{#{expr}}` is not a function"
-      if expr[key]
+      if _expr[key]
         throw new Error "#{object.toString()} - Property `#{key}=>{#{expr}}` is already bound"
-      if readonly[key]
-        throw new Error "#{object.toString()} - Property `#{key}` is read-only"
+      if _computed[key]
+        throw new Error "#{object.toString()} - Property `#{key}` is computed"
+      if _finals[key]
+        throw new Error "#{object.toString()} - Property `#{key}` is final"
 
-      list = if final then finals else if readonly then reads else expr
-      list[key] = _expr
+      list = if computed then _computed else _expr
+      list[key] = expression
 
-      _expr = _expr.bind object
-      bound[key] = (t, d) -> object.set key, _expr(t, d), true
-      _attributes.invoke bound[key] if  final
-      _attributes.bind   bound[key] if !final
+      short = if data[key]? then data[key].short else key
+      expr[short] = expression # flattened
+      expression = expression.bind object
+      _bound[key] = (t, d) -> object.set key, expression(t, d), true
+      _attributes.bind _bound[key]
 
-    unbind = (key, readonly = false, final = true) ->
-      list = if final then finals else if readonly then reads else expr
+    unbind = (key, computed = false) ->
+      key = to key
+
+      list = if computed then _computed else _expr
       return unless list[key]
-      _attributes.unbind bound[key]
-      delete bound[key]
+      _attributes.unbind _bound[key]
+      delete _bound[key]
       delete list[key]
 
-    shallowCopy = (x) ->
-      out = {}
-      out[k] = v for k, v of x
-      out
+      key = data[key].short if data[key]?
+      delete expr[key]
+
+    evaluate = (key, time) ->
+      key = to key
+      _bound[key]?(time, 0) ? data[key].value
 
     # Public interface
     object.expr  = expr
     object.props = flattened
 
-    object.get = (key) => if key? then get(key) else flattened
+    object.evaluate = (key, time) ->
+      if key?
+        evaluate(key, time)
+      else
+        out = {}
+        out[key] = evaluate(key, time) for key of props
+        out
+
+    object.get = (key) -> if key? then get(key) else flattened
 
     object.set = (key, value, ignore, initial) ->
       if typeof key == 'string'
@@ -177,25 +210,27 @@ class Data
         set(key, value, ignore, initial) for key, value of options
       return
 
-    object.bind = (key, expr, readonly, final) ->
+    object.bind = (key, expr, computed) ->
       if typeof key == 'string'
-        bind(key, expr, readonly, final)
+        bind(key, expr, computed)
       else
-        readonly = expr
+        computed = expr
         binds = key
-        bind(key, expr, readonly, final) for key, expr of binds
+        bind(key, expr, computed) for key, expr of binds
+      return
 
-    object.unbind = (key, readonly) ->
+    object.unbind = (key, computed) ->
       if typeof key == 'string'
-        unbind(key, readonly)
+        unbind(key, computed)
       else
-        unbind(key, readonly) for key of expr
+        computed = expr
+        binds = key
+        unbind(key, computed) for key of binds
+      return
 
-    object.attribute = (key) => if key? then         @[to key] else @
-    object.final     = (key) => if key? then    finals[to key] else shallowCopy finals
-    object.readonly  = (key) => if key? then     reads[to key] else shallowCopy reads
-    object.orig      = (key) => if key? then originals[to key] else shallowCopy originals
-
+    object.attribute = (key) -> if key? then      data[to key] else data
+    object.orig      = (key) -> if key? then originals[to key] else shallowCopy originals
+    object.computed  = (key) -> if key? then _computed[to key] else shallowCopy _computed
 
     # Validate value for key
     makers     = {}
@@ -214,10 +249,12 @@ class Data
 
     # Accumulate changes
     dirty = false
+    changes = {}
+    touches = {}
     changed = {}
     touched = {}
     getNS  = (key) -> key.split('.')[0]
-    change = (key, value) =>
+    change = (key, value) ->
       if !dirty
         dirty = true
         _attributes.queue digest, key, value
@@ -225,10 +262,10 @@ class Data
       trait = getNS key
 
       # Log change
-      changed[key]   = true
+      changes[key]   = true
 
       # Mark trait/namespace as dirty
-      touched[trait] = true
+      touches[trait] = true
 
     event =
       type: 'change'
@@ -237,17 +274,23 @@ class Data
 
     # Notify listeners of accumulated changes
     digest = () ->
-      event.changed = changed
-      event.touched = touched
-      changes = {}
-      touches = {}
+      # Swap double buffered changes objects
+      event.changed = changes
+      event.touched = touches
+      changes = changed
+      touches = touched
+      changed = event.changed
+      touched = event.touched
 
+      # Reset all dirty flags
       dirty = false
+      changes[k] = false for k of changes
+      touches[k] = false for k of touches
 
       event.type = 'change'
       object.trigger event
 
-      for trait, dummy of event.touched
+      for trait of event.touched
         event.type = "change:#{trait}"
         object.trigger event
 
@@ -260,13 +303,13 @@ class Data
       parts.reduce (a, b) -> a + b.charAt(0).toUpperCase() + b.substring(1)
 
     # Define attributes for given trait spec by namespace
-    addSpec = (name, spec) =>
+    addSpec = (name, spec) ->
       for key, type of spec
         key = [name, key].join '.'
         short = shorthand key
 
         # Make attribute object
-        @[key] = attr =
+        data[key] = attr =
           T:     type
           ns:    name
           short: short
@@ -304,19 +347,29 @@ class Data
     unique = list.filter (object, i) -> list.indexOf(object) == i
     object.traits = unique
 
-    # Set previous values if applicable
-    object.set  oldProps,  true,  true  if oldProps?
-    object.set  oldOrig,   false, true  if oldOrig?
+    # Set previous internal values
+    object.set  oldProps,    true,  true  if oldProps?
 
-    # Bind previous expressions if applicable
-    object.bind oldFinals, true,  true  if oldFinals?
-    object.bind oldReads,  true         if oldReads?
-    object.bind oldExpr,   false        if oldExpr?
+    # Set final props
+    if finals?
+      for key, value of finals
+        constant key, value
+
+    # Set previous external values
+    object.set  oldOrig,     false, true  if oldOrig?
+
+    # Bind previous computed props/expressions
+    object.bind oldComputed, true         if oldComputed?
+    object.bind oldExpr,     false        if oldExpr?
 
     # Destructor
     @dispose = () ->
-      unbind(key, true)  for key of reads
+      unbind(key, true)  for key of _computed
       unbind(key, false) for key of expr
+      props = {}
+      delete object.attributes
+      delete object.get
+      delete object.set
 
     null
 

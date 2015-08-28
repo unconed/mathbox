@@ -113,7 +113,7 @@
       axis: 'z',
       length: 512,
       history: 64,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         j = Math.floor(i/2);
         theta = scrub * (1 + Math.sin(j * j * j + j) * .5) * 4;
         rad = Math.sin(j * 12 + j * j) * .5 + Math.sin((j * .018 + 1 + Math.sin(j) * .3) * time);
@@ -126,6 +126,7 @@
       length: 2,
     });
     view.spread({
+      unit: 'absolute',
       width: [0, 0, .015, 0],
       depth: [0, 0, .01, 0],
       id: 'split',
@@ -145,7 +146,7 @@
         width: 2,
         zBias: 2,
         color: 0x1550FF,
-        solid: false,
+        fill:  false,
         lineX: false,
       });
 

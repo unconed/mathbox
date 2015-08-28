@@ -40,6 +40,6 @@ class HTML extends Voxel
         callback emit, el, i, j, k, l
     else
       (emit, i, j, k, l) ->
-        callback emit, el, i, j, k, l, @_context.time.clock, @_context.time.delta
+        callback emit, el, i, j, k, l, @_context.time.clock, @_context.time.step
 
 module.exports = HTML

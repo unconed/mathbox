@@ -16,7 +16,6 @@ class Transition extends Parent
 
     @latched = null
     @locked  = null
-    @zero = new THREE.Vector4
 
   make: () ->
     @uniforms =
@@ -35,21 +34,33 @@ class Transition extends Parent
     activeParent  = @_inherit('active')
 
     @_listen slideParent,   'transition.latch',   (e) => @latch e.step
-    @_listen visibleParent, 'visible.change',     ()  => @update (@state.isVisible = visibleParent.isVisible)
-    @_listen activeParent,  'active.change',      ()  => @update (@state.isActive  = activeParent.isActive)
     @_listen slideParent,   'transition.release', ()  => @release()
+
+    @_listen visibleParent, 'visible.change',     ()  =>
+      #console.log @node.toString(), 'visible.change ^', visibleParent.isVisible
+      @update (@state.isVisible = visibleParent.isVisible)
+
+    @_listen activeParent,  'active.change',      ()  =>
+      #console.log @node.toString(), 'active.change ^', activeParent.isActive
+      @update (@state.isActive  = activeParent.isActive)
 
     @animate = @_animator.make @_types.vec2(1, 1),
       step: (value) =>
         @state.enter     = value.x
         @state.exit      = value.y
         @update()
-      complete: () => @complete()
+      complete: (done) => @complete done
 
     @move = @props.from? or @props.to?
 
+    #@_helpers.visible.make()
+    #@_helpers.active.make()
+
   unmake: () ->
     @animate.dispose()
+
+    #@_helpers.visible.unmake()
+    #@_helpers.active.unmake()
 
   latch: (step) ->
     @locked  = null
@@ -65,11 +76,17 @@ class Transition extends Parent
       [enter, exit] = if forward then [0, 1] else [1, 0]
       @animate.set enter, exit
 
+    #console.log @node.toString(), 'transition::latch', @latched, enter, exit
+
   release: () ->
     # Get before/after and unlatch state
     latched = @latched
     state   = @state
     @latched = null
+
+    #console.log @node.toString(), 'transition::release', JSON.parse JSON.stringify {latched, state}
+
+    #p = @; console.log '-> ', p.node.toString(), p.isVisible while p = p._inherit 'visible'
 
     # Transition if visibility state change
     if latched.isVisible != state.isVisible
@@ -92,6 +109,7 @@ class Transition extends Parent
       delay = visible * delayEnter + !visible * delayExit
 
       # Animate enter/exit
+      #console.log @node.toString(), '@animate.immediate', {x: enter, y: exit}, {duration, delay, ease: 'linear'}
       @animate.immediate {x: enter, y: exit}, {duration, delay, ease: 'linear'}
 
       # Lock visibility and active open during transition
@@ -101,7 +119,8 @@ class Transition extends Parent
 
     @update()
 
-  complete: () ->
+  complete: (done) ->
+    return if !done
     @locked = null
     @update()
 
@@ -123,7 +142,8 @@ class Transition extends Parent
     @uniforms.transitionActive.value = partial
 
     # Resolve visibility state
-    visible = !!(@state.isVisible or @locked?.isVisible) if visible
+    visible = !!@state.isVisible if visible
+    visible =  @locked.isVisible if @locked?
 
     if @isVisible != visible
       @isVisible = visible
@@ -140,18 +160,6 @@ class Transition extends Parent
 
 
   change: (changed, touched, init) ->
-
-
-    if changed['transition.from'] or
-       changed['transition.to']   or
-       init
-
-      move = @props.from? or @props.to?
-      return @rebuild if move != @move
-
-      # Replace null with zero
-      @uniforms.transitionFrom.value.copy @props.from ? @zero
-      @uniforms.transitionTo  .value.copy @props.to   ? @zero
 
     if changed['transition.enter'] or
        changed['transition.exit']  or
@@ -187,25 +195,5 @@ class Transition extends Parent
                                           flipY * staggerY,
                                           flipZ * staggerZ,
                                           flipW * staggerW
-
-  mask: (shader) ->
-    if shader
-      s = @_shaders.shader()
-      s.pipe Util.GLSL.identity 'vec4'
-      s.fan()
-      s  .pipe shader, @uniforms
-      s.next()
-      s  .pipe 'transition.mask', @uniforms
-      s.end()
-      s.pipe "float combine(float a, float b) { return min(a, b); }"
-    else
-      s = @_shaders.shader()
-      s.pipe 'transition.mask', @uniforms
-
-    @_inherit('mask')?.mask(s) ? s
-
-  transform: (shader, pass) ->
-    shader.pipe 'transition.position', @uniforms if @move and (pass == @props.pass)
-    @_inherit('transform')?.transform(shader, pass) ? shader
 
 module.exports = Transition

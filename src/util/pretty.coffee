@@ -170,9 +170,10 @@ prettyJSXPair = do ->
               when 'number'
                 formatNumber v
               else
-                if v?._up? then value v.map (v) -> v
-                else if v instanceof Node then v.toString()
-                else "#{JSON.stringify v}"
+                if v?
+                  if v._up?            then return value v.map (v) -> v
+                  if v instanceof Node then return v.toString()
+                return "#{JSON.stringify v}"
 
     [k, op, wrap value v].join ''
 

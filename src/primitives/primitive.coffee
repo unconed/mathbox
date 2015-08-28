@@ -6,8 +6,10 @@ class Primitive
 
   # Class default
   @model    = @Node
-  @traits   = []
-  @props    = {}
+  @defaults = null
+  @traits   = null
+  @props    = null
+  @finals   = null
   @freeform = false
 
   constructor: (@node, @_context, helpers) ->
@@ -36,7 +38,7 @@ class Primitive
     @_helpers = helpers @, @node.traits
 
     # Keep track of various handlers to do auto-cleanup on unmake()
-    @_handlers = inherit: {}, listen: [], watch: [], prop: []
+    @_handlers = inherit: {}, listen: [], watch: [], compute: []
 
     # Detached initially
     @_root = @_parent = null
@@ -92,7 +94,7 @@ class Primitive
     @unmake rebuild
     @_unlisten()
     @_unattach()
-    @_unbind()
+    @_uncompute()
 
     @_root     = null
     @_parent   = null
@@ -209,19 +211,17 @@ class Primitive
     watcher?.unwatch() for watcher in @_handlers.watch
     @_handlers.watch = []
 
-  # Bind a computed or final value to a prop
-  _readonly: (key, expr) -> @_bind key, false, expr
-  _final:    (key, expr) -> @_bind key, true,  expr
-
-  _bind: (key, final, expr) ->
-    @_handlers.bind.push {key, final}
-    @node.bind key, expr, true, final
+  # Bind a computed value to a prop
+  _compute: (key, expr) ->
+    @_handlers.compute.push key
+    @node.bind key, expr, true
 
   # Remove prop bindings
-  _unbind: () ->
-    return unless @_handlers.bind.length
-    for [key, final] in @_handlers.bind
-      @node.unbind key, true, final
+  _uncompute: () ->
+    return unless @_handlers.compute.length
+    @node.unbind key, true for key in @_handlers.compute
+    @_handlers.compute = []
+
 
 THREE.Binder.apply Primitive::
 

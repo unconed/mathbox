@@ -1,33 +1,42 @@
 Track = require './track'
 
 class Step extends Track
-  @traits = ['node', 'track', 'steps', 'bind']
+  @traits = ['node', 'track', 'step', 'bind']
 
   make: () ->
     super
 
-    @lastIndex = 0
+    @lastIndex = null
     @animate = @_animator.make @_types.number(0),
-      realTime: @props.realTime
+      realtime: @props.realtime
       step: (value) =>
         @playhead = value
         @update()
 
     @stops = @props.stops ? [0...@script.length]
 
+    # Seek instantly after reset
+    @_listen 'slide', 'slide.reset', (e) => @lastIndex = null
+
     # Update playhead in response to slide change
     @_listen 'slide', 'slide.step', (e) =>
       {delay, duration, pace, speed, playback, rewind, skip, trigger} = @props
 
-      #console.log 'slide.step', @node.toString(), {index: e.index, trigger, diff: e.index - trigger}
+      # Note: enter phase is from index 0 to 1
+      i = Math.max  0, Math.min @stops.length - 1, e.index - trigger
 
-      # Note: enter phase is from 0 to 1, subtract default trigger 1 to not animate instantly
-      i = Math.max 0, Math.min @stops.length - 1, e.index - trigger
-      step = i - @lastIndex
-      @lastIndex = i
-
+      # Animation range
       from = @playhead
       to   = @stops[i]
+
+      # Seek if first step after reset
+      if !@lastIndex? and trigger
+        @lastIndex = i
+        return @animate.set to
+
+      # Calculate step
+      step = i - (@lastIndex ? 0)
+      @lastIndex = i
 
       # Apply rewind factor
       factor = speed * if e.step >= 0 then 1 else rewind
@@ -50,7 +59,7 @@ class Step extends Track
     super
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['steps.stops'] or changed['steps.realTime']
+    return @rebuild() if changed['step.stops'] or changed['step.realtime']
     super changed, touched, init
 
 module.exports = Step

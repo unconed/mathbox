@@ -4,16 +4,14 @@ Util = require '../../../util'
 class Text extends Voxel
   @traits = ['node', 'buffer', 'data', 'texture', 'voxel', 'text']
   @defaults =
-    channels:         4
     minFilter: 'linear'
     magFilter: 'linear'
+  @finals =
+    channels: 4
 
   init: () ->
     super
     @atlas = null
-    @_final 'channels',  4,      
-    @_final 'minFilter', 'linear'
-    @_final 'magFilter', 'linear'
 
   textShader: (shader) ->
     @atlas.shader shader

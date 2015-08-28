@@ -63,6 +63,9 @@ class API
   get: (key) ->
     @_targets[0]?.get key
 
+  evaluate: (key, time) ->
+    @_targets[0]?.evaluate key, time
+
   bind: (key, value) ->
     @_context.controller.bind target, key, value for target in @_targets
     @
@@ -131,9 +134,13 @@ class API
       renders     = flatten renderables.map (x) -> x.renders
       shaders     = flatten renderables.map (x) -> x.renders.map (r) -> make x, r
 
-      console.log 'Renderables', renderables
-      console.log 'Renders',     renders
-      console.log 'Shaders',     shaders
+      @info = {renderables, renders, shaders}
+
+      console.log "mathbox.info = {"
+      console.log 'Renderables: ', renderables
+      console.log 'Renders: ',     renders
+      console.log 'Shaders: ',     shaders
+      console.log "}"
 
     @
 

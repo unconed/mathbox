@@ -74,7 +74,7 @@
     view.interval({
       id: 'sampler',
       length: 128,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         emit(x, .5 + .5 * Math.sin(x + time));
       },
       channels: 2,

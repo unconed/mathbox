@@ -126,7 +126,7 @@ class Voxel extends Buffer
       callback
     else
       (emit, i) =>
-        callback emit, i, j, k, @_context.time.clock, @_context.time.delta
+        callback emit, i, j, k, @bufferClock, @bufferStep
 
   update: () =>
     return unless @buffer

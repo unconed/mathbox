@@ -12,13 +12,13 @@
 <body>
   <script>
   
-    // Define global DOM handler to format latex into an HTML span
-    MathBox.DOM.latex = {
-      render: function (el, props, children) {
-        props.innerHTML = katex.renderToString(children);
-        return el('span', props);
+    // Define global DOM handler to format 'latex' into an HTML span
+    MathBox.DOM.Types.latex = MathBox.DOM.createClass({
+      render: function (el) {
+        this.props.innerHTML = katex.renderToString(this.children);
+        return el('span', this.props);
       }
-    };
+    });
   
     mathbox = mathBox({
       plugins: ['core', 'controls', 'cursor', 'stats'],
@@ -73,7 +73,7 @@
 
     view.interval({
       length: 8,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         y = Math.sin(x + time / 4) * .7;
         emit(x, y);
       },
@@ -85,6 +85,7 @@
       depth:  2,
     });
     view.spread({
+      unit: 'absolute',
       height: [0, 0, .5],
       depth: [0, .5, 0],
     });
@@ -99,7 +100,7 @@
       width: 8,
       height: 3,
       depth:  2,
-      map: function (emit, el, i, j) {
+      expr: function (emit, el, i, j) {
         // Emit latex element
         emit(el('latex', null, 'c = \\pm\\sqrt{' + i + ' a^2 + ' + j + ' b^2}'));
       },

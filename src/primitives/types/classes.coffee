@@ -47,9 +47,10 @@ Classes =
   slice:             require './operator/slice'
   transpose:         require './operator/transpose'
 
-  shader:            require './base/shader'
   group:             require './base/group'
+  inherit:           require './base/inherit'
   root:              require './base/root'
+  shader:            require './base/shader'
   unit:              require './base/unit'
 
   camera:            require './camera/camera'
@@ -57,11 +58,12 @@ Classes =
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
 
-  clock:             require './present/clock'
   present:           require './present/present'
   slide:             require './present/slide'
   step:              require './present/step'
+  play:              require './present/play'
   track:             require './present/track'
-  transition:        require './present/transition'
+  reveal:            require './present/reveal'
+  move:              require './present/move'
 
 module.exports = Classes

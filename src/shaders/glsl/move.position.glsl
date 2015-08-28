@@ -5,8 +5,8 @@ uniform vec4  transitionBias;
 uniform float transitionSkew;
 uniform float transitionActive;
 
-uniform vec4  transitionFrom;
-uniform vec4  transitionTo;
+uniform vec4  moveFrom;
+uniform vec4  moveTo;
 
 float ease(float t) {
   t = clamp(t, 0.0, 1.0);
@@ -28,5 +28,5 @@ vec4 getTransitionPosition(vec4 xyzw, inout vec4 stpq) {
   float a1 = ease(enter * factor - offset);
   float a2 = ease(exit  * factor + offset - skew);
 
-  return xyzw + a1 * transitionFrom + a2 * transitionTo;
+  return xyzw + a1 * moveFrom + a2 * moveTo;
 }

@@ -66,7 +66,7 @@
       items: 1,
       axis: 1,
       history: 96,
-      map: function (emit, x, i) {
+      expr: function (emit, x, i) {
         z = Math.sin(time * 5) * 3;
         y = .25 + Math.cos(x + z + Math.sin(1.52 * x - z * z / 3 + x * z * .25 + time) + time * 3) * .25;
         emit(x, y, z);

@@ -117,7 +117,7 @@ class Array_ extends Buffer
       callback
     else
       (emit, i) =>
-        callback emit, i, @_context.time.clock, @_context.time.delta
+        callback emit, i, @bufferClock, @bufferStep
 
   update: () ->
     return unless @buffer
