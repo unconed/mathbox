@@ -97,7 +97,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
   # Log scene for inspection
   inspect: (three) ->
     @context.api.inspect()
-    @info() if !@options.warmup
+    @info three if !@options.warmup
 
   info: (three) ->
     fmt = (x) ->

@@ -24,7 +24,7 @@ class Group extends Node
     index = @children.indexOf node
     return if index == -1
 
-    @children = @children.splice index, 1
+    @children.splice index, 1
     node._index null
     node._removed @
 

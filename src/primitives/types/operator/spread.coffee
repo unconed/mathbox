@@ -29,7 +29,10 @@ class Spread extends Operator
     super
 
   resize: () ->
-    if @bind.source
+    @update()
+    super
+
+  update: () ->
       # Size to fit to include future history
       dims = @bind.source.getFutureDimensions()
 
@@ -63,8 +66,6 @@ class Spread extends Operator
         for k in [0..3]
           v = spread?.getComponent(k) ? 0
           els[i*4+k] = map key, i, k, v
-
-    super
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator']

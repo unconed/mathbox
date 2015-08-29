@@ -21,7 +21,7 @@
   height: 10px;
   border-radius: 5px;
   width: 80px;
-  margin: 0 auto 10px;
+  margin: 0 auto 20px;
   box-shadow:
      1px  1px 1px rgba(255, 255, 255, .2),
      1px -1px 1px rgba(255, 255, 255, .2),
@@ -42,7 +42,7 @@
   position: relative;
   width: 140px;
   height: 100px;
-  margin: 0 auto 20px;
+  margin: 0 auto 10px;
   -webkit-perspective: 200px;
   perspective: 200px;
 }

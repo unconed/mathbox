@@ -118,7 +118,7 @@ Traits =
     items:             Types.int(1)
     fps:               Types.nullable(Types.int(60))
     hurry:             Types.int(5)
-    limit:             Types.int(50)
+    limit:             Types.int(60)
     realtime:          Types.bool(false)
     observe:           Types.bool(false)
   sampler:

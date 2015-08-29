@@ -142,9 +142,10 @@ class Data
       finals[key] = true
 
     # Prop/expression binding
-    expr  = {}
+    expr     = {}
 
     _bound    = {}
+    _eval     = {}
     _expr     = {}
     _computed = {}
     _finals   = {}
@@ -166,7 +167,9 @@ class Data
 
       short = if data[key]? then data[key].short else key
       expr[short] = expression # flattened
-      expression = expression.bind object
+      eval[key]   = expression
+
+      expression  = expression.bind object
       _bound[key] = (t, d) -> object.set key, expression(t, d), true
       _attributes.bind _bound[key]
 
@@ -184,7 +187,7 @@ class Data
 
     evaluate = (key, time) ->
       key = to key
-      _bound[key]?(time, 0) ? data[key].value
+      _eval[key]?(time, 0) ? data[key].value
 
     # Public interface
     object.expr  = expr
@@ -365,7 +368,7 @@ class Data
     # Destructor
     @dispose = () ->
       unbind(key, true)  for key of _computed
-      unbind(key, false) for key of expr
+      unbind(key, false) for key of _expr
       props = {}
       delete object.attributes
       delete object.get
