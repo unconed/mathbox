@@ -170,7 +170,12 @@ class Data
       eval[key]   = expression
 
       expression  = expression.bind object
-      _bound[key] = (t, d) -> object.set key, expression(t, d), true
+      _bound[key] = (t, d) ->
+        if clock = data.clock?.getClock()
+          t = clock.time
+          d = clock.delta
+
+        object.set key, expression(t, d), true
       _attributes.bind _bound[key]
 
     unbind = (key, computed = false) ->

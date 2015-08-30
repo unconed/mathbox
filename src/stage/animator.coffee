@@ -58,7 +58,10 @@ class Animation
     @value  = target
     @notify()
 
-  getTime: () -> if @options.realtime then @time.time else @time.clock
+  getTime: () ->
+    clock = @options.clock
+    time  = if clock then clock.getClock() else @time
+    if @options.realtime then time.time else time.clock
 
   cancel: (from) ->
     from ?= @getTime()

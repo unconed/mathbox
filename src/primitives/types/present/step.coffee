@@ -1,13 +1,16 @@
 Track = require './track'
 
 class Step extends Track
-  @traits = ['node', 'track', 'step', 'bind']
+  @traits = ['node', 'track', 'step', 'trigger', 'bind']
 
   make: () ->
     super
 
+    clock = @_inherit 'clock'
+
     @lastIndex = null
     @animate = @_animator.make @_types.number(0),
+      clock:    clock
       realtime: @props.realtime
       step: (value) =>
         @playhead = value

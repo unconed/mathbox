@@ -13,7 +13,14 @@ class Buffer extends Data
 
     @bufferClock  = 0
     @bufferStep   = 0
+    super
 
+  make: () ->
+    super
+
+    @clockParent = @_inherit 'clock'
+
+  unmake: () ->
     super
 
   rawBuffer: () -> @buffer
@@ -36,10 +43,12 @@ class Buffer extends Data
     filled = @buffer.getFilled()
     return unless !filled or live
 
+    time = @clockParent.getClock()
+
     if fps?
       slack = @bufferSlack
-      speed = @_context.time.step / @_context.time.delta
-      delta = if realtime then @_context.time.delta else @_context.time.step
+      speed = time.step / time.delta
+      delta = if realtime then time.delta else time.step
       frame = 1 / fps
       step  = if realtime and observe then speed * frame else frame
 
@@ -61,10 +70,10 @@ class Buffer extends Data
 
         @bufferSlack -= frame
     else
-      @bufferTime  = @_context.time.time
-      @bufferDelta = @_context.time.delta
-      @bufferClock = @_context.time.clock
-      @bufferStep  = @_context.time.step
+      @bufferTime  = time.time
+      @bufferDelta = time.delta
+      @bufferClock = time.clock
+      @bufferStep  = time.step
       callback (()->), @bufferFrames++, 0, 1
 
 module.exports = Buffer

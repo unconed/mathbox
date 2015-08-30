@@ -104,6 +104,24 @@ class API
     @_targets.map (x) -> @_context.controller.inspect x, 'info'
     @
 
+  debug: () ->
+    info = @inspect()
+    console.log 'Renderables: ', info.renderables
+    console.log 'Renders: ',     info.renders
+    console.log 'Shaders: ',     info.shaders
+
+    getName = (owner) ->
+      owner.constructor.toString().match('function +([^(]*)')[1]
+
+    shaders = []
+    for shader in info.shaders
+      name = getName shader.owner
+      shaders.push "#{name} - Vertex"
+      shaders.push shader.vertex
+      shaders.push "#{name} - Fragment"
+      shaders.push shader.fragment
+    ShaderGraph.inspect shaders
+
   inspect: (print = true) ->
 
     # Recurse tree and extract all inserted renderables
@@ -126,28 +144,23 @@ class API
       d.fragment   = render.material.fragmentGraph
       d
 
-    @info =
+    info =
+      nodes:       @_targets.slice()
       renderables: []
       renders:     []
       shaders:     []
 
     # Inspect all targets
     for target in @_targets
-      @_context.controller.inspect target, 'info'
+      @_context.controller.inspect target, 'info' if print
 
-      info =
+      _info =
         renderables: renderables = flatten recurse target
         renders:     flatten renderables.map (x) -> x.renders
         shaders:     flatten renderables.map (x) -> x.renders.map (r) -> make x, r
 
-      if print
-        console.log 'Renderables: ', info.renderables
-        console.log 'Renders: ',     info.renders
-        console.log 'Shaders: ',     info.shaders
+      info[k] = info[k].concat _info[k] for k of _info
 
-      @info[k] = @info[k].concat info[k] for k of info
-
-    @
-
+    info
 
 module.exports = API

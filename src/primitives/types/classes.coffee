@@ -60,12 +60,13 @@ Classes =
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
 
+  clock:             require './present/clock'
+  move:              require './present/move'
+  play:              require './present/play'
   present:           require './present/present'
+  reveal:            require './present/reveal'
   slide:             require './present/slide'
   step:              require './present/step'
-  play:              require './present/play'
   track:             require './present/track'
-  reveal:            require './present/reveal'
-  move:              require './present/move'
 
 module.exports = Classes

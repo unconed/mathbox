@@ -50,6 +50,11 @@ class Primitive
     @traits.hash[trait]
 
   # Primitive lifecycle
+  env:    () ->
+
+    # Attach attributes to local clock
+    @node.attributes.clock = @_inherit 'clock'
+
   init:   () ->
   make:   () ->
   made:   () ->
@@ -80,13 +85,14 @@ class Primitive
 
     try
       try
+        @env()
         @make()
+        @refresh()
+        @made()
       catch e
         @node.print 'warn'
         console.error e
         throw e
-      @refresh()
-      @made()
     catch e
       try @_removed()
 

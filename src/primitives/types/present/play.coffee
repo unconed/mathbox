@@ -1,7 +1,7 @@
 Track = require './track'
 
-class Clock extends Track
-  @traits = ['node', 'track', 'play', 'bind']
+class Play extends Track
+  @traits = ['node', 'track', 'trigger', 'play', 'bind']
 
   init: () ->
     super
@@ -9,7 +9,7 @@ class Clock extends Track
     @last  = -1
 
   reset: (go = true) ->
-    @clock = if go then -@props.delay * @props.speed / @props.pace else null
+    @clock = if go then 0 else null
 
   make: () ->
     super
@@ -21,23 +21,32 @@ class Clock extends Track
       return @reset(false) if trigger? and e.index == 0
     @reset() if !@props.trigger or !@_inherit('slide')?
 
-    # Update clock before change notifications fire
-    @_listen 'root', 'root.pre', () =>
-      {from, to, speed, pace} = @props
+    # Find parent clock
+    parentClock = @_inherit 'clock'
+
+    # Update clock
+    @_listen parentClock, 'clock.tick', () =>
+      {from, to, speed, pace, realtime} = @props
+
+      time = parentClock.getTime()
+
       @playhead =
         if @clock?
-          delta = if @props.realtime then @_context.time.delta else @_context.time.step
-          @clock += delta * speed / pace
-          @playhead = Math.min to, from + Math.max 0, @clock
+          delta = if realtime then time.delta else time.step
+          ratio = speed / pace
+
+          @clock   += delta * ratio
+          @playhead = Math.min to, from + Math.max 0, @clock - delay * ratio
         else
           0
+
       @update()
 
   update: () ->
     super
 
   change: (changed, touched, init) ->
-    return @rebuild() if changed['clock.trigger'] or changed['clock.realtime']
+    return @rebuild() if changed['trigger.trigger'] or changed['play.realtime']
     super changed, touched, init
 
-module.exports = Clock
+module.exports = Play

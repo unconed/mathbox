@@ -13,6 +13,8 @@ class Root extends Parent
     @renderEvent = type: 'root.render'
     @postEvent   = type: 'root.post'
 
+    @clockEvent  = type: 'clock.tick'
+
     @camera = null
 
   make:   () -> @_helpers.unit.make()
@@ -53,7 +55,9 @@ class Root extends Parent
 
   pre:    () ->
     @getCamera().updateProjectionMatrix()
+    @trigger @clockEvent
     @trigger @preEvent
+
   update: () -> @trigger @updateEvent
   render: () -> @trigger @renderEvent
   post:   () -> @trigger @postEvent
@@ -65,6 +69,8 @@ class Root extends Parent
       @trigger {type: 'root.camera'}
 
   getCamera: () -> @camera?.getCamera() ? @_context.defaultCamera
+
+  getClock: () -> @_context.time
 
   # End transform chain here
   vertex: (shader, pass) ->

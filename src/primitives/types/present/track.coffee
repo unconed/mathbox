@@ -126,8 +126,6 @@ class Track extends Primitive
     {node} = @bind.target
 
     playhead = seek if seek?
-    time  = @_context.time.clock
-    delta = @_context.time.step
 
     if script.length
       find = () ->
