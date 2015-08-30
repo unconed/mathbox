@@ -70,39 +70,16 @@ vec4 getFramesSample(vec2 xy) {
     });
     three = mathbox.three;
 
-    three.camera.position.set(.3, .1, 2);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
     gl = three.renderer.getContext()
 
-    view = null
-    time = 0;
-    origin = new THREE.Vector3();
-    three.on('update', function (event) {
-      time = three.Time.clock * 1.5;
-
-      x = Math.cos(time) * 3;
-      z = Math.sin(time) * 3;
-      y = Math.sin(time * .341) * 3;
-
-      c = rtt[0].controller.rtt.camera;
-      c.position.set(x, (x + z) * .2 + y, z);
-      c.lookAt(origin);
-
-      time = three.Time.clock / 3;
-
-      c = Math.cos(time / 4);
-      s = Math.sin(time / 4);
-
-      c2 = Math.cos(time / 11.71) * 1.71;
-      s2 = Math.sin(time / 11.71) * 1.71;
-
-      view.set('quaternion', [s * s2, s * c2, 0, c]);
-    });
-
     mathbox
       .set({
         scale: 720
+      })
+      .camera({
+        position: [.3, .1, 2]
       })
       .rtt({
         id: 'render',
@@ -112,6 +89,19 @@ vec4 getFramesSample(vec2 xy) {
         minFilter: 'nearest',
         magFilter: 'nearest',
       })
+        .camera({
+          lookAt: [0, 0, 0]
+        }, {
+          position: function (t) {
+            time = t * 1.5;
+
+            x = Math.cos(time) * 3;
+            z = Math.sin(time) * 3;
+            y = Math.sin(time * .341) * 3;
+
+            return [x, (x + z) * .2 + y, z];
+          }
+        })
         .cartesian({
           range: [[-2, 2], [-1, 1], [-1, 1]],
           scale: [2, 1, 1],
@@ -231,6 +221,18 @@ vec4 getFramesSample(vec2 xy) {
       .cartesian({
         range: [[-16/9-.001, 16/9+.001], [-1, 1], [-1, 1]],
         scale: [16/9, 1, 1],
+      }, {
+        quaternion: function (t) {
+          time = t / 3;
+
+          c = Math.cos(time / 4);
+          s = Math.sin(time / 4);
+
+          c2 = Math.cos(time / 11.71) * 1.71;
+          s2 = Math.sin(time / 11.71) * 1.71;
+
+          return [s * s2, s * c2, 0, c];
+        }
       })
         .vector({
           points: '#transpose',
@@ -252,9 +254,7 @@ vec4 getFramesSample(vec2 xy) {
         })
 
 
-    rtt = mathbox.select('rtt')
     grid = mathbox.select('grid:nth-of-type(2)')
-    view = mathbox.select('cartesian')[1]
 
   </script>
 </body>

@@ -17,7 +17,6 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(0, 0, 3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     time = 0;
@@ -27,14 +26,19 @@
       x = Math.cos(time) * 3;
       z = Math.sin(time) * 3;
 
-      c = rtt[0].controller.rtt.camera;
-      c.position.set(x, 0, z);
-      c.lookAt(origin);
+      camera.set('position', [x, 0, z]);
+      camera.set('lookAt', origin);
     });
 
     view = mathbox
+    .set({
+      focus: 3
+    })
     .rtt({
       type: 'float',
+    })
+    .camera({
+      position: [0, 0, 3]
     })
     .compose({
       color: '#fcfbfa',
@@ -49,7 +53,7 @@
       opacity: .25,
     });
 
-    rtt = mathbox.select('rtt')
+    var camera = mathbox.select('camera');
 
     mathbox.compose({
       color: '#fff',

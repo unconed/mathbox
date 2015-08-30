@@ -27,13 +27,8 @@
       x = Math.cos(time) * 3;
       z = Math.sin(time) * 3;
 
-      if (rtt) {
-        c = rtt[0].controller.rtt.camera;
-        if (c) {
-          c.position.set(x, 0, z);
-          c.lookAt(origin);
-        }
-      }
+      camera.set('position', [x, 0, z]);
+      camera.set('lookAt', origin);
     });
 
     mathbox
@@ -44,6 +39,7 @@
         history: 2,
         type: 'unsignedByte',
       })
+        .camera()
         .shader({
           code:
             "vec4 getSample(vec3 xyz);\n"+
@@ -74,6 +70,7 @@
             zBias: 10,
             opacity: .25,
             color: 0xc0e0ff,
+            width: 3
           })
         .end()
       .end()
@@ -82,7 +79,7 @@
         zWrite: false,
       })
 
-    var rtt = mathbox.select('rtt')
+    var camera = mathbox.select('rtt camera')
 
   </script>
 </body>
