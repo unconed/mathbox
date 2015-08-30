@@ -283,6 +283,7 @@ Traits =
     indexed:           Types.bool()
 
   root:
+    speed:             Types.number(1)
     camera:            Types.select('[camera]')
   inherit:
     source:            Types.select()
