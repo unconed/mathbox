@@ -2,7 +2,7 @@ Transform = require './transform'
 π = Math.PI
 
 class Layer extends Transform
-  @traits = ['node', 'transform', 'layer']
+  @traits = ['node', 'vertex', 'layer']
 
   make: () ->
     @_listen 'root', 'root.resize', @update
@@ -48,7 +48,7 @@ class Layer extends Transform
       @update()
 
   # End transform chain here without applying camera view
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     return shader.pipe 'layer.position', @uniforms if pass == 2
     return shader.pipe 'root.position'                if pass == 3
     shader

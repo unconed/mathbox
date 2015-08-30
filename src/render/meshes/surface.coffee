@@ -6,10 +6,10 @@ class Surface extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, position, color, mask, shaded, map} = options
+    {uniforms, material, position, color, mask, map, combine, linear, stpq} = options
 
     uniforms ?= {}
-    shaded   ?= true
+    material ?= true
 
     hasStyle  = uniforms.styleColor?
     hasHollow = uniforms.surfaceHollow?
@@ -27,17 +27,15 @@ class Surface extends Base
 
     v = factory.vertex
 
-    @_vertexColor v, color, mask
+    v.pipe @_vertexColor color, mask
 
-    v.require position if position
-    v.require 'mesh.vertex.stpq',     @uniforms
-    v.pipe 'surface.position',        @uniforms if !shaded
-    v.pipe 'surface.position.normal', @uniforms if  shaded
+    v.require @_vertexPosition position, material, map, 2, stpq
+    v.pipe 'surface.position',        @uniforms if !material
+    v.pipe 'surface.position.normal', @uniforms if  material
     v.pipe 'project.position',        @uniforms
 
-    f = factory.fragment
-
-    @_fragmentColor f, hasStyle, shaded, color, mask
+    factory.fragment = f =
+      @_fragmentColor hasStyle, material, color, mask, map, 2, stpq, combine, linear
 
     f.pipe 'fragment.color',          @uniforms
 

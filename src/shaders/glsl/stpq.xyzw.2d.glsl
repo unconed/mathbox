@@ -1,5 +1,5 @@
-varying vec2 vST;
+varying vec2 vUV;
 
-void setRawST(vec4 xyzw) {
-  vST = xyzw.xy;
+void setRawUV(vec4 xyzw) {
+  vUV = xyzw.xy;
 }

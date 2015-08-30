@@ -165,7 +165,7 @@ class Model
     # Track IDs (live)
     addID = (id, node) =>
       if @ids[id]
-        throw "Duplicate id `#{id}`"
+        throw new Error "Duplicate node id `#{id}`"
 
       @ids[id] = [node] if id?
       node.id = id
@@ -217,8 +217,8 @@ class Model
       while parent?
         if parent in parents
           out.push node
-          continue
-        parent = node.parent
+          break
+        parent = parent.parent
     out
 
   # Query model by (scoped) selector

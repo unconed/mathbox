@@ -116,7 +116,7 @@ class Present extends Parent
         parent         = step[1]
 
         parentIndex = if parent? then indices[parent._id] else 0
-        throw "parent index missing" if !parentIndex?
+        #throw "parent index missing" if !parentIndex?
         childIndex  = index
 
         from = if props.from? then parentIndex + props.from else childIndex - props.early

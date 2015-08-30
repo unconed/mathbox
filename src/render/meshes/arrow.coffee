@@ -5,10 +5,8 @@ class Arrow extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    uniforms = options.uniforms ? {}
-    position = options.position
-    color    = options.color
-    mask     = options.mask
+    {uniforms, material, position, color, mask, map, combine, stpq, linear} = options
+    uniforms ?= {}
 
     hasStyle = uniforms.styleColor?
 
@@ -28,16 +26,14 @@ class Arrow extends Base
 
     v = factory.vertex
 
-    @_vertexColor v, color, mask
+    v.pipe @_vertexColor color, mask
 
-    v.require position if position
-    v.require 'mesh.vertex.stpq',   @uniforms
+    v.require @_vertexPosition position, material, map, 1, stpq
     v.pipe 'arrow.position',        @uniforms
     v.pipe 'project.position',      @uniforms
 
-    f = factory.fragment
-
-    @_fragmentColor f, hasStyle, false, color, mask
+    factory.fragment = f =
+      @_fragmentColor hasStyle, material, color, mask, map, 1, stpq, combine, linear
 
     f.pipe 'fragment.color',        @uniforms
 

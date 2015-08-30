@@ -83,12 +83,12 @@ class Primitive
         @make()
       catch e
         @node.print 'warn'
+        console.error e
         throw e
       @refresh()
       @made()
     catch e
       try @_removed()
-      console.error e
 
   _removed: (rebuild = false) ->
     @unmake rebuild
@@ -221,7 +221,6 @@ class Primitive
     return unless @_handlers.compute.length
     @node.unbind key, true for key in @_handlers.compute
     @_handlers.compute = []
-
 
 THREE.Binder.apply Primitive::
 

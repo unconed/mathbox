@@ -2,7 +2,7 @@ Parent = require './parent'
 Util   = require '../../../util'
 
 class Root extends Parent
-  @traits = ['node', 'root', 'scene', 'transform', 'unit']
+  @traits = ['node', 'root', 'clock', 'scene', 'vertex', 'unit']
 
   init: () ->
     @size = null
@@ -10,6 +10,7 @@ class Root extends Parent
     @cameraEvent = type: 'root.camera'
     @preEvent    = type: 'root.pre'
     @updateEvent = type: 'root.update'
+    @renderEvent = type: 'root.render'
     @postEvent   = type: 'root.post'
 
     @camera = null
@@ -54,6 +55,7 @@ class Root extends Parent
     @getCamera().updateProjectionMatrix()
     @trigger @preEvent
   update: () -> @trigger @updateEvent
+  render: () -> @trigger @renderEvent
   post:   () -> @trigger @postEvent
 
   setCamera: () ->
@@ -65,7 +67,7 @@ class Root extends Parent
   getCamera: () -> @camera?.getCamera() ? @_context.defaultCamera
 
   # End transform chain here
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     return shader.pipe 'view.position' if pass == 2
     return shader.pipe 'root.position' if pass == 3
     shader

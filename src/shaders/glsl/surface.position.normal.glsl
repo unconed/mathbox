@@ -3,7 +3,7 @@ attribute vec4 position4;
 attribute vec2 surface;
 
 // External
-vec3 getPosition(vec4 xyzw);
+vec3 getPosition(vec4 xyzw, float canonical);
 
 void getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {
   vec4 deltaX = vec4(1.0, 0.0, 0.0, 0.0);
@@ -11,19 +11,19 @@ void getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out 
 
   /*
   // high quality, 5 tap
-  center =                  getPosition(xyzw);
-  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX) : center;
-  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : center;
-  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY) : center;
-  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : center;
+  center =                  getPosition(xyzw, 1.0);
+  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX, 0.0) : center;
+  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX, 0.0) : center;
+  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY, 0.0) : center;
+  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY, 0.0) : center;
   */
   
   // low quality, 3 tap
-  center =                  getPosition(xyzw);
+  center =                  getPosition(xyzw, 1.0);
   left   =                  center;
   down   =                  center;
-  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX) : (2.0 * center - getPosition(xyzw - deltaX));
-  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY) : (2.0 * center - getPosition(xyzw - deltaY));
+  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX, 0.0) : (2.0 * center - getPosition(xyzw - deltaX, 0.0));
+  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY, 0.0) : (2.0 * center - getPosition(xyzw - deltaY, 0.0));
 }
 
 vec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {
@@ -47,7 +47,7 @@ vec3 getSurfacePositionNormal() {
 
   getSurfaceGeometry(p, surface.x, surface.y, left, center, right, up, down);
   vNormal   = getSurfaceNormal(left, center, right, up, down);
-  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);// - center);
+  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz); // hardcoded directional light
   vPosition = -center;
   
   return center;

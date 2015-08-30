@@ -2,7 +2,7 @@ Operator = require './operator'
 Util     = require '../../../util'
 
 class Resample extends Operator
-  @traits = ['node', 'bind', 'operator', 'source', 'index', 'resample', 'sampler:width', 'sampler:height', 'sampler:depth', 'sampler:items']
+  @traits = ['node', 'bind', 'operator', 'source', 'index', 'resample', 'sampler:width', 'sampler:height', 'sampler:depth', 'sampler:items', 'include']
 
   indexShader:  (shader) ->
     shader.pipe @indexer
@@ -18,7 +18,7 @@ class Resample extends Operator
 
   _resample: (dims) ->
     r = @resampled
-    if @scaled
+    if @relativeSize
       dims.items  *= r.items  if r.items?
       dims.width  *= r.width  if r.width?
       dims.height *= r.height if r.height?
@@ -36,7 +36,7 @@ class Resample extends Operator
 
     # Bind to attached shader
     @_helpers.bind.make [
-      { to: 'resample.shader', trait: 'shader', optional: true }
+      { to: 'include.shader', trait: 'shader', optional: true }
     ]
 
     # Get custom shader
@@ -45,16 +45,16 @@ class Resample extends Operator
     shader     = @bind.shader
 
     # Get resampled dimensions (if any)
-    map    = @_get 'resample.map'
-    unit   = @_get 'resample.unit'
+    sample = @_get 'resample.sample'
+    size   = @_get 'resample.size'
     items  = @_get 'resample.items'
     width  = @_get 'resample.width'
     height = @_get 'resample.height'
     depth  = @_get 'resample.depth'
 
     # Sampler behavior
-    relativeMap  = map  == @node.attributes['resample.map'] .enum.relative
-    relativeUnit = unit == @node.attributes['resample.unit'].enum.relative
+    relativeSample = sample == @node.attributes['resample.sample'].enum.relative
+    relativeSize   = size   == @node.attributes['resample.size'].enum.relative
 
     @resampled = {}
     @resampled.items  = items  if items?
@@ -105,7 +105,7 @@ class Resample extends Operator
       vec = "vec4(#{vec})"
       operator.pipe Util.GLSL.binaryOperator 4, '+', vec4
 
-    if relativeMap
+    if relativeSample
       # Addressing relative to target
       if items? or width? or height? or depth?
         operator.pipe 'resample.relative', uniforms
@@ -133,7 +133,9 @@ class Resample extends Operator
     @operator = operator
     @indexer  = indexer
     @indices  = indices
-    @scaled   = relativeUnit
+
+    @relativeSample = relativeSample
+    @relativeSize   = relativeSize
 
   unmake: () ->
     super
@@ -188,6 +190,7 @@ class Resample extends Operator
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator'] or
                          touched['resample'] or
-                         touched['sampler']
+                         touched['sampler'] or
+                         touched['include']
 
 module.exports = Resample

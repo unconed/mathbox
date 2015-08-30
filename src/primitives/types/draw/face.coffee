@@ -83,7 +83,7 @@ class Face extends Primitive
                 items:    items
                 position: position
                 color:    color
-                shaded:   shaded
+                material: shaded
                 mask:     mask
       objects.push @face
 

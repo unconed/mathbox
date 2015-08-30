@@ -5,13 +5,8 @@ class Sprite extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    uniforms = options.uniforms ? {}
-    position = options.position
-    sprite   = options.sprite
-    map      = options.map
-    combine  = options.combine
-    color    = options.color
-    mask     = options.mask
+    {uniforms, material, position, sprite, map, combine, linear, color, mask, stpq} = options
+    uniforms ?= {}
 
     hasStyle = uniforms.styleColor?
 
@@ -28,29 +23,16 @@ class Sprite extends Base
     factory = shaders.material()
     v = factory.vertex
 
-    @_vertexColor v, color, mask
+    v.pipe @_vertexColor color, mask
 
-    v.require position if position
-    v.require 'mesh.vertex.stpq',   @uniforms
-    v.require sprite   if sprite
+    v.require @_vertexPosition position, material, map, 2, stpq
+    v.require sprite
     v.pipe 'sprite.position',       @uniforms
     v.pipe 'project.position',      @uniforms
 
     # Shared fragment shader
-    f = factory.fragment
-
-    blend = color || mask || hasStyle
-
-    f.split()                                       if blend
-    f  .require map
-    f  .pipe 'sprite.fragment',        @uniforms
-    f.next()                                        if blend
-
-    @_fragmentColor f, hasStyle, false, color, mask
-
-    f.join()                                        if blend
-    f.pipe combine                                  if combine
-    f.pipe Util.GLSL.binaryOperator 'vec4', '*'     if !combine
+    factory.fragment = f =
+      @_fragmentColor hasStyle, material, color, mask, map, 2, stpq, combine, linear
 
     # Split fragment into edge and fill pass for better z layering
     edgeFactory = shaders.material()

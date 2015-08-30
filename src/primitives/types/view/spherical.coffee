@@ -2,7 +2,7 @@ View = require './view'
 Util = require '../../../util'
 
 class Spherical extends View
-  @traits = ['node', 'object', 'visible', 'view', 'view3', 'spherical', 'transform']
+  @traits = ['node', 'object', 'visible', 'view', 'view3', 'spherical', 'vertex']
 
   make: () ->
     super
@@ -107,7 +107,7 @@ class Spherical extends View
       @trigger
         type: 'view.range'
 
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     shader.pipe 'spherical.position', @uniforms if pass == 1
     super shader, pass
 

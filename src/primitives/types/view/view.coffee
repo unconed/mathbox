@@ -1,7 +1,7 @@
 Transform = require '../transform/transform'
 
 class View extends Transform
-  @traits = ['node', 'object', 'visible', 'view', 'transform']
+  @traits = ['node', 'object', 'visible', 'view', 'vertex']
 
   make: () ->
     @_helpers.visible.make()

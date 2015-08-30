@@ -2,7 +2,7 @@ View = require('./view')
 Util = require '../../../util'
 
 class Stereographic extends View
-  @traits = ['node', 'object', 'visible', 'view', 'view3', 'stereographic', 'transform']
+  @traits = ['node', 'object', 'visible', 'view', 'view3', 'stereographic', 'vertex']
 
   make: () ->
     super
@@ -71,7 +71,7 @@ class Stereographic extends View
       @trigger
         type: 'view.range'
 
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     shader.pipe 'stereographic.position', @uniforms if pass == 1
     super shader, pass
 

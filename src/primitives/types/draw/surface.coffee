@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Surface extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind', 'shade']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -24,6 +24,7 @@ class Surface extends Primitive
     @_helpers.bind.make [
       { to: 'geometry.points', trait: 'source' }
       { to: 'geometry.colors', trait: 'source' }
+      { to: 'mesh.texture',    trait: 'source' }
     ]
 
     return unless @bind.points?
@@ -67,6 +68,12 @@ class Surface extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
+    # Build texture map lookup
+    map = @bind.map?.sourceShader @_shaders.shader()
+
+    # Build fragment material lookup
+    material = @_helpers.shade.pipeline() || shaded
+
     # Make line and surface renderables
     {swizzle, swizzle2}  = @_helpers.position
     uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms, wireUniforms
@@ -109,7 +116,7 @@ class Surface extends Primitive
                 layers:   items
                 position: position
                 color:    color
-                shaded:   shaded
+                material: shaded
                 zUnits:   zUnits
                 stroke:   stroke
                 mask:     mask

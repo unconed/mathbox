@@ -3,9 +3,9 @@ uniform vec4 geometryResolution;
 attribute vec4 position4;
 
 // External
-vec3 getPosition(vec4 xyzw);
+vec3 getPosition(vec4 xyzw, float canonical);
 
 vec3 getSurfacePosition() {
   vec4 p = min(geometryClip, position4);
-  return getPosition(p);
+  return getPosition(p, 1.0);
 }

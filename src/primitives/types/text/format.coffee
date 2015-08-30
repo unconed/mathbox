@@ -1,4 +1,4 @@
-Operator = require './operator'
+Operator = require '../operator/operator'
 Util = require '../../../util'
 
 class Format extends Operator

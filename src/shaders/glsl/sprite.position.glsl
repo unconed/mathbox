@@ -13,17 +13,16 @@ uniform vec4 geometryClip;
 attribute vec4 position4;
 attribute vec2 sprite;
 
-varying vec2 vSprite;
 varying float vPixelSize;
 
 // External
-vec3 getPosition(vec4 xyzw);
+vec3 getPosition(vec4 xyzw, float canonical);
 vec4 getSprite(vec4 xyzw);
 
 vec3 getSpritePosition() {
   vec4 p = min(geometryClip, position4);
 
-  vec3 center = getPosition(p);
+  vec3 center = getPosition(p, 1.0);
   vec4 atlas = getSprite(p);
 
   // Sprite goes from -1..1, width = 2.
@@ -31,8 +30,10 @@ vec3 getSpritePosition() {
   vec2 halfSprite = sprite * .5;
   vec2 halfFlipSprite = vec2(halfSprite.x, -halfSprite.y);
 
+#ifdef POSITION_UV
   // Assign UVs
-  vSprite = atlas.xy + atlas.zw * (halfFlipSprite + .5);
+  vUV = atlas.xy + atlas.zw * (halfFlipSprite + .5);
+#endif
 
   // Depth blending
   // TODO: orthographic camera

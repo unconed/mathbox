@@ -6,9 +6,8 @@ class Screen extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    uniforms = options.uniforms ? {}
-    map      = options.map
-    combine  = options.combine
+    {uniforms, map, combine, stpq, linear} = options
+    uniforms ?= {}
 
     hasStyle = uniforms.styleColor?
 
@@ -29,14 +28,10 @@ class Screen extends Base
     v  .pipe  'screen.position',    @uniforms
     v.join()
 
-    f = factory.fragment
-    f.require options.map
-    f.pipe    'stpq.sample.2d'
-    if hasStyle
-      f.pipe  'style.color',        @uniforms
-      f.pipe  combine                               if combine
-      f.pipe  Util.GLSL.binaryOperator 'vec4', '*'  if !combine
-    f.pipe    'fragment.color'
+    factory.fragment = f =
+      @_fragmentColor hasStyle, false, null, null, map, 2, stpq, combine, linear
+
+    f.pipe 'fragment.color',        @uniforms
 
     @material = @_material factory.link
       side: THREE.DoubleSide

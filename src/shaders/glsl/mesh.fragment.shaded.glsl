@@ -1,14 +1,16 @@
-uniform vec3 styleColor;
-uniform float styleOpacity;
-
 varying vec3 vNormal;
 varying vec3 vLight;
 varying vec3 vPosition;
 
-vec4 getStyleColor() {
+vec3 offSpecular(vec3 color) {
+  vec3 c = 1.0 - color;
+  return 1.0 - c * c;
+}
+
+vec4 getShadedColor(vec4 rgba) {
   
-  vec3 color = styleColor * styleColor;
-  vec3 color2 = styleColor;
+  vec3 color = rgba.xyz;
+  vec3 color2 = offSpecular(rgba.xyz);
 
   vec3 normal = normalize(vNormal);
   vec3 light = normalize(vLight);
@@ -22,5 +24,5 @@ vec4 getStyleColor() {
 	float cosineHalf = max(0.0, side * dot(normal, halfLight));
 	float specular = pow(cosineHalf, 16.0);
 	
-	return vec4(sqrt(color * (diffuse * .9 + .05) + .25 * color2 * specular), styleOpacity);
+	return vec4(color * (diffuse * .9 + .05) + .25 * color2 * specular, rgba.a);
 }

@@ -6,7 +6,7 @@ varying float vPixelSize;
 
 const float PIXEL_STEP = 255.0 / 16.0;
 
-vec4 getLabelOutlineColor(vec4 sample, vec4 color) {
+vec4 getLabelOutlineColor(vec4 color, vec4 sample) {
   float ps = vPixelSize * PIXEL_STEP;
   float os = outlineStep;
 
@@ -18,7 +18,7 @@ vec4 getLabelOutlineColor(vec4 sample, vec4 color) {
     discard;
   }
 
-  vec3  blend = color.xyz;
+  vec3 blend = color.xyz;
   if (alpha.y > alpha.x) {
     blend = sqrt(mix(outlineColor * outlineColor, blend * blend, alpha.x));
   }

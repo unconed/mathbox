@@ -38,7 +38,8 @@ class Label extends Primitive
     sprite   = @bind.text.sourceShader @_shaders.shader()
 
     # Build shader to sample text image data
-    map      = @bind.text.textShader @_shaders.shader()
+    map = @_shaders.shader().pipe 'label.map'
+    map.pipe @bind.text.textShader @_shaders.shader()
 
     # Build shader to resolve text data
     labelUniforms =
@@ -83,6 +84,7 @@ class Label extends Primitive
               combine:  combine
               color:    color
               mask:     mask
+              linear:   true
 
     @_helpers.visible.make()
     @_helpers.object.make [@sprite]

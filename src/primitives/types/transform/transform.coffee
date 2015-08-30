@@ -1,9 +1,9 @@
 Parent = require '../base/parent'
 
 class Transform extends Parent
-  @traits = ['node', 'transform']
+  @traits = ['node', 'vertex']
 
-  transform: (shader, pass) ->
-    @_inherit('transform')?.transform(shader, pass) ? shader
+  vertex: (shader, pass) ->
+    @_inherit('vertex')?.vertex(shader, pass) ? shader
 
 module.exports = Transform

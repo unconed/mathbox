@@ -21,7 +21,7 @@ varying vec3  vClipStrokePosition;
 #endif
 
 // External
-vec3 getPosition(vec4 xyzw);
+vec3 getPosition(vec4 xyzw, float canonical);
 
 #ifdef LINE_CLIP
 uniform float clipRange;
@@ -36,11 +36,11 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
 
   // Sample end of line strip
   vec4 xyzwE = vec4(strip.y, xyzw.yzw);
-  vec3 end   = getPosition(xyzwE);
+  vec3 end   = getPosition(xyzwE, 0.0);
 
   // Sample start of line strip
   vec4 xyzwS = vec4(strip.x, xyzw.yzw);
-  vec3 start = getPosition(xyzwS);
+  vec3 start = getPosition(xyzwS, 0.0);
 
   // Measure length
   vec3 diff = end - start;
@@ -119,9 +119,9 @@ void fixCenter(vec3 left, inout vec3 center, vec3 right) {
 void getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {
   vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);
 
-  center =                 getPosition(xyzw);
-  left   = (edge > -0.5) ? getPosition(xyzw - delta) : center;
-  right  = (edge < 0.5)  ? getPosition(xyzw + delta) : center;
+  center =                 getPosition(xyzw, 1.0);
+  left   = (edge > -0.5) ? getPosition(xyzw - delta, 0.0) : center;
+  right  = (edge < 0.5)  ? getPosition(xyzw + delta, 0.0) : center;
 }
 
 vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float width) {

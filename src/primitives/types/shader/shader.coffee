@@ -10,7 +10,7 @@ class Shader extends Primitive
 
   make: () ->
     {language, code} = @props
-    throw "GLSL required" if language != 'glsl'
+    throw new Error "GLSL required" if language != 'glsl'
 
     # Parse snippet w/ shadergraph (will do implicit DOM script tag by ID lookup if simple selector or ID given)
     snippet = @_shaders.fetch(code)

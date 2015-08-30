@@ -1,4 +1,4 @@
-Voxel = require './voxel'
+Voxel = require '../data/voxel'
 Util = require '../../../util'
 
 class Text extends Voxel

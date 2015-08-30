@@ -1,7 +1,7 @@
 Transform = require './transform'
 
 class Transform3 extends Transform
-  @traits = ['node', 'transform', 'transform3']
+  @traits = ['node', 'vertex', 'transform3']
 
   make: () ->
     @uniforms =
@@ -26,7 +26,7 @@ class Transform3 extends Transform
     t.compose p, q, s
     t.multiplyMatrices t, m if m?
 
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     shader.pipe 'transform3.position', @uniforms if pass == @props.pass
     super shader, pass
 

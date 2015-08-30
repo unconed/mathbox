@@ -14,7 +14,7 @@ Traits =
   unit:
     scale:             Types.nullable(Types.number())
     fov:               Types.nullable(Types.number())
-    focus:             Types.number(1)
+    focus:             Types.nullable(Types.number(1), true)
 
   span:
     range:             Types.nullable(Types.vec2(-1, 1))
@@ -38,10 +38,10 @@ Traits =
 
   vertex:
     pass:              Types.vertexPass()
-    shader:            Types.select()
+  fragment:
+    pass:              Types.fragmentPass()
 
   transform3:
-    pass:              Types.vertexPass()
     position:          Types.vec3()
     quaternion:        Types.quat()
     rotation:          Types.vec3()
@@ -52,7 +52,6 @@ Traits =
                                   0, 0, 1, 0,
                                   0, 0, 0, 1)
   transform4:
-    pass:              Types.vertexPass()
     position:          Types.vec4()
     scale:             Types.vec4(1, 1, 1, 1)
     matrix:            Types.mat4(1, 0, 0, 0,
@@ -61,18 +60,14 @@ Traits =
                                   0, 0, 0, 1)
 
   camera:
+    proxy:             Types.bool(false)
     position:          Types.vec3()
     quaternion:        Types.nullable(Types.quat())
     rotation:          Types.nullable(Types.vec3())
     lookAt:            Types.nullable(Types.vec3())
     eulerOrder:        Types.swizzle('xyz')
-  ###
-  perspective:
-    fov:               Types.number(60)
-    aspect:            Types.nullable(Types.number(1))
-  ortho:
-    range:             Types.array(Types.vec2(-1, 1), 2)
-  ###
+    fov:               Types.nullable(Types.number(1))
+    #ortho:             Types.nullable(Types.number(0))
 
   polar:
     bend:              Types.number(1)
@@ -159,6 +154,7 @@ Traits =
   geometry:
     points:            Types.select()
     colors:            Types.nullable(Types.select())
+
   point:
     size:              Types.positive(Types.number(4))
     shape:             Types.shape()
@@ -172,6 +168,7 @@ Traits =
   mesh:
     fill:              Types.bool(true)
     shaded:            Types.bool(true)
+    map:               Types.nullable(Types.select())
   strip:
     outline:           Types.bool(false)
   face:
@@ -230,6 +227,8 @@ Traits =
     language:          Types.string('glsl')
     code:              Types.string()
     uniforms:          Types.nullable(Types.object())
+  include:
+    shader:            Types.select()
 
   operator:
     source:            Types.select()
@@ -274,9 +273,8 @@ Traits =
   resample:
     indices:           Types.number(4)
     channels:          Types.number(4)
-    map:               Types.mapping()
-    unit:              Types.mapping('absolute')
-    shader:            Types.select()
+    sample:            Types.mapping()
+    size:              Types.mapping('absolute')
     items:             Types.nullable(Types.int())
     width:             Types.nullable(Types.int())
     height:            Types.nullable(Types.int())
@@ -284,9 +282,10 @@ Traits =
   readback:
     indexed:           Types.bool()
 
+  clock:
+    speed:             Types.number(1)
   root:
     camera:            Types.select('[camera]')
-    speed:             Types.number(1)
   inherit:
     source:            Types.select()
     traits:            Types.array(Types.string())
@@ -321,7 +320,6 @@ Traits =
     durationEnter:     Types.nullable(Types.number(0))
     durationExit:      Types.nullable(Types.number(0))
   move:
-    pass:              Types.vertexPass('data')
     from:              Types.vec4()
     to:                Types.vec4()
   track:

@@ -1,12 +1,12 @@
 Transform = require './transform'
 
 class Vertex extends Transform
-  @traits = ['node', 'transform', 'vertex', 'bind']
+  @traits = ['node', 'include', 'vertex', 'bind']
 
   make: () ->
     # Bind to attached shader
     @_helpers.bind.make [
-      { to: 'vertex.shader', trait: 'shader', optional: true }
+      { to: 'include.shader', trait: 'shader', optional: true }
     ]
 
     return unless @bind.shader?
@@ -15,9 +15,9 @@ class Vertex extends Transform
     @_helpers.bind.unmake()
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['vertex']
+    return @rebuild() if touched['include']
 
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     if @bind.shader?
       shader.pipe @bind.shader.shaderBind() if pass == @props.pass
     super shader, pass

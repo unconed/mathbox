@@ -86,7 +86,7 @@ class Strip extends Primitive
                 items:    items
                 position: position
                 color:    color
-                shaded:   shaded
+                material: shaded
       objects.push @strip
 
     @_helpers.visible.make()

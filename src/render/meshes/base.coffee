@@ -90,8 +90,10 @@ class Base extends Renderable
   _hide: (object) ->
     object.visible = false
 
-  _vertexColor: (shader, color, mask, map) ->
-    v = shader
+  _vertexColor: (color, mask) ->
+    return unless color or mask
+
+    v = @shaders.shader()
 
     if color
       v.require color
@@ -101,29 +103,85 @@ class Base extends Renderable
       v.require mask
       v.pipe 'mesh.vertex.mask',  @uniforms
 
-    if map
-      v.pipe 'mesh.vertex.map',   @uniforms
+    v
 
-    return v
+  _vertexPosition: (position, material, map, channels, stpq) ->
+    v = @shaders.shader()
 
-  _fragmentColor: (shader, hasStyle, shaded, color, mask, map) ->
-    f = shader
+    if map or (material and material != true)
+      defs = {}
+      defs.POSITION_MAP = ''  if channels > 0 or stpq
+      defs[['POSITION_U','POSITION_UV','POSITION_UVW','POSITION_UVWO'][channels - 1]] = '' if channels > 0
+      defs.POSITION_STPQ = '' if stpq
+
+    v.require position
+    v.pipe 'mesh.vertex.position',      @uniforms, defs
+
+  _fragmentColor: (hasStyle, material, color, mask, map, channels, stpq, combine, linear) ->
+    f = @shaders.shader()
+
+    # metacode is terrible
+    join  = false
+    gamma = false
 
     if hasStyle
-      f.pipe 'style.color',             @uniforms if !shaded
-      f.pipe 'style.color.shaded',      @uniforms if  shaded
+      f.pipe 'style.color',             @uniforms
+      join  = true
+
+      if color or map or material
+        f.pipe 'mesh.gamma.in'          if !linear or color
+        gamma = true
 
     if color
+      f.isolate()
       f.pipe 'mesh.fragment.color',     @uniforms
-      f.pipe Util.GLSL.binaryOperator 'vec4', '*' if hasStyle
+      f.pipe 'mesh.gamma.in'            if !linear or join
+      f.end()
+      f.pipe Util.GLSL.binaryOperator 'vec4', '*' if join
+
+      f.pipe 'mesh.gamma.out'           if linear and join
+
+      join = true
+      gamma = true
+
+    if map
+      if !join and combine
+        f.pipe Util.GLSL.constant 'vec4', 'vec4(1.0)'
+
+      f.isolate()
+      defs = {}
+      defs[['POSITION_U','POSITION_UV','POSITION_UVW','POSITION_UVWO'][channels - 1]] = '' if channels > 0
+      defs.POSITION_STPQ        = '' if stpq
+
+      f.require map
+      f.pipe 'mesh.fragment.map',       @uniforms, defs
+      f.pipe 'mesh.gamma.in'            if !linear
+      f.end()
+
+      join = true
+      gamma = true
+
+      if combine
+        f.pipe combine
+      else
+        f.pipe Util.GLSL.binaryOperator 'vec4', '*' if join
+
+    if material
+      f.pipe Util.GLSL.constant 'vec4', 'vec4(1.0)' if !join
+      if material == true
+        f.pipe 'mesh.fragment.shaded',    @uniforms
+      else
+        f.pipe material
+      join  = true
+      gamma = true
+
+    if gamma and !linear
+      f.pipe 'mesh.gamma.out'
 
     if mask
       f.pipe 'mesh.fragment.mask',      @uniforms
-      f.pipe Util.GLSL.binaryOperator 'vec4', '*' if hasStyle || color
+      f.pipe Util.GLSL.binaryOperator 'vec4', '*' if join
 
-    if map
-      f.pipe 'mesh.fragment.map',       @uniforms
-      f.pipe Util.GLSL.binaryOperator 'vec4', '*' if hasStyle || color || mask
-
+    f
 
 module.exports = Base

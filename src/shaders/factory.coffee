@@ -13,7 +13,7 @@ Factory = (snippets) ->
     if element? and element.tagName == 'SCRIPT'
       return (element.textContent || element.innerText)
 
-    throw "Unknown shader `#{name}`"
+    throw new Error "Unknown shader `#{name}`"
 
   new ShaderGraph fetch,
     autoInspect: true

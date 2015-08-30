@@ -5,7 +5,7 @@ class Point extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, position, color, mask, shape, fill} = options
+    {uniforms, material, position, color, mask, map, combine, linear, shape, fill, stpq} = options
 
     uniforms ?= {}
     shape     = +shape ? 0
@@ -32,17 +32,15 @@ class Point extends Base
     factory = shaders.material()
     v = factory.vertex
 
-    @_vertexColor v, color, mask
+    v.pipe @_vertexColor color, mask
 
-    v.require position if position
-    v.require 'mesh.vertex.stpq',   @uniforms
+    v.require @_vertexPosition position, material, map, 2, stpq
     v.pipe 'point.position',        @uniforms
     v.pipe 'project.position',      @uniforms
 
     # Shared fragment shader
-    f = factory.fragment
-
-    @_fragmentColor f, hasStyle, false, color, mask
+    factory.fragment = f =
+      @_fragmentColor hasStyle, material, color, mask, map, 2, stpq, combine, linear
 
     # Split fragment into edge and fill pass for better z layering
     edgeFactory = shaders.material()

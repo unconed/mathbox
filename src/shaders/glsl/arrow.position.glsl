@@ -12,12 +12,12 @@ attribute vec3 arrow;
 attribute vec2 attach;
 
 // External
-vec3 getPosition(vec4 xyzw);
+vec3 getPosition(vec4 xyzw, float canonical);
 
 void getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {
-  right = getPosition(xyzw);
-  left  = getPosition(vec4(near, xyzw.yzw));
-  start = getPosition(vec4(far, xyzw.yzw));
+  right = getPosition(xyzw, 1.0);
+  left  = getPosition(vec4(near, xyzw.yzw), 0.0);
+  start = getPosition(vec4(far, xyzw.yzw), 0.0);
 }
 
 mat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {

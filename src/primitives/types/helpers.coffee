@@ -138,11 +138,15 @@ helpers =
     # Return bound surface style uniforms
     uniforms: () -> {}
 
-  position:
+  shade:
     pipeline: (shader) ->
-      shader = @_inherit('transform')?.transform shader, pass for pass in [0..3]
+      shader = @_inherit('fragment')?.fragment shader, pass for pass in [0..2]
       shader
 
+  position:
+    pipeline: (shader) ->
+      shader = @_inherit('vertex')?.vertex shader, pass for pass in [0..3]
+      shader
 
     swizzle: (shader, order) ->
       if shader
@@ -283,14 +287,6 @@ helpers =
       return unless mask = @_inherit('mask')
       shader = mask.mask shader
 
-    albedo: () ->
-      return unless mask = @_inherit('albedo')
-      shader = mask.mask shader
-
-    light: () ->
-      return unless mask = @_inherit('light')
-      shader = mask.mask shader
-
   unit:
     make: () ->
       π = Math.PI
@@ -320,7 +316,7 @@ helpers =
 
         scale = @props.scale
         fov   = @props.fov
-        focus = @props.focus
+        focus = @props.focus ? @inherit('unit').props.focus
 
         isAbsolute = scale == null
 

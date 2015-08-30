@@ -10,7 +10,7 @@ class PrimitiveFactory
 
   make: (type, options = {}, binds = null) ->
     klass = @classes[type]
-    throw "Unknown primitive class `#{type}`" unless klass?
+    throw new Error "Unknown primitive class `#{type}`" unless klass?
 
     node      = new klass.model type, klass.defaults, options, binds, klass, @context.attributes
     primitive = new klass node, @context, @helpers

@@ -403,10 +403,10 @@ Types =
       target
 
   color: (r = .5, g = .5, b = .5) ->
-    vec3 = Types.vec3(r, g, b)
+    defaults = [r, g, b]
 
-    uniform: () -> 'v3'
-    make: () -> new THREE.Vector3 r, g, b
+    uniform: () -> 'c'
+    make: () -> new THREE.Color r, g, b
     validate: (value, target, invalid) ->
       if value == "" + value
         value = new THREE.Color().setStyle value
@@ -414,17 +414,24 @@ Types =
         value = new THREE.Color value
 
       if value instanceof THREE.Color
-        target.set value.r,
-                   value.g,
-                   value.b
-      else return vec3.validate value, target, invalid
+        target.copy value
+      else if value instanceof Array
+        value = value.concat defaults.slice value.length
+        target.set.apply target, value
+      else if value?
+        rr = value.r ? r
+        gg = value.g ? g
+        bb = value.b ? b
+        target.set rr, gg, bb
+      else
+        return invalid()
       target
 
-    equals: (a, b) -> a.x == b.x and a.y == b.y and a.z == b.z
+    equals: (a, b) -> a.r == b.r and a.g == b.g and a.b == b.b
     op: (a, b, target, op) ->
-      target.x = op a.x, b.x
-      target.y = op a.y, b.y
-      target.z = op a.z, b.z
+      target.r = op a.r, b.r
+      target.g = op a.g, b.g
+      target.b = op a.b, b.b
       target
 
   axis: (value = 1, allowZero = false) ->
@@ -552,6 +559,10 @@ Types =
 
   vertexPass: (value = 'view') ->
     keys = ['data', 'view', 'world', 'eye']
+    Types.enum value, keys
+
+  fragmentPass: (value = 'light') ->
+    keys = ['color', 'light', 'rgba']
     Types.enum value, keys
 
   ease: (value = 'linear') ->

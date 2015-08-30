@@ -5,7 +5,7 @@ class Line extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, position, color, mask, clip, stroke, proximity} = options
+    {uniforms, material, position, color, mask, map, combine, stpq, linear, clip, stroke, proximity} = options
 
     uniforms ?= {}
     stroke   = [null, 'dotted', 'dashed'][stroke]
@@ -31,10 +31,9 @@ class Line extends Base
 
     v = factory.vertex
 
-    @_vertexColor v, color, mask
+    v.pipe @_vertexColor color, mask
 
-    v.require position if position
-    v.require 'mesh.vertex.stpq',     @uniforms
+    v.require @_vertexPosition position, material, map, 2, stpq
     v.pipe 'line.position',           @uniforms, defs
     v.pipe 'project.position',        @uniforms
 
@@ -43,7 +42,7 @@ class Line extends Base
     f.pipe 'fragment.clip.ends',      @uniforms if clip
     f.pipe 'fragment.clip.proximity', @uniforms if proximity?
 
-    @_fragmentColor f, hasStyle, false, color, mask
+    f.pipe @_fragmentColor hasStyle, material, color, mask, map, 2, stpq, combine, linear
 
     f.pipe 'fragment.color',          @uniforms
 

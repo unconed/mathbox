@@ -98,13 +98,13 @@ class API
 
   toMarkup: () ->
     tags = @_targets.map (x) -> x.toMarkup()
-    if @_targets.length > 1 then tags else tags[0]
+    tags.join "\n\n"
 
   print: () ->
-    @_targets.map (x) -> Util.Pretty.print x.toMarkup()
+    @_targets.map (x) -> @_context.controller.inspect x, 'info'
     @
 
-  inspect: () ->
+  inspect: (print = true) ->
 
     # Recurse tree and extract all inserted renderables
     map     = (node) -> node.controller?.objects ? []
@@ -116,7 +116,7 @@ class API
     # Flatten arrays
     flatten = (list) -> list.reduce ((a, b) -> a.concat b), []
 
-    # Fake descriptor for pretty printing
+    # Render descriptor
     make = (renderable, render) ->
       d = {}
       d.owner      = renderable
@@ -126,21 +126,26 @@ class API
       d.fragment   = render.material.fragmentGraph
       d
 
+    @info =
+      renderables: []
+      renders:     []
+      shaders:     []
+
     # Inspect all targets
     for target in @_targets
       @_context.controller.inspect target, 'info'
 
-      renderables = flatten recurse target
-      renders     = flatten renderables.map (x) -> x.renders
-      shaders     = flatten renderables.map (x) -> x.renders.map (r) -> make x, r
+      info =
+        renderables: renderables = flatten recurse target
+        renders:     flatten renderables.map (x) -> x.renders
+        shaders:     flatten renderables.map (x) -> x.renders.map (r) -> make x, r
 
-      @info = {renderables, renders, shaders}
+      if print
+        console.log 'Renderables: ', info.renderables
+        console.log 'Renders: ',     info.renders
+        console.log 'Shaders: ',     info.shaders
 
-      console.log "mathbox.info = {"
-      console.log 'Renderables: ', renderables
-      console.log 'Renders: ',     renders
-      console.log 'Shaders: ',     shaders
-      console.log "}"
+      @info[k] = @info[k].concat info[k] for k of info
 
     @
 

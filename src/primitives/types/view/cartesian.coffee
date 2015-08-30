@@ -2,7 +2,7 @@ View = require './view'
 Util = require '../../../util'
 
 class Cartesian extends View
-  @traits = ['node', 'object', 'visible', 'view', 'view3', 'transform']
+  @traits = ['node', 'object', 'visible', 'view', 'view3', 'vertex']
 
   make: () ->
     super
@@ -62,7 +62,7 @@ class Cartesian extends View
       @trigger
         type: 'view.range'
 
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     shader.pipe 'cartesian.position', @uniforms if pass == 1
     super shader, pass
 

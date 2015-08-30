@@ -1,7 +1,7 @@
 Transform = require './transform'
 
 class Clip extends Transform
-  @traits = ['node', 'transform', 'clip']
+  @traits = ['node', 'vertex', 'clip']
 
   make: () ->
     @uniforms =
@@ -9,7 +9,7 @@ class Clip extends Transform
       clipMax: @_attributes.make @_types.vec4()
 
   # Calculate vertex clip
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     return shader.pipe 'clip.position', @uniforms if pass == @props.pass
     shader
 

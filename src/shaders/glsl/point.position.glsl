@@ -14,11 +14,11 @@ varying vec2 vSprite;
 varying float vPixelSize;
 
 // External
-vec3 getPosition(vec4 xyzw);
+vec3 getPosition(vec4 xyzw, float canonical);
 
 vec3 getPointPosition() {
   vec4 p = min(geometryClip, position4);
-  vec3 center = getPosition(p);
+  vec3 center = getPosition(p, 1.0);
 
   // Depth blending
   // TODO: orthographic camera

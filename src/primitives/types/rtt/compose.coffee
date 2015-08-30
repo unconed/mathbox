@@ -24,7 +24,7 @@ class Compose extends Primitive
     depth  = dims.depth
     layers = dims.items
 
-    @remap2DScale.set width, height
+    @remapUVScale.set width, height
 
   make: () ->
     # Bind to attached data sources
@@ -36,19 +36,20 @@ class Compose extends Primitive
 
     # Prepare uniforms for remapping to absolute coords on the fly
     resampleUniforms =
-      remap2DScale: @_attributes.make @_types.vec2()
-    @remap2DScale = resampleUniforms.remap2DScale.value
+      remapUVScale: @_attributes.make @_types.vec2()
+    @remapUVScale = resampleUniforms.remapUVScale.value
 
     # Build fragment shader
     fragment = @_shaders.shader()
     alpha    = @props.alpha
 
     if @bind.source.is 'image'
-      # Sample image directly in 2D
+      # Sample image directly in 2D UV
+      fragment.pipe 'screen.pass.uv', resampleUniforms
       fragment = @bind.source.imageShader fragment
     else
       # Sample data source in 4D
-      fragment.pipe 'screen.remap.2d.xyzw', resampleUniforms
+      fragment.pipe 'screen.map.xy', resampleUniforms
       fragment = @bind.source.sourceShader fragment
 
     # Force pixels to solid if requested
@@ -59,6 +60,7 @@ class Compose extends Primitive
     @compose = @_renderables.make 'screen',
                  map: fragment
                  uniforms: composeUniforms
+                 linear: true
 
     @_helpers.visible.make()
     @_helpers.object.make [@compose]

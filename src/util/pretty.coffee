@@ -6,8 +6,9 @@ checkUnit   = (v) -> checkFactor v, 1
 
 formatMultiple = (v, f, k, compact) ->
   d = Math.round(v / f)
-  return "#{k}"  if d == 1
+  return "#{k}"  if d ==  1
   return "-#{k}" if d == -1
+  return "#{d}"  if k == '1'
   return if compact then "#{d}#{k}" else "#{d}*#{k}"
 
 formatFraction = (v, f, k, compact) ->
@@ -15,7 +16,7 @@ formatFraction = (v, f, k, compact) ->
   if Math.abs(d) == 1
     d = if d < 0 then "-" else ""
     d += k
-  else
+  else if k != '1'
     d += if compact then "#{k}" else "*#{k}"
 
   "#{d}/#{f}"
@@ -30,10 +31,13 @@ formatFactors    = [
   {1: 1, π: Math.PI, e: Math.E}
   {1: 1, τ: Math.PI * 2, π: Math.PI, e: Math.E}
 ]
-formatPrimes     = [
-  [2*2*3*5*7, [2,3,5,7]]
-  [2*2*3*3*5*5*7*7, [2,3,5,7]]
-  [2*3*5*7*11*11*13*13, [2,3,5,7,11,13]]
+formatPrimes     = [ # denominators 1-30 + interesting multiples
+  [2*2*3*5*7, [2,3,5,7]]                   # 1-7
+  [2*2*2*3*3*5*5*7*7, [2,3,5,7]]           # 8-11
+  [2*2*3*5*7*11*13, [2,3,5,7,11,13]]       # 12-16
+  [2*2*17*19*23*29, [2,17,19,23,29]]       # 17-30
+  [256*256,         [2,3]]                 # Powers of 2
+  [1000000,         [2,5]]                 # Powers of 10
 ]
 
 prettyNumber = (options) ->
@@ -171,8 +175,8 @@ prettyJSXPair = do ->
                 formatNumber v
               else
                 if v?
-                  if v._up?            then return value v.map (v) -> v
-                  if v instanceof Node then return v.toString()
+                  if v._up?     then return value v.map (v) -> v
+                  if v.toMarkup then return v.toString()
                 return "#{JSON.stringify v}"
 
     [k, op, wrap value v].join ''

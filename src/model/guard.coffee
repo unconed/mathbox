@@ -7,7 +7,7 @@ class Guard
     while run = step()
       if !--limit
         console.warn "Last iteration", last?()
-        throw "Exceeded iteration limit in digest."
+        throw new Error "Exceeded iteration limit."
     null
 
 module.exports = Guard

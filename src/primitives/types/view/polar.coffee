@@ -2,7 +2,7 @@ View = require './view'
 Util = require '../../../util'
 
 class Polar extends View
-  @traits = ['node', 'object', 'visible', 'view', 'view3', 'polar', 'transform']
+  @traits = ['node', 'object', 'visible', 'view', 'view3', 'polar', 'vertex']
 
   make: () ->
     super
@@ -92,7 +92,7 @@ class Polar extends View
       @trigger
         type: 'view.range'
 
-  transform: (shader, pass) ->
+  vertex: (shader, pass) ->
     shader.pipe 'polar.position', @uniforms if pass == 1
     super shader, pass
 

@@ -44,7 +44,7 @@ class Atlas extends Renderable
     @bottom  = 0
 
   resize: (width, height) ->
-    throw "Cannot resize unbacked texture atlas" if !@backed
+    throw new Error "Cannot resize unbacked texture atlas" if !@backed
     if width > 2048 and height > 2048
       console.warn "Giant text atlas #{width}x#{height}."
     else

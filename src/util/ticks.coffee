@@ -61,7 +61,7 @@ linear = (min, max, n, unit, base, bias, start, end, zero) ->
 ###
 
 log = (min, max, n, unit, base, bias, start, end, zero) ->
-  throw "Log ticks not yet implemented."
+  throw new Error "Log ticks not yet implemented."
 
 LINEAR = 0
 LOG    = 1

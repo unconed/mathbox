@@ -8,7 +8,8 @@ Util         = require '../../util'
 class RenderToTexture extends Renderable
 
   constructor: (renderer, shaders, options) ->
-    @scene  = options.scene ? new THREE.Scene()
+    @scene  = options.scene  ? new THREE.Scene()
+    @camera = options.camera
 
     super renderer, shaders
     @build options
@@ -34,9 +35,10 @@ class RenderToTexture extends Renderable
       shader.pipe sample2DArray,   @uniforms
 
   build: (options) ->
-    @camera = new THREE.PerspectiveCamera()
-    @camera.position.set 0, 0, 3
-    @camera.lookAt new THREE.Vector3()
+    if !@camera
+      @camera = new THREE.PerspectiveCamera()
+      @camera.position.set 0, 0, 3
+      @camera.lookAt new THREE.Vector3()
     @scene.inject?()
 
     @target = new RenderTarget @gl, options.width, options.height, options.frames, options

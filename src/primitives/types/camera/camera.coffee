@@ -5,7 +5,12 @@ class Camera extends Primitive
   @traits = ['node', 'camera']
 
   init: () ->
-    @camera = @_context.defaultCamera
+
+  make: () ->
+    camera = @_context.defaultCamera
+    @camera = if @props.proxy then camera else camera.clone()
+
+  unmake: () ->
 
   getCamera: () -> @camera
 
@@ -15,9 +20,10 @@ class Camera extends Primitive
        changed['camera.quaternion'] or
        changed['camera.rotation'] or
        changed['camera.lookAt'] or
+       changed['camera.fov'] or
        init
 
-      {position, rotation, lookAt} = @props
+      {position, rotation, lookAt, fov, aspect} = @props
 
       @camera.position.copy   position
 
@@ -25,6 +31,9 @@ class Camera extends Primitive
         @camera.lookAt        lookAt
       else
         @camera.quaternion.set 0, 0, 0, 1
+
+      if fov? and @camera.fov?
+        @camera.fov = fov
 
       @camera.quaternion.multiply rotation if rotation?
       @camera.updateMatrix()

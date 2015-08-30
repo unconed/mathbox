@@ -8,7 +8,6 @@ Classes =
   surface:           require './draw/surface'
   ticks:             require './draw/ticks'
   vector:            require './draw/vector'
-  label:             require './draw/label'
 
   view:              require './view/view'
   cartesian:         require './view/cartesian'
@@ -29,13 +28,15 @@ Classes =
   area:              require './data/area'
   voxel:             require './data/voxel'
   volume:            require './data/volume'
-  text:              require './data/text'
   scale:             require './data/scale'
 
   html:              require './overlay/html'
   dom:               require './overlay/dom'
 
-  format:            require './operator/format'
+  text:              require './text/text'
+  format:            require './text/format'
+  label:             require './text/label'
+
   join:              require './operator/join'
   lerp:              require './operator/lerp'
   memo:              require './operator/memo'
@@ -50,8 +51,9 @@ Classes =
   group:             require './base/group'
   inherit:           require './base/inherit'
   root:              require './base/root'
-  shader:            require './base/shader'
   unit:              require './base/unit'
+
+  shader:            require './shader/shader'
 
   camera:            require './camera/camera'
 

@@ -1,9 +1,9 @@
-uniform vec2 remap2DScale;
+uniform vec2 remapUVScale;
 uniform vec2 remapModulus;
 uniform vec2 remapModulusInv;
 
-vec4 screenRemap4Dxyzw(vec2 uv) {
-  vec2 st = floor(remap2DScale * uv);
+vec4 screenMapXYZW(vec4 uvwo, vec4 stpq) {
+  vec2 st = floor(remapUVScale * uvwo.xy);
   vec2 xy = st * remapModulusInv;
   vec2 ixy = floor(xy);
   vec2 fxy = xy - ixy;
