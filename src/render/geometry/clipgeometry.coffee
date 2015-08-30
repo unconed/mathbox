@@ -16,6 +16,7 @@ class ClipGeometry extends Geometry
 
     @geometryClip       = new THREE.Vector4 1e10, 1e10, 1e10, 1e10
     @geometryResolution = new THREE.Vector4
+    @mapSize            = new THREE.Vector4
 
     @uniforms ?= {}
     @uniforms.geometryClip =
@@ -24,6 +25,9 @@ class ClipGeometry extends Geometry
     @uniforms.geometryResolution =
       type: 'v4'
       value: @geometryResolution
+    @uniforms.mapSize =
+      type: 'v4'
+      value: @mapSize
 
   _clipGeometry: (width, height, depth, items) ->
     c = (x) -> Math.max 0, x - 1
@@ -31,6 +35,10 @@ class ClipGeometry extends Geometry
 
     @geometryClip.set       c(width), c(height), c(depth), c(items)
     @geometryResolution.set r(width), r(height), r(depth), r(items)
+
+  _clipMap: (mapWidth, mapHeight, mapDepth, mapItems) ->
+
+    @mapSize.set mapWidth, mapHeight, mapDepth, mapItems
 
   _clipOffsets: (factor, width, height, depth, items, _width, _height, _depth, _items) ->
     dims  = [ items,  depth,  height,  width]

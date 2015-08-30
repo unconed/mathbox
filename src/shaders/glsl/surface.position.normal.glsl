@@ -1,3 +1,5 @@
+uniform vec4 mapSize;
+uniform vec4 geometryResolution;
 uniform vec4 geometryClip;
 attribute vec4 position4;
 attribute vec2 surface;
@@ -49,6 +51,14 @@ vec3 getSurfacePositionNormal() {
   vNormal   = getSurfaceNormal(left, center, right, up, down);
   vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz); // hardcoded directional light
   vPosition = -center;
+
+#ifdef POSITION_UV
+#ifdef POSITION_UV_INT
+  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;
+#else
+  vUV = position4.xy * geometryResolution.xy;
+#endif
+#endif
   
   return center;
 }

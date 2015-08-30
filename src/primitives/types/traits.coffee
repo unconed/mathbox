@@ -282,8 +282,6 @@ Traits =
   readback:
     indexed:           Types.bool()
 
-  clock:
-    speed:             Types.number(1)
   root:
     camera:            Types.select('[camera]')
   inherit:
@@ -327,6 +325,8 @@ Traits =
     script:            Types.object({})
     seek:              Types.nullable(Types.number(0))
     ease:              Types.ease('cosine')
+  trigger:
+    trigger:           Types.nullable(Types.int(1), true)
   step:
     playback:          Types.ease('linear')
     stops:             Types.nullable(Types.array(Types.number()))
@@ -336,7 +336,6 @@ Traits =
     speed:             Types.number(1)
     rewind:            Types.number(3)
     skip:              Types.bool(true)
-    trigger:           Types.nullable(Types.int(1), true)
     realtime:          Types.bool(false)
   play:
     delay:             Types.number(0)
@@ -344,8 +343,10 @@ Traits =
     speed:             Types.number(1)
     from:              Types.number(0)
     to:                Types.number(Infinity)
-    trigger:           Types.nullable(Types.int(1), true)
     realtime:          Types.bool(false)
+
+  date:
+    now:               Types.nullable(Types.timestamp())
 
 
 module.exports = Traits

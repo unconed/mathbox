@@ -25,6 +25,7 @@ class MemoScreen extends Screen
     map = shaders.shader()
     map.pipe 'screen.map.xyzw', uniforms
     if options.map?
+      # Need artifical STPQs because the screen is not the real geometry
       map.pipe 'screen.map.stpq', uniforms if stpq
       map.pipe options.map
 

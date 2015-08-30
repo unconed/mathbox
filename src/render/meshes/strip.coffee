@@ -28,8 +28,8 @@ class Strip extends Base
     v.pipe @_vertexColor color, mask
 
     v.require @_vertexPosition position, material, map, 2, stpq
-    v.pipe 'mesh.position',         @uniforms if !shaded
-    v.pipe 'strip.position.normal', @uniforms if  shaded
+    v.pipe 'mesh.position',         @uniforms if !material
+    v.pipe 'strip.position.normal', @uniforms if  material
     v.pipe 'project.position',      @uniforms
 
     factory.fragment = f =

@@ -28,8 +28,8 @@ class Face extends Base
     v.pipe @_vertexColor color, mask
 
     v.require @_vertexPosition position, material, map, 2, stpq
-    v.pipe 'face.position',         @uniforms if !shaded
-    v.pipe 'face.position.normal',  @uniforms if  shaded
+    v.pipe 'face.position',         @uniforms if !material
+    v.pipe 'face.position.normal',  @uniforms if  material
     v.pipe 'project.position',      @uniforms
 
     factory.fragment = f =

@@ -143,6 +143,10 @@ helpers =
       shader = @_inherit('fragment')?.fragment shader, pass for pass in [0..2]
       shader
 
+    map: (shader) ->
+      return shader unless shader
+      shader = @_shaders.shader().pipe('mesh.map.uvwo').pipe shader
+
   position:
     pipeline: (shader) ->
       shader = @_inherit('vertex')?.vertex shader, pass for pass in [0..3]

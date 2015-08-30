@@ -88,4 +88,8 @@ class SurfaceGeometry extends ClipGeometry
                      segmentsX,  segmentsY,  surfaces,  layers,
                      @segmentsX, @segmentsY, @surfaces, @layers
 
+  map: (width = @width, height = @height, surfaces = @surfaces, layers = @layers) ->
+
+    @_clipMap width, height, surfaces, layers
+
 module.exports = SurfaceGeometry

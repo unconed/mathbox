@@ -15,16 +15,20 @@ class Surface extends Primitive
     dims = @bind.points.getActiveDimensions()
     {width, height, depth, items} = dims
 
+    map  = @bind.points.getActiveDimensions()
+
     @surface.geometry.clip width, height, depth, items if @surface
     @lineX  .geometry.clip width, height, depth, items if @lineX
     @lineY  .geometry.clip height, width, depth, items if @lineY
+
+    @surface.geometry.map  map.width, map.height, map.depth, map.items if @surface
 
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make [
       { to: 'geometry.points', trait: 'source' }
       { to: 'geometry.colors', trait: 'source' }
-      { to: 'mesh.texture',    trait: 'source' }
+      { to: 'mesh.map',        trait: 'source' }
     ]
 
     return unless @bind.points?
@@ -69,7 +73,7 @@ class Surface extends Primitive
     mask = @_helpers.object.mask()
 
     # Build texture map lookup
-    map = @bind.map?.sourceShader @_shaders.shader()
+    map = @_helpers.shade.map @bind.map?.sourceShader @_shaders.shader()
 
     # Build fragment material lookup
     material = @_helpers.shade.pipeline() || shaded
@@ -120,6 +124,8 @@ class Surface extends Primitive
                 zUnits:   zUnits
                 stroke:   stroke
                 mask:     mask
+                map:      map
+                intUV:    true
       objects.push @surface
 
     @_helpers.visible.make()

@@ -217,6 +217,17 @@ Types =
       return invalid()
     clone: (v) -> JSON.parse JSON.stringify v
 
+  timestamp: (value = null) ->
+    if typeof value == 'string'
+      value = Date.parse value
+
+    uniform: () -> 'f'
+    make: () -> value ? +new Date()
+    validate: (value, target, invalid) ->
+      value = Date.parse value
+      return invalid() if value != (x = +value)
+      value
+
   vec2: (x = 0, y = 0) ->
     defaults = [x, y]
     uniform: () -> 'v2'
