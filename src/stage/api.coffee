@@ -27,6 +27,16 @@ class API
     return @_push [@_targets[index]] if @_targets.length > index
     @_push []
 
+  filter: (callback) ->
+    if typeof callback == 'string'
+      matcher  = @_context.model._matcher callback
+      callback = (x) -> matcher x
+
+    @_push @_targets.filter callback
+
+  map: (callback) ->
+    callback @[i], i, @ for i in [0...@length]
+
   each: (callback) ->
     callback @[i], i, @ for i in [0...@length]
     @
@@ -101,7 +111,7 @@ class API
     tags.join "\n\n"
 
   print: () ->
-    @_targets.map (x) -> @_context.controller.inspect x, 'info'
+    Util.Pretty.print @_targets.map((x) -> x.toMarkup()).join "\n\n"
     @
 
   debug: () ->
@@ -122,12 +132,16 @@ class API
       shaders.push shader.fragment
     ShaderGraph.inspect shaders
 
-  inspect: (print = true) ->
+  inspect: (selector, print) ->
+    if typeof trait == 'boolean'
+      print = trait
+      trait = null
+    print ?= true
 
     # Recurse tree and extract all inserted renderables
     map     = (node) -> node.controller?.objects ? []
     recurse = self = (node, list = []) ->
-      list.push map node
+      list.push map node if !trait or node.traits.hash[trait]
       self child, list for child in node.children if node.children?
       list
 
@@ -152,12 +166,12 @@ class API
 
     # Inspect all targets
     for target in @_targets
-      @_context.controller.inspect target, 'info' if print
+      target.print selector, 'info' if print
 
       _info =
         renderables: renderables = flatten recurse target
         renders:     flatten renderables.map (x) -> x.renders
-        shaders:     flatten renderables.map (x) -> x.renders.map (r) -> make x, r
+        shaders:     flatten renderables.map (x) -> x.renders?.map (r) -> make x, r
 
       info[k] = info[k].concat _info[k] for k of _info
 

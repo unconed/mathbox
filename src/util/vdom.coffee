@@ -1,7 +1,7 @@
 # Quick'n'dirty Virtual DOM diffing
 # with a poor man's React for components
 #
-# This is mainly for rendering only. See DOM examples.
+# This is for rendering HTML with data from a GL readback. See DOM examples.
 HEAP = []
 id = 0
 

@@ -43,7 +43,4 @@ class Controller
     target = node.parent
     target.remove node if target
 
-  inspect: (node, level = 'info') ->
-    Util.Pretty.print node.toMarkup()
-
 module.exports = Controller

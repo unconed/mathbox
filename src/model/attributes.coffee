@@ -166,7 +166,7 @@ class Data
       list[key] = expression
 
       short = if data[key]? then data[key].short else key
-      expr[short] = expression # flattened
+      expr[short] = expression if !computed # flattened
       eval[key]   = expression
 
       expression  = expression.bind object

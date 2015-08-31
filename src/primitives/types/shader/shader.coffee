@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Shader extends Primitive
-  @traits = ['node', 'shader']
+  @traits = ['node', 'bind', 'shader']
   @freeform = true
 
   init: () ->
@@ -11,6 +11,11 @@ class Shader extends Primitive
   make: () ->
     {language, code} = @props
     throw new Error "GLSL required" if language != 'glsl'
+
+    # Bind to attached data sources
+    @_helpers.bind.make [
+      { to: 'shader.sources', trait: 'source', multiple: true }
+    ]
 
     # Parse snippet w/ shadergraph (will do implicit DOM script tag by ID lookup if simple selector or ID given)
     snippet = @_shaders.fetch(code)
@@ -63,7 +68,14 @@ class Shader extends Primitive
     # Merge in explicit uniform object if set
     uniforms[k] = v for k, v of u if (u = @props.uniforms)?
 
+    # New shader
+    s = @_shaders.shader()
+
+    # Require sources
+    if @bind.sources?
+      s.require source.sourceShader @_shaders.shader() for source in @bind.sources
+
     # Build bound shader
-    @_shaders.shader().pipe(code, uniforms)
+    s.pipe(code, uniforms)
 
 module.exports = Shader

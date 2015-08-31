@@ -10,6 +10,9 @@ class Camera extends Primitive
     camera = @_context.defaultCamera
     @camera = if @props.proxy then camera else camera.clone()
 
+    @euler = new THREE.Euler
+    @quat = new THREE.Quaternion
+
   unmake: () ->
 
   getCamera: () -> @camera
@@ -23,19 +26,25 @@ class Camera extends Primitive
        changed['camera.fov'] or
        init
 
-      {position, rotation, lookAt, fov, aspect} = @props
+      {position, quaternion, rotation, lookAt, fov, aspect} = @props
 
       @camera.position.copy   position
 
       if lookAt?
         @camera.lookAt        lookAt
+      else if quaternion?
+        @camera.quaternion.copy quaternion
       else
         @camera.quaternion.set 0, 0, 0, 1
 
       if fov? and @camera.fov?
         @camera.fov = fov
 
-      @camera.quaternion.multiply rotation if rotation?
+      if rotation?
+        @euler.setFromVector3 rotation, Util.Three.swizzleToEulerOrder @props.eulerOrder
+        @quat .setFromEuler @euler
+        @camera.quaternion.multiply @quat
+
       @camera.updateMatrix()
 
 module.exports = Camera

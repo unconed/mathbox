@@ -168,12 +168,12 @@ class Model
         throw new Error "Duplicate node id `#{id}`"
 
       @ids[id] = [node] if id?
-      node.id = id
+      node.id = id ? node._id
 
     removeID = (id, node) =>
       if id?
         delete @ids[id]
-      delete node.id
+      node.id = node._id
 
     # Track classes (live)
     addClasses    = (classes, node) =>

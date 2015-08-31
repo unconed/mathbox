@@ -1,4 +1,5 @@
 Transform = require './transform'
+Util = require '../../../util'
 
 class Transform3 extends Transform
   @traits = ['node', 'vertex', 'transform3']
@@ -7,6 +8,8 @@ class Transform3 extends Transform
     @uniforms =
       transformMatrix: @_attributes.make @_types.mat4()
 
+    @euler           = new THREE.Euler
+    @rotationMatrix  = new THREE.Matrix4
     @transformMatrix = @uniforms.transformMatrix.value
 
   unmake: () ->
@@ -23,8 +26,15 @@ class Transform3 extends Transform
     m = @props.matrix
 
     t = @transformMatrix
+    rot = @rotationMatrix
+
+    @euler.setFromVector3 r, Util.Three.swizzleToEulerOrder @props.eulerOrder
+    rot.identity()
+    rot.makeRotationFromEuler @euler
+
     t.compose p, q, s
-    t.multiplyMatrices t, m if m?
+    t.multiplyMatrices t, rot
+    t.multiplyMatrices m, t if m?
 
   vertex: (shader, pass) ->
     shader.pipe 'transform3.position', @uniforms if pass == @props.pass

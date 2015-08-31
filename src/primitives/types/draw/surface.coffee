@@ -3,6 +3,9 @@ Util      = require '../../../util'
 
 class Surface extends Primitive
   @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'surface', 'position', 'grid', 'bind', 'shade']
+  @defaults =
+    lineX: false
+    lineY: false
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -15,13 +18,13 @@ class Surface extends Primitive
     dims = @bind.points.getActiveDimensions()
     {width, height, depth, items} = dims
 
-    map  = @bind.points.getActiveDimensions()
-
     @surface.geometry.clip width, height, depth, items if @surface
     @lineX  .geometry.clip width, height, depth, items if @lineX
     @lineY  .geometry.clip height, width, depth, items if @lineY
 
-    @surface.geometry.map  map.width, map.height, map.depth, map.items if @surface
+    if @bind.map?
+      map  = @bind.map.getActiveDimensions()
+      @surface.geometry.map  map.width, map.height, map.depth, map.items if @surface
 
   make: () ->
     # Bind to attached data sources

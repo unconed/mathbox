@@ -11,13 +11,16 @@ class Operator extends Source
   getActiveDimensions: () -> @bind.source.getActiveDimensions()
   getIndexDimensions:  () -> @bind.source.getIndexDimensions()
 
+  init: () ->
+    @sourceSpec = [
+      { to: 'operator.source', trait: 'source' }
+    ]
+
   make: () ->
     super
 
     # Bind to attached data sources
-    @_helpers.bind.make [
-      { to: 'operator.source', trait: 'source' }
-    ]
+    @_helpers.bind.make @sourceSpec
 
   made: () ->
     @resize()

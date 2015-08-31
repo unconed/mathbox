@@ -36,7 +36,9 @@ Classes =
   text:              require './text/text'
   format:            require './text/format'
   label:             require './text/label'
+  retext:            require './text/retext'
 
+  grow:              require './operator/grow'
   join:              require './operator/join'
   lerp:              require './operator/lerp'
   memo:              require './operator/memo'

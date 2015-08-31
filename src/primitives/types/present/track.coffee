@@ -70,13 +70,6 @@ class Track extends Primitive
         step.expr  ?= {}
 
       s.push step
-
-      # Connect steps
-      last.next = step if last?
-      last = step
-
-    # Last step leads to itself
-    last.next = last
     script = s
 
     return [[], {}, 0, 0] if !script.length
@@ -85,6 +78,15 @@ class Track extends Primitive
     script.sort (a, b) -> a.key - b.key
     start = script[0].key
     end   = script[script.length - 1].key
+
+    # Connect steps
+    for key, step of script
+      last.next = step if last?
+      last = step
+
+    # Last step leads to itself
+    last.next = last
+    script = s
 
     # Determine starting props
     props  = {}

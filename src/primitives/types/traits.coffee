@@ -109,7 +109,7 @@ Traits =
     bind:              Types.nullable(Types.func())
     live:              Types.bool(true)
   buffer:
-    channels:          Types.enum(3, [1, 2, 3, 4])
+    channels:          Types.enum(4, [1, 2, 3, 4])
     items:             Types.int(1)
     fps:               Types.nullable(Types.int(60))
     hurry:             Types.int(5)
@@ -167,7 +167,7 @@ Traits =
     proximity:         Types.nullable(Types.number(Infinity))
   mesh:
     fill:              Types.bool(true)
-    shaded:            Types.bool(true)
+    shaded:            Types.bool(false)
     map:               Types.nullable(Types.select())
   strip:
     outline:           Types.bool(false)
@@ -224,6 +224,7 @@ Traits =
     type:              Types.type('float')
 
   shader:
+    sources:           Types.nullable(Types.select())
     language:          Types.string('glsl')
     code:              Types.string()
     uniforms:          Types.nullable(Types.object())
@@ -242,6 +243,12 @@ Traits =
     alignWidth:        Types.anchor()
     alignHeight:       Types.anchor()
     alignDepth:        Types.anchor()
+  grow:
+    scale:             Types.number(1)
+    items:             Types.nullable(Types.anchor())
+    width:             Types.nullable(Types.anchor())
+    height:            Types.nullable(Types.anchor())
+    depth:             Types.nullable(Types.anchor())
   split:
     order:             Types.transpose('wxyz')
     axis:              Types.nullable(Types.axis())
@@ -321,6 +328,7 @@ Traits =
   move:
     from:              Types.vec4()
     to:                Types.vec4()
+
   track:
     target:            Types.select()
     script:            Types.object({})

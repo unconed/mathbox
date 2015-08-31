@@ -109,6 +109,8 @@ class Present extends Parent
     expand = (lists) ->
       [relative, absolute] = lists
 
+      limit = 100
+
       indices = {}
       steps   = []
       slide = (step, index) ->
@@ -121,6 +123,9 @@ class Present extends Parent
 
         from = if props.from? then parentIndex + props.from else childIndex - props.early
         to   = if props.to?   then parentIndex + props.to   else childIndex + props.steps + props.late
+
+        from = Math.max 0, from
+        to   = Math.min limit, to
 
         indices[node._id] ?= from
         steps[i] = (steps[i] ?= []).concat step for i in [from...to]
@@ -137,7 +142,11 @@ class Present extends Parent
       [steps, indices]
 
     # Remove duplicates
-    dedupe = (step) -> node for node, i in step when step.indexOf(node) == i
+    dedupe = (step) ->
+      if step
+        node for node, i in step when step.indexOf(node) == i
+      else
+        []
 
     # Finalize individual step by document order
     finalize = (step) -> step.sort (a, b) -> a.order - b.order

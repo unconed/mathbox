@@ -159,7 +159,8 @@ class Primitive
       else
         nodes = selector
         nodes = [].slice.call nodes if nodes._up   # Convert API object to array
-        controllers = selector.filter(filter).map(map)
+        nodes = [nodes] if nodes !instanceof Array # Make an array out of a single object
+        controllers = nodes.filter(filter).map(map)
         return controllers if controllers.length
 
     # Auto-link selector '<'
@@ -182,6 +183,7 @@ class Primitive
         previous = parent unless previous or controllers.length
 
         # Include if matched
+        controller = null
         controller = map previous   if filter previous
         controllers.push controller if controller? && discard-- <= 0
 

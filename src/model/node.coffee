@@ -101,7 +101,9 @@ class Node
     else
       "<#{id} />"
 
-  toMarkup: (indent = '') ->
+  toMarkup: (selector = null, indent = '') ->
+    if selector and typeof selector != 'function'
+      selector = @root.model._matcher selector
 
     tag   = @type ? 'node'
     expr  = @expr
@@ -118,18 +120,33 @@ class Node
     attr = attr.concat expr  if expr.length
     attr = attr.join ' '
 
+    child = indent
+    recurse = () =>
+      return '' if !@children?.length
+      children = @children
+        .map((x) -> x.toMarkup selector, child)
+        .filter((x) -> x? and x.length)
+        .join("\n")
+
+    if selector and !selector @
+      return recurse()
+
     if @children?
+      open  = "<#{tag}#{attr}>"
+      close = "</#{tag}>"
+
       child = indent + '  '
-      [
-        "#{indent}<#{tag}#{attr}>",
-        @children.map((x) -> x.toMarkup child).join("\n"),
-        "#{indent}</#{tag}>",
-      ].join "\n"
+      children  = recurse()
+      children  = "\n" + children + "\n" + indent if children.length
+      children ?= ''
+
+      indent + open + children + close
+
     else
       "#{indent}<#{tag}#{attr} />"
 
-  print: (level) ->
-    Util.Pretty.print @toMarkup(), level
+  print: (selector, level) ->
+    Util.Pretty.print @toMarkup(selector), level
 
 
 THREE.Binder.apply Node::
