@@ -145,21 +145,31 @@ class Primitive
   # Attach to controller by trait and watch the selector
   _attach: (selector, trait, method, self = @, start = @, optional = false, multiple = false) ->
 
-    filter = (node) -> node.controller if node? and trait in node.traits
-    map    = (node) -> node?.controller
+    filter  = (node) -> node.controller if node? and trait in node.traits
+    map     = (node) -> node?.controller
+    flatten = (list) ->
+      out = []
+      for sub in list
+        if sub instanceof Array
+          out = out.concat sub
+        else
+          out.push sub
+      out
 
     # Direct JS binding, no watcher.
     if typeof selector == 'object'
       if !multiple
         node       = selector
         node       = node[0] if node._up              # Unwrap an API object
-        node       = node[0] if node instanceof Array # Unwrap an array
+        node       = node[0] if node instanceof Array # Unwrap an array of nodes
+        node       = node[0] if node._up              # Unwrap an array of API objects
         controller = map node if filter node
         return controller  if controller?
       else
         nodes = selector
-        nodes = [].slice.call nodes if nodes._up   # Convert API object to array
-        nodes = [nodes] if nodes !instanceof Array # Make an array out of a single object
+        nodes = [].slice.call nodes if nodes._up   # Convert API object to array of nodes
+        nodes = [nodes] if nodes !instanceof Array # Make an array out of a single node
+        nodes = flatten nodes.map (n) -> if n._up then n._targets else n
         controllers = nodes.filter(filter).map(map)
         return controllers if controllers.length
 

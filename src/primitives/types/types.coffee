@@ -92,6 +92,13 @@ Types =
   nullable: (type, make = false) ->
     value = if make then type.make() else null
 
+    emitter =
+      if type.emitter
+        (expr1, expr2) ->
+          return expr1 if !expr2?
+          return expr2 if !expr1?
+          return type.emitter expr1, expr2
+
     lerp =
       if type.lerp
         (a, b, target, f) ->
@@ -124,6 +131,7 @@ Types =
       return type.equals?(a, b) ? a == b
     lerp: lerp
     op: op
+    emitter: emitter
 
   enum: (value, keys = [], map = {}) ->
     i = 0
@@ -174,6 +182,7 @@ Types =
     validate: (value, target, invalid) ->
       return invalid() if value != (x = +value)
       Math.round(x) || 0
+    op: (a, b, target, op) -> op a, b
 
   round: (value = 0) ->
     value = +Math.round(value)
@@ -182,6 +191,7 @@ Types =
     validate: (value, target, invalid) ->
       return invalid() if value != (x = +value)
       Math.round(x) || 0
+    op: (a, b, target, op) -> op a, b
 
   number: (value = 0) ->
     uniform: () -> 'f'
@@ -189,6 +199,7 @@ Types =
     validate: (value, target, invalid) ->
       return invalid() if value != (x = +value)
       x || 0
+    op: (a, b, target, op) -> op a, b
 
   positive: (type, strict = false) ->
     uniform: type.uniform
@@ -197,6 +208,7 @@ Types =
       value = type.validate value, target, invalid
       return invalid() if (value < 0) or (strict and value <= 0)
       value
+    op: (a, b, target, op) -> op a, b
 
   string: (value = '') ->
     make: () -> "" + value
@@ -234,6 +246,7 @@ Types =
       value = Date.parse value
       return invalid() if value != (x = +value)
       value
+    op: (a, b, target, op) -> op a, b
 
   vec2: (x = 0, y = 0) ->
     defaults = [x, y]
@@ -628,9 +641,8 @@ decorate = (types) ->
   for k, type of types
     types[k] = do (type) -> () ->
       t = type.apply type, arguments
-      t.validate ?= (v) -> v
+      t.validate ?= (v) -> v?
       t.equals   ?= (a, b) -> a == b
-      t.op       ?= (a, b, target, op) -> op a, b
       t.clone    ?= (v) -> v?.clone?() ? v
       t
   types

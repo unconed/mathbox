@@ -126,7 +126,7 @@ class RTT extends Parent
     @trigger e
   update: (e) ->
     if (camera = @getOwnCamera())?
-      camera.aspect = @size.aspect || 1
+      camera.aspect = @aspect || 1
       camera.updateProjectionMatrix()
     @trigger e
   render: (e) ->

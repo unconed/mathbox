@@ -117,6 +117,7 @@ class Voxel extends Buffer
     if changed['data.map'] or
        changed['data.data'] or
        changed['data.resolve'] or
+       changed['data.expr'] or
        init
 
       @buffer.setCallback @emitter()

@@ -105,7 +105,7 @@ Traits =
 
   data:
     data:              Types.nullable(Types.object())
-    expr:              Types.nullable(Types.func())
+    expr:              Types.nullable(Types.emitter())
     bind:              Types.nullable(Types.func())
     live:              Types.bool(true)
   buffer:

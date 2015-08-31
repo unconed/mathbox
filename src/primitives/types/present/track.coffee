@@ -2,16 +2,15 @@ Primitive = require '../../primitive'
 {Ease} = require '../../../util'
 
 deepCopy = (x) ->
-  return x
-
   out = {}
   for k, v of x
-    if v? and typeof v == 'object'
-      out[k] = deepCopy v
-    else if v instanceof Array
+    if v instanceof Array
       out[k] = v.slice()
+    else if v? and typeof v == 'object'
+      out[k] = deepCopy v
     else
       out[k] = v
+
   out
 
 class Track extends Primitive
@@ -219,6 +218,8 @@ class Track extends Primitive
         else
           do (values, from, to) ->
             (time, delta) ->
+              if window.spy?
+                debugger if key == 'expr'
               values[0] = animator.lerp attr.T, fromP, toP, getLerpFactor(), values[0]
 
       # Handle expr / props on both ends
