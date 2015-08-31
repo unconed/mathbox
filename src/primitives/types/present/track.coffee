@@ -25,7 +25,7 @@ class Track extends Primitive
     [@script, @values, @start, @end] = @_process node, script
 
   unmake: () ->
-    @unbind()
+    @unbindExpr()
     @_helpers.bind.unmake()
     @script = @values = @start = @end = @section = @expr = null
     @playhead = 0
