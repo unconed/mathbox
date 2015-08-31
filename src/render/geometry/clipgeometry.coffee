@@ -41,8 +41,8 @@ class ClipGeometry extends Geometry
     @mapSize.set mapWidth, mapHeight, mapDepth, mapItems
 
   _clipOffsets: (factor, width, height, depth, items, _width, _height, _depth, _items) ->
-    dims  = [ items,  depth,  height,  width]
-    maxs  = [_items, _depth, _height, _width]
+    dims  = [ depth,  height,  width,  items]
+    maxs  = [_depth, _height, _width, _items]
     elements = @_reduce dims, maxs
 
     @_offsets [
