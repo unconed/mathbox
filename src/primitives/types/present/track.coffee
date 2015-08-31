@@ -1,6 +1,19 @@
 Primitive = require '../../primitive'
 {Ease} = require '../../../util'
 
+deepCopy = (x) ->
+  return x
+
+  out = {}
+  for k, v of x
+    if v? and typeof v == 'object'
+      out[k] = deepCopy v
+    else if v instanceof Array
+      out[k] = v.slice()
+    else
+      out[k] = v
+  out
+
 class Track extends Primitive
   @traits = ['node', 'track', 'bind']
 
@@ -56,13 +69,17 @@ class Track extends Primitive
 
       if step instanceof Array
         # [props, expr] array
-        step = {key: +key, props: step[0] ? {}, expr: step[1] ? {}}
+        step =
+          key: +key
+          props: if step[0]? then deepCopy(step[0]) else {}
+          expr:  if step[1]? then deepCopy(step[1]) else {}
       else
-        # Direct props object (iffy, but people will do this anyhow)
         if !step.key? and !step.props and !step.expr
-          step = {props: step}
+          # Direct props object (iffy, but people will do this anyhow)
+          step = {props: deepCopy step}
         else
-          step = JSON.parse JSON.stringify step
+          # Proper step
+          step = deepCopy step
 
         # Prepare step object
         step.key = if step.key? then +step.key else +key

@@ -233,7 +233,7 @@ helpers =
 
       objectScene  = @_inherit 'scene'
 
-      opacity = blending = zOrder = zUnits = zFactor = null
+      opacity = blending = zOrder = null
 
       hasStyle = 'style' in @traits
       opacity  = 1
@@ -253,6 +253,7 @@ helpers =
         refresh  = null
         refresh  = opacity  = @props.opacity  if changed['style.opacity']
         refresh  = blending = @props.blending if changed['style.blending']
+        refresh  = zOrder   = @props.zOrder   if changed['style.zOrder']
         refresh  = zWrite   = @props.zWrite   if changed['style.zWrite']
         refresh  = zTest    = @props.zTest    if changed['style.zTest']
         onVisible() if refresh?

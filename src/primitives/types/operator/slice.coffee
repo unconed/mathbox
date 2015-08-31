@@ -20,8 +20,8 @@ class Slice extends Operator
 
     index = (i, dim) -> if i < 0 then dim + i else i
 
-    start = index range.x, dim
-    end   = index range.y, dim
+    start = index Math.round(range.x), dim
+    end   = index Math.round(range.y), dim
 
     end   = Math.max start, end
     [start, end - start]

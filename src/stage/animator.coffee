@@ -31,6 +31,20 @@ class Animator
 
       value = type.op from, to, value, lerp
 
+    else if type.emitter
+
+      fromE = from.emitterFrom
+      toE   = to  .emitterTo
+
+      if fromE? and toE? and fromE == toE
+        fromE.lerp f
+        return fromE
+
+      else
+        emitter = type.emitter from, to
+        from.emitterFrom = emitter
+        to  .emitterTo   = emitter
+
     else
       value = if f > .5 then to else from
 

@@ -210,6 +210,13 @@ Types =
       return value if typeof value == 'function'
       return invalid()
 
+  emitter: () ->
+    make: () -> (emit) -> emit 1, 1, 1, 1
+    validate: (value, target, invalid) ->
+      return value if typeof value == 'function'
+      return invalid()
+    emitter: (a, b) -> Util.Data.getLerpEmitter a, b
+
   object: (value) ->
     make: () -> value ? {}
     validate: (value, target, invalid) ->

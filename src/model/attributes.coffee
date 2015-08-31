@@ -265,7 +265,7 @@ class Data
     change = (key, value) ->
       if !dirty
         dirty = true
-        _attributes.queue digest, key, value
+        _attributes.queue digest, object, key, value
 
       trait = getNS key
 

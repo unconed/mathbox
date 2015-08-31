@@ -347,3 +347,75 @@ exports.getStreamer = (array, samples, channels, items) ->
 
   reset()
   {emit, consume, skip, count, done, reset}
+
+exports.getLerpEmitter = (expr1, expr2) ->
+
+  scratch = new Float32Array(4096)
+  lerp1 = lerp2 = 0.5
+  p = q = 0
+
+  emit1 = (x, y, z, w) ->
+    scratch[p++] = x * lerp1
+    scratch[p++] = y * lerp1
+    scratch[p++] = z * lerp1
+    scratch[p++] = w * lerp1
+
+  emit2 = (x, y, z, w) ->
+    scratch[q++] += x * lerp2
+    scratch[q++] += y * lerp2
+    scratch[q++] += z * lerp2
+    scratch[q++] += w * lerp2
+
+  args = Math.max expr1.length, expr2.length
+
+  if args <= 3
+    emitter = (emit, x, i) ->
+      p = q = 0
+      expr1 emit1, x, i
+      expr2 emit2, x, i
+      n = Math.min p, q
+      l = 0
+      for k in [0...n]
+        emit scratch[l++], scratch[l++], scratch[l++], scratch[l++]
+  else if args <= 5
+    emitter = (emit, x, y, i, j) ->
+      p = q = 0
+      expr1 emit1, x, y, i, j
+      expr2 emit2, x, y, i, j
+      n = Math.min p, q
+      l = 0
+      for k in [0...n]
+        emit scratch[l++], scratch[l++], scratch[l++], scratch[l++]
+  else if args <= 7
+    emitter = (emit, x, y, z, i, j, k) ->
+      p = q = 0
+      expr1 emit1, x, y, z, i, j, k
+      expr2 emit2, x, y, z, i, j, k
+      n = Math.min p, q
+      l = 0
+      for k in [0...n]
+        emit scratch[l++], scratch[l++], scratch[l++], scratch[l++]
+  else if args <= 9
+    emitter = (emit, x, y, z, w, i, j, k, l) ->
+      p = q = 0
+      expr1 emit1, x, y, z, w, i, j, k, l
+      expr2 emit2, x, y, z, w, i, j, k, l
+      n = Math.min p, q
+      l = 0
+      for k in [0...n]
+        emit scratch[l++], scratch[l++], scratch[l++], scratch[l++]
+  else
+    emitter = (emit, x, y, z, w, i, j, k, l, d, t) ->
+      p = q = 0
+      expr1 emit1, x, y, z, w, i, j, k, l, d, t
+      expr2 emit2, x, y, z, w, i, j, k, l, d, t
+      n = Math.min p, q
+      l = 0
+      for k in [0...n]
+        emit scratch[l++], scratch[l++], scratch[l++], scratch[l++]
+
+  emitter.lerp = (f) -> [lerp1, lerp2] = [1 - f, f]
+
+  console.log 'made lerp emitted', expr1, expr2, emitter
+
+  emitter
