@@ -8,8 +8,15 @@ class Step extends Track
 
     clock = @_inherit 'clock'
 
+    @actualIndex = null
+    @animateIndex = @_animator.make @_types.number(0),
+      clock:    clock
+      realtime: @props.realtime
+      step: (value) =>
+        @actualIndex = value
+
     @lastIndex = null
-    @animate = @_animator.make @_types.number(0),
+    @animateStep = @_animator.make @_types.number(0),
       clock:    clock
       realtime: @props.realtime
       step: (value) =>
@@ -35,22 +42,26 @@ class Step extends Track
       # Seek if first step after reset
       if !@lastIndex? and trigger
         @lastIndex = i
-        return @animate.set to
+        @animateStep .set to
+        @animateIndex.set i
+        return
 
-      # Calculate step
-      step = i - (@lastIndex ? 0)
+      # Calculate actual step from current offset (may be still animating)
+      step = i - (@actualIndex ? @lastIndex ? 0)
       @lastIndex = i
 
       # Apply rewind factor
       factor = speed * if e.step >= 0 then 1 else rewind
 
       # Pass through multiple steps at faster rate if skip is enabled
-      factor *= if skip then Math.max 1, step * step else 1
+      factor *= if skip then Math.max 1, Math.abs(step) else 1
 
       # Apply pace
       duration += Math.abs(to - from) * pace / factor
 
-      @animate.immediate to, {delay, duration, ease: playback} if from != to
+      if from != to
+        @animateIndex.immediate i,  {delay, duration, ease: playback}
+        @animateStep .immediate to, {delay, duration, ease: playback}
 
   made: () ->
     @update()
