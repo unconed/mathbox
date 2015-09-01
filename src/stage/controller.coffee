@@ -19,21 +19,21 @@ class Controller
     try
       node.set key, value
     catch e
-      @inspect node, 'warn'
+      node.print null, 'warn'
       console.error e
 
   bind: (node, key, expr) ->
     try
       node.bind key, expr
     catch e
-      @inspect node, 'warn'
+      node.print null, 'warn'
       console.error e
 
   unbind: (node, key) ->
     try
       node.unbind key
     catch e
-      @inspect node, 'warn'
+      node.print null, 'warn'
       console.error e
 
   add: (node, target = @model.getRoot()) ->
