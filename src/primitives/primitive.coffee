@@ -50,11 +50,6 @@ class Primitive
     @traits.hash[trait]
 
   # Primitive lifecycle
-  env:    () ->
-
-    # Attach attributes to local clock
-    @node.attributes.clock = @_inherit 'clock'
-
   init:   () ->
   make:   () ->
   made:   () ->
@@ -82,10 +77,10 @@ class Primitive
   _added: () ->
     @_parent   = @node.parent?.controller
     @_root     = @node.root  ?.controller
+    @node.attributes.clock = @_inherit 'clock'
 
     try
       try
-        @env()
         @make()
         @refresh()
         @made()

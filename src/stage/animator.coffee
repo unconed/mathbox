@@ -19,18 +19,13 @@ class Animator
   lerp: (type, from, to, f, value) ->
     value ?= type.make()
 
+    # Use the most appropriate interpolation method for the type
+
+    # Direct lerp operator
     if type.lerp
       value = type.lerp from, to, value, f
 
-    else if type.op
-      lerp = (a, b) ->
-        if a == +a and b == +b
-          a + (b - a) * f
-        else
-          if f > .5 then b else a
-
-      value = type.op from, to, value, lerp
-
+    # Substitute emitter
     else if type.emitter
 
       fromE = from.emitterFrom
@@ -45,6 +40,19 @@ class Animator
         from.emitterFrom = emitter
         to  .emitterTo   = emitter
 
+    # Generic binary operator
+    else if type.op
+      lerp = (a, b) ->
+        if a == +a and b == +b
+          # Lerp numbers
+          a + (b - a) * f
+        else
+          # No lerp
+          if f > .5 then b else a
+
+      value = type.op from, to, value, lerp
+
+    # No lerp
     else
       value = if f > .5 then to else from
 
@@ -129,12 +137,11 @@ class Animation
         else                  Ease.cosine
       f = method f if method?
 
-      value = @animator.lerp @type, from, to, f, value
+      active = f < 1
+      value = if active then @animator.lerp @type, from, to, f, value else to
 
       #console.log 'animation step', f, from, to, value
-
       step? value
-      active = f < 1
 
       if !active
         complete?()

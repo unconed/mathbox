@@ -1,13 +1,17 @@
 ###
  Custom attribute model
- - Organizes attributes by trait
- - Provides shorthand aliases to access via flat namespace API .get(key)
- - Provides constant-time .get() access to flat dictionary
- - Originally passed values are preserved and can be fetched via .get(true), .get(key, true)
+ - Organizes attributes by trait in .attributes
+ - Provides constant-time .props / .get() access to flat dictionary
+ - Provides .get(key) with or without trait namespaces
+ - Change attributes with .set(key) or .set(dictionary)
+ - Validation is double-buffered and in-place to detect changes and nops
+ - Change notifications are coalesced per object and per trait, digested later
  - Values are stored in three.js uniform-style objects so they can be bound as GL uniforms
- - Type validators and setters avoid copying value objects on write
- - Value is double-buffered to detect changes and nops
- - Coalesces update notifications per object and per trait
+ - Originally passed (unnormalized) values are preserved and can be fetched via .orig()
+ - Attributes can be defined as final/const
+ - Attributes can be computed from both public or private expressions with .bind(key, false/true)
+ - Expressions are time-dependent, can be time-travelled with .evaluate()
+ - This enables continous simulation and data logging despite choppy animation updates
  
   Actual type and trait definitions are injected from Primitives
 ###

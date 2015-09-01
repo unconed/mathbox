@@ -24,6 +24,10 @@ class Track extends Primitive
     @section  = null
     @expr     = null
 
+    @velocity  = 0
+    @lastHead  = null
+    @lastClock = null
+
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make [
@@ -138,12 +142,26 @@ class Track extends Primitive
 
     [result, values, start, end]
 
+  measureVelocity: () ->
+    # measure velocity of playhead in node's time to do animation time travel
+    time = @node.attributes.clock.getClock()
+    {clock, step} = time
+    {playhead, lastClock, lastHead} = @
+
+    if lastClock? and lastHead?
+      @velocity = if step then (playhead - lastHead) / step else 0
+
+    @lastClock = clock
+    @lastHead  = playhead
+
   update: () ->
     {playhead, script} = @
     {ease, seek} = @props
     {node} = @bind.target
 
     playhead = seek if seek?
+
+    @measureVelocity()
 
     if script.length
       find = () ->
@@ -170,11 +188,14 @@ class Track extends Primitive
         when 'cosine', 1 then Ease.cosine
         else                  Ease.cosine
 
-      # Callback for live playhead interpolator
-      getPlayhead   = () => @playhead
+      # Callback for live playhead interpolator (linear approx time travel)
+      getPlayhead = (time) =>
+        return @playhead unless @lastClock?
+        @playhead + @velocity * (time - @lastClock)
+
       getLerpFactor = do ->
         scale = 1 / Math.max(0.0001, end - start)
-        () -> easeMethod (getPlayhead() - start) * scale, 0, 1
+        (time) -> easeMethod (getPlayhead(time) - start) * scale, 0, 1
 
       # Create prop expression interpolator
       live = (key) =>
@@ -198,21 +219,21 @@ class Track extends Primitive
             (time, delta) ->
               values[0] = _from = attr.T.validate fromE(time, delta), values[0], invalid
               values[1] = _to   = attr.T.validate   toE(time, delta), values[1], invalid
-              values[2] = animator.lerp attr.T, _from, _to, getLerpFactor(), values[2]
+              values[2] = animator.lerp attr.T, _from, _to, getLerpFactor(time), values[2]
 
         # Lerp between an expression and a constant
         else if fromE
           do (values, from, to) ->
             (time, delta) ->
               values[0] = _from = attr.T.validate fromE(time, delta), values[0], invalid
-              values[1] = animator.lerp attr.T, _from, toP, getLerpFactor(), values[1]
+              values[1] = animator.lerp attr.T, _from, toP, getLerpFactor(time), values[1]
 
         # Lerp between a constant and an expression
         else if toE
           do (values, from, to) ->
             (time, delta) ->
               values[0] = _to = attr.T.validate toE(time, delta), values[0], invalid
-              values[1] = animator.lerp attr.T, fromP, _to, getLerpFactor(), values[1]
+              values[1] = animator.lerp attr.T, fromP, _to, getLerpFactor(time), values[1]
 
         # Lerp between two constants
         else
@@ -220,7 +241,7 @@ class Track extends Primitive
             (time, delta) ->
               if window.spy?
                 debugger if key == 'expr'
-              values[0] = animator.lerp attr.T, fromP, toP, getLerpFactor(), values[0]
+              values[0] = animator.lerp attr.T, fromP, toP, getLerpFactor(time), values[0]
 
       # Handle expr / props on both ends
       expr = {}

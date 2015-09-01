@@ -96,6 +96,7 @@ Traits =
     end:               Types.bool(true)
     zero:              Types.bool(true)
     bias:              Types.number(0)
+    nice:              Types.bool(true)
   grid:
     lineX:             Types.bool(true)
     lineY:             Types.bool(true)
