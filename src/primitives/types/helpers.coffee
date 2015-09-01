@@ -91,8 +91,9 @@ helpers =
       start  = @_get prefix + 'scale.start'
       end    = @_get prefix + 'scale.end'
       zero   = @_get prefix + 'scale.zero'
+      nice   = @_get prefix + 'scale.nice'
 
-      ticks = Util.Ticks.make mode, min, max, divide, unit, base, bias, start, end, zero
+      ticks = Util.Ticks.make mode, min, max, divide, unit, base, bias, start, end, zero, nice
       buffer.copy ticks
       ticks
 

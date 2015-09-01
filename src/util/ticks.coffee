@@ -9,9 +9,10 @@
  @param start - Whether to include a tick at the start
  @param end - Whether to include a tick at the end
  @param zero - Whether to include zero as a tick
+ @param nice - Whether to round to a more reasonable interval
 ###
 
-linear = (min, max, n, unit, base, bias, start, end, zero) ->
+linear = (min, max, n, unit, base, bias, start, end, zero, nice) ->
 
   # Desired
   n ||= 10
@@ -20,6 +21,14 @@ linear = (min, max, n, unit, base, bias, start, end, zero) ->
   # Calculate naive tick size.
   span = max - min
   ideal = span / n
+
+  # Unsnapped division
+  if !nice
+    ticks = (min + i * ideal for i in [0..n])
+    ticks.shift() if !start
+    ticks.pop()   if !end
+    ticks = ticks.filter((x) -> x != 0) if !zero
+    return ticks
 
   # Round to the floor'd power of 'scale'
   unit ||= 1
@@ -60,16 +69,16 @@ linear = (min, max, n, unit, base, bias, start, end, zero) ->
  Generate logarithmically spaced ticks in a range at sensible positions.
 ###
 
-log = (min, max, n, unit, base, bias, start, end, zero) ->
+log = (min, max, n, unit, base, bias, start, end, zero, nice) ->
   throw new Error "Log ticks not yet implemented."
 
 LINEAR = 0
 LOG    = 1
 
-make = (type, min, max, n, unit, base, bias, start, end, zero) ->
+make = (type, min, max, n, unit, base, bias, start, end, zero, nice) ->
   switch type
-    when LINEAR then linear min, max, n, unit, base, bias, start, end, zero
-    when LOG    then log    min, max, n, unit, base, bias, start, end, zero
+    when LINEAR then linear min, max, n, unit, base, bias, start, end, zero, nice
+    when LOG    then log    min, max, n, unit, base, bias, start, end, zero, nice
 
 exports.make = make
 exports.linear = linear
