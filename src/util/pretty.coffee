@@ -164,7 +164,7 @@ prettyJSXPair = do ->
     key   = (k) -> if (k == "" + +k) or k.match /^[A-Za-z_][A-Za-z0-9]*$/ then k else JSON.stringify k
     wrap  = (v) -> if v.match '\n*"' then v else "{#{v}}"
     value = (v) ->
-      return "[#{v.map(value).join ','}]" if v instanceof Array
+      return "[#{v.map(value).join ', '}]" if v instanceof Array
 
       switch typeof v
               when 'string'
@@ -177,11 +177,9 @@ prettyJSXPair = do ->
               when 'number'
                 formatNumber v
               else
-                if v?
+                if v? and v != !!v
                   if v._up?     then return value v.map (v) -> v
                   if v.toMarkup then return v.toString()
-                  if v instanceof Array
-                    "[" + (value vv for vv in v).join(", ") + "]"
                   else
                     "{" + ("#{key kk}: #{value vv}" for kk, vv of v).join(", ") + "}"
                 else
