@@ -82,7 +82,7 @@ class Animation
 
   getTime: () ->
     clock = @options.clock
-    time  = if clock then clock.getClock() else @time
+    time  = if clock then clock.getTime() else @time
     if @options.realtime then time.time else time.clock
 
   cancel: (from) ->

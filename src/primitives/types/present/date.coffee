@@ -28,7 +28,7 @@ class Date extends Parent
 
     @trigger e
 
-  getClock: () ->
+  getTime: () ->
     @time
 
 module.exports = Date

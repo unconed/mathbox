@@ -175,9 +175,9 @@ class Data
 
       expression  = expression.bind object
       _bound[key] = (t, d) ->
-        if clock = data.clock?.getClock()
-          t = clock.time
-          d = clock.delta
+        if clock = object.clock?.getTime()
+          t = clock.clock
+          d = clock.step
 
         object.set key, expression(t, d), true
       _attributes.bind _bound[key]

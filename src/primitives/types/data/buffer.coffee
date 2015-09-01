@@ -43,7 +43,7 @@ class Buffer extends Data
     filled = @buffer.getFilled()
     return unless !filled or live
 
-    time = @clockParent.getClock()
+    time = @clockParent.getTime()
 
     if fps?
       slack = @bufferSlack

@@ -86,7 +86,6 @@ class Context
   # Broken down update/render cycle, for manual scheduling/invocation
 
   pre: (time) ->
-    #time = null
     if !time
       time = {
         now: +new Date() / 1000,
@@ -95,8 +94,11 @@ class Context
       }
 
       time.delta = if @time.now? then time.now - @time.now else 0
-      time.step  = time.delta * @speed
 
+      # Check for stopped render loop, assume 1 60fps frame
+      time.delta = 1 / 60 if time.delta > 1
+
+      time.step  = time.delta * @speed
       time.time  = @time.time  + time.delta
       time.clock = @time.clock + time.step
 

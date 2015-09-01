@@ -345,7 +345,7 @@ Traits =
     duration:          Types.number(.3)
     pace:              Types.number(0)
     speed:             Types.number(1)
-    rewind:            Types.number(3)
+    rewind:            Types.number(2)
     skip:              Types.bool(true)
     realtime:          Types.bool(false)
   play:

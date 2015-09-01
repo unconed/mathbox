@@ -77,7 +77,8 @@ class Primitive
   _added: () ->
     @_parent   = @node.parent?.controller
     @_root     = @node.root  ?.controller
-    @node.attributes.clock = @_inherit 'clock'
+
+    @node.clock = @_inherit('clock') ? @_root
 
     try
       try

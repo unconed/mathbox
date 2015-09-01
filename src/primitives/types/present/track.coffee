@@ -21,12 +21,9 @@ class Track extends Primitive
     @script   = null
     @values   = null
     @playhead = 0
+    @velocity = null
     @section  = null
     @expr     = null
-
-    @velocity  = 0
-    @lastHead  = null
-    @lastClock = null
 
   make: () ->
     # Bind to attached data sources
@@ -52,9 +49,19 @@ class Track extends Primitive
     @expr = expr
     @targetNode.bind expr, true
 
+    # Measure playhead velocity on attribute computation
+    {clock} = @targetNode
+    @_attributes.bind @measure = do ->
+      playhead = null
+      () =>
+        {step} = clock.getTime()
+        @velocity = (@playhead - playhead) / step if playhead?
+        playhead = @playhead
+
   unbindExpr: () ->
-    @targetNode.unbind @expr, true if @expr?
-    @expr = null
+    @targetNode .unbind @expr, true if @expr?
+    @_attributes.unbind @measure if @measure?
+    @expr = @measure = null
 
   # Process script steps by filling out missing props
   _process: (object, script) ->
@@ -142,26 +149,12 @@ class Track extends Primitive
 
     [result, values, start, end]
 
-  measureVelocity: () ->
-    # measure velocity of playhead in node's time to do animation time travel
-    time = @node.attributes.clock.getClock()
-    {clock, step} = time
-    {playhead, lastClock, lastHead} = @
-
-    if lastClock? and lastHead?
-      @velocity = if step then (playhead - lastHead) / step else 0
-
-    @lastClock = clock
-    @lastHead  = playhead
-
   update: () ->
     {playhead, script} = @
     {ease, seek} = @props
-    {node} = @bind.target
+    node = @targetNode
 
     playhead = seek if seek?
-
-    @measureVelocity()
 
     if script.length
       find = () ->
@@ -189,9 +182,11 @@ class Track extends Primitive
         else                  Ease.cosine
 
       # Callback for live playhead interpolator (linear approx time travel)
+      {clock} = node
       getPlayhead = (time) =>
-        return @playhead unless @lastClock?
-        @playhead + @velocity * (time - @lastClock)
+        return @playhead unless @velocity?
+        now = clock.getTime()
+        @playhead + @velocity * (time - now.time)
 
       getLerpFactor = do ->
         scale = 1 / Math.max(0.0001, end - start)

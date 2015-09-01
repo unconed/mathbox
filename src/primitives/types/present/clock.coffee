@@ -22,7 +22,7 @@ class Clock extends Parent
   tick: (e) ->
     {from, to, speed, pace, delay, realtime} = @props
 
-    parent = @clockParent.getClock()
+    parent = @clockParent.getTime()
 
     delta = if realtime then parent.delta else parent.step
     ratio = speed / pace
@@ -39,7 +39,7 @@ class Clock extends Parent
 
     @trigger e
 
-  getClock: () ->
+  getTime: () ->
     @time
 
 module.exports = Clock

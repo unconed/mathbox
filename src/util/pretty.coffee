@@ -161,6 +161,7 @@ prettyJSXPair = do ->
 
   (k, v, op) ->
 
+    key   = (k) -> if (k == "" + +k) or k.match /^[A-Za-z_][A-Za-z0-9]*$/ then k else JSON.stringify k
     wrap  = (v) -> if v.match '\n*"' then v else "{#{v}}"
     value = (v) ->
       return "[#{v.map(value).join ','}]" if v instanceof Array
@@ -171,13 +172,20 @@ prettyJSXPair = do ->
               when 'function'
                 v = "#{v}"
                 if v.match "\n" then "\n#{v}\n" else "#{v}"
+                v = v.replace /^function (\([^)]+\))/, "$1 =>"
+                v = v.replace /^(\([^)]+\)) =>\s*{\s*return\s*([^}]+)\s*;\s*}/, "$1 => $2"
               when 'number'
                 formatNumber v
               else
                 if v?
                   if v._up?     then return value v.map (v) -> v
                   if v.toMarkup then return v.toString()
-                return "#{JSON.stringify v}"
+                  if v instanceof Array
+                    "[" + (value vv for vv in v).join(", ") + "]"
+                  else
+                    "{" + ("#{key kk}: #{value vv}" for kk, vv of v).join(", ") + "}"
+                else
+                  "#{JSON.stringify v}"
 
     [k, op, wrap value v].join ''
 

@@ -70,7 +70,7 @@ class Root extends Parent
 
   getCamera: () -> @camera?.getCamera() ? @_context.defaultCamera
 
-  getClock: () -> @_context.time
+  getTime: () -> @_context.time
 
   # End transform chain here
   vertex: (shader, pass) ->
