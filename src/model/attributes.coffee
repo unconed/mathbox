@@ -167,7 +167,7 @@ class Data
 
       short = if data[key]? then data[key].short else key
       expr[short] = expression if !computed # flattened
-      eval[key]   = expression
+      _eval[key]  = expression
 
       expression  = expression.bind object
       _bound[key] = (t, d) ->
