@@ -61,3 +61,38 @@ exports.paramToArrayStorage = (type) ->
 
 exports.swizzleToEulerOrder = (swizzle) ->
   swizzle.map((i) -> ['', 'X', 'Y', 'Z'][i]).join ''
+
+exports.transformComposer = () ->
+
+  euler     = new THREE.Euler
+  quat      = new THREE.Quaternion
+  pos       = new THREE.Vector3
+  scl       = new THREE.Vector3
+  transform = new THREE.Matrix4
+
+  (position, rotation, quaternion, scale, matrix, eulerOrder = 'XYZ') ->
+
+    if rotation?
+      eulerOrder = exports.swizzleToEulerOrder eulerOrder if eulerOrder instanceof Array
+      euler.setFromVector3 rotation, eulerOrder
+      quat.setFromEuler euler
+    else
+      quat.set 0, 0, 0, 1
+
+    if quaternion?
+      quat.multiply quaternion
+
+    if position?
+      pos.copy position
+    else
+      pos.set 0, 0, 0
+
+    if scale?
+      scl.copy scale
+    else
+      scl.set 1, 1, 1
+
+    transform.compose pos, quat, scl
+    transform.multiplyMatrices transform, matrix if matrix?
+
+    transform

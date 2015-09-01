@@ -418,6 +418,4 @@ exports.getLerpEmitter = (expr1, expr2) ->
 
   emitter.lerp = (f) -> [lerp1, lerp2] = [1 - f, f]
 
-  console.log 'made lerp emitter', expr1, expr2, emitter
-
   emitter

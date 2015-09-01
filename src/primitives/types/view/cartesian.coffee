@@ -10,10 +10,8 @@ class Cartesian extends View
     @uniforms =
       viewMatrix:          @_attributes.make @_types.mat4()
 
-    @viewMatrix          = @uniforms.viewMatrix.value
-    @objectMatrix        = new THREE.Matrix4
-
-    @euler               = new THREE.Euler
+    @viewMatrix = @uniforms.viewMatrix.value
+    @composer   = Util.Three.transformComposer()
 
   unmake: () ->
     super
@@ -26,11 +24,12 @@ class Cartesian extends View
 
     return unless touched['view'] or touched['view3'] or init
 
-    o = @props.position
+    p = @props.position
     s = @props.scale
     q = @props.quaternion
     r = @props.rotation
     g = @props.range
+    e = @props.eulerOrder
 
     x = g[0].x
     y = g[1].x
@@ -49,14 +48,9 @@ class Cartesian extends View
       0, 0, 2/dz, -(2*z+dz)/dz,
       0, 0, 0, 1 #,
     )
-    
-    @euler.setFromVector3 r, Util.Three.swizzleToEulerOrder @props.eulerOrder
-    @objectMatrix.identity()
-    @objectMatrix.makeRotationFromEuler @euler
-    @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
-    
-    @objectMatrix.compose o, q, s
-    @viewMatrix.multiplyMatrices @objectMatrix, @viewMatrix
+
+    transformMatrix = @composer p, r, q, s, null, e
+    @viewMatrix.multiplyMatrices transformMatrix, @viewMatrix
 
     if changed['view.range']
       @trigger

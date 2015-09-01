@@ -61,10 +61,11 @@ Traits =
 
   camera:
     proxy:             Types.bool(false)
-    position:          Types.vec3()
+    position:          Types.nullable(Types.vec3())
     quaternion:        Types.nullable(Types.quat())
     rotation:          Types.nullable(Types.vec3())
     lookAt:            Types.nullable(Types.vec3())
+    up:                Types.nullable(Types.vec3())
     eulerOrder:        Types.swizzle('xyz')
     fov:               Types.nullable(Types.number(1))
     #ortho:             Types.nullable(Types.number(0))

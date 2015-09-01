@@ -8,9 +8,7 @@ class Transform3 extends Transform
     @uniforms =
       transformMatrix: @_attributes.make @_types.mat4()
 
-    @euler           = new THREE.Euler
-    @rotationMatrix  = new THREE.Matrix4
-    @transformMatrix = @uniforms.transformMatrix.value
+    @composer = Util.Three.transformComposer()
 
   unmake: () ->
     delete @uniforms
@@ -24,17 +22,9 @@ class Transform3 extends Transform
     r = @props.rotation
     s = @props.scale
     m = @props.matrix
+    e = @props.eulerOrder
 
-    t = @transformMatrix
-    rot = @rotationMatrix
-
-    @euler.setFromVector3 r, Util.Three.swizzleToEulerOrder @props.eulerOrder
-    rot.identity()
-    rot.makeRotationFromEuler @euler
-
-    t.compose p, q, s
-    t.multiplyMatrices t, rot
-    t.multiplyMatrices m, t if m?
+    @uniforms.transformMatrix.value = @composer p, r, q, s, m, e
 
   vertex: (shader, pass) ->
     shader.pipe 'transform3.position', @uniforms if pass == @props.pass

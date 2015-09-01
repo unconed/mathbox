@@ -20,8 +20,14 @@ vec3 getPosition(vec4 xyzw, float canonical);
 vec4 getSprite(vec4 xyzw);
 
 vec3 getSpritePosition() {
+  // Clip points
   vec4 p = min(geometryClip, position4);
+  float diff = length(position4 - p);
+  if (diff > 0.0) {
+    return vec3(0.0, 0.0, 1000.0);
+  }
 
+  // Make sprites
   vec3 center = getPosition(p, 1.0);
   vec4 atlas = getSprite(p);
 
