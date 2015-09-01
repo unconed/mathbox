@@ -23,27 +23,35 @@ class Camera extends Primitive
        changed['camera.quaternion'] or
        changed['camera.rotation'] or
        changed['camera.lookAt'] or
+       changed['camera.up'] or
        changed['camera.fov'] or
        init
 
-      {position, quaternion, rotation, lookAt, fov, aspect} = @props
+      {position, quaternion, rotation, lookAt, up, fov, aspect} = @props
 
-      @camera.position.copy   position
+      # Apply transform conservatively to avoid conflicts with controls / proxy
+      if position?
+        @camera.position.copy   position
 
-      if lookAt?
-        @camera.lookAt        lookAt
-      else if quaternion?
-        @camera.quaternion.copy quaternion
-      else
-        @camera.quaternion.set 0, 0, 0, 1
+      if quaternion? or rotation? or lookAt?
+        if lookAt?
+          @camera.lookAt        lookAt
+        else
+          @camera.quaternion.set 0, 0, 0, 1
+
+        if rotation?
+          @euler.setFromVector3 rotation, Util.Three.swizzleToEulerOrder @props.eulerOrder
+          @quat .setFromEuler @euler
+          @camera.quaternion.multiply @quat
+
+        if quaternion?
+          @camera.quaternion.multiply quaternion
 
       if fov? and @camera.fov?
         @camera.fov = fov
 
-      if rotation?
-        @euler.setFromVector3 rotation, Util.Three.swizzleToEulerOrder @props.eulerOrder
-        @quat .setFromEuler @euler
-        @camera.quaternion.multiply @quat
+      if up?
+        @camera.up.copy up
 
       @camera.updateMatrix()
 
