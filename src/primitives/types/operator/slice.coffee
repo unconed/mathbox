@@ -10,7 +10,7 @@ class Slice extends Operator
   getIndexDimensions:  () -> @_resample @bind.source.getIndexDimensions()
 
   sourceShader: (shader) ->
-    shader.pipe @operator
+    shader.pipe 'slice.position', @uniforms
     @bind.source.sourceShader shader
 
   _resolve: (key, dims) ->
@@ -27,10 +27,10 @@ class Slice extends Operator
     [start, end - start]
 
   _resample: (dims) ->
-    dims.items   = @_resolve('items',  dims)[1]
     dims.width   = @_resolve('width',  dims)[1]
     dims.height  = @_resolve('height', dims)[1]
     dims.depth   = @_resolve('depth',  dims)[1]
+    dims.items   = @_resolve('items',  dims)[1]
     dims
 
   make: () ->
@@ -39,12 +39,6 @@ class Slice extends Operator
 
     @uniforms =
       sliceOffset: @_attributes.make @_types.vec4()
-
-    # Build shader to shift origin
-    transform = @_shaders.shader()
-    transform.pipe 'slice.position', @uniforms
-
-    @operator = transform
 
   unmake: () ->
     super
@@ -55,10 +49,10 @@ class Slice extends Operator
     dims = @bind.source.getActiveDimensions()
 
     @uniforms.sliceOffset.value.set(
-      @_resolve('items',  dims)[0],
       @_resolve('width',  dims)[0],
       @_resolve('height', dims)[0],
       @_resolve('depth',  dims)[0]
+      @_resolve('items',  dims)[0],
     )
 
     super
