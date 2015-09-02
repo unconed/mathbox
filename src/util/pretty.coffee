@@ -181,7 +181,7 @@ prettyJSXPair = do ->
                   if v._up?     then return value v.map (v) -> v
                   if v.toMarkup then return v.toString()
                   else
-                    "{" + ("#{key kk}: #{value vv}" for kk, vv of v).join(", ") + "}"
+                    "{" + ("#{key kk}: #{value vv}" for kk, vv of v when v.hasOwnProperty kk).join(", ") + "}"
                 else
                   "#{JSON.stringify v}"
 
