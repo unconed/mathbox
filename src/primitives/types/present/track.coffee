@@ -28,7 +28,7 @@ class Track extends Primitive
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make [
-      { to: 'track.target', trait: 'node' }
+      { to: 'track.target', trait: 'node', callback: null }
     ]
 
     {script} = @props

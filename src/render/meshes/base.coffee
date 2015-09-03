@@ -124,6 +124,10 @@ class Base extends Renderable
     join  = false
     gamma = false
 
+    defs = {}
+    defs[['POSITION_U','POSITION_UV','POSITION_UVW','POSITION_UVWO'][channels - 1]] = '' if channels > 0
+    defs.POSITION_STPQ        = '' if stpq
+
     if hasStyle
       f.pipe 'style.color',             @uniforms
       join  = true
@@ -149,29 +153,26 @@ class Base extends Renderable
         f.pipe Util.GLSL.constant 'vec4', 'vec4(1.0)'
 
       f.isolate()
-      defs = {}
-      defs[['POSITION_U','POSITION_UV','POSITION_UVW','POSITION_UVWO'][channels - 1]] = '' if channels > 0
-      defs.POSITION_STPQ        = '' if stpq
-
       f.require map
       f.pipe 'mesh.fragment.map',       @uniforms, defs
       f.pipe 'mesh.gamma.in'            if !linear
       f.end()
-
-      join = true
-      gamma = true
 
       if combine
         f.pipe combine
       else
         f.pipe Util.GLSL.binaryOperator 'vec4', '*' if join
 
+      join = true
+      gamma = true
+
     if material
       f.pipe Util.GLSL.constant 'vec4', 'vec4(1.0)' if !join
       if material == true
-        f.pipe 'mesh.fragment.shaded',    @uniforms
+        f.pipe 'mesh.fragment.shaded',  @uniforms
       else
-        f.pipe material
+        f.require material
+        f.pipe 'mesh.fragment.map',     @uniforms, defs
       join  = true
       gamma = true
 

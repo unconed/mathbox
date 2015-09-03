@@ -24,7 +24,7 @@ class Surface extends Primitive
 
     if @bind.map?
       map  = @bind.map.getActiveDimensions()
-      @surface.geometry.map  map.width, map.height, map.depth, map.items if @surface
+      @surface.geometry.map map.width, map.height, map.depth, map.items if @surface
 
   make: () ->
     # Bind to attached data sources
@@ -63,9 +63,9 @@ class Surface extends Primitive
     {width, height, depth, items} = dims
 
     # Get display properties
-    {shaded, fill, lineX, lineY, stroke, crossed} = @props
-
+    {shaded, fill, lineX, lineY, stroke, proximity, crossed} = @props
     objects = []
+    @proximity = proximity
 
     # Build color lookup
     if @bind.colors
@@ -87,30 +87,32 @@ class Surface extends Primitive
     zUnits = if lineX or lineY then -50 else 0
     if lineX
       @lineX = @_renderables.make 'line',
-                uniforms: uniforms
-                samples:  width
-                strips:   height
-                ribbons:  depth
-                layers:   items
-                position: position
-                color:    color
-                zUnits:   -zUnits
-                stroke:   stroke
-                mask:     mask
+                uniforms:  uniforms
+                samples:   width
+                strips:    height
+                ribbons:   depth
+                layers:    items
+                position:  position
+                color:     color
+                zUnits:    -zUnits
+                stroke:    stroke
+                mask:      mask
+                proximity: proximity
       objects.push @lineX
 
     if lineY
       @lineY = @_renderables.make 'line',
-                uniforms: uniforms
-                samples:  height
-                strips:   width
-                ribbons:  depth
-                layers:   items
-                position: swizzle2 position, 'yxzw', 'yxzw'
-                color:    swizzle  color,    'yxzw'
-                zUnits:   -zUnits
-                stroke:   stroke
-                mask:     swizzle  mask,     if crossed then 'xyzw' else 'yxzw'
+                uniforms:  uniforms
+                samples:   height
+                strips:    width
+                ribbons:   depth
+                layers:    items
+                position:  swizzle2 position, 'yxzw', 'yxzw'
+                color:     swizzle  color,    'yxzw'
+                zUnits:    -zUnits
+                stroke:    stroke
+                mask:      swizzle  mask,     if crossed then 'xyzw' else 'yxzw'
+                proximity: proximity
       objects.push @lineY
 
     if fill
@@ -169,5 +171,8 @@ class Surface extends Primitive
         @wireColor.x = c.r
         @wireColor.y = c.g
         @wireColor.z = c.b
+
+    if changed['line.proximity']
+      return @rebuild() if @proximity? != @props.proximity?
 
 module.exports = Surface

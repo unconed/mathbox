@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Face extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'face', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'face', 'geometry', 'position', 'bind', 'shade']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -11,17 +11,23 @@ class Face extends Primitive
 
   resize: () ->
     return unless @bind.points?
+
     dims = @bind.points.getActiveDimensions()
     {items, width, height, depth} = dims
 
     @face.geometry.clip width, height, depth, items if @face
     @line.geometry.clip items, width, height, depth if @line
 
+    if @bind.map?
+      map  = @bind.map.getActiveDimensions()
+      @face.geometry.map  map.width, map.height, map.depth, map.items if @face
+
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make [
       { to: 'geometry.points', trait: 'source' }
       { to: 'geometry.colors', trait: 'source' }
+      { to: 'mesh.map',        trait: 'source' }
     ]
 
     return unless @bind.points?
@@ -50,6 +56,12 @@ class Face extends Primitive
 
     # Build transition mask lookup
     mask = @_helpers.object.mask()
+
+    # Build texture map lookup
+    map = @_helpers.shade.map @bind.map?.sourceShader @_shaders.shader()
+
+    # Build fragment material lookup
+    material = @_helpers.shade.pipeline() || shaded
 
     objects = []
 
@@ -83,8 +95,9 @@ class Face extends Primitive
                 items:    items
                 position: position
                 color:    color
-                material: shaded
+                material: material
                 mask:     mask
+                map:      map
       objects.push @face
 
     @_helpers.visible.make()

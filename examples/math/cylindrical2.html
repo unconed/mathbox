@@ -147,7 +147,7 @@
         zBias: 2,
         color: 0x1550FF,
         fill:  false,
-        lineX: false,
+        lineY: true,
       });
 
     view
@@ -159,8 +159,7 @@
       .surface({
         width: 2,
         color: 0x2070FF,
-        lineX: false,
-        lineY: false,
+        shaded: true
       });
 
     objs = mathbox.select('transform.surface');

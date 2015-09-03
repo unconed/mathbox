@@ -8,14 +8,14 @@ class Step extends Track
 
     clock = @_inherit 'clock'
 
-    @actualIndex = null
+    @actualIndex ?= null
     @animateIndex = @_animator.make @_types.number(0),
       clock:    clock
       realtime: @props.realtime
       step: (value) =>
         @actualIndex = value
 
-    @lastIndex = null
+    @lastIndex ?= null
     @animateStep = @_animator.make @_types.number(0),
       clock:    clock
       realtime: @props.realtime
@@ -67,8 +67,9 @@ class Step extends Track
     @update()
 
   unmake: () ->
-    @animate.dispose()
-    @animate = null
+    @animateIndex.dispose()
+    @animateStep .dispose()
+    @animateIndex = @animateStep = null
 
     super
 

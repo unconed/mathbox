@@ -1,7 +1,7 @@
 Transform = require './transform'
 
-class Vertex extends Transform
-  @traits = ['node', 'include', 'vertex', 'bind']
+class Fragment extends Transform
+  @traits = ['node', 'include', 'fragment', 'bind']
 
   make: () ->
     # Bind to attached shader
@@ -15,9 +15,9 @@ class Vertex extends Transform
   change: (changed, touched, init) ->
     return @rebuild() if touched['include']
 
-  vertex: (shader, pass) ->
+  fragment: (shader, pass) ->
     if @bind.shader?
       shader.pipe @bind.shader.shaderBind() if pass == @props.pass
     super shader, pass
 
-module.exports = Vertex
+module.exports = Fragment

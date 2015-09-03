@@ -20,6 +20,7 @@ Classes =
   transform:         require './transform/transform3'
   transform4:        require './transform/transform4'
   vertex:            require './transform/vertex'
+  fragment:          require './transform/fragment'
   layer:             require './transform/layer'
 
   array:             require './data/array'

@@ -146,7 +146,9 @@ class API
       list
 
     # Flatten arrays
-    flatten = (list) -> list.reduce ((a, b) -> a.concat b), []
+    flatten = (list) ->
+      list = list.reduce ((a, b) -> a.concat b), []
+      list = list.filter (x, i) -> x? and list.indexOf(x) == i
 
     # Render descriptor
     make = (renderable, render) ->

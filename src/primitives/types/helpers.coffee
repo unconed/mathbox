@@ -19,10 +19,11 @@ helpers =
       # Fetch attached objects and bind to them
       # Attach rebuild watcher for DOM changes to bound nodes
       for slot in slots
-        {to, trait, optional, unique, multiple} = slot
+        {to, trait, optional, unique, multiple, callback} = slot
 
-        name     = to.split(/\./g).pop()
-        selector = @_get to
+        callback ?= @rebuild
+        name      = to.split(/\./g).pop()
+        selector  = @_get to
 
         # Find by selector
         source = null
@@ -31,14 +32,14 @@ helpers =
           done  = false
           while !done
             # Keep scanning back until a new node is found
-            start    = source = @_attach selector, trait, @rebuild, @, start, optional, multiple
+            start    = source = @_attach selector, trait, callback, @, start, optional, multiple
             isUnique = unique and (!source? or @bound.indexOf(source) < 0)
             done     = multiple or optional or !unique or isUnique
 
         # Monitor source for reallocation / resize
         if source?
           @_listen source, 'source.resize',  @resize  if @resize?
-          @_listen source, 'source.rebuild', @rebuild if @rebuild?
+          @_listen source, 'source.rebuild', callback if callback
 
           if multiple
             @bound.push s for s in source
@@ -141,7 +142,10 @@ helpers =
 
   shade:
     pipeline: (shader) ->
+      return shader if !@_inherit 'fragment'
+      shader ?= @_shaders.shader()
       shader = @_inherit('fragment')?.fragment shader, pass for pass in [0..2]
+      shader.pipe 'fragment.map.rgba'
       shader
 
     map: (shader) ->
@@ -150,6 +154,8 @@ helpers =
 
   position:
     pipeline: (shader) ->
+      return shader if !@_inherit 'vertex'
+      shader ?= @_shaders.shader()
       shader = @_inherit('vertex')?.vertex shader, pass for pass in [0..3]
       shader
 

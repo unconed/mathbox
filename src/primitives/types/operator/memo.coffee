@@ -43,6 +43,9 @@ class Memo extends Operator
                  depth:  depth
     @memo.adopt @compose
 
+    @objects = [@compose]
+    @renders = @compose.renders
+
   unmake: () ->
     super
 

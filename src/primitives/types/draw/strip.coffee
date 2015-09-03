@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Strip extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'position', 'bind', 'shade']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -15,15 +15,19 @@ class Strip extends Primitive
     dims = @bind.points.getActiveDimensions()
     {items, width, height, depth} = dims
 
-    #console.log 'strip', dims
+    @strip.geometry.clip width, height, depth, items if @strip
+    @line .geometry.clip items, width, height, depth if @line
 
-    @strip.geometry.clip width, height, depth, items
+    if @bind.map?
+      map  = @bind.map.getActiveDimensions()
+      @strip.geometry.map map.width, map.height, map.depth, map.items if @strip
 
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make [
       { to: 'geometry.points', trait: 'source' }
       { to: 'geometry.colors', trait: 'source' }
+      { to: 'mesh.map',        trait: 'source' }
     ]
 
     return unless @bind.points?
