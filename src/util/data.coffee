@@ -82,6 +82,7 @@ exports.repeatCall = (call, times) ->
       call()
 
 exports.makeEmitter = (thunk, items, channels) ->
+
   inner = switch channels
     when 0 then () -> true
     when 1 then (emit) -> emit thunk()

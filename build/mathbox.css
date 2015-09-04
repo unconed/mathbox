@@ -38,7 +38,7 @@
 }
 .shadergraph-node {
   margin: 5px 15px 25px; 
-  background: rgba(0, 0, 0, .08);
+  background: rgba(0, 0, 0, .1);
   border-radius: 5px;
   box-shadow: 0 1px  2px rgba(0, 0, 0, .2),
               0 1px  10px rgba(0, 0, 0, .2);
@@ -54,7 +54,7 @@
   font-weight: bold;
   text-align: center;
   height: 25px;
-  background: rgba(0, 0, 0, .2);
+  background: rgba(0, 0, 0, .3);
   text-shadow: 0 1px 2px rgba(0, 0, 0, .25);
   color: #fff;
   border-top-left-radius: 5px;
@@ -97,30 +97,39 @@
 }
 
 .shadergraph-node-callback {
-  background: rgba(0, 20, 80, .08);
+  background: rgba(205, 209, 221, .5);
   box-shadow: 0 1px  2px rgba(0, 10, 40, .2),
               0 1px  10px rgba(0, 10, 40, .2);
 }
 .shadergraph-node-callback > .shadergraph-header {
-  background: rgba(0, 20, 80, .2);
+  background: rgba(0, 20, 80, .3);
+}
+.shadergraph-graph .shadergraph-graph .shadergraph-node-callback {
+  background: rgba(0, 20, 80, .1);
 }
 
 .shadergraph-node-call {
-  background: rgba(20, 80, 0, .08);
+  background: rgba(209, 221, 205, .5);
   box-shadow: 0 1px  2px rgba(10, 40, 0, .2),
               0 1px  10px rgba(10, 40, 0, .2);
 }
 .shadergraph-node-call > .shadergraph-header {
-  background: rgba(20, 80, 0, .2);
+  background: rgba(20, 80, 0, .3);
+}
+.shadergraph-graph .shadergraph-graph .shadergraph-node-call {
+  background: rgba(20, 80, 0, .1);
 }
 
 .shadergraph-node-isolate {
-  background: rgba(80, 0, 20, .08);
+  background: rgba(221, 205, 209, .5);
   box-shadow: 0 1px  2px rgba(40, 0, 10, .2),
               0 1px  10px rgba(40, 0, 10, .2);
 }
 .shadergraph-node-isolate > .shadergraph-header {
-  background: rgba(80, 0, 20, .2);
+  background: rgba(80, 0, 20, .3);
+}
+.shadergraph-graph .shadergraph-graph .shadergraph-node-isolate {
+  background: rgba(80, 0, 20, .1);
 }
 
 .shadergraph-node.shadergraph-has-code {
@@ -176,7 +185,6 @@
 .shadergraph-overlay .shadergraph-inside {
   width: 4000px;
   min-height: 100%;
-  padding-top: 10px;
   box-sizing: border-box;
 }
 .shadergraph-overlay .shadergraph-close {
@@ -199,9 +207,161 @@
   color: rgba(0, 0, 0, 1);
 }
 .shadergraph-overlay .shadergraph-graph {
+  padding-top: 10px;
   overflow: visible;
   min-height: 100%;
 }
+.shadergraph-overlay span {
+  display: block;
+  padding: 5px 15px;
+  margin: 0;
+  background: rgba(0, 0, 0, .1);
+  font-weight: bold;
+  font-family: sans-serif;
+}
+.mathbox-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  padding: 10px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.mathbox-loader.mathbox-exit {
+  opacity: 0;
+  -webkit-transition:
+    opacity .15s ease-in-out;
+  transition:
+    opacity .15s ease-in-out;
+}
+
+.mathbox-progress {
+  height: 10px;
+  border-radius: 5px;
+  width: 80px;
+  margin: 0 auto 20px;
+  box-shadow:
+     1px  1px 1px rgba(255, 255, 255, .2),
+     1px -1px 1px rgba(255, 255, 255, .2),
+    -1px  1px 1px rgba(255, 255, 255, .2),
+    -1px -1px 1px rgba(255, 255, 255, .2);
+  background: #ccc;
+  overflow: hidden;
+}
+
+.mathbox-progress > div {
+  display: block;
+  width: 0px;
+  height: 10px;
+  background: #888;
+}
+
+.mathbox-logo {
+  position: relative;
+  width: 140px;
+  height: 100px;
+  margin: 0 auto 10px;
+  -webkit-perspective: 200px;
+  perspective: 200px;
+}
+
+.mathbox-logo > div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  -webkit-transform-style: preserve-3d;
+  transform-style:         preserve-3d;
+}
+
+.mathbox-logo > :nth-child(1) {
+  -webkit-transform: rotateZ(22deg) rotateX(24deg) rotateY(30deg);
+  transform:         rotateZ(22deg) rotateX(24deg) rotateY(30deg);
+}
+
+.mathbox-logo > :nth-child(2) {
+  -webkit-transform: rotateZ(11deg) rotateX(12deg) rotateY(15deg) scale3d(.6, .6, .6);
+  transform:         rotateZ(11deg) rotateX(12deg) rotateY(15deg) scale3d(.6, .6, .6);
+}
+
+.mathbox-logo > div > div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -100px;
+  margin-top: -100px;
+  width: 200px;
+  height: 200px;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+
+.mathbox-logo > div > :nth-child(1) {
+  -webkit-transform: scale(0.5, 0.5);
+  transform:         rotateX(30deg) scale(0.5, 0.5);
+}
+
+.mathbox-logo > div > :nth-child(2) {
+  -webkit-transform: rotateX(90deg) scale(0.42, 0.42);
+  transform:         rotateX(90deg) scale(0.42, 0.42);
+}
+
+.mathbox-logo > div > :nth-child(3) {
+  -webkit-transform: rotateY(90deg) scale(0.35, 0.35);
+  transform:         rotateY(90deg) scale(0.35, 0.35);
+}
+
+.mathbox-logo > :nth-child(1) > :nth-child(1) {
+  border: 16px solid #808080;
+}
+.mathbox-logo > :nth-child(1) > :nth-child(2) {
+  border: 19px solid #A0A0A0;
+}
+.mathbox-logo > :nth-child(1) > :nth-child(3) {
+  border: 23px solid #C0C0C0;
+}
+.mathbox-logo > :nth-child(2) > :nth-child(1) {
+  border: 27px solid #808080;
+}
+.mathbox-logo > :nth-child(2) > :nth-child(2) {
+  border: 32px solid #A0A0A0;
+}
+.mathbox-logo > :nth-child(2) > :nth-child(3) {
+  border: 38px solid #C0C0C0;
+}
+
+.mathbox-splash-blue .mathbox-progress {
+  background: #def;
+}
+.mathbox-splash-blue .mathbox-progress > div {
+  background: #1979e7;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(1) > :nth-child(1) {
+  border-color: #1979e7;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(1) > :nth-child(2) {
+  border-color: #33b0ff;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(1) > :nth-child(3) {
+  border-color: #75eaff;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(2) > :nth-child(1) {
+  border-color: #18487F;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(2) > :nth-child(2) {
+  border-color: #33b0ff;
+}
+.mathbox-splash-blue .mathbox-logo > :nth-child(2) > :nth-child(3) {
+  border-color: #75eaff;
+}  
+
+
+
+
 .mathbox-overlays {
   position: absolute;
   left:   0;
@@ -224,73 +384,78 @@
 }
 .mathbox-outline-1 {
   text-shadow:
-    1px 1px 0px rgb(255, 255, 255),
-    -1px 1px 0px rgb(255, 255, 255),
-    1px -1px 0px rgb(255, 255, 255),
     -1px -1px 0px rgb(255, 255, 255),
-    1px 1px 0px rgb(255, 255, 255),
-    -1px 1px 0px rgb(255, 255, 255),
-    1px -1px 0px rgb(255, 255, 255),
-    -1px -1px 0px rgb(255, 255, 255),
-    1px 1px 1px rgb(255, 255, 255),
-    -1px 1px 1px rgb(255, 255, 255),
-    1px -1px 1px rgb(255, 255, 255),
-    -1px -1px 1px rgb(255, 255, 255);
+     1px  1px 0px rgb(255, 255, 255),
+    -1px  1px 0px rgb(255, 255, 255),
+     1px -1px 0px rgb(255, 255, 255),
+     1px  0px 1px rgb(255, 255, 255),
+    -1px  0px 1px rgb(255, 255, 255),
+     0px -1px 1px rgb(255, 255, 255),
+     0px  1px 1px rgb(255, 255, 255);
 }
 .mathbox-outline-2 {
   text-shadow:
-    2px 0px 0px rgb(255, 255, 255),
-    -2px 0px 0px rgb(255, 255, 255),
-    0px -2px 0px rgb(255, 255, 255),
-    0px 2px 0px rgb(255, 255, 255),
-    2px 1px 0px rgb(255, 255, 255),
-    -2px 1px 0px rgb(255, 255, 255),
-    2px -1px 0px rgb(255, 255, 255),
-    -2px -1px 0px rgb(255, 255, 255),
-    1px 2px 0px rgb(255, 255, 255),
-    -1px 2px 0px rgb(255, 255, 255),
-    1px -2px 0px rgb(255, 255, 255),
+     0px -2px 0px rgb(255, 255, 255),
+     0px  2px 0px rgb(255, 255, 255),
+    -2px  0px 0px rgb(255, 255, 255),
+     2px  0px 0px rgb(255, 255, 255),
     -1px -2px 0px rgb(255, 255, 255),
-    1px 1px 1px rgb(255, 255, 255),
-    -1px 1px 1px rgb(255, 255, 255),
-    1px -1px 1px rgb(255, 255, 255),
-    -1px -1px 1px rgb(255, 255, 255);
+    -2px -1px 0px rgb(255, 255, 255),
+    -1px  2px 0px rgb(255, 255, 255),
+    -2px  1px 0px rgb(255, 255, 255),
+     1px  2px 0px rgb(255, 255, 255),
+     2px  1px 0px rgb(255, 255, 255),
+     1px -2px 0px rgb(255, 255, 255),
+     2px -1px 0px rgb(255, 255, 255);
 }
 .mathbox-outline-3 {
   text-shadow:
-    3px 0px 0px rgb(255, 255, 255),
-    -3px 0px 0px rgb(255, 255, 255),
-    0px -3px 0px rgb(255, 255, 255),
-    0px 3px 0px rgb(255, 255, 255),
-    3px 3px 0px rgb(255, 255, 255),
-    -3px 2px 0px rgb(255, 255, 255),
-    3px -2px 0px rgb(255, 255, 255),
-    -3px -2px 0px rgb(255, 255, 255),
-    2px 3px 0px rgb(255, 255, 255),
-    -2px 3px 0px rgb(255, 255, 255),
-    2px -3px 0px rgb(255, 255, 255),
-    -2px -3px 0px rgb(255, 255, 255),
-    2px 2px 1px rgb(255, 255, 255),
-    -2px 2px 1px rgb(255, 255, 255),
-    2px -2px 1px rgb(255, 255, 255),
-    -2px -2px 1px rgb(255, 255, 255);
+     3px  0px 0px rgb(255, 255, 255),
+    -3px  0px 0px rgb(255, 255, 255),
+     0px  3px 0px rgb(255, 255, 255),
+     0px -3px 0px rgb(255, 255, 255),
+
+    -2px -2px 0px rgb(255, 255, 255),
+    -2px  2px 0px rgb(255, 255, 255),
+     2px  2px 0px rgb(255, 255, 255),
+     2px -2px 0px rgb(255, 255, 255),
+
+    -1px -2px 1px rgb(255, 255, 255),
+    -2px -1px 1px rgb(255, 255, 255),
+    -1px  2px 1px rgb(255, 255, 255),
+    -2px  1px 1px rgb(255, 255, 255),
+     1px  2px 1px rgb(255, 255, 255),
+     2px  1px 1px rgb(255, 255, 255),
+     1px -2px 1px rgb(255, 255, 255),
+     2px -1px 1px rgb(255, 255, 255);
 }
 .mathbox-outline-4 {
   text-shadow:
-    4px 0px 0px rgb(255, 255, 255),
-    -4px 0px 0px rgb(255, 255, 255),
-    0px -4px 0px rgb(255, 255, 255),
-    0px 4px 0px rgb(255, 255, 255),
-    4px 4px 0px rgb(255, 255, 255),
-    -4px 3px 0px rgb(255, 255, 255),
-    4px -3px 0px rgb(255, 255, 255),
-    -4px -3px 0px rgb(255, 255, 255),
-    3px 4px 0px rgb(255, 255, 255),
-    -3px 4px 0px rgb(255, 255, 255),
-    3px -4px 0px rgb(255, 255, 255),
-    -3px -4px 0px rgb(255, 255, 255),
-    3px 3px 1px rgb(255, 255, 255),
-    -3px 3px 1px rgb(255, 255, 255),
-    3px -3px 1px rgb(255, 255, 255),
-    -3px -3px 1px rgb(255, 255, 255);
+     4px  0px 0px rgb(255, 255, 255),
+    -4px  0px 0px rgb(255, 255, 255),
+     0px  4px 0px rgb(255, 255, 255),
+     0px -4px 0px rgb(255, 255, 255),
+   
+    -3px -2px 0px rgb(255, 255, 255),
+    -3px  2px 0px rgb(255, 255, 255),
+     3px  2px 0px rgb(255, 255, 255),
+     3px -2px 0px rgb(255, 255, 255),
+   
+    -2px -3px 0px rgb(255, 255, 255),
+    -2px  3px 0px rgb(255, 255, 255),
+     2px  3px 0px rgb(255, 255, 255),
+     2px -3px 0px rgb(255, 255, 255),
+   
+    -1px -2px 1px rgb(255, 255, 255),
+    -2px -1px 1px rgb(255, 255, 255),
+    -1px  2px 1px rgb(255, 255, 255),
+    -2px  1px 1px rgb(255, 255, 255),
+     1px  2px 1px rgb(255, 255, 255),
+     2px  1px 1px rgb(255, 255, 255),
+     1px -2px 1px rgb(255, 255, 255),
+     2px -1px 1px rgb(255, 255, 255);
+
+}
+.mathbox-outline-fill, .mathbox-outline-fill * {
+  color: #fff !important;
 }
