@@ -67,8 +67,8 @@ class Model
       removeNode    node
       removeType    node
       removeTraits  node
-      removeID      node.id
-      removeClasses node.classes
+      removeID      node.id, node
+      removeClasses node.classes, node
 
       node.off 'change:node', update
       force node
@@ -267,11 +267,11 @@ class Model
   _matcher: (s) ->
     # Check for simple *, #id, .class or type selector
     [all, id, klass, trait, type] = @_simplify s
-    return ((node) -> true)                      if all
-    return ((node) -> node.id == id)             if id
-    return ((node) -> node.classes?.hash[klass]) if klass
-    return ((node) -> node.traits?. hash[trait]) if trait
-    return ((node) -> node.type == type)         if type
+    return ((node) -> true)                       if all
+    return ((node) -> node.id == id)              if id
+    return ((node) -> node.classes?.hash?[klass]) if klass
+    return ((node) -> node.traits?. hash?[trait]) if trait
+    return ((node) -> node.type == type)          if type
 
     # Otherwise apply CSSauron filter
     return language s

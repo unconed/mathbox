@@ -44,8 +44,6 @@ class Node
     @trigger event
 
   _removed: () ->
-    @root = @parent = null
-
     # Notify root listeners of child removal
     event =
       type: 'remove'
@@ -55,6 +53,8 @@ class Node
     # Notify self listeners of own removal
     event.type = 'removed'
     @trigger event
+
+    @root = @parent = null
 
   # Assign unique indices to nodes to make paths
   _index: (index, parent = @parent) ->

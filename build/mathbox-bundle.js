@@ -53066,7 +53066,10 @@ Group = (function(_super) {
   };
 
   Group.prototype.remove = function(node) {
-    var i, index, _i, _len, _ref, _results;
+    var i, index, _i, _len, _ref, _ref1;
+    if ((_ref = node.children) != null ? _ref.length : void 0) {
+      node.empty();
+    }
     index = this.children.indexOf(node);
     if (index === -1) {
       return;
@@ -53074,26 +53077,22 @@ Group = (function(_super) {
     this.children.splice(index, 1);
     node._index(null);
     node._removed(this);
-    _ref = this.children;
-    _results = [];
-    for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-      node = _ref[i];
+    _ref1 = this.children;
+    for (i = _i = 0, _len = _ref1.length; _i < _len; i = ++_i) {
+      node = _ref1[i];
       if (i >= index) {
-        _results.push(node._index(i));
+        node._index(i);
       }
     }
-    return _results;
   };
 
   Group.prototype.empty = function() {
-    var children, node, _i, _len, _results;
+    var children, node, _i, _len;
     children = this.children.slice();
-    _results = [];
     for (_i = 0, _len = children.length; _i < _len; _i++) {
       node = children[_i];
-      _results.push(this.remove(node));
+      this.remove(node);
     }
-    return _results;
   };
 
   return Group;
@@ -53227,8 +53226,8 @@ Model = (function() {
         removeNode(node);
         removeType(node);
         removeTraits(node);
-        removeID(node.id);
-        removeClasses(node.classes);
+        removeID(node.id, node);
+        removeClasses(node.classes, node);
         node.off('change:node', update);
         return force(node);
       };
@@ -53560,14 +53559,14 @@ Model = (function() {
     }
     if (klass) {
       return (function(node) {
-        var _ref1;
-        return (_ref1 = node.classes) != null ? _ref1.hash[klass] : void 0;
+        var _ref1, _ref2;
+        return (_ref1 = node.classes) != null ? (_ref2 = _ref1.hash) != null ? _ref2[klass] : void 0 : void 0;
       });
     }
     if (trait) {
       return (function(node) {
-        var _ref1;
-        return (_ref1 = node.traits) != null ? _ref1.hash[trait] : void 0;
+        var _ref1, _ref2;
+        return (_ref1 = node.traits) != null ? (_ref2 = _ref1.hash) != null ? _ref2[trait] : void 0 : void 0;
       });
     }
     if (type) {
@@ -53679,7 +53678,6 @@ Node = (function() {
 
   Node.prototype._removed = function() {
     var event;
-    this.root = this.parent = null;
     event = {
       type: 'remove',
       node: this
@@ -53688,7 +53686,8 @@ Node = (function() {
       this.root.trigger(event);
     }
     event.type = 'removed';
-    return this.trigger(event);
+    this.trigger(event);
+    return this.root = this.parent = null;
   };
 
   Node.prototype._index = function(index, parent) {
@@ -69323,17 +69322,16 @@ API = (function() {
   };
 
   API.prototype.remove = function(selector) {
-    var target, _i, _len, _ref, _results;
+    var target, _i, _len, _ref;
     if (selector) {
       return this.select(selector).remove();
     }
     _ref = this._targets;
-    _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       target = _ref[_i];
-      _results.push(this._context.controller.remove(target));
+      this._context.controller.remove(target);
     }
-    return _results;
+    return this._pop();
   };
 
   API.prototype.set = function(key, value) {

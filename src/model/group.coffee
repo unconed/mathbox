@@ -14,12 +14,8 @@ class Group extends Node
     @children.push node
     node._added @
 
-    # Adopt children ?
-    # if node.children?.length
-
   remove: (node) ->
-    # or Remove children?
-    # @node.empty() if node.children?.length
+    node.empty() if node.children?.length
 
     index = @children.indexOf node
     return if index == -1
@@ -29,9 +25,11 @@ class Group extends Node
     node._removed @
 
     node._index i for node, i in @children when i >= index
+    return
 
   empty: () ->
     children = @children.slice()
     @remove node for node in children
+    return
 
 module.exports = Group
