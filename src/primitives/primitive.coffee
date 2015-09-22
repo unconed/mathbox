@@ -94,12 +94,15 @@ class Primitive
 
   _removed: (rebuild = false) ->
     @unmake rebuild
+
     @_unlisten()
     @_unattach()
     @_uncompute()
 
     @_root     = null
     @_parent   = null
+
+    @unmade rebuild
 
   # Bind event listeners to methods
   _listen: (object, type, method, self = @) ->

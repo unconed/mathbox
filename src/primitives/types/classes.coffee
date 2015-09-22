@@ -63,7 +63,9 @@ Classes =
   rtt:               require './rtt/rtt'
   compose:           require './rtt/compose'
 
-  clock:             require './present/clock'
+  clock:             require './time/clock'
+  now:               require './time/now'
+
   move:              require './present/move'
   play:              require './present/play'
   present:           require './present/present'

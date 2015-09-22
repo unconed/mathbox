@@ -45,8 +45,8 @@ vec3 getSpritePosition() {
   // TODO: orthographic camera
   // Workaround: set depth = 0
   float depth = focusDepth, z;
+  z = -center.z;
   if (spriteDepth < 1.0) {
-    z = -center.z;
     depth = mix(z, focusDepth, spriteDepth);
   }
   

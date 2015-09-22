@@ -356,8 +356,10 @@ Traits =
     to:                Types.number(Infinity)
     realtime:          Types.bool(false)
 
-  date:
+  now:
     now:               Types.nullable(Types.timestamp())
-
+    seek:              Types.nullable(Types.number(0))
+    pace:              Types.number(1)
+    speed:             Types.number(1)
 
 module.exports = Traits

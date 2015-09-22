@@ -159,7 +159,7 @@ class Surface extends Primitive
       fill   = @_get 'mesh.fill'
       color  = @_get 'style.color'
 
-      @wireZBias.value = @_get('style.zBias') + 5
+      @wireZBias.value = @_get('style.zBias') + if fill then 5 else 0
       @wireColor.copy color
       if fill
         c = @wireScratch

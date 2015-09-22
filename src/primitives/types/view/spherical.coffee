@@ -41,7 +41,7 @@ class Spherical extends View
     p = @props.position
     s = @props.scale
     q = @props.quaternion
-    q = @props.rotation
+    r = @props.rotation
     g = @props.range
     e = @props.eulerOrder
 

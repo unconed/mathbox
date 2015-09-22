@@ -9,7 +9,7 @@ class Format extends Operator
 
   init: () ->
     super
-    @atlas = @buffer = @used = null
+    @atlas = @buffer = @used = @time = null
     @filled = false
 
   sourceShader: (shader) ->
@@ -70,6 +70,8 @@ class Format extends Operator
     emit  = @buffer.streamer.emit
     @buffer.streamer.emit = (t) -> atlas.map t, emit
 
+    # Grab parent clock
+    @clockParent = @_inherit 'clock'
     @_listen 'root', 'root.update', @update
 
   made: () ->
@@ -91,6 +93,8 @@ class Format extends Operator
     dst = @buffer
 
     return if (@filled and !@props.live) or !@through
+
+    @time = @clockParent.getTime()
 
     used = @used
 
@@ -121,16 +125,16 @@ class Format extends Operator
         else
           expr = (x) -> x
 
-      timed = expr.length > 8
+      length = expr.length
 
       if digits?
         expr = do (expr) ->
           (x, y, z, w, i, j, k, l, t, d) -> +(expr x, y, z, w, i, j, k, l, t, d).toPrecision digits
 
       # Stream raw source data and format it with expression
-      if timed
-        map = (emit, x, y, z, w, i, j, k, l) =>
-          emit expr x, y, z, w, i, j, k, l, @_context.time.clock, @_context.time.step
+      if length > 8
+        map = (emit, x, y, z, w, i, j, k, l, t, d) =>
+          emit expr x, y, z, w, i, j, k, l, @time.clock, @time.step
       else
         map = (emit, x, y, z, w, i, j, k, l) =>
           emit expr x, y, z, w, i, j, k, l

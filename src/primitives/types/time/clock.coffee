@@ -5,10 +5,10 @@ class Clock extends Parent
 
   init: () ->
     @clock = 0
-    @time = {
+    @time  = {
       now: +new Date() / 1000,
-      time: 0,  delta: 0,
-      clock: 0, step: 0
+      time:  0, delta: 0,
+      clock: 0, step:  0
     }
 
   make: () ->
@@ -31,6 +31,7 @@ class Clock extends Parent
     @clock += delta
 
     @time.now   = parent.now
+
     @time.time  = parent.time
     @time.delta = parent.delta
 

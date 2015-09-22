@@ -234,8 +234,6 @@ class Track extends Primitive
         else
           do (values, from, to) ->
             (time, delta) ->
-              if window.spy?
-                debugger if key == 'expr'
               values[0] = animator.lerp attr.T, fromP, toP, getLerpFactor(time), values[0]
 
       # Handle expr / props on both ends
