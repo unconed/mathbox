@@ -78,7 +78,7 @@ module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lin
 "split.position": "uniform float splitStride;\n\nvec2 getIndices(vec4 xyzw);\nvec4 getRest(vec4 xyzw);\nvec4 injectIndex(float v);\n\nvec4 getSplitXYZW(vec4 xyzw) {\n  vec2 uv = getIndices(xyzw);\n  float offset = uv.x + uv.y * splitStride;\n  return injectIndex(offset) + getRest(xyzw);\n}\n",
 "spread.position": "uniform vec4 spreadOffset;\nuniform mat4 spreadMatrix;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvec4 getSpreadSample(vec4 xyzw) {\n  vec4 sample = getSample(xyzw);\n  return sample + spreadMatrix * (spreadOffset + xyzw);\n}\n",
 "sprite.fragment": "varying vec2 vSprite;\n\nvec4 getSample(vec2 xy);\n\nvec4 getSpriteColor() {\n  return getSample(vSprite);\n}",
-"sprite.position": "uniform vec2 spriteOffset;\nuniform float spriteScale;\nuniform float spriteDepth;\nuniform float spriteSnap;\n\nuniform vec2 renderOdd;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float pixelUnit;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\nvec4 getSprite(vec4 xyzw);\n\nvec3 getSpritePosition() {\n  // Clip points\n  vec4 p = min(geometryClip, position4);\n  float diff = length(position4 - p);\n  if (diff > 0.0) {\n    return vec3(0.0, 0.0, 1000.0);\n  }\n\n  // Make sprites\n  vec3 center = getPosition(p, 1.0);\n  vec4 atlas = getSprite(p);\n\n  // Sprite goes from -1..1, width = 2.\n  // -1..1 -> -0.5..0.5\n  vec2 halfSprite = sprite * .5;\n  vec2 halfFlipSprite = vec2(halfSprite.x, -halfSprite.y);\n\n#ifdef POSITION_UV\n  // Assign UVs\n  vUV = atlas.xy + atlas.zw * (halfFlipSprite + .5);\n#endif\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float depth = focusDepth, z;\n  if (spriteDepth < 1.0) {\n    z = -center.z;\n    depth = mix(z, focusDepth, spriteDepth);\n  }\n  \n  // Match device/unit mapping \n  float size = pixelUnit * spriteScale;\n  float depthSize = depth * size;\n\n  // Calculate pixelSize for anti-aliasing\n  float pixelSize = (spriteDepth > 0.0 ? depthSize / z : size);\n  vPixelSize = pixelSize;\n\n  // Position sprite\n  vec2 atlasOdd = fract(atlas.zw / 2.0);\n  vec2 offset = (spriteOffset + halfSprite * atlas.zw) * depthSize;\n  if (spriteSnap > 0.5) {\n    // Snap to pixel (w/ epsilon shift to avoid jitter)\n    return vec3(((floor(center.xy / center.z * renderScale + 0.001) + renderOdd + atlasOdd) * center.z + offset) * renderScaleInv, center.z);\n  }\n  else {\n    // Place directly\n    return center + vec3(offset * renderScaleInv, 0.0);\n  }\n\n}\n",
+"sprite.position": "uniform vec2 spriteOffset;\nuniform float spriteScale;\nuniform float spriteDepth;\nuniform float spriteSnap;\n\nuniform vec2 renderOdd;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float pixelUnit;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\nvec4 getSprite(vec4 xyzw);\n\nvec3 getSpritePosition() {\n  // Clip points\n  vec4 p = min(geometryClip, position4);\n  float diff = length(position4 - p);\n  if (diff > 0.0) {\n    return vec3(0.0, 0.0, 1000.0);\n  }\n\n  // Make sprites\n  vec3 center = getPosition(p, 1.0);\n  vec4 atlas = getSprite(p);\n\n  // Sprite goes from -1..1, width = 2.\n  // -1..1 -> -0.5..0.5\n  vec2 halfSprite = sprite * .5;\n  vec2 halfFlipSprite = vec2(halfSprite.x, -halfSprite.y);\n\n#ifdef POSITION_UV\n  // Assign UVs\n  vUV = atlas.xy + atlas.zw * (halfFlipSprite + .5);\n#endif\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float depth = focusDepth, z;\n  z = -center.z;\n  if (spriteDepth < 1.0) {\n    depth = mix(z, focusDepth, spriteDepth);\n  }\n  \n  // Match device/unit mapping \n  float size = pixelUnit * spriteScale;\n  float depthSize = depth * size;\n\n  // Calculate pixelSize for anti-aliasing\n  float pixelSize = (spriteDepth > 0.0 ? depthSize / z : size);\n  vPixelSize = pixelSize;\n\n  // Position sprite\n  vec2 atlasOdd = fract(atlas.zw / 2.0);\n  vec2 offset = (spriteOffset + halfSprite * atlas.zw) * depthSize;\n  if (spriteSnap > 0.5) {\n    // Snap to pixel (w/ epsilon shift to avoid jitter)\n    return vec3(((floor(center.xy / center.z * renderScale + 0.001) + renderOdd + atlasOdd) * center.z + offset) * renderScaleInv, center.z);\n  }\n  else {\n    // Place directly\n    return center + vec3(offset * renderScaleInv, 0.0);\n  }\n\n}\n",
 "stereographic.position": "uniform float stereoBend;\n\nuniform mat4 viewMatrix;\n\nvec4 getStereoPosition(vec4 position, inout vec4 stpq) {\n  if (stereoBend > 0.0001) {\n\n    vec3 pos = position.xyz;\n    float r = length(pos);\n    float z = r + pos.z;\n    vec3 project = vec3(pos.xy / z, r);\n    \n    vec3 lerped = mix(pos, project, stereoBend);\n\n    return viewMatrix * vec4(lerped, 1.0);\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "stereographic4.position": "uniform float stereoBend;\nuniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getStereographic4Position(vec4 position, inout vec4 stpq) {\n  \n  vec4 transformed;\n  if (stereoBend > 0.0001) {\n\n    float r = length(position);\n    float w = r + position.w;\n    vec4 project = vec4(position.xyz / w, r);\n    \n    transformed = mix(position, project, stereoBend);\n  }\n  else {\n    transformed = position;\n  }\n\n  vec4 pos4 = transformed * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n",
 "stpq.sample.2d": "varying vec2 vST;\n\nvec4 getSample(vec2 st);\n\nvec4 getSTSample() {\n  return getSample(vST);\n}\n",
@@ -6849,7 +6849,7 @@ Context = (function() {
 module.exports = Context;
 
 
-},{"./model":34,"./overlay":40,"./primitives":43,"./render":144,"./shaders":159,"./stage":164,"./util":169}],30:[function(require,module,exports){
+},{"./model":34,"./overlay":40,"./primitives":43,"./render":145,"./shaders":160,"./stage":165,"./util":170}],30:[function(require,module,exports){
 var Context, k, mathBox, v, _ref;
 
 mathBox = function(options) {
@@ -7040,7 +7040,7 @@ THREE.Bootstrap.registerPlugin('mathbox', {
 });
 
 
-},{"./context":29,"./splash":160}],31:[function(require,module,exports){
+},{"./context":29,"./splash":161}],31:[function(require,module,exports){
 
 /*
  Custom attribute model
@@ -8368,7 +8368,7 @@ THREE.Binder.apply(Node.prototype);
 module.exports = Node;
 
 
-},{"../util":169}],37:[function(require,module,exports){
+},{"../util":170}],37:[function(require,module,exports){
 var Classes;
 
 Classes = {
@@ -8459,7 +8459,7 @@ DOM = (function(_super) {
 module.exports = DOM;
 
 
-},{"../util":169,"./overlay":41}],39:[function(require,module,exports){
+},{"../util":170,"./overlay":41}],39:[function(require,module,exports){
 var OverlayFactory;
 
 OverlayFactory = (function() {
@@ -8564,7 +8564,7 @@ PrimitiveFactory = (function() {
 module.exports = PrimitiveFactory;
 
 
-},{"../util":169}],43:[function(require,module,exports){
+},{"../util":170}],43:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Primitive = require('./primitive');
@@ -8703,7 +8703,8 @@ Primitive = (function() {
     this._unattach();
     this._uncompute();
     this._root = null;
-    return this._parent = null;
+    this._parent = null;
+    return this.unmade(rebuild);
   };
 
   Primitive.prototype._listen = function(object, type, method, self) {
@@ -9224,7 +9225,7 @@ Root = (function(_super) {
 module.exports = Root;
 
 
-},{"../../../util":169,"./parent":47}],49:[function(require,module,exports){
+},{"../../../util":170,"./parent":47}],49:[function(require,module,exports){
 var Primitive, Source, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9284,7 +9285,7 @@ Source = (function(_super) {
 module.exports = Source;
 
 
-},{"../../../util":169,"../../primitive":44}],50:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],50:[function(require,module,exports){
 var Parent, Unit, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9325,7 +9326,7 @@ Unit = (function(_super) {
 module.exports = Unit;
 
 
-},{"../../../util":169,"./parent":47}],51:[function(require,module,exports){
+},{"../../../util":170,"./parent":47}],51:[function(require,module,exports){
 var Camera, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9398,7 +9399,7 @@ Camera = (function(_super) {
 module.exports = Camera;
 
 
-},{"../../../util":169,"../../primitive":44}],52:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],52:[function(require,module,exports){
 var Classes;
 
 Classes = {
@@ -9455,7 +9456,8 @@ Classes = {
   camera: require('./camera/camera'),
   rtt: require('./rtt/rtt'),
   compose: require('./rtt/compose'),
-  clock: require('./present/clock'),
+  clock: require('./time/clock'),
+  now: require('./time/now'),
   move: require('./present/move'),
   play: require('./present/play'),
   present: require('./present/present'),
@@ -9468,7 +9470,7 @@ Classes = {
 module.exports = Classes;
 
 
-},{"./base/group":45,"./base/inherit":46,"./base/root":48,"./base/unit":50,"./camera/camera":51,"./data/area":53,"./data/array":54,"./data/interval":57,"./data/matrix":58,"./data/scale":59,"./data/volume":60,"./data/voxel":61,"./draw/axis":62,"./draw/face":63,"./draw/grid":64,"./draw/line":65,"./draw/point":66,"./draw/strip":67,"./draw/surface":68,"./draw/ticks":69,"./draw/vector":70,"./operator/grow":73,"./operator/join":74,"./operator/lerp":75,"./operator/memo":76,"./operator/repeat":78,"./operator/resample":79,"./operator/slice":80,"./operator/split":81,"./operator/spread":82,"./operator/swizzle":83,"./operator/transpose":84,"./overlay/dom":85,"./overlay/html":86,"./present/clock":87,"./present/move":88,"./present/play":89,"./present/present":90,"./present/reveal":91,"./present/slide":92,"./present/step":93,"./present/track":94,"./rtt/compose":96,"./rtt/rtt":97,"./shader/shader":98,"./text/format":99,"./text/label":100,"./text/retext":101,"./text/text":102,"./transform/fragment":104,"./transform/layer":105,"./transform/transform3":107,"./transform/transform4":108,"./transform/vertex":109,"./view/cartesian":111,"./view/cartesian4":112,"./view/polar":113,"./view/spherical":114,"./view/stereographic":115,"./view/stereographic4":116,"./view/view":117}],53:[function(require,module,exports){
+},{"./base/group":45,"./base/inherit":46,"./base/root":48,"./base/unit":50,"./camera/camera":51,"./data/area":53,"./data/array":54,"./data/interval":57,"./data/matrix":58,"./data/scale":59,"./data/volume":60,"./data/voxel":61,"./draw/axis":62,"./draw/face":63,"./draw/grid":64,"./draw/line":65,"./draw/point":66,"./draw/strip":67,"./draw/surface":68,"./draw/ticks":69,"./draw/vector":70,"./operator/grow":73,"./operator/join":74,"./operator/lerp":75,"./operator/memo":76,"./operator/repeat":78,"./operator/resample":79,"./operator/slice":80,"./operator/split":81,"./operator/spread":82,"./operator/swizzle":83,"./operator/transpose":84,"./overlay/dom":85,"./overlay/html":86,"./present/move":87,"./present/play":88,"./present/present":89,"./present/reveal":90,"./present/slide":91,"./present/step":92,"./present/track":93,"./rtt/compose":95,"./rtt/rtt":96,"./shader/shader":97,"./text/format":98,"./text/label":99,"./text/retext":100,"./text/text":101,"./time/clock":102,"./time/now":103,"./transform/fragment":105,"./transform/layer":106,"./transform/transform3":108,"./transform/transform4":109,"./transform/vertex":110,"./view/cartesian":112,"./view/cartesian4":113,"./view/polar":114,"./view/spherical":115,"./view/stereographic":116,"./view/stereographic4":117,"./view/view":118}],53:[function(require,module,exports){
 var Area, Matrix, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9566,7 +9568,7 @@ Area = (function(_super) {
 module.exports = Area;
 
 
-},{"../../../util":169,"./matrix":58}],54:[function(require,module,exports){
+},{"../../../util":170,"./matrix":58}],54:[function(require,module,exports){
 var Array_, Buffer, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9759,7 +9761,7 @@ Array_ = (function(_super) {
 module.exports = Array_;
 
 
-},{"../../../util":169,"./buffer":55}],55:[function(require,module,exports){
+},{"../../../util":170,"./buffer":55}],55:[function(require,module,exports){
 var Buffer, Data, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9869,7 +9871,7 @@ Buffer = (function(_super) {
 module.exports = Buffer;
 
 
-},{"../../../util":169,"./data":56}],56:[function(require,module,exports){
+},{"../../../util":170,"./data":56}],56:[function(require,module,exports){
 var Data, Source, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9937,7 +9939,7 @@ Data = (function(_super) {
 module.exports = Data;
 
 
-},{"../../../util":169,"../base/source":49}],57:[function(require,module,exports){
+},{"../../../util":170,"../base/source":49}],57:[function(require,module,exports){
 var Interval, Util, _Array,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10018,7 +10020,7 @@ Interval = (function(_super) {
 module.exports = Interval;
 
 
-},{"../../../util":169,"./array":54}],58:[function(require,module,exports){
+},{"../../../util":170,"./array":54}],58:[function(require,module,exports){
 var Buffer, Matrix, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10233,7 +10235,7 @@ Matrix = (function(_super) {
 module.exports = Matrix;
 
 
-},{"../../../util":169,"./buffer":55}],59:[function(require,module,exports){
+},{"../../../util":170,"./buffer":55}],59:[function(require,module,exports){
 var Scale, Source, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10340,7 +10342,7 @@ Scale = (function(_super) {
 module.exports = Scale;
 
 
-},{"../../../util":169,"../base/source":49}],60:[function(require,module,exports){
+},{"../../../util":170,"../base/source":49}],60:[function(require,module,exports){
 var Util, Volume, Voxel,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10455,7 +10457,7 @@ Volume = (function(_super) {
 module.exports = Volume;
 
 
-},{"../../../util":169,"./voxel":61}],61:[function(require,module,exports){
+},{"../../../util":170,"./voxel":61}],61:[function(require,module,exports){
 var Buffer, Util, Voxel,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
@@ -10676,7 +10678,7 @@ Voxel = (function(_super) {
 module.exports = Voxel;
 
 
-},{"../../../util":169,"./buffer":55}],62:[function(require,module,exports){
+},{"../../../util":170,"./buffer":55}],62:[function(require,module,exports){
 var Axis, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10788,7 +10790,7 @@ Axis = (function(_super) {
 module.exports = Axis;
 
 
-},{"../../../util":169,"../../primitive":44}],63:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],63:[function(require,module,exports){
 var Face, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -10923,7 +10925,7 @@ Face = (function(_super) {
 module.exports = Face;
 
 
-},{"../../../util":169,"../../primitive":44}],64:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],64:[function(require,module,exports){
 var Grid, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11079,7 +11081,7 @@ Grid = (function(_super) {
 module.exports = Grid;
 
 
-},{"../../../util":169,"../../primitive":44}],65:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],65:[function(require,module,exports){
 var Line, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11225,7 +11227,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../../../util":169,"../../primitive":44}],66:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],66:[function(require,module,exports){
 var Point, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11324,7 +11326,7 @@ Point = (function(_super) {
 module.exports = Point;
 
 
-},{"../../../util":169,"../../primitive":44}],67:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],67:[function(require,module,exports){
 var Primitive, Strip, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11453,7 +11455,7 @@ Strip = (function(_super) {
 module.exports = Strip;
 
 
-},{"../../../util":169,"../../primitive":44}],68:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],68:[function(require,module,exports){
 var Primitive, Surface, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11620,7 +11622,7 @@ Surface = (function(_super) {
     if (changed['style.color'] || changed['mesh.fill'] || init) {
       fill = this._get('mesh.fill');
       color = this._get('style.color');
-      this.wireZBias.value = this._get('style.zBias') + 5;
+      this.wireZBias.value = this._get('style.zBias') + (fill ? 5 : 0);
       this.wireColor.copy(color);
       if (fill) {
         c = this.wireScratch;
@@ -11645,7 +11647,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../../util":169,"../../primitive":44}],69:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],69:[function(require,module,exports){
 var Primitive, Ticks, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11761,7 +11763,7 @@ Ticks = (function(_super) {
 module.exports = Ticks;
 
 
-},{"../../../util":169,"../../primitive":44}],70:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],70:[function(require,module,exports){
 var Primitive, Util, Vector,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -11911,7 +11913,7 @@ Vector = (function(_super) {
 module.exports = Vector;
 
 
-},{"../../../util":169,"../../primitive":44}],71:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],71:[function(require,module,exports){
 var Util, View, helpers,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -12431,7 +12433,7 @@ module.exports = function(object, traits) {
 };
 
 
-},{"../../util":169,"./view/view":117}],72:[function(require,module,exports){
+},{"../../util":170,"./view/view":118}],72:[function(require,module,exports){
 var Model;
 
 Model = require('../../model');
@@ -12445,7 +12447,7 @@ exports.Traits = require('./traits');
 exports.Helpers = require('./helpers');
 
 
-},{"../../model":34,"./classes":52,"./helpers":71,"./traits":103,"./types":110}],73:[function(require,module,exports){
+},{"../../model":34,"./classes":52,"./helpers":71,"./traits":104,"./types":111}],73:[function(require,module,exports){
 var Grow, Operator,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -12691,7 +12693,7 @@ Join = (function(_super) {
 module.exports = Join;
 
 
-},{"../../../util":169,"./operator":77}],75:[function(require,module,exports){
+},{"../../../util":170,"./operator":77}],75:[function(require,module,exports){
 var Lerp, Operator,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -12883,7 +12885,7 @@ Memo = (function(_super) {
 module.exports = Memo;
 
 
-},{"../../../util":169,"./operator":77}],77:[function(require,module,exports){
+},{"../../../util":170,"./operator":77}],77:[function(require,module,exports){
 var Operator, Source,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13314,7 +13316,7 @@ Resample = (function(_super) {
 module.exports = Resample;
 
 
-},{"../../../util":169,"./operator":77}],80:[function(require,module,exports){
+},{"../../../util":170,"./operator":77}],80:[function(require,module,exports){
 var Operator, Slice, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13421,7 +13423,7 @@ Slice = (function(_super) {
 module.exports = Slice;
 
 
-},{"../../../util":169,"./operator":77}],81:[function(require,module,exports){
+},{"../../../util":170,"./operator":77}],81:[function(require,module,exports){
 var Operator, Split, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13591,7 +13593,7 @@ Split = (function(_super) {
 module.exports = Split;
 
 
-},{"../../../util":169,"./operator":77}],82:[function(require,module,exports){
+},{"../../../util":170,"./operator":77}],82:[function(require,module,exports){
 var Operator, Spread,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13756,7 +13758,7 @@ Swizzle = (function(_super) {
 module.exports = Swizzle;
 
 
-},{"../../../util":169,"./operator":77}],84:[function(require,module,exports){
+},{"../../../util":170,"./operator":77}],84:[function(require,module,exports){
 var Operator, Transpose, Util, labels,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -13856,7 +13858,7 @@ Transpose = (function(_super) {
 module.exports = Transpose;
 
 
-},{"../../../util":169,"./operator":77}],85:[function(require,module,exports){
+},{"../../../util":170,"./operator":77}],85:[function(require,module,exports){
 var DOM, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14093,7 +14095,7 @@ DOM = (function(_super) {
 module.exports = DOM;
 
 
-},{"../../../util":169,"../../primitive":44}],86:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],86:[function(require,module,exports){
 var HTML, Util, Voxel,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14168,70 +14170,7 @@ HTML = (function(_super) {
 module.exports = HTML;
 
 
-},{"../../../util":169,"../data/voxel":61}],87:[function(require,module,exports){
-var Clock, Parent,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-Parent = require('../base/parent');
-
-Clock = (function(_super) {
-  __extends(Clock, _super);
-
-  function Clock() {
-    return Clock.__super__.constructor.apply(this, arguments);
-  }
-
-  Clock.traits = ['node', 'clock', 'play'];
-
-  Clock.prototype.init = function() {
-    this.clock = 0;
-    return this.time = {
-      now: +new Date() / 1000,
-      time: 0,
-      delta: 0,
-      clock: 0,
-      step: 0
-    };
-  };
-
-  Clock.prototype.make = function() {
-    this.clockParent = this._inherit('clock');
-    return this._listen('clock', 'clock.tick', this.tick);
-  };
-
-  Clock.prototype.unmake = function() {
-    return this.clockParent = null;
-  };
-
-  Clock.prototype.tick = function(e) {
-    var delay, delta, from, pace, parent, ratio, realtime, speed, to, _ref;
-    _ref = this.props, from = _ref.from, to = _ref.to, speed = _ref.speed, pace = _ref.pace, delay = _ref.delay, realtime = _ref.realtime;
-    parent = this.clockParent.getTime();
-    delta = realtime ? parent.delta : parent.step;
-    ratio = speed / pace;
-    delta *= ratio;
-    this.clock += delta;
-    this.time.now = parent.now;
-    this.time.time = parent.time;
-    this.time.delta = parent.delta;
-    this.time.clock = Math.min(to, from + Math.max(0, this.clock - delay * ratio));
-    this.time.step = delta;
-    return this.trigger(e);
-  };
-
-  Clock.prototype.getTime = function() {
-    return this.time;
-  };
-
-  return Clock;
-
-})(Parent);
-
-module.exports = Clock;
-
-
-},{"../base/parent":47}],88:[function(require,module,exports){
+},{"../../../util":170,"../data/voxel":61}],87:[function(require,module,exports){
 var Move, Transition,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14275,7 +14214,7 @@ Move = (function(_super) {
 module.exports = Move;
 
 
-},{"./transition":95}],89:[function(require,module,exports){
+},{"./transition":94}],88:[function(require,module,exports){
 var Play, Track,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14352,7 +14291,7 @@ Play = (function(_super) {
 module.exports = Play;
 
 
-},{"./track":94}],90:[function(require,module,exports){
+},{"./track":93}],89:[function(require,module,exports){
 var Parent, Present, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14713,7 +14652,7 @@ Present = (function(_super) {
 module.exports = Present;
 
 
-},{"../../../util":169,"../base/parent":47}],91:[function(require,module,exports){
+},{"../../../util":170,"../base/parent":47}],90:[function(require,module,exports){
 var Reveal, Transition, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14756,7 +14695,7 @@ Reveal = (function(_super) {
 module.exports = Reveal;
 
 
-},{"../../../util":169,"./transition":95}],92:[function(require,module,exports){
+},{"../../../util":170,"./transition":94}],91:[function(require,module,exports){
 var Parent, Slide,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14836,7 +14775,7 @@ Slide = (function(_super) {
 module.exports = Slide;
 
 
-},{"../base/parent":47}],93:[function(require,module,exports){
+},{"../base/parent":47}],92:[function(require,module,exports){
 var Step, Track,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14950,7 +14889,7 @@ Step = (function(_super) {
 module.exports = Step;
 
 
-},{"./track":94}],94:[function(require,module,exports){
+},{"./track":93}],93:[function(require,module,exports){
 var Ease, Primitive, Track, deepCopy,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15259,11 +15198,6 @@ Track = (function(_super) {
           } else {
             return (function(values, from, to) {
               return function(time, delta) {
-                if (window.spy != null) {
-                  if (key === 'expr') {
-                    debugger;
-                  }
-                }
                 return values[0] = animator.lerp(attr.T, fromP, toP, getLerpFactor(time), values[0]);
               };
             })(values, from, to);
@@ -15311,7 +15245,7 @@ Track = (function(_super) {
 module.exports = Track;
 
 
-},{"../../../util":169,"../../primitive":44}],95:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],94:[function(require,module,exports){
 var Parent, Transition, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15530,7 +15464,7 @@ Transition = (function(_super) {
 module.exports = Transition;
 
 
-},{"../../../util":169,"../base/parent":47}],96:[function(require,module,exports){
+},{"../../../util":170,"../base/parent":47}],95:[function(require,module,exports){
 var Compose, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15631,7 +15565,7 @@ Compose = (function(_super) {
 module.exports = Compose;
 
 
-},{"../../../util":169,"../../primitive":44}],97:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],96:[function(require,module,exports){
 var Parent, RTT, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -15879,7 +15813,7 @@ RTT = (function(_super) {
 module.exports = RTT;
 
 
-},{"../../../util":169,"../base/parent":47}],98:[function(require,module,exports){
+},{"../../../util":170,"../base/parent":47}],97:[function(require,module,exports){
 var Primitive, Shader, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16018,7 +15952,7 @@ Shader = (function(_super) {
 module.exports = Shader;
 
 
-},{"../../../util":169,"../../primitive":44}],99:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],98:[function(require,module,exports){
 var Format, Operator, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16043,7 +15977,7 @@ Format = (function(_super) {
 
   Format.prototype.init = function() {
     Format.__super__.init.apply(this, arguments);
-    this.atlas = this.buffer = this.used = null;
+    this.atlas = this.buffer = this.used = this.time = null;
     return this.filled = false;
   };
 
@@ -16104,6 +16038,7 @@ Format = (function(_super) {
     this.buffer.streamer.emit = function(t) {
       return atlas.map(t, emit);
     };
+    this.clockParent = this._inherit('clock');
     return this._listen('root', 'root.update', this.update);
   };
 
@@ -16131,6 +16066,7 @@ Format = (function(_super) {
     if ((this.filled && !this.props.live) || !this.through) {
       return;
     }
+    this.time = this.clockParent.getTime();
     used = this.used;
     this.atlas.begin();
     this.used = this.through();
@@ -16145,7 +16081,7 @@ Format = (function(_super) {
   };
 
   Format.prototype.change = function(changed, touched, init) {
-    var data, digits, expr, map, timed, _ref;
+    var data, digits, expr, length, map, _ref;
     if (touched['text']) {
       return this.rebuild();
     }
@@ -16162,7 +16098,7 @@ Format = (function(_super) {
           };
         }
       }
-      timed = expr.length > 8;
+      length = expr.length;
       if (digits != null) {
         expr = (function(expr) {
           return function(x, y, z, w, i, j, k, l, t, d) {
@@ -16170,10 +16106,10 @@ Format = (function(_super) {
           };
         })(expr);
       }
-      if (timed) {
+      if (length > 8) {
         map = (function(_this) {
-          return function(emit, x, y, z, w, i, j, k, l) {
-            return emit(expr(x, y, z, w, i, j, k, l, _this._context.time.clock, _this._context.time.step));
+          return function(emit, x, y, z, w, i, j, k, l, t, d) {
+            return emit(expr(x, y, z, w, i, j, k, l, _this.time.clock, _this.time.step));
           };
         })(this);
       } else {
@@ -16194,7 +16130,7 @@ Format = (function(_super) {
 module.exports = Format;
 
 
-},{"../../../util":169,"../operator/operator":77}],100:[function(require,module,exports){
+},{"../../../util":170,"../operator/operator":77}],99:[function(require,module,exports){
 var Label, Primitive, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16332,7 +16268,7 @@ Label = (function(_super) {
 module.exports = Label;
 
 
-},{"../../../util":169,"../../primitive":44}],101:[function(require,module,exports){
+},{"../../../util":170,"../../primitive":44}],100:[function(require,module,exports){
 var Resample, Retext, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16380,7 +16316,7 @@ Retext = (function(_super) {
 module.exports = Retext;
 
 
-},{"../../../util":169,"../operator/resample":79}],102:[function(require,module,exports){
+},{"../../../util":170,"../operator/resample":79}],101:[function(require,module,exports){
 var Text, Util, Voxel,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16478,7 +16414,138 @@ Text = (function(_super) {
 module.exports = Text;
 
 
-},{"../../../util":169,"../data/voxel":61}],103:[function(require,module,exports){
+},{"../../../util":170,"../data/voxel":61}],102:[function(require,module,exports){
+var Clock, Parent,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Parent = require('../base/parent');
+
+Clock = (function(_super) {
+  __extends(Clock, _super);
+
+  function Clock() {
+    return Clock.__super__.constructor.apply(this, arguments);
+  }
+
+  Clock.traits = ['node', 'clock', 'play'];
+
+  Clock.prototype.init = function() {
+    this.clock = 0;
+    return this.time = {
+      now: +new Date() / 1000,
+      time: 0,
+      delta: 0,
+      clock: 0,
+      step: 0
+    };
+  };
+
+  Clock.prototype.make = function() {
+    this.clockParent = this._inherit('clock');
+    return this._listen('clock', 'clock.tick', this.tick);
+  };
+
+  Clock.prototype.unmake = function() {
+    return this.clockParent = null;
+  };
+
+  Clock.prototype.tick = function(e) {
+    var delay, delta, from, pace, parent, ratio, realtime, speed, to, _ref;
+    _ref = this.props, from = _ref.from, to = _ref.to, speed = _ref.speed, pace = _ref.pace, delay = _ref.delay, realtime = _ref.realtime;
+    parent = this.clockParent.getTime();
+    delta = realtime ? parent.delta : parent.step;
+    ratio = speed / pace;
+    delta *= ratio;
+    this.clock += delta;
+    this.time.now = parent.now;
+    this.time.time = parent.time;
+    this.time.delta = parent.delta;
+    this.time.clock = Math.min(to, from + Math.max(0, this.clock - delay * ratio));
+    this.time.step = delta;
+    return this.trigger(e);
+  };
+
+  Clock.prototype.getTime = function() {
+    return this.time;
+  };
+
+  return Clock;
+
+})(Parent);
+
+module.exports = Clock;
+
+
+},{"../base/parent":47}],103:[function(require,module,exports){
+var Now, Parent,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Parent = require('../base/parent');
+
+Now = (function(_super) {
+  __extends(Now, _super);
+
+  function Now() {
+    return Now.__super__.constructor.apply(this, arguments);
+  }
+
+  Now.traits = ['node', 'clock', 'now'];
+
+  Now.prototype.init = function() {
+    var now;
+    this.now = now = +new Date() / 1000;
+    this.skew = 0;
+    return this.time = {
+      now: now,
+      time: 0,
+      delta: 0,
+      clock: 0,
+      step: 0
+    };
+  };
+
+  Now.prototype.make = function() {
+    this.clockParent = this._inherit('clock');
+    return this._listen('clock', 'clock.tick', this.tick);
+  };
+
+  Now.prototype.unmake = function() {
+    return this.clockParent = null;
+  };
+
+  Now.prototype.change = function(changed, touched, init) {
+    if (changed['date.now']) {
+      return this.skew = 0;
+    }
+  };
+
+  Now.prototype.tick = function(e) {
+    var now, pace, parent, seek, speed, _ref, _ref1;
+    _ref = this.props, now = _ref.now, seek = _ref.seek, pace = _ref.pace, speed = _ref.speed;
+    parent = this.clockParent.getTime();
+    this.skew += parent.step * pace / speed;
+    if (seek != null) {
+      this.skew = seek;
+    }
+    this.time.now = this.time.time = this.time.clock = ((_ref1 = this.props.now) != null ? _ref1 : this.now) + this.skew;
+    this.time.delta = this.time.step = parent.delta;
+    return this.trigger(e);
+  };
+
+  Now.prototype.getTime = function() {
+    return this.time;
+  };
+
+  return Now;
+
+})(Parent);
+
+module.exports = Now;
+
+
+},{"../base/parent":47}],104:[function(require,module,exports){
 var Traits, Types;
 
 Types = require('./types');
@@ -16878,15 +16945,18 @@ Traits = {
     to: Types.number(Infinity),
     realtime: Types.bool(false)
   },
-  date: {
-    now: Types.nullable(Types.timestamp())
+  now: {
+    now: Types.nullable(Types.timestamp()),
+    seek: Types.nullable(Types.number(0)),
+    pace: Types.number(1),
+    speed: Types.number(1)
   }
 };
 
 module.exports = Traits;
 
 
-},{"./types":110}],104:[function(require,module,exports){
+},{"./types":111}],105:[function(require,module,exports){
 var Fragment, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16938,7 +17008,7 @@ Fragment = (function(_super) {
 module.exports = Fragment;
 
 
-},{"./transform":106}],105:[function(require,module,exports){
+},{"./transform":107}],106:[function(require,module,exports){
 var Layer, Transform, π,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -17013,7 +17083,7 @@ Layer = (function(_super) {
 module.exports = Layer;
 
 
-},{"./transform":106}],106:[function(require,module,exports){
+},{"./transform":107}],107:[function(require,module,exports){
 var Parent, Transform,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -17046,7 +17116,7 @@ Transform = (function(_super) {
 module.exports = Transform;
 
 
-},{"../base/parent":47}],107:[function(require,module,exports){
+},{"../base/parent":47}],108:[function(require,module,exports){
 var Transform, Transform3, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -17106,7 +17176,7 @@ Transform3 = (function(_super) {
 module.exports = Transform3;
 
 
-},{"../../../util":169,"./transform":106}],108:[function(require,module,exports){
+},{"../../../util":170,"./transform":107}],109:[function(require,module,exports){
 var Transform, Transform4,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -17163,7 +17233,7 @@ Transform4 = (function(_super) {
 module.exports = Transform4;
 
 
-},{"./transform":106}],109:[function(require,module,exports){
+},{"./transform":107}],110:[function(require,module,exports){
 var Transform, Vertex,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -17215,7 +17285,7 @@ Vertex = (function(_super) {
 module.exports = Vertex;
 
 
-},{"./transform":106}],110:[function(require,module,exports){
+},{"./transform":107}],111:[function(require,module,exports){
 var Types, Util, decorate,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -18498,7 +18568,7 @@ decorate = function(types) {
 module.exports = decorate(Types);
 
 
-},{"../../util":169}],111:[function(require,module,exports){
+},{"../../util":170}],112:[function(require,module,exports){
 var Cartesian, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -18576,7 +18646,7 @@ Cartesian = (function(_super) {
 module.exports = Cartesian;
 
 
-},{"../../../util":169,"./view":117}],112:[function(require,module,exports){
+},{"../../../util":170,"./view":118}],113:[function(require,module,exports){
 var Cartesian4, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -18657,7 +18727,7 @@ Cartesian4 = (function(_super) {
 module.exports = Cartesian4;
 
 
-},{"./view":117}],113:[function(require,module,exports){
+},{"./view":118}],114:[function(require,module,exports){
 var Polar, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -18767,7 +18837,7 @@ Polar = (function(_super) {
 module.exports = Polar;
 
 
-},{"../../../util":169,"./view":117}],114:[function(require,module,exports){
+},{"../../../util":170,"./view":118}],115:[function(require,module,exports){
 var Spherical, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -18813,7 +18883,7 @@ Spherical = (function(_super) {
   };
 
   Spherical.prototype.change = function(changed, touched, init) {
-    var adz, aspectX, aspectY, aspectZ, bend, dx, dy, dz, e, fdx, fdy, focus, g, idx, idy, p, q, s, scaleY, sdx, sdy, sdz, sx, sy, sz, transformMatrix, x, y, z, _ref, _ref1;
+    var adz, aspectX, aspectY, aspectZ, bend, dx, dy, dz, e, fdx, fdy, focus, g, idx, idy, p, q, r, s, scaleY, sdx, sdy, sdz, sx, sy, sz, transformMatrix, x, y, z, _ref, _ref1;
     if (!(touched['view'] || touched['view3'] || touched['spherical'] || init)) {
       return;
     }
@@ -18822,7 +18892,7 @@ Spherical = (function(_super) {
     p = this.props.position;
     s = this.props.scale;
     q = this.props.quaternion;
-    q = this.props.rotation;
+    r = this.props.rotation;
     g = this.props.range;
     e = this.props.eulerOrder;
     x = g[0].x;
@@ -18889,7 +18959,7 @@ Spherical = (function(_super) {
 module.exports = Spherical;
 
 
-},{"../../../util":169,"./view":117}],115:[function(require,module,exports){
+},{"../../../util":170,"./view":118}],116:[function(require,module,exports){
 var Stereographic, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -18973,7 +19043,7 @@ Stereographic = (function(_super) {
 module.exports = Stereographic;
 
 
-},{"../../../util":169,"./view":117}],116:[function(require,module,exports){
+},{"../../../util":170,"./view":118}],117:[function(require,module,exports){
 var Stereographic4, Util, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19059,7 +19129,7 @@ Stereographic4 = (function(_super) {
 module.exports = Stereographic4;
 
 
-},{"../../../util":169,"./view":117}],117:[function(require,module,exports){
+},{"../../../util":170,"./view":118}],118:[function(require,module,exports){
 var Transform, View,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19094,7 +19164,7 @@ View = (function(_super) {
 module.exports = View;
 
 
-},{"../transform/transform":106}],118:[function(require,module,exports){
+},{"../transform/transform":107}],119:[function(require,module,exports){
 var ArrayBuffer_, DataBuffer, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19193,7 +19263,7 @@ ArrayBuffer_ = (function(_super) {
 module.exports = ArrayBuffer_;
 
 
-},{"../../util":169,"./databuffer":121}],119:[function(require,module,exports){
+},{"../../util":170,"./databuffer":122}],120:[function(require,module,exports){
 var Atlas, BackedTexture, DataTexture, Renderable, Row, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19387,7 +19457,7 @@ Row = (function() {
 module.exports = Atlas;
 
 
-},{"../../util":169,"../renderable":156,"./texture/backedtexture":128,"./texture/datatexture":129}],120:[function(require,module,exports){
+},{"../../util":170,"../renderable":157,"./texture/backedtexture":129,"./texture/datatexture":130}],121:[function(require,module,exports){
 var Buffer, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19452,7 +19522,7 @@ Buffer = (function(_super) {
 module.exports = Buffer;
 
 
-},{"../../util":169,"../renderable":156}],121:[function(require,module,exports){
+},{"../../util":170,"../renderable":157}],122:[function(require,module,exports){
 var Buffer, DataBuffer, DataTexture, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19606,7 +19676,7 @@ DataBuffer = (function(_super) {
 module.exports = DataBuffer;
 
 
-},{"../../util":169,"./buffer":120,"./texture/datatexture":129}],122:[function(require,module,exports){
+},{"../../util":170,"./buffer":121,"./texture/datatexture":130}],123:[function(require,module,exports){
 var DataBuffer, MatrixBuffer, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19758,7 +19828,7 @@ MatrixBuffer = (function(_super) {
 module.exports = MatrixBuffer;
 
 
-},{"../../util":169,"./databuffer":121}],123:[function(require,module,exports){
+},{"../../util":170,"./databuffer":122}],124:[function(require,module,exports){
 var Memo, RenderToTexture, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19828,7 +19898,7 @@ Memo = (function(_super) {
 module.exports = Memo;
 
 
-},{"../../util":169,"../renderable":156,"./rendertotexture":126}],124:[function(require,module,exports){
+},{"../../util":170,"../renderable":157,"./rendertotexture":127}],125:[function(require,module,exports){
 var Buffer, PushBuffer, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -19956,7 +20026,7 @@ PushBuffer = (function(_super) {
 module.exports = PushBuffer;
 
 
-},{"../../util":169,"./buffer":120}],125:[function(require,module,exports){
+},{"../../util":170,"./buffer":121}],126:[function(require,module,exports){
 var Buffer, Memo, MemoScreen, Readback, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -20291,7 +20361,7 @@ Readback = (function(_super) {
 module.exports = Readback;
 
 
-},{"../../util":169,"../meshes/memoscreen":150,"../renderable":156,"./buffer":120,"./memo":123}],126:[function(require,module,exports){
+},{"../../util":170,"../meshes/memoscreen":151,"../renderable":157,"./buffer":121,"./memo":124}],127:[function(require,module,exports){
 var RenderTarget, RenderToTexture, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -20448,7 +20518,7 @@ RenderToTexture = (function(_super) {
 module.exports = RenderToTexture;
 
 
-},{"../../util":169,"../renderable":156,"./texture/rendertarget":130}],127:[function(require,module,exports){
+},{"../../util":170,"../renderable":157,"./texture/rendertarget":131}],128:[function(require,module,exports){
 var Atlas, SCRATCH_SIZE, TextAtlas,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -20668,7 +20738,7 @@ TextAtlas = (function(_super) {
 module.exports = TextAtlas;
 
 
-},{"./atlas":119}],128:[function(require,module,exports){
+},{"./atlas":120}],129:[function(require,module,exports){
 var BackedTexture, DataTexture, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -20753,7 +20823,7 @@ BackedTexture = (function(_super) {
 module.exports = BackedTexture;
 
 
-},{"../../../Util":23,"./datatexture":129}],129:[function(require,module,exports){
+},{"../../../Util":23,"./datatexture":130}],130:[function(require,module,exports){
 var DataTexture, Util;
 
 Util = require('../../../Util');
@@ -20838,7 +20908,7 @@ DataTexture = (function() {
 module.exports = DataTexture;
 
 
-},{"../../../Util":23}],130:[function(require,module,exports){
+},{"../../../Util":23}],131:[function(require,module,exports){
 
 /*
 Virtual RenderTarget that cycles through multiple frames
@@ -20966,7 +21036,7 @@ RenderTarget = (function() {
 module.exports = RenderTarget;
 
 
-},{}],131:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 var DataBuffer, Util, VoxelBuffer,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21110,7 +21180,7 @@ VoxelBuffer = (function(_super) {
 module.exports = VoxelBuffer;
 
 
-},{"../../util":169,"./databuffer":121}],132:[function(require,module,exports){
+},{"../../util":170,"./databuffer":122}],133:[function(require,module,exports){
 var Classes;
 
 Classes = {
@@ -21140,7 +21210,7 @@ Classes = {
 module.exports = Classes;
 
 
-},{"./buffer/arraybuffer":118,"./buffer/atlas":119,"./buffer/databuffer":121,"./buffer/matrixbuffer":122,"./buffer/memo":123,"./buffer/pushbuffer":124,"./buffer/readback":125,"./buffer/rendertotexture":126,"./buffer/textatlas":127,"./buffer/voxelbuffer":131,"./meshes/arrow":145,"./meshes/debug":147,"./meshes/face":148,"./meshes/line":149,"./meshes/memoscreen":150,"./meshes/point":151,"./meshes/screen":152,"./meshes/sprite":153,"./meshes/strip":154,"./meshes/surface":155,"./scene":157}],133:[function(require,module,exports){
+},{"./buffer/arraybuffer":119,"./buffer/atlas":120,"./buffer/databuffer":122,"./buffer/matrixbuffer":123,"./buffer/memo":124,"./buffer/pushbuffer":125,"./buffer/readback":126,"./buffer/rendertotexture":127,"./buffer/textatlas":128,"./buffer/voxelbuffer":132,"./meshes/arrow":146,"./meshes/debug":148,"./meshes/face":149,"./meshes/line":150,"./meshes/memoscreen":151,"./meshes/point":152,"./meshes/screen":153,"./meshes/sprite":154,"./meshes/strip":155,"./meshes/surface":156,"./scene":158}],134:[function(require,module,exports){
 var RenderFactory;
 
 RenderFactory = (function() {
@@ -21165,7 +21235,7 @@ RenderFactory = (function() {
 module.exports = RenderFactory;
 
 
-},{}],134:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 var ArrowGeometry, ClipGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21295,7 +21365,7 @@ ArrowGeometry = (function(_super) {
 module.exports = ArrowGeometry;
 
 
-},{"./clipgeometry":135}],135:[function(require,module,exports){
+},{"./clipgeometry":136}],136:[function(require,module,exports){
 var ClipGeometry, Geometry, debug, tick,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21379,7 +21449,7 @@ ClipGeometry = (function(_super) {
 module.exports = ClipGeometry;
 
 
-},{"./geometry":137}],136:[function(require,module,exports){
+},{"./geometry":138}],137:[function(require,module,exports){
 var ClipGeometry, FaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21472,7 +21542,7 @@ FaceGeometry = (function(_super) {
 module.exports = FaceGeometry;
 
 
-},{"./clipgeometry":135}],137:[function(require,module,exports){
+},{"./clipgeometry":136}],138:[function(require,module,exports){
 var Geometry, debug, tick,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21683,7 +21753,7 @@ Geometry = (function(_super) {
 module.exports = Geometry;
 
 
-},{}],138:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 exports.Geometry = require('./geometry');
 
 exports.ArrowGeometry = require('./arrowgeometry');
@@ -21701,7 +21771,7 @@ exports.StripGeometry = require('./stripgeometry');
 exports.SurfaceGeometry = require('./surfacegeometry');
 
 
-},{"./arrowgeometry":134,"./facegeometry":136,"./geometry":137,"./linegeometry":139,"./screengeometry":140,"./spritegeometry":141,"./stripgeometry":142,"./surfacegeometry":143}],139:[function(require,module,exports){
+},{"./arrowgeometry":135,"./facegeometry":137,"./geometry":138,"./linegeometry":140,"./screengeometry":141,"./spritegeometry":142,"./stripgeometry":143,"./surfacegeometry":144}],140:[function(require,module,exports){
 var ClipGeometry, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21804,7 +21874,7 @@ LineGeometry = (function(_super) {
 module.exports = LineGeometry;
 
 
-},{"./clipgeometry":135}],140:[function(require,module,exports){
+},{"./clipgeometry":136}],141:[function(require,module,exports){
 var ScreenGeometry, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21881,7 +21951,7 @@ ScreenGeometry = (function(_super) {
 module.exports = ScreenGeometry;
 
 
-},{"./surfacegeometry":143}],141:[function(require,module,exports){
+},{"./surfacegeometry":144}],142:[function(require,module,exports){
 var ClipGeometry, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21979,7 +22049,7 @@ SpriteGeometry = (function(_super) {
 module.exports = SpriteGeometry;
 
 
-},{"./clipgeometry":135}],142:[function(require,module,exports){
+},{"./clipgeometry":136}],143:[function(require,module,exports){
 var ClipGeometry, StripGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22089,7 +22159,7 @@ StripGeometry = (function(_super) {
 module.exports = StripGeometry;
 
 
-},{"./clipgeometry":135}],143:[function(require,module,exports){
+},{"./clipgeometry":136}],144:[function(require,module,exports){
 var ClipGeometry, SurfaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22212,7 +22282,7 @@ SurfaceGeometry = (function(_super) {
 module.exports = SurfaceGeometry;
 
 
-},{"./clipgeometry":135}],144:[function(require,module,exports){
+},{"./clipgeometry":136}],145:[function(require,module,exports){
 exports.Scene = require('./scene');
 
 exports.Factory = require('./factory');
@@ -22222,7 +22292,7 @@ exports.Renderable = require('./scene');
 exports.Classes = require('./classes');
 
 
-},{"./classes":132,"./factory":133,"./scene":157}],145:[function(require,module,exports){
+},{"./classes":133,"./factory":134,"./scene":158}],146:[function(require,module,exports){
 var Arrow, ArrowGeometry, Base,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22283,7 +22353,7 @@ Arrow = (function(_super) {
 module.exports = Arrow;
 
 
-},{"../geometry":138,"./base":146}],146:[function(require,module,exports){
+},{"../geometry":139,"./base":147}],147:[function(require,module,exports){
 var Base, Renderable, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22536,7 +22606,7 @@ Base = (function(_super) {
 module.exports = Base;
 
 
-},{"../../util":169,"../renderable":156}],147:[function(require,module,exports){
+},{"../../util":170,"../renderable":157}],148:[function(require,module,exports){
 var Base, Debug,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22577,7 +22647,7 @@ Debug = (function(_super) {
 module.exports = Debug;
 
 
-},{"./base":146}],148:[function(require,module,exports){
+},{"./base":147}],149:[function(require,module,exports){
 var Base, Face, FaceGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22643,7 +22713,7 @@ Face = (function(_super) {
 module.exports = Face;
 
 
-},{"../geometry":138,"./base":146}],149:[function(require,module,exports){
+},{"../geometry":139,"./base":147}],150:[function(require,module,exports){
 var Base, Line, LineGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22723,7 +22793,7 @@ Line = (function(_super) {
 module.exports = Line;
 
 
-},{"../geometry":138,"./base":146}],150:[function(require,module,exports){
+},{"../geometry":139,"./base":147}],151:[function(require,module,exports){
 var MemoScreen, Screen, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22815,7 +22885,7 @@ MemoScreen = (function(_super) {
 module.exports = MemoScreen;
 
 
-},{"../../util":169,"./screen":152}],151:[function(require,module,exports){
+},{"../../util":170,"./screen":153}],152:[function(require,module,exports){
 var Base, Point, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22904,7 +22974,7 @@ Point = (function(_super) {
 module.exports = Point;
 
 
-},{"../geometry":138,"./base":146}],152:[function(require,module,exports){
+},{"../geometry":139,"./base":147}],153:[function(require,module,exports){
 var Base, Screen, ScreenGeometry, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22965,7 +23035,7 @@ Screen = (function(_super) {
 module.exports = Screen;
 
 
-},{"../../util":169,"../geometry":138,"./base":146}],153:[function(require,module,exports){
+},{"../../util":170,"../geometry":139,"./base":147}],154:[function(require,module,exports){
 var Base, Sprite, SpriteGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -23042,7 +23112,7 @@ Sprite = (function(_super) {
 module.exports = Sprite;
 
 
-},{"../geometry":138,"./base":146}],154:[function(require,module,exports){
+},{"../geometry":139,"./base":147}],155:[function(require,module,exports){
 var Base, Strip, StripGeometry,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -23108,7 +23178,7 @@ Strip = (function(_super) {
 module.exports = Strip;
 
 
-},{"../geometry":138,"./base":146}],155:[function(require,module,exports){
+},{"../geometry":139,"./base":147}],156:[function(require,module,exports){
 var Base, Surface, SurfaceGeometry, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -23182,7 +23252,7 @@ Surface = (function(_super) {
 module.exports = Surface;
 
 
-},{"../../util":169,"../geometry":138,"./base":146}],156:[function(require,module,exports){
+},{"../../util":170,"../geometry":139,"./base":147}],157:[function(require,module,exports){
 var Renderable;
 
 Renderable = (function() {
@@ -23224,7 +23294,7 @@ Renderable = (function() {
 module.exports = Renderable;
 
 
-},{}],157:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 var MathBox, Renderable, Scene,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -23361,7 +23431,7 @@ Scene = (function(_super) {
 module.exports = Scene;
 
 
-},{"./renderable":156}],158:[function(require,module,exports){
+},{"./renderable":157}],159:[function(require,module,exports){
 var Factory, ShaderGraph;
 
 ShaderGraph = require('../../vendor/shadergraph/src');
@@ -23390,13 +23460,13 @@ Factory = function(snippets) {
 module.exports = Factory;
 
 
-},{"../../vendor/shadergraph/src":202}],159:[function(require,module,exports){
+},{"../../vendor/shadergraph/src":203}],160:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Snippets = require('../../build/shaders');
 
 
-},{"../../build/shaders":1,"./factory":158}],160:[function(require,module,exports){
+},{"../../build/shaders":1,"./factory":159}],161:[function(require,module,exports){
 THREE.Bootstrap.registerPlugin('splash', {
   defaults: {
     color: 'mono',
@@ -23483,7 +23553,7 @@ THREE.Bootstrap.registerPlugin('splash', {
 });
 
 
-},{}],161:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 var Animation, Animator, Ease;
 
 Ease = require('../util').Ease;
@@ -23748,7 +23818,7 @@ Animation = (function() {
 module.exports = Animator;
 
 
-},{"../util":169}],162:[function(require,module,exports){
+},{"../util":170}],163:[function(require,module,exports){
 var API, Util;
 
 Util = require('../util');
@@ -24087,7 +24157,7 @@ API = (function() {
 module.exports = API;
 
 
-},{"../util":169}],163:[function(require,module,exports){
+},{"../util":170}],164:[function(require,module,exports){
 var Controller, Util;
 
 Util = require('../util');
@@ -24169,7 +24239,7 @@ Controller = (function() {
 module.exports = Controller;
 
 
-},{"../util":169}],164:[function(require,module,exports){
+},{"../util":170}],165:[function(require,module,exports){
 exports.Animator = require('./animator');
 
 exports.API = require('./api');
@@ -24177,7 +24247,7 @@ exports.API = require('./api');
 exports.Controller = require('./controller');
 
 
-},{"./animator":161,"./api":162,"./controller":163}],165:[function(require,module,exports){
+},{"./animator":162,"./api":163,"./controller":164}],166:[function(require,module,exports){
 var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 exports.setOrigin = function(vec, dimensions, origin) {
@@ -24244,7 +24314,7 @@ exports.recenterAxis = (function() {
 })();
 
 
-},{}],166:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 var getSizes;
 
 exports.getSizes = getSizes = function(data) {
@@ -24827,7 +24897,7 @@ exports.getLerpEmitter = function(expr1, expr2) {
 };
 
 
-},{}],167:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 var ease, π;
 
 π = Math.PI;
@@ -24844,7 +24914,7 @@ ease = {
 module.exports = ease;
 
 
-},{}],168:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 var index, letters, parseOrder, toFloatString, toType,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -25045,7 +25115,7 @@ exports.constant = function(type, value) {
 exports.toType = toType;
 
 
-},{}],169:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 exports.Axis = require('./axis');
 
 exports.Data = require('./data');
@@ -25065,7 +25135,7 @@ exports.Ticks = require('./ticks');
 exports.VDOM = require('./vdom');
 
 
-},{"./axis":165,"./data":166,"./ease":167,"./glsl":168,"./js":170,"./pretty":171,"./three":172,"./ticks":173,"./vdom":174}],170:[function(require,module,exports){
+},{"./axis":166,"./data":167,"./ease":168,"./glsl":169,"./js":171,"./pretty":172,"./three":173,"./ticks":174,"./vdom":175}],171:[function(require,module,exports){
 exports.merge = function() {
   var k, obj, v, x, _i, _len;
   x = {};
@@ -25137,7 +25207,7 @@ exports.parseQuoted = function(str) {
 };
 
 
-},{}],171:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 var NUMBER_PRECISION, NUMBER_THRESHOLD, checkFactor, checkUnit, formatFactors, formatFraction, formatMultiple, formatPrimes, prettyJSXBind, prettyJSXPair, prettyJSXProp, prettyMarkup, prettyNumber, prettyPrint;
 
 NUMBER_PRECISION = 5;
@@ -25467,7 +25537,7 @@ for x in [1, 2, 1/2, 3, 1/3, Math.PI, Math.PI / 2, Math.PI * 2, Math.PI * 3, Mat
  */
 
 
-},{}],172:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 exports.paramToGL = function(gl, p) {
   if (p === THREE.RepeatWrapping) {
     return gl.REPEAT;
@@ -25653,7 +25723,7 @@ exports.transformComposer = function() {
 };
 
 
-},{}],173:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 
 /*
  Generate equally spaced ticks in a range at sensible positions.
@@ -25771,7 +25841,7 @@ exports.linear = linear;
 exports.log = log;
 
 
-},{}],174:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 var HEAP, Types, apply, createClass, descriptor, element, hint, id, key, map, mount, prop, recycle, set, unmount, unset, _i, _len, _ref;
 
 HEAP = [];
@@ -26218,7 +26288,7 @@ module.exports = {
 };
 
 
-},{}],175:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 
 /*
   Graph of nodes with outlets
@@ -26362,7 +26432,7 @@ Graph = (function() {
 module.exports = Graph;
 
 
-},{}],176:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 exports.Graph = require('./graph');
 
 exports.Node = require('./node');
@@ -26374,7 +26444,7 @@ exports.IN = exports.Graph.IN;
 exports.OUT = exports.Graph.OUT;
 
 
-},{"./graph":175,"./node":177,"./outlet":178}],177:[function(require,module,exports){
+},{"./graph":176,"./node":178,"./outlet":179}],178:[function(require,module,exports){
 var Graph, Node, Outlet;
 
 Graph = require('./graph');
@@ -26617,7 +26687,7 @@ Node = (function() {
 module.exports = Node;
 
 
-},{"./graph":175,"./outlet":178}],178:[function(require,module,exports){
+},{"./graph":176,"./outlet":179}],179:[function(require,module,exports){
 var Graph, Outlet;
 
 Graph = require('./graph');
@@ -26737,7 +26807,7 @@ Outlet = (function() {
 module.exports = Outlet;
 
 
-},{"./graph":175}],179:[function(require,module,exports){
+},{"./graph":176}],180:[function(require,module,exports){
 var Block, Graph, Layout, OutletError, Program, debug;
 
 Graph = require('../graph');
@@ -26895,7 +26965,7 @@ OutletError.prototype = new Error;
 module.exports = Block;
 
 
-},{"../graph":199,"../linker":204}],180:[function(require,module,exports){
+},{"../graph":200,"../linker":205}],181:[function(require,module,exports){
 var Block, Call,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -26965,7 +27035,7 @@ Call = (function(_super) {
 module.exports = Call;
 
 
-},{"./block":179}],181:[function(require,module,exports){
+},{"./block":180}],182:[function(require,module,exports){
 var Block, Callback, Graph,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -27072,7 +27142,7 @@ Callback = (function(_super) {
 module.exports = Callback;
 
 
-},{"../graph":199,"./block":179}],182:[function(require,module,exports){
+},{"../graph":200,"./block":180}],183:[function(require,module,exports){
 exports.Block = require('./block');
 
 exports.Call = require('./call');
@@ -27084,7 +27154,7 @@ exports.Isolate = require('./isolate');
 exports.Join = require('./join');
 
 
-},{"./block":179,"./call":180,"./callback":181,"./isolate":183,"./join":184}],183:[function(require,module,exports){
+},{"./block":180,"./call":181,"./callback":182,"./isolate":184,"./join":185}],184:[function(require,module,exports){
 var Block, Graph, Isolate,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -27179,7 +27249,7 @@ Isolate = (function(_super) {
 module.exports = Isolate;
 
 
-},{"../graph":199,"./block":179}],184:[function(require,module,exports){
+},{"../graph":200,"./block":180}],185:[function(require,module,exports){
 var Block, Join,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -27238,7 +27308,7 @@ Join = (function(_super) {
 module.exports = Join;
 
 
-},{"./block":179}],185:[function(require,module,exports){
+},{"./block":180}],186:[function(require,module,exports){
 
 /*
   Cache decorator  
@@ -27272,7 +27342,7 @@ cache = function(fetch) {
 module.exports = cache;
 
 
-},{"./hash":187,"./queue":191}],186:[function(require,module,exports){
+},{"./hash":188,"./queue":192}],187:[function(require,module,exports){
 var Block, Factory, Graph, State, Visualize;
 
 Graph = require('../graph').Graph;
@@ -27691,7 +27761,7 @@ State = (function() {
 module.exports = Factory;
 
 
-},{"../block":182,"../graph":199,"../visualize":210}],187:[function(require,module,exports){
+},{"../block":183,"../graph":200,"../visualize":211}],188:[function(require,module,exports){
 var c1, c2, c3, c4, c5, hash, imul, test;
 
 c1 = 0xcc9e2d51;
@@ -27757,7 +27827,7 @@ hash = function(string) {
 module.exports = hash;
 
 
-},{}],188:[function(require,module,exports){
+},{}],189:[function(require,module,exports){
 exports.Factory = require('./factory');
 
 exports.Material = require('./material');
@@ -27771,7 +27841,7 @@ exports.queue = require('./queue');
 exports.hash = require('./hash');
 
 
-},{"./cache":185,"./factory":186,"./hash":187,"./library":189,"./material":190,"./queue":191}],189:[function(require,module,exports){
+},{"./cache":186,"./factory":187,"./hash":188,"./library":190,"./material":191,"./queue":192}],190:[function(require,module,exports){
 
 /*
   Snippet library
@@ -27828,7 +27898,7 @@ library = function(language, snippets, load) {
 module.exports = library;
 
 
-},{}],190:[function(require,module,exports){
+},{}],191:[function(require,module,exports){
 var Material, Visualize, debug, tick;
 
 debug = false;
@@ -27915,7 +27985,7 @@ Material = (function() {
 module.exports = Material;
 
 
-},{"../visualize":210}],191:[function(require,module,exports){
+},{"../visualize":211}],192:[function(require,module,exports){
 var queue;
 
 queue = function(limit) {
@@ -27983,7 +28053,7 @@ queue = function(limit) {
 module.exports = queue;
 
 
-},{}],192:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
 
 /*
   Compile snippet back into GLSL, but with certain symbols replaced by prefixes / placeholders
@@ -28082,14 +28152,14 @@ string_compiler = function(code, placeholders) {
 module.exports = compile;
 
 
-},{}],193:[function(require,module,exports){
+},{}],194:[function(require,module,exports){
 module.exports = {
   SHADOW_ARG: '_i_o',
   RETURN_ARG: 'return'
 };
 
 
-},{}],194:[function(require,module,exports){
+},{}],195:[function(require,module,exports){
 var Definition, decl, defaults, get, three, threejs, win;
 
 module.exports = decl = {};
@@ -28308,7 +28378,7 @@ Definition = (function() {
 })();
 
 
-},{}],195:[function(require,module,exports){
+},{}],196:[function(require,module,exports){
 var $, Graph, _;
 
 Graph = require('../graph');
@@ -28638,7 +28708,7 @@ module.exports = _ = {
 };
 
 
-},{"../graph":199,"./constants":193}],196:[function(require,module,exports){
+},{"../graph":200,"./constants":194}],197:[function(require,module,exports){
 var k, v, _i, _len, _ref;
 
 exports.compile = require('./compile');
@@ -28654,7 +28724,7 @@ for (v = _i = 0, _len = _ref.length; _i < _len; v = ++_i) {
 }
 
 
-},{"./compile":192,"./constants":193,"./generate":195,"./parse":197}],197:[function(require,module,exports){
+},{"./compile":193,"./constants":194,"./generate":196,"./parse":198}],198:[function(require,module,exports){
 var $, collect, debug, decl, extractSignatures, mapSymbols, parse, parseGLSL, parser, processAST, sortSymbols, tick, tokenizer, walk;
 
 tokenizer = require('../../vendor/glsl-tokenizer');
@@ -28943,7 +29013,7 @@ module.exports = walk;
 module.exports = parse;
 
 
-},{"../../vendor/glsl-parser":213,"../../vendor/glsl-tokenizer":217,"./constants":193,"./decl":194}],198:[function(require,module,exports){
+},{"../../vendor/glsl-parser":214,"../../vendor/glsl-tokenizer":218,"./constants":194,"./decl":195}],199:[function(require,module,exports){
 
 /*
   Graph of nodes with outlets
@@ -29087,7 +29157,7 @@ Graph = (function() {
 module.exports = Graph;
 
 
-},{}],199:[function(require,module,exports){
+},{}],200:[function(require,module,exports){
 exports.Graph = require('./graph');
 
 exports.Node = require('./node');
@@ -29099,7 +29169,7 @@ exports.IN = exports.Graph.IN;
 exports.OUT = exports.Graph.OUT;
 
 
-},{"./graph":198,"./node":200,"./outlet":201}],200:[function(require,module,exports){
+},{"./graph":199,"./node":201,"./outlet":202}],201:[function(require,module,exports){
 var Graph, Node, Outlet;
 
 Graph = require('./graph');
@@ -29342,7 +29412,7 @@ Node = (function() {
 module.exports = Node;
 
 
-},{"./graph":198,"./outlet":201}],201:[function(require,module,exports){
+},{"./graph":199,"./outlet":202}],202:[function(require,module,exports){
 var Graph, Outlet;
 
 Graph = require('./graph');
@@ -29462,7 +29532,7 @@ Outlet = (function() {
 module.exports = Outlet;
 
 
-},{"./graph":198}],202:[function(require,module,exports){
+},{"./graph":199}],203:[function(require,module,exports){
 var Block, Factory, GLSL, Graph, Linker, ShaderGraph, Snippet, Visualize, cache, inspect, library, merge, visualize;
 
 Block = require('./block');
@@ -29569,7 +29639,7 @@ if (typeof window !== 'undefined') {
 }
 
 
-},{"./block":182,"./factory":188,"./glsl":196,"./graph":199,"./linker":204,"./visualize":210}],203:[function(require,module,exports){
+},{"./block":183,"./factory":189,"./glsl":197,"./graph":200,"./linker":205,"./visualize":211}],204:[function(require,module,exports){
 var Graph, Priority, assemble;
 
 Graph = require('../graph');
@@ -29758,7 +29828,7 @@ assemble = function(language, namespace, calls, requires) {
 module.exports = assemble;
 
 
-},{"../graph":199,"./priority":207}],204:[function(require,module,exports){
+},{"../graph":200,"./priority":208}],205:[function(require,module,exports){
 exports.Snippet = require('./snippet');
 
 exports.Program = require('./program');
@@ -29774,7 +29844,7 @@ exports.priority = require('./priority');
 exports.load = exports.Snippet.load;
 
 
-},{"./assemble":203,"./layout":205,"./link":206,"./priority":207,"./program":208,"./snippet":209}],205:[function(require,module,exports){
+},{"./assemble":204,"./layout":206,"./link":207,"./priority":208,"./program":209,"./snippet":210}],206:[function(require,module,exports){
 var Layout, Snippet, debug, link;
 
 Snippet = require('./snippet');
@@ -29852,7 +29922,7 @@ Layout = (function() {
 module.exports = Layout;
 
 
-},{"./link":206,"./snippet":209}],206:[function(require,module,exports){
+},{"./link":207,"./snippet":210}],207:[function(require,module,exports){
 var Graph, Priority, link;
 
 Graph = require('../graph');
@@ -29994,7 +30064,7 @@ link = function(language, links, modules, exported) {
 module.exports = link;
 
 
-},{"../graph":199,"./priority":207}],207:[function(require,module,exports){
+},{"../graph":200,"./priority":208}],208:[function(require,module,exports){
 exports.make = function(x) {
   if (x == null) {
     x = [];
@@ -30042,7 +30112,7 @@ exports.max = function(a, b) {
 };
 
 
-},{}],208:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 var Program, Snippet, assemble;
 
 Snippet = require('./snippet');
@@ -30121,7 +30191,7 @@ Program = (function() {
 module.exports = Program;
 
 
-},{"./assemble":203,"./snippet":209}],209:[function(require,module,exports){
+},{"./assemble":204,"./snippet":210}],210:[function(require,module,exports){
 var Snippet;
 
 Snippet = (function() {
@@ -30303,7 +30373,7 @@ Snippet = (function() {
 module.exports = Snippet;
 
 
-},{}],210:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 var Graph, markup, merge, resolve, serialize, visualize;
 
 Graph = require('../Graph').Graph;
@@ -30388,7 +30458,7 @@ exports.inspect = function() {
 };
 
 
-},{"../Graph":176,"./markup":211,"./serialize":212}],211:[function(require,module,exports){
+},{"../Graph":177,"./markup":212,"./serialize":213}],212:[function(require,module,exports){
 var connect, cssColor, escapeText, hash, hashColor, makeSVG, merge, overlay, path, process, sqr, trim, wrap, _activate, _markup, _order;
 
 hash = require('../factory/hash');
@@ -30702,7 +30772,7 @@ module.exports = {
 };
 
 
-},{"../factory/hash":187}],212:[function(require,module,exports){
+},{"../factory/hash":188}],213:[function(require,module,exports){
 var Block, isCallback, serialize;
 
 Block = require('../block');
@@ -30792,10 +30862,10 @@ serialize = function(graph) {
 module.exports = serialize;
 
 
-},{"../block":182}],213:[function(require,module,exports){
+},{"../block":183}],214:[function(require,module,exports){
 module.exports = require('./lib/index')
 
-},{"./lib/index":215}],214:[function(require,module,exports){
+},{"./lib/index":216}],215:[function(require,module,exports){
 var state
   , token
   , tokens
@@ -31062,7 +31132,7 @@ function fail(message) {
   return function() { return state.unexpected(message) }
 }
 
-},{}],215:[function(require,module,exports){
+},{}],216:[function(require,module,exports){
 module.exports = parser
 
 var through = require('../../through')
@@ -32023,7 +32093,7 @@ function is_precision(token) {
          token.data === 'lowp'
 }
 
-},{"../../through":221,"./expr":214,"./scope":216}],216:[function(require,module,exports){
+},{"../../through":222,"./expr":215,"./scope":217}],217:[function(require,module,exports){
 module.exports = scope
 
 function scope(state) {
@@ -32063,7 +32133,7 @@ proto.find = function(name, fail) {
   return null
 }
 
-},{}],217:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 module.exports = tokenize
 
 var through = require('../through')
@@ -32400,7 +32470,7 @@ function tokenize() {
   }
 }
 
-},{"../through":221,"./lib/builtins":218,"./lib/literals":219,"./lib/operators":220}],218:[function(require,module,exports){
+},{"../through":222,"./lib/builtins":219,"./lib/literals":220,"./lib/operators":221}],219:[function(require,module,exports){
 module.exports = [
     'gl_Position'
   , 'gl_PointSize'
@@ -32546,7 +32616,7 @@ module.exports = [
   , 'textureCubeLod'
 ]
 
-},{}],219:[function(require,module,exports){
+},{}],220:[function(require,module,exports){
 module.exports = [
   // current
     'precision'
@@ -32641,7 +32711,7 @@ module.exports = [
   , 'using'
 ]
 
-},{}],220:[function(require,module,exports){
+},{}],221:[function(require,module,exports){
 module.exports = [
     '<<='
   , '>>='
@@ -32689,7 +32759,7 @@ module.exports = [
   , '}'
 ]
 
-},{}],221:[function(require,module,exports){
+},{}],222:[function(require,module,exports){
 var through;
 
 through = function(write, end) {
