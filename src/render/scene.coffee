@@ -83,4 +83,6 @@ class Scene extends Renderable
     # Restore visibility
     children.map (o, i) -> o.visible = visible[i]
 
+  toJSON: () -> @root.toJSON()
+
 module.exports = Scene

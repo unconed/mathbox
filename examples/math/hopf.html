@@ -76,51 +76,12 @@
 
     view = mathbox
       .unit({
-        scale: 720,
+        scale: 500,
       })
       .stereographic4({
         range: [[-4, 4], [-4, 4], [-4, 4], [-1, 1]],
         scale: [4, 4, 4, 1],
       });
-
-    view.area({
-      rangeX: [-π, π],
-      rangeY: [-π/2, π/2],
-      width: 127,
-      height: 63,
-      expr: function (emit, x, y, i, j) {
-        ϕ = y
-        θ = angle
-        hopf(emit, ϕ, θ, x);
-      },
-      channels: 4,
-    });
-    view.surface({
-      color: 0xffffff,
-      opacity: .5,
-      lineX: false,
-      lineY: false,
-      zBias: -80,
-    });
-
-    view.area({
-      rangeX: [-π, π],
-      rangeY: [-.6, .6],
-      width: 127,
-      height: 63,
-      expr: function (emit, x, y, i, j) {
-        ϕ = y + time
-        θ = angle
-        hopf(emit, ϕ, θ, x);
-      },
-      channels: 4,
-    });
-    view.surface({
-      color: 0x3080FF,
-      lineX: false,
-      lineY: false,
-      zBias: -5,
-    });
 
     view.area({
       rangeX: [-π, π],
@@ -141,6 +102,44 @@
       zBias: 10,
       width: 3
     });
+
+    view.area({
+      rangeX: [-π, π],
+      rangeY: [-.6, .6],
+      width: 127,
+      height: 63,
+      expr: function (emit, x, y, i, j) {
+        ϕ = y + time
+        θ = angle
+        hopf(emit, ϕ, θ, x);
+      },
+      channels: 4,
+    });
+    view.surface({
+      shaded: true,
+      color: 0x3080FF,
+      zBias: -5,
+    });
+
+    view.area({
+      rangeX: [-π, π],
+      rangeY: [-π/2, π/2],
+      width: 127,
+      height: 63,
+      expr: function (emit, x, y, i, j) {
+        ϕ = y
+        θ = angle
+        hopf(emit, ϕ, θ, x);
+      },
+      channels: 4,
+    });
+    view.surface({
+      shaded: true,
+      color: 0xffffff,
+      opacity: .5,
+      zBias: -80,
+    });
+
 
   </script>
 </body>

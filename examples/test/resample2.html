@@ -29,39 +29,10 @@ vec4 getFramesSample(vec3 xyz) {
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor'],
-      controls: {
-        klass: THREE.OrbitControls
-      },
+      plugins: ['core'],
     });
     three = mathbox.three;
-
-    three.camera.position.set(.3, 1, 3);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
-
-    time = 0;
-    origin = new THREE.Vector3();
-    three.on('update', function (event) {
-      time = three.Time.clock;
-      x = Math.cos(time) * 3;
-      z = Math.sin(time) * 3;
-      
-      m1 = Math.cos(time * .417) * .5 + .5;
-      m2 = Math.cos(time * .617 + Math.sin(time * .133)) * .5 + .5;
-
-      if (rtt) {
-        c = rtt[0].controller.rtt.camera;
-        if (c) {
-          c.position.set(x, 0, z);
-          c.lookAt(origin);
-        }
-      }
-      
-      if (colormap) {
-        colormap.set('modulate1', m1);
-        colormap.set('modulate2', m2);
-      }
-    });
 
     mathbox
       .set({
@@ -73,6 +44,11 @@ vec4 getFramesSample(vec3 xyz) {
         magFilter: 'nearest',
         type: 'unsignedByte',
       })
+        .camera({
+          lookAt: [0, 0, 0]
+        }, {
+          position: function (t) { return [Math.cos(t) * 3, 0, Math.sin(t) * 3] }
+        })
         .cartesian({
           range: [[-2, 2], [-1, 1], [-1, 1]],
           scale: [2, 1, 1],
@@ -81,7 +57,7 @@ vec4 getFramesSample(vec3 xyz) {
             scale: [.7, .7, .7],
           })
             .grid({
-              width: 3,
+              width: 5,
               divideX: 2,
               divideY: 2,
               zBias: 10,
@@ -103,12 +79,12 @@ vec4 getFramesSample(vec3 xyz) {
           code: [
             "uniform vec3 dataResolution;",
             "uniform vec3 dataSize;",
-            "const float COS = .995;",
-            "const float SIN = .01;",
+            "uniform float cosine;",
+            "uniform float sine;",
             "vec4 getSample(vec3 xyz);",
             "vec4 getFramesSample(vec3 xyz) {",
             "  vec2 pos = xyz.xy * dataResolution.xy - .5;",
-            "  pos = ((pos * vec2(16.0, 9.0)) * mat2(COS, SIN, -SIN, COS) * .999) / vec2(16.0, 9.0);",
+            "  pos = ((pos * dataSize.xy) * mat2(cosine, sine, -sine, cosine) * .999) / dataSize.xy;",
             "  xyz.xy = (pos + .5) * dataSize.xy;",
             "  vec4 c = getSample(xyz + vec3( 0.0, 0.0, 1.0));",
             "  vec3 t = getSample(xyz + vec3( 0.0, 1.5, 0.0)).xyz;",
@@ -117,6 +93,9 @@ vec4 getFramesSample(vec3 xyz) {
             "  vec3 r = getSample(xyz + vec3( 1.5, 0.0, 0.0)).xyz;",
             "  return vec4((t + b + l + r) / 2.0 - c.xyz, c.w);",
             "}"].join("\n")
+        }, {
+          cosine: function (t) { return Math.cos(Math.sin(t * .2) * .005); },
+          sine:   function (t) { return Math.sin(Math.sin(t * .2) * .005); },
         })
         .resample({
           id: 'resample1',
@@ -137,7 +116,33 @@ vec4 getFramesSample(vec3 xyz) {
       })
         .shader({
           id: "colormap",
-          code: '#map-color',
+          code: [
+            "uniform float modulate1;",
+            "uniform float modulate2;",
+            "uniform float modulate3;",
+            "uniform float modulate4;",
+            "vec4 getSample(vec3 xyz);",
+            "vec4 getFramesSample(vec3 xyz) {",
+            "  vec4 color = (",
+            "    getSample(xyz) +",
+            "    getSample(xyz + vec3(0.0, 0.0, 1.0)) +",
+            "    getSample(xyz + vec3(0.0, 0.0, 2.0)) +",
+            "    getSample(xyz + vec3(0.0, 0.0, 3.0))",
+            "  ) / 4.0;",
+            "  color = color * color * color * 1.15;",
+            "  float v = color.x + color.y + color.z;",
+            "  vec3 c = vec3(v*v + color.x * .2, v*v, v*v*v + color.z) * .333;",
+            "  c = mix(c, mix(sqrt(c.yzx * c), c.zxy, modulate1), modulate2);",
+            "  c = mix(c, mix(c.yzx, c.zxy, modulate1), modulate2);",
+            "  c = mix(c, mix(abs(sin(c.yxz * 2.0)), c.zyx, modulate3), modulate4);",
+            "  return vec4(c, 1.0);",
+            "}",
+          ].join("\n")
+        }, {
+          modulate1: function (t) { return Math.cos(t * .417) * .5 + .5; },
+          modulate2: function (t) { return Math.cos(t * .617 + Math.sin(t * .133)) * .5 + .5; },
+          modulate3: function (t) { return Math.cos(t * .217 + 2.0) * .5 + .5; },
+          modulate4: function (t) { return Math.cos(t * .117 + 3.0 + Math.sin(t * .133)) * .5 + .5; },
         })
         .resample({
           id: 'resample2',
@@ -164,9 +169,6 @@ vec4 getFramesSample(vec3 xyz) {
         source: '#resample2',
       })
 
-
-    var rtt = mathbox.select('rtt')
-    var colormap = mathbox.select('#colormap')
 
   </script>
 </body>

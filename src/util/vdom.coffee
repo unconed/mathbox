@@ -84,6 +84,8 @@ apply = (el, last, node, parent, index) ->
         children     = last?.children ? null
         nextChildren = el   .children
 
+        nextProps.children = nextChildren if nextProps?
+
         # Component
         if type?
           # See if it changed
@@ -126,7 +128,7 @@ apply = (el, last, node, parent, index) ->
         else
           # VDOM node
           unset node, key, props[key] for key        of props     when !nextProps.hasOwnProperty key if props?
-          set   node, key, value, ref for key, value of nextProps when (ref = props[key]) != value   if nextProps?
+          set   node, key, value, ref for key, value of nextProps when (ref = props[key]) != value   and key != 'children' if nextProps?
 
           # Diff children
           if nextChildren?

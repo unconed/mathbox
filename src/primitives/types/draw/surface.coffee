@@ -153,7 +153,8 @@ class Surface extends Primitive
                          touched['grid']
 
     if changed['style.color'] or
-       changed['mesh.fill'] or
+       changed['style.zBias'] or
+       changed['mesh.fill']   or
        init
 
       fill   = @_get 'mesh.fill'

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Polar</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script type="application/glsl">
+  vec4 getHelixSheer(vec4 xyzw) {
+    
+  }
+  </script>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(0, 0, 3);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    time = 0
+    three.on('update', function () {
+      time = three.Time.clock / 4
+    });
+
+    view = mathbox
+    .set({
+      focus: 3
+    })
+    .polar({
+      bend: 1,
+      range: [[-π, π], [0, 1], [-1, 1]],
+      scale: [2, 1, 1],
+    })
+    .shader({
+      code: '#helix-shear'
+    })
+    .vertex();
+
+    view.transform({
+      position: [0, .5, 0],
+    }).axis({
+      detail: 30,
+    })
+    .scale({
+      divide: 10,
+      unit: π,
+      base: 2,
+    })
+    .ticks({
+      width: 2,
+      classes: ['foo', 'bar'],
+    })
+    .ticks({
+      opacity: .5,
+      width: 1,
+      size: 50,
+      normal: [0, 1, 0],
+      classes: ['foo', 'bar'],
+    });
+
+    view.axis({
+      axis: 2,
+    });
+    view.transform({
+      position: [π/2, 0, 0],
+    }).axis({
+      axis: 2,
+    });
+    view.transform({
+      position: [-π/2, 0, 0],
+    }).axis({
+      axis: 2,
+    });
+    view.grid({
+      divideX: 5,
+      detailX: 48,
+      width: 1,
+      opacity: 0.5,
+      unitX: π,
+      baseX: 2,
+      zBias: -5,
+    });
+
+    view.interval({
+      id: 'sampler',
+      length: 128,
+      items: 2,
+      expr: function (emit, θ, i) {
+        emit(0, 0);
+        emit(θ, 1);
+      },
+      channels: 2,
+    });
+    view.vector({
+      points: '#sampler',
+      color: 0x3090FF,
+      width: 5,
+    });
+
+  </script>
+</body>
+</html>

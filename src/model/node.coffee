@@ -113,7 +113,7 @@ class Node
     orig[k] = v for k, v of @orig?()
 
     props = (Util.Pretty.JSX.prop k, v for k, v of orig when !@expr[k])
-    expr  = (Util.Pretty.JSX.prop k, v for k, v of expr)
+    expr  = (Util.Pretty.JSX.bind k, v for k, v of expr)
 
     attr = ['']
     attr = attr.concat props if props.length

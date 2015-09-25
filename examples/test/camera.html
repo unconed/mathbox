@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Present</title>
+  <title>MathBox - Camera</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -17,11 +17,6 @@
 
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0
-    three.on('update', function () {
-      time = three.Time.frames / 200
-    });
-
     view = mathbox.cartesian({
       range: [[-1, 1], [-1, 1], [-1, 1]],
       scale: [1, 1, 1],
@@ -30,7 +25,7 @@
     var camera = view.camera({
       lookAt: [0, 0, 0],
     }, {
-      position: function () { return [-3 * Math.cos(three.Time.now), .4 * Math.cos(three.Time.now * .381), -3 * Math.sin(three.Time.now)] },
+      position: function (t) { return [-3 * Math.cos(t) + 1, .4 * Math.cos(t * .381) + 1, -3 * Math.sin(t) + 1] },
     });
 
     view

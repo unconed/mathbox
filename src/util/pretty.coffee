@@ -92,8 +92,8 @@ prettyNumber = (options) ->
     out
 
 prettyPrint = (markup, level = 'info') ->
-  [markup, args] = prettyMarkup markup
-  console[level].apply console, [markup].concat args
+  markup = prettyMarkup markup
+  console[level].apply console, markup
 
 prettyMarkup = (markup) ->
 
@@ -151,7 +151,7 @@ prettyMarkup = (markup) ->
         else
           char
 
-  [markup, args]
+  [markup].concat args
 
 prettyJSXProp = (k, v) -> prettyJSXPair k, v, '='
 prettyJSXBind = (k, v) -> prettyJSXPair k, v, '=>'
@@ -168,7 +168,7 @@ prettyJSXPair = do ->
 
       switch typeof v
               when 'string'
-                if v.match "\n" then "\n\"#{v}\"\n" else "\"#{v}\""
+                if v.match "\n" then "\"\n#{v}\"\n" else "\"#{v}\""
               when 'function'
                 v = "#{v}"
                 if v.match "\n" then "\n#{v}\n" else "#{v}"
@@ -187,10 +187,36 @@ prettyJSXPair = do ->
 
     [k, op, wrap value v].join ''
 
+escapeHTML = (str) ->
+  str = str.replace /&/g, '&amp;'
+  str = str.replace /</g, '&lt;'
+  str = str.replace /"/g, '&quot;'
+
+prettyFormat = (str) ->
+  args = [].slice.call arguments
+  args.shift()
+
+  out = "<span>"
+
+  str = escapeHTML str
+
+  for arg in args
+    str = str.replace /%([a-z])/, (_, f) ->
+      v = args.shift()
+      switch f
+        when 'c'
+          "</span><span style=\"#{escapeHTML v}\">"
+        else
+          escapeHTML v
+
+  out += str
+  out += "</span>"
+
 module.exports =
   markup: prettyMarkup
   number: prettyNumber
   print:  prettyPrint
+  format: prettyFormat
   JSX: { prop: prettyJSXProp, bind: prettyJSXBind }
 
 ###

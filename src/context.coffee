@@ -58,10 +58,12 @@ class Context
   init: () ->
     @scene.inject()
     @overlays.inject()
+    @
 
   destroy: () ->
     @scene.unject()
     @overlays.unject()
+    @
 
   resize: (size) ->
     ###
@@ -69,7 +71,14 @@ class Context
       viewWidth, viewHeight, renderWidth, renderHeight, aspect, pixelRatio
     }
     ###
+    size ?= {}
+    size.renderWidth ?= size.viewWidth  ?= 1280
+    size.renderWidth ?= size.viewHeight ?= 720
+    size.pixelRatio  ?= size.renderWidth / size.viewWidth
+    size.aspect      ?= size.viewWidth / Math.max 1, size.viewHeight
+
     @root.controller.resize size
+    @
 
   frame: (time) ->
     ###
@@ -81,6 +90,7 @@ class Context
     @update()
     @render()
     @post()
+    @
 
   #-------------------------------------------------------------------
   # Broken down update/render cycle, for manual scheduling/invocation
@@ -104,6 +114,7 @@ class Context
 
     @time = time
     @root.controller.pre?()
+    @
 
   update: () ->
 
@@ -122,18 +133,24 @@ class Context
     @camera = @root.controller.getCamera()
     @speed  = @root.controller.getSpeed()
 
+    @
+
   render: () ->
     @root.controller.render?()
     @scene.render()
 
+    @
+
   post: () ->
     @root.controller.post?()
+    @
 
   #-------------------------------------------------------------------
   # Warmup mode, inserts only n objects into the scene per frame
   # Will render objects to offscreen 1x1 buffer to ensure shader is compiled even if invisible
   setWarmup: (n) ->
     @scene.warmup n
+    @
 
   getPending: () ->
     @scene.pending.length

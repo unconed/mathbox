@@ -19,8 +19,9 @@ window.mathBox = exports.mathBox = mathBox
 exports.version = '2'
 
 # Load context and export namespace
-Context = require './context'
+exports.Context = Context = require './context'
 exports[k] = v for k, v of Context.Namespace
+
 
 # Splash screen plugin
 require './splash'
@@ -54,6 +55,10 @@ THREE.Bootstrap.registerPlugin 'mathbox',
         # Enable handy destructuring
         @context.api.three   = three.three   = three
         @context.api.mathbox = three.mathbox = @context.api
+
+        # v1 compatibility
+        @context.api.start = () -> three.Loop.start()
+        @context.api.stop  = () -> three.Loop.stop()
 
         # Initialize and set initial size
         @context.init()
