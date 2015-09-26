@@ -72,6 +72,5 @@ Classes =
   reveal:            require './present/reveal'
   slide:             require './present/slide'
   step:              require './present/step'
-  track:             require './present/track'
 
 module.exports = Classes

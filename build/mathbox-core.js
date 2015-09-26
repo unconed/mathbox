@@ -40,7 +40,7 @@ module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lin
 "mesh.gamma.in": "vec4 getGammaInColor(vec4 rgba) {\n  return vec4(rgba.rgb * rgba.rgb, rgba.a);\n}\n",
 "mesh.gamma.out": "vec4 getGammaOutColor(vec4 rgba) {\n  return vec4(sqrt(rgba.rgb), rgba.a);\n}\n",
 "mesh.map.uvwo": "vec4 mapUVWO(vec4 uvwo, vec4 stpq) {\n  return uvwo;\n}\n",
-"mesh.position": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw);\n\nvec3 getMeshPosition() {\n  return getPosition(position4);\n}\n",
+"mesh.position": "uniform vec4 geometryClip;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getMeshPosition() {\n  vec4 p = min(geometryClip, position4);\n  return getPosition(p, 1.0);\n}\n",
 "mesh.vertex.color": "attribute vec4 position4;\nuniform vec4 geometryClip;\nvarying vec4 vColor;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvoid vertexColor() {\n  vec4 p = min(geometryClip, position4);\n  vColor = getSample(p);\n}\n",
 "mesh.vertex.mask": "attribute vec4 position4;\nuniform vec4 geometryResolution;\nuniform vec4 geometryClip;\nvarying float vMask;\n\n// External\nfloat getSample(vec4 xyzw);\n\nvoid maskLevel() {\n  vec4 p = min(geometryClip, position4);\n  vMask = getSample(p * geometryResolution);\n}\n",
 "mesh.vertex.position": "uniform vec4 geometryResolution;\n\n#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw, vec4 stpq);\n\nvec3 getMeshPosition(vec4 xyzw, float canonical) {\n  vec4 stpq = xyzw * geometryResolution;\n  vec3 xyz = getPosition(xyzw, stpq);\n\n  #ifdef POSITION_MAP\n  if (canonical > 0.5) {\n    #ifdef POSITION_STPQ\n    vSTPQ = stpq;\n    #endif\n    #ifdef POSITION_U\n    vU = stpq.x;\n    #endif\n    #ifdef POSITION_UV\n    vUV = stpq.xy;\n    #endif\n    #ifdef POSITION_UVW\n    vUVW = stpq.xyz;\n    #endif\n    #ifdef POSITION_UVWO\n    vUVWO = stpq;\n    #endif\n  }\n  #endif\n  return xyz;\n}\n",
@@ -54,9 +54,12 @@ module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lin
 "point.fill": "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha < 1.0) {\n    discard;\n  }\n  gl_FragColor = color;\n}\n\n",
 "point.mask.circle": "varying float vPixelSize;\n\nfloat getCircleMask(vec2 uv) {\n  return dot(uv, uv);\n}\n",
 "point.mask.diamond": "varying float vPixelSize;\n\nfloat getDiamondMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return a.x + a.y;\n}\n",
+"point.mask.down": "varying float vPixelSize;\n\nfloat getTriangleDownMask(vec2 uv) {\n  uv.y += .25;\n  return max(uv.y, abs(uv.x) * .866 - uv.y * .5 + .6);\n}\n",
+"point.mask.left": "varying float vPixelSize;\n\nfloat getTriangleLeftMask(vec2 uv) {\n  uv.x += .25;\n  return max(uv.x, abs(uv.y) * .866 - uv.x * .5 + .6);\n}\n",
+"point.mask.right": "varying float vPixelSize;\n\nfloat getTriangleRightMask(vec2 uv) {\n  uv.x -= .25;\n  return max(-uv.x, abs(uv.y) * .866 + uv.x * .5 + .6);\n}\n",
 "point.mask.square": "varying float vPixelSize;\n\nfloat getSquareMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return max(a.x, a.y);\n}\n",
-"point.mask.triangle": "varying float vPixelSize;\n\nfloat getTriangleMask(vec2 uv) {\n  uv.y -= .25;\n  return max(-uv.y, abs(uv.x) * .866 + uv.y * .5 + .6);\n}\n",
-"point.position": "uniform float pointSize;\nuniform float pointDepth;\n\nuniform float pixelUnit;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getPointPosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 center = getPosition(p, 1.0);\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float z = -center.z;\n  float depth = mix(z, focusDepth, pointDepth);\n  \n  // Match device/unit mapping \n  // Sprite goes from -1..1, width = 2.\n  float size = pointSize * pixelUnit * .5;\n  float depthSize = depth * size;\n  \n  // Pad sprite by half a pixel to make the anti-aliasing straddle the pixel edge\n  // Note: pixelsize measures radius\n  float pixelSize = .5 * (pointDepth > 0.0 ? depthSize / z : size);\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * depthSize * renderScaleInv * padFactor, 0.0);\n}\n",
+"point.mask.up": "varying float vPixelSize;\n\nfloat getTriangleUpMask(vec2 uv) {\n  uv.y -= .25;\n  return max(-uv.y, abs(uv.x) * .866 + uv.y * .5 + .6);\n}\n",
+"point.position": "uniform float pointSize;\nuniform float pointDepth;\n\nuniform float pixelUnit;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\nconst float pointScale = POINT_SHAPE_SCALE;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getPointPosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 center = getPosition(p, 1.0);\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float z = -center.z;\n  float depth = mix(z, focusDepth, pointDepth);\n  \n  // Match device/unit mapping \n  // Sprite goes from -1..1, width = 2.\n  float size = pointScale * pointSize * pixelUnit * .5;\n  float depthSize = depth * size;\n  \n  // Pad sprite by half a pixel to make the anti-aliasing straddle the pixel edge\n  // Note: pixelsize measures radius\n  float pixelSize = .5 * (pointDepth > 0.0 ? depthSize / z : size);\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * depthSize * renderScaleInv * padFactor, 0.0);\n}\n",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position, inout vec4 stpq) {\n  if (polarBend > 0.0) {\n\n    if (polarBend < 0.001) {\n      // Factor out large addition/subtraction of polarFocus\n      // to avoid numerical error\n      // sin(x) ~ x\n      // cos(x) ~ 1 - x * x / 2\n      vec2 pb = position.xy * polarBend;\n      float ppbbx = pb.x * pb.x;\n      return viewMatrix * vec4(\n        position.x * (1.0 - polarBend + (pb.y * polarAspect)),\n        position.y * (1.0 - .5 * ppbbx) - (.5 * ppbbx) * polarFocus / polarAspect,\n        position.z + position.x * polarHelix * polarBend,\n        1.0\n      );\n    }\n    else {\n      vec2 xy = position.xy * vec2(polarBend, polarAspect);\n      float radius = polarFocus + xy.y;\n      return viewMatrix * vec4(\n        sin(xy.x) * radius,\n        (cos(xy.x) * radius - polarFocus) / polarAspect,\n        position.z + position.x * polarHelix * polarBend,\n        1.0\n      );\n    }\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "project.position": "uniform float styleZBias;\nuniform float styleZIndex;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n\n  // Apply relative Z bias\n  float bias  = (1.0 - styleZBias / 32768.0);\n  pos.z *= bias;\n  \n  // Apply large scale Z index changes\n  if (styleZIndex > 0.0) {\n    float z = pos.z / pos.w;\n    pos.z = ((z + 1.0) / (styleZIndex + 1.0) - 1.0) * pos.w;\n  }\n  \n  gl_Position = pos;\n}",
 "project.readback": "// This is three.js' global uniform, missing from fragment shaders.\nuniform mat4 projectionMatrix;\n\nvec4 readbackPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  vec3 final = pos.xyz / pos.w;\n  if (final.z < -1.0) {\n    return vec4(0.0, 0.0, 0.0, -1.0);\n  }\n  else {\n    return vec4(final, -position.z);\n  }\n}\n",
@@ -83,7 +86,7 @@ module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lin
 "stereographic4.position": "uniform float stereoBend;\nuniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getStereographic4Position(vec4 position, inout vec4 stpq) {\n  \n  vec4 transformed;\n  if (stereoBend > 0.0001) {\n\n    float r = length(position);\n    float w = r + position.w;\n    vec4 project = vec4(position.xyz / w, r);\n    \n    transformed = mix(position, project, stereoBend);\n  }\n  else {\n    transformed = position;\n  }\n\n  vec4 pos4 = transformed * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n",
 "stpq.sample.2d": "varying vec2 vST;\n\nvec4 getSample(vec2 st);\n\nvec4 getSTSample() {\n  return getSample(vST);\n}\n",
 "stpq.xyzw.2d": "varying vec2 vUV;\n\nvoid setRawUV(vec4 xyzw) {\n  vUV = xyzw.xy;\n}\n",
-"strip.position.normal": "uniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec3 strip;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid getStripGeometry(vec4 xyzw, vec3 strip, out vec3 pos, out vec3 normal) {\n  vec3 a, b, c;\n\n  a   = getPosition(xyzw, 1.0);\n  b   = getPosition(vec4(xyzw.xyz, strip.x), 0.0);\n  c   = getPosition(vec4(xyzw.xyz, strip.y), 0.0);\n\n  pos = getPosition(xyzw);\n  normal = normalize(cross(c - a, b - a)) * strip.z;\n}\n\nvec3 getStripPositionNormal() {\n  vec3 center, normal;\n\n  vec4 p = min(geometryClip, position4);\n\n  getStripGeometry(p, strip, center, normal);\n  vNormal   = normal;\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);\n  vPosition = -center;\n\n  return center;\n}\n",
+"strip.position.normal": "uniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec3 strip;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid getStripGeometry(vec4 xyzw, vec3 strip, out vec3 pos, out vec3 normal) {\n  vec3 a, b, c;\n\n  a   = getPosition(xyzw, 1.0);\n  b   = getPosition(vec4(xyzw.xyz, strip.x), 0.0);\n  c   = getPosition(vec4(xyzw.xyz, strip.y), 0.0);\n\n  normal = normalize(cross(c - a, b - a)) * strip.z;\n  \n  pos = a;\n}\n\nvec3 getStripPositionNormal() {\n  vec3 center, normal;\n\n  vec4 p = min(geometryClip, position4);\n\n  getStripGeometry(p, strip, center, normal);\n  vNormal   = normal;\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);\n  vPosition = -center;\n\n  return center;\n}\n",
 "style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvec4 getStyleColor() {\n  return vec4(styleColor, styleOpacity);\n}\n",
 "surface.mask.hollow": "attribute vec4 position4;\n\nfloat getSurfaceHollowMask(vec4 xyzw) {\n  vec4 df = abs(fract(position4) - .5);\n  vec2 df2 = min(df.xy, df.zw);\n  float df3 = min(df2.x, df2.y);\n  return df3;\n}",
 "surface.position": "uniform vec4 geometryClip;\nuniform vec4 geometryResolution;\nuniform vec4 mapSize;\n\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getSurfacePosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 xyz = getPosition(p, 1.0);\n\n  // Overwrite UVs\n#ifdef POSITION_UV\n#ifdef POSITION_UV_INT\n  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;\n#else\n  vUV = position4.xy * geometryResolution.xy;\n#endif\n#endif\n\n  return xyz;\n}\n",
@@ -5596,7 +5599,7 @@ exports.parseQuoted = function(str) {
 
 
 },{}],25:[function(require,module,exports){
-var NUMBER_PRECISION, NUMBER_THRESHOLD, checkFactor, checkUnit, formatFactors, formatFraction, formatMultiple, formatPrimes, prettyJSXBind, prettyJSXPair, prettyJSXProp, prettyMarkup, prettyNumber, prettyPrint;
+var NUMBER_PRECISION, NUMBER_THRESHOLD, checkFactor, checkUnit, escapeHTML, formatFactors, formatFraction, formatMultiple, formatPrimes, prettyFormat, prettyJSXBind, prettyJSXPair, prettyJSXProp, prettyMarkup, prettyNumber, prettyPrint;
 
 NUMBER_PRECISION = 5;
 
@@ -5744,12 +5747,11 @@ prettyNumber = function(options) {
 };
 
 prettyPrint = function(markup, level) {
-  var args, _ref;
   if (level == null) {
     level = 'info';
   }
-  _ref = prettyMarkup(markup), markup = _ref[0], args = _ref[1];
-  return console[level].apply(console, [markup].concat(args));
+  markup = prettyMarkup(markup);
+  return console[level].apply(console, markup);
 };
 
 prettyMarkup = function(markup) {
@@ -5821,7 +5823,7 @@ prettyMarkup = function(markup) {
       }
     })();
   });
-  return [markup, args];
+  return [markup].concat(args);
 };
 
 prettyJSXProp = function(k, v) {
@@ -5861,7 +5863,7 @@ prettyJSXPair = (function() {
       switch (typeof v) {
         case 'string':
           if (v.match("\n")) {
-            return "\n\"" + v + "\"\n";
+            return "\"\n" + v + "\"\n";
           } else {
             return "\"" + v + "\"";
           }
@@ -5908,10 +5910,40 @@ prettyJSXPair = (function() {
   };
 })();
 
+escapeHTML = function(str) {
+  str = str.replace(/&/g, '&amp;');
+  str = str.replace(/</g, '&lt;');
+  return str = str.replace(/"/g, '&quot;');
+};
+
+prettyFormat = function(str) {
+  var arg, args, out, _i, _len;
+  args = [].slice.call(arguments);
+  args.shift();
+  out = "<span>";
+  str = escapeHTML(str);
+  for (_i = 0, _len = args.length; _i < _len; _i++) {
+    arg = args[_i];
+    str = str.replace(/%([a-z])/, function(_, f) {
+      var v;
+      v = args.shift();
+      switch (f) {
+        case 'c':
+          return "</span><span style=\"" + (escapeHTML(v)) + "\">";
+        default:
+          return escapeHTML(v);
+      }
+    });
+  }
+  out += str;
+  return out += "</span>";
+};
+
 module.exports = {
   markup: prettyMarkup,
   number: prettyNumber,
   print: prettyPrint,
+  format: prettyFormat,
   JSX: {
     prop: prettyJSXProp,
     bind: prettyJSXBind
@@ -6320,6 +6352,9 @@ apply = function(el, last, node, parent, index) {
         nextProps = el.props;
         children = (_ref1 = last != null ? last.children : void 0) != null ? _ref1 : null;
         nextChildren = el.children;
+        if (nextProps != null) {
+          nextProps.children = nextChildren;
+        }
         if (type != null) {
           dirty = node._COMPONENT_DIRTY;
           if ((props != null) !== (nextProps != null)) {
@@ -6392,7 +6427,7 @@ apply = function(el, last, node, parent, index) {
           if (nextProps != null) {
             for (key in nextProps) {
               value = nextProps[key];
-              if ((ref = props[key]) !== value) {
+              if ((ref = props[key]) !== value && key !== 'children') {
                 set(node, key, value, ref);
               }
             }
@@ -6706,7 +6741,7 @@ Context = (function() {
   };
 
   function Context(renderer, scene, camera) {
-    var canvas, element;
+    var canvas;
     if (scene == null) {
       scene = null;
     }
@@ -6714,10 +6749,10 @@ Context = (function() {
       camera = null;
     }
     this.canvas = canvas = renderer.domElement;
-    this.element = element = canvas.parentNode;
+    this.element = null;
     this.shaders = new Shaders.Factory(Shaders.Snippets);
     this.renderables = new Render.Factory(Render.Classes, renderer, this.shaders);
-    this.overlays = new Overlay.Factory(Overlay.Classes, element, canvas);
+    this.overlays = new Overlay.Factory(Overlay.Classes, canvas);
     this.scene = this.renderables.make('scene', {
       scene: scene
     });
@@ -6742,12 +6777,14 @@ Context = (function() {
 
   Context.prototype.init = function() {
     this.scene.inject();
-    return this.overlays.inject();
+    this.overlays.inject();
+    return this;
   };
 
   Context.prototype.destroy = function() {
     this.scene.unject();
-    return this.overlays.unject();
+    this.overlays.unject();
+    return this;
   };
 
   Context.prototype.resize = function(size) {
@@ -6757,7 +6794,23 @@ Context = (function() {
       viewWidth, viewHeight, renderWidth, renderHeight, aspect, pixelRatio
     }
      */
-    return this.root.controller.resize(size);
+    if (size == null) {
+      size = {};
+    }
+    if (size.renderWidth == null) {
+      size.renderWidth = size.viewWidth != null ? size.viewWidth : size.viewWidth = 1280;
+    }
+    if (size.renderHeight == null) {
+      size.renderHeight = size.viewHeight != null ? size.viewHeight : size.viewHeight = 720;
+    }
+    if (size.pixelRatio == null) {
+      size.pixelRatio = size.renderWidth / Math.max(.000001, size.viewWidth);
+    }
+    if (size.aspect == null) {
+      size.aspect = size.viewWidth / Math.max(.000001, size.viewHeight);
+    }
+    this.root.controller.resize(size);
+    return this;
   };
 
   Context.prototype.frame = function(time) {
@@ -6770,7 +6823,8 @@ Context = (function() {
     this.pre(time);
     this.update();
     this.render();
-    return this.post();
+    this.post();
+    return this;
   };
 
   Context.prototype.pre = function(time) {
@@ -6792,7 +6846,10 @@ Context = (function() {
       time.clock = this.time.clock + time.step;
     }
     this.time = time;
-    return typeof (_base = this.root.controller).pre === "function" ? _base.pre() : void 0;
+    if (typeof (_base = this.root.controller).pre === "function") {
+      _base.pre();
+    }
+    return this;
   };
 
   Context.prototype.update = function() {
@@ -6818,7 +6875,8 @@ Context = (function() {
       _base.update();
     }
     this.camera = this.root.controller.getCamera();
-    return this.speed = this.root.controller.getSpeed();
+    this.speed = this.root.controller.getSpeed();
+    return this;
   };
 
   Context.prototype.render = function() {
@@ -6826,16 +6884,21 @@ Context = (function() {
     if (typeof (_base = this.root.controller).render === "function") {
       _base.render();
     }
-    return this.scene.render();
+    this.scene.render();
+    return this;
   };
 
   Context.prototype.post = function() {
     var _base;
-    return typeof (_base = this.root.controller).post === "function" ? _base.post() : void 0;
+    if (typeof (_base = this.root.controller).post === "function") {
+      _base.post();
+    }
+    return this;
   };
 
   Context.prototype.setWarmup = function(n) {
-    return this.scene.warmup(n);
+    this.scene.warmup(n);
+    return this;
   };
 
   Context.prototype.getPending = function() {
@@ -6878,7 +6941,7 @@ window.mathBox = exports.mathBox = mathBox;
 
 exports.version = '2';
 
-Context = require('./context');
+exports.Context = Context = require('./context');
 
 _ref = Context.Namespace;
 for (k in _ref) {
@@ -6913,6 +6976,12 @@ THREE.Bootstrap.registerPlugin('mathbox', {
           _this.context = new Context(three.renderer, scene, camera);
           _this.context.api.three = three.three = three;
           _this.context.api.mathbox = three.mathbox = _this.context.api;
+          _this.context.api.start = function() {
+            return three.Loop.start();
+          };
+          _this.context.api.stop = function() {
+            return three.Loop.stop();
+          };
           _this.context.init();
           _this.context.resize(three.Size);
           _this.context.setWarmup(_this.options.warmup);
@@ -8309,7 +8378,7 @@ Node = (function() {
       _results = [];
       for (k in expr) {
         v = expr[k];
-        _results.push(Util.Pretty.JSX.prop(k, v));
+        _results.push(Util.Pretty.JSX.bind(k, v));
       }
       return _results;
     })();
@@ -8463,10 +8532,9 @@ module.exports = DOM;
 var OverlayFactory;
 
 OverlayFactory = (function() {
-  function OverlayFactory(classes, element, canvas) {
+  function OverlayFactory(classes, canvas) {
     var div;
     this.classes = classes;
-    this.element = element;
     this.canvas = canvas;
     div = document.createElement('div');
     div.classList.add('mathbox-overlays');
@@ -8474,11 +8542,18 @@ OverlayFactory = (function() {
   }
 
   OverlayFactory.prototype.inject = function() {
-    return this.element.insertBefore(this.div, this.canvas);
+    var element;
+    element = this.canvas.parentNode;
+    if (!element) {
+      throw new Error("Canvas not inserted into document.");
+    }
+    return element.insertBefore(this.div, this.canvas);
   };
 
   OverlayFactory.prototype.unject = function() {
-    return this.element.removeChild(this.div);
+    var element;
+    element = this.div.parentNode;
+    return element.removeChild(this.div);
   };
 
   OverlayFactory.prototype.getTypes = function() {
@@ -9463,14 +9538,13 @@ Classes = {
   present: require('./present/present'),
   reveal: require('./present/reveal'),
   slide: require('./present/slide'),
-  step: require('./present/step'),
-  track: require('./present/track')
+  step: require('./present/step')
 };
 
 module.exports = Classes;
 
 
-},{"./base/group":45,"./base/inherit":46,"./base/root":48,"./base/unit":50,"./camera/camera":51,"./data/area":53,"./data/array":54,"./data/interval":57,"./data/matrix":58,"./data/scale":59,"./data/volume":60,"./data/voxel":61,"./draw/axis":62,"./draw/face":63,"./draw/grid":64,"./draw/line":65,"./draw/point":66,"./draw/strip":67,"./draw/surface":68,"./draw/ticks":69,"./draw/vector":70,"./operator/grow":73,"./operator/join":74,"./operator/lerp":75,"./operator/memo":76,"./operator/repeat":78,"./operator/resample":79,"./operator/slice":80,"./operator/split":81,"./operator/spread":82,"./operator/swizzle":83,"./operator/transpose":84,"./overlay/dom":85,"./overlay/html":86,"./present/move":87,"./present/play":88,"./present/present":89,"./present/reveal":90,"./present/slide":91,"./present/step":92,"./present/track":93,"./rtt/compose":95,"./rtt/rtt":96,"./shader/shader":97,"./text/format":98,"./text/label":99,"./text/retext":100,"./text/text":101,"./time/clock":102,"./time/now":103,"./transform/fragment":105,"./transform/layer":106,"./transform/transform3":108,"./transform/transform4":109,"./transform/vertex":110,"./view/cartesian":112,"./view/cartesian4":113,"./view/polar":114,"./view/spherical":115,"./view/stereographic":116,"./view/stereographic4":117,"./view/view":118}],53:[function(require,module,exports){
+},{"./base/group":45,"./base/inherit":46,"./base/root":48,"./base/unit":50,"./camera/camera":51,"./data/area":53,"./data/array":54,"./data/interval":57,"./data/matrix":58,"./data/scale":59,"./data/volume":60,"./data/voxel":61,"./draw/axis":62,"./draw/face":63,"./draw/grid":64,"./draw/line":65,"./draw/point":66,"./draw/strip":67,"./draw/surface":68,"./draw/ticks":69,"./draw/vector":70,"./operator/grow":73,"./operator/join":74,"./operator/lerp":75,"./operator/memo":76,"./operator/repeat":78,"./operator/resample":79,"./operator/slice":80,"./operator/split":81,"./operator/spread":82,"./operator/swizzle":83,"./operator/transpose":84,"./overlay/dom":85,"./overlay/html":86,"./present/move":87,"./present/play":88,"./present/present":89,"./present/reveal":90,"./present/slide":91,"./present/step":92,"./rtt/compose":95,"./rtt/rtt":96,"./shader/shader":97,"./text/format":98,"./text/label":99,"./text/retext":100,"./text/text":101,"./time/clock":102,"./time/now":103,"./transform/fragment":105,"./transform/layer":106,"./transform/transform3":108,"./transform/transform4":109,"./transform/vertex":110,"./view/cartesian":112,"./view/cartesian4":113,"./view/polar":114,"./view/spherical":115,"./view/stereographic":116,"./view/stereographic4":117,"./view/view":118}],53:[function(require,module,exports){
 var Area, Matrix, Util,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -9486,7 +9560,7 @@ Area = (function(_super) {
     return Area.__super__.constructor.apply(this, arguments);
   }
 
-  Area.traits = ['node', 'buffer', 'data', 'source', 'index', 'matrix', 'texture', 'raw', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y'];
+  Area.traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'matrix', 'texture', 'raw', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y'];
 
   Area.prototype.updateSpan = function() {
     var centeredX, centeredY, dimensions, height, inverseX, inverseY, padX, padY, rangeX, rangeY, spanX, spanY, width;
@@ -9584,7 +9658,7 @@ Array_ = (function(_super) {
     return Array_.__super__.constructor.apply(this, arguments);
   }
 
-  Array_.traits = ['node', 'buffer', 'data', 'source', 'index', 'array', 'texture', 'raw'];
+  Array_.traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'array', 'texture', 'raw'];
 
   Array_.prototype.init = function() {
     this.buffer = this.spec = null;
@@ -9777,7 +9851,7 @@ Buffer = (function(_super) {
     return Buffer.__super__.constructor.apply(this, arguments);
   }
 
-  Buffer.traits = ['node', 'buffer', 'data', 'source', 'index', 'texture'];
+  Buffer.traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture'];
 
   Buffer.prototype.init = function() {
     this.bufferSlack = 0;
@@ -9887,7 +9961,7 @@ Data = (function(_super) {
     return Data.__super__.constructor.apply(this, arguments);
   }
 
-  Data.traits = ['node', 'data', 'source', 'index'];
+  Data.traits = ['node', 'data', 'source', 'index', 'entity', 'active'];
 
   Data.prototype.init = function() {
     this.dataEmitter = null;
@@ -9923,11 +9997,23 @@ Data = (function(_super) {
     return callback != null ? callback : function() {};
   };
 
+  Data.prototype.update = function() {};
+
   Data.prototype.make = function() {
-    return this._listen('root', 'root.update', this.update);
+    this._helpers.active.make();
+    this.first = true;
+    return this._listen('root', 'root.update', (function(_this) {
+      return function() {
+        if (_this.isActive || _this.first) {
+          _this.update();
+        }
+        return _this.first = false;
+      };
+    })(this));
   };
 
   Data.prototype.unmake = function() {
+    this._helpers.active.unmake();
     this.dataEmitter = null;
     return this.dataSizes = null;
   };
@@ -9955,7 +10041,7 @@ Interval = (function(_super) {
     return Interval.__super__.constructor.apply(this, arguments);
   }
 
-  Interval.traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'array', 'span', 'interval', 'sampler', 'raw'];
+  Interval.traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'array', 'span', 'interval', 'sampler', 'raw'];
 
   Interval.prototype.updateSpan = function() {
     var centered, dimension, inverse, length, pad, range, span;
@@ -10036,7 +10122,7 @@ Matrix = (function(_super) {
     return Matrix.__super__.constructor.apply(this, arguments);
   }
 
-  Matrix.traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'matrix', 'raw'];
+  Matrix.traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'matrix', 'raw'];
 
   Matrix.prototype.init = function() {
     this.buffer = this.spec = null;
@@ -10358,7 +10444,7 @@ Volume = (function(_super) {
     return Volume.__super__.constructor.apply(this, arguments);
   }
 
-  Volume.traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z', 'raw'];
+  Volume.traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z', 'raw'];
 
   Volume.prototype.updateSpan = function() {
     var centeredX, centeredY, centeredZ, depth, dimensions, height, inverseX, inverseY, inverseZ, padX, padY, padZ, rangeX, rangeY, rangeZ, spanX, spanY, spanZ, width;
@@ -10475,7 +10561,7 @@ Voxel = (function(_super) {
     return Voxel.__super__.constructor.apply(this, arguments);
   }
 
-  Voxel.traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'voxel', 'raw'];
+  Voxel.traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'voxel', 'raw'];
 
   Voxel.prototype.init = function() {
     this.buffer = this.spec = null;
@@ -10616,7 +10702,7 @@ Voxel = (function(_super) {
       return callback;
     } else {
       return (function(_this) {
-        return function(emit, i) {
+        return function(emit, i, j, k) {
           return callback(emit, i, j, k, _this.bufferClock, _this.bufferStep);
         };
       })(this);
@@ -10831,7 +10917,7 @@ Face = (function(_super) {
   };
 
   Face.prototype.make = function() {
-    var color, depth, dims, fill, height, items, lineUniforms, map, mask, material, objects, outline, position, shaded, styleUniforms, swizzle, uniforms, width, _ref;
+    var color, depth, dims, fill, height, items, line, lineUniforms, map, mask, material, objects, position, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width, wireUniforms, _ref;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -10851,9 +10937,13 @@ Face = (function(_super) {
     position = this._helpers.position.pipeline(position);
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
+    unitUniforms = this._inherit('unit').getUnitUniforms();
+    wireUniforms = {};
+    wireUniforms.styleZBias = this._attributes.make(this._types.number());
+    this.wireZBias = wireUniforms.styleZBias;
     dims = this.bind.points.getDimensions();
     items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
-    outline = this.props.outline;
+    line = this.props.line;
     shaded = this.props.shaded;
     fill = this.props.fill;
     if (this.bind.colors) {
@@ -10864,25 +10954,26 @@ Face = (function(_super) {
     map = this._helpers.shade.map((_ref = this.bind.map) != null ? _ref.sourceShader(this._shaders.shader()) : void 0);
     material = this._helpers.shade.pipeline() || shaded;
     objects = [];
-    if (outline) {
+    if (line) {
       swizzle = this._shaders.shader();
       swizzle.pipe(Util.GLSL.swizzleVec4('yzwx'));
       swizzle.pipe(position);
-      uniforms = Util.JS.merge(lineUniforms, styleUniforms);
+      uniforms = Util.JS.merge(unitUniforms, lineUniforms, styleUniforms, wireUniforms);
       this.line = this._renderables.make('line', {
         uniforms: uniforms,
         samples: items,
-        ribbons: width,
-        strips: height,
+        strips: width,
+        ribbons: height,
         layers: depth,
         position: swizzle,
         color: color,
-        mask: mask
+        mask: mask,
+        closed: true
       });
       objects.push(this.line);
     }
     if (fill) {
-      uniforms = Util.JS.merge(styleUniforms, {});
+      uniforms = Util.JS.merge(unitUniforms, styleUniforms, {});
       this.face = this._renderables.make('face', {
         uniforms: uniforms,
         width: width,
@@ -10913,8 +11004,13 @@ Face = (function(_super) {
   };
 
   Face.prototype.change = function(changed, touched, init) {
+    var fill;
     if (changed['geometry.points'] || touched['mesh']) {
       return this.rebuild();
+    }
+    if (changed['style.zBias'] || init) {
+      fill = this._get('mesh.fill');
+      return this.wireZBias.value = this._get('style.zBias') + (fill ? 5 : 0);
     }
   };
 
@@ -11257,7 +11353,7 @@ Point = (function(_super) {
   };
 
   Point.prototype.make = function() {
-    var color, depth, dims, fill, height, items, mask, pointUniforms, position, shape, styleUniforms, uniforms, unitUniforms, width;
+    var color, depth, dims, fill, height, items, mask, optical, pointUniforms, position, shape, styleUniforms, uniforms, unitUniforms, width;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -11285,6 +11381,7 @@ Point = (function(_super) {
     mask = this._helpers.object.mask();
     shape = this.props.shape;
     fill = this.props.fill;
+    optical = this.props.optical;
     uniforms = Util.JS.merge(unitUniforms, pointUniforms, styleUniforms);
     this.point = this._renderables.make('point', {
       uniforms: uniforms,
@@ -11295,6 +11392,7 @@ Point = (function(_super) {
       position: position,
       color: color,
       shape: shape,
+      optical: optical,
       fill: fill,
       mask: mask
     });
@@ -11338,7 +11436,7 @@ Util = require('../../../util');
 Strip = (function(_super) {
   __extends(Strip, _super);
 
-  Strip.traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'position', 'bind', 'shade'];
+  Strip.traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'strip', 'geometry', 'position', 'bind', 'shade'];
 
   function Strip(node, context, helpers) {
     Strip.__super__.constructor.call(this, node, context, helpers);
@@ -11367,7 +11465,7 @@ Strip = (function(_super) {
   };
 
   Strip.prototype.make = function() {
-    var color, depth, dims, fill, height, items, lineUniforms, mask, objects, outline, position, shaded, styleUniforms, uniforms, width;
+    var color, depth, dims, fill, height, items, line, lineUniforms, mask, objects, position, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -11388,7 +11486,8 @@ Strip = (function(_super) {
     position = this._helpers.position.pipeline(position);
     styleUniforms = this._helpers.style.uniforms();
     lineUniforms = this._helpers.line.uniforms();
-    outline = this.props.outline;
+    unitUniforms = this._inherit('unit').getUnitUniforms();
+    line = this.props.line;
     shaded = this.props.shaded;
     fill = this.props.fill;
     dims = this.bind.points.getDimensions();
@@ -11399,15 +11498,18 @@ Strip = (function(_super) {
     }
     mask = this._helpers.object.mask();
     objects = [];
-    if (outline) {
-      uniforms = Util.JS.merge(lineUniforms, styleUniforms);
+    if (line) {
+      swizzle = this._shaders.shader();
+      swizzle.pipe(Util.GLSL.swizzleVec4('yzwx'));
+      swizzle.pipe(position);
+      uniforms = Util.JS.merge(unitUniforms, lineUniforms, styleUniforms);
       this.line = this._renderables.make('line', {
         uniforms: uniforms,
         samples: items,
-        ribbons: width,
-        strips: height,
+        strips: width,
+        ribbons: height,
         layers: depth,
-        position: position,
+        position: swizzle,
         color: color,
         mask: mask
       });
@@ -11504,7 +11606,7 @@ Surface = (function(_super) {
   };
 
   Surface.prototype.make = function() {
-    var color, crossed, depth, dims, fill, height, items, lineUniforms, lineX, lineY, map, mask, material, objects, position, proximity, shaded, stroke, styleUniforms, surfaceUniforms, swizzle, swizzle2, uniforms, unitUniforms, width, wireUniforms, zUnits, _ref, _ref1, _ref2;
+    var closedX, closedY, color, crossed, depth, dims, fill, height, items, lineUniforms, lineX, lineY, map, mask, material, objects, position, proximity, shaded, stroke, styleUniforms, surfaceUniforms, swizzle, swizzle2, uniforms, unitUniforms, width, wireUniforms, zUnits, _ref, _ref1, _ref2;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -11535,7 +11637,7 @@ Surface = (function(_super) {
     this.wireScratch = new THREE.Color;
     dims = this.bind.points.getDimensions();
     width = dims.width, height = dims.height, depth = dims.depth, items = dims.items;
-    _ref = this.props, shaded = _ref.shaded, fill = _ref.fill, lineX = _ref.lineX, lineY = _ref.lineY, stroke = _ref.stroke, proximity = _ref.proximity, crossed = _ref.crossed;
+    _ref = this.props, shaded = _ref.shaded, fill = _ref.fill, lineX = _ref.lineX, lineY = _ref.lineY, closedX = _ref.closedX, closedY = _ref.closedY, stroke = _ref.stroke, proximity = _ref.proximity, crossed = _ref.crossed;
     objects = [];
     this.proximity = proximity;
     if (this.bind.colors) {
@@ -11560,7 +11662,8 @@ Surface = (function(_super) {
         zUnits: -zUnits,
         stroke: stroke,
         mask: mask,
-        proximity: proximity
+        proximity: proximity,
+        closed: closedX || closed
       });
       objects.push(this.lineX);
     }
@@ -11576,7 +11679,8 @@ Surface = (function(_super) {
         zUnits: -zUnits,
         stroke: stroke,
         mask: swizzle(mask, crossed ? 'xyzw' : 'yxzw'),
-        proximity: proximity
+        proximity: proximity,
+        closed: closedY || closed
       });
       objects.push(this.lineY);
     }
@@ -11595,7 +11699,9 @@ Surface = (function(_super) {
         stroke: stroke,
         mask: mask,
         map: map,
-        intUV: true
+        intUV: true,
+        closedX: closedX || closed,
+        closedY: closedY || closed
       });
       objects.push(this.surface);
     }
@@ -11619,7 +11725,7 @@ Surface = (function(_super) {
     if (changed['geometry.points'] || changed['mesh.shaded'] || changed['mesh.fill'] || changed['line.stroke'] || touched['grid']) {
       return this.rebuild();
     }
-    if (changed['style.color'] || changed['mesh.fill'] || init) {
+    if (changed['style.color'] || changed['style.zBias'] || changed['mesh.fill'] || init) {
       fill = this._get('mesh.fill');
       color = this._get('style.color');
       this.wireZBias.value = this._get('style.zBias') + (fill ? 5 : 0);
@@ -12808,7 +12914,7 @@ Memo = (function(_super) {
     return Memo.__super__.constructor.apply(this, arguments);
   }
 
-  Memo.traits = ['node', 'bind', 'operator', 'source', 'index', 'texture', 'memo'];
+  Memo.traits = ['node', 'bind', 'active', 'operator', 'source', 'index', 'texture', 'memo'];
 
   Memo.prototype.sourceShader = function(shader) {
     return this.memo.shaderAbsolute(shader, 1);
@@ -12820,7 +12926,14 @@ Memo = (function(_super) {
     if (this.bind.source == null) {
       return;
     }
-    this._listen('root', 'root.update', this.update);
+    this._helpers.active.make();
+    this._listen('root', 'root.update', (function(_this) {
+      return function() {
+        if (_this.isActive) {
+          return _this.update();
+        }
+      };
+    })(this));
     _ref = this.props, minFilter = _ref.minFilter, magFilter = _ref.magFilter, type = _ref.type;
     dims = this.bind.source.getDimensions();
     items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
@@ -12850,6 +12963,7 @@ Memo = (function(_super) {
   Memo.prototype.unmake = function() {
     Memo.__super__.unmake.apply(this, arguments);
     if (this.bind.source != null) {
+      this._helpers.active.unmake();
       this.memo.unadopt(this.compose);
       this.memo.dispose();
       return this.memo = this.compose = null;
@@ -14111,7 +14225,7 @@ HTML = (function(_super) {
     return HTML.__super__.constructor.apply(this, arguments);
   }
 
-  HTML.traits = ['node', 'buffer', 'data', 'voxel', 'html'];
+  HTML.traits = ['node', 'buffer', 'active', 'data', 'voxel', 'html'];
 
   HTML.defaults = {
     channels: 1
@@ -14138,6 +14252,10 @@ HTML = (function(_super) {
     }
   };
 
+  HTML.prototype.update = function() {
+    return HTML.__super__.update.apply(this, arguments);
+  };
+
   HTML.prototype.change = function(changed, touched, init) {
     if (touched['html']) {
       return this.rebuild();
@@ -14157,9 +14275,11 @@ HTML = (function(_super) {
         return callback(emit, el, i, j, k, l);
       };
     } else {
-      return function(emit, i, j, k, l) {
-        return callback(emit, el, i, j, k, l, this._context.time.clock, this._context.time.step);
-      };
+      return (function(_this) {
+        return function(emit, i, j, k, l) {
+          return callback(emit, el, i, j, k, l, _this.bufferClock, _this.bufferStep);
+        };
+      })(this);
     }
   };
 
@@ -14264,10 +14384,10 @@ Play = (function(_super) {
     parentClock = this._inherit('clock');
     return this._listen(parentClock, 'clock.tick', (function(_this) {
       return function() {
-        var delta, from, pace, ratio, realtime, speed, time, to, _ref;
-        _ref = _this.props, from = _ref.from, to = _ref.to, speed = _ref.speed, pace = _ref.pace, realtime = _ref.realtime;
+        var delay, delta, from, offset, pace, ratio, realtime, speed, time, to, _ref;
+        _ref = _this.props, from = _ref.from, to = _ref.to, speed = _ref.speed, pace = _ref.pace, delay = _ref.delay, realtime = _ref.realtime;
         time = parentClock.getTime();
-        _this.playhead = _this.clock != null ? (delta = realtime ? time.delta : time.step, ratio = speed / pace, _this.clock += delta * ratio, _this.playhead = Math.min(to, from + Math.max(0, _this.clock - delay * ratio))) : 0;
+        _this.playhead = _this.clock != null ? (delta = realtime ? time.delta : time.step, ratio = speed / pace, _this.clock += delta * ratio, offset = Math.max(0, _this.clock - delay * ratio), _this.props.loop ? offset = offset % (to - from) : void 0, _this.playhead = Math.min(to, from + offset)) : 0;
         return _this.update();
       };
     })(this));
@@ -16332,7 +16452,7 @@ Text = (function(_super) {
     return Text.__super__.constructor.apply(this, arguments);
   }
 
-  Text.traits = ['node', 'buffer', 'data', 'texture', 'voxel', 'text'];
+  Text.traits = ['node', 'buffer', 'active', 'data', 'texture', 'voxel', 'text'];
 
   Text.defaults = {
     minFilter: 'linear',
@@ -16381,8 +16501,8 @@ Text = (function(_super) {
     Text.__super__.make.apply(this, arguments);
     atlas = this.atlas;
     emit = this.buffer.streamer.emit;
-    return this.buffer.streamer.emit = function(t) {
-      return atlas.map(t, emit);
+    return this.buffer.streamer.emit = function(text) {
+      return atlas.map(text, emit);
     };
   };
 
@@ -16654,7 +16774,9 @@ Traits = {
   grid: {
     lineX: Types.bool(true),
     lineY: Types.bool(true),
-    crossed: Types.bool(false)
+    crossed: Types.bool(false),
+    closedX: Types.bool(false),
+    closedY: Types.bool(false)
   },
   axis: {
     detail: Types.int(1),
@@ -16720,6 +16842,7 @@ Traits = {
   point: {
     size: Types.positive(Types.number(4)),
     shape: Types.shape(),
+    optical: Types.bool(true),
     fill: Types.bool(true),
     depth: Types.number(1)
   },
@@ -16727,7 +16850,8 @@ Traits = {
     width: Types.positive(Types.number(2)),
     depth: Types.positive(Types.number(1)),
     stroke: Types.stroke(),
-    proximity: Types.nullable(Types.number(Infinity))
+    proximity: Types.nullable(Types.number(Infinity)),
+    closed: Types.bool(false)
   },
   mesh: {
     fill: Types.bool(true),
@@ -16735,10 +16859,10 @@ Traits = {
     map: Types.nullable(Types.select())
   },
   strip: {
-    outline: Types.bool(false)
+    line: Types.bool(false)
   },
   face: {
-    outline: Types.bool(false)
+    line: Types.bool(false)
   },
   arrow: {
     size: Types.number(3),
@@ -16943,7 +17067,8 @@ Traits = {
     speed: Types.number(1),
     from: Types.number(0),
     to: Types.number(Infinity),
-    realtime: Types.bool(false)
+    realtime: Types.bool(false),
+    loop: Types.bool(false)
   },
   now: {
     now: Types.nullable(Types.timestamp()),
@@ -18434,7 +18559,7 @@ Types = {
     if (value == null) {
       value = 'circle';
     }
-    keys = ['circle', 'square', 'diamond', 'triangle'];
+    keys = ['circle', 'square', 'diamond', 'up', 'down', 'left', 'right'];
     return Types["enum"](value, keys);
   },
   stroke: function(value) {
@@ -20677,7 +20802,7 @@ TextAtlas = (function(_super) {
     x = o + 1;
     y = Math.round(h * 1.05 - 1);
     m = ctx.measureText(text);
-    w = Math.min(max, Math.ceil(m.width + 2 * x));
+    w = Math.min(max, Math.ceil(m.width + 2 * x + 1));
     ctx.clearRect(0, 0, w, h);
     if (this.outline === 0) {
       ctx.fillText(text, x, y);
@@ -21793,14 +21918,16 @@ LineGeometry = (function(_super) {
   __extends(LineGeometry, _super);
 
   function LineGeometry(options) {
-    var base, edge, i, index, j, k, l, layers, line, points, position, quads, ribbons, samples, segments, strip, strips, triangles, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
+    var base, closed, edge, edger, i, index, j, k, l, layers, line, points, position, quads, ribbons, samples, segments, strip, strips, triangles, wrap, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
     LineGeometry.__super__.constructor.call(this, options);
     this._clipUniforms();
-    this.samples = samples = +options.samples || 2;
+    this.closed = closed = options.closed || false;
+    this.samples = samples = (+options.samples || 2) + (closed ? 1 : 0);
     this.strips = strips = +options.strips || 1;
     this.ribbons = ribbons = +options.ribbons || 1;
     this.layers = layers = +options.layers || 1;
     this.segments = segments = samples - 1;
+    wrap = samples - (closed ? 1 : 0);
     points = samples * strips * ribbons * layers * 2;
     quads = segments * strips * ribbons * layers;
     triangles = quads * 2;
@@ -21828,11 +21955,25 @@ LineGeometry = (function(_super) {
         base += 2;
       }
     }
+    edger = closed ? function() {
+      return 0;
+    } : function(x) {
+      if (x === 0) {
+        return -1;
+      } else if (x === segments) {
+        return 1;
+      } else {
+        return 0;
+      }
+    };
     for (l = _l = 0; 0 <= layers ? _l < layers : _l > layers; l = 0 <= layers ? ++_l : --_l) {
       for (z = _m = 0; 0 <= ribbons ? _m < ribbons : _m > ribbons; z = 0 <= ribbons ? ++_m : --_m) {
         for (y = _n = 0; 0 <= strips ? _n < strips : _n > strips; y = 0 <= strips ? ++_n : --_n) {
           for (x = _o = 0; 0 <= samples ? _o < samples : _o > samples; x = 0 <= samples ? ++_o : --_o) {
-            edge = x === 0 ? -1 : x === segments ? 1 : 0;
+            if (closed) {
+              x = x % wrap;
+            }
+            edge = edger(x);
             position(x, y, z, l);
             position(x, y, z, l);
             line(edge, 1);
@@ -21851,7 +21992,7 @@ LineGeometry = (function(_super) {
   LineGeometry.prototype.clip = function(samples, strips, ribbons, layers) {
     var segments;
     if (samples == null) {
-      samples = this.samples;
+      samples = this.samples - this.closed;
     }
     if (strips == null) {
       strips = this.strips;
@@ -21862,7 +22003,7 @@ LineGeometry = (function(_super) {
     if (layers == null) {
       layers = this.layers;
     }
-    segments = Math.max(0, samples - 1);
+    segments = Math.max(0, samples - (this.closed ? 0 : 1));
     this._clipGeometry(samples, strips, ribbons, layers);
     return this._clipOffsets(6, segments, strips, ribbons, layers, this.segments, this.strips, this.ribbons, this.layers);
   };
@@ -22187,13 +22328,17 @@ SurfaceGeometry = (function(_super) {
   __extends(SurfaceGeometry, _super);
 
   function SurfaceGeometry(options) {
-    var base, edgeX, edgeY, height, i, index, j, k, l, layers, points, position, quads, segmentsX, segmentsY, surface, surfaces, triangles, width, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
+    var base, closedX, closedY, edgeX, edgeY, edgerX, edgerY, height, i, index, j, k, l, layers, points, position, quads, segmentsX, segmentsY, surface, surfaces, triangles, width, wrapX, wrapY, x, y, z, _i, _j, _k, _l, _m, _n, _o, _ref;
     SurfaceGeometry.__super__.constructor.call(this, options);
     this._clipUniforms();
-    this.width = width = +options.width || 2;
-    this.height = height = +options.height || 2;
+    this.closedX = closedX = options.closedX || false;
+    this.closedY = closedY = options.closedY || false;
+    this.width = width = (+options.width || 2) + (closedX ? 1 : 0);
+    this.height = height = (+options.height || 2) + (closedY ? 1 : 0);
     this.surfaces = surfaces = +options.surfaces || 1;
     this.layers = layers = +options.layers || 1;
+    wrapX = width - (closedX ? 1 : 0);
+    wrapY = height - (closedY ? 1 : 0);
     this.segmentsX = segmentsX = Math.max(0, width - 1);
     this.segmentsY = segmentsY = Math.max(0, height - 1);
     points = width * height * surfaces * layers;
@@ -22222,12 +22367,40 @@ SurfaceGeometry = (function(_super) {
       }
       base += width;
     }
+    edgerX = closedX ? function() {
+      return 0;
+    } : function(x) {
+      if (x === 0) {
+        return -1;
+      } else if (x === segmentsX) {
+        return 1;
+      } else {
+        return 0;
+      }
+    };
+    edgerY = closedY ? function() {
+      return 0;
+    } : function(y) {
+      if (y === 0) {
+        return -1;
+      } else if (y === segmentsY) {
+        return 1;
+      } else {
+        return 0;
+      }
+    };
     for (l = _l = 0; 0 <= layers ? _l < layers : _l > layers; l = 0 <= layers ? ++_l : --_l) {
       for (z = _m = 0; 0 <= surfaces ? _m < surfaces : _m > surfaces; z = 0 <= surfaces ? ++_m : --_m) {
         for (y = _n = 0; 0 <= height ? _n < height : _n > height; y = 0 <= height ? ++_n : --_n) {
-          edgeY = y === 0 ? -1 : y === segmentsY ? 1 : 0;
+          if (closedY) {
+            y = y % wrapY;
+          }
+          edgeY = edgerY(y);
           for (x = _o = 0; 0 <= width ? _o < width : _o > width; x = 0 <= width ? ++_o : --_o) {
-            edgeX = x === 0 ? -1 : x === segmentsX ? 1 : 0;
+            if (closedX) {
+              x = x % wrapX;
+            }
+            edgeX = edgerX(x);
             position(x, y, z, l);
             surface(edgeX, edgeY);
           }
@@ -22739,7 +22912,8 @@ Line = (function(_super) {
       strips: options.strips,
       ribbons: options.ribbons,
       layers: options.layers,
-      anchor: options.anchor
+      anchor: options.anchor,
+      closed: options.closed
     });
     this._adopt(uniforms);
     this._adopt(this.geometry.uniforms);
@@ -22898,9 +23072,9 @@ Point = (function(_super) {
   __extends(Point, _super);
 
   function Point(renderer, shaders, options) {
-    var alpha, color, combine, edgeFactory, f, factory, fill, fillFactory, hasStyle, linear, map, mask, material, pass, passes, position, shape, shapes, stpq, uniforms, v, _ref, _ref1, _shape;
+    var alpha, color, combine, defines, edgeFactory, f, factory, fill, fillFactory, hasStyle, linear, map, mask, material, optical, pass, passes, position, scales, shape, shapes, stpq, uniforms, v, _ref, _ref1, _ref2, _scale, _shape;
     Point.__super__.constructor.call(this, renderer, shaders, options);
-    uniforms = options.uniforms, material = options.material, position = options.position, color = options.color, mask = options.mask, map = options.map, combine = options.combine, linear = options.linear, shape = options.shape, fill = options.fill, stpq = options.stpq;
+    uniforms = options.uniforms, material = options.material, position = options.position, color = options.color, mask = options.mask, map = options.map, combine = options.combine, linear = options.linear, shape = options.shape, optical = options.optical, fill = options.fill, stpq = options.stpq;
     if (uniforms == null) {
       uniforms = {};
     }
@@ -22909,10 +23083,12 @@ Point = (function(_super) {
       fill = true;
     }
     hasStyle = uniforms.styleColor != null;
-    shapes = ['circle', 'square', 'diamond', 'triangle'];
-    passes = ['circle', 'generic', 'generic', 'generic'];
+    shapes = ['circle', 'square', 'diamond', 'up', 'down', 'left', 'right'];
+    passes = ['circle', 'generic', 'generic', 'generic', 'generic', 'generic', 'generic'];
+    scales = [1.2, 1, 1.414, 1.16, 1.16, 1.16, 1.16];
     pass = (_ref = passes[shape]) != null ? _ref : passes[0];
     _shape = (_ref1 = shapes[shape]) != null ? _ref1 : shapes[0];
+    _scale = (_ref2 = optical && scales[shape]) != null ? _ref2 : 1;
     alpha = fill ? pass : "" + pass + ".hollow";
     this.geometry = new SpriteGeometry({
       items: options.items,
@@ -22922,11 +23098,14 @@ Point = (function(_super) {
     });
     this._adopt(uniforms);
     this._adopt(this.geometry.uniforms);
+    defines = {
+      POINT_SHAPE_SCALE: +(_scale + .00001)
+    };
     factory = shaders.material();
     v = factory.vertex;
     v.pipe(this._vertexColor(color, mask));
     v.require(this._vertexPosition(position, material, map, 2, stpq));
-    v.pipe('point.position', this.uniforms);
+    v.pipe('point.position', this.uniforms, defines);
     v.pipe('project.position', this.uniforms);
     factory.fragment = f = this._fragmentColor(hasStyle, material, color, mask, map, 2, stpq, combine, linear);
     edgeFactory = shaders.material();
@@ -23208,7 +23387,9 @@ Surface = (function(_super) {
       width: options.width,
       height: options.height,
       surfaces: options.surfaces,
-      layers: options.layers
+      layers: options.layers,
+      closedX: options.closedX,
+      closedY: options.closedY
     });
     this._adopt(uniforms);
     this._adopt(this.geometry.uniforms);
@@ -23424,6 +23605,10 @@ Scene = (function(_super) {
     });
   };
 
+  Scene.prototype.toJSON = function() {
+    return this.root.toJSON();
+  };
+
   return Scene;
 
 })(Renderable);
@@ -23520,7 +23705,7 @@ THREE.Bootstrap.registerPlugin('splash', {
         };
       })(this)), 150);
     }
-    width = current < total ? Math.round(100 * current / total) + '%' : '100%';
+    width = current < total ? (Math.round(1000 * current / total) * .1) + '%' : '100%';
     this.bar.style.width = width;
     if (this.options.fancy) {
       weights = this.random;
@@ -23760,7 +23945,7 @@ Animation = (function() {
   };
 
   Animation.prototype.update = function(time) {
-    var active, clock, complete, ease, end, f, from, method, queue, stage, start, step, to, value, _ref;
+    var active, clock, complete, ease, end, f, from, method, queue, stage, start, step, to, value, _base, _ref;
     this.time = time;
     if (this.queue.length === 0) {
       return true;
@@ -23799,7 +23984,10 @@ Animation = (function() {
       }
       if (!active) {
         if (typeof complete === "function") {
-          complete();
+          complete(true);
+        }
+        if (typeof (_base = this.options).complete === "function") {
+          _base.complete(true);
         }
         queue.shift();
         if (queue.length === 0) {
@@ -25208,7 +25396,7 @@ exports.parseQuoted = function(str) {
 
 
 },{}],172:[function(require,module,exports){
-var NUMBER_PRECISION, NUMBER_THRESHOLD, checkFactor, checkUnit, formatFactors, formatFraction, formatMultiple, formatPrimes, prettyJSXBind, prettyJSXPair, prettyJSXProp, prettyMarkup, prettyNumber, prettyPrint;
+var NUMBER_PRECISION, NUMBER_THRESHOLD, checkFactor, checkUnit, escapeHTML, formatFactors, formatFraction, formatMultiple, formatPrimes, prettyFormat, prettyJSXBind, prettyJSXPair, prettyJSXProp, prettyMarkup, prettyNumber, prettyPrint;
 
 NUMBER_PRECISION = 5;
 
@@ -25356,12 +25544,11 @@ prettyNumber = function(options) {
 };
 
 prettyPrint = function(markup, level) {
-  var args, _ref;
   if (level == null) {
     level = 'info';
   }
-  _ref = prettyMarkup(markup), markup = _ref[0], args = _ref[1];
-  return console[level].apply(console, [markup].concat(args));
+  markup = prettyMarkup(markup);
+  return console[level].apply(console, markup);
 };
 
 prettyMarkup = function(markup) {
@@ -25433,7 +25620,7 @@ prettyMarkup = function(markup) {
       }
     })();
   });
-  return [markup, args];
+  return [markup].concat(args);
 };
 
 prettyJSXProp = function(k, v) {
@@ -25473,7 +25660,7 @@ prettyJSXPair = (function() {
       switch (typeof v) {
         case 'string':
           if (v.match("\n")) {
-            return "\n\"" + v + "\"\n";
+            return "\"\n" + v + "\"\n";
           } else {
             return "\"" + v + "\"";
           }
@@ -25520,10 +25707,40 @@ prettyJSXPair = (function() {
   };
 })();
 
+escapeHTML = function(str) {
+  str = str.replace(/&/g, '&amp;');
+  str = str.replace(/</g, '&lt;');
+  return str = str.replace(/"/g, '&quot;');
+};
+
+prettyFormat = function(str) {
+  var arg, args, out, _i, _len;
+  args = [].slice.call(arguments);
+  args.shift();
+  out = "<span>";
+  str = escapeHTML(str);
+  for (_i = 0, _len = args.length; _i < _len; _i++) {
+    arg = args[_i];
+    str = str.replace(/%([a-z])/, function(_, f) {
+      var v;
+      v = args.shift();
+      switch (f) {
+        case 'c':
+          return "</span><span style=\"" + (escapeHTML(v)) + "\">";
+        default:
+          return escapeHTML(v);
+      }
+    });
+  }
+  out += str;
+  return out += "</span>";
+};
+
 module.exports = {
   markup: prettyMarkup,
   number: prettyNumber,
   print: prettyPrint,
+  format: prettyFormat,
   JSX: {
     prop: prettyJSXProp,
     bind: prettyJSXBind
@@ -25932,6 +26149,9 @@ apply = function(el, last, node, parent, index) {
         nextProps = el.props;
         children = (_ref1 = last != null ? last.children : void 0) != null ? _ref1 : null;
         nextChildren = el.children;
+        if (nextProps != null) {
+          nextProps.children = nextChildren;
+        }
         if (type != null) {
           dirty = node._COMPONENT_DIRTY;
           if ((props != null) !== (nextProps != null)) {
@@ -26004,7 +26224,7 @@ apply = function(el, last, node, parent, index) {
           if (nextProps != null) {
             for (key in nextProps) {
               value = nextProps[key];
-              if ((ref = props[key]) !== value) {
+              if ((ref = props[key]) !== value && key !== 'children') {
                 set(node, key, value, ref);
               }
             }

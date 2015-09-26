@@ -10,37 +10,27 @@
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor', 'stats'],
+      plugins: ['core', 'controls', 'cursor'],
       controls: {
         klass: THREE.OrbitControls
       },
     });
     three = mathbox.three;
 
-    three.camera.position.set(-1.5, .4, -1.3);
-    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
-    time = 0
-    three.on('update', function () {
-      time = three.Time.frames / 200
-
-      t = Math.max(three.Time.clock, 0) / 25
-      t = t < .5 ? t * t : t - .25
-
-      o = .5 - .5 * Math.cos(Math.min(1, t) * π)
-
-      c = Math.cos(t);
-      s = Math.sin(t);
-      view.set('quaternion', [0, -s, 0, c]);
-    });
-
-    mathbox.set({ scale: 500 });
+    mathbox.set({ scale: 500, focus: 1 });
     
-    
-    view = mathbox.cartesian({
+    view = mathbox
+    .camera({
+      proxy: true,
+      position: [-1.2, .4, -1.1],
+    })
+    .cartesian({
       range: [[-1, 1], [-1, 1], [-1, 1]],
       scale: [1, 1, 1],
+    }, {
+      quaternion: function (t) { return [0, -Math.sin(t / 8), 0, Math.cos(t / 8)]; }
     });
 
     view
@@ -102,14 +92,13 @@
     });
 
     view.volume({
-      id: 'sampler',
-      width:  32,
-      height: 32,
-      depth:  32,
-      expr: function (emit, x, y, z, i, j, k) {
-        var u = Math.cos((i + j*j + k*k*k) * 100.681 + time) * .05;
-        var v = Math.cos((i*i*i + j + k*k) * 120.681 + time) * .05;
-        var w = Math.cos((i*i + j*j*j + k) * 140.681 + time) * .05;
+      width:  28,
+      height: 28,
+      depth:  28,
+      expr: function (emit, x, y, z, i, j, k, t) {
+        var u = Math.cos((i + j*j + k*k*k) * 100.681 + t) * .05;
+        var v = Math.cos((i*i*i + j + k*k) * 120.681 + t) * .05;
+        var w = Math.cos((i*i + j*j*j + k) * 140.681 + t) * .05;
 
         emit(x, y, z);
         emit(x + u, y + v, z + w);
@@ -119,8 +108,8 @@
     });
     view.vector({
       color: 0x3090FF,
-      width: .6,
-      size: 5,
+      width: 1,
+      size: 4,
       end: true,
       zWrite: false,
       blending: THREE.AdditiveBlending,

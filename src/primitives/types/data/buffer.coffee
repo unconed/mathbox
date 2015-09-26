@@ -2,7 +2,7 @@ Data = require './data'
 Util = require '../../../util'
 
 class Buffer extends Data
-  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture']
+  @traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture']
 
   init: () ->
     @bufferSlack  = 0

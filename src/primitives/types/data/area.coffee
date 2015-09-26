@@ -2,7 +2,7 @@ Matrix = require './matrix'
 Util = require '../../../util'
 
 class Area extends Matrix
-  @traits = ['node', 'buffer', 'data', 'source', 'index', 'matrix', 'texture', 'raw', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
+  @traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'matrix', 'texture', 'raw', 'span:x', 'span:y', 'area', 'sampler:x', 'sampler:y']
 
   updateSpan: () ->
     dimensions = @props.axes

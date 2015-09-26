@@ -17,12 +17,12 @@ class Context
 
     # DOM container
     @canvas      = canvas  = renderer.domElement
-    @element     = element = canvas.parentNode
+    @element     = null
 
     # Rendering factory
     @shaders     = new Shaders.Factory    Shaders.Snippets
     @renderables = new Render .Factory    Render .Classes, renderer, @shaders
-    @overlays    = new Overlay.Factory    Overlay.Classes, element,  canvas
+    @overlays    = new Overlay.Factory    Overlay.Classes, canvas
 
     @scene       = @renderables.make      'scene',  scene: scene
     @camera      = @defaultCamera =       camera ? new THREE.PerspectiveCamera()
@@ -72,10 +72,10 @@ class Context
     }
     ###
     size ?= {}
-    size.renderWidth ?= size.viewWidth  ?= 1280
-    size.renderWidth ?= size.viewHeight ?= 720
-    size.pixelRatio  ?= size.renderWidth / size.viewWidth
-    size.aspect      ?= size.viewWidth / Math.max 1, size.viewHeight
+    size.renderWidth  ?= size.viewWidth  ?= 1280
+    size.renderHeight ?= size.viewHeight ?= 720
+    size.pixelRatio   ?= size.renderWidth / Math.max .000001, size.viewWidth
+    size.aspect       ?= size.viewWidth   / Math.max .000001, size.viewHeight
 
     @root.controller.resize size
     @

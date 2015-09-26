@@ -2,7 +2,7 @@ _Array = require './array'
 Util = require '../../../util'
 
 class Interval extends _Array
-  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'array', 'span', 'interval', 'sampler', 'raw']
+  @traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'array', 'span', 'interval', 'sampler', 'raw']
 
   updateSpan: () ->
     dimension = @props.axis

@@ -69,32 +69,36 @@
 
     view.area({
       rangeX: [-π/2, π/2],
-      rangeY: [0, π],
-      width:  128,
-      height: 32,
+      rangeY: [0, 2*π],
+      width:  129,
+      height: 65,
+      expr: function (emit, θ, ϕ, i, j) {
+        q1.set(0, 0, Math.sin(θ), Math.cos(θ));
+        q2.set(0, Math.sin(ϕ), 0, Math.cos(ϕ));
+        q1.multiply(q2);
+        emit(q1.x, q1.y, q1.z, q1.w);
+      },
+      live: false,
+      channels: 4,
+    });
+    view.line({
+      color: blue,
+    });
+    
+    // ===========================================================================
+    
+    view.area({
+      rangeX: [-π/2, π/2],
+      rangeY: [0, 2*π],
+      width:  129,
+      height: 65,
       expr: function (emit, θ, ϕ, i, j) {
         q1.set(0, Math.sin(θ), 0, Math.cos(θ));
         q2.set(Math.sin(ϕ), 0, 0, Math.cos(ϕ));
         q1.multiply(q2);
         emit(q1.x, q1.y, q1.z, q1.w);
       },
-      channels: 4,
-    });
-    view.line({
-      color: green,
-    });
-
-    view.area({
-      rangeX: [-π/2, π/2],
-      rangeY: [0, π],
-      width:  128,
-      height: 32,
-      expr: function (emit, θ, ϕ, i, j) {
-        q1.set(0, Math.sin(θ), 0, -Math.cos(θ));
-        q2.set(Math.sin(ϕ), 0, 0, -Math.cos(ϕ));
-        q1.multiply(q2);
-        emit(q1.x, q1.y, q1.z, q1.w);
-      },
+      live: false,
       channels: 4,
     });
     view.line({
@@ -105,32 +109,16 @@
   
     view.area({
       rangeX: [-π/2, π/2],
-      rangeY: [0, π],
-      width:  128,
-      height: 32,
+      rangeY: [0, 2*π],
+      width:  129,
+      height: 65,
       expr: function (emit, θ, ϕ, i, j) {
         q1.set(Math.sin(θ), 0, 0, Math.cos(θ));
         q2.set(0, 0, Math.sin(ϕ), Math.cos(ϕ));
         q1.multiply(q2);
         emit(q1.x, q1.y, q1.z, q1.w);
       },
-      channels: 4,
-    });
-    view.line({
-      color: red,
-    });
-
-    view.area({
-      rangeX: [-π/2, π/2],
-      rangeY: [0, π],
-      width:  128,
-      height: 32,
-      expr: function (emit, θ, ϕ, i, j) {
-        q1.set(Math.sin(θ), 0, 0, -Math.cos(θ));
-        q2.set(0, 0, Math.sin(ϕ), -Math.cos(ϕ));
-        q1.multiply(q2);
-        emit(q1.x, q1.y, q1.z, q1.w);
-      },
+      live: false,
       channels: 4,
     });
     view.line({
@@ -138,41 +126,7 @@
     });
   
     // ===========================================================================
-  
-    view.area({
-      rangeX: [-π/2, π/2],
-      rangeY: [0, π],
-      width:  128,
-      height: 32,
-      expr: function (emit, θ, ϕ, i, j) {
-        q1.set(0, 0, Math.sin(θ), Math.cos(θ));
-        q2.set(0, Math.sin(ϕ), 0, Math.cos(ϕ));
-        q1.multiply(q2);
-        emit(q1.x, q1.y, q1.z, q1.w);
-      },
-      channels: 4,
-    });
-    view.line({
-      color: blue,
-    });
-
-    view.area({
-      rangeX: [-π/2, π/2],
-      rangeY: [0, π],
-      width:  128,
-      height: 32,
-      expr: function (emit, θ, ϕ, i, j) {
-        q1.set(0, 0, Math.sin(θ), -Math.cos(θ));
-        q2.set(0, Math.sin(ϕ), 0, -Math.cos(ϕ));
-        q1.multiply(q2);
-        emit(q1.x, q1.y, q1.z, q1.w);
-      },
-      channels: 4,
-    });
-    view.line({
-      color: blue,
-    });
-  
+    
   </script>
 </body>
 </html>

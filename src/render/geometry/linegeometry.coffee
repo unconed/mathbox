@@ -17,12 +17,14 @@ class LineGeometry extends ClipGeometry
 
     @_clipUniforms()
 
-    @samples  = samples = +options.samples || 2
-    @strips   = strips  = +options.strips  || 1
-    @ribbons  = ribbons = +options.ribbons || 1
-    @layers   = layers  = +options.layers  || 1
-    @segments = segments  = samples - 1
+    @closed   = closed   =  options.closed  || false
+    @samples  = samples  =(+options.samples || 2) + if closed then 1 else 0
+    @strips   = strips   = +options.strips  || 1
+    @ribbons  = ribbons  = +options.ribbons || 1
+    @layers   = layers   = +options.layers  || 1
+    @segments = segments =  samples - 1
 
+    wrap      = samples  - if closed then 1 else 0
     points    = samples  * strips * ribbons * layers * 2
     quads     = segments * strips * ribbons * layers
     triangles = quads    * 2
@@ -54,12 +56,19 @@ class LineGeometry extends ClipGeometry
           base += 2
         base += 2
 
+    edger =
+      if closed
+        () -> 0
+      else
+        (x) -> if x == 0 then -1 else if x == segments then 1 else 0
+
     for l in [0...layers]
       for z in [0...ribbons]
         for y in [0...strips]
 
           for x in [0...samples]
-            edge = if x == 0 then -1 else if x == segments then 1 else 0
+            x    = x % wrap if closed
+            edge = edger x
 
             position x, y, z, l
             position x, y, z, l
@@ -75,8 +84,8 @@ class LineGeometry extends ClipGeometry
 
     return
 
-  clip: (samples = @samples, strips = @strips, ribbons = @ribbons, layers = @layers) ->
-    segments  = Math.max 0, samples - 1
+  clip: (samples = @samples - @closed, strips = @strips, ribbons = @ribbons, layers = @layers) ->
+    segments  = Math.max 0, samples - if @closed then 0 else 1
 
     @_clipGeometry   samples, strips, ribbons, layers
     @_clipOffsets    6,

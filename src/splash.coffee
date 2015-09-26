@@ -62,7 +62,7 @@ THREE.Bootstrap.registerPlugin 'splash',
       @timer = setTimeout (() => @loader.style.display = 'none'), 150
 
     # Update splash progress
-    width = if current < total then Math.round(100 * current / total) + '%' else '100%'
+    width = if current < total then (Math.round(1000 * current / total) * .1) + '%' else '100%'
     @bar.style.width = width
 
     if @options.fancy

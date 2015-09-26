@@ -2,7 +2,7 @@ Voxel = require '../data/voxel'
 Util = require '../../../util'
 
 class HTML extends Voxel
-  @traits = ['node', 'buffer', 'data', 'voxel', 'html']
+  @traits = ['node', 'buffer', 'active', 'data', 'voxel', 'html']
   @defaults =
     channels: 1
 
@@ -26,6 +26,9 @@ class HTML extends Voxel
       @dom.dispose()
       @dom = null
 
+  update: () ->
+    super
+
   change: (changed, touched, init) ->
     return @rebuild() if touched['html']
     super changed, touched, init
@@ -39,7 +42,7 @@ class HTML extends Voxel
       (emit, i, j, k, l) ->
         callback emit, el, i, j, k, l
     else
-      (emit, i, j, k, l) ->
-        callback emit, el, i, j, k, l, @_context.time.clock, @_context.time.step
+      (emit, i, j, k, l) =>
+        callback emit, el, i, j, k, l, @bufferClock, @bufferStep
 
 module.exports = HTML

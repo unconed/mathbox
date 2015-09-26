@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Strip extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'geometry', 'position', 'bind', 'shade']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'mesh', 'strip', 'geometry', 'position', 'bind', 'shade']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -44,9 +44,10 @@ class Strip extends Primitive
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
     lineUniforms  = @_helpers.line.uniforms()
+    unitUniforms  = @_inherit('unit').getUnitUniforms()
 
     # Get display properties
-    outline = @props.outline
+    line    = @props.line
     shaded  = @props.shaded
     fill    = @props.fill
 
@@ -65,17 +66,24 @@ class Strip extends Primitive
     objects = []
 
     # Make line renderable
-    if outline
-      uniforms = Util.JS.merge lineUniforms, styleUniforms
+    if line
+      # Swizzle strip edges into segments
+      swizzle = @_shaders.shader()
+      swizzle.pipe Util.GLSL.swizzleVec4 'yzwx'
+      swizzle.pipe position
+
+      uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms
+
       @line = @_renderables.make 'line',
                 uniforms: uniforms
                 samples:  items
-                ribbons:  width
-                strips:   height
+                strips:   width
+                ribbons:  height
                 layers:   depth
-                position: position
+                position: swizzle
                 color:    color
                 mask:     mask
+
       objects.push @line
 
     # Make strip renderable

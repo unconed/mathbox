@@ -18,6 +18,7 @@ class Line extends Base
       ribbons: options.ribbons
       layers:  options.layers
       anchor:  options.anchor
+      closed:  options.closed
 
     @_adopt uniforms
     @_adopt @geometry.uniforms

@@ -2,7 +2,7 @@ Voxel = require '../data/voxel'
 Util = require '../../../util'
 
 class Text extends Voxel
-  @traits = ['node', 'buffer', 'data', 'texture', 'voxel', 'text']
+  @traits = ['node', 'buffer', 'active', 'data', 'texture', 'voxel', 'text']
   @defaults =
     minFilter: 'linear'
     magFilter: 'linear'
@@ -48,7 +48,7 @@ class Text extends Voxel
     # Hook buffer emitter to map atlas text
     atlas = @atlas
     emit  = @buffer.streamer.emit
-    @buffer.streamer.emit = (t) -> atlas.map t, emit
+    @buffer.streamer.emit = (text) -> atlas.map text, emit
 
   unmake: () ->
     super

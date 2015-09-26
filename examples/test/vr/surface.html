@@ -17,7 +17,7 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(0, 0, .01);
+    three.camera.position.set(0, .003, .01);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 //    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
@@ -51,7 +51,6 @@
     });
 
     view.area({
-      id: 'sampler',
       width: 64,
       height: 64,
       axes: [1, 3],
@@ -65,7 +64,9 @@
     });
     view.surface({
       color: 0x3090FF,
-      width: 5,
+      width: 2,
+      shaded: true,
+      lineX: true,
     });
 
 

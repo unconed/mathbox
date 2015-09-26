@@ -144,7 +144,8 @@ class Animation
       step? value
 
       if !active
-        complete?()
+        complete?(true)
+        @options.complete?(true)
         queue.shift()
         break if queue.length == 0 # end of queue
 

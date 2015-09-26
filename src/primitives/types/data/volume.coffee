@@ -2,7 +2,7 @@ Voxel = require './voxel'
 Util = require '../../../util'
 
 class Volume extends Voxel
-  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z', 'raw']
+  @traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'voxel', 'span:x', 'span:y', 'span:z', 'volume', 'sampler:x', 'sampler:y', 'sampler:z', 'raw']
 
   updateSpan: () ->
     dimensions = @props.axes

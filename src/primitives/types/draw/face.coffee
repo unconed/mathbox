@@ -39,13 +39,20 @@ class Face extends Primitive
     # Prepare bound uniforms
     styleUniforms = @_helpers.style.uniforms()
     lineUniforms  = @_helpers.line.uniforms()
+    unitUniforms  = @_inherit('unit').getUnitUniforms()
+
+    # Darken wireframe if needed for contrast
+    # Auto z-bias wireframe over surface
+    wireUniforms = {}
+    wireUniforms.styleZBias  = @_attributes.make @_types.number()
+    @wireZBias  = wireUniforms.styleZBias
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
     {items, width, height, depth} = dims
 
     # Get display properties
-    outline = @props.outline
+    line    = @props.line
     shaded  = @props.shaded
     fill    = @props.fill
 
@@ -66,27 +73,28 @@ class Face extends Primitive
     objects = []
 
     # Make line renderable
-    if outline
+    if line
       # Swizzle face edges into segments
       swizzle = @_shaders.shader()
       swizzle.pipe Util.GLSL.swizzleVec4 'yzwx'
       swizzle.pipe position
 
-      uniforms = Util.JS.merge lineUniforms, styleUniforms
+      uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms, wireUniforms
       @line = @_renderables.make 'line',
                 uniforms: uniforms
                 samples:  items
-                ribbons:  width
-                strips:   height
+                strips:   width
+                ribbons:  height
                 layers:   depth
                 position: swizzle
                 color:    color
                 mask:     mask
+                closed:   true
       objects.push @line
 
     # Make face renderable
     if fill
-      uniforms = Util.JS.merge styleUniforms, {}
+      uniforms = Util.JS.merge unitUniforms, styleUniforms, {}
       @face = @_renderables.make 'face',
                 uniforms: uniforms
                 width:    width
@@ -114,5 +122,11 @@ class Face extends Primitive
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['geometry.points'] or touched['mesh']
+
+    if changed['style.zBias'] or
+       init
+
+      fill   = @_get 'mesh.fill'
+      @wireZBias.value = @_get('style.zBias') + if fill then 5 else 0
 
 module.exports = Face

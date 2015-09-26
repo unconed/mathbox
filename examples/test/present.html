@@ -10,17 +10,12 @@
 <body>
   
   <script>
-    mathbox = mathBox({
+    var mathbox = mathBox({
       plugins: ['core'],
     });
-    three = mathbox.three;
+    var three = mathbox.three;
 
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-
-    time = 0
-    three.on('update', function () {
-      time = three.Time.frames / 200
-    });
 
     if (window == top)
       window.onkeydown = function (e) {
@@ -38,15 +33,15 @@
       }
 
     setInterval(function () {
-//      view.set('index', (view.get('index') + 1) % (view.get('length') + 1));
+      present.set('index', (present.get('index') + 1) % (present.get('length') + 1));
     }, 1000);
 
-    view = mathbox.cartesian({
+    var view = mathbox.cartesian({
       range: [[-1, 1], [-1, 1], [-1, 1]],
       scale: [1, 1, 1],
     })
     
-    present =
+    var present =
     view.present({
       index: 1
     })
@@ -54,7 +49,7 @@
     var camera = view.camera({
       lookAt: [0, 0, 0],
     }, {
-      position: function () { return [-3 * Math.cos(three.Time.now), .4 + .2 * Math.cos(three.Time.now * .381), -3 * Math.sin(three.Time.now)] },
+      position: function (t) { return [-3 * Math.cos(t), .4 + .2 * Math.cos(t * .381), -3 * Math.sin(t)] },
     });
 
     present
@@ -134,15 +129,29 @@
 
     present
       .slide()
-        .transform({
-          position: [0, 0, 0]
-        })
         .grid({
           axes: [1, 3],
           width: 2,
           color: 0xff4f90,
           depth: .5
-        });
+        })
+        .reveal({
+          stagger: [1],
+          duration: 1,
+        })
+          .interval({
+            length: 128,
+            expr: function (emit, x, i, t) {
+              if (i == 0) console.log('emitting')
+              emit(x, .5 + .5 * Math.sin((x + t) * 3));
+            },
+            channels: 2,
+          })
+          .line({
+            color: 0x3090FF,
+            width: 20,
+          });
+        
 
     present
       .slide()

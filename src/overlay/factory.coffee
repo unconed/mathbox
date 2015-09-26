@@ -1,14 +1,17 @@
 class OverlayFactory
-  constructor: (@classes, @element, @canvas) ->
+  constructor: (@classes, @canvas) ->
     div = document.createElement 'div'
     div.classList.add 'mathbox-overlays'
     @div = div
 
   inject: () ->
-    @element.insertBefore @div, @canvas
+    element = @canvas.parentNode
+    throw new Error "Canvas not inserted into document." if !element
+    element.insertBefore @div, @canvas
 
   unject: () ->
-    @element.removeChild @div
+    element = @div.parentNode
+    element.removeChild @div
 
   getTypes: () ->
     Object.keys @classes

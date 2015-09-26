@@ -101,6 +101,8 @@ Traits =
     lineX:             Types.bool(true)
     lineY:             Types.bool(true)
     crossed:           Types.bool(false)
+    closedX:           Types.bool(false)
+    closedY:           Types.bool(false)
   axis:
     detail:            Types.int(1)
     crossed:           Types.bool(false)
@@ -160,6 +162,7 @@ Traits =
   point:
     size:              Types.positive(Types.number(4))
     shape:             Types.shape()
+    optical:           Types.bool(true)
     fill:              Types.bool(true)
     depth:             Types.number(1)
   line:
@@ -167,14 +170,15 @@ Traits =
     depth:             Types.positive(Types.number(1))
     stroke:            Types.stroke()
     proximity:         Types.nullable(Types.number(Infinity))
+    closed:            Types.bool(false)
   mesh:
     fill:              Types.bool(true)
     shaded:            Types.bool(false)
     map:               Types.nullable(Types.select())
   strip:
-    outline:           Types.bool(false)
+    line:              Types.bool(false)
   face:
-    outline:           Types.bool(false)
+    line:              Types.bool(false)
   arrow:
     size:              Types.number(3)
     start:             Types.bool(false)
@@ -355,7 +359,7 @@ Traits =
     from:              Types.number(0)
     to:                Types.number(Infinity)
     realtime:          Types.bool(false)
-
+    loop:              Types.bool(false)
   now:
     now:               Types.nullable(Types.timestamp())
     seek:              Types.nullable(Types.number(0))

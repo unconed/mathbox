@@ -2,7 +2,7 @@ Source = require '../base/source'
 Util = require '../../../util'
 
 class Data extends Source
-  @traits = ['node', 'data', 'source', 'index']
+  @traits = ['node', 'data', 'source', 'index', 'entity', 'active']
 
   init: () ->
     @dataEmitter = null
@@ -41,10 +41,20 @@ class Data extends Source
   callback: (callback) ->
     callback ? () ->
 
+  update: () ->
+
   make: () ->
-    @_listen 'root', 'root.update', @update
+    @_helpers.active.make()
+
+    # Always run update at least once to prime JS VM optimization for entering elements
+    @first = true
+    @_listen 'root', 'root.update', () =>
+      @update() if @isActive or @first
+      @first = false
 
   unmake: () ->
+    @_helpers.active.unmake()
+
     @dataEmitter = null
     @dataSizes   = null
 

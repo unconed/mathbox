@@ -2,7 +2,7 @@ Buffer = require './buffer'
 Util = require '../../../util'
 
 class Voxel extends Buffer
-  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'voxel', 'raw']
+  @traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'voxel', 'raw']
 
   init: () ->
     @buffer = @spec = null
@@ -126,7 +126,7 @@ class Voxel extends Buffer
     if callback.length <= 4
       callback
     else
-      (emit, i) =>
+      (emit, i, j, k) =>
         callback emit, i, j, k, @bufferClock, @bufferStep
 
   update: () =>

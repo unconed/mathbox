@@ -581,7 +581,7 @@ Types =
     Types.enum value, keys
 
   shape: (value = 'circle') ->
-    keys = ['circle', 'square', 'diamond', 'triangle']
+    keys = ['circle', 'square', 'diamond', 'up', 'down', 'left', 'right']
     Types.enum value, keys
 
   stroke: (value = 'solid') ->

@@ -19,6 +19,8 @@ class Surface extends Base
       height:   options.height
       surfaces: options.surfaces
       layers:   options.layers
+      closedX:  options.closedX
+      closedY:  options.closedY
 
     @_adopt uniforms
     @_adopt @geometry.uniforms

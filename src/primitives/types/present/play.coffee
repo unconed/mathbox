@@ -26,7 +26,7 @@ class Play extends Track
 
     # Update clock
     @_listen parentClock, 'clock.tick', () =>
-      {from, to, speed, pace, realtime} = @props
+      {from, to, speed, pace, delay, realtime} = @props
 
       time = parentClock.getTime()
 
@@ -36,7 +36,11 @@ class Play extends Track
           ratio = speed / pace
 
           @clock   += delta * ratio
-          @playhead = Math.min to, from + Math.max 0, @clock - delay * ratio
+
+          offset = Math.max 0, @clock - delay * ratio
+          offset = offset % (to - from) if @props.loop
+
+          @playhead = Math.min to, from + offset
         else
           0
 

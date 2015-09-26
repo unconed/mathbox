@@ -2,7 +2,7 @@ Buffer = require './buffer'
 Util = require '../../../util'
 
 class Matrix extends Buffer
-  @traits = ['node', 'buffer', 'data', 'source', 'index', 'texture', 'matrix', 'raw']
+  @traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'matrix', 'raw']
 
   init: () ->
     @buffer = @spec = null

@@ -17,28 +17,27 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(0, 0, 3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-
-    time = 0
-    three.on('update', function () {
-      time = three.Time.clock / 4
-    });
 
     view = mathbox
     .set({
       focus: 3
     })
+    .camera({
+      proxy: true,
+      position: [0, 0, 3],
+    })
     .polar({
-      bend: .25,
-      range: [[-π, π], [0, 1], [-1, 1]],
+      bend: 1,
+      range: [[-2*π, 2*π], [0, 1], [-1, 1]],
       scale: [2, 1, 1],
+      helix: .1,
     });
 
     view.transform({
       position: [0, .5, 0],
     }).axis({
-      detail: 30,
+      detail: 256,
     })
     .scale({
       divide: 10,
@@ -71,29 +70,44 @@
       axis: 2,
     });
 
-    view.interval({
+    view
+    .interval({
       id: 'sampler',
-      length: 128,
-      expr: function (emit, x, i) {
-        emit(x, .5 + .5 * Math.sin(x + time));
+      length: 256,
+      expr: function (emit, x, i, t) {
+        emit(x, .5 + .5 * Math.sin((x + t) * 3));
       },
       channels: 2,
-    });
-    view.grid({
-      divideX: 5,
-      detailX: 48,
-      width: 1,
-      opacity: 0.5,
-      unitX: π,
-      baseX: 2,
-      zBias: -5,
-    });
-    view.line({
+    })
+    .line({
       points: '#sampler',
       color: 0x3090FF,
       width: 5,
     });
 
+    view
+    .area({
+      width: 256,
+      height: 2,
+    })
+    .surface({
+      color: '#fff',
+      opacity: .75,
+      zBias: -10,
+    });
+
+    view.grid({
+      divideX: 5,
+      detailX: 256,
+      width: 1,
+      opacity: 0.5,
+      unitX: π,
+      baseX: 2,
+      zBias: -5,
+      zOrder: 2
+    });
+
+  
   </script>
 </body>
 </html>

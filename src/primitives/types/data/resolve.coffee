@@ -2,7 +2,7 @@ Data = require './data'
 Util = require '../../../util'
 
 class Resolve extends Data
-  @traits = ['node', 'data', 'source', 'index', 'voxel']
+  @traits = ['node', 'data', 'active', 'source', 'index', 'voxel']
 
   init: () ->
     @buffer = @spec = null

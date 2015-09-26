@@ -13,6 +13,8 @@ attribute vec2 sprite;
 varying vec2 vSprite;
 varying float vPixelSize;
 
+const float pointScale = POINT_SHAPE_SCALE;
+
 // External
 vec3 getPosition(vec4 xyzw, float canonical);
 
@@ -28,7 +30,7 @@ vec3 getPointPosition() {
   
   // Match device/unit mapping 
   // Sprite goes from -1..1, width = 2.
-  float size = pointSize * pixelUnit * .5;
+  float size = pointScale * pointSize * pixelUnit * .5;
   float depthSize = depth * size;
   
   // Pad sprite by half a pixel to make the anti-aliasing straddle the pixel edge

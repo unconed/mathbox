@@ -135,7 +135,7 @@ class TextAtlas extends Atlas
 
     # Measure text
     m = ctx.measureText text
-    w = Math.min max, Math.ceil m.width + 2 * x
+    w = Math.min max, Math.ceil m.width + 2 * x + 1
 
     # Clear scratch area
     ctx.clearRect  0, 0, w, h

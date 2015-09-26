@@ -16,8 +16,9 @@ void getStripGeometry(vec4 xyzw, vec3 strip, out vec3 pos, out vec3 normal) {
   b   = getPosition(vec4(xyzw.xyz, strip.x), 0.0);
   c   = getPosition(vec4(xyzw.xyz, strip.y), 0.0);
 
-  pos = getPosition(xyzw);
   normal = normalize(cross(c - a, b - a)) * strip.z;
+  
+  pos = a;
 }
 
 vec3 getStripPositionNormal() {

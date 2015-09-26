@@ -2,7 +2,7 @@ Operator = require './operator'
 Util     = require '../../../util'
 
 class Memo extends Operator
-  @traits = ['node', 'bind', 'operator', 'source', 'index', 'texture', 'memo']
+  @traits = ['node', 'bind', 'active', 'operator', 'source', 'index', 'texture', 'memo']
 
   sourceShader: (shader) -> @memo.shaderAbsolute shader, 1
 
@@ -11,7 +11,8 @@ class Memo extends Operator
     return unless @bind.source?
 
     # Listen for updates
-    @_listen 'root', 'root.update', @update
+    @_helpers.active.make()
+    @_listen 'root', 'root.update', () => @update() if @isActive
 
     # Read sampling parameters
     {minFilter, magFilter, type} = @props
@@ -50,6 +51,8 @@ class Memo extends Operator
     super
 
     if @bind.source?
+      @_helpers.active.unmake()
+
       @memo.unadopt @compose
       @memo.dispose()
 

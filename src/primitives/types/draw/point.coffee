@@ -51,8 +51,9 @@ class Point extends Primitive
     mask = @_helpers.object.mask()
 
     # Point style
-    shape  = @props.shape
-    fill   = @props.fill
+    shape   = @props.shape
+    fill    = @props.fill
+    optical = @props.optical
 
     # Make point renderable
     uniforms = Util.JS.merge unitUniforms, pointUniforms, styleUniforms
@@ -65,6 +66,7 @@ class Point extends Primitive
               position: position
               color:    color
               shape:    shape
+              optical:  optical
               fill:     fill
               mask:     mask
 

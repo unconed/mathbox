@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Cylindrical Rotation</title>
+  <title>MathBox - Cylindrical Stream</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -22,16 +22,13 @@
 
     var objs = null
     var time = 0
-    var scrub = 0
     three.on('update', function () {
       clock = three.Time.frames / 60
       time = clock
 
       t = Math.max(clock, 0) / 2
       t = t < .5 ? t * t : t - .25
-
-      scrub = t
-
+  
       f = t / 8;
       c = Math.cos(f);
       s = Math.sin(f);
@@ -51,6 +48,7 @@
     view = mathbox
       .unit({
         scale: 720,
+        focus: 4,
       })
       .polar({
         range: [[-π, π], [0, 1], [-1, 1]],
@@ -113,10 +111,11 @@
       axis: 'z',
       length: 512,
       history: 64,
-      expr: function (emit, x, i) {
+      fps: 60,
+      expr: function (emit, x, i, t) {
         j = Math.floor(i/2);
-        theta = scrub * (1 + Math.sin(j * j * j + j) * .5) * 4;
-        rad = Math.sin(j * 12 + j * j) * .5 + Math.sin((j * .018 + 1 + Math.sin(j) * .3) * time);
+        theta = t / 2 * (1 + Math.sin(j * j * j + j) * .5) * 4;
+        rad = Math.sin(j * 12 + j * j) * .5 + Math.sin((j * .018 + 1 + Math.sin(j) * .3) * t / 2);
         emit(theta, rad * .5, x / π);
       },
       channels: 3,
@@ -127,7 +126,7 @@
     });
     view.spread({
       unit: 'absolute',
-      width: [0, 0, .015, 0],
+      width: [0, 0, .02, 0],
       depth: [0, 0, .01, 0],
       id: 'split',
     });
@@ -143,9 +142,10 @@
       scale: [1, 1, π],
     })
       .surface({
-        width: 2,
+        width: 1.5,
         zBias: 2,
-        color: 0x1550FF,
+        color: 0x3070FF,
+        points: '<',
         fill:  false,
         lineY: true,
       });
@@ -156,9 +156,21 @@
       position: [0, .75, 0],
       scale: [1, 1, π],
     })
+      .shader({
+        code: [
+          "uniform vec4 dataResolution;",
+          "vec4 getPosition(vec4 xyzw);",
+          "vec4 getColor(vec4 xyzw) {",
+          "  return vec4(mix(vec3(1.0), vec3(1.0, 2.0, 1.5), mod(xyzw.z, 3.0) / 2.0) * (1.0 - vec3(xyzw.y * dataResolution.y)), 1.0);",
+          "}",
+        ].join("\n")
+      })
+      .resample()
       .surface({
         width: 2,
-        color: 0x2070FF,
+        color: 0x3090FF,
+        points: '<<',
+        colors: '<',
         shaded: true
       });
 

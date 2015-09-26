@@ -5,7 +5,7 @@ class Point extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, material, position, color, mask, map, combine, linear, shape, fill, stpq} = options
+    {uniforms, material, position, color, mask, map, combine, linear, shape, optical, fill, stpq} = options
 
     uniforms ?= {}
     shape     = +shape ? 0
@@ -13,10 +13,12 @@ class Point extends Base
 
     hasStyle = uniforms.styleColor?
 
-    shapes   = ['circle', 'square', 'diamond', 'triangle']
-    passes   = ['circle', 'generic', 'generic', 'generic']
+    shapes   = ['circle', 'square', 'diamond', 'up', 'down', 'left', 'right']
+    passes   = ['circle', 'generic', 'generic', 'generic', 'generic', 'generic', 'generic']
+    scales   = [1.2,       1,         1.414,     1.16, 1.16,   1.16,  1.16]
     pass     = passes[shape] ? passes[0]
     _shape   = shapes[shape] ? shapes[0]
+    _scale   = optical and scales[shape] ? 1
     alpha    = if fill then pass else "#{pass}.hollow"
 
     @geometry = new SpriteGeometry
@@ -28,6 +30,8 @@ class Point extends Base
     @_adopt uniforms
     @_adopt @geometry.uniforms
 
+    defines = POINT_SHAPE_SCALE: +(_scale + .00001)
+
     # Shared vertex shader
     factory = shaders.material()
     v = factory.vertex
@@ -35,7 +39,7 @@ class Point extends Base
     v.pipe @_vertexColor color, mask
 
     v.require @_vertexPosition position, material, map, 2, stpq
-    v.pipe 'point.position',        @uniforms
+    v.pipe 'point.position',        @uniforms, defines
     v.pipe 'project.position',      @uniforms
 
     # Shared fragment shader

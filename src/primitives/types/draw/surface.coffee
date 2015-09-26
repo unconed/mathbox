@@ -63,7 +63,7 @@ class Surface extends Primitive
     {width, height, depth, items} = dims
 
     # Get display properties
-    {shaded, fill, lineX, lineY, stroke, proximity, crossed} = @props
+    {shaded, fill, lineX, lineY, closedX, closedY, stroke, proximity, crossed} = @props
     objects = []
     @proximity = proximity
 
@@ -98,6 +98,7 @@ class Surface extends Primitive
                 stroke:    stroke
                 mask:      mask
                 proximity: proximity
+                closed:    closedX || closed
       objects.push @lineX
 
     if lineY
@@ -113,6 +114,7 @@ class Surface extends Primitive
                 stroke:    stroke
                 mask:      swizzle  mask,     if crossed then 'xyzw' else 'yxzw'
                 proximity: proximity
+                closed:    closedY || closed
       objects.push @lineY
 
     if fill
@@ -131,6 +133,8 @@ class Surface extends Primitive
                 mask:     mask
                 map:      map
                 intUV:    true
+                closedX:  closedX || closed
+                closedY:  closedY || closed
       objects.push @surface
 
     @_helpers.visible.make()
