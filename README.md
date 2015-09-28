@@ -48,7 +48,7 @@ On initialization, it returns a MathBox API object, wrapping the MathBox <root>.
 via
 
 ```javascript
-mathbox
+var view = mathbox
   .cartesian({
     range: [[-2, 2], [-1, 1], [-1, 1]],
     scale: [2, 1, 1],
