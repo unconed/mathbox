@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Empty</title>
+  <script src="../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    var mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.TrackballControls,
+      },
+    });
+    if (mathbox.fallback) throw "WebGL not supported"
+
+    var three = mathbox.three;
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    // Do stuff with mathbox
+    /*
+    mathbox
+      .set({
+        focus: 3,
+        scale: 720,
+      });
+
+    var view =
+      mathbox
+      .camera({
+        proxy: true,
+        position: [0, 0, 3],
+      })
+      .cartesian({
+        range: [[-2, 2], [-1, 1], [-1, 1]],
+        scale: [2, 1, 1],
+      })
+        .axis({
+          axis: 1,
+          width: 3,
+        })
+        .axis({
+          axis: 2,
+          width: 3,
+        })
+        .grid({
+          width: 2,  
+          divideX: 20,
+          divideY: 10,        
+        })
+    //*/
+      
+    /*
+    var curve =
+      view.interval({
+        expr: function (emit, x, i, t) {
+          emit(x, Math.sin(x + t));
+        },
+        length: 64,
+        channels: 2,
+      })
+      .line({
+        width: 5,
+        color: '#3090FF',
+      });
+    //*/
+
+    
+  </script>
+</body>
+</html>

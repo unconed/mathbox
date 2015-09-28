@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <title>MathBox - Label Everything</title>
-  <script src="../../build/mathbox-bundle.js"></script>
+  <script src="../../build/mathbox-bundle.min.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.css">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.js"></script>
+  <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.css">
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.js"></script>
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
@@ -51,8 +51,8 @@
     // Define VDOM handler to clone real DOM elements
     var clone = MathBox.DOM.createClass({
       render: function (el, props, children) {
-        var element = children.cloneNode(true);
-        return element;
+        var button = children.cloneNode(true);
+        return button;
       },
     });
 
@@ -67,7 +67,10 @@
     mathbox = mathBox({
       plugins: ['core', 'controls', 'cursor'],
       controls: {
-        klass: THREE.OrbitControls
+        klass: THREE.OrbitControls,
+      },
+      loop: {
+        start: window == window.top,
       },
       camera: {
         near: .01,
@@ -76,7 +79,7 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(-1, 1, 2.6);
+    three.camera.position.set(-1, 1, 2.5);
     three.camera.lookAt(new THREE.Vector3())
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
@@ -117,7 +120,7 @@
         var color = ['#30D0FF','#30A0FF'][i%2];
         var a = Math.round(Math.sqrt(t * t + t + 3) + Math.abs(Math.cos(t * .1 + i + i * i) * 50)) % symbols.length;
         var b = Math.round(Math.sqrt(t * t + Math.sin(t + i * i) + 5));
-        emit(el(latex, {style: {color: color}}, '\\sqrt{\\text{LaTeX} + ' + (i + b + 1) + ' \\pi^{' + symbols[a] +'}}'));
+        emit(el(latex, {style: {color: color}}, '\\sqrt{L^AT_EX + ' + (i + b + 1) + ' \\pi^{' + symbols[a] +'}}'));
       },
     })
     .dom({
@@ -289,6 +292,8 @@
       outline: 3,
       zIndex: 1,
     });
+
+
 
   </script>
 </body>

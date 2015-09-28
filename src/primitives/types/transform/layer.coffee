@@ -50,7 +50,7 @@ class Layer extends Transform
   # End transform chain here without applying camera view
   vertex: (shader, pass) ->
     return shader.pipe 'layer.position', @uniforms if pass == 2
-    return shader.pipe 'root.position'                if pass == 3
+    return shader.pipe 'root.position'             if pass == 3
     shader
 
 module.exports = Layer

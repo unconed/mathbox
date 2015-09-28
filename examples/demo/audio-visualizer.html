@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Audio Visualizer with Vertex Feedback</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+  <script type="text/javascript" src="http://use.typekit.com/nde6wmn.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+</head>
+
+<script type="application/glsl" id="map-rotate">
+uniform vec3 dataResolution;
+uniform vec3 dataSize;
+const float COS = .995;
+const float SIN = .01;
+vec4 getSample(vec3 xyz);
+vec4 getFramesSample(vec3 xyz) {
+  vec2 pos = xyz.xy * dataResolution.xy - .5;
+  pos = ((pos * vec2(16.0, 9.0)) * mat2(COS, SIN, -SIN, COS) * .98) / vec2(16.0, 9.0);
+  xyz.xy = (pos + .5) * dataSize.xy;
+  return getSample(xyz) - .01;
+}
+</script>
+
+<script type="application/glsl" id="map-temporal-blur">
+uniform float time;
+uniform float modulate;
+uniform float pattern;
+uniform float warp;
+uniform float shift;
+vec4 getSample(vec3 xyz);
+vec4 getFramesSample(vec3 xyz) {
+  // Convolve 4 last buffers
+  vec4 color = (
+    getSample(xyz) +
+    getSample(xyz + vec3(0.0, 0.0, 1.0)) +
+    getSample(xyz + vec3(0.0, 0.0, 2.0)) +
+    getSample(xyz + vec3(0.0, 0.0, 3.0))
+  ) / 4.0;
+  
+  // Grayscale
+  float v = color.x + color.y + color.z;
+
+  // Warp effect
+  vec2 xy = xyz.xy;
+  xy = xy + warp * sin(vec2(xy.y, xy.x) / 16.0) * 8.0;
+
+  // Calculate shift bias
+  float d = shift * sin((xy.x + xy.y) / 16.0 + time / 4.0) * 4.0;
+
+  // Radial and tiled pattern
+  float r = length(xy - vec2(64.0, 36.0));
+  float m = abs(fract((r + time) / 32.0) - .5);
+
+  // Map with warped signed distance + bias
+  vec2 sxy = abs(fract(vec2(xy + time) / vec2(32.0, 32.0)) - .5);
+  m = mix(min(sxy.x, sxy.y), m, pattern);
+  float s = mix(1.0, 2.0 * clamp(32.0 * m - 8.0 + d, 0.0, 1.0), modulate);
+
+  return vec4(vec3(v * v) / 8.0 * s, 1.0);
+} 
+</script>
+
+<script type="application/glsl" id="map-xy-to-xyz">
+vec3 getSample(vec3 xyz);
+vec3 getFramesSample(vec3 xyz) {
+  vec3 c = getSample(xyz);
+  vec2 uv = (xyz.xy - vec2(64.0, 36.0)) / vec2(64.0, 36.0) * vec2(16.0 / 9.0, 1.0);
+  float f = xyz.z * 2.0 - 1.0;
+  return vec3(uv, (c.x + c.y + c.z) * .1 * f);
+}
+</script>
+
+<script type="application/glsl" id="map-z-to-color">
+uniform float modulate1;
+uniform float modulate2;
+uniform float modulate3;
+uniform float modulate4;
+vec4 getSample(vec2 xy);
+vec4 getFramesSample(vec2 xy) {
+  vec3 c = getSample(xy).xyz;
+  c = c.z * vec3(c.z * vec2(c.z, 1.0), 1.0);
+  c = mix(c, mix(c.yzx, c.zxy, modulate1), modulate2);
+  c = mix(c, mix(abs(sin(c.yxz * 2.0)), c.zyx, modulate3), modulate4);
+  return vec4(c, 1.0);
+}
+</script>
+
+<script type="application/glsl" id="map-z-to-color-2">
+uniform float modulate1;
+uniform float modulate2;
+uniform float modulate3;
+uniform float modulate4;
+vec4 getSample(vec2 xy);
+vec4 getFramesSample(vec2 xy) {
+  vec3 c = getSample(xy).xyz;
+  c = vec3(.01) + sqrt(c.z * vec3(c.z * vec2(c.z, 1.0), 1.0));
+  c = mix(c, mix(c.yzx, c.zxy, modulate1), modulate2);
+  c = mix(c, mix(abs(sin(c.yxz * 2.0)), c.zyx, modulate3), modulate4);
+  return vec4(c, 1.0);
+}
+</script>
+<style type="text/css">
+body {
+  font-size: 16px;
+  line-height: 28px;
+
+  font-family: 'klavika-web', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+}
+.playerbutton {
+  position: absolute;
+  z-index: 10001;
+  left: 50%;
+  top: 50%;
+  margin-left: -100px;
+  margin-top: -100px;
+  width: 200px;
+  height: 200px;
+  cursor: pointer;
+}
+.playerbutton > div {
+  margin: 50px auto;
+  width: 100px;
+  height: 100px;
+  border-radius: 50% 50%;
+  background: rgb(120,139,149);
+  color: #fff;
+  overflow: hidden;
+}
+#play div div, #loading div div {
+  margin: 30px 30px 0 30px;
+  width: 0px;
+  border-top:    20px solid transparent;
+  border-left:   40px solid #fff;
+  border-bottom: 20px solid transparent;
+}
+#pause div div {
+  margin: 30px 30px 0 30px;
+  display: block;
+  width: 10px;
+  height: 40px;
+  border-left:  15px solid #fff;
+  border-right: 15px solid #fff;
+}
+#pause {
+  opacity: 0;
+}
+#pause:hover {
+  opacity: 1;
+}
+#loading {
+  display: none;
+  cursor: wait;
+}
+#loading > div {
+  -webkit-animation: load 1.4s infinite linear;
+  animation: load 1.4s infinite linear;
+}
+@-webkit-keyframes load {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@keyframes load {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+</style>
+<body>
+  <div id="pause" class="playerbutton"><div><div></div></div></div>
+  <div id="play"  class="playerbutton"><div><div></div></div></div>
+  <div id="loading" class="playerbutton"><div><div></div></div></div>
+  <script>
+  
+    // Play/pause
+    var play = document.querySelector('#play');
+    play.onclick = function () {
+      loadAudio();
+      play.style.display = 'none';
+    }
+
+    var pause = document.querySelector('#pause');
+    pause.onclick = function () {
+      if (audio) audio.pause();
+      play.style.display = 'block';
+    }
+  
+    // Load audio
+    var audio;
+    var loadAudio = function (url) {
+      if (!audio) {
+        audio = new Audio();
+        var sources = [
+          ['audio/mpeg', 'http://acko.net/audio/readyornot.mp3'],
+          ['audio/ogg', 'http://acko.net/audio/readyornot.ogg'],
+        ];
+
+        sources.forEach(function (source) {
+          if (!url && audio.canPlayType(source[0])) {
+            url = source[1];
+          }
+        });
+        audio.oncanplaythrough = function () {
+          loading.style.display = 'none';
+          audio.play();
+        };
+        audio.onended = function () {
+          play.style.display = 'block';
+        };
+        loading.style.display = 'block';
+        audio.crossOrigin = "anonymous";
+        audio.src = url;
+      }
+      else {
+        audio.play();
+      }
+        
+      if (!audioHandler) {
+        makeAudioPipe(audio);
+      }
+    };
+
+    // Audio analyzer
+    var audioHandler, audioCurrentTime;
+    var makeAudioPipe = function (element) {
+      var ctx = new AudioContext;
+
+      var source = ctx.createMediaElementSource(element);
+
+      var analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+
+      var bufferFreq = new Float32Array(analyser.frequencyBinCount);
+      var bufferTime = new Float32Array(analyser.fftSize);
+      three.on('update', audioHandler = function () {
+        analyser.getFloatFrequencyData(bufferFreq);
+        analyser.getFloatTimeDomainData(bufferTime);
+      });
+    
+      mathbox.select('#audioFreq').set('data', bufferFreq);
+      mathbox.select('#audioTime').set('data', bufferTime);
+
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+    };
+    
+    // Mathbox
+    var mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      renderer: {
+        parameters: {
+          antialias: window.devicePixelRatio > 2 ? false : true,
+        },
+      },
+      controls: {
+        klass: THREE.TrackballControls,
+        parameters: {
+          noZoom: true,
+        },
+      },
+      loop: {
+        start: window == top.window,
+      },
+    });
+
+    var three = mathbox.three;
+    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+
+    // Mathbox DOM
+    mathbox
+    .set({
+      scale: 720
+    })
+    .camera({
+      proxy: true,
+      position: [.3, .1, 2],
+    })
+    .group()
+      .array({
+        id: 'audioTime',
+        data: [],
+        length: 1024,
+        channels: 1
+      })
+      .array({
+        id: 'audioFreq',
+        data: [],
+        length: 512,
+        channels: 1,
+      });
+    
+    mathbox
+    .rtt({
+      id: 'render',
+      width: 64*4,
+      height: 36*4,
+      type: 'unsignedByte',
+      minFilter: 'nearest',
+      magFilter: 'nearest',
+    })
+      .camera({
+        position: [0, 0, 2.5]
+      })
+      .group()
+        .swizzle({
+          source: '#audioTime',
+          order: 'yx',
+        })
+        .spread({
+          width: [3.444, 0, 0, 0],
+        })
+        .shader({
+          code: [
+            "vec4 getSample(vec4 xyzw);",
+            "vec4 getColor(vec4 xyzw) {",
+            "  float h = getSample(xyzw).y;",
+            "  return vec4(vec3(h), 1.0);",
+            "}",
+          ].join("\n")
+        })
+        .resample({
+      
+        })
+        .transform({
+          scale: [1, .75, 1],
+        })
+          .line({
+            points: '<<',
+            colors: '<',
+            width: 5,
+            color: 0xFFFFFF,
+            opacity: .4,
+            blending: 'add',
+          })
+        .end()
+      .end()
+
+      .cartesian({
+        range: [[-2, 2], [-1, 1], [-1, 1]],
+        scale: [1/2, 1/4, 1/4],
+      }, {
+        quaternion: function (t) {
+          c = Math.cos(t / 3);
+          s = Math.sin(t / 3);
+          c2 = Math.cos(t / 8.71);
+          s2 = Math.sin(t / 8.71);
+          return [s * s2, s * c2, .2, c];
+        }
+      })
+        .grid({
+          divideX: 4,
+          divideY: 4,
+          zBias: 10,
+          opacity: .1,
+          color: 0xffdfe0,
+          width: 6,
+        })
+      .end()
+    .end()
+
+    .rtt({
+      id: 'rtt1',
+      history: 4,
+      width: 64*4,
+      height: 36*4,
+      type: 'unsignedByte',
+    })
+      .shader({
+        code: '#map-rotate'
+      })
+      .resample({
+        id: 'resample1',
+        indices:    3,
+        channels: 4,
+      })
+      .compose({
+        color: '#ffffff',
+        zWrite: false,
+      })
+      .compose({
+        source: '#render',
+        blending: 'add',
+        color: '#ffffff',
+        zWrite: false,
+      })
+    .end()
+
+    var modulate = 0;
+    var warp = 0;
+    var pattern = 0;
+
+    mathbox
+    .rtt({
+      id: "rtt2",
+      width: 64*4,
+      height: 36*4,
+      type: 'float',
+    })
+      .camera({
+        position: [0, 0, 2.5]
+      })
+      .clock({}, {
+        seek: function (t) { return audio ? audio.currentTime : t; }
+      })
+        .shader({
+          code: '#map-temporal-blur'
+        }, {
+          time: function (t) { return t * 16.0; },
+          modulate: function (t) {
+            var bang = ((t > 69.229311)  && (t < 88.922656)) ||
+                       ((t > 88.922656)  && (t < 148.9143)) ||
+                       ((t > 148.9143)   && (t < 158.2)) ||
+                       ((t > 168.284427) && (t < 188.00)) ? 1 : 0;
+            if ((t > 88.922656)  && (t < 148.9143)) {
+              bang *= .5 + .45 * Math.cos(t / 3);
+            }
+            if ((t > 168)) {
+              bang *= .85 + .15 * Math.cos(t);
+            }
+            modulate = modulate + (bang - modulate) * .1;
+            return modulate;
+          },
+          pattern: function (t) {
+            var bang = ((t > 88.922656) && (t < 148.9143));
+            pattern = pattern + (bang - pattern) * .1;
+            if ((t > 168)) {
+              pattern = .5 + .4 * Math.cos(t * 2.311);
+            }
+            return pattern;
+          },
+          warp: function (t) {
+            var bang = (t > 148.9143);
+            if ((t > 168)) {
+              warp *= 1 + .5 * Math.cos(t * .556);
+            }
+            if ((t > 148.2) && (t < 158.2)) warp = warp + .75 + .25 * Math.cos((t - 158.2));
+            warp = warp + (bang - warp) * .1;
+            return warp;
+          },
+          shift: function (t) {
+            var bang = (t > 168) ? Math.max(0, Math.min(1, .1 * (t - 168))) : 0;
+            bang *= .75 + .25 * Math.cos(t * .731);
+            warp = warp + (bang - warp) * .1;
+            return warp;
+          },
+        })
+        .resample({
+          id: 'resample2',
+          source: '#rtt1',
+          indices:    3,
+          channels: 4
+        })
+        .compose({
+          color: '#fff',
+          zWrite: false,
+        })
+      .end()
+      .transform({
+        scale: [1, .25, 1]
+      })
+        .swizzle({
+          source: '#audioTime',
+          order: 'yx',
+        })
+        .spread({
+          width: [3.444, 0, 0, 0],
+        })
+        .shader({
+          code: [
+            "vec4 getSample(vec4 xyzw);",
+            "vec4 getColor(vec4 xyzw) {",
+            "  float h = getSample(xyzw).y;",
+            "  return vec4(vec3(h) * .2, 1.0);",
+            "}",
+          ].join("\n")
+        })
+        .resample({
+          
+        })
+        .line({
+          points: '<<',
+          colors: '<',
+          width: 50,
+          color: 0xFFFFFF,
+          opacity: 1,
+          blending: 'add',
+        })
+      .end()
+    .end()
+    .resample({
+      width: 129,
+      height: 73,
+    })
+    .repeat({
+      depth: 2,
+      id: 'lerp',
+    })
+
+    .shader({
+      code: '#map-xy-to-xyz'
+    })
+    .resample({
+      indices:  3,
+      channels: 3,
+    })
+
+    .transpose({
+      order: 'xywz',
+      id: 'transpose',
+    })
+
+    .transpose({
+      source: '#lerp',
+      order: 'xywz',
+      id: 'color',
+    })
+
+  .clock({}, {
+      seek: function (t) { return audio ? audio.currentTime : t; }
+  })
+    .clock({
+      id: 'disco',
+    }, {
+      speed: function (t) {
+        var bang = ((t > 69.329311)  && (t < 89.122656)) ||
+                   ((t > 148.9143)   && (t < 158.0)) ||
+                   ((t > 168.284427) && (t < 188.077772));
+        return bang ? 1 : .2;
+      },
+    })
+    
+      .shader({
+        code: '#map-z-to-color'
+      }, {
+        modulate1: function (t) { return Math.cos((t + 1) * .417) * .5 + .5; },
+        modulate2: function (t) { return Math.cos((t + 1) * .617 + Math.sin(t * .133)) * .5 + .5; },
+        modulate3: function (t) { return Math.cos((t + 1) * .217 + 2.0) * .5 + .5; },
+        modulate4: function (t) { return Math.cos((t + 1) * .117 + 3.0 + Math.sin(t * .133)) * .5 + .5; },
+      })
+      .resample({
+        source: '#lerp',
+        id: 'color1',
+        indices:    2,
+        channels: 4,
+      })
+
+      .shader({
+        code: '#map-z-to-color-2'
+      }, {
+        modulate1: function (t) { return Math.cos((t + 1) * .417) * .5 + .5; },
+        modulate2: function (t) { return Math.cos((t + 1) * .617 + Math.sin(t * .133)) * .5 + .5; },
+        modulate3: function (t) { return Math.cos((t + 1) * .217 + 2.0) * .5 + .5; },
+        modulate4: function (t) { return Math.cos((t + 1) * .117 + 3.0 + Math.sin(t * .133)) * .5 + .5; },
+      })
+      .resample({
+        source: '#lerp',
+        id: 'color2',
+        indices:    2,
+        channels: 4,
+      })
+    
+    .end()
+
+
+    .cartesian({
+      range: [[-16/9-.001, 16/9+.001], [-1, 1], [-1, 1]],
+      scale: [16/9, 1, 1],
+    }, {
+      quaternion: function (t) {
+        t = t / 3;
+        c = Math.cos(t / 4);
+        s = Math.sin(t / 4);
+        c2 = Math.cos(t / 11.71) * 1.71;
+        s2 = Math.sin(t / 11.71) * 1.71;
+        return [s * s2, s * c2, -.2, c];
+      }
+    })
+      .lerp({
+        source: '#transpose',
+        width: 33,
+        height: 19,
+      })
+      .lerp({
+        source: '#color2',
+        width: 33,
+        height: 19,
+      })
+      .transform()
+        .line({
+          points: '<<',
+          colors: '<',
+          color: '#ffffff',
+          width: 2,
+          zBias: 5,
+        })
+      .end()
+      .play({
+        script: {
+          20: {position: [0, 0, 0]},
+          39: {position: [0, 0, 2]},
+          57: {position: [0, 0, 0]},
+        }
+      })
+      .transpose({
+        source: '<<',
+        order: 'yxzw'
+      })
+      .transpose({
+        source: '<<',
+        order: 'yxzw'
+      })
+      .transform()
+        .line({
+          points: '<<',
+          colors: '<',
+          color: '#ffffff',
+          width: 2,
+          zBias: 5,
+        })
+      .end()
+      .play({
+        script: {
+          20: {position: [0, 0, 0]},
+          39: {position: [0, 0,-2]},
+          57: {position: [0, 0, 0]},
+        }
+      })
+
+      .transform()
+        .point({
+          points: '<<',
+          colors: '<',
+          color: '#ffffff',
+          size: 10,
+          zBias: 5,
+          zOrder: 1,
+          blending: 'add',
+          zWrite: false,
+        })
+      .end()
+      .play({
+        script: {
+          22: {position: [0, 0, 0]},
+          39: {position: [0, 0, -1]},
+          57: {position: [0, 0, 0]},
+        }
+      })
+      .transform()
+        .point({
+          points: '#transpose',
+          colors: '#color2',
+          color: '#ffffff',
+          size: 5,
+          zBias: 5,
+          zOrder: 1,
+          blending: 'add',
+          zWrite: false,
+        })
+      .end()
+      .play({
+        script: {
+          20: {position: [0, 0, 0]},
+          39: {position: [0, 0, 1]},
+          57: {position: [0, 0, 0]},
+        }
+      })
+      .vector({
+        points: '#transpose',
+        colors: '#color1',
+        color: '#ffffff',
+        start: false,
+        end: false,
+        width: 40,
+        opacity: .03,
+        blending: 'add',
+        zWrite: false,
+        zOrder: -2
+      })
+
+  </script>
+</body>
+</html>

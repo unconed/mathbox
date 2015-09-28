@@ -149,6 +149,7 @@ class Node
     Util.Pretty.print @toMarkup(selector), level
 
 
-THREE.Binder.apply Node::
+Binder = require '../util/binder'
+Binder.apply Node::
 
 module.exports = Node

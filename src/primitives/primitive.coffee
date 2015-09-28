@@ -239,6 +239,7 @@ class Primitive
     @node.unbind key, true for key in @_handlers.compute
     @_handlers.compute = []
 
-THREE.Binder.apply Primitive::
+Binder = require '../util/binder'
+Binder.apply Primitive::
 
 module.exports = Primitive

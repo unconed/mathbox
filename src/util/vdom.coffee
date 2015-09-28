@@ -234,6 +234,7 @@ unmount = (comp, node) ->
     delete child._COMPONENT
 
 prop = (key) ->
+  return true if typeof document == 'undefined'
   return key if document.documentElement.style[key]?
 
   key = key[0].toUpperCase() + key.slice 1

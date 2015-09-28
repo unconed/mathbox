@@ -33,8 +33,6 @@ Traits =
   layer:
     depth:             Types.number(1)
     fit:               Types.fit('y')
-    origin:            Types.vec2(0, 0)
-    unit:              Types.mapping()
 
   vertex:
     pass:              Types.vertexPass()
@@ -151,7 +149,7 @@ Traits =
     blending:          Types.blending()
     zWrite:            Types.bool(true)
     zTest:             Types.bool(true)
-    zIndex:            Types.absolute(Types.round())
+    zIndex:            Types.positive(Types.round())
     zBias:             Types.number(0)
     zOrder:            Types.nullable(Types.int())
 
@@ -213,7 +211,7 @@ Traits =
 
   overlay:
     opacity:           Types.number(1)
-    zIndex:            Types.absolute(Types.round(0))
+    zIndex:            Types.positive(Types.round(0))
   dom:
     points:            Types.select()
     html:              Types.select()

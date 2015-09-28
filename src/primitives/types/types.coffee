@@ -82,13 +82,6 @@ Types =
     equals: (a, b) -> array.equals a, b
     clone: array.clone
 
-  absolute: (type) ->
-    value = type.make()
-    make: () -> value
-    uniform: () -> type.uniform()
-    validate: (value, target, invalid) ->
-      Math.abs +type.validate value, target, invalid
-
   nullable: (type, make = false) ->
     value = if make then type.make() else null
 

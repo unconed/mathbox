@@ -1,8 +1,67 @@
-# README #
+# MathBox #
 
-Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule init`.
+![MathBox](http://acko.net/files/mathbox2/cover1.jpg)
 
-See examples/ for a start.
+MathBox is a library for rendering presentation-quality math diagrams in a browser using WebGL. Built on top of Three.js and ShaderGraph, it provides a clean API to visualize mathematical relationships and animate them declaratively.
+
+MathBox is used through its JS-based DOM.
+
+For background, see the [article series on Acko.net](http://acko.net/blog/mathbox2/). See `examples/` for a start.
+
+*Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule init`.*
+
+####
+
+## Usage
+
+Download the [package](#) or install via bower:
+
+```
+bower install mathbox
+```
+
+Include the bundle:
+
+<script src="./mathbox-bundle.js"></script>
+
+MathBox uses [threestrap](https://github.com/unconed/threestrap) to launch and shares all of its options.
+
+```javascript
+var mathbox = mathBox(options);
+if (mathbox.fallback) throw "WebGL not supported";
+
+var three = mathbox.three;
+// three.renderer, three.scene, three.camera
+```
+
+On initialization, it returns a MathBox API object, wrapping the MathBox <root>. You can spawn new nodes:
+  
+```javascript
+mathbox
+  .cartesian({
+    range: [[-2, 2], [-1, 1], [-1, 1]],
+    scale: [2, 1, 1],
+  })
+    .axis({
+      axis: 1,
+    })
+    .axis({
+      axis: 2,
+    })
+```
+
+You can select objects using `.select()` and a CSS-like selector:
+
+```javascript
+mathbox
+  .select("cartesian > axis")
+```
+
+Use `.print()`, `.inspect()` and `.debug()` to show information about a selection.
+
+####
+
+See `docs/intro.md` for a tiny quickstart, `docs/primitives.md` for a full element reference and `docs/context.md` for context usage.
 
 ####
 
@@ -12,7 +71,11 @@ See examples/ for a start.
 * primitives/ - The DOM node types (the legos)
 * render/     - Smart proxies for Three.js (the glue)
 * shaders/    - GLSL code
-* stage/      - API / controllers (mostly missing)
+* stage/      - API / controllers
 * util/       - It's inevitable
 
-Uses gulp to build.
+/vendor
+* [threestrap](https://github.com/unconed/threestrap)
+* [shadergraph](https://github.com/unconed/shadergraph)
+
+Uses `gulp` to build itself.

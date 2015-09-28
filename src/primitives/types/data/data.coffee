@@ -10,7 +10,7 @@ class Data extends Source
 
   emitter: (channels, items) ->
     data = @props.data
-    bind = @props.resolve
+    bind = @props.bind
     expr = @props.expr
 
     if data?

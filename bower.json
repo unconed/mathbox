@@ -1,6 +1,6 @@
 {
   "name": "mathbox",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "WebGL math graphing",
   "main": "build/mathbox-bundle.js",
 	"keywords": [
