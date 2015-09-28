@@ -2,6 +2,10 @@
   "name": "mathbox",
   "version": "0.0.2",
   "description": "Presentation-quality WebGL math graphing",
+  "repository": {
+    "type": "git",
+    "url": "https://gitgud.io/unconed/mathbox.git"
+  },
   "main": "build/mathbox-bundle.js",
 	"keywords": [
 		"three",
