@@ -38,7 +38,7 @@ var three = mathbox.three;
 
 On initialization, it returns a MathBox API object, wrapping the MathBox <root>. You can spawn new nodes:
 
-```html
+```jsx
 <cartesian range={[[-2, 2], [-1, 1], [-1, 1]]} scale={[2, 1, 1]}>
   <axis axis={1} />
   <axis axis={2} />
