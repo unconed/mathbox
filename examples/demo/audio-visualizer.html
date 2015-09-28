@@ -239,6 +239,7 @@ body {
     // Audio analyzer
     var audioHandler, audioCurrentTime;
     var makeAudioPipe = function (element) {
+      window.AudioContext = window.AudioContext || window.webkitAudioContext;
       var ctx = new AudioContext;
 
       var source = ctx.createMediaElementSource(element);
@@ -246,11 +247,23 @@ body {
       var analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
 
+      var scratchTime = new Float32Array(analyser.fftSize);
+
       var bufferFreq = new Float32Array(analyser.frequencyBinCount);
       var bufferTime = new Float32Array(analyser.fftSize);
       three.on('update', audioHandler = function () {
         analyser.getFloatFrequencyData(bufferFreq);
-        analyser.getFloatTimeDomainData(bufferTime);
+        
+        // Web Audio support is spotty
+        if (analyser.getFloatTimeDomainData) {
+          analyser.getFloatTimeDomainData(bufferTime);
+        }
+        else {
+          analyser.getByteTimeDomainData(scratchTime);
+          for (var i = 0; i < analyser.fftSize; ++i) {
+            bufferTime[i] = scratchTime[i];
+          }
+        }
       });
     
       mathbox.select('#audioFreq').set('data', bufferFreq);
