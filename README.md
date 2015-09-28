@@ -16,13 +16,15 @@ For background, see the [article series on Acko.net](http://acko.net/blog/mathbo
 
 Download the [package](#) or install via bower:
 
-```
+```bash
 bower install mathbox
 ```
 
 Include the bundle:
 
+```html
 <script src="./mathbox-bundle.js"></script>
+```
 
 MathBox uses [threestrap](https://github.com/unconed/threestrap) to launch and shares all of its options.
 
@@ -35,7 +37,16 @@ var three = mathbox.three;
 ```
 
 On initialization, it returns a MathBox API object, wrapping the MathBox <root>. You can spawn new nodes:
-  
+
+```html
+<cartesian range={[[-2, 2], [-1, 1], [-1, 1]]} scale={[2, 1, 1]}>
+  <axis axis={1} />
+  <axis axis={2} />
+</cartesian>
+```
+
+via
+
 ```javascript
 mathbox
   .cartesian({
@@ -50,7 +61,7 @@ mathbox
     })
 ```
 
-You can select objects using `.select()` and a CSS-like selector:
+You can select objects using `.select()` and a CSS-like selector to get a jQuery-like selection:
 
 ```javascript
 mathbox
