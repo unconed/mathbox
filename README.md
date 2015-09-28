@@ -27,7 +27,7 @@ Demos:
 
 ## Usage
 
-Download the [package](#) or install via bower:
+Download the [package](http://acko.net/files/mathbox2/mathbox-0.0.2.zip) or install via bower:
 
 ```bash
 bower install mathbox
