@@ -10,7 +10,7 @@ For background, see the [article series on Acko.net](http://acko.net/blog/mathbo
 
 *Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule init`.*
 
-####
+***
 
 ## Usage
 
@@ -70,11 +70,16 @@ mathbox
 
 Use `.print()`, `.inspect()` and `.debug()` to show information about a selection.
 
-####
+***
 
-See `docs/intro.md` for a tiny quickstart, `docs/primitives.md` for a full element reference and `docs/context.md` for context usage.
+Docs 
 
-####
+See:
+* `docs/intro.md` for a tiny quickstart
+* `docs/primitives.md` for a full element reference
+* `docs/context.md` for advanced context usage.
+
+***
 
 /src tree:
 
