@@ -21,6 +21,9 @@ Demos:
  * [Vertex Warping](http://acko.net/files/mathbox2/iframe-vertex.html)
  * [Volumetric Vectors](http://acko.net/files/mathbox2/iframe-volume.html)
 
+Presentations:
+ * [The Pixel Factory](http://acko.net/files/gltalks/pixelfactory/online.html#0)
+
 *Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule init`.*
 
 ***
