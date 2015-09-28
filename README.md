@@ -67,15 +67,22 @@ See `docs/intro.md` for a tiny quickstart, `docs/primitives.md` for a full eleme
 
 /src tree:
 
-* model/      - DOM tree + CSS selector handling
-* primitives/ - The DOM node types (the legos)
-* render/     - Smart proxies for Three.js (the glue)
-* shaders/    - GLSL code
-* stage/      - API / controllers
-* util/       - It's inevitable
+ * model/      - DOM tree + CSS selector handling
+ * primitives/ - The DOM node types (the legos)
+ * render/     - Smart proxies for Three.js (the glue)
+ * shaders/    - GLSL code
+ * stage/      - API / controllers
+ * util/       - It's inevitable
 
 /vendor
-* [threestrap](https://github.com/unconed/threestrap)
-* [shadergraph](https://github.com/unconed/shadergraph)
+
+ * [threestrap](https://github.com/unconed/threestrap) - Three.js bootstrapper
+ * [shadergraph](https://github.com/unconed/shadergraph) - Functional GLSL linker
 
 Uses `gulp` to build itself.
+
+***
+
+MathBox and ShaderGraph (c) Steven Wittens 2013-2015. MIT License.
+
+Libraries and 3rd party shaders (c) their respective authors.
