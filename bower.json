@@ -16,7 +16,7 @@
 		"math",
 		"mathbox",
 		"graph",
-		"graphing",
+		"graphing"
 	],
 	"license": "MIT",
 	"ignore": [
