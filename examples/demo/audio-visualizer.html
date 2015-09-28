@@ -460,7 +460,7 @@ body {
           warp: function (t) {
             var bang = (t > 148.9143);
             if ((t > 168)) {
-              warp *= 1 + .5 * Math.cos(t * .556);
+              warp *= .75 + .5 * Math.cos(t * .556);
             }
             if ((t > 148.2) && (t < 158.2)) warp = warp + .75 + .25 * Math.cos((t - 158.2));
             warp = warp + (bang - warp) * .1;
