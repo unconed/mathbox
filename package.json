@@ -1,7 +1,7 @@
 {
   "name": "mathbox",
   "version": "0.0.2",
-  "description": "WebGL math graphing",
+  "description": "Presentation-quality WebGL math graphing",
   "repository": {
     "type": "git",
     "url": "https://github.com/unconed/mathbox.git"

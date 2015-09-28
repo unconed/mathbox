@@ -1,7 +1,7 @@
 {
   "name": "mathbox",
   "version": "0.0.2",
-  "description": "WebGL math graphing",
+  "description": "Presentation-quality WebGL math graphing",
   "main": "build/mathbox-bundle.js",
 	"keywords": [
 		"three",
