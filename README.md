@@ -8,7 +8,7 @@ MathBox is a library for rendering presentation-quality math diagrams in a brows
 
 MathBox is used through its JS-based DOM.
 
-For background, see the [article series on Acko.net](http://acko.net/blog/mathbox2/). See `examples/` for a start.
+For background, see the [article series on Acko.net](http://acko.net/blog/mathbox2/). See `docs/` for TLDR and `examples/` for a start.
 
 *Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule init`.*
 
