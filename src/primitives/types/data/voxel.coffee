@@ -157,7 +157,7 @@ class Voxel extends Buffer
         used.depth  = dims.depth
 
         @buffer.setActive used.width, used.height, used.depth
-        @buffer.callback.rebind data
+        @buffer.callback.rebind? data
         @buffer.update()
       else
         @buffer.setActive @spec.width, @spec.height, @spec.depth

@@ -12,11 +12,12 @@
  @param nice - Whether to round to a more reasonable interval
 ###
 
-linear = (min, max, n, unit, base, bias, start, end, zero, nice) ->
+linear = (min, max, n, unit, base, factor, start, end, zero, nice = true) ->
 
-  # Desired
-  n ||= 10
-  bias ||= 0
+  n      ||= 10
+  unit   ||= 1
+  base   ||= 10
+  factor ||= 1
 
   # Calculate naive tick size.
   span = max - min
@@ -33,14 +34,14 @@ linear = (min, max, n, unit, base, bias, start, end, zero, nice) ->
   # Round to the floor'd power of 'scale'
   unit ||= 1
   base ||= 10
-  ref = unit * (bias + Math.pow(base, Math.floor(Math.log(ideal / unit) / Math.log(base))))
+  ref = unit * (Math.pow(base, Math.floor(Math.log(ideal / unit) / Math.log(base))))
 
   # Make derived steps at sensible factors.
   factors =
             if base % 2 == 0 then [base / 2, 1, 1 / 2]
             else if base % 3 == 0 then [base / 3, 1, 1 / 3]
             else                       [1]
-  steps = (ref * factor for factor in factors)
+  steps = (ref * f for f in factors)
 
   # Find step size closest to ideal.
   distance = Infinity
@@ -54,6 +55,9 @@ linear = (min, max, n, unit, base, bias, start, end, zero, nice) ->
     else
       ref
   , ref
+
+  # Scale final step
+  step *= factor
 
   # Renormalize min/max onto aligned steps.
   min = (Math.ceil (min / step) + +!start) * step

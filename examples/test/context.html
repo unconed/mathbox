@@ -2,24 +2,38 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Curve</title>
+  <title>MathBox - Raw Context</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
-    mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor'],
-      controls: {
-        klass: THREE.OrbitControls
-      },
-    });
-    three = mathbox.three;
 
-    three.camera.position.set(0, 0, 3);
-    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+    var WIDTH = 640;
+    var HEIGHT = 480;
 
+    // Vanilla Three.js
+    var renderer = new THREE.WebGLRenderer();
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(60, WIDTH / HEIGHT, .01, 1000);
+
+    // Insert into document
+    document.body.appendChild(renderer.domElement);
+
+    // MathBox context
+    var context = new MathBox.Context(renderer, scene, camera).init();
+    var mathbox = context.api;
+
+    // Set size
+    renderer.setSize(WIDTH, HEIGHT);
+    context.resize({ viewWidth: WIDTH, viewHeight: HEIGHT });
+
+    // Place camera and set background
+    camera.position.set(0, 0, 3);
+    renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    // MathBox elements
     view = mathbox
     .set({
       focus: 3,
@@ -56,7 +70,7 @@
       id: 'sampler',
       length: 64,
       expr: function (emit, x, i, t) {
-        y = Math.sin(x + t) * .7;// + (i%2)*Math.sin(x * 400000 + t * 5 + x * x * 10000)*.05;
+        y = Math.sin(x + t) * .7;
         emit(x, y);
       },
       channels: 2,
@@ -85,6 +99,15 @@
       width: 5,
       stroke: 'dashed',
     });
+
+    frame = function () {
+      requestAnimationFrame(frame);
+      context.frame();
+      renderer.render(scene, camera);
+    };
+
+    requestAnimationFrame(frame);
+
 
   </script>
 </body>

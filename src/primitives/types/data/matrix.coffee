@@ -157,7 +157,7 @@ class Matrix extends Buffer
         used.height = dims.height
 
         @buffer.setActive used.width, used.height
-        @buffer.callback.rebind data
+        @buffer.callback.rebind? data
         @buffer.update()
       else
         @buffer.setActive @spec.width, @spec.height

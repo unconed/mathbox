@@ -14,7 +14,7 @@ deepCopy = (x) ->
   out
 
 class Track extends Primitive
-  @traits = ['node', 'track', 'bind']
+  @traits = ['node', 'track', 'seek', 'bind']
 
   init: () ->
     @handlers = {}
@@ -251,7 +251,7 @@ class Track extends Primitive
                          changed['track.script'] or
                          changed['track.mode']
 
-    if changed['track.seek'] or
+    if changed['seek.seek'] or
        init
 
       @update()

@@ -80,7 +80,8 @@ helpers =
     # Divisions to allocate on scale
     divide: (prefix) ->
       divide = @_get prefix + 'scale.divide'
-      Math.round divide * 2.5
+      factor = @_get prefix + 'scale.factor'
+      Math.round divide * 2.5 / factor
 
     # Generate ticks on scale
     generate: (prefix, buffer, min, max) ->
@@ -88,13 +89,13 @@ helpers =
       divide = @_get prefix + 'scale.divide'
       unit   = @_get prefix + 'scale.unit'
       base   = @_get prefix + 'scale.base'
-      bias   = @_get prefix + 'scale.bias'
+      factor = @_get prefix + 'scale.factor'
       start  = @_get prefix + 'scale.start'
       end    = @_get prefix + 'scale.end'
       zero   = @_get prefix + 'scale.zero'
       nice   = @_get prefix + 'scale.nice'
 
-      ticks = Util.Ticks.make mode, min, max, divide, unit, base, bias, start, end, zero, nice
+      ticks = Util.Ticks.make mode, min, max, divide, unit, base, factor, start, end, zero, nice
       buffer.copy ticks
       ticks
 

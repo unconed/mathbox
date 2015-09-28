@@ -52845,10 +52845,15 @@ exports.transformComposer = function() {
  */
 var LINEAR, LOG, linear, log, make;
 
-linear = function(min, max, n, unit, base, bias, start, end, zero, nice) {
-  var distance, factor, factors, i, ideal, ref, span, step, steps, ticks;
+linear = function(min, max, n, unit, base, factor, start, end, zero, nice) {
+  var distance, f, factors, i, ideal, ref, span, step, steps, ticks;
+  if (nice == null) {
+    nice = true;
+  }
   n || (n = 10);
-  bias || (bias = 0);
+  unit || (unit = 1);
+  base || (base = 10);
+  factor || (factor = 1);
   span = max - min;
   ideal = span / n;
   if (!nice) {
@@ -52875,20 +52880,20 @@ linear = function(min, max, n, unit, base, bias, start, end, zero, nice) {
   }
   unit || (unit = 1);
   base || (base = 10);
-  ref = unit * (bias + Math.pow(base, Math.floor(Math.log(ideal / unit) / Math.log(base))));
+  ref = unit * (Math.pow(base, Math.floor(Math.log(ideal / unit) / Math.log(base))));
   factors = base % 2 === 0 ? [base / 2, 1, 1 / 2] : base % 3 === 0 ? [base / 3, 1, 1 / 3] : [1];
   steps = (function() {
     var _i, _len, _results;
     _results = [];
     for (_i = 0, _len = factors.length; _i < _len; _i++) {
-      factor = factors[_i];
-      _results.push(ref * factor);
+      f = factors[_i];
+      _results.push(ref * f);
     }
     return _results;
   })();
   distance = Infinity;
   step = steps.reduce(function(ref, step) {
-    var d, f;
+    var d;
     f = step / ideal;
     d = Math.max(f, 1 / f);
     if (d < distance) {
@@ -52898,6 +52903,7 @@ linear = function(min, max, n, unit, base, bias, start, end, zero, nice) {
       return ref;
     }
   }, ref);
+  step *= factor;
   min = (Math.ceil((min / step) + +(!start))) * step;
   max = (Math.floor(max / step) - +(!end)) * step;
   n = Math.ceil((max - min) / step);
@@ -56488,7 +56494,7 @@ Array_ = (function(_super) {
     filled = this.buffer.getFilled();
     this.syncBuffer((function(_this) {
       return function(abort) {
-        var dims, length;
+        var dims, length, _base;
         if (data != null) {
           dims = Util.Data.getDimensions(data, _this.spec);
           if (dims.width > space.length) {
@@ -56497,7 +56503,9 @@ Array_ = (function(_super) {
           }
           used.length = dims.width;
           _this.buffer.setActive(used.length);
-          _this.buffer.callback.rebind(data);
+          if (typeof (_base = _this.buffer.callback).rebind === "function") {
+            _base.rebind(data);
+          }
           return _this.buffer.update();
         } else {
           _this.buffer.setActive(_this.spec.width);
@@ -56969,7 +56977,7 @@ Matrix = (function(_super) {
     filled = this.buffer.getFilled();
     this.syncBuffer((function(_this) {
       return function(abort) {
-        var dims, length, _w;
+        var dims, length, _base, _w;
         if (data != null) {
           dims = Util.Data.getDimensions(data, _this.spec);
           if (dims.width > space.width || dims.height > space.height) {
@@ -56979,7 +56987,9 @@ Matrix = (function(_super) {
           used.width = dims.width;
           used.height = dims.height;
           _this.buffer.setActive(used.width, used.height);
-          _this.buffer.callback.rebind(data);
+          if (typeof (_base = _this.buffer.callback).rebind === "function") {
+            _base.rebind(data);
+          }
           return _this.buffer.update();
         } else {
           _this.buffer.setActive(_this.spec.width, _this.spec.height);
@@ -57407,7 +57417,7 @@ Voxel = (function(_super) {
     filled = this.buffer.getFilled();
     this.syncBuffer((function(_this) {
       return function(abort) {
-        var dims, length, _h, _w;
+        var dims, length, _base, _h, _w;
         if (data != null) {
           dims = Util.Data.getDimensions(data, _this.spec);
           if (dims.width > space.width || dims.height > space.height || dims.depth > space.depth) {
@@ -57418,7 +57428,9 @@ Voxel = (function(_super) {
           used.height = dims.height;
           used.depth = dims.depth;
           _this.buffer.setActive(used.width, used.height, used.depth);
-          _this.buffer.callback.rebind(data);
+          if (typeof (_base = _this.buffer.callback).rebind === "function") {
+            _base.rebind(data);
+          }
           return _this.buffer.update();
         } else {
           _this.buffer.setActive(_this.spec.width, _this.spec.height, _this.spec.depth);
@@ -57529,7 +57541,8 @@ Axis = (function(_super) {
     }
     this._helpers.visible.make();
     this._helpers.object.make(this.arrows.concat([this.line]));
-    return this._helpers.span.make();
+    this._helpers.span.make();
+    return this._listen(this, 'span.range', this.updateRanges);
   };
 
   Axis.prototype.unmake = function() {
@@ -57539,19 +57552,23 @@ Axis = (function(_super) {
   };
 
   Axis.prototype.change = function(changed, touched, init) {
-    var axis, max, min, origin, range, _ref;
     if (changed['axis.detail'] || changed['line.stroke'] || changed['axis.crossed'] || (changed['interval.axis'] && this.props.crossed)) {
       return this.rebuild();
     }
     if (touched['interval'] || touched['span'] || touched['view'] || init) {
-      _ref = this.props, axis = _ref.axis, origin = _ref.origin;
-      range = this._helpers.span.get('', axis);
-      min = range.x;
-      max = range.y;
-      Util.Axis.setDimension(this.axisPosition, axis).multiplyScalar(min);
-      Util.Axis.setDimension(this.axisStep, axis).multiplyScalar((max - min) * this.resolution);
-      return Util.Axis.addOrigin(this.axisPosition, axis, origin);
+      return this.updateRanges();
     }
+  };
+
+  Axis.prototype.updateRanges = function() {
+    var axis, max, min, origin, range, _ref;
+    _ref = this.props, axis = _ref.axis, origin = _ref.origin;
+    range = this._helpers.span.get('', axis);
+    min = range.x;
+    max = range.y;
+    Util.Axis.setDimension(this.axisPosition, axis).multiplyScalar(min);
+    Util.Axis.setDimension(this.axisStep, axis).multiplyScalar((max - min) * this.resolution);
+    return Util.Axis.addOrigin(this.axisPosition, axis, origin);
   };
 
   return Axis;
@@ -57803,7 +57820,8 @@ Grid = (function(_super) {
     }).call(this);
     this._helpers.visible.make();
     this._helpers.object.make(lines);
-    return this._helpers.span.make();
+    this._helpers.span.make();
+    return this._listen(this, 'span.range', this.updateRanges);
   };
 
   Grid.prototype.unmake = function() {
@@ -57820,10 +57838,16 @@ Grid = (function(_super) {
   };
 
   Grid.prototype.change = function(changed, touched, init) {
-    var axes, axis, lineX, lineY, origin, range1, range2, _ref, _ref1;
-    if (changed['x.axis.detail'] || changed['y.axis.detail'] || changed['grid.lineX'] || changed['grid.lineY'] || changed['line.stroke'] || changed['grid.crossed'] || (changed['grid.axes'] && this.props.crossed)) {
+    if (changed['x.axis.detail'] || changed['y.axis.detail'] || changed['x.axis.factor'] || changed['y.axis.factor'] || changed['grid.lineX'] || changed['grid.lineY'] || changed['line.stroke'] || changed['grid.crossed'] || (changed['grid.axes'] && this.props.crossed)) {
       return this.rebuild();
     }
+    if (touched['x'] || touched['y'] || touched['area'] || touched['grid'] || touched['view'] || init) {
+      return this.updateRanges();
+    }
+  };
+
+  Grid.prototype.updateRanges = function() {
+    var axes, axis, lineX, lineY, origin, range1, range2, _ref, _ref1;
     axis = (function(_this) {
       return function(x, y, range1, range2, axis) {
         var buffer, first, line, max, min, n, resolution, samples, second, ticks, values;
@@ -57841,17 +57865,15 @@ Grid = (function(_super) {
         return line.geometry.clip(samples, n, 1, 1);
       };
     })(this);
-    if (touched['x'] || touched['y'] || touched['area'] || touched['grid'] || touched['view'] || init) {
-      _ref = this.props, axes = _ref.axes, origin = _ref.origin;
-      range1 = this._helpers.span.get('x.', axes[0]);
-      range2 = this._helpers.span.get('y.', axes[1]);
-      _ref1 = this.props, lineX = _ref1.lineX, lineY = _ref1.lineY;
-      if (lineX) {
-        axis(axes[0], axes[1], range1, range2, this.axes[0]);
-      }
-      if (lineY) {
-        return axis(axes[1], axes[0], range2, range1, this.axes[+lineX]);
-      }
+    _ref = this.props, axes = _ref.axes, origin = _ref.origin;
+    range1 = this._helpers.span.get('x.', axes[0]);
+    range2 = this._helpers.span.get('y.', axes[1]);
+    _ref1 = this.props, lineX = _ref1.lineX, lineY = _ref1.lineY;
+    if (lineX) {
+      axis(axes[0], axes[1], range1, range2, this.axes[0]);
+    }
+    if (lineY) {
+      return axis(axes[1], axes[0], range2, range1, this.axes[+lineX]);
     }
   };
 
@@ -58805,22 +58827,23 @@ helpers = {
   },
   scale: {
     divide: function(prefix) {
-      var divide;
+      var divide, factor;
       divide = this._get(prefix + 'scale.divide');
-      return Math.round(divide * 2.5);
+      factor = this._get(prefix + 'scale.factor');
+      return Math.round(divide * 2.5 / factor);
     },
     generate: function(prefix, buffer, min, max) {
-      var base, bias, divide, end, mode, nice, start, ticks, unit, zero;
+      var base, divide, end, factor, mode, nice, start, ticks, unit, zero;
       mode = this._get(prefix + 'scale.mode');
       divide = this._get(prefix + 'scale.divide');
       unit = this._get(prefix + 'scale.unit');
       base = this._get(prefix + 'scale.base');
-      bias = this._get(prefix + 'scale.bias');
+      factor = this._get(prefix + 'scale.factor');
       start = this._get(prefix + 'scale.start');
       end = this._get(prefix + 'scale.end');
       zero = this._get(prefix + 'scale.zero');
       nice = this._get(prefix + 'scale.nice');
-      ticks = Util.Ticks.make(mode, min, max, divide, unit, base, bias, start, end, zero, nice);
+      ticks = Util.Ticks.make(mode, min, max, divide, unit, base, factor, start, end, zero, nice);
       buffer.copy(ticks);
       return ticks;
     }
@@ -61037,15 +61060,14 @@ Play = (function(_super) {
 
   Play.prototype.init = function() {
     Play.__super__.init.apply(this, arguments);
-    this.clock = null;
-    return this.last = -1;
+    return this.skew = null;
   };
 
   Play.prototype.reset = function(go) {
     if (go == null) {
       go = true;
     }
-    return this.clock = go ? 0 : null;
+    return this.skew = go ? 0 : null;
   };
 
   Play.prototype.make = function() {
@@ -61069,10 +61091,10 @@ Play = (function(_super) {
     parentClock = this._inherit('clock');
     return this._listen(parentClock, 'clock.tick', (function(_this) {
       return function() {
-        var delay, delta, from, offset, pace, ratio, realtime, speed, time, to, _ref;
+        var delay, delta, from, now, offset, pace, ratio, realtime, speed, time, to, _ref;
         _ref = _this.props, from = _ref.from, to = _ref.to, speed = _ref.speed, pace = _ref.pace, delay = _ref.delay, realtime = _ref.realtime;
         time = parentClock.getTime();
-        _this.playhead = _this.clock != null ? (delta = realtime ? time.delta : time.step, ratio = speed / pace, _this.clock += delta * ratio, offset = Math.max(0, _this.clock - delay * ratio), _this.props.loop ? offset = offset % (to - from) : void 0, _this.playhead = Math.min(to, from + offset)) : 0;
+        _this.playhead = _this.skew != null ? (now = realtime ? time.time : time.clock, delta = realtime ? time.delta : time.step, ratio = speed / pace, _this.skew += delta * (ratio - 1), offset = Math.max(0, now + _this.skew - delay * ratio), _this.props.loop ? offset = offset % (to - from) : void 0, _this.playhead = Math.min(to, from + offset)) : 0;
         return _this.update();
       };
     })(this));
@@ -61726,7 +61748,7 @@ Track = (function(_super) {
     return Track.__super__.constructor.apply(this, arguments);
   }
 
-  Track.traits = ['node', 'track', 'bind'];
+  Track.traits = ['node', 'track', 'seek', 'bind'];
 
   Track.prototype.init = function() {
     this.handlers = {};
@@ -62038,7 +62060,7 @@ Track = (function(_super) {
     if (changed['track.target'] || changed['track.script'] || changed['track.mode']) {
       return this.rebuild();
     }
-    if (changed['track.seek'] || init) {
+    if (changed['seek.seek'] || init) {
       return this.update();
     }
   };
@@ -63233,10 +63255,11 @@ Clock = (function(_super) {
     return Clock.__super__.constructor.apply(this, arguments);
   }
 
-  Clock.traits = ['node', 'clock', 'play'];
+  Clock.traits = ['node', 'clock', 'seek', 'play'];
 
   Clock.prototype.init = function() {
-    this.clock = 0;
+    this.skew = 0;
+    this.last = 0;
     return this.time = {
       now: +new Date() / 1000,
       time: 0,
@@ -63247,27 +63270,31 @@ Clock = (function(_super) {
   };
 
   Clock.prototype.make = function() {
-    this.clockParent = this._inherit('clock');
     return this._listen('clock', 'clock.tick', this.tick);
   };
 
-  Clock.prototype.unmake = function() {
-    return this.clockParent = null;
+  Clock.prototype.reset = function() {
+    return this.skew = 0;
   };
 
   Clock.prototype.tick = function(e) {
-    var delay, delta, from, pace, parent, ratio, realtime, speed, to, _ref;
-    _ref = this.props, from = _ref.from, to = _ref.to, speed = _ref.speed, pace = _ref.pace, delay = _ref.delay, realtime = _ref.realtime;
-    parent = this.clockParent.getTime();
+    var clock, delay, delta, from, pace, parent, ratio, realtime, seek, speed, time, to, _ref;
+    _ref = this.props, from = _ref.from, to = _ref.to, speed = _ref.speed, seek = _ref.seek, pace = _ref.pace, delay = _ref.delay, realtime = _ref.realtime;
+    parent = this._inherit('clock').getTime();
+    time = realtime ? parent.time : parent.clock;
     delta = realtime ? parent.delta : parent.step;
     ratio = speed / pace;
-    delta *= ratio;
-    this.clock += delta;
-    this.time.now = parent.now;
-    this.time.time = parent.time;
+    this.skew += delta * (ratio - 1);
+    if (this.last > time) {
+      this.skew = 0;
+    }
+    this.time.now = parent.now + this.skew;
+    this.time.time = parent.time + this.skew;
     this.time.delta = parent.delta;
-    this.time.clock = Math.min(to, from + Math.max(0, this.clock - delay * ratio));
+    clock = seek != null ? seek : parent.clock + this.skew;
+    this.time.clock = Math.min(to, from + Math.max(0, clock - delay * ratio));
     this.time.step = delta;
+    this.last = time;
     return this.trigger(e);
   };
 
@@ -63453,7 +63480,7 @@ Traits = {
     start: Types.bool(true),
     end: Types.bool(true),
     zero: Types.bool(true),
-    bias: Types.number(0),
+    factor: Types.positive(Types.number(1)),
     nice: Types.bool(true)
   },
   grid: {
@@ -63726,10 +63753,12 @@ Traits = {
     from: Types.vec4(),
     to: Types.vec4()
   },
+  seek: {
+    seek: Types.nullable(Types.number(0))
+  },
   track: {
     target: Types.select(),
     script: Types.object({}),
-    seek: Types.nullable(Types.number(0)),
     ease: Types.ease('cosine')
   },
   trigger: {
@@ -72642,10 +72671,15 @@ exports.transformComposer = function() {
  */
 var LINEAR, LOG, linear, log, make;
 
-linear = function(min, max, n, unit, base, bias, start, end, zero, nice) {
-  var distance, factor, factors, i, ideal, ref, span, step, steps, ticks;
+linear = function(min, max, n, unit, base, factor, start, end, zero, nice) {
+  var distance, f, factors, i, ideal, ref, span, step, steps, ticks;
+  if (nice == null) {
+    nice = true;
+  }
   n || (n = 10);
-  bias || (bias = 0);
+  unit || (unit = 1);
+  base || (base = 10);
+  factor || (factor = 1);
   span = max - min;
   ideal = span / n;
   if (!nice) {
@@ -72672,20 +72706,20 @@ linear = function(min, max, n, unit, base, bias, start, end, zero, nice) {
   }
   unit || (unit = 1);
   base || (base = 10);
-  ref = unit * (bias + Math.pow(base, Math.floor(Math.log(ideal / unit) / Math.log(base))));
+  ref = unit * (Math.pow(base, Math.floor(Math.log(ideal / unit) / Math.log(base))));
   factors = base % 2 === 0 ? [base / 2, 1, 1 / 2] : base % 3 === 0 ? [base / 3, 1, 1 / 3] : [1];
   steps = (function() {
     var _i, _len, _results;
     _results = [];
     for (_i = 0, _len = factors.length; _i < _len; _i++) {
-      factor = factors[_i];
-      _results.push(ref * factor);
+      f = factors[_i];
+      _results.push(ref * f);
     }
     return _results;
   })();
   distance = Infinity;
   step = steps.reduce(function(ref, step) {
-    var d, f;
+    var d;
     f = step / ideal;
     d = Math.max(f, 1 / f);
     if (d < distance) {
@@ -72695,6 +72729,7 @@ linear = function(min, max, n, unit, base, bias, start, end, zero, nice) {
       return ref;
     }
   }, ref);
+  step *= factor;
   min = (Math.ceil((min / step) + +(!start))) * step;
   max = (Math.floor(max / step) - +(!end)) * step;
   n = Math.ceil((max - min) / step);

@@ -95,7 +95,7 @@ Traits =
     start:             Types.bool(true)
     end:               Types.bool(true)
     zero:              Types.bool(true)
-    bias:              Types.number(0)
+    factor:            Types.positive(Types.number(1))
     nice:              Types.bool(true)
   grid:
     lineX:             Types.bool(true)
@@ -335,10 +335,11 @@ Traits =
     from:              Types.vec4()
     to:                Types.vec4()
 
+  seek:
+    seek:              Types.nullable(Types.number(0))
   track:
     target:            Types.select()
     script:            Types.object({})
-    seek:              Types.nullable(Types.number(0))
     ease:              Types.ease('cosine')
   trigger:
     trigger:           Types.nullable(Types.int(1), true)

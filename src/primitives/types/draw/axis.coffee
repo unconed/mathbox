@@ -85,6 +85,9 @@ class Axis extends Primitive
     @_helpers.object.make @arrows.concat [@line]
     @_helpers.span.make()
 
+    # Monitor view range
+    @_listen @, 'span.range', @updateRanges
+
   unmake: () ->
     @_helpers.visible.unmake()
     @_helpers.object.unmake()
@@ -101,17 +104,20 @@ class Axis extends Primitive
        touched['view']     or
        init
 
-      {axis, origin} = @props
+      @updateRanges()
 
-      range = @_helpers.span.get '', axis
+  updateRanges: () ->
+    {axis, origin} = @props
 
-      min = range.x
-      max = range.y
+    range = @_helpers.span.get '', axis
 
-      Util.Axis.setDimension(@axisPosition, axis).multiplyScalar(min)
-      Util.Axis.setDimension(@axisStep, axis).multiplyScalar((max - min) * @resolution)
+    min = range.x
+    max = range.y
 
-      Util.Axis.addOrigin(@axisPosition, axis, origin)
+    Util.Axis.setDimension(@axisPosition, axis).multiplyScalar(min)
+    Util.Axis.setDimension(@axisStep, axis).multiplyScalar((max - min) * @resolution)
+
+    Util.Axis.addOrigin(@axisPosition, axis, origin)
 
 
 module.exports = Axis

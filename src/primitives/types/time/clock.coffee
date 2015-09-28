@@ -1,10 +1,11 @@
 Parent = require '../base/parent'
 
 class Clock extends Parent
-  @traits = ['node', 'clock', 'play']
+  @traits = ['node', 'clock', 'seek', 'play']
 
   init: () ->
-    @clock = 0
+    @skew  = 0
+    @last  = 0
     @time  = {
       now: +new Date() / 1000,
       time:  0, delta: 0,
@@ -13,30 +14,33 @@ class Clock extends Parent
 
   make: () ->
     # Listen to parent clock
-    @clockParent = @_inherit 'clock'
     @_listen 'clock', 'clock.tick', @tick
 
-  unmake: () ->
-    @clockParent = null
+  reset: () ->
+    @skew = 0
 
   tick: (e) ->
-    {from, to, speed, pace, delay, realtime} = @props
+    {from, to, speed, seek, pace, delay, realtime} = @props
 
-    parent = @clockParent.getTime()
+    parent = @_inherit('clock').getTime()
 
+    time  = if realtime then parent.time  else parent.clock
     delta = if realtime then parent.delta else parent.step
     ratio = speed / pace
 
-    delta  *= ratio
-    @clock += delta
+    @skew += delta * (ratio - 1)
+    @skew = 0 if @last > time
 
-    @time.now   = parent.now
+    @time.now   = parent.now + @skew
 
-    @time.time  = parent.time
+    @time.time  = parent.time + @skew
     @time.delta = parent.delta
 
-    @time.clock = Math.min to, from + Math.max 0, @clock - delay * ratio
+    clock = if seek? then seek else parent.clock + @skew
+    @time.clock = Math.min to, from + Math.max 0, clock - delay * ratio
     @time.step  = delta
+
+    @last = time
 
     @trigger e
 

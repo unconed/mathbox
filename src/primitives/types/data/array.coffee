@@ -142,7 +142,7 @@ class Array_ extends Buffer
         used.length = dims.width
 
         @buffer.setActive used.length
-        @buffer.callback.rebind data
+        @buffer.callback.rebind? data
         @buffer.update()
       else
         @buffer.setActive @spec.width

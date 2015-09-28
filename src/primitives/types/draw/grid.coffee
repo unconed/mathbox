@@ -94,6 +94,9 @@ class Grid extends Primitive
     @_helpers.object.make lines
     @_helpers.span.make()
 
+    # Monitor view range
+    @_listen @, 'span.range', @updateRanges
+
   unmake: () ->
     @_helpers.visible.unmake()
     @_helpers.object.unmake()
@@ -108,11 +111,24 @@ class Grid extends Primitive
 
     return @rebuild() if changed['x.axis.detail'] or
                          changed['y.axis.detail'] or
+                         changed['x.axis.factor'] or
+                         changed['y.axis.factor'] or
                          changed['grid.lineX']    or
                          changed['grid.lineY']    or
                          changed['line.stroke']   or
                          changed['grid.crossed']  or
                          (changed['grid.axes']    and @props.crossed)
+
+    if touched['x']    or
+       touched['y']    or
+       touched['area'] or
+       touched['grid'] or
+       touched['view'] or
+       init
+
+      @updateRanges()
+
+  updateRanges: () ->
 
     axis = (x, y, range1, range2, axis) =>
       {first, second, resolution, samples, line, buffer, values} = axis
@@ -136,25 +152,18 @@ class Grid extends Primitive
       n = ticks.length
       line.geometry.clip samples, n, 1, 1
 
-    if touched['x']    or
-       touched['y']    or
-       touched['area'] or
-       touched['grid'] or
-       touched['view'] or
-       init
+    # Fetch grid range in both dimensions
+    {axes, origin} = @props
+    range1 = @_helpers.span.get 'x.', axes[0]
+    range2 = @_helpers.span.get 'y.', axes[1]
 
-      # Fetch grid range in both dimensions
-      {axes, origin} = @props
-      range1 = @_helpers.span.get 'x.', axes[0]
-      range2 = @_helpers.span.get 'y.', axes[1]
+    # Update both line sets
+    {lineX, lineY} = @props
 
-      # Update both line sets
-      {lineX, lineY} = @props
-
-      if lineX
-        axis axes[0], axes[1], range1, range2, @axes[0]
-      if lineY
-        axis axes[1], axes[0], range2, range1, @axes[+lineX]
+    if lineX
+      axis axes[0], axes[1], range1, range2, @axes[0]
+    if lineY
+      axis axes[1], axes[0], range2, range1, @axes[+lineX]
 
 
 module.exports = Grid
