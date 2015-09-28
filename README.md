@@ -10,6 +10,16 @@ MathBox is used through its JS-based DOM.
 
 For background, see the [article series on Acko.net](http://acko.net/blog/mathbox2/). See `docs/` for TLDR and `examples/` for a start.
 
+Demos:
+
+ * [Audio Visualizer](http://acko.net/files/mathbox2/iframe-readyornot.html)
+ * [Cylindrical Stream](http://acko.net/files/mathbox2/iframe-cylindrical-stream.html)
+ * [Data/Shape Mapping](http://acko.net/files/mathbox2/iframe-lineup.html)
+ * [LaTeX/HTML/GL Labels](http://acko.net/files/mathbox2/iframe-labels.html)
+ * [Quaternion Hypersphere](http://acko.net/files/mathbox2/iframe-quat.html)
+ * [Vertex Warping](http://acko.net/files/mathbox2/iframe-vertex.html)
+ * [Volumetric Vectors](http://acko.net/files/mathbox2/iframe-volume.html)
+
 *Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule init`.*
 
 ***
