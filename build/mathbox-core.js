@@ -14981,7 +14981,7 @@ Step = (function(_super) {
     })(this));
     return this._listen('slide', 'slide.step', (function(_this) {
       return function(e) {
-        var delay, duration, factor, from, i, pace, playback, rewind, skip, speed, step, to, trigger, _ref2, _ref3, _ref4;
+        var delay, duration, factor, free, from, i, last, pace, playback, rewind, skip, skips, speed, step, stop, to, trigger, _j, _len, _ref2, _ref3, _ref4;
         _ref2 = _this.props, delay = _ref2.delay, duration = _ref2.duration, pace = _ref2.pace, speed = _ref2.speed, playback = _ref2.playback, rewind = _ref2.rewind, skip = _ref2.skip, trigger = _ref2.trigger;
         i = Math.max(0, Math.min(_this.stops.length - 1, e.index - trigger));
         from = _this.playhead;
@@ -14992,10 +14992,24 @@ Step = (function(_super) {
           _this.animateIndex.set(i);
           return;
         }
-        step = i - ((_ref3 = (_ref4 = _this.actualIndex) != null ? _ref4 : _this.lastIndex) != null ? _ref3 : 0);
+        last = (_ref3 = (_ref4 = _this.actualIndex) != null ? _ref4 : _this.lastIndex) != null ? _ref3 : 0;
+        step = i - last;
+        skips = _this.stops.slice(Math.min(last, i), Math.max(last, i));
+        free = 0;
+        last = skips.shift();
+        for (_j = 0, _len = skips.length; _j < _len; _j++) {
+          stop = skips[_j];
+          if (last === stop) {
+            free++;
+          }
+          last = stop;
+        }
+        if (free > 0) {
+          console.log(_this.node.toString(), 'skipping', free, 'of', skips, "(" + last + ", " + i + ") on ", _this.stops);
+        }
         _this.lastIndex = i;
         factor = speed * (e.step >= 0 ? 1 : rewind);
-        factor *= skip ? Math.max(1, Math.abs(step)) : 1;
+        factor *= skip ? Math.max(1, Math.abs(step) - free) : 1;
         duration += Math.abs(to - from) * pace / factor;
         if (from !== to) {
           _this.animateIndex.immediate(i, {
@@ -16611,11 +16625,11 @@ Clock = (function(_super) {
       this.skew = 0;
     }
     this.time.now = parent.now + this.skew;
-    this.time.time = parent.time + this.skew;
+    this.time.time = parent.time;
     this.time.delta = parent.delta;
     clock = seek != null ? seek : parent.clock + this.skew;
     this.time.clock = Math.min(to, from + Math.max(0, clock - delay * ratio));
-    this.time.step = delta;
+    this.time.step = delta * ratio;
     this.last = time;
     return this.trigger(e);
   };
