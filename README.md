@@ -72,12 +72,13 @@ Use `.print()`, `.inspect()` and `.debug()` to show information about a selectio
 
 ***
 
-Docs 
+## Docs 
 
 See:
-* `docs/intro.md` for a tiny quickstart
-* `docs/primitives.md` for a full element reference
-* `docs/context.md` for advanced context usage.
+
+ * `docs/intro.md` for a tiny quickstart
+ * `docs/primitives.md` for a full element reference
+ * `docs/context.md` for advanced context usage.
 
 ***
 
