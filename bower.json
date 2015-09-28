@@ -4,7 +4,7 @@
   "description": "Presentation-quality WebGL math graphing",
   "repository": {
     "type": "git",
-    "url": "https://gitgud.io/unconed/mathbox.git"
+    "url": "git://github.com/unconed/mathbox.git"
   },
   "main": "build/mathbox-bundle.js",
 	"keywords": [
