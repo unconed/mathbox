@@ -8,9 +8,13 @@ MathBox is a library for rendering presentation-quality math diagrams in a brows
 
 MathBox is used through its JS-based DOM.
 
+To give it a whirl in your browser, [try the JSBin Sandbox](http://jsbin.com/hasuhaw/edit?html,output).
+
 For background, see the [article series on Acko.net](http://acko.net/blog/mathbox2/).
 
 **See `docs/` for TLDR and `examples/` for a start.**
+
+***
 
 Demos:
 
