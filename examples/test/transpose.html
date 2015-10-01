@@ -20,11 +20,6 @@
     three.camera.position.set(2.85, 3.84, -1.8);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0
-    three.on('update', function () {
-      time = three.Time.now * .5
-    });
-
     view = mathbox.cartesian({
       range: [[-3, 3], [-.5, 1], [-3, 3]],
       scale: [2, 1, 2],
@@ -48,9 +43,9 @@
       width: 33,
       height: 33,
       axes: [1, 3],
-      expr: function (emit, x, z, i, j) {
-        var y1 = .75 + .5 * (Math.sin(x + time) * Math.sin(z + time));
-        var y2 = .5 + .5 * (Math.sin(x * 1.25 + Math.sin(z + time) - time * 1.34) * Math.sin(z * 1.17 - time * .79));
+      expr: function (emit, x, z, i, j, t) {
+        var y1 = .75 + .5 * (Math.sin(x + t) * Math.sin(z + t));
+        var y2 = .5 + .5 * (Math.sin(x * 1.25 + Math.sin(z + t) - t * 1.34) * Math.sin(z * 1.17 - t * .79));
         emit(x, y1, z);
         emit(x, y2, z);
       },
@@ -65,9 +60,15 @@
     });
     view.surface({
       shaded: true,
+      color: 0x3090FF,
+      width: 5,
+    });
+    view.surface({
+      fill: false,
       lineY: true,
       color: 0x3090FF,
       width: 5,
+      zBias: 1,
     });
     view.transpose({
       source: '#sampler',
@@ -78,9 +79,16 @@
     });
     view.surface({
       shaded: true,
+      color: 0x3090FF,
+      width: 5,
+    });
+    view.surface({
+      shaded: true,
+      fill: false,
       lineY: true,
       color: 0x3090FF,
       width: 5,
+      zBias: 1,
     });
 
   </script>

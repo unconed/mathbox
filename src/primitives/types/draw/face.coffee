@@ -41,7 +41,6 @@ class Face extends Primitive
     lineUniforms  = @_helpers.line.uniforms()
     unitUniforms  = @_inherit('unit').getUnitUniforms()
 
-    # Darken wireframe if needed for contrast
     # Auto z-bias wireframe over surface
     wireUniforms = {}
     wireUniforms.styleZBias  = @_attributes.make @_types.number()
@@ -126,7 +125,7 @@ class Face extends Primitive
     if changed['style.zBias'] or
        init
 
-      fill   = @_get 'mesh.fill'
-      @wireZBias.value = @_get('style.zBias') + if fill then 5 else 0
+      {fill, zBias} = @props
+      @wireZBias.value = zBias + if fill then 5 else 0
 
 module.exports = Face
