@@ -11761,7 +11761,7 @@ Surface = (function(_super) {
     }
     if (changed['style.color'] || changed['style.zBias'] || changed['mesh.fill'] || init) {
       _ref = this.props, fill = _ref.fill, color = _ref.color, zBias = _ref.zBias;
-      this.wireZBias.value = zBias(fill ? 5 : 0);
+      this.wireZBias.value = zBias + (fill ? 5 : 0);
       this.wireColor.copy(color);
       if (fill) {
         c = this.wireScratch;
