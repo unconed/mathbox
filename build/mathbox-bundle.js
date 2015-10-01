@@ -57718,13 +57718,13 @@ Face = (function(_super) {
   };
 
   Face.prototype.change = function(changed, touched, init) {
-    var fill;
+    var fill, zBias, _ref;
     if (changed['geometry.points'] || touched['mesh']) {
       return this.rebuild();
     }
     if (changed['style.zBias'] || init) {
-      fill = this._get('mesh.fill');
-      return this.wireZBias.value = this._get('style.zBias') + (fill ? 5 : 0);
+      _ref = this.props, fill = _ref.fill, zBias = _ref.zBias;
+      return this.wireZBias.value = zBias + (fill ? 5 : 0);
     }
   };
 
@@ -58440,14 +58440,13 @@ Surface = (function(_super) {
   };
 
   Surface.prototype.change = function(changed, touched, init) {
-    var c, color, fill;
+    var c, color, fill, zBias, _ref;
     if (changed['geometry.points'] || changed['mesh.shaded'] || changed['mesh.fill'] || changed['line.stroke'] || touched['grid']) {
       return this.rebuild();
     }
     if (changed['style.color'] || changed['style.zBias'] || changed['mesh.fill'] || init) {
-      fill = this._get('mesh.fill');
-      color = this._get('style.color');
-      this.wireZBias.value = this._get('style.zBias') + (fill ? 5 : 0);
+      _ref = this.props, fill = _ref.fill, color = _ref.color, zBias = _ref.zBias;
+      this.wireZBias.value = zBias(fill ? 5 : 0);
       this.wireColor.copy(color);
       if (fill) {
         c = this.wireScratch;
