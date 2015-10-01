@@ -10407,7 +10407,8 @@ Scale = (function(_super) {
     p = this.sampler = this._shaders.shader();
     p.require(this.buffer.shader(this._shaders.shader(), 1));
     p.pipe('scale.position', positionUniforms);
-    return this._helpers.span.make();
+    this._helpers.span.make();
+    return this._listen(this, 'span.range', this.updateRanges);
   };
 
   Scale.prototype.unmake = function() {
@@ -10416,25 +10417,29 @@ Scale = (function(_super) {
   };
 
   Scale.prototype.change = function(changed, touched, init) {
-    var axis, max, min, origin, range, ticks, used, _ref;
     if (changed['scale.divide']) {
       return this.rebuild();
     }
     if (touched['view'] || touched['interval'] || touched['span'] || touched['scale'] || init) {
-      used = this.used;
-      _ref = this.props, axis = _ref.axis, origin = _ref.origin;
-      range = this._helpers.span.get('', axis);
-      min = range.x;
-      max = range.y;
-      ticks = this._helpers.scale.generate('', this.buffer, min, max);
-      Util.Axis.setDimension(this.scaleAxis, axis);
-      Util.Axis.setOrigin(this.scaleOffset, axis, origin);
-      this.used = ticks.length;
-      if (this.used !== used) {
-        return this.trigger({
-          type: 'source.resize'
-        });
-      }
+      return this.updateRanges();
+    }
+  };
+
+  Scale.prototype.updateRanges = function() {
+    var axis, max, min, origin, range, ticks, used, _ref;
+    used = this.used;
+    _ref = this.props, axis = _ref.axis, origin = _ref.origin;
+    range = this._helpers.span.get('', axis);
+    min = range.x;
+    max = range.y;
+    ticks = this._helpers.scale.generate('', this.buffer, min, max);
+    Util.Axis.setDimension(this.scaleAxis, axis);
+    Util.Axis.setOrigin(this.scaleOffset, axis, origin);
+    this.used = ticks.length;
+    if (this.used !== used) {
+      return this.trigger({
+        type: 'source.resize'
+      });
     }
   };
 
@@ -15003,9 +15008,6 @@ Step = (function(_super) {
             free++;
           }
           last = stop;
-        }
-        if (free > 0) {
-          console.log(_this.node.toString(), 'skipping', free, 'of', skips, "(" + last + ", " + i + ") on ", _this.stops);
         }
         _this.lastIndex = i;
         factor = speed * (e.step >= 0 ? 1 : rewind);

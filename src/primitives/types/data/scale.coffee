@@ -52,6 +52,9 @@ class Scale extends Source
 
     @_helpers.span.make()
 
+    # Monitor view range
+    @_listen @, 'span.range', @updateRanges
+
   unmake: () ->
     @scaleAxis = null
 
@@ -66,6 +69,9 @@ class Scale extends Source
        touched['scale']    or
        init
 
+      @updateRanges()
+
+  updateRanges: () ->
       used = @used
 
       # Fetch range along axis
