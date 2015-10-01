@@ -30,13 +30,21 @@ Presentations:
 
 ***
 
-## Usage
 
-Download the [package](http://acko.net/files/mathbox2/mathbox-0.0.2.zip) or install via bower:
+## Download
+
+* Release: [0.0.2 ZIP](http://acko.net/files/mathbox2/mathbox-0.0.2.zip)
+* Development branch: [0.0.x ZIP](http://acko.net/files/mathbox2/mathbox-0.0.x-dev.zip)
+
+or install via bower:
 
 ```bash
 bower install mathbox
 ```
+
+
+***
+## Usage
 
 Include the bundle:
 
