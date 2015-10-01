@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Point Cloud</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    var mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor', 'stats'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    var three = mathbox.three;
+
+    three.camera.position.set(.91351, .47111, 2.5);
+    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+
+    var view = mathbox.cartesian({
+      range: [[-16/9, 16/9], [-1, 1], [-1, 1]],
+      scale: [16/9, 1, 1],
+    });
+
+    view
+      .area({
+        width: 200,
+        height: 200,
+        axes: [1, 2],
+        channels: 3,
+        expr: function (emit, x, y, i, j, t) {
+          var z = 2 * (Math.sin(x * 500 + Math.cos(x * y * 100) + t) * Math.sin(y * 503 + Math.sin(x * 40 + y * 60) + t));
+          emit(x, -y, z);
+        },
+      })
+      .point({
+        color: [68/255, 174/255, 218/255],
+        size: 4,
+        blending: 'add',
+        opacity: .5,
+        zWrite: false,
+        zTest: false,
+      });
+
+  </script>
+</body>
+</html>

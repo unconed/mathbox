@@ -65054,7 +65054,7 @@ Types = {
           target.copy(value);
         } else if (value instanceof Array) {
           value = value.concat(defaults.slice(value.length));
-          target.set.apply(target, value);
+          target.setRGB.apply(target, value);
         } else if (value != null) {
           rr = (_ref = value.r) != null ? _ref : r;
           gg = (_ref1 = value.g) != null ? _ref1 : g;
