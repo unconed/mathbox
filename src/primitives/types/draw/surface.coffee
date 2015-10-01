@@ -163,7 +163,7 @@ class Surface extends Primitive
 
       {fill, color, zBias} = @props
 
-      @wireZBias.value = zBias if fill then 5 else 0
+      @wireZBias.value = zBias + if fill then 5 else 0
       @wireColor.copy color
       if fill
         c = @wireScratch
