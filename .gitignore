@@ -2,4 +2,4 @@
 /bower_modules/*
 .DS_Store
 .tmp/*
-release/*
+release/mathbox-0.0.x*
