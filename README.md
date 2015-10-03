@@ -98,13 +98,15 @@ Use `.print()`, `.inspect()` and `.debug()` to show information about a selectio
 
 ***
 
-## Docs 
+## Docs & Help
 
 See:
 
  * `docs/intro.md` for a tiny quickstart
  * `docs/primitives.md` for a full element reference
  * `docs/context.md` for advanced context usage.
+
+Visit the [MathBox Google Group](https://groups.google.com/forum/#!forum/mathbox) or #mathbox on Freenode.
 
 ***
 
