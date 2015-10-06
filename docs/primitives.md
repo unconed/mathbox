@@ -346,16 +346,16 @@
  * *digits* = `null` (nullable positive number) - Digits of precision, e.g. `2`
  * *expand* = `5` (number) - SDF expansion
  * *expr* = `null` (nullable function) - Label formatter expression, e.g. `function (x, y, z, w, i, j, k, l, time, delta) { ... }`
- * *font* = `sans-serif` (font) - Font family
+ * *font* = `"sans-serif"` (font) - Font family
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *live* = `true` (bool) - Update continuously
  * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
  * *minFilter* = `"nearest"` (filter) - Texture minification filtering
  * *source* = `"<"` (select) - Input source
- * *style* = `` (string) - Font style, e.g. `italic`
+ * *style* = `""` (string) - Font style, e.g. `"italic"`
  * *type* = `"float"` (type) - Texture data type
- * *variant* = `` (string) - Font variant, e.g. `small-caps`
- * *weight* = `` (string) - Font weight, e.g. `bold`
+ * *variant* = `""` (string) - Font variant, e.g. `"small-caps"`
+ * *weight* = `""` (string) - Font weight, e.g. `"bold"`
 
 ####  <a name="transform/fragment"></a>`transform/fragment`
 
@@ -665,6 +665,7 @@
  * *points* = `<` (select) - Points data source
  * *shape* = `"circle"` (shape) - Point shape (circle, square, diamond, up, down, left, right)
  * *size* = `4` (positive number) - Point size
+ * *sizes* = `null` (nullable select) - Point sizes data source, e.g. `"#sizes"`
  * *visible* = `true` (bool) - Visibility for rendering
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
@@ -737,7 +738,7 @@
  * *depth* = `null` (nullable number) - Resample factor depth, e.g. `10`
  * *detail* = `24` (number) - Font detail
  * *expand* = `5` (number) - SDF expansion
- * *font* = `sans-serif` (font) - Font family
+ * *font* = `"sans-serif"` (font) - Font family
  * *height* = `null` (nullable number) - Resample factor height, e.g. `10`
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *indices* = `4` (number) - Resample indices
@@ -746,9 +747,9 @@
  * *shader* = `"<"` (select) - Shader to use
  * *size* = `"absolute"` (mapping) - Scaling mode (relative, absolute)
  * *source* = `"<"` (select) - Input source
- * *style* = `` (string) - Font style, e.g. `italic`
- * *variant* = `` (string) - Font variant, e.g. `small-caps`
- * *weight* = `` (string) - Font weight, e.g. `bold`
+ * *style* = `""` (string) - Font style, e.g. `"italic"`
+ * *variant* = `""` (string) - Font variant, e.g. `"small-caps"`
+ * *weight* = `""` (string) - Font weight, e.g. `"bold"`
  * *width* = `null` (nullable number) - Resample factor width, e.g. `10`
 
 ####  <a name="present/reveal"></a>`present/reveal`
@@ -1026,7 +1027,7 @@
  * *detail* = `24` (number) - Font detail
  * *expand* = `5` (number) - SDF expansion
  * *expr* = `null` (nullable emitter) - Data emitter expression
- * *font* = `sans-serif` (font) - Font family
+ * *font* = `"sans-serif"` (font) - Font family
  * *fps* = `null` (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = `1` (nullable number) - Voxel height
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
@@ -1038,10 +1039,10 @@
  * *minFilter* = `"nearest"` (filter) - Texture minification filtering
  * *observe* = `false` (bool) - Pass clock time to data
  * *realtime* = `false` (bool) - Run on real time, not clock time
- * *style* = `` (string) - Font style, e.g. `italic`
+ * *style* = `""` (string) - Font style, e.g. `"italic"`
  * *type* = `"float"` (type) - Texture data type
- * *variant* = `` (string) - Font variant, e.g. `small-caps`
- * *weight* = `` (string) - Font weight, e.g. `bold`
+ * *variant* = `""` (string) - Font variant, e.g. `"small-caps"`
+ * *weight* = `""` (string) - Font weight, e.g. `"bold"`
  * *width* = `1` (nullable number) - Voxel width
 
 ####  <a name="draw/ticks"></a>`draw/ticks`

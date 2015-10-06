@@ -144,6 +144,7 @@ Traits =
 
   point:
     size:              ["Point size", "positive number", 4]
+    sizes:             ["Point sizes data source", "nullable select", null, '"#sizes"']
     shape:             ["Point shape (circle, square, diamond, up, down, left, right)", "shape", '"circle"']
     optical:           ["Optical or exact sizing", "bool", true]
     fill:              ["Fill shape", "bool", true]
@@ -181,10 +182,10 @@ Traits =
     expr:              ["Label formatter expression", 'nullable function', null]
     live:              ["Update continuously", "bool", true]
   text:
-    font:              ["Font family", "font", "sans-serif"]
-    style:             ["Font style", "string", "", "italic"]
-    variant:           ["Font variant", "string", "", "small-caps"]
-    weight:            ["Font weight", "string", "", "bold"]
+    font:              ["Font family", "font", '"sans-serif"']
+    style:             ["Font style", "string", '""', '"italic"']
+    variant:           ["Font variant", "string", '""', '"small-caps"']
+    weight:            ["Font weight", "string", '""', '"bold"']
     detail:            ["Font detail", "number", "24"]
     expand:            ["SDF expansion", "number", "5"]
   label:
