@@ -159,6 +159,8 @@ Traits =
 
   point:
     size:              Types.positive(Types.number(4))
+    sizes:             Types.nullable(Types.select())
+
     shape:             Types.shape()
     optical:           Types.bool(true)
     fill:              Types.bool(true)

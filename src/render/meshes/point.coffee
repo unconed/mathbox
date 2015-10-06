@@ -5,7 +5,7 @@ class Point extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, material, position, color, mask, map, combine, linear, shape, optical, fill, stpq} = options
+    {uniforms, material, position, color, size, mask, map, combine, linear, shape, optical, fill, stpq} = options
 
     uniforms ?= {}
     shape     = +shape ? 0
@@ -38,7 +38,17 @@ class Point extends Base
 
     v.pipe @_vertexColor color, mask
 
+    # Point sizing
+    if size
+      v.isolate()
+      v  .require size
+      v  .require 'point.size.varying', @uniforms
+      v.end()
+    else
+      v.require 'point.size.uniform',   @uniforms
+
     v.require @_vertexPosition position, material, map, 2, stpq
+
     v.pipe 'point.position',        @uniforms, defines
     v.pipe 'project.position',      @uniforms
 

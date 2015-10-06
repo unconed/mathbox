@@ -22,6 +22,7 @@ class Point extends Primitive
     @_helpers.bind.make [
       { to: 'geometry.points', trait: 'source' }
       { to: 'geometry.colors', trait: 'source' }
+      { to: 'point.sizes',     trait: 'source' }
     ]
 
     return unless @bind.points?
@@ -47,6 +48,11 @@ class Point extends Primitive
       color = @_shaders.shader()
       @bind.colors.sourceShader color
 
+    # Build size lookup
+    if @bind.sizes
+      size = @_shaders.shader()
+      @bind.sizes.sourceShader size
+
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
@@ -65,6 +71,7 @@ class Point extends Primitive
               items:    items
               position: position
               color:    color
+              size:     size
               shape:    shape
               optical:  optical
               fill:     fill

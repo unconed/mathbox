@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Point</title>
+  <title>MathBox - Point Sizes</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -30,7 +30,7 @@
 
     view = mathbox
     .set({
-      scale: 1440,
+      scale: 1200,
       focus: three.camera.position.length()
     })
     .cartesian({
@@ -51,6 +51,19 @@
       axes: [1, 3],
     });
 
+    view.matrix({
+      id: 'size',
+      expr: function (emit, i, j) {
+        var a = .5 + .5 * Math.cos(time * .873 + i) * (j % 2);
+        var b = .5 + .5 * Math.sin(time + j) * (i % 2);
+
+        emit(a * b);
+      },
+      width:  64,
+      height: 64,
+      channels: 1,
+    });
+
     view.area({
       id: 'sampler',
       width: 32,
@@ -63,6 +76,7 @@
     view.point({
       color: 0x3090FF,
       size: 20,
+      sizes:  '#size',
     });
 
     view.transform({
@@ -70,6 +84,7 @@
     }).point({
       color: 0xFFFFFF,
       size: 38,
+      sizes:  '#size',
       shape: 'diamond',
       fill: true,
       zBias: -1,
@@ -79,6 +94,7 @@
     }).point({
       color: 0x30C030,
       size: 40,
+      sizes:  '#size',
       shape: 'diamond',
       fill: false,
     });
@@ -116,6 +132,7 @@
     }).point({
       points: '#sampler',
       colors: '#color',
+      sizes:  '#size',
       color: 0xFFFFFF,
       size: 40,
       shape: 'up',
