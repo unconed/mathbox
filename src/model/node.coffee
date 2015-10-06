@@ -103,7 +103,7 @@ class Node
 
   toMarkup: (selector = null, indent = '') ->
     if selector and typeof selector != 'function'
-      selector = @root.model._matcher selector
+      selector = @root?.model._matcher(selector) ? () -> true
 
     tag   = @type ? 'node'
     expr  = @expr

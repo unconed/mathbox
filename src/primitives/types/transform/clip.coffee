@@ -13,4 +13,4 @@ class Clip extends Transform
     return shader.pipe 'clip.position', @uniforms if pass == @props.pass
     shader
 
-module.exports = Layer
+module.exports = Clip
