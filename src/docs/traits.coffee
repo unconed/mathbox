@@ -196,7 +196,7 @@ Traits =
     background:        ["Outline background", "color", '"rgb(255, 255, 255)"']
 
   overlay:
-    opacity:           ["Opacity", 1]
+    opacity:           ["Opacity", "positive number", 1]
     zIndex:            ["Z-Index (2D stacking)", "positive int", "0"]
   dom:
     points:            ["Points data source", "select", '"<"']
@@ -216,7 +216,7 @@ Traits =
   shader:
     sources:           ["Sampler sources", "nullable select", null, '["#pressure", "#divergence"]']
     language:          ["Shader language", "string", '"glsl"']
-    code:              ["Shader code", "string", ""]
+    code:              ["Shader code", "string", '""']
     uniforms:          ["Shader uniform objects (three.js style)", "nullable object", null, "{ time: { type: 'f', value: 3 }}"]
   include:
     shader:            ["Shader to use", "select", '"<"']
