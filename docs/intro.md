@@ -1,4 +1,4 @@
-# MathBox
+# MathBox Quick Start
 
 ### What?
 
@@ -17,13 +17,15 @@ To show anything in MathBox, you need to establish four things:
 3) Geometrical data represented via...
 4) A choice of shape to draw it as.
 
-For example, a 2D cartesian coordinate system containing an array of data points, drawn as a continuous line. Let's do that.
+For example, a 2D rectangular view containing an array of points, drawn as a continuous line. Let's do that.
 
+![MathBox](http://acko.net/files/mathbox2/graph.png)
 
+[Download MathBox](http://acko.net/files/mathbox2/mathbox-0.0.3.zip) (ZIP). See [README](/unconed/mathbox) for more info.
 
 *Note: Open `examples/empty.html` in your text editor and browser to follow along. You can also use the [JSBin](http://jsbin.com/hasuhaw/edit?html,output), but you'll want to turn off "Auto-run" in the top right.*
 
-#### Start with the camera
+### Start with the camera
 
 The default 3D camera starts out at `[0, 0, 0]` (i.e. X, Y, Z), right in the middle of our diagram. +Z goes out of the screen and -Z into the screen.
 
@@ -52,7 +54,7 @@ The return value, `camera`, is a mathbox selection that points to the `<camera /
 camera = mathbox.select('camera');
 ```
 
-#### Add a coordinate system
+### Add a coordinate system
 
 Now we're going to set up a simple 2D cartesian coordinate system. We'll make it twice as wide as high.
 
@@ -127,7 +129,7 @@ Which gives us:
 *Note: You can use `.get("prop")`/`.set("prop", value)` to set individual properties, or use `.get()` and `.set({ prop: value })` to change multiple properties at once.*
 
 
-#### Add some data and draw it
+### Add some data and draw it
 
 Now we'll draw a moving sine wave. First we create an `interval`, this is a 1D array, sampled over the cartesian view's range. It contains an `expr`, an expression to generate the data points.
 
@@ -175,7 +177,7 @@ The DOM now looks like:
 </root>
 ```
 
-#### Add more shapes
+### Add more shapes
 
 The nice thing about separating data from shape is that you can draw the same data multiple ways. For example, add on `<point />` to draw points as well:
 
@@ -233,7 +235,7 @@ var vector =
 
 *Alternatively, you can also supply an array of `data`, either constant or changing, flat or nested. MathBox will iterate over it and emit it for you, picking up any live data. If your data does not change, you can set `live: false` to optimize.*
 
-#### Add some floating labels
+### Add some floating labels
 
 Finally we'll label our coordinate system. First we need to establish a `<scale />`, which will divide our view into nice intervals.
 
@@ -280,7 +282,7 @@ Here we apply `zIndex` similar to CSS to ensure the labels overlap in 2D rather 
 *Note: Unlike CSS, large zIndex values are not recommended, as the higher the z-Index, the less depth resolution you have.*
 
 
-#### Make it move
+### Make it move
 
 Finally we'll add on a little bit of animation by adding a `<play />` block.
 
