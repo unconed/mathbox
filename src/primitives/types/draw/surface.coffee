@@ -161,10 +161,9 @@ class Surface extends Primitive
        changed['mesh.fill']   or
        init
 
-      fill   = @_get 'mesh.fill'
-      color  = @_get 'style.color'
+      {fill, color, zBias} = @props
 
-      @wireZBias.value = @_get('style.zBias') + if fill then 5 else 0
+      @wireZBias.value = zBias + if fill then 5 else 0
       @wireColor.copy color
       if fill
         c = @wireScratch

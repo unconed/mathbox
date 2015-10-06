@@ -47,14 +47,25 @@ class Step extends Track
         return
 
       # Calculate actual step from current offset (may be still animating)
-      step = i - (@actualIndex ? @lastIndex ? 0)
+      last = (@actualIndex ? @lastIndex ? 0)
+      step = i - last
+
+      # Don't count duped stops
+      skips = @stops.slice Math.min(last, i), Math.max(last, i)
+      free  = 0
+      last  = skips.shift()
+      for stop in skips
+        free++ if last == stop
+        last = stop
+
+      # Remember last intended stop
       @lastIndex = i
 
       # Apply rewind factor
       factor = speed * if e.step >= 0 then 1 else rewind
 
       # Pass through multiple steps at faster rate if skip is enabled
-      factor *= if skip then Math.max 1, Math.abs(step) else 1
+      factor *= if skip then Math.max 1, Math.abs(step) - free else 1
 
       # Apply pace
       duration += Math.abs(to - from) * pace / factor

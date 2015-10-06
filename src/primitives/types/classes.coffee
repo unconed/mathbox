@@ -22,6 +22,7 @@ Classes =
   vertex:            require './transform/vertex'
   fragment:          require './transform/fragment'
   layer:             require './transform/layer'
+  mask:              require './transform/mask'
 
   array:             require './data/array'
   interval:          require './data/interval'

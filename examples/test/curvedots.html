@@ -44,6 +44,16 @@
       unit: 'absolute',
       height: [0, .05, 0, 0],
     });
+    
+    view.split({
+      axis:    'x',
+      length:  3,
+      overlap: 0,
+    });
+    view.join({
+      axis:   'x',
+      overlap: 1,
+    });
 
     view.line({
       color: 0x3090FF,

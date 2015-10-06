@@ -126,7 +126,7 @@ class Context
         change   = @attributes.digest()
         change ||= @model     .digest()
       last: () ->
-        {attribute: @attributes.getLastTrigger(), model: @attributes.getLastTrigger()}
+        {attribute: @attributes.getLastTrigger(), model: @model.getLastTrigger()}
 
     @root.controller.update?()
 

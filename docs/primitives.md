@@ -1,20 +1,157 @@
-### MathBox.Primitives
+## List of MathBox Primitives
 
-#### `data/area`
+*Grouped by module.*
 
-*2D area*
+#### base
+
+
+ * [group](#base/group) - Group elements for visibility and activity
+ * [inherit](#base/inherit) - Inherit and inject a trait from another element
+ * [root](#base/root) - Tree root
+ * [unit](#base/unit) - Change unit sizing for drawing ops
+
+
+#### camera
+
+
+ * [camera](#camera/camera) - Camera instance or proxy
+
+
+#### data
+
+
+ * [array](#data/array) - 1D array
+ * [interval](#data/interval) - 1D sampled array
+ * [matrix](#data/matrix) - 2D matrix
+ * [area](#data/area) - 2D sampled matrix
+ * [voxel](#data/voxel) - 3D voxels
+ * [volume](#data/volume) - 3D sampled voxels
+ * [scale](#data/scale) - Human-friendly divisions on an axis, subdivided as needed
+
+
+#### draw
+
+
+ * [axis](#draw/axis) - Draw an axis
+ * [face](#draw/face) - Draw polygon faces
+ * [grid](#draw/grid) - Draw a 2D line grid
+ * [line](#draw/line) - Draw lines
+ * [point](#draw/point) - Draw points
+ * [strip](#draw/strip) - Draw triangle strips
+ * [surface](#draw/surface) - Draw surfaces
+ * [ticks](#draw/ticks) - Draw ticks
+ * [vector](#draw/vector) - Draw vectors
+
+
+#### operator
+
+
+ * [grow](#operator/grow) - Scale data relative to reference data point
+ * [join](#operator/join) - Join two array dimensions into one by concatenating rows/columns/stacks
+ * [lerp](#operator/lerp) - Linear interpolation of data
+ * [memo](#operator/memo) - Memoize data to an array/texture
+ * [resample](#operator/resample) - Resample data to new dimensions with a shader
+ * [repeat](#operator/repeat) - Repeat data in one or more dimensions
+ * [swizzle](#operator/swizzle) - Swizzle data values
+ * [spread](#operator/spread) - Spread data values according to array indices
+ * [split](#operator/split) - Split one array dimension into two by splitting rows/columns/etc
+ * [slice](#operator/slice) - Select one or more rows/columns/stacks
+ * [transpose](#operator/transpose) - Transpose array dimensions
+
+
+#### overlay
+
+
+ * [html](#overlay/html) - HTML element source
+ * [dom](#overlay/dom) - HTML DOM injector
+
+
+#### present
+
+
+ * [move](#present/move) - Move elements in/out on transition
+ * [play](#present/play) - Play a sequenced animation
+ * [present](#present/present) - Present a tree of slides
+ * [reveal](#present/reveal) - Reveal/hide elements on transition
+ * [slide](#present/slide) - Presentation slide
+ * [step](#present/step) - Step through a sequenced animation
+
+
+#### rtt
+
+
+ * [rtt](#rtt/rtt) - Render objects to a texture
+ * [compose](#rtt/compose) - Full-screen render pass
+
+
+#### shader
+
+
+ * [shader](#shader/shader) - Custom shader snippet
+
+
+#### text
+
+
+ * [text](#text/text) - GL text source
+ * [format](#text/format) - Text formatter
+ * [label](#text/label) - Draw GL labels
+ * [retext](#text/retext) - Text atlas resampler
+
+
+#### time
+
+
+ * [clock](#time/clock) - Relative clock that starts from zero.
+ * [now](#time/now) - Absolute UNIX time in seconds since 01/01/1970
+
+
+#### transform
+
+
+ * [transform](#transform/transform) - Transform geometry in 3D
+ * [transform4](#transform/transform4) - Transform geometry in 4D
+ * [vertex](#transform/vertex) - Apply custom vertex shader pass
+ * [fragment](#transform/fragment) - Apply custom fragment shader pass
+ * [layer](#transform/layer) - Independent 2D layer/overlay
+ * [mask](#transform/mask) - Apply custom mask pass
+
+
+#### view
+
+
+ * [view](#view/view) - Adjust view range
+ * [cartesian](#view/cartesian) - Apply cartesian view
+ * [cartesian4](#view/cartesian4) - Apply 4D cartesian view
+ * [polar](#view/polar) - Apply polar view
+ * [spherical](#view/spherical) - Apply spherical view
+ * [stereographic](#view/stereographic) - Apply stereographic projection
+ * [stereographic4](#view/stereographic4) - Apply 4D stereographic projection
+
+
+
+
+---
+
+### Reference
+
+
+####  <a name="data/area"></a>`data/area`
+
+*2D sampled matrix*
+
  * *axes* = [1, 2] (swizzle(2) axis) - Axis pair
  * *bufferHeight* = 1 (number) - Matrix buffer height
  * *bufferWidth* = 1 (number) - Matrix buffer width
  * *channels* = 4 (number) - Number of channels
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *data* = null (nullable object) - Data array
- * *expr* = null (nullable emitter) - Data emitter expression
- * *fps* = null (nullable number) - Frames-per-second update rate
+ * *expr* = null (nullable emitter) - Data emitter expression, e.g. `function (emit, x, y, i, j, time, delta) { ... }`
+ * *fps* = null (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = 1 (nullable number) - Matrix height
  * *history* = 1 (number) - Matrix history
  * *hurry* = 5 (number) - Maximum frames to hurry per frame
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 4 (number) - Number of items
  * *limit* = 60 (number) - Maximum frames to track
  * *live* = true (bool) - Update continuously
@@ -25,18 +162,19 @@
  * *type* = "float" (type) - Texture data type
  * *width* = 1 (nullable number) - Matrix width
 
-#### `data/array`
+####  <a name="data/array"></a>`data/array`
 
 *1D array*
+
  * *bufferLength* = 1 (number) - Array buffer length
  * *channels* = 4 (number) - Number of channels
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *data* = null (nullable object) - Data array
- * *expr* = null (nullable emitter) - Data emitter expression
- * *fps* = null (nullable number) - Frames-per-second update rate
+ * *expr* = null (nullable emitter) - Data emitter expression, e.g. `function (emit, i, time, delta) { ... }`
+ * *fps* = null (nullable number) - Frames-per-second update rate, e.g. `60`
  * *history* = 1 (number) - Array history
  * *hurry* = 5 (number) - Maximum frames to hurry per frame
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 4 (number) - Number of items
  * *length* = 1 (nullable number) - Array length
  * *limit* = 60 (number) - Maximum frames to track
@@ -47,54 +185,57 @@
  * *realtime* = false (bool) - Run on real time, not clock time
  * *type* = "float" (type) - Texture data type
 
-#### `draw/axis`
+####  <a name="draw/axis"></a>`draw/axis`
 
-*Axis*
+*Draw an axis*
+
  * *axis* = 1 (axis) - Axis
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *closed* = false (bool) - Close line
  * *color* = "rgb(128, 128, 128)" (color) - Color
  * *crossed* = true (bool) - UVWO map on matching axis
  * *depth* = 1 (number) - Depth scaling
  * *detail* = 1 (number) - Geometric detail
  * *end* = true (bool) - Draw end arrow
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *opacity* = 1 (positive number) - Opacity
  * *origin* = [0, 0, 0, 0] (vec4) - 4D Origin
- * *proximity* = null (nullable number) - Proximity threshold
+ * *proximity* = null (nullable number) - Proximity threshold, e.g. `10`
  * *range* = [-1, 1] (vec2) - Range on axis
  * *size* = 3 (number) - Arrow size
  * *start* = true (bool) - Draw start arrow
- * *stroke* = solid (stroke) - Line stroke (solid, dotted, dashed)
+ * *stroke* = "solid" (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `camera/camera`
+####  <a name="camera/camera"></a>`camera/camera`
 
-*Camera interface*
- * *classes* = [] (string array) - Node classes
+*Camera instance or proxy*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = "xyz" (swizzle) - 3D Euler order
- * *fov* = null (nullable number) - Field-of-view (degrees)
- * *id* = null (nullable string) - Unique ID
- * *lookAt* = null (nullable vec3) - 3D Look at
- * *position* = null (nullable vec3) - 3D Position
+ * *fov* = null (nullable number) - Field-of-view (degrees), e.g. `60`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *lookAt* = null (nullable vec3) - 3D Look at, e.g. `[2, 3, 4]`
+ * *position* = null (nullable vec3) - 3D Position, e.g. `[1, 2, 3]`
  * *proxy* = false (bool) - Re-use existing camera
- * *quaternion* = null (nullable quat) - 3D Quaternion
- * *rotation* = null (nullable vec3) - 3D Euler rotation
- * *up* = null (nullable vec3) - 3D Up
+ * *quaternion* = null (nullable quat) - 3D Quaternion, e.g. `[0.707, 0, 0, 0.707]`
+ * *rotation* = null (nullable vec3) - 3D Euler rotation, e.g. `[π/2, 0, 0]`
+ * *up* = null (nullable vec3) - 3D Up, e.g. `[0, 1, 0]`
 
-#### `view/cartesian`
+####  <a name="view/cartesian"></a>`view/cartesian`
 
-*Cartesian*
- * *classes* = [] (string array) - Node classes
+*Apply cartesian view*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = xyz (swizzle) - Euler order
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = [0, 0, 0] (vec3) - 3D Position
  * *quaternion* = [0, 0, 0, 1] (quat) - 3D Quaternion
  * *range* = [[-1, 1], [-1, 1], [-1, 1], [-1, 1]] (array vec2) - 4D range in view
@@ -102,57 +243,61 @@
  * *scale* = 1,1,1 (vec3) - 3D Scale
  * *visible* = true (bool) - Visibility for rendering
 
-#### `view/cartesian4`
+####  <a name="view/cartesian4"></a>`view/cartesian4`
 
-*4D cartesian*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+*Apply 4D cartesian view*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = [0, 0, 0, 0] (vec4) - 4D Position
  * *range* = [[-1, 1], [-1, 1], [-1, 1], [-1, 1]] (array vec2) - 4D range in view
  * *scale* = [1, 1, 1, 1] (vec4) - 4D Scale
  * *visible* = true (bool) - Visibility for rendering
 
-#### `time/clock`
+####  <a name="time/clock"></a>`time/clock`
 
-*Relative clock*
- * *classes* = [] (string array) - Node classes
+*Relative clock that starts from zero.*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *delay* = 0 (number) - Play delay
  * *from* = 0 (number) - Play from
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *loop* = false (bool) - Loop
  * *pace* = 1 (number) - Play pace
  * *realtime* = false (bool) - Run on real time, not clock time
- * *seek* = null (nullable number) - Seek to time
+ * *seek* = null (nullable number) - Seek to time, e.g. `4`
  * *speed* = 1 (number) - Play speed
  * *to* = Infinity (number) - Play until
 
-#### `rtt/compose`
+####  <a name="rtt/compose"></a>`rtt/compose`
 
-*Compose pass*
- * *alpha* = false (bool) - Compose with alpha
+*Full-screen render pass*
+
+ * *alpha* = false (bool) - Compose with alpha transparency
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *opacity* = 1 (positive number) - Opacity
  * *source* = "<" (select) - Input source
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `overlay/dom`
+####  <a name="overlay/dom"></a>`overlay/dom`
 
-*DOM injector*
- * *attributes* = null (nullable object) - HTML attributes
- * *classes* = [] (string array) - Node classes
+*HTML DOM injector*
+
+ * *attributes* = null (nullable object) - HTML attributes, e.g. `{"style": {"color": "red"}}`
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *color* = "rgb(255, 255, 255)" (color) - Color
  * *depth* = 0 (number) - Depth scaling
  * *html* = "<" (select) - HTML data source
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *offset* = [0, -20] (vec2) - 2D offset
  * *opacity* = undefined (1) - Opacity
  * *outline* = 2 (number) - Outline size
@@ -164,122 +309,129 @@
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
  * *zoom* = 1 (number) - HTML zoom
 
-#### `draw/face`
+####  <a name="draw/face"></a>`draw/face`
 
-*Polygon face*
+*Draw polygon faces*
+
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *closed* = false (bool) - Close line
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *colors* = null (nullable select) - Colors data source
+ * *colors* = null (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = 1 (number) - Depth scaling
  * *fill* = true (bool) - Fill mesh
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *line* = false (bool) - Draw line
- * *map* = null (nullable select) - Texture map
+ * *map* = null (nullable select) - Texture map, e.g. `"#map"`
  * *opacity* = 1 (positive number) - Opacity
  * *points* = < (select) - Points data source
- * *proximity* = null (nullable number) - Proximity threshold
+ * *proximity* = null (nullable number) - Proximity threshold, e.g. `10`
  * *shaded* = false (bool) - Shade mesh
  * *size* = 2 (positive number) - Line width
- * *stroke* = solid (stroke) - Line stroke (solid, dotted, dashed)
+ * *stroke* = "solid" (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `text/format`
+####  <a name="text/format"></a>`text/format`
 
-*Source formatter*
- * *classes* = [] (string array) - Node classes
- * *data* = null (nullable array) - Array of labels
+*Text formatter*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *data* = null (nullable array) - Array of labels, e.g. `["Grumpy", "Sleepy", "Sneezy"]`
  * *detail* = 24 (number) - Font detail
- * *digits* = null (nullable positive number) - Digits of precision
+ * *digits* = null (nullable positive number) - Digits of precision, e.g. `2`
  * *expand* = 5 (number) - SDF expansion
- * *expr* = null (nullable function) - Label formatter expression
+ * *expr* = null (nullable function) - Label formatter expression, e.g. `function (x, y, z, w, i, j, k, l, time, delta) { ... }`
  * *font* = sans-serif (font) - Font family
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *live* = true (bool) - Update continuously
  * *magFilter* = "nearest" (filter) - Texture magnification filtering
  * *minFilter* = "nearest" (filter) - Texture minification filtering
  * *source* = "<" (select) - Input source
- * *style* =  (string) - Font style
+ * *style* =  (string) - Font style, e.g. `italic`
  * *type* = "float" (type) - Texture data type
- * *variant* =  (string) - Font variant
- * *weight* =  (string) - Font weight
+ * *variant* =  (string) - Font variant, e.g. `small-caps`
+ * *weight* =  (string) - Font weight, e.g. `bold`
 
-#### `transform/fragment`
+####  <a name="transform/fragment"></a>`transform/fragment`
 
-*Fragment pass*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
- * *pass* = light (fragmentPass) - Fragment pass (color, light, rgba)
+*Apply custom fragment shader pass*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "light" (fragmentPass) - Fragment pass (color, light, rgba)
  * *shader* = "<" (select) - Shader to use
 
-#### `draw/grid`
+####  <a name="draw/grid"></a>`draw/grid`
 
-*2D line grid*
+*Draw a 2D line grid*
+
  * *axes* = [1, 2] (swizzle(2) axis) - Axis pair
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *closed* = false (bool) - Close line
  * *closedX* = false (bool) - Close X lines
  * *closedY* = true (bool) - Close Y lines
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *crossed* = true (bool) - UVWO map on matching axis
+ * *crossed* = true (bool) - UVWO map on matching axes
  * *depth* = 1 (number) - Depth scaling
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *lineX* = true (bool) - Draw X lines
  * *lineY* = true (bool) - Draw Y lines
  * *opacity* = 1 (positive number) - Opacity
  * *origin* = [0, 0, 0, 0] (vec4) - 4D Origin
- * *proximity* = null (nullable number) - Proximity threshold
+ * *proximity* = null (nullable number) - Proximity threshold, e.g. `10`
  * *size* = 2 (positive number) - Line width
- * *stroke* = solid (stroke) - Line stroke (solid, dotted, dashed)
+ * *stroke* = "solid" (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `base/group`
+####  <a name="base/group"></a>`base/group`
 
-*Group*
+*Group elements for visibility and activity*
+
  * *active* = true (bool) - Updates continuously
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *visible* = true (bool) - Visibility for rendering
 
-#### `operator/grow`
+####  <a name="operator/grow"></a>`operator/grow`
 
-*Grow data*
- * *classes* = [] (string array) - Node classes
+*Scale data relative to reference data point*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *depth* = null (nullable anchor) - Depth alignment
  * *height* = null (nullable anchor) - Height alignment
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = null (nullable anchor) - Items alignment
  * *scale* = 1 (number) - Scale factor
  * *source* = "<" (select) - Input source
  * *width* = null (nullable anchor) - Width alignment
 
-#### `overlay/html`
+####  <a name="overlay/html"></a>`overlay/html`
 
-*HTML source*
+*HTML element source*
+
  * *bufferDepth* = 1 (number) - Voxel buffer depth
  * *bufferHeight* = 1 (number) - Voxel buffer height
  * *bufferWidth* = 1 (number) - Voxel buffer width
  * *channels* = 4 (number) - Number of channels
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *data* = null (nullable object) - Data array
  * *depth* = 1 (nullable number) - Voxel depth
  * *expr* = null (nullable emitter) - Data emitter expression
- * *fps* = null (nullable number) - Frames-per-second update rate
+ * *fps* = null (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = 1 (nullable number) - Voxel height
  * *hurry* = 5 (number) - Maximum frames to hurry per frame
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 4 (number) - Number of items
  * *limit* = 60 (number) - Maximum frames to track
  * *live* = true (bool) - Update continuously
@@ -287,26 +439,28 @@
  * *realtime* = false (bool) - Run on real time, not clock time
  * *width* = 1 (nullable number) - Voxel width
 
-#### `base/inherit`
+####  <a name="base/inherit"></a>`base/inherit`
 
-*Inherit trait*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
+*Inherit and inject a trait from another element*
 
-#### `data/interval`
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
 
-*1D interval*
+####  <a name="data/interval"></a>`data/interval`
+
+*1D sampled array*
+
  * *axis* = 1 (axis) - Axis
  * *bufferLength* = 1 (number) - Array buffer length
  * *centered* = false (bool) - Centered instead of corner sampling
  * *channels* = 4 (number) - Number of channels
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *data* = null (nullable object) - Data array
- * *expr* = null (nullable emitter) - Data emitter expression
- * *fps* = null (nullable number) - Frames-per-second update rate
+ * *expr* = null (nullable emitter) - Data emitter expression, e.g. `function (emit, x, i, time, delta) { ... }`
+ * *fps* = null (nullable number) - Frames-per-second update rate, e.g. `60`
  * *history* = 1 (number) - Array history
  * *hurry* = 5 (number) - Maximum frames to hurry per frame
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 4 (number) - Number of items
  * *length* = 1 (nullable number) - Array length
  * *limit* = 60 (number) - Maximum frames to track
@@ -319,27 +473,29 @@
  * *realtime* = false (bool) - Run on real time, not clock time
  * *type* = "float" (type) - Texture data type
 
-#### `operator/join`
+####  <a name="operator/join"></a>`operator/join`
 
-*Join rows*
- * *axis* = null (nullable axis) - Axis to join
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
+*Join two array dimensions into one by concatenating rows/columns/stacks*
+
+ * *axis* = null (nullable axis) - Axis to join, e.g. `x`
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *order* = "wxyz" (transpose) - Axis order
  * *overlap* = 1 (number) - Tuple overlap
  * *source* = "<" (select) - Input source
 
-#### `text/label`
+####  <a name="text/label"></a>`text/label`
 
-*GL label*
+*Draw GL labels*
+
  * *background* = "rgb(255, 255, 255)" (color) - Outline background
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *colors* = null (nullable select) - Colors data source
+ * *colors* = null (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = 0 (number) - Depth scaling
  * *expand* = 0 (number) - Expand glyphs
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *offset* = [0, -20] (vec2) - 2D offset
  * *opacity* = 1 (positive number) - Opacity
  * *outline* = 2 (number) - Outline size
@@ -350,68 +506,80 @@
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `transform/layer`
+####  <a name="transform/layer"></a>`transform/layer`
 
-*Layer*
- * *classes* = [] (string array) - Node classes
+*Independent 2D layer/overlay*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *depth* = 1 (number) - 3D Depth
  * *fit* = y (fit) - Fit to (contain, cover, x, y)
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
 
-#### `operator/lerp`
+####  <a name="operator/lerp"></a>`operator/lerp`
 
-*Linear interpolation*
- * *classes* = [] (string array) - Node classes
- * *depth* = null (nullable number) - Lerp to depth
- * *height* = null (nullable number) - Lerp to height
- * *id* = null (nullable string) - Unique ID
- * *items* = null (nullable number) - Lerp to items
+*Linear interpolation of data*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *depth* = null (nullable number) - Lerp to depth, e.g. `5`
+ * *height* = null (nullable number) - Lerp to height, e.g. `5`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *items* = null (nullable number) - Lerp to items, e.g. `5`
  * *source* = "<" (select) - Input source
- * *width* = null (nullable number) - Lerp to width
+ * *width* = null (nullable number) - Lerp to width, e.g. `5`
 
-#### `draw/line`
+####  <a name="draw/line"></a>`draw/line`
 
-*Line*
+*Draw lines*
+
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *closed* = false (bool) - Close line
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *colors* = null (nullable select) - Colors data source
+ * *colors* = null (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = 1 (number) - Depth scaling
  * *end* = true (bool) - Draw end arrow
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *opacity* = 1 (positive number) - Opacity
  * *points* = < (select) - Points data source
- * *proximity* = null (nullable number) - Proximity threshold
+ * *proximity* = null (nullable number) - Proximity threshold, e.g. `10`
  * *size* = 3 (number) - Arrow size
  * *start* = true (bool) - Draw start arrow
- * *stroke* = solid (stroke) - Line stroke (solid, dotted, dashed)
+ * *stroke* = "solid" (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `data/matrix`
+####  <a name="transform/mask"></a>`transform/mask`
+
+*Apply custom mask pass*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *shader* = "<" (select) - Shader to use
+
+####  <a name="data/matrix"></a>`data/matrix`
 
 *2D matrix*
+
  * *bufferHeight* = 1 (number) - Matrix buffer height
  * *bufferWidth* = 1 (number) - Matrix buffer width
  * *channels* = 4 (number) - Number of channels
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *data* = null (nullable object) - Data array
- * *expr* = null (nullable emitter) - Data emitter expression
- * *fps* = null (nullable number) - Frames-per-second update rate
+ * *expr* = null (nullable emitter) - Data emitter expression, e.g. `function (emit, i, j, time, delta) { ... }`
+ * *fps* = null (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = 1 (nullable number) - Matrix height
  * *history* = 1 (number) - Matrix history
  * *hurry* = 5 (number) - Maximum frames to hurry per frame
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 4 (number) - Number of items
  * *limit* = 60 (number) - Maximum frames to track
  * *live* = true (bool) - Update continuously
@@ -422,71 +590,76 @@
  * *type* = "float" (type) - Texture data type
  * *width* = 1 (nullable number) - Matrix width
 
-#### `operator/memo`
+####  <a name="operator/memo"></a>`operator/memo`
 
-*Memoize*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
+*Memoize data to an array/texture*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *magFilter* = "nearest" (filter) - Texture magnification filtering
  * *minFilter* = "nearest" (filter) - Texture minification filtering
  * *source* = "<" (select) - Input source
  * *type* = "float" (type) - Texture data type
 
-#### `present/move`
+####  <a name="present/move"></a>`present/move`
 
-*Move transition*
- * *classes* = [] (string array) - Node classes
+*Move elements in/out on transition*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *delay* = 0 (number) - Transition delay
- * *delayEnter* = null (nullable number) - Transition enter delay
- * *delayExit* = null (nullable number) - Transition exit delay
+ * *delayEnter* = null (nullable number) - Transition enter delay, e.g. `0.3`
+ * *delayExit* = null (nullable number) - Transition exit delay, e.g. `0.3`
  * *duration* = 0.3 (number) - Transition duration
  * *durationEnter* = 0.3 (number) - Transition enter duration
  * *durationExit* = 0.3 (number) - Transition exit duration
- * *enter* = null (nullable number) - Enter state
- * *exit* = null (nullable number) - Exit state
+ * *enter* = null (nullable number) - Enter state, e.g. `0.5`
+ * *exit* = null (nullable number) - Exit state, e.g. `0.5`
  * *from* = [0, 0, 0, 0] (vec4) - Enter from
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
- * *stagger* = [0, 0, 0, 0] (vec4) - Stagger dimensions
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
+ * *stagger* = [0, 0, 0, 0] (vec4) - Stagger dimensions, e.g. `[2, 1, 0, 0]`
  * *to* = [0, 0, 0, 0] (vec4) - Exit to
 
-#### `time/now`
+####  <a name="time/now"></a>`time/now`
 
-*Absolute time*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
- * *now* = null (nullable timestamp) - Current moment
+*Absolute UNIX time in seconds since 01/01/1970*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *now* = null (nullable timestamp) - Current moment, e.g. `1444094929.619`
  * *pace* = 1 (number) - Time pace
  * *seek* = null (nullable number) - Seek to time
  * *speed* = 1 (number) - Time speed
 
-#### `present/play`
+####  <a name="present/play"></a>`present/play`
 
-*Play animation*
- * *classes* = [] (string array) - Node classes
+*Play a sequenced animation*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *delay* = 0 (number) - Play delay
  * *ease* = "cosine" (ease) - Animation ease
  * *from* = 0 (number) - Play from
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *loop* = false (bool) - Loop
  * *pace* = 1 (number) - Play pace
  * *realtime* = false (bool) - Run on real time, not clock time
- * *script* = [object Object] (object) - Animation script
+ * *script* = {} (object) - Animation script, e.g. `{ "0": { props: { color: "red" }, expr: { size: function (t) { return Math.sin(t) + 1; }}}, "1": ...}`
  * *speed* = 1 (number) - Play speed
  * *target* = "<" (select) - Animation target
  * *to* = Infinity (number) - Play until
  * *trigger* = 1 (nullable number) - Trigger on step
 
-#### `draw/point`
+####  <a name="draw/point"></a>`draw/point`
 
-*Point*
+*Draw points*
+
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *colors* = null (nullable select) - Colors data source
+ * *colors* = null (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = 1 (number) - Depth scaling
  * *fill* = true (bool) - Fill shape
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *opacity* = 1 (positive number) - Opacity
  * *optical* = true (bool) - Optical or exact sizing
  * *points* = < (select) - Points data source
@@ -495,19 +668,20 @@
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `view/polar`
+####  <a name="view/polar"></a>`view/polar`
 
-*Polar*
+*Apply polar view*
+
  * *bend* = 1 (number) - Amount of polar bend
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = xyz (swizzle) - Euler order
  * *helix* = 0 (number) - Expand into helix
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = [0, 0, 0] (vec3) - 3D Position
  * *quaternion* = [0, 0, 0, 1] (quat) - 3D Quaternion
  * *range* = [[-1, 1], [-1, 1], [-1, 1], [-1, 1]] (array vec2) - 4D range in view
@@ -515,116 +689,124 @@
  * *scale* = 1,1,1 (vec3) - 3D Scale
  * *visible* = true (bool) - Visibility for rendering
 
-#### `present/present`
+####  <a name="present/present"></a>`present/present`
 
-*Present slides*
- * *classes* = [] (string array) - Node classes
+*Present a tree of slides*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *directed* = true (bool) - Apply directional transitions
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *index* = 1 (number) - Present slide number
  * *length* = 0 (number) - Presentation length (computed)
 
-#### `operator/repeat`
+####  <a name="operator/repeat"></a>`operator/repeat`
 
-*Repeat*
- * *classes* = [] (string array) - Node classes
+*Repeat data in one or more dimensions*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *depth* = 1 (number) - Repeat depth
  * *height* = 1 (number) - Repeat height
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 1 (number) - Repeat items
  * *source* = "<" (select) - Input source
  * *width* = 1 (number) - Repeat width
 
-#### `operator/resample`
+####  <a name="operator/resample"></a>`operator/resample`
 
-*Resample*
+*Resample data to new dimensions with a shader*
+
  * *channels* = 4 (number) - Resample channels
- * *classes* = [] (string array) - Node classes
- * *depth* = null (nullable number) - Resample factor depth
- * *height* = null (nullable number) - Resample factor height
- * *id* = null (nullable string) - Unique ID
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *depth* = null (nullable number) - Resample factor depth, e.g. `10`
+ * *height* = null (nullable number) - Resample factor height, e.g. `10`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *indices* = 4 (number) - Resample indices
- * *items* = null (nullable number) - Resample factor items
+ * *items* = null (nullable number) - Resample factor items, e.g. `10`
  * *sample* = "relative" (mapping) - Source sampling (relative, absolute)
  * *shader* = "<" (select) - Shader to use
  * *size* = "absolute" (mapping) - Scaling mode (relative, absolute)
  * *source* = "<" (select) - Input source
- * *width* = null (nullable number) - Resample factor width
+ * *width* = null (nullable number) - Resample factor width, e.g. `10`
 
-#### `text/retext`
+####  <a name="text/retext"></a>`text/retext`
 
-*Text reformatter*
+*Text atlas resampler*
+
  * *channels* = 4 (number) - Resample channels
- * *classes* = [] (string array) - Node classes
- * *depth* = null (nullable number) - Resample factor depth
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *depth* = null (nullable number) - Resample factor depth, e.g. `10`
  * *detail* = 24 (number) - Font detail
  * *expand* = 5 (number) - SDF expansion
  * *font* = sans-serif (font) - Font family
- * *height* = null (nullable number) - Resample factor height
- * *id* = null (nullable string) - Unique ID
+ * *height* = null (nullable number) - Resample factor height, e.g. `10`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *indices* = 4 (number) - Resample indices
- * *items* = null (nullable number) - Resample factor items
+ * *items* = null (nullable number) - Resample factor items, e.g. `10`
  * *sample* = "relative" (mapping) - Source sampling (relative, absolute)
  * *shader* = "<" (select) - Shader to use
  * *size* = "absolute" (mapping) - Scaling mode (relative, absolute)
  * *source* = "<" (select) - Input source
- * *style* =  (string) - Font style
- * *variant* =  (string) - Font variant
- * *weight* =  (string) - Font weight
- * *width* = null (nullable number) - Resample factor width
+ * *style* =  (string) - Font style, e.g. `italic`
+ * *variant* =  (string) - Font variant, e.g. `small-caps`
+ * *weight* =  (string) - Font weight, e.g. `bold`
+ * *width* = null (nullable number) - Resample factor width, e.g. `10`
 
-#### `present/reveal`
+####  <a name="present/reveal"></a>`present/reveal`
 
-*Reveal transition*
- * *classes* = [] (string array) - Node classes
+*Reveal/hide elements on transition*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *delay* = 0 (number) - Transition delay
- * *delayEnter* = null (nullable number) - Transition enter delay
- * *delayExit* = null (nullable number) - Transition exit delay
+ * *delayEnter* = null (nullable number) - Transition enter delay, e.g. `0.3`
+ * *delayExit* = null (nullable number) - Transition exit delay, e.g. `0.3`
  * *duration* = 0.3 (number) - Transition duration
  * *durationEnter* = 0.3 (number) - Transition enter duration
  * *durationExit* = 0.3 (number) - Transition exit duration
- * *enter* = null (nullable number) - Enter state
- * *exit* = null (nullable number) - Exit state
- * *id* = null (nullable string) - Unique ID
- * *stagger* = [0, 0, 0, 0] (vec4) - Stagger dimensions
+ * *enter* = null (nullable number) - Enter state, e.g. `0.5`
+ * *exit* = null (nullable number) - Exit state, e.g. `0.5`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *stagger* = [0, 0, 0, 0] (vec4) - Stagger dimensions, e.g. `[2, 1, 0, 0]`
 
-#### `base/root`
+####  <a name="base/root"></a>`base/root`
 
-*Root*
+*Tree root*
+
  * *camera* = "[camera]" (select) - Active camera
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *focus* = 1 (nullable number) - Camera focus distance in world units
- * *fov* = null (nullable number) - (Vertical) Field-of-view to calibrate units for (degrees)
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
- * *scale* = null (nullable number) - (Vertical) Reference scale of viewport in pixels
+ * *fov* = null (nullable number) - (Vertical) Field-of-view to calibrate units for (degrees), e.g. `60`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
+ * *scale* = null (nullable number) - (Vertical) Reference scale of viewport in pixels, e.g. `720`
  * *speed* = 1 (number) - Global speed
 
-#### `rtt/rtt`
+####  <a name="rtt/rtt"></a>`rtt/rtt`
 
-*Render to texture*
+*Render objects to a texture*
+
  * *camera* = "[camera]" (select) - Active camera
- * *classes* = [] (string array) - Node classes
- * *height* = null (nullable number) - RTT height
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *height* = null (nullable number) - RTT height, e.g. `360`
  * *history* = 1 (number) - RTT history
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *magFilter* = "nearest" (filter) - Texture magnification filtering
  * *minFilter* = "nearest" (filter) - Texture minification filtering
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *speed* = 1 (number) - Global speed
  * *type* = "float" (type) - Texture data type
- * *width* = null (nullable number) - RTT width
+ * *width* = null (nullable number) - RTT width, e.g. `640`
 
-#### `data/scale`
+####  <a name="data/scale"></a>`data/scale`
 
-*Scale*
+*Human-friendly divisions on an axis, subdivided as needed*
+
  * *axis* = 1 (axis) - Axis
  * *base* = 10 (number) - Power base for sub/super units
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *divide* = 10 (number) - Number of divisions
  * *end* = true (bool) - Include end
  * *factor* = 1 (positive number) - Scale factor
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *mode* = "linear" (scale) - Scale type
  * *nice* = true (bool) - Snap to nice numbers
  * *origin* = [0, 0, 0, 0] (vec4) - 4D Origin
@@ -633,47 +815,51 @@
  * *unit* = 1 (number) - Reference unit
  * *zero* = true (bool) - Include zero
 
-#### `shader/shader`
+####  <a name="shader/shader"></a>`shader/shader`
 
-*Shader snippet*
- * *classes* = [] (string array) - Node classes
+*Custom shader snippet*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *code* =  (string) - Shader code
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *language* = "glsl" (string) - Shader language
- * *sources* = null (nullable select) - Sampler sources
- * *uniforms* = null (nullable object) - Shader uniform objects
+ * *sources* = null (nullable select) - Sampler sources, e.g. `["#pressure", "#divergence"]`
+ * *uniforms* = null (nullable object) - Shader uniform objects (three.js style), e.g. `{ time: { type: 'f', value: 3 }}`
 
-#### `operator/slice`
+####  <a name="operator/slice"></a>`operator/slice`
 
-*Slice rows*
- * *classes* = [] (string array) - Node classes
- * *depth* = null (nullable vec2) - Slice from, to depth
- * *height* = null (nullable vec2) - Slice from, to height
- * *id* = null (nullable string) - Unique ID
- * *items* = null (nullable vec2) - Slice from, to items
+*Select one or more rows/columns/stacks*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *depth* = null (nullable vec2) - Slice from, to depth, e.g. `[2, 4]`
+ * *height* = null (nullable vec2) - Slice from, to height, e.g. `[2, 4]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *items* = null (nullable vec2) - Slice from, to items, e.g. `[2, 4]`
  * *source* = "<" (select) - Input source
- * *width* = null (nullable vec2) - Slice from, to width
+ * *width* = null (nullable vec2) - Slice from, to width, e.g. `[2, 4]`
 
-#### `present/slide`
+####  <a name="present/slide"></a>`present/slide`
 
 *Presentation slide*
- * *classes* = [] (string array) - Node classes
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *early* = 0 (number) - Appear early steps
- * *from* = null (nullable number) - Appear from step
- * *id* = null (nullable string) - Unique ID
+ * *from* = null (nullable number) - Appear from step, e.g. `2`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *late* = 0 (number) - Stay late steps
  * *order* = 0 (nullable number) - Slide order
  * *steps* = 1 (number) - Slide steps
- * *to* = null (nullable number) - Disappear on step
+ * *to* = null (nullable number) - Disappear on step, e.g. `4`
 
-#### `view/spherical`
+####  <a name="view/spherical"></a>`view/spherical`
 
-*Spherical*
+*Apply spherical view*
+
  * *bend* = 1 (number) - Amount of spherical bend
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = xyz (swizzle) - Euler order
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = [0, 0, 0] (vec3) - 3D Position
  * *quaternion* = [0, 0, 0, 1] (quat) - 3D Quaternion
  * *range* = [[-1, 1], [-1, 1], [-1, 1], [-1, 1]] (array vec2) - 4D range in view
@@ -681,60 +867,64 @@
  * *scale* = 1,1,1 (vec3) - 3D Scale
  * *visible* = true (bool) - Visibility for rendering
 
-#### `operator/split`
+####  <a name="operator/split"></a>`operator/split`
 
-*Split rows*
- * *axis* = null (nullable axis) - Axis to split
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
+*Split one array dimension into two by splitting rows/columns/etc*
+
+ * *axis* = null (nullable axis) - Axis to split, e.g. `x`
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *length* = 1 (number) - Tuple length
  * *order* = "wxyz" (transpose) - Axis order
  * *overlap* = 1 (number) - Tuple overlap
  * *source* = "<" (select) - Input source
 
-#### `operator/spread`
+####  <a name="operator/spread"></a>`operator/spread`
 
-*Spread rows*
+*Spread data values according to array indices*
+
  * *alignDepth* = 0 (anchor) - Depth alignment
  * *alignHeight* = 0 (anchor) - Height alignment
  * *alignItems* = 0 (anchor) - Items alignment
  * *alignWidth* = 0 (anchor) - Width alignment
- * *classes* = [] (string array) - Node classes
- * *depth* = null (nullable vec4) - Depth offset
- * *height* = null (nullable vec4) - Height offset
- * *id* = null (nullable string) - Unique ID
- * *items* = null (nullable vec4) - Items offset
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *depth* = null (nullable vec4) - Depth offset, e.g. `[1.5, 0, 0, 0]`
+ * *height* = null (nullable vec4) - Height offset, e.g. `[1.5, 0, 0, 0]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *items* = null (nullable vec4) - Items offset, e.g. `[1.5, 0, 0, 0]`
  * *source* = "<" (select) - Input source
  * *unit* = "relative" (mapping) - Spread per item (absolute) or array (relative)
- * *width* = null (nullable vec4) - Width offset
+ * *width* = null (nullable vec4) - Width offset, e.g. `[1.5, 0, 0, 0]`
 
-#### `present/step`
+####  <a name="present/step"></a>`present/step`
 
-*Step through animation*
- * *classes* = [] (string array) - Node classes
+*Step through a sequenced animation*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *delay* = 0 (number) - Step delay
  * *duration* = 0.3 (number) - Step duration
  * *ease* = "cosine" (ease) - Animation ease
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *pace* = 0 (number) - Step pace
  * *playback* = "linear" (ease) - Playhead ease
  * *realtime* = false (bool) - Run on real time, not clock time
  * *rewind* = 2 (number) - Step rewind factor
- * *script* = [object Object] (object) - Animation script
+ * *script* = {} (object) - Animation script, e.g. `{ "0": { props: { color: "red" }, expr: { size: function (t) { return Math.sin(t) + 1; }}}, "1": ...}`
  * *skip* = true (bool) - Speed up through skips
  * *speed* = 1 (number) - Step speed
- * *stops* = null (nullable number array) - Playhead stops
+ * *stops* = null (nullable number array) - Playhead stops, e.g. `[0, 1, 3, 5]`
  * *target* = "<" (select) - Animation target
  * *trigger* = 1 (nullable number) - Trigger on step
 
-#### `view/stereographic`
+####  <a name="view/stereographic"></a>`view/stereographic`
 
-*Stereographic*
+*Apply stereographic projection*
+
  * *bend* = 1 (number) - Amount of stereographic bend
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = xyz (swizzle) - Euler order
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = [0, 0, 0] (vec3) - 3D Position
  * *quaternion* = [0, 0, 0, 1] (quat) - 3D Quaternion
  * *range* = [[-1, 1], [-1, 1], [-1, 1], [-1, 1]] (array vec2) - 4D range in view
@@ -742,100 +932,105 @@
  * *scale* = 1,1,1 (vec3) - 3D Scale
  * *visible* = true (bool) - Visibility for rendering
 
-#### `view/stereographic4`
+####  <a name="view/stereographic4"></a>`view/stereographic4`
 
-*4D stereographic*
+*Apply 4D stereographic projection*
+
  * *bend* = 1 (number) - Amount of stereographic bend
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = [0, 0, 0, 0] (vec4) - 4D Position
  * *range* = [[-1, 1], [-1, 1], [-1, 1], [-1, 1]] (array vec2) - 4D range in view
  * *scale* = [1, 1, 1, 1] (vec4) - 4D Scale
  * *visible* = true (bool) - Visibility for rendering
 
-#### `draw/strip`
+####  <a name="draw/strip"></a>`draw/strip`
 
-*Triangle strip*
+*Draw triangle strips*
+
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *closed* = false (bool) - Close line
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *colors* = null (nullable select) - Colors data source
+ * *colors* = null (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = 1 (number) - Depth scaling
  * *fill* = true (bool) - Fill mesh
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *line* = false (bool) - Draw line
- * *map* = null (nullable select) - Texture map
+ * *map* = null (nullable select) - Texture map, e.g. `"#map"`
  * *opacity* = 1 (positive number) - Opacity
  * *points* = < (select) - Points data source
- * *proximity* = null (nullable number) - Proximity threshold
+ * *proximity* = null (nullable number) - Proximity threshold, e.g. `10`
  * *shaded* = false (bool) - Shade mesh
  * *size* = 2 (positive number) - Line width
- * *stroke* = solid (stroke) - Line stroke (solid, dotted, dashed)
+ * *stroke* = "solid" (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `draw/surface`
+####  <a name="draw/surface"></a>`draw/surface`
 
-*Surface*
+*Draw surfaces*
+
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *closed* = false (bool) - Close line
  * *closedX* = false (bool) - Close X lines
  * *closedY* = true (bool) - Close Y lines
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *colors* = null (nullable select) - Colors data source
- * *crossed* = true (bool) - UVWO map on matching axis
+ * *colors* = null (nullable select) - Colors data source, e.g. `"#colors"`
+ * *crossed* = true (bool) - UVWO map on matching axes
  * *depth* = 1 (number) - Depth scaling
  * *fill* = true (bool) - Fill mesh
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *lineX* = true (bool) - Draw X lines
  * *lineY* = true (bool) - Draw Y lines
- * *map* = null (nullable select) - Texture map
+ * *map* = null (nullable select) - Texture map, e.g. `"#map"`
  * *opacity* = 1 (positive number) - Opacity
  * *points* = < (select) - Points data source
- * *proximity* = null (nullable number) - Proximity threshold
+ * *proximity* = null (nullable number) - Proximity threshold, e.g. `10`
  * *shaded* = false (bool) - Shade mesh
  * *size* = 2 (positive number) - Line width
- * *stroke* = solid (stroke) - Line stroke (solid, dotted, dashed)
+ * *stroke* = "solid" (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `operator/swizzle`
+####  <a name="operator/swizzle"></a>`operator/swizzle`
 
-*Swizzle data*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
+*Swizzle data values*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *order* = xyzw (swizzle) - Swizzle order
  * *source* = "<" (select) - Input source
 
-#### `text/text`
+####  <a name="text/text"></a>`text/text`
 
-*Text source*
+*GL text source*
+
  * *bufferDepth* = 1 (number) - Voxel buffer depth
  * *bufferHeight* = 1 (number) - Voxel buffer height
  * *bufferWidth* = 1 (number) - Voxel buffer width
  * *channels* = 4 (number) - Number of channels
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *data* = null (nullable object) - Data array
  * *depth* = 1 (nullable number) - Voxel depth
  * *detail* = 24 (number) - Font detail
  * *expand* = 5 (number) - SDF expansion
  * *expr* = null (nullable emitter) - Data emitter expression
  * *font* = sans-serif (font) - Font family
- * *fps* = null (nullable number) - Frames-per-second update rate
+ * *fps* = null (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = 1 (nullable number) - Voxel height
  * *hurry* = 5 (number) - Maximum frames to hurry per frame
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 4 (number) - Number of items
  * *limit* = 60 (number) - Maximum frames to track
  * *live* = true (bool) - Update continuously
@@ -843,133 +1038,142 @@
  * *minFilter* = "nearest" (filter) - Texture minification filtering
  * *observe* = false (bool) - Pass clock time to data
  * *realtime* = false (bool) - Run on real time, not clock time
- * *style* =  (string) - Font style
+ * *style* =  (string) - Font style, e.g. `italic`
  * *type* = "float" (type) - Texture data type
- * *variant* =  (string) - Font variant
- * *weight* =  (string) - Font weight
+ * *variant* =  (string) - Font variant, e.g. `small-caps`
+ * *weight* =  (string) - Font weight, e.g. `bold`
  * *width* = 1 (nullable number) - Voxel width
 
-#### `draw/ticks`
+####  <a name="draw/ticks"></a>`draw/ticks`
 
-*Ticks*
+*Draw ticks*
+
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *closed* = false (bool) - Close line
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *colors* = null (nullable select) - Colors data source
+ * *colors* = null (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = 1 (number) - Depth scaling
  * *epsilon* = 0.0001 (number) - Tick epsilon
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *normal* = true (bool) - Normal for reference plane
  * *opacity* = 1 (positive number) - Opacity
  * *points* = < (select) - Points data source
- * *proximity* = null (nullable number) - Proximity threshold
+ * *proximity* = null (nullable number) - Proximity threshold, e.g. `10`
  * *size* = 10 (number) - Tick size
- * *stroke* = solid (stroke) - Line stroke (solid, dotted, dashed)
+ * *stroke* = "solid" (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `transform/transform`
+####  <a name="transform/transform"></a>`transform/transform`
 
-*3D transform*
- * *classes* = [] (string array) - Node classes
+*Transform geometry in 3D*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = xyz (swizzle) - 3D Euler order
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *matrix* = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] (mat4) - 3D Projective Matrix
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = [0, 0, 0] (vec3) - 3D Position
  * *quaternion* = [0, 0, 0, 1] (quat) - 3D Quaternion
  * *rotation* = [0, 0, 0] (vec3) - 3D Euler rotation
  * *scale* = 1,1,1 (vec3) - 3D Scale
 
-#### `transform/transform4`
+####  <a name="transform/transform4"></a>`transform/transform4`
 
-*4D transform*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
+*Transform geometry in 4D*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *matrix* = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] (mat4) - 4D Affine Matrix
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = [0, 0, 0, 0] (vec4) - 4D Position
  * *scale* = [1, 1, 1, 1] (vec4) - 4D Scale
 
-#### `operator/transpose`
+####  <a name="operator/transpose"></a>`operator/transpose`
 
-*Transpose*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
+*Transpose array dimensions*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *order* = xyzw (transpose) - Transpose order
  * *source* = "<" (select) - Input source
 
-#### `base/unit`
+####  <a name="base/unit"></a>`base/unit`
 
-*Unit calibration*
- * *classes* = [] (string array) - Node classes
+*Change unit sizing for drawing ops*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *focus* = 1 (nullable number) - Camera focus distance in world units
- * *fov* = null (nullable number) - (Vertical) Field-of-view to calibrate units for (degrees)
- * *id* = null (nullable string) - Unique ID
- * *scale* = null (nullable number) - (Vertical) Reference scale of viewport in pixels
+ * *fov* = null (nullable number) - (Vertical) Field-of-view to calibrate units for (degrees), e.g. `60`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *scale* = null (nullable number) - (Vertical) Reference scale of viewport in pixels, e.g. `720`
 
-#### `draw/vector`
+####  <a name="draw/vector"></a>`draw/vector`
 
-*Vector*
+*Draw vectors*
+
  * *blending* = "normal" (blending) - Blending mode ('no, normal, add, subtract, multiply)
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *closed* = false (bool) - Close line
  * *color* = "rgb(128, 128, 128)" (color) - Color
- * *colors* = null (nullable select) - Colors data source
+ * *colors* = null (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = 1 (number) - Depth scaling
  * *end* = true (bool) - Draw end arrow
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *opacity* = 1 (positive number) - Opacity
  * *points* = < (select) - Points data source
- * *proximity* = null (nullable number) - Proximity threshold
+ * *proximity* = null (nullable number) - Proximity threshold, e.g. `10`
  * *size* = 3 (number) - Arrow size
  * *start* = true (bool) - Draw start arrow
- * *stroke* = solid (stroke) - Line stroke (solid, dotted, dashed)
+ * *stroke* = "solid" (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = true (bool) - Visibility for rendering
  * *zBias* = 0 (positive number) - Z-Bias (3D stacking)
  * *zIndex* = 0 (positive int) - Z-Index (2D stacking)
- * *zOrder* = null (nullable number) - Z-Order (drawing order)
+ * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
 
-#### `transform/vertex`
+####  <a name="transform/vertex"></a>`transform/vertex`
 
-*Vertex pass*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+*Apply custom vertex shader pass*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *shader* = "<" (select) - Shader to use
 
-#### `view/view`
+####  <a name="view/view"></a>`view/view`
 
-*View*
- * *classes* = [] (string array) - Node classes
- * *id* = null (nullable string) - Unique ID
- * *pass* = view (vertexPass) - Vertex pass (data, view, world, eye)
+*Adjust view range*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *pass* = "view" (vertexPass) - Vertex pass (data, view, world, eye)
  * *range* = [[-1, 1], [-1, 1], [-1, 1], [-1, 1]] (array vec2) - 4D range in view
  * *visible* = true (bool) - Visibility for rendering
 
-#### `data/volume`
+####  <a name="data/volume"></a>`data/volume`
 
-*3D volume*
+*3D sampled voxels*
+
  * *axes* = [1, 2, 3] (swizzle(3) axis) - Axis triplet
  * *bufferDepth* = 1 (number) - Voxel buffer depth
  * *bufferHeight* = 1 (number) - Voxel buffer height
  * *bufferWidth* = 1 (number) - Voxel buffer width
  * *channels* = 4 (number) - Number of channels
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *data* = null (nullable object) - Data array
  * *depth* = 1 (nullable number) - Voxel depth
- * *expr* = null (nullable emitter) - Data emitter expression
- * *fps* = null (nullable number) - Frames-per-second update rate
+ * *expr* = null (nullable emitter) - Data emitter expression, e.g. `function (emit, x, y, z, i, j, k, time, delta) { ... }`
+ * *fps* = null (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = 1 (nullable number) - Voxel height
  * *hurry* = 5 (number) - Maximum frames to hurry per frame
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 4 (number) - Number of items
  * *limit* = 60 (number) - Maximum frames to track
  * *live* = true (bool) - Update continuously
@@ -980,21 +1184,22 @@
  * *type* = "float" (type) - Texture data type
  * *width* = 1 (nullable number) - Voxel width
 
-#### `data/voxel`
+####  <a name="data/voxel"></a>`data/voxel`
 
-*3D voxel*
+*3D voxels*
+
  * *bufferDepth* = 1 (number) - Voxel buffer depth
  * *bufferHeight* = 1 (number) - Voxel buffer height
  * *bufferWidth* = 1 (number) - Voxel buffer width
  * *channels* = 4 (number) - Number of channels
- * *classes* = [] (string array) - Node classes
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *data* = null (nullable object) - Data array
  * *depth* = 1 (nullable number) - Voxel depth
- * *expr* = null (nullable emitter) - Data emitter expression
- * *fps* = null (nullable number) - Frames-per-second update rate
+ * *expr* = null (nullable emitter) - Data emitter expression, e.g. `function (emit, i, j, k, time, delta) { ... }`
+ * *fps* = null (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = 1 (nullable number) - Voxel height
  * *hurry* = 5 (number) - Maximum frames to hurry per frame
- * *id* = null (nullable string) - Unique ID
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
  * *items* = 4 (number) - Number of items
  * *limit* = 60 (number) - Maximum frames to track
  * *live* = true (bool) - Update continuously

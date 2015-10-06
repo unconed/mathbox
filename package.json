@@ -1,6 +1,6 @@
 {
   "name": "mathbox",
-  "version": "0.0.2",
+  "version": "0.0.3-dev",
   "description": "Presentation-quality WebGL math graphing",
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
     "gulp-karma": "0.0.2",
     "gulp-rename": "^0.2.2",
     "gulp-uglify": "^0.1.0",
+    "gulp-util": "^3.0.6",
     "gulp-watch": "^0.5.4",
     "karma": "^0.10.10",
     "karma-browserify": "^0.1.0",

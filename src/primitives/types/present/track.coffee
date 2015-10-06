@@ -130,7 +130,7 @@ class Track extends Primitive
       ] for k of props
     catch
       console.warn @node.toMarkup()
-      message = "#{@node} - Target #{object} has no `#{k}` property"
+      message = "#{@node.toString()} - Target #{object} has no `#{k}` property"
       throw new Error message
 
     result = []
@@ -143,7 +143,7 @@ class Track extends Primitive
 
         if step.expr[k]? && typeof step.expr[k] != 'function'
           console.warn @node.toMarkup()
-          message = "#{@node} - Expression `#{step.expr[k]}` on property `#{k}` is not a function"
+          message = "#{@node.toString()} - Expression `#{step.expr[k]}` on property `#{k}` is not a function"
           throw new Error message
       result.push step
 
@@ -202,7 +202,7 @@ class Track extends Primitive
 
         invalid = () ->
           console.warn node.toMarkup()
-          throw new Error "#{@node} - Invalid expression result on track `#{key}`"
+          throw new Error "#{@node.toString()} - Invalid expression result on track `#{key}`"
 
         attr = node.attribute(key)
         values = @values[key]

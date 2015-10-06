@@ -441,7 +441,7 @@ Types =
         target.copy value
       else if value instanceof Array
         value = value.concat defaults.slice value.length
-        target.set.apply target, value
+        target.setRGB.apply target, value
       else if value?
         rr = value.r ? r
         gg = value.g ? g

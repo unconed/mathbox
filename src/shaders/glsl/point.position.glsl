@@ -1,4 +1,3 @@
-uniform float pointSize;
 uniform float pointDepth;
 
 uniform float pixelUnit;
@@ -16,6 +15,7 @@ varying float vPixelSize;
 const float pointScale = POINT_SHAPE_SCALE;
 
 // External
+float getPointSize(vec4 xyzw);
 vec3 getPosition(vec4 xyzw, float canonical);
 
 vec3 getPointPosition() {
@@ -30,6 +30,7 @@ vec3 getPointPosition() {
   
   // Match device/unit mapping 
   // Sprite goes from -1..1, width = 2.
+  float pointSize = getPointSize(p);
   float size = pointScale * pointSize * pixelUnit * .5;
   float depthSize = depth * size;
   

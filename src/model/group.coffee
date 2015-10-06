@@ -28,7 +28,7 @@ class Group extends Node
     return
 
   empty: () ->
-    children = @children.slice()
+    children = @children.slice().reverse()
     @remove node for node in children
     return
 

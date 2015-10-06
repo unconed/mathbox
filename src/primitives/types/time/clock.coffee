@@ -33,12 +33,12 @@ class Clock extends Parent
 
     @time.now   = parent.now + @skew
 
-    @time.time  = parent.time + @skew
+    @time.time  = parent.time
     @time.delta = parent.delta
 
     clock = if seek? then seek else parent.clock + @skew
     @time.clock = Math.min to, from + Math.max 0, clock - delay * ratio
-    @time.step  = delta
+    @time.step  = delta * ratio
 
     @last = time
 

@@ -36,7 +36,7 @@ formatPrimes     = [ # denominators 1-30 + interesting multiples
   [2*2*2*3*3*5*5*7*7, [2,3,5,7]]           # 8-11
   [2*2*3*5*7*11*13, [2,3,5,7,11,13]]       # 12-16
   [2*2*17*19*23*29, [2,17,19,23,29]]       # 17-30
-  [256*256,         [2,3]]                 # Powers of 2
+  [256*256,         [2]]                   # Powers of 2
   [1000000,         [2,5]]                 # Powers of 10
 ]
 
@@ -57,7 +57,7 @@ prettyNumber = (options) ->
   numberCache = if cache then {} else null
 
   (v) ->
-    if numberCache
+    if numberCache?
       return cached if (cached = numberCache[v])?
       return numberCache[v] = "#{v}" if v == Math.round v
 
