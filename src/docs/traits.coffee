@@ -181,13 +181,13 @@ Traits =
     data:              ["Array of labels", 'nullable array', null, '["Grumpy", "Sleepy", "Sneezy"]']
     expr:              ["Label formatter expression", 'nullable function', null]
     live:              ["Update continuously", "bool", true]
-  text:
+  font:
     font:              ["Font family", "font", '"sans-serif"']
     style:             ["Font style", "string", '""', '"italic"']
     variant:           ["Font variant", "string", '""', '"small-caps"']
     weight:            ["Font weight", "string", '""', '"bold"']
     detail:            ["Font detail", "number", "24"]
-    expand:            ["SDF expansion", "number", "5"]
+    sdf:               ["Signed distance field range", "number", "5"]
   label:
     text:              ["Text source", "select", '"<"']
     size:              ["Text size", "number", "16"]

@@ -19,6 +19,7 @@
     "gulp-concat": "^2.1.7",
     "gulp-karma": "0.0.2",
     "gulp-rename": "^0.2.2",
+    "gulp-shell": "^0.4.3",
     "gulp-uglify": "^0.1.0",
     "gulp-util": "^3.0.6",
     "gulp-watch": "^0.5.4",

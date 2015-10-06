@@ -16,7 +16,7 @@ class Text extends Voxel
   textShader: (shader) ->
     @atlas.shader shader
 
-  textIsSDF:  () -> @props.expand > 0
+  textIsSDF:  () -> @props.sdf > 0
   textHeight: () -> @props.detail
 
   make: () ->
@@ -24,7 +24,7 @@ class Text extends Voxel
     {minFilter, magFilter, type} = @props
 
     # Read font parameters
-    {font, style, variant, weight, detail, expand} = @props
+    {font, style, variant, weight, detail, sdf} = @props
 
     # Prepare text atlas
     @atlas = @_renderables.make 'textAtlas',
@@ -33,7 +33,7 @@ class Text extends Voxel
                style:     style
                variant:   variant
                weight:    weight
-               outline:   expand
+               outline:   sdf
                minFilter: minFilter
                magFilter: magFilter
                type:      type

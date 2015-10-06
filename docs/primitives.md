@@ -344,13 +344,13 @@
  * *data* = `null` (nullable array) - Array of labels, e.g. `["Grumpy", "Sleepy", "Sneezy"]`
  * *detail* = `24` (number) - Font detail
  * *digits* = `null` (nullable positive number) - Digits of precision, e.g. `2`
- * *expand* = `5` (number) - SDF expansion
  * *expr* = `null` (nullable function) - Label formatter expression, e.g. `function (x, y, z, w, i, j, k, l, time, delta) { ... }`
  * *font* = `"sans-serif"` (font) - Font family
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *live* = `true` (bool) - Update continuously
  * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
  * *minFilter* = `"nearest"` (filter) - Texture minification filtering
+ * *sdf* = `5` (number) - Signed distance field range
  * *source* = `"<"` (select) - Input source
  * *style* = `""` (string) - Font style, e.g. `"italic"`
  * *type* = `"float"` (type) - Texture data type
@@ -736,9 +736,6 @@
  * *channels* = `4` (number) - Resample channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Resample factor depth, e.g. `10`
- * *detail* = `24` (number) - Font detail
- * *expand* = `5` (number) - SDF expansion
- * *font* = `"sans-serif"` (font) - Font family
  * *height* = `null` (nullable number) - Resample factor height, e.g. `10`
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *indices* = `4` (number) - Resample indices
@@ -747,9 +744,6 @@
  * *shader* = `"<"` (select) - Shader to use
  * *size* = `"absolute"` (mapping) - Scaling mode (relative, absolute)
  * *source* = `"<"` (select) - Input source
- * *style* = `""` (string) - Font style, e.g. `"italic"`
- * *variant* = `""` (string) - Font variant, e.g. `"small-caps"`
- * *weight* = `""` (string) - Font weight, e.g. `"bold"`
  * *width* = `null` (nullable number) - Resample factor width, e.g. `10`
 
 ####  <a name="present/reveal"></a>`present/reveal`
@@ -1025,7 +1019,6 @@
  * *data* = `null` (nullable object) - Data array
  * *depth* = `1` (nullable number) - Voxel depth
  * *detail* = `24` (number) - Font detail
- * *expand* = `5` (number) - SDF expansion
  * *expr* = `null` (nullable emitter) - Data emitter expression
  * *font* = `"sans-serif"` (font) - Font family
  * *fps* = `null` (nullable number) - Frames-per-second update rate, e.g. `60`
@@ -1039,6 +1032,7 @@
  * *minFilter* = `"nearest"` (filter) - Texture minification filtering
  * *observe* = `false` (bool) - Pass clock time to data
  * *realtime* = `false` (bool) - Run on real time, not clock time
+ * *sdf* = `5` (number) - Signed distance field range
  * *style* = `""` (string) - Font style, e.g. `"italic"`
  * *type* = `"float"` (type) - Texture data type
  * *variant* = `""` (string) - Font variant, e.g. `"small-caps"`
