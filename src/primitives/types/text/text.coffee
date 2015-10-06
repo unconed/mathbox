@@ -2,7 +2,7 @@ Voxel = require '../data/voxel'
 Util = require '../../../util'
 
 class Text extends Voxel
-  @traits = ['node', 'buffer', 'active', 'data', 'texture', 'voxel', 'text']
+  @traits = ['node', 'buffer', 'active', 'data', 'texture', 'voxel', 'text', 'font']
   @defaults =
     minFilter: 'linear'
     magFilter: 'linear'
@@ -62,7 +62,7 @@ class Text extends Voxel
     @atlas.end()
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['text']
+    return @rebuild() if touched['font']
     super changed, touched, init
 
 module.exports = Text

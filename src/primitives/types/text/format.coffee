@@ -2,7 +2,7 @@ Operator = require '../operator/operator'
 Util = require '../../../util'
 
 class Format extends Operator
-  @traits = ['node', 'bind', 'operator', 'texture', 'text', 'format']
+  @traits = ['node', 'bind', 'operator', 'texture', 'text', 'format', 'font']
   @defaults =
     minFilter: 'linear'
     magFilter: 'linear'
@@ -110,7 +110,7 @@ class Format extends Operator
         type: 'source.resize'
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['text']
+    return @rebuild() if touched['font']
 
     if changed['format.expr']   or
        changed['format.digits'] or

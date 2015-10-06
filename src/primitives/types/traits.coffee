@@ -197,13 +197,13 @@ Traits =
     data:              Types.nullable(Types.object())
     expr:              Types.nullable(Types.func())
     live:              Types.bool(true)
-  text:
+  font:
     font:              Types.font('sans-serif')
     style:             Types.string()
     variant:           Types.string()
     weight:            Types.string()
     detail:            Types.number(24)
-    expand:            Types.number(5)
+    sdf:               Types.number(5)
   label:
     text:              Types.select()
     size:              Types.number(16)
