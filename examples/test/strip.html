@@ -33,16 +33,6 @@
       scale: [1, 1, 1],
     });
 
-    view.axis({
-      axis: 1,
-      end: true,
-      width: 3,
-      depth: 1,
-      color: 0xffffff,
-      opacity: .5,
-      zBias: -1,
-    });
-
     view.array({
       length: 100,
       data: data,
@@ -54,7 +44,7 @@
     });
     view.spread({
       unit: 'absolute',
-      height: [.75/100, 0, 0],
+      height: [1.5/100, 0, 0],
     });
     view.join({
       order: 'wy',

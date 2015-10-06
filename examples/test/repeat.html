@@ -53,7 +53,7 @@
       surface.set('quaternion', [s*cc, 0, s*ss, c]);
     });
 
-    view = mathbox.polar({
+    view = mathbox.set({ scale: 360 }).polar({
       bend: 1/128,
       range: [[-π, π], [-1, 1], [-1, 1]],
       scale: [2, 2, 2],
@@ -98,6 +98,8 @@
     .surface({
       color: 0x3090FF,
       shaded: true,
+      lineX: true,
+      lineY: true,
     })
     .transpose({
       source: '#spread',
@@ -106,6 +108,8 @@
     .surface({
       color: 0x3090FF,
       shaded: true,
+      lineX: true,
+      lineY: true,
     });
 
     surface = mathbox.select('transform.surface');

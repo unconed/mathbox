@@ -28,6 +28,17 @@
       range: [[-2.4, 2.4], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
     });
+    view.play({
+      pace: 5,
+      to: 3,
+      loop: true,
+      script: [
+        {props: {range: [[-2.4, 2.4], [-1, 1], [-1, 1]]}},
+        {props: {range: [[-5.8, 5.8], [-1, 1], [-1, 1]]}},
+        {props: {range: [[-2.8, 8.8], [-1, 1], [-1, 1]]}},
+        {props: {range: [[-2.4, 2.4], [-1, 1], [-1, 1]]}},
+      ]
+    })
     view.axis({
       detail: 20,
       end: true,

@@ -19,7 +19,7 @@
 
     three.camera.position.set(.3, 0, 3);
     three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
-
+  
     var rtt = mathbox.rtt({
       type: 'unsignedByte',
     });
@@ -41,7 +41,13 @@
     rtt.cartesian({
       range: [[-1, 1], [-1, 1]]
     })
-    .grid()
+    .grid({
+      width: 3,
+    })
+    .grid({
+      width: 6,
+      opacity: .05,
+    })
     .interval({
       id: 'sampler',
       length: 64,
