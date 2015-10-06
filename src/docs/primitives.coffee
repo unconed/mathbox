@@ -19,9 +19,10 @@ Classes =
 
   transform:         ['transform','Transform geometry in 3D']
   transform4:        ['transform','Transform geometry in 4D']
-  vertex:            ['transform','Apply vertex shader pass']
-  fragment:          ['transform','Apply fragment shader pass']
+  vertex:            ['transform','Apply custom vertex shader pass']
+  fragment:          ['transform','Apply custom fragment shader pass']
   layer:             ['transform','Independent 2D layer/overlay']
+  mask:              ['transform','Apply custom mask pass']
 
   array:             ['data','1D array', {expr: "function (emit, i, time, delta) { ... }"}]
   interval:          ['data','1D sampled array', {expr: "function (emit, x, i, time, delta) { ... }"}]

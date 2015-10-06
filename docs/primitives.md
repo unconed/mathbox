@@ -111,9 +111,10 @@
 
  * [transform](#transform/transform) - Transform geometry in 3D
  * [transform4](#transform/transform4) - Transform geometry in 4D
- * [vertex](#transform/vertex) - Apply vertex shader pass
- * [fragment](#transform/fragment) - Apply fragment shader pass
+ * [vertex](#transform/vertex) - Apply custom vertex shader pass
+ * [fragment](#transform/fragment) - Apply custom fragment shader pass
  * [layer](#transform/layer) - Independent 2D layer/overlay
+ * [mask](#transform/mask) - Apply custom mask pass
 
 
 #### view
@@ -358,7 +359,7 @@
 
 ####  <a name="transform/fragment"></a>`transform/fragment`
 
-*Apply fragment shader pass*
+*Apply custom fragment shader pass*
 
  * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *id* = null (nullable string) - Unique ID, e.g. `sampler`
@@ -555,6 +556,14 @@
  * *zOrder* = null (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = true (bool) - Test Z buffer
  * *zWrite* = true (bool) - Write Z buffer
+
+####  <a name="transform/mask"></a>`transform/mask`
+
+*Apply custom mask pass*
+
+ * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
+ * *id* = null (nullable string) - Unique ID, e.g. `sampler`
+ * *shader* = "<" (select) - Shader to use
 
 ####  <a name="data/matrix"></a>`data/matrix`
 
@@ -1131,7 +1140,7 @@
 
 ####  <a name="transform/vertex"></a>`transform/vertex`
 
-*Apply vertex shader pass*
+*Apply custom vertex shader pass*
 
  * *classes* = [] (string array) - Custom classes, e.g. `["big"]`
  * *id* = null (nullable string) - Unique ID, e.g. `sampler`
