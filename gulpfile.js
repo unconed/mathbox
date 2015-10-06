@@ -7,6 +7,7 @@ var karma      = require('gulp-karma');
 var sequence   = require('run-sequence');
 var browserify = require('gulp-browserify');
 var watch      = require('gulp-watch');
+var shell      = require('gulp-shell');
 var jsify      = require('./vendor/gulp-jsify');
 
 var builds = {
@@ -36,7 +37,8 @@ var css = [
 ];
 
 var core = [
-  '.tmp/index.js'
+  '.tmp/index.js', 
+  '.tmp/index.coffee.js', // something creates this on some platforms, accept either
 ];
 
 var glsls = [
@@ -136,6 +138,10 @@ gulp.task('build', function (callback) {
 gulp.task('default', function (callback) {
   sequence('build', 'uglify-js', callback);
 });
+
+gulp.task('docs', shell.task([
+  'coffee src/docs/generate.coffee > docs/primitives.md',
+]));
 
 gulp.task('test', function (callback) {
   sequence('build', 'karma', callback);
