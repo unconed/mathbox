@@ -1,6 +1,7 @@
 ### MathBox Changelog
 
 0.0.4-dev
+ * Removed unused font properties from <retext />.
 
 0.0.3
 
