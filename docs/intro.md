@@ -17,9 +17,9 @@ To show anything in MathBox, you need to establish four things:
 3) Geometrical data represented via...
 4) A choice of shape to draw it as.
 
-For example, a 2D cartesian coordinate system containing an array of data points, drawn as a continuous line. Let's do that.
+For example, a 2D rectangular view containing an array of points, drawn as a continuous line. Let's do that.
 
-
+![MathBox](http://acko.net/files/mathbox2/graph.png)
 
 *Note: Open `examples/empty.html` in your text editor and browser to follow along. You can also use the [JSBin](http://jsbin.com/hasuhaw/edit?html,output), but you'll want to turn off "Auto-run" in the top right.*
 
