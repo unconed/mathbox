@@ -240,7 +240,7 @@
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
  * *range* = `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]` (array vec2) - 4D range in view
  * *rotation* = `[0, 0, 0]` (vec3) - 3D Euler rotation
- * *scale* = `1,1,1` (vec3) - 3D Scale
+ * *scale* = `[1, 1, 1]` (vec3) - 3D Scale
  * *visible* = `true` (bool) - Visibility for rendering
 
 ####  <a name="view/cartesian4"></a>`view/cartesian4`
@@ -375,7 +375,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *closed* = `false` (bool) - Close line
  * *closedX* = `false` (bool) - Close X lines
- * *closedY* = `true` (bool) - Close Y lines
+ * *closedY* = `false` (bool) - Close Y lines
  * *color* = `"rgb(128, 128, 128)"` (color) - Color
  * *crossed* = `true` (bool) - UVWO map on matching axes
  * *depth* = `1` (number) - Depth scaling
@@ -687,7 +687,7 @@
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
  * *range* = `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]` (array vec2) - 4D range in view
  * *rotation* = `[0, 0, 0]` (vec3) - 3D Euler rotation
- * *scale* = `1,1,1` (vec3) - 3D Scale
+ * *scale* = `[1, 1, 1]` (vec3) - 3D Scale
  * *visible* = `true` (bool) - Visibility for rendering
 
 ####  <a name="present/present"></a>`present/present`
@@ -865,7 +865,7 @@
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
  * *range* = `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]` (array vec2) - 4D range in view
  * *rotation* = `[0, 0, 0]` (vec3) - 3D Euler rotation
- * *scale* = `1,1,1` (vec3) - 3D Scale
+ * *scale* = `[1, 1, 1]` (vec3) - 3D Scale
  * *visible* = `true` (bool) - Visibility for rendering
 
 ####  <a name="operator/split"></a>`operator/split`
@@ -930,7 +930,7 @@
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
  * *range* = `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]` (array vec2) - 4D range in view
  * *rotation* = `[0, 0, 0]` (vec3) - 3D Euler rotation
- * *scale* = `1,1,1` (vec3) - 3D Scale
+ * *scale* = `[1, 1, 1]` (vec3) - 3D Scale
  * *visible* = `true` (bool) - Visibility for rendering
 
 ####  <a name="view/stereographic4"></a>`view/stereographic4`
@@ -981,7 +981,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *closed* = `false` (bool) - Close line
  * *closedX* = `false` (bool) - Close X lines
- * *closedY* = `true` (bool) - Close Y lines
+ * *closedY* = `false` (bool) - Close Y lines
  * *color* = `"rgb(128, 128, 128)"` (color) - Color
  * *colors* = `null` (nullable select) - Colors data source, e.g. `"#colors"`
  * *crossed* = `true` (bool) - UVWO map on matching axes
@@ -1082,7 +1082,7 @@
  * *position* = `[0, 0, 0]` (vec3) - 3D Position
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
  * *rotation* = `[0, 0, 0]` (vec3) - 3D Euler rotation
- * *scale* = `1,1,1` (vec3) - 3D Scale
+ * *scale* = `[1, 1, 1]` (vec3) - 3D Scale
 
 ####  <a name="transform/transform4"></a>`transform/transform4`
 
