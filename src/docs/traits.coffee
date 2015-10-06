@@ -22,7 +22,7 @@ Traits =
     position:          ["3D Position", "vec3", "[0, 0, 0]"]
     quaternion:        ["3D Quaternion", "quat", "[0, 0, 0, 1]"]
     rotation:          ["3D Euler rotation", "vec3", "[0, 0, 0]"]
-    scale:             ["3D Scale", "vec3", [1, 1, 1]]
+    scale:             ["3D Scale", "vec3", "[1, 1, 1]"]
     eulerOrder:        ["Euler order", "swizzle", "xyz"]
   view4:
     position:          ["4D Position", "vec4", "[0, 0, 0, 0]"]
@@ -41,7 +41,7 @@ Traits =
     position:          ["3D Position", "vec3", "[0, 0, 0]"]
     quaternion:        ["3D Quaternion", "quat", "[0, 0, 0, 1]"]
     rotation:          ["3D Euler rotation", "vec3", "[0, 0, 0]"]
-    scale:             ["3D Scale", "vec3", [1, 1, 1]]
+    scale:             ["3D Scale", "vec3", "[1, 1, 1]"]
     eulerOrder:        ["3D Euler order", "swizzle", "xyz"]
     matrix:            ["3D Projective Matrix", "mat4", "[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]"]
   transform4:
@@ -90,7 +90,7 @@ Traits =
     lineY:             ["Draw Y lines", "bool", 'true']
     crossed:           ["UVWO map on matching axes", "bool", 'true']
     closedX:           ["Close X lines", "bool", 'false']
-    closedY:           ["Close Y lines", "bool", 'true']
+    closedY:           ["Close Y lines", "bool", 'false']
   axis:
     detail:            ["Geometric detail", "number", 1]
     crossed:           ["UVWO map on matching axis", "bool", 'true']
@@ -284,7 +284,7 @@ Traits =
     camera:            ["Active camera", "select", '"[camera]"']
   inherit:
     source:            ["Inherit from node", "select", '"<"']
-    traits:            ["Inherit traits", "string array", []]
+    traits:            ["Inherit traits", "string array", "[]"]
 
   rtt:
     width:             ["RTT width", 'nullable number', null, "640"]
