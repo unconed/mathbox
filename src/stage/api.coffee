@@ -61,7 +61,7 @@ class API
 
   remove: (selector) ->
     return @select(selector).remove() if selector
-    @_context.controller.remove target for target in @_targets
+    @_context.controller.remove target for target in @_targets.slice().reverse()
     @_pop()
 
   set: (key, value) ->
