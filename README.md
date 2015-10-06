@@ -33,8 +33,7 @@ Presentations:
 
 ## Download
 
-* Release: [0.0.2 ZIP](http://acko.net/files/mathbox2/mathbox-0.0.2.zip)
-* Development branch: [0.0.x ZIP](http://acko.net/files/mathbox2/mathbox-0.0.x-dev.zip)
+* Release: [0.0.3 ZIP](http://acko.net/files/mathbox2/mathbox-0.0.3.zip)
 
 or install via bower:
 
