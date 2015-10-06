@@ -46,9 +46,9 @@ Open the included `/examples` to see more demos.
 
 See:
 
- * [Quick Start](/unconed/mathbox/blob/master/docs/intro.md) for a hands on introduction.
- * [List of Primitives](/unconed/mathbox/blob/master/docs/primitives.md) for a full element reference.
- * [Context API](/unconed/mathbox/blob/master/docs/context.md) for advanced usage.
+ * [Quick Start](/docs/intro.md) for a hands on introduction.
+ * [List of Primitives](/docs/primitives.md) for a full element reference.
+ * [Context API](/docs/context.md) for advanced usage.
 
 Join us in the [MathBox Google Group](https://groups.google.com/forum/#!forum/mathbox) or #mathbox on Freenode.
 
