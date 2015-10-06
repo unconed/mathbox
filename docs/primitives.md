@@ -299,7 +299,7 @@
  * *html* = `"<"` (select) - HTML data source
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *offset* = `[0, -20]` (vec2) - 2D offset
- * *opacity* = `undefined` (1) - Opacity
+ * *opacity* = `1` (positive number) - Opacity
  * *outline* = `2` (number) - Outline size
  * *pointerEvents* = `false` (bool) - Allow pointer events
  * *points* = `"<"` (select) - Points data source
@@ -821,7 +821,7 @@
 *Custom shader snippet*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *code* = `` (string) - Shader code
+ * *code* = `""` (string) - Shader code
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *language* = `"glsl"` (string) - Shader language
  * *sources* = `null` (nullable select) - Sampler sources, e.g. `["#pressure", "#divergence"]`
