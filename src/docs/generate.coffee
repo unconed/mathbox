@@ -40,7 +40,7 @@ for type, def of defs
     ex = prop[3] ? examples?[key]
     ex = if ex then ", e.g. `#{ex}`" else ""
 
-    out += " * *#{key}* = #{prop[2]} (#{prop[1]}) - #{prop[0]}#{ex}\n"
+    out += " * *#{key}* = `#{prop[2]}` (#{prop[1]}) - #{prop[0]}#{ex}\n"
 
   docs[type] = out
 
