@@ -1,5 +1,7 @@
 ### MathBox Changelog
 
+0.0.4-dev
+
 0.0.3
 
  * New `docs/intro.md`, add nullable examples to `docs/primitives.md`.
