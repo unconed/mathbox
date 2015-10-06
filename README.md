@@ -10,8 +10,6 @@ MathBox is used through its JS-based DOM.
 
 For background, see the [article series on Acko.net](http://acko.net/blog/mathbox2/).
 
-**See `docs/` for TLDR and `examples/` for a start.**
-
 Demos:
 
  * [Audio Visualizer](http://acko.net/files/mathbox2/iframe-readyornot.html)
@@ -26,10 +24,9 @@ Demos:
 Presentations:
  * [The Pixel Factory](http://acko.net/files/gltalks/pixelfactory/online.html#0)
 
-*Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule init`.*
+*Note: this repo uses submodules, clone it with `--recursive` or do a `git submodule update --init` after cloning.*
 
 ***
-
 
 ## Download
 
@@ -41,8 +38,22 @@ or install via bower:
 bower install mathbox
 ```
 
+Open the included `/examples` to see more demos.
 
 ***
+
+## Docs & Help
+
+See:
+
+ * [Quick Start](/unconed/mathbox/blob/master/docs/intro.md) for a hands on introduction.
+ * [List of Primitives](/unconed/mathbox/blob/master/docs/primitives.md) for a full element reference.
+ * [Context API](/unconed/mathbox/blob/master/docs/context.md) for advanced usage.
+
+Join us in the [MathBox Google Group](https://groups.google.com/forum/#!forum/mathbox) or #mathbox on Freenode.
+
+***
+
 ## Usage
 
 Include the bundle:
@@ -94,18 +105,6 @@ mathbox
 ```
 
 Use `.print()`, `.inspect()` and `.debug()` to show information about a selection.
-
-***
-
-## Docs & Help
-
-See:
-
- * `docs/intro.md` for a tiny quickstart
- * `docs/primitives.md` for a full element reference
- * `docs/context.md` for advanced context usage.
-
-Visit the [MathBox Google Group](https://groups.google.com/forum/#!forum/mathbox) or #mathbox on Freenode.
 
 ***
 
