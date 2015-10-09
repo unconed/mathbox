@@ -7,6 +7,7 @@
  * Fix public `channels` on <text /> being 4 instead of 1.
  * Removed unused font properties from <retext />.
  * Fix final props being overwritable on initial set.
+ * Rename <text expand={n} /> to <text sdf={n} /> (signed distance field) to avoid confusion with <label expand={n} />
 
 0.0.3
 
