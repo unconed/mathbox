@@ -7337,7 +7337,7 @@ Data = (function() {
     constant = function(key, value, initial) {
       key = to(key);
       set(key, value, true, initial);
-      return finals[key] = true;
+      return _finals[key] = true;
     };
     expr = {};
     _bound = {};
@@ -7618,7 +7618,7 @@ Data = (function() {
     if (finals != null) {
       for (key in finals) {
         value = finals[key];
-        constant(key, value);
+        constant(key, value, true);
       }
     }
     if (oldOrig != null) {
@@ -9752,7 +9752,7 @@ Array_ = (function(_super) {
   };
 
   Array_.prototype.make = function() {
-    var channels, data, dims, history, items, length, magFilter, minFilter, reserve, space, type, _base, _ref, _ref1, _ref2;
+    var channels, data, dims, history, items, length, magFilter, minFilter, reserve, space, type, _ref, _ref1, _ref2;
     Array_.__super__.make.apply(this, arguments);
     minFilter = (_ref = this.minFilter) != null ? _ref : this.props.minFilter;
     magFilter = (_ref1 = this.magFilter) != null ? _ref1 : this.props.magFilter;
@@ -9774,9 +9774,6 @@ Array_ = (function(_super) {
     space = this.space;
     space.length = Math.max(reserve, dims.width || 1);
     space.history = history;
-    if ((_base = this.spec).width == null) {
-      _base.width = 1;
-    }
     return this.buffer = this._renderables.make(this.storage, {
       length: space.length,
       history: space.history,
@@ -9838,7 +9835,7 @@ Array_ = (function(_super) {
     filled = this.buffer.getFilled();
     this.syncBuffer((function(_this) {
       return function(abort) {
-        var dims, length, _base;
+        var dims, length, width, _base;
         if (data != null) {
           dims = Util.Data.getDimensions(data, _this.spec);
           if (dims.width > space.length) {
@@ -9852,7 +9849,8 @@ Array_ = (function(_super) {
           }
           return _this.buffer.update();
         } else {
-          _this.buffer.setActive(_this.spec.width);
+          width = _this.spec.width || 1;
+          _this.buffer.setActive(width);
           length = _this.buffer.update();
           return used.length = length;
         }
@@ -10220,7 +10218,7 @@ Matrix = (function(_super) {
   };
 
   Matrix.prototype.make = function() {
-    var channels, data, dims, height, history, items, magFilter, minFilter, reserveX, reserveY, space, type, width, _base, _base1, _ref, _ref1, _ref2;
+    var channels, data, dims, height, history, items, magFilter, minFilter, reserveX, reserveY, space, type, width, _ref, _ref1, _ref2;
     Matrix.__super__.make.apply(this, arguments);
     minFilter = (_ref = this.minFilter) != null ? _ref : this.props.minFilter;
     magFilter = (_ref1 = this.magFilter) != null ? _ref1 : this.props.magFilter;
@@ -10246,12 +10244,6 @@ Matrix = (function(_super) {
     space.width = Math.max(reserveX, dims.width || 1);
     space.height = Math.max(reserveY, dims.height || 1);
     space.history = history;
-    if ((_base = this.spec).width == null) {
-      _base.width = 1;
-    }
-    if ((_base1 = this.spec).height == null) {
-      _base1.height = 1;
-    }
     return this.buffer = this._renderables.make(this.storage, {
       width: space.width,
       height: space.height,
@@ -10321,7 +10313,7 @@ Matrix = (function(_super) {
     filled = this.buffer.getFilled();
     this.syncBuffer((function(_this) {
       return function(abort) {
-        var dims, length, _base, _w;
+        var dims, height, length, width, _base, _w;
         if (data != null) {
           dims = Util.Data.getDimensions(data, _this.spec);
           if (dims.width > space.width || dims.height > space.height) {
@@ -10336,9 +10328,11 @@ Matrix = (function(_super) {
           }
           return _this.buffer.update();
         } else {
-          _this.buffer.setActive(_this.spec.width, _this.spec.height);
+          width = _this.spec.width || 1;
+          height = _this.spec.height || 1;
+          _this.buffer.setActive(width, height);
           length = _this.buffer.update();
-          used.width = _w = _this.spec.width;
+          used.width = _w = width;
           used.height = Math.ceil(length / _w);
           if (used.height === 1) {
             return used.width = length;
@@ -10653,7 +10647,7 @@ Voxel = (function(_super) {
   };
 
   Voxel.prototype.make = function() {
-    var channels, data, depth, dims, height, items, magFilter, minFilter, reserveX, reserveY, reserveZ, space, type, width, _base, _base1, _base2, _ref, _ref1, _ref2;
+    var channels, data, depth, dims, height, items, magFilter, minFilter, reserveX, reserveY, reserveZ, space, type, width, _ref, _ref1, _ref2;
     Voxel.__super__.make.apply(this, arguments);
     minFilter = (_ref = this.minFilter) != null ? _ref : this.props.minFilter;
     magFilter = (_ref1 = this.magFilter) != null ? _ref1 : this.props.magFilter;
@@ -10681,15 +10675,6 @@ Voxel = (function(_super) {
     space.width = Math.max(reserveX, dims.width || 1);
     space.height = Math.max(reserveY, dims.height || 1);
     space.depth = Math.max(reserveZ, dims.depth || 1);
-    if ((_base = this.spec).width == null) {
-      _base.width = 1;
-    }
-    if ((_base1 = this.spec).height == null) {
-      _base1.height = 1;
-    }
-    if ((_base2 = this.spec).depth == null) {
-      _base2.depth = 1;
-    }
     return this.buffer = this._renderables.make(this.storage, {
       width: space.width,
       height: space.height,
@@ -10766,7 +10751,7 @@ Voxel = (function(_super) {
     filled = this.buffer.getFilled();
     this.syncBuffer((function(_this) {
       return function(abort) {
-        var dims, length, _base, _h, _w;
+        var depth, dims, height, length, width, _base, _h, _w;
         if (data != null) {
           dims = Util.Data.getDimensions(data, _this.spec);
           if (dims.width > space.width || dims.height > space.height || dims.depth > space.depth) {
@@ -10782,10 +10767,13 @@ Voxel = (function(_super) {
           }
           return _this.buffer.update();
         } else {
-          _this.buffer.setActive(_this.spec.width, _this.spec.height, _this.spec.depth);
+          width = _this.spec.width || 1;
+          height = _this.spec.height || 1;
+          depth = _this.spec.depeth || 1;
+          _this.buffer.setActive(width, height, depth);
           length = _this.buffer.update();
-          used.width = _w = _this.spec.width;
-          used.height = _h = _this.spec.height;
+          used.width = _w = width;
+          used.height = _h = height;
           used.depth = Math.ceil(length / _w / _h);
           if (used.depth === 1) {
             used.height = Math.ceil(length / _w);
@@ -16162,7 +16150,7 @@ Format = (function(_super) {
     return Format.__super__.constructor.apply(this, arguments);
   }
 
-  Format.traits = ['node', 'bind', 'operator', 'texture', 'text', 'format'];
+  Format.traits = ['node', 'bind', 'operator', 'texture', 'text', 'format', 'font'];
 
   Format.defaults = {
     minFilter: 'linear',
@@ -16184,7 +16172,7 @@ Format = (function(_super) {
   };
 
   Format.prototype.textIsSDF = function() {
-    return this.props.expand > 0;
+    return this.props.sdf > 0;
   };
 
   Format.prototype.textHeight = function() {
@@ -16192,7 +16180,7 @@ Format = (function(_super) {
   };
 
   Format.prototype.make = function() {
-    var atlas, depth, detail, dims, emit, expand, font, height, items, magFilter, minFilter, style, type, variant, weight, width, _ref, _ref1;
+    var atlas, depth, detail, dims, emit, font, height, items, magFilter, minFilter, sdf, style, type, variant, weight, width, _ref, _ref1;
     this._helpers.bind.make([
       {
         to: 'operator.source',
@@ -16200,14 +16188,14 @@ Format = (function(_super) {
       }
     ]);
     _ref = this.props, minFilter = _ref.minFilter, magFilter = _ref.magFilter, type = _ref.type;
-    _ref1 = this.props, font = _ref1.font, style = _ref1.style, variant = _ref1.variant, weight = _ref1.weight, detail = _ref1.detail, expand = _ref1.expand;
+    _ref1 = this.props, font = _ref1.font, style = _ref1.style, variant = _ref1.variant, weight = _ref1.weight, detail = _ref1.detail, sdf = _ref1.sdf;
     this.atlas = this._renderables.make('textAtlas', {
       font: font,
       size: detail,
       style: style,
       variant: variant,
       weight: weight,
-      outline: expand,
+      outline: sdf,
       minFilter: minFilter,
       magFilter: magFilter,
       type: type
@@ -16276,7 +16264,7 @@ Format = (function(_super) {
 
   Format.prototype.change = function(changed, touched, init) {
     var data, digits, expr, length, map, _ref;
-    if (touched['text']) {
+    if (touched['font']) {
       return this.rebuild();
     }
     if (changed['format.expr'] || changed['format.digits'] || changed['format.data'] || init) {
@@ -16495,7 +16483,7 @@ Retext = (function(_super) {
 
   Retext.prototype.textIsSDF = function() {
     var _ref;
-    return ((_ref = this.bind.source) != null ? _ref.props.expand : void 0) > 0;
+    return ((_ref = this.bind.source) != null ? _ref.props.sdf : void 0) > 0;
   };
 
   Retext.prototype.textHeight = function() {
@@ -16511,9 +16499,11 @@ module.exports = Retext;
 
 
 },{"../../../util":172,"../operator/resample":79}],101:[function(require,module,exports){
-var Text, Util, Voxel,
+var Buffer, Text, Util, Voxel,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+Buffer = require('../data/buffer');
 
 Voxel = require('../data/voxel');
 
@@ -16526,7 +16516,7 @@ Text = (function(_super) {
     return Text.__super__.constructor.apply(this, arguments);
   }
 
-  Text.traits = ['node', 'buffer', 'active', 'data', 'texture', 'voxel', 'text'];
+  Text.traits = ['node', 'buffer', 'active', 'data', 'texture', 'voxel', 'text', 'font'];
 
   Text.defaults = {
     minFilter: 'linear',
@@ -16534,7 +16524,7 @@ Text = (function(_super) {
   };
 
   Text.finals = {
-    channels: 4
+    channels: 1
   };
 
   Text.prototype.init = function() {
@@ -16547,7 +16537,7 @@ Text = (function(_super) {
   };
 
   Text.prototype.textIsSDF = function() {
-    return this.props.expand > 0;
+    return this.props.sdf > 0;
   };
 
   Text.prototype.textHeight = function() {
@@ -16555,16 +16545,16 @@ Text = (function(_super) {
   };
 
   Text.prototype.make = function() {
-    var atlas, detail, emit, expand, font, magFilter, minFilter, style, type, variant, weight, _ref, _ref1;
+    var atlas, channels, data, depth, detail, dims, emit, font, height, items, magFilter, minFilter, reserveX, reserveY, reserveZ, sdf, space, style, type, variant, weight, width, _ref, _ref1, _ref2, _ref3, _ref4;
     _ref = this.props, minFilter = _ref.minFilter, magFilter = _ref.magFilter, type = _ref.type;
-    _ref1 = this.props, font = _ref1.font, style = _ref1.style, variant = _ref1.variant, weight = _ref1.weight, detail = _ref1.detail, expand = _ref1.expand;
+    _ref1 = this.props, font = _ref1.font, style = _ref1.style, variant = _ref1.variant, weight = _ref1.weight, detail = _ref1.detail, sdf = _ref1.sdf;
     this.atlas = this._renderables.make('textAtlas', {
       font: font,
       size: detail,
       style: style,
       variant: variant,
       weight: weight,
-      outline: expand,
+      outline: sdf,
       minFilter: minFilter,
       magFilter: magFilter,
       type: type
@@ -16572,7 +16562,43 @@ Text = (function(_super) {
     this.minFilter = THREE.NearestFilter;
     this.magFilter = THREE.NearestFilter;
     this.type = THREE.FloatType;
-    Text.__super__.make.apply(this, arguments);
+    Buffer.prototype.make.call(this);
+    minFilter = (_ref2 = this.minFilter) != null ? _ref2 : this.props.minFilter;
+    magFilter = (_ref3 = this.magFilter) != null ? _ref3 : this.props.magFilter;
+    type = (_ref4 = this.type) != null ? _ref4 : this.props.type;
+    width = this.props.width;
+    height = this.props.height;
+    depth = this.props.depth;
+    reserveX = this.props.bufferWidth;
+    reserveY = this.props.bufferHeight;
+    reserveZ = this.props.bufferDepth;
+    channels = this.props.channels;
+    items = this.props.items;
+    dims = this.spec = {
+      channels: channels,
+      items: items,
+      width: width,
+      height: height,
+      depth: depth
+    };
+    this.items = dims.items;
+    this.channels = dims.channels;
+    data = this.props.data;
+    dims = Util.Data.getDimensions(data, dims);
+    space = this.space;
+    space.width = Math.max(reserveX, dims.width || 1);
+    space.height = Math.max(reserveY, dims.height || 1);
+    space.depth = Math.max(reserveZ, dims.depth || 1);
+    this.buffer = this._renderables.make(this.storage, {
+      width: space.width,
+      height: space.height,
+      depth: space.depth,
+      channels: 4,
+      items: items,
+      minFilter: minFilter,
+      magFilter: magFilter,
+      type: type
+    });
     atlas = this.atlas;
     emit = this.buffer.streamer.emit;
     return this.buffer.streamer.emit = function(text) {
@@ -16595,7 +16621,7 @@ Text = (function(_super) {
   };
 
   Text.prototype.change = function(changed, touched, init) {
-    if (touched['text']) {
+    if (touched['font']) {
       return this.rebuild();
     }
     return Text.__super__.change.call(this, changed, touched, init);
@@ -16608,7 +16634,7 @@ Text = (function(_super) {
 module.exports = Text;
 
 
-},{"../../../util":172,"../data/voxel":61}],102:[function(require,module,exports){
+},{"../../../util":172,"../data/buffer":55,"../data/voxel":61}],102:[function(require,module,exports){
 var Clock, Parent,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16963,13 +16989,13 @@ Traits = {
     expr: Types.nullable(Types.func()),
     live: Types.bool(true)
   },
-  text: {
+  font: {
     font: Types.font('sans-serif'),
     style: Types.string(),
     variant: Types.string(),
     weight: Types.string(),
     detail: Types.number(24),
-    expand: Types.number(5)
+    sdf: Types.number(5)
   },
   label: {
     text: Types.select(),

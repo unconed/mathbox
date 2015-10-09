@@ -143,7 +143,7 @@ class Data
       key = to(key)
 
       set key, value, true, initial
-      finals[key] = true
+      _finals[key] = true
 
     # Prop/expression binding
     expr     = {}
@@ -365,7 +365,7 @@ class Data
     # Set final props
     if finals?
       for key, value of finals
-        constant key, value
+        constant key, value, true
 
     # Set previous external values
     object.set  oldOrig,     false, true  if oldOrig?

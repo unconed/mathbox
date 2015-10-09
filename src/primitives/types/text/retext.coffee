@@ -12,7 +12,7 @@ class Retext extends Resample
   textShader: (shader) ->
     @bind.source.textShader shader
 
-  textIsSDF:  () -> @bind.source?.props.expand > 0
+  textIsSDF:  () -> @bind.source?.props.sdf > 0
   textHeight: () -> @bind.source?.props.detail
 
 module.exports = Retext

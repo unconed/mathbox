@@ -74,8 +74,6 @@ class Array_ extends Buffer
     space.length  = Math.max reserve, dims.width || 1
     space.history = history
 
-    @spec.width  ?= 1
-
     # Create array buffer
     @buffer = @_renderables.make @storage,
               length:    space.length
@@ -145,7 +143,9 @@ class Array_ extends Buffer
         @buffer.callback.rebind? data
         @buffer.update()
       else
-        @buffer.setActive @spec.width
+        width  = @spec.width  || 1
+
+        @buffer.setActive width
 
         length = @buffer.update()
         used.length = length

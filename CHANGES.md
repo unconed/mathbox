@@ -1,7 +1,12 @@
 ### MathBox Changelog
 
 0.0.4-dev
+
+ * Make <array />, <matrix />, <voxel /> and <text /> auto-detect `null` dimensions from `data` if given.
+ * Fix <text /> not parsing >1 string from an array.
+ * Fix public `channels` on <text /> being 4 instead of 1.
  * Removed unused font properties from <retext />.
+ * Fix final props being overwritable on initial set.
 
 0.0.3
 

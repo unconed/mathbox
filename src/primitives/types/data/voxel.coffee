@@ -71,10 +71,6 @@ class Voxel extends Buffer
     space.height = Math.max reserveY,  dims.height || 1
     space.depth  = Math.max reserveZ,  dims.depth  || 1
 
-    @spec.width  ?= 1
-    @spec.height ?= 1
-    @spec.depth  ?= 1
-
     # Create voxel buffer
     @buffer = @_renderables.make @storage,
               width:     space.width
@@ -160,12 +156,16 @@ class Voxel extends Buffer
         @buffer.callback.rebind? data
         @buffer.update()
       else
-        @buffer.setActive @spec.width, @spec.height, @spec.depth
+        width  = @spec.width  || 1
+        height = @spec.height || 1
+        depth  = @spec.depeth || 1
+
+        @buffer.setActive width, height, depth
 
         length = @buffer.update()
 
-        used.width  = _w = @spec.width
-        used.height = _h = @spec.height
+        used.width  = _w = width
+        used.height = _h = height
         used.depth  = Math.ceil length / _w / _h
 
         if used.depth == 1

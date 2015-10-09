@@ -1,3 +1,4 @@
+Buffer = require '../data/buffer'
 Voxel = require '../data/voxel'
 Util = require '../../../util'
 
@@ -7,7 +8,7 @@ class Text extends Voxel
     minFilter: 'linear'
     magFilter: 'linear'
   @finals =
-    channels: 4
+    channels: 1
 
   init: () ->
     super
@@ -43,7 +44,48 @@ class Text extends Voxel
     @magFilter = THREE.NearestFilter
     @type      = THREE.FloatType
 
-    super
+    # Skip voxel::make(), as we need 4 channels internally in our buffer to store sprite x/y/w/h per string
+    Buffer.prototype.make.call @
+
+    # Read sampling parameters
+    minFilter = @minFilter ? @props.minFilter
+    magFilter = @magFilter ? @props.magFilter
+    type      = @type      ? @props.type
+
+    # Read given dimensions
+    width    = @props.width
+    height   = @props.height
+    depth    = @props.depth
+    reserveX = @props.bufferWidth
+    reserveY = @props.bufferHeight
+    reserveZ = @props.bufferDepth
+    channels = @props.channels
+    items    = @props.items
+
+    dims = @spec = {channels, items, width, height, depth}
+
+    @items    = dims.items
+    @channels = dims.channels
+
+    # Init to right size if data supplied
+    data = @props.data
+    dims = Util.Data.getDimensions data, dims
+
+    space = @space
+    space.width  = Math.max reserveX,  dims.width  || 1
+    space.height = Math.max reserveY,  dims.height || 1
+    space.depth  = Math.max reserveZ,  dims.depth  || 1
+
+    # Create text voxel buffer
+    @buffer = @_renderables.make @storage,
+              width:     space.width
+              height:    space.height
+              depth:     space.depth
+              channels:  4
+              items:     items
+              minFilter: minFilter
+              magFilter: magFilter
+              type:      type
 
     # Hook buffer emitter to map atlas text
     atlas = @atlas

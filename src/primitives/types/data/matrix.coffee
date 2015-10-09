@@ -79,9 +79,6 @@ class Matrix extends Buffer
     space.height  = Math.max reserveY, dims.height || 1
     space.history = history
 
-    @spec.width  ?= 1
-    @spec.height ?= 1
-
     # Create matrix buffer
     @buffer = @_renderables.make @storage,
               width:     space.width
@@ -160,11 +157,14 @@ class Matrix extends Buffer
         @buffer.callback.rebind? data
         @buffer.update()
       else
-        @buffer.setActive @spec.width, @spec.height
+        width  = @spec.width  || 1
+        height = @spec.height || 1
+
+        @buffer.setActive width, height
 
         length = @buffer.update()
 
-        used.width  = _w = @spec.width
+        used.width  = _w = width
         used.height = Math.ceil length / _w
         used.width  = length if used.height == 1
 
