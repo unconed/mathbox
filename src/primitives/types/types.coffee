@@ -630,6 +630,20 @@ Types =
     equals: stringArray.equals
     clone:  stringArray.clone
 
+  data: (value = []) ->
+
+    make: () -> []
+    validate: (value, target, invalid) ->
+
+      if value instanceof Array
+        return value
+      else if value.length?
+        return value
+      else
+        return invalid()
+
+    emitter: (a, b) -> Util.Data.getLerpThunk a, b
+
 decorate = (types) ->
   for k, type of types
     types[k] = do (type) -> () ->

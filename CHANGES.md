@@ -8,6 +8,9 @@
  * Removed unused font properties from <retext />.
  * Fix final props being overwritable on initial set.
  * Rename <text expand={n} /> to <text sdf={n} /> (signed distance field) to avoid confusion with <label expand={n} />
+ * Change default <label /> color from black to gray to match other primitives.
+ * Fix data array emitters for larger item sizes.
+ * Add thunk lerper to put data arrays on keyframe tracks directly.
 
 0.0.3
 

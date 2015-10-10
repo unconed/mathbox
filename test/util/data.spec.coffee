@@ -390,3 +390,50 @@ describe "util.data", () ->
       expect(value).toBeGreaterThan(last) if last?
       last = value
     expect(thunk()).toBeFalsy()
+
+  it 'makes a 1 item, 1 channel emitter', () ->
+
+    i = j = 0
+    n = 1
+    thunk = () -> i++
+    out = []
+
+    Data.makeEmitter(thunk, 1, 1)((x) -> out.push(x))
+
+    expect(i).toBe n
+    expect(out.length).toBe n
+    expect(v).toBe(j++) for v in out
+
+  it 'makes a 2 item, 4 channel emitter', () ->
+
+    items    = 2
+    channels = 4
+
+    i = j = 0
+    n = items * channels
+    thunk = () -> i++
+    out = []
+
+    Data.makeEmitter(thunk, items, channels)((x, y, z, w) -> out.push([x, y, z, w]))
+
+    expect(i).toBe n
+    expect(out.length).toBe items
+    expect(row.length).toBe channels for row in out
+    expect(v).toBe(j++) for v in row for row in out
+
+  it 'makes a 14 item, 3 channel emitter', () ->
+
+    items    = 14
+    channels = 3
+
+    i = j = 0
+    n = items * channels
+    thunk = () -> i++
+    out = []
+
+    Data.makeEmitter(thunk, items, channels)((x, y, z) -> out.push([x, y, z]))
+
+    expect(i).toBe n
+    expect(out.length).toBe items
+    expect(row.length).toBe channels for row in out
+    expect(v).toBe(j++) for v in row for row in out

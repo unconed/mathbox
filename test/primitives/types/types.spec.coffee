@@ -26,7 +26,10 @@ describe "primitives.types.types", () ->
       y: 2
       z: 3
       w: 4
-      i: 4
+      W: 1
+      H: 2
+      D: 3
+      I: 4
       width:  1
       height: 2
       depth:  3
@@ -73,7 +76,11 @@ describe "primitives.types.types", () ->
       y: 2
       z: 3
       w: 4
-      i: 4
+      W: 1
+      H: 2
+      D: 3
+      I: 4
+      zero:   0
       null:   0
       width:  1
       height: 2

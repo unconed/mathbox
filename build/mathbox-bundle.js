@@ -51539,7 +51539,7 @@ exports.repeatCall = function(call, times) {
 };
 
 exports.makeEmitter = function(thunk, items, channels) {
-  var inner, outer;
+  var inner, n, next, outer;
   inner = (function() {
     switch (channels) {
       case 0:
@@ -51572,56 +51572,88 @@ exports.makeEmitter = function(thunk, items, channels) {
         };
     }
   })();
-  outer = (function() {
-    switch (items) {
-      case 0:
-        return function() {
-          return true;
-        };
-      case 1:
+  next = null;
+  while (items > 0) {
+    n = Math.min(items, 8);
+    outer = (function() {
+      switch (n) {
+        case 1:
+          return function(emit) {
+            return inner(emit);
+          };
+        case 2:
+          return function(emit) {
+            inner(emit);
+            return inner(emit);
+          };
+        case 3:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 4:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 5:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 6:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 7:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 8:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+      }
+    })();
+    if (next != null) {
+      next = (function(outer, next) {
         return function(emit) {
-          return inner(emit);
+          outer(emit);
+          return next(emit);
         };
-      case 2:
-        return function(emit) {
-          inner(emit);
-          return inner(emit);
-        };
-      case 3:
-        return function(emit) {
-          inner(emit);
-          inner(emit);
-          return inner(emit);
-        };
-      case 4:
-        return function(emit) {
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          return inner(emit);
-        };
-      case 6:
-        return function(emit) {
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          return inner(emit);
-        };
-      case 8:
-        return function(emit) {
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          return inner(emit);
-        };
+      })(outer, next);
+    } else {
+      next = outer;
     }
-  })();
+    items -= n;
+  }
+  outer = next != null ? next : function() {
+    return true;
+  };
   outer.reset = thunk.reset;
   outer.rebind = thunk.rebind;
   return outer;
@@ -63016,7 +63048,7 @@ Label = (function(_super) {
   Label.traits = ['node', 'bind', 'object', 'visible', 'style', 'label', 'attach', 'geometry', 'position'];
 
   Label.defaults = {
-    color: '#000000'
+    color: '#808080'
   };
 
   Label.prototype.make = function() {
@@ -71606,7 +71638,7 @@ exports.repeatCall = function(call, times) {
 };
 
 exports.makeEmitter = function(thunk, items, channels) {
-  var inner, outer;
+  var inner, n, next, outer;
   inner = (function() {
     switch (channels) {
       case 0:
@@ -71639,56 +71671,88 @@ exports.makeEmitter = function(thunk, items, channels) {
         };
     }
   })();
-  outer = (function() {
-    switch (items) {
-      case 0:
-        return function() {
-          return true;
-        };
-      case 1:
+  next = null;
+  while (items > 0) {
+    n = Math.min(items, 8);
+    outer = (function() {
+      switch (n) {
+        case 1:
+          return function(emit) {
+            return inner(emit);
+          };
+        case 2:
+          return function(emit) {
+            inner(emit);
+            return inner(emit);
+          };
+        case 3:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 4:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 5:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 6:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 7:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+        case 8:
+          return function(emit) {
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            inner(emit);
+            return inner(emit);
+          };
+      }
+    })();
+    if (next != null) {
+      next = (function(outer, next) {
         return function(emit) {
-          return inner(emit);
+          outer(emit);
+          return next(emit);
         };
-      case 2:
-        return function(emit) {
-          inner(emit);
-          return inner(emit);
-        };
-      case 3:
-        return function(emit) {
-          inner(emit);
-          inner(emit);
-          return inner(emit);
-        };
-      case 4:
-        return function(emit) {
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          return inner(emit);
-        };
-      case 6:
-        return function(emit) {
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          return inner(emit);
-        };
-      case 8:
-        return function(emit) {
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          inner(emit);
-          return inner(emit);
-        };
+      })(outer, next);
+    } else {
+      next = outer;
     }
-  })();
+    items -= n;
+  }
+  outer = next != null ? next : function() {
+    return true;
+  };
   outer.reset = thunk.reset;
   outer.rebind = thunk.rebind;
   return outer;

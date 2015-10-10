@@ -92,39 +92,61 @@ exports.makeEmitter = (thunk, items, channels) ->
     when 6 then (emit) -> emit thunk(), thunk(), thunk(), thunk(), thunk(), thunk()
     when 8 then (emit) -> emit thunk(), thunk(), thunk(), thunk(), thunk(), thunk(), thunk(), thunk()
 
-  outer = switch items
-    when 0 then () -> true
-    when 1 then (emit) ->
-      inner emit
-    when 2 then (emit) ->
-      inner emit
-      inner emit
-    when 3 then (emit) ->
-      inner emit
-      inner emit
-      inner emit
-    when 4 then (emit) ->
-      inner emit
-      inner emit
-      inner emit
-      inner emit
-    when 6 then (emit) ->
-      inner emit
-      inner emit
-      inner emit
-      inner emit
-      inner emit
-      inner emit
-    when 8 then (emit) ->
-      inner emit
-      inner emit
-      inner emit
-      inner emit
-      inner emit
-      inner emit
-      inner emit
-      inner emit
+  next = null
+  while items > 0
+    n = Math.min items, 8
+    outer = switch n
+      when 1 then (emit) ->
+        inner emit
+      when 2 then (emit) ->
+        inner emit
+        inner emit
+      when 3 then (emit) ->
+        inner emit
+        inner emit
+        inner emit
+      when 4 then (emit) ->
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+      when 5 then (emit) ->
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+      when 6 then (emit) ->
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+      when 7 then (emit) ->
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+      when 8 then (emit) ->
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+        inner emit
+    if next?
+      next = do (outer, next) -> (emit) -> outer emit; next emit
+    else
+      next = outer
+    items -= n
 
+  outer = next ? () -> true
   outer.reset  = thunk.reset
   outer.rebind = thunk.rebind
   outer
@@ -184,6 +206,7 @@ exports.getThunk = (data) ->
             second = data[k] ? []
           first = second[j]  ? []
         x
+
       thunk.reset = () ->
         i = j = k = 0
         second = data[k]   ? []
@@ -211,6 +234,7 @@ exports.getThunk = (data) ->
             second = third[k] ? []
           first = second[j]   ? []
         x
+
       thunk.reset = () ->
         i = j = k = l = 0
         third  = data[l]   ? []
@@ -351,7 +375,7 @@ exports.getStreamer = (array, samples, channels, items) ->
 
 exports.getLerpEmitter = (expr1, expr2) ->
 
-  scratch = new Float32Array(4096)
+  scratch = new Float32Array 4096
   lerp1 = lerp2 = 0.5
   p = q = r = s = 0
 
@@ -420,3 +444,30 @@ exports.getLerpEmitter = (expr1, expr2) ->
   emitter.lerp = (f) -> [lerp1, lerp2] = [1 - f, f]
 
   emitter
+
+exports.getLerpThunk = (data1, data2) ->
+
+  # Get sizes
+  n1       = exports.getSizes(data1).reduce (a, b) -> a * b
+  n2       = exports.getSizes(data2).reduce (a, b) -> a * b
+  n        = Math.min n1, n2
+
+  # Create data thunks to copy (multi-)array
+  thunk1   = exports.getThunk data1
+  thunk2   = exports.getThunk data2
+
+  # Create scratch array
+  scratch = new Float32Array n
+
+  scratch.lerp = (f) ->
+    thunk1.reset()
+    thunk2.reset()
+
+    i = 0
+    while i < n
+      a = thunk1()
+      b = thunk2()
+      scratch[i++] = a + (b - a) * f
+
+  scratch
+
