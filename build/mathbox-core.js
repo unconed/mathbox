@@ -13304,20 +13304,15 @@ Readback = (function(_super) {
   };
 
   Readback.prototype.resize = function() {
-    var depth, height, htmlDims, items, pointDims, sI, sJ, sK, width;
+    var depth, height, items, sI, sJ, sK, width, _ref;
     if (this.readback == null) {
       return;
     }
-    pointDims = this.bind.points.getActiveDimensions();
-    htmlDims = this.bind.html.getActiveDimensions();
-    items = Math.min(pointDims.items, htmlDims.items);
-    width = Math.min(pointDims.width, htmlDims.width);
-    height = Math.min(pointDims.height, htmlDims.height);
-    depth = Math.min(pointDims.depth, htmlDims.depth);
+    _ref = this.bind.source.getActiveDimensions(), items = _ref.items, width = _ref.width, height = _ref.height, depth = _ref.depth;
     this.readback.setActive(items, width, height, depth);
-    this.strideI = sI = htmlDims.items;
-    this.strideJ = sJ = sI * htmlDims.width;
-    return this.strideK = sK = sJ * htmlDims.height;
+    this.strideI = sI = items;
+    this.strideJ = sJ = sI * width;
+    return this.strideK = sK = sJ * height;
   };
 
   Readback.prototype.change = function(changed, touched, init) {

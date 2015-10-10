@@ -77,21 +77,15 @@ class Readback extends Primitive
     return unless @readback?
 
     # Fetch geometry/html dimensions
-    pointDims = @bind.points.getActiveDimensions()
-    htmlDims  = @bind.html.getActiveDimensions()
-
-    items  = Math.min pointDims.items,  htmlDims.items
-    width  = Math.min pointDims.width,  htmlDims.width
-    height = Math.min pointDims.height, htmlDims.height
-    depth  = Math.min pointDims.depth,  htmlDims.depth
+    {items, width, height, depth} = @bind.source.getActiveDimensions()
 
     # Limit readback to active area
     @readback.setActive items, width, height, depth
 
     # Recalculate iteration strides
-    @strideI = sI = htmlDims.items
-    @strideJ = sJ = sI * htmlDims.width
-    @strideK = sK = sJ * htmlDims.height
+    @strideI = sI = items
+    @strideJ = sJ = sI * width
+    @strideK = sK = sJ * height
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['readback.type']
