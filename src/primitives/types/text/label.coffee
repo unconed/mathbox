@@ -4,7 +4,7 @@ Util    = require '../../../util'
 class Label extends Primitive
   @traits = ['node', 'bind', 'object', 'visible', 'style', 'label', 'attach', 'geometry', 'position']
   @defaults =
-    color: '#000000'
+    color: '#808080'
 
   make: () ->
     super
