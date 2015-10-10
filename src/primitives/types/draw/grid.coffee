@@ -9,7 +9,6 @@ class Grid extends Primitive
   @defaults =
     width: 1
     zBias: -2
-    zOrder: -2
 
   constructor: (node, context, helpers) ->
     super node, context, helpers

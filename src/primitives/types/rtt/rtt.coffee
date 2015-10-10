@@ -36,16 +36,16 @@ class RTT extends Parent
 
     return unless @rootSize?
 
-    minFilter = @props.minFilter
-    magFilter = @props.magFilter
-    type      = @props.type
+    {minFilter, magFilter, type} = @props
 
-    width     = @props.width
-    height    = @props.height
-    history   = @props.history
+    {width, height, history, size} = @props
 
-    @width    = width  ? @rootSize.renderWidth
-    @height   = height ? @rootSize.renderHeight
+    relativeSize = size == @node.attributes['rtt.size'].enum.relative
+    widthFactor  = if relativeSize then @rootSize.renderWidth  else 1
+    heightFactor = if relativeSize then @rootSize.renderHeight else 1
+
+    @width    = Math.round if width?  then (width  * widthFactor ) else @rootSize.renderWidth
+    @height   = Math.round if height? then (height * heightFactor) else @rootSize.renderHeight
     @history  = history
     @aspect   = aspect = @width / @height
 
@@ -108,10 +108,10 @@ class RTT extends Parent
   resize: (size) ->
     @rootSize = size
 
-    width  = @props.width
-    height = @props.height
+    {width, height, size} = @props
+    relativeSize = size == @node.attributes['rtt.size'].enum.relative
 
-    return @rebuild() if !@rtt or !width? or !height?
+    return @rebuild() if !@rtt or !width? or !height? or relativeSize
 
   select: (selector) ->
     @_root.node.model.select selector, [@node]

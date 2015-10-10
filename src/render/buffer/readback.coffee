@@ -8,6 +8,7 @@ Util            = require '../../util'
 # Readback up to 4D array of up to 4D data from GL
 ###
 class Readback extends Renderable
+
   constructor: (renderer, shaders, options) ->
     @items    ?= options.items    || 1
     @channels ?= options.channels || 4

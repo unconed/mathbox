@@ -44,6 +44,7 @@ Classes =
   join:              ['operator','Join two array dimensions into one by concatenating rows/columns/stacks']
   lerp:              ['operator','Linear interpolation of data']
   memo:              ['operator','Memoize data to an array/texture']
+  readback:          ['operator','Read data back to a binary JavaScript array', {expr: "function (x, y, z, w, i, j, k, l) { ... }"}]
   resample:          ['operator','Resample data to new dimensions with a shader']
   repeat:            ['operator','Repeat data in one or more dimensions']
   swizzle:           ['operator','Swizzle data values']

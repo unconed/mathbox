@@ -44,6 +44,7 @@ Classes =
   join:              require './operator/join'
   lerp:              require './operator/lerp'
   memo:              require './operator/memo'
+  readback:          require './operator/readback'
   resample:          require './operator/resample'
   repeat:            require './operator/repeat'
   swizzle:           require './operator/swizzle'

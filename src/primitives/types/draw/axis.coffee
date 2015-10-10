@@ -6,7 +6,6 @@ class Axis extends Primitive
   @defaults =
     end: true
     zBias: -1
-    zOrder: -1
 
   constructor: (node, context, helpers) ->
     super node, context, helpers

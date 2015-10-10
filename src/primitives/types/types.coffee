@@ -637,7 +637,7 @@ Types =
 
       if value instanceof Array
         return value
-      else if value.length?
+      else if value?.length?
         return value
       else
         return invalid()

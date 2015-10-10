@@ -50,6 +50,7 @@
  * [join](#operator/join) - Join two array dimensions into one by concatenating rows/columns/stacks
  * [lerp](#operator/lerp) - Linear interpolation of data
  * [memo](#operator/memo) - Memoize data to an array/texture
+ * [readback](#operator/readback) - Read data back to a binary JavaScript array
  * [resample](#operator/resample) - Resample data to new dimensions with a shader
  * [repeat](#operator/repeat) - Repeat data in one or more dimensions
  * [swizzle](#operator/swizzle) - Swizzle data values
@@ -699,6 +700,23 @@
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *index* = `1` (number) - Present slide number
  * *length* = `0` (number) - Presentation length (computed)
+
+####  <a name="operator/readback"></a>`operator/readback`
+
+*Read data back to a binary JavaScript array*
+
+ * *active* = `true` (bool) - Updates continuously
+ * *channels* = `4` (number) - Readback channels (read only)
+ * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
+ * *data* = `[]` (data) - Readback data buffer (read only)
+ * *depth* = `1` (nullable number) - Readback depth (read only)
+ * *expr* = `null` (nullable function) - Readback consume expression, e.g. `function (x, y, z, w, i, j, k, l) { ... }`
+ * *height* = `1` (nullable number) - Readback height (read only)
+ * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *items* = `1` (nullable number) - Readback items (read only)
+ * *source* = `"<"` (select) - Input source
+ * *type* = `"float"` (float) - Readback data type (float, unsignedByte)
+ * *width* = `1` (nullable number) - Readback width (read only)
 
 ####  <a name="operator/repeat"></a>`operator/repeat`
 

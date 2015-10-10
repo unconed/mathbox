@@ -47,7 +47,7 @@ class DOM extends Primitive
     # Build nop index shader
     indexer = @_shaders.shader()
 
-    # Prepare memoization RTT
+    # Prepare readback/memo RTT
     @readback = @_renderables.make 'readback',
                   map:      position
                   indexer:  indexer
