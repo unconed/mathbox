@@ -20,13 +20,20 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(-.05, .05, 1.2);
+    three.camera.position.set(-.15, .15, 3.6);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
     three.on('update', function () {
       var d = .5 + .5 * Math.sin(three.Time.now * .5);
       depthObj.set('depth', d);
     });
+
+    function colorComponents(x){
+        var color = new THREE.Color(x)
+        return [color.r*255, color.g*255, color.b*255, 1];
+    }
+
+    colors = {x: 0xFF4136, y: 0x2ECC40, z: 0x0074D9}
 
     view = mathbox
     .set({
@@ -40,19 +47,40 @@
     view.axis({
       end: true,
       width: 5,
+      color: colors.x,
     });
     view.axis({
-      axis: 2,
+      axis: 2, // "y" also works
       end: true,
       width: 5,
+      color: colors.y,
     });
     view.axis({
       axis: 3,
       end: true,
       width: 5,
+      color: colors.z,
     });
 
     var depthObj = mathbox.select('axis');
+
+
+    view.array({
+        id: "colors",
+        data: [colors.x, colors.y, colors.z].map(colorComponents),
+        live: false,
+    })
+
+    view.array({
+        data: [[2,0,0], [0,1.11,0], [0,0,1]],
+        channels: 3, // necessary
+        live: false,
+    }).text({
+        data: ["x", "y", "z"],
+    }).label({
+        color: 0x010101, // multiply each component by 1
+        colors: "#colors",
+    })
 
   </script>
 </body>
