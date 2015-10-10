@@ -139,14 +139,14 @@
     var none     = [-1, -1];
     var hovered  = none;
     
-    var getIndexAt = function () {
+    var getIndexAt = function (x, y) {
       var data = readback.get('data');
       if (!data) {
         return none;
       }
 
-      var x = Math.round(mouse[0] * scale);
-      var y = Math.round(mouse[1] * scale);
+      x = Math.round(x * scale);
+      y = Math.round(y * scale);
       
       var w = readback.get('width');
       var h = readback.get('height');
