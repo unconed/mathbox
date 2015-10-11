@@ -12,6 +12,8 @@ var jsify      = require('./vendor/gulp-jsify');
 var plumber    = require('gulp-plumber');
 var batch      = require('gulp-batch');
 
+var KarmaServer = require('karma').Server;
+
 var builds = {
   core:   'build/mathbox-core.js',
   bundle: 'build/mathbox-bundle.js',
@@ -40,7 +42,6 @@ var css = [
 
 var core = [
   '.tmp/index.js', 
-  '.tmp/index.coffee.js', // something creates this on some platforms, accept either
 ];
 
 var glsls = [
@@ -106,12 +107,12 @@ gulp.task('uglify-js', function () {
     .pipe(gulp.dest('build'));
 });
 
-gulp.task('karma', function() {
-  return gulp.src(test)
-    .pipe(karma({
-      configFile: 'karma.conf.js',
-      action: 'single',
-    }));
+gulp.task('karma', function (done) {
+  new KarmaServer({
+    configFile: __dirname + '/karma.conf.js',
+    files: test,
+    singleRun: true,
+  }, done).start();
 });
 
 gulp.task('watch-karma', function() {
@@ -123,9 +124,12 @@ gulp.task('watch-karma', function() {
 });
 
 gulp.task('watch-build-watch', function () {
-  watch(source, batch(function (events, done) {
-    gulp.start('build', done);
-  }));
+  gulp.src(source)
+    .pipe(
+      watch(function(files) {
+        return gulp.start('build');
+      })
+    );
 });
 
 // Main tasks
