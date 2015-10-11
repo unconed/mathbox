@@ -21,10 +21,6 @@
     three.camera.position.set(.3, 1, 3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0;
-    three.on('update', function (event) {
-    });
-
     view = mathbox.cartesian({
       range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
@@ -34,18 +30,30 @@
       length: 16,
       history: 16,
       range: [0, 1],
-      expr: function (emit, x, i) {
-        var j = three.Time.frames;
-        var y = Math.sin(three.Time.frames * .1) * .5 + .5;
-        emit(x + y, i%2, Math.cos(y)*.5+.5);
+      expr: function (emit, x, i, t) {
+        var j = t * 60;
+        var y = Math.sin(j * .1) * .5 + .5;
+        emit(x + y, i % 2, Math.cos(y) * .5 + .5, 1.0);
       },
       bufferLength: 32,
+    });
+    view.memo({
       minFilter: 'linear',
       magFilter: 'linear',
     });
-    view.memo({
-    });
     view.compose();
+
+    view
+    .area({
+      width:  3,
+      height: 16,
+    })
+    .surface({
+      color: 0xffffff,
+      points: '<',
+      map: '<<',
+      zBias: -5,
+    });
 
   </script>
 </body>
