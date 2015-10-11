@@ -31,24 +31,42 @@
     });
 
     view.interval({
-      length: 16,
+      length: 16, // number of red data points
       expr: function (emit, x, i) {
-        var d = Math.sin((x + time) * 2);
+        var d = Math.sin((x + time) * 2)/2;
 
         emit(x, 0);
-        emit(x, d * .5);
+        emit(x, d);
       },
       items: 2,
       channels: 2,
+    }).vector({
+      color: 0xc02050,
+      width: 16,
+      size: 3,
+      end: true,
     });
+
     view.lerp({
-      width: 128,
-    });
+      // number of blue interpolated values
+      // = 16 original samples + (15 gaps * 8 samples per gap)
+      width: 136,
+    })
+    // drop the first sample in each group of 9
+    // so that red and blue vectors don't overlap
+    view.split({
+      axis: 'x',
+      length:  9,
+    }).slice({
+      width: [1, 9],
+    }).join({
+      axis: 'x',
+    })
+    //draw the blue vectors
     view.vector({
       color: 0x3090FF,
       width: 10,
-      size: 0.1,
-      start: true,
+      size: 2.5,
       end: true,
     });
 

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Tiling</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    var mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor', 'mathbox'],
+      controls: {
+        // Orbit controls, i.e. Euler angles, with gimbal lock
+        klass: THREE.OrbitControls,
+
+        // Trackball controls, i.e. Free quaternion rotation
+        //klass: THREE.TrackballControls,
+      },
+    });
+    if (mathbox.fallback) throw "WebGL not supported"
+
+    var three = mathbox.three;
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    // Place camera
+    var camera =
+      mathbox
+      .camera({
+        proxy: true,
+        position: [5, 9, 30],
+      });
+    
+    // Approximate recreation of
+    // https://twitter.com/shonk/status/645737325339652096
+    
+    // Colors
+    var colors = [
+      [130/255, 208/255, 128/255],
+      [ 95/255, 197/255, 137/255],
+      [ 45/255, 164/255, 147/255],
+      [ 10/255, 111/255, 147/255],
+      [ 28/255, 143/255, 151/255],
+      [ 71/255, 183/255, 144/255],
+    ];
+    
+    // Offsets
+    var offsets = [
+      [[2, 1.731], [.5, 0]],
+      [[3, 2.599], [.5, 0]],
+      [[2.25, 1.731], [.666, -.25]],
+    ];
+
+    // Tile face
+    var tiles = [
+      [
+        [ 0,    0],
+        [ 1,    0],
+        [ 1,    0],
+        [ 1, .577],
+        [.5, .866],
+      ],
+      [
+        [ 0,      0],
+        [ 1,      0],
+        [ 2,      0],
+        [ 1.5, .866],
+        [.5,   .866],
+      ],
+      [
+        [ 0,      0],
+        [ 1,      0],
+        [ 1.25,.433],
+        [ 1,   .866],
+        [.5,   .866],
+      ],
+    ];
+
+    // Face
+    mathbox
+    .array({
+      channels: 2,
+      items: 5,
+    })
+    .play({
+      pace: 5,
+      loop: true,
+      to: 3,
+      script: [
+        {props: {data: [tiles[0]]}},
+        {props: {data: [tiles[1]]}},
+        {props: {data: [tiles[2]]}},
+        {props: {data: [tiles[0]]}},
+      ]
+    })
+    .repeat({
+      width:  30,
+      height: 30,
+    })
+
+    .shader({
+      code: [
+        "uniform vec2 tileStep;",
+        "uniform vec2 tileShift;",
+        "const vec2 dataScale = vec2(29.0, 29.0);",
+        "vec4 getPosition(vec4 xyzw, inout vec4 stpq) {",
+        "  vec2 ij = (stpq.st - .5) * dataScale;",
+        "  vec2 offset = vec2(ij.x + tileShift.x * ij.y,",
+        "                     ij.y + tileShift.y * ij.x) * tileStep;",
+        "  return xyzw + vec4(offset, (ij.x + ij.y) * 0.01, 0.0);",
+        "}",
+      ].join("\n")
+    })
+    .play({
+      pace: 5,
+      loop: true,
+      to: 3,
+      script: [
+        {props: {tileStep: offsets[0][0], tileShift: offsets[0][1]}},
+        {props: {tileStep: offsets[1][0], tileShift: offsets[1][1]}},
+        {props: {tileStep: offsets[2][0], tileShift: offsets[2][1]}},
+        {props: {tileStep: offsets[0][0], tileShift: offsets[0][1]}},
+      ]
+    })
+    .vertex()
+
+      .transform({
+        rotation: [0, 0, 0*τ/6],
+      })
+        .face({
+          color: colors[0],
+        })
+      .end()
+
+      .transform({
+        rotation: [0, 0, 1*τ/6],
+      })
+        .face({
+          color: colors[1],
+        })
+      .end()
+
+      .transform({
+        rotation: [0, 0, 2*τ/6],
+      })
+        .face({
+          color: colors[2],
+        })
+      .end()
+
+      .transform({
+        rotation: [0, 0, 3*τ/6],
+      })
+        .face({
+          color: colors[3],
+        })
+      .end()
+
+      .transform({
+        rotation: [0, 0, 4*τ/6],
+      })
+        .face({
+          color: colors[4],
+        })
+      .end()
+
+      .transform({
+        rotation: [0, 0, 5*τ/6],
+      })
+        .face({
+          color: colors[5],
+        })
+      .end()
+
+    .end()
+    
+  </script>
+</body>
+</html>

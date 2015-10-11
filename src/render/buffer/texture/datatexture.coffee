@@ -15,13 +15,13 @@ class DataTexture
     type      = options.type      ? THREE.FloatType
 
     @minFilter = Util.Three.paramToGL gl, minFilter
-    @magFilter = Util.Three.paramToGL gl, minFilter
+    @magFilter = Util.Three.paramToGL gl, magFilter
     @type      = Util.Three.paramToGL gl, type
     @ctor      = Util.Three.paramToArrayStorage type
 
-    @build()
+    @build options
 
-  build: () ->
+  build: (options) ->
     gl = @gl
 
     # Make GL texture
@@ -46,8 +46,8 @@ class DataTexture
       THREE.UVMapping,
       THREE.ClampToEdgeWrapping,
       THREE.ClampToEdgeWrapping,
-      THREE.NearestFilter,
-      THREE.NearestFilter)
+      options.minFilter,
+      options.magFilter)
 
     # Pre-init texture to trick WebGLRenderer
     @textureObject.__webglInit     = true
@@ -55,6 +55,8 @@ class DataTexture
     @textureObject.format          = @format3
     @textureObject.type            = THREE.FloatType
     @textureObject.unpackAlignment = 1
+    @textureObject.flipY           = false
+    @textureObject.generateMipmaps = false
 
     # Create uniforms
     @uniforms =

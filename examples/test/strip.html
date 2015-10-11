@@ -20,13 +20,6 @@
     three.camera.position.set(-.5, .4, -1.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    // Prepare test data
-    var data = []
-    for (var i = 0; i < 100; ++i) {
-      data.push([i/100 * 2 - 1, 0]);
-      data.push([i/100 * 2 - 1, Math.random()]);
-    }
-
     // Mathbox view
     var view = mathbox.cartesian({
       range: [[-1, 1], [-.5, 1.5], [-1, 1]],
@@ -35,9 +28,13 @@
 
     view.array({
       length: 100,
-      data: data,
       items: 2,
       channels: 2,
+      live: false, // expr is iterated once
+      expr: function(emit, i){
+          emit(i/100 * 2 - 1, 0);
+          emit(i/100 * 2 - 1, Math.random());
+      },
     });
     view.repeat({
       height: 2,
