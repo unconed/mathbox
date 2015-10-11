@@ -7,12 +7,15 @@
  * Fix <text /> not parsing >1 string from an array.
  * Fix public `channels` on <text /> being 4 instead of 1.
  * Removed unused font properties from <retext />.
- * Fix final props being overwritable on initial set.
+ * Fix final/const props being overwritable on initial set.
  * Rename <text expand={n} /> to <text sdf={n} /> (signed distance field) to avoid confusion with <label expand={n} />
  * Change default <label /> color from black to gray to match other primitives.
  * Fix data array emitters for larger item sizes.
- * Add thunk lerper to put data arrays on keyframe tracks directly.
+ * Add thunk lerper to animate data arrays on keyframe tracks.
  * Remove default zOrder on <axis /> and <grid />.
+ * Clean slate NPM dependencies.
+ * Fix `gulp-rename` compatibility.
+ * Improved axis, grid, helix, lerp, label, strip examples.
 
 0.0.3
 

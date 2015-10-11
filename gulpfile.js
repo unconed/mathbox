@@ -9,6 +9,8 @@ var browserify = require('gulp-browserify');
 var watch      = require('gulp-watch');
 var shell      = require('gulp-shell');
 var jsify      = require('./vendor/gulp-jsify');
+var plumber    = require('gulp-plumber');
+var batch      = require('gulp-batch');
 
 var builds = {
   core:   'build/mathbox-core.js',
@@ -72,7 +74,7 @@ gulp.task('browserify', function () {
         extensions: ['.coffee'],
       }))
       .pipe(rename({
-        ext: ".js"
+        extname: ".js"
       }))
       .pipe(gulp.dest('.tmp/'))
 });
@@ -99,7 +101,7 @@ gulp.task('uglify-js', function () {
   return gulp.src(products)
     .pipe(uglify())
     .pipe(rename({
-      ext: ".min.js"
+      extname: ".min.js"
     }))
     .pipe(gulp.dest('build'));
 });
@@ -121,12 +123,9 @@ gulp.task('watch-karma', function() {
 });
 
 gulp.task('watch-build-watch', function () {
-  gulp.src(source)
-    .pipe(
-      watch(function(files) {
-        return gulp.start('build');
-      })
-    );
+  watch(source, batch(function (events, done) {
+    gulp.start('build', done);
+  }));
 });
 
 // Main tasks
