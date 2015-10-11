@@ -74,7 +74,7 @@ gulp.task('browserify', function () {
         extensions: ['.coffee'],
       }))
       .pipe(rename({
-        extname: ".js"
+        extname: ".js",
       }))
       .pipe(gulp.dest('.tmp/'))
 });
@@ -101,7 +101,7 @@ gulp.task('uglify-js', function () {
   return gulp.src(products)
     .pipe(uglify())
     .pipe(rename({
-      extname: ".min.js"
+      extname: ".min.js",
     }))
     .pipe(gulp.dest('build'));
 });
