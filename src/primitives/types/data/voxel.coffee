@@ -158,7 +158,7 @@ class Voxel extends Buffer
       else
         width  = @spec.width  || 1
         height = @spec.height || 1
-        depth  = @spec.depeth || 1
+        depth  = @spec.depth  || 1
 
         @buffer.setActive width, height, depth
 
