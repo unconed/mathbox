@@ -64,7 +64,7 @@
       id: 'colors',
       length: 2,
       channels: 4,
-      data: [[0xc0, 0x20, 0x50, 1], [0x50, 0xc0, 0x20, 1]],
+      data: [[0xc0/255, 0x20/255, 0x50/255, 1], [0x50/255, 0xc0/255, 0x20/255, 1]],
     });
 
     view.interval({
@@ -108,7 +108,7 @@
       },
     })
     .label({
-      color: 0x010101,
+      color: '#ffffff',
       colors: '#colors',
       snap: false,
       outline: 2,
