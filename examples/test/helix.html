@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Lerp Test</title>
+  <title>MathBox - Helix Test</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
@@ -30,43 +30,31 @@
       scale: [6, 1, 1],
     });
 
-    view.interval({
-      length: 16, // number of red data points
-      expr: function (emit, x, i) {
-        var d = Math.sin((x + time) * 2)/2;
+    view.axis({
+        width: 5,
+        start: true,
+        end: true,
+    })
 
-        emit(x, 0);
-        emit(x, d);
+    view.interval({
+      length: 128,
+      expr: function (emit, x, i) {
+        var theta = x + time;
+        var a = Math.cos(theta);
+        var b = Math.sin(theta);
+
+        emit(x, a, b);
+        emit(x, -a, -b);
       },
       items: 2,
-      channels: 2,
-    }).vector({
-      color: 0xc02050,
-      width: 16,
-      size: 3,
-      end: true,
-    });
+      channels: 3,
+    })
 
-    view.lerp({
-      // number of blue interpolated values
-      // = 16 original samples + (15 gaps * 8 samples per gap)
-      width: 136,
-    })
-    // drop the first sample in each group of 9
-    // so that red and blue vectors don't overlap
-    view.split({
-      axis: 'x',
-      length:  9,
-    }).slice({
-      width: [1, 9],
-    }).join({
-      axis: 'x',
-    })
-    //draw the blue vectors
-    view.vector({
+    view.line({
       color: 0x3090FF,
       width: 10,
       size: 2.5,
+      start: true,
       end: true,
     });
 
