@@ -124,12 +124,9 @@ gulp.task('watch-karma', function() {
 });
 
 gulp.task('watch-build-watch', function () {
-  gulp.src(source)
-    .pipe(
-      watch(function(files) {
-        return gulp.start('build');
-      })
-    );
+  watch(source, function () {
+    return gulp.start('build');
+  });
 });
 
 // Main tasks
