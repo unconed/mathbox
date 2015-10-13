@@ -13272,7 +13272,12 @@ Readback = (function(superClass) {
 
   Readback.prototype.init = function() {
     this.emitter = this.root = null;
-    this.active = {};
+    return this.active = {};
+  };
+
+  Readback.prototype.make = function() {
+    var channels, depth, expr, height, items, ref, ref1, sampler, type, width;
+    Readback.__super__.make.apply(this, arguments);
     this._compute('readback.data', (function(_this) {
       return function() {
         var ref;
@@ -13297,17 +13302,12 @@ Readback = (function(superClass) {
         return (ref = _this.readback) != null ? ref.height : void 0;
       };
     })(this));
-    return this._compute('readback.depth', (function(_this) {
+    this._compute('readback.depth', (function(_this) {
       return function() {
         var ref;
         return (ref = _this.readback) != null ? ref.depth : void 0;
       };
     })(this));
-  };
-
-  Readback.prototype.make = function() {
-    var channels, depth, expr, height, items, ref, ref1, sampler, type, width;
-    Readback.__super__.make.apply(this, arguments);
     this._helpers.bind.make([
       {
         to: 'operator.source',
