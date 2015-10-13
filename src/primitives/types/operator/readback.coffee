@@ -10,14 +10,14 @@ class Readback extends Primitive
     @emitter = @root = null
     @active = {}
 
+  make: () ->
+    super
+
     @_compute 'readback.data',   () => @readback?.data
     @_compute 'readback.items',  () => @readback?.items
     @_compute 'readback.width',  () => @readback?.width
     @_compute 'readback.height', () => @readback?.height
     @_compute 'readback.depth',  () => @readback?.depth
-
-  make: () ->
-    super
 
     # Bind to attached objects
     @_helpers.bind.make [
