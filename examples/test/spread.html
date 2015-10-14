@@ -17,23 +17,23 @@
     });
     three = mathbox.three;
 
-    three.camera.position.set(2.3, 1, 2);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0
-    three.on('update', function () {
-      time = three.Time.now
-    });
-
-    view = mathbox.cartesian({
+    view = mathbox
+    .camera({
+      proxy: true,
+      position: [2.3, 1, 2],
+    })
+    .cartesian({
       range: [[-6, 6], [-1, 1], [-1, 1]],
       scale: [6, 1, 1],
     });
 
-    view.interval({
-      length: 16,
-      expr: function (emit, x, i) {
-        var d = Math.sin((x + time));
+    view.area({
+      width: 16,
+      height: 16,
+      expr: function (emit, x, y, i, j, t) {
+        var d = Math.sin((x + y + t));
 
         emit(0);
         emit(.5 + d * .5);
@@ -46,14 +46,12 @@
     });
     view.spread({
       unit: 'absolute',
-      width: [.1, 0, 0, 0],
+      width:  [.1, 0,  0, 0],
+      height: [ 0, 0,.25, 0],
     });
     view.vector({
       color: 0x3090FF,
       width: 10,
-      size: 0.1,
-      start: true,
-      end: true,
     });
 
   </script>
