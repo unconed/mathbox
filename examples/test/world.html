@@ -17,12 +17,6 @@
     });
     three = mathbox.three;
 
-    three.on('update', function () {
-      var t = three.Time.now
-
-      view.set('quaternion', [0, Math.cos(t), 0, Math.sin(t)]);
-    });
-
     three.camera.position.set(0, 1, 4);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
@@ -30,6 +24,10 @@
       range: [[-1, 1], [-1, 1], [-1, 1]],
       scale: [.5, .5, .5],
       quaternion: [.866, 0, 0, -.5]
+    },{
+      quaternion: function(t){
+        return [0, Math.cos(t), 0, Math.sin(t)]
+      }
     });
 
     view.transform({

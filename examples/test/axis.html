@@ -23,11 +23,6 @@
     three.camera.position.set(-.15, .15, 3.6);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    three.on('update', function () {
-      var d = .5 + .5 * Math.sin(three.Time.now * .5);
-      depthObj.set('depth', d);
-    });
-
     colors = {
       x: new THREE.Color(0xFF4136),
       y: new THREE.Color(0x2ECC40),
@@ -44,24 +39,23 @@
       scale: [2, 1, 1],
     });
     view.axis({
-      end: true,
-      width: 5,
       color: colors.x,
     });
     view.axis({
       axis: 2, // "y" also works
-      end: true,
-      width: 5,
       color: colors.y,
     });
     view.axis({
       axis: 3,
-      end: true,
-      width: 5,
       color: colors.z,
     });
 
-    var depthObj = mathbox.select('axis');
+    mathbox.select('axis')
+      .set('end', true)
+      .set('width', 5)
+      .bind('depth', function(t){
+          return .5 + .5 * Math.sin(t * .5);
+      })
 
     view.array({
       id: "colors",

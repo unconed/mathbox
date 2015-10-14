@@ -20,22 +20,6 @@
     three.camera.position.set(0, 0, 10);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0
-    q1 = new THREE.Quaternion();
-    q2 = new THREE.Quaternion();
-    three.on('update', function () {
-      time = three.Time.now
-
-      q1.x = Math.cos(time * .123);
-      q1.y = Math.cos(time * .224 - 1);
-      q1.z = Math.cos(time * .161 + 1);
-      q1.w = Math.cos(time * .193 + 2);
-      q1.normalize();
-
-      q2.slerp(q1, .05);
-      spherical.set('quaternion', q2);
-    });
-
     stereo = mathbox.set({
       focus: 10
     }).stereographic({
@@ -43,8 +27,21 @@
       bend: 1,
     });
 
+    q1 = new THREE.Quaternion();
+    q2 = new THREE.Quaternion();
     spherical = stereo.spherical({
       range: [[-π, π], [-π/2, π/2], [-1, 1]],
+    },{
+      quaternion: function(t){
+        q1.x = Math.cos(t * .123);
+        q1.y = Math.cos(t * .224 - 1);
+        q1.z = Math.cos(t * .161 + 1);
+        q1.w = Math.cos(t * .193 + 2);
+        q1.normalize();
+
+        q2.slerp(q1, .05);
+        return q2;
+      }
     });
 
     spherical

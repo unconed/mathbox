@@ -20,23 +20,20 @@
     three.camera.position.set(3.5, 1.4, -2.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0
-    three.on('update', function () {
-      time = three.Time.frames / 200
-
-      t = Math.max(three.Time.clock, 0) / 25
-      t = t < .5 ? t * t : t - .25
-
-      o = .5 - .5 * Math.cos(Math.min(1, t) * π)
-
-      c = Math.cos(t);
-      s = Math.sin(t);
-      view.set('quaternion', [0, -s, 0, c]);
-    });
-
     view = mathbox.cartesian({
       range: [[-3, 3], [-.25, .75], [-3, 3]],
       scale: [2, 1, 2],
+    },{
+      quaternion: function(time){
+        t = Math.max(time, 0) / 25
+        t = t < .5 ? t * t : t - .25
+
+        o = .5 - .5 * Math.cos(Math.min(1, t) * π)
+
+        c = Math.cos(t);
+        s = Math.sin(t);
+        return [0, -s, 0, c];
+      }
     });
 
     view.axis({
@@ -66,7 +63,8 @@
       items: 1,
       axis: 1,
       history: 96,
-      expr: function (emit, x, i) {
+      expr: function (emit, x, i, time) {
+        time /= 3;
         z = Math.sin(time * 5) * 3;
         y = .25 + Math.cos(x + z + Math.sin(1.52 * x - z * z / 3 + x * z * .25 + time) + time * 3) * .25;
         emit(x, y, z);

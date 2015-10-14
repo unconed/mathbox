@@ -25,11 +25,6 @@
     three.camera.lookAt(new THREE.Vector3())
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0
-    three.on('update', function () {
-      time = three.Time.clock * .2;
-    });
-
     view = mathbox
     .unit({
       scale: null,
@@ -59,7 +54,7 @@
       zBias: -10,
       axes: [1, 3],
     });
-    
+
     view.array({
       id: 'colors',
       length: 2,
@@ -69,8 +64,8 @@
 
     view.interval({
       length: 16,
-      expr: function (emit, x, i) {
-        y = Math.sin(x + time / 4) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
+      expr: function (emit, x, i, time) {
+        y = Math.sin(x + (time*0.2) / 4) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);
       },
       channels: 2,
@@ -98,7 +93,8 @@
       width:  16,
       height: 5,
       depth:  2,
-      expr: function (emit, i, j) {
+      expr: function (emit, i, j, time) {
+        time *= 0.2;
         //emit('QxAfjldgざおぎぼアプヸ⾤⾘⿕⿒');
         emit(
           Math.floor(time * 2 + i / 8)

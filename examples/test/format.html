@@ -23,14 +23,6 @@
     three.camera.position.set(1, 1, 3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    three.on('update', function () {
-      var d = .5 + .5 * Math.sin(three.Time.now * .25);
-      var v = .5 - .5 * Math.sin(three.Time.now * 2);
-      v = 20 * v * v;
-      depthObj.set('depth', d);
-      view.set('range', [[-2 - v, 2 + v], [-1, 1], [-1, 1]]);
-    });
-
     view = mathbox
     .set({
       scale: 950,
@@ -38,8 +30,13 @@
       fov: 45
     })
     .cartesian({
-      range: [[-2, 2], [-1, 1], [-1, 1]],
       scale: [2, 1, 1],
+    },{
+      range: function(t){
+          var v = .5 - .5 * Math.sin(t * 2);
+          v = 20 * v * v;
+          return [[-2 - v, 2 + v], [-1, 1], [-1, 1]];
+      }
     });
 
     view.axis({
@@ -58,7 +55,7 @@
       width: 5,
     });
 
-    
+
     view.scale({
       divide: 10,
     });
@@ -74,7 +71,10 @@
       depth: 1,
     });
 
-    var depthObj = mathbox.select('axis, ticks, label');
+    mathbox.select('axis, ticks, label')
+      .bind('depth', function(t){
+        return .5 + .5 * Math.sin(t * .25);
+      })
 
   </script>
 </body>

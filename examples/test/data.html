@@ -34,13 +34,6 @@
       return Math.floor(x * data.length / 2) * 2
     };
 
-    clamp = function (x) { return Math.max(0, Math.min(1, x)); };
-
-    rand = function (seed, i) {
-      var r = Math.sin(seed + i * 100) * 11.0;
-      return r - Math.floor(r);
-    };
-
     time = 0
     three.on('update', function () {
       time = three.Time.frames / 200

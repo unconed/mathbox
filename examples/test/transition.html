@@ -19,7 +19,6 @@
 
     three.camera.position.set(-3.5, 2.2, -3.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-//    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
 
     function pingpong(t) {
       return Math.sin(t)
@@ -30,10 +29,10 @@
       time = three.Time.clock;
       var enter = Math.min(1,  1 + pingpong(time));
       var exit  = Math.min(1,  1 - pingpong(time));
-      
+
       enter = 1.0 - Math.pow(1.0 - enter, 2);
       exit  = 1.0 - Math.pow(1.0 - exit,  2);
-      
+
       move.set({ enter: enter, exit: exit })
       reveal.set({ enter: enter, exit: exit })
     });

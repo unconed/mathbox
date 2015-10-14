@@ -19,17 +19,6 @@
 
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0;
-    origin = new THREE.Vector3();
-    three.on('update', function (event) {
-      time = three.Time.clock;
-      x = Math.cos(time) * 3;
-      z = Math.sin(time) * 3;
-
-      camera.set('position', [x, 0, z]);
-      camera.set('lookAt', origin);
-    });
-
     view = mathbox
     .set({
       focus: 3
@@ -38,7 +27,11 @@
       type: 'float',
     })
     .camera({
-      position: [0, 0, 3]
+      lookAt: [0, 0, 0]
+      }, {
+      position: function(t){
+          return [Math.cos(t)*3, 0, Math.sin(t)*3]
+      }
     })
     .compose({
       color: '#fcfbfa',
@@ -52,8 +45,6 @@
       divideY: 2,
       opacity: .25,
     });
-
-    var camera = mathbox.select('camera');
 
     mathbox.compose({
       color: '#fff',
