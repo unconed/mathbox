@@ -20,7 +20,7 @@ docs = {}
 index = {}
 
 for type, def of defs
-  [module, description, examples] = PrimitiveDefs[type]
+  [module, description, examples, defaults] = PrimitiveDefs[type]
 
   id = "#{module}/#{type}"
 
@@ -41,10 +41,12 @@ for type, def of defs
   for key in props
     prop = def[key]
 
-    ex = prop[3] ? examples?[key]
+    ex = examples?[key] ? prop[3]
     ex = if ex then ", e.g. `#{ex}`" else ""
 
-    out += " * *#{key}* = `#{prop[2]}` (#{prop[1]}) - #{prop[0]}#{ex}\n"
+    val = defaults?[key] ? prop[2]
+
+    out += " * *#{key}* = `#{val}` (#{prop[1]}) - #{prop[0]}#{ex}\n"
 
   docs[type] = out
 

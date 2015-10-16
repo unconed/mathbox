@@ -154,7 +154,7 @@
  * *height* = `1` (nullable number) - Matrix height
  * *history* = `1` (number) - Matrix history
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
  * *limit* = `60` (number) - Maximum frames to track
  * *live* = `true` (bool) - Update continuously
@@ -181,7 +181,7 @@
  * *fps* = `null` (nullable number) - Frames-per-second update rate, e.g. `60`
  * *history* = `1` (number) - Array history
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
  * *length* = `1` (nullable number) - Array length
  * *limit* = `60` (number) - Maximum frames to track
@@ -205,7 +205,7 @@
  * *depth* = `1` (number) - Depth scaling
  * *detail* = `1` (number) - Geometric detail
  * *end* = `true` (bool) - Draw end arrow
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *opacity* = `1` (positive number) - Opacity
  * *origin* = `[0, 0, 0, 0]` (vec4) - 4D Origin
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
@@ -214,7 +214,7 @@
  * *start* = `true` (bool) - Draw start arrow
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
- * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
+ * *zBias* = `-1` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = `true` (bool) - Test Z buffer
@@ -227,7 +227,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = `"xyz"` (swizzle) - 3D Euler order
  * *fov* = `null` (nullable number) - Field-of-view (degrees), e.g. `60`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *lookAt* = `null` (nullable vec3) - 3D Look at, e.g. `[2, 3, 4]`
  * *position* = `null` (nullable vec3) - 3D Position, e.g. `[1, 2, 3]`
  * *proxy* = `false` (bool) - Re-use existing camera
@@ -241,7 +241,7 @@
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = `xyz` (swizzle) - Euler order
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = `[0, 0, 0]` (vec3) - 3D Position
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
@@ -255,7 +255,7 @@
 *Apply 4D cartesian view*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = `[0, 0, 0, 0]` (vec4) - 4D Position
  * *range* = `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]` (array vec2) - 4D range in view
@@ -269,7 +269,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *delay* = `0` (number) - Play delay
  * *from* = `0` (number) - Play from
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *loop* = `false` (bool) - Loop
  * *pace* = `1` (number) - Play pace
  * *realtime* = `false` (bool) - Run on real time, not clock time
@@ -284,16 +284,16 @@
  * *alpha* = `false` (bool) - Compose with alpha transparency
  * *blending* = `"normal"` (blending) - Blending mode ('no, normal, add, subtract, multiply)
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *color* = `"rgb(128, 128, 128)"` (color) - Color
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *color* = `"white"` (color) - Color
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *opacity* = `1` (positive number) - Opacity
  * *source* = `"<"` (select) - Input source
  * *visible* = `true` (bool) - Visibility for rendering
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
- * *zTest* = `true` (bool) - Test Z buffer
- * *zWrite* = `true` (bool) - Write Z buffer
+ * *zTest* = `false` (bool) - Test Z buffer
+ * *zWrite* = `false` (bool) - Write Z buffer
 
 ####  <a name="overlay/dom"></a>`overlay/dom`
 
@@ -304,7 +304,7 @@
  * *color* = `"rgb(255, 255, 255)"` (color) - Color
  * *depth* = `0` (number) - Depth scaling
  * *html* = `"<"` (select) - HTML data source
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *offset* = `[0, -20]` (vec2) - 2D offset
  * *opacity* = `1` (positive number) - Opacity
  * *outline* = `2` (number) - Outline size
@@ -327,7 +327,7 @@
  * *colors* = `null` (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = `1` (number) - Depth scaling
  * *fill* = `true` (bool) - Fill mesh
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *line* = `false` (bool) - Draw line
  * *map* = `null` (nullable select) - Texture map, e.g. `"#map"`
  * *opacity* = `1` (positive number) - Opacity
@@ -353,10 +353,10 @@
  * *digits* = `null` (nullable positive number) - Digits of precision, e.g. `2`
  * *expr* = `null` (nullable function) - Label formatter expression, e.g. `function (x, y, z, w, i, j, k, l, time, delta) { ... }`
  * *font* = `"sans-serif"` (font) - Font family
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *live* = `true` (bool) - Update continuously
- * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
- * *minFilter* = `"nearest"` (filter) - Texture minification filtering
+ * *magFilter* = `"linear"` (filter) - Texture magnification filtering
+ * *minFilter* = `"linear"` (filter) - Texture minification filtering
  * *sdf* = `5` (number) - Signed distance field range
  * *source* = `"<"` (select) - Input source
  * *style* = `""` (string) - Font style, e.g. `"italic"`
@@ -369,7 +369,7 @@
 *Apply custom fragment shader pass*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"light"` (fragmentPass) - Fragment pass (color, light, rgba)
  * *shader* = `"<"` (select) - Shader to use
 
@@ -398,7 +398,7 @@
  * *endY* = `true` (bool) - Include end
  * *factorX* = `1` (positive number) - Scale factor
  * *factorY* = `1` (positive number) - Scale factor
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *lineX* = `true` (bool) - Draw X lines
  * *lineY* = `true` (bool) - Draw Y lines
  * *modeX* = `"linear"` (scale) - Scale type
@@ -417,7 +417,7 @@
  * *unitX* = `1` (number) - Reference unit
  * *unitY* = `1` (number) - Reference unit
  * *visible* = `true` (bool) - Visibility for rendering
- * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
+ * *zBias* = `-2` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = `true` (bool) - Test Z buffer
@@ -431,7 +431,7 @@
 
  * *active* = `true` (bool) - Updates continuously
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *visible* = `true` (bool) - Visibility for rendering
 
 ####  <a name="operator/grow"></a>`operator/grow`
@@ -441,7 +441,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable anchor) - Depth alignment
  * *height* = `null` (nullable anchor) - Height alignment
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `null` (nullable anchor) - Items alignment
  * *scale* = `1` (number) - Scale factor
  * *source* = `"<"` (select) - Input source
@@ -462,7 +462,7 @@
  * *fps* = `null` (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = `1` (nullable number) - Voxel height
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
  * *limit* = `60` (number) - Maximum frames to track
  * *live* = `true` (bool) - Update continuously
@@ -475,7 +475,7 @@
 *Inherit and inject a trait from another element*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
 
 ####  <a name="data/interval"></a>`data/interval`
 
@@ -491,7 +491,7 @@
  * *fps* = `null` (nullable number) - Frames-per-second update rate, e.g. `60`
  * *history* = `1` (number) - Array history
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
  * *length* = `1` (nullable number) - Array length
  * *limit* = `60` (number) - Maximum frames to track
@@ -510,7 +510,7 @@
 
  * *axis* = `null` (nullable axis) - Axis to join, e.g. `x`
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *order* = `"wxyz"` (transpose) - Axis order
  * *overlap* = `1` (number) - Tuple overlap
  * *source* = `"<"` (select) - Input source
@@ -526,7 +526,7 @@
  * *colors* = `null` (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = `0` (number) - Depth scaling
  * *expand* = `0` (number) - Expand glyphs
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *offset* = `[0, -20]` (vec2) - 2D offset
  * *opacity* = `1` (positive number) - Opacity
  * *outline* = `2` (number) - Outline size
@@ -548,7 +548,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `1` (number) - 3D Depth
  * *fit* = `y` (fit) - Fit to (contain, cover, x, y)
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
 
 ####  <a name="operator/lerp"></a>`operator/lerp`
@@ -562,7 +562,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Lerp to depth, e.g. `5`
  * *height* = `null` (nullable number) - Lerp to height, e.g. `5`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `null` (nullable number) - Lerp to items, e.g. `5`
  * *paddingDepth* = `0` (number) - Number of samples padding
  * *paddingHeight* = `0` (number) - Number of samples padding
@@ -582,7 +582,7 @@
  * *colors* = `null` (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = `1` (number) - Depth scaling
  * *end* = `true` (bool) - Draw end arrow
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
@@ -601,7 +601,7 @@
 *Apply custom mask pass*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *shader* = `"<"` (select) - Shader to use
 
 ####  <a name="data/matrix"></a>`data/matrix`
@@ -618,7 +618,7 @@
  * *height* = `1` (nullable number) - Matrix height
  * *history* = `1` (number) - Matrix history
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
  * *limit* = `60` (number) - Maximum frames to track
  * *live* = `true` (bool) - Update continuously
@@ -634,7 +634,7 @@
 *Memoize data to an array/texture*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
  * *minFilter* = `"nearest"` (filter) - Texture minification filtering
  * *source* = `"<"` (select) - Input source
@@ -654,7 +654,7 @@
  * *enter* = `null` (nullable number) - Enter state, e.g. `0.5`
  * *exit* = `null` (nullable number) - Exit state, e.g. `0.5`
  * *from* = `[0, 0, 0, 0]` (vec4) - Enter from
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *stagger* = `[0, 0, 0, 0]` (vec4) - Stagger dimensions, e.g. `[2, 1, 0, 0]`
  * *to* = `[0, 0, 0, 0]` (vec4) - Exit to
@@ -664,7 +664,7 @@
 *Absolute UNIX time in seconds since 01/01/1970*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *now* = `null` (nullable timestamp) - Current moment, e.g. `1444094929.619`
  * *pace* = `1` (number) - Time pace
  * *seek* = `null` (nullable number) - Seek to time
@@ -678,7 +678,7 @@
  * *delay* = `0` (number) - Play delay
  * *ease* = `"cosine"` (ease) - Animation ease
  * *from* = `0` (number) - Play from
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *loop* = `false` (bool) - Loop
  * *pace* = `1` (number) - Play pace
  * *realtime* = `false` (bool) - Run on real time, not clock time
@@ -698,7 +698,7 @@
  * *colors* = `null` (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = `1` (number) - Depth scaling
  * *fill* = `true` (bool) - Fill shape
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *opacity* = `1` (positive number) - Opacity
  * *optical* = `true` (bool) - Optical or exact sizing
  * *points* = `<` (select) - Points data source
@@ -720,7 +720,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = `xyz` (swizzle) - Euler order
  * *helix* = `0` (number) - Expand into helix
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = `[0, 0, 0]` (vec3) - 3D Position
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
@@ -735,7 +735,7 @@
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *directed* = `true` (bool) - Apply directional transitions
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *index* = `1` (number) - Present slide number
  * *length* = `0` (number) - Presentation length (computed)
 
@@ -750,7 +750,7 @@
  * *depth* = `1` (nullable number) - Readback depth (read only)
  * *expr* = `null` (nullable function) - Readback consume expression, e.g. `function (x, y, z, w, i, j, k, l) { ... }`
  * *height* = `1` (nullable number) - Readback height (read only)
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `1` (nullable number) - Readback items (read only)
  * *source* = `"<"` (select) - Input source
  * *type* = `"float"` (float) - Readback data type (float, unsignedByte)
@@ -763,7 +763,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `1` (number) - Repeat depth
  * *height* = `1` (number) - Repeat height
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `1` (number) - Repeat items
  * *source* = `"<"` (select) - Input source
  * *width* = `1` (number) - Repeat width
@@ -780,7 +780,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Resample factor depth, e.g. `10`
  * *height* = `null` (nullable number) - Resample factor height, e.g. `10`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *indices* = `4` (number) - Resample indices
  * *items* = `null` (nullable number) - Resample factor items, e.g. `10`
  * *paddingDepth* = `0` (number) - Number of samples padding
@@ -805,7 +805,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Resample factor depth, e.g. `10`
  * *height* = `null` (nullable number) - Resample factor height, e.g. `10`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *indices* = `4` (number) - Resample indices
  * *items* = `null` (nullable number) - Resample factor items, e.g. `10`
  * *paddingDepth* = `0` (number) - Number of samples padding
@@ -831,7 +831,7 @@
  * *durationExit* = `0.3` (number) - Transition exit duration
  * *enter* = `null` (nullable number) - Enter state, e.g. `0.5`
  * *exit* = `null` (nullable number) - Exit state, e.g. `0.5`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *stagger* = `[0, 0, 0, 0]` (vec4) - Stagger dimensions, e.g. `[2, 1, 0, 0]`
 
 ####  <a name="base/root"></a>`base/root`
@@ -842,7 +842,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *focus* = `1` (nullable number) - Camera focus distance in world units
  * *fov* = `null` (nullable number) - (Vertical) Field-of-view to calibrate units for (degrees), e.g. `60`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *scale* = `null` (nullable number) - (Vertical) Reference scale of viewport in pixels, e.g. `720`
  * *speed* = `1` (number) - Global speed
@@ -855,12 +855,12 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *height* = `null` (nullable number) - RTT height, e.g. `360`
  * *history* = `1` (number) - RTT history
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
- * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
- * *minFilter* = `"nearest"` (filter) - Texture minification filtering
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
+ * *magFilter* = `"linear"` (filter) - Texture magnification filtering
+ * *minFilter* = `"linear"` (filter) - Texture minification filtering
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *speed* = `1` (number) - Global speed
- * *type* = `"float"` (type) - Texture data type
+ * *type* = `"unsignedByte"` (type) - Texture data type
  * *width* = `null` (nullable number) - RTT width, e.g. `640`
 
 ####  <a name="data/scale"></a>`data/scale`
@@ -873,7 +873,7 @@
  * *divide* = `10` (number) - Number of divisions
  * *end* = `true` (bool) - Include end
  * *factor* = `1` (positive number) - Scale factor
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *mode* = `"linear"` (scale) - Scale type
  * *nice* = `true` (bool) - Snap to nice numbers
  * *origin* = `[0, 0, 0, 0]` (vec4) - 4D Origin
@@ -888,7 +888,7 @@
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *code* = `""` (string) - Shader code
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *language* = `"glsl"` (string) - Shader language
  * *sources* = `null` (nullable select) - Sampler sources, e.g. `["#pressure", "#divergence"]`
  * *uniforms* = `null` (nullable object) - Shader uniform objects (three.js style), e.g. `{ time: { type: 'f', value: 3 }}`
@@ -900,7 +900,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable vec2) - Slice from, to depth, e.g. `[2, 4]`
  * *height* = `null` (nullable vec2) - Slice from, to height, e.g. `[2, 4]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `null` (nullable vec2) - Slice from, to items, e.g. `[2, 4]`
  * *source* = `"<"` (select) - Input source
  * *width* = `null` (nullable vec2) - Slice from, to width, e.g. `[2, 4]`
@@ -912,7 +912,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *early* = `0` (number) - Appear early steps
  * *from* = `null` (nullable number) - Appear from step, e.g. `2`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *late* = `0` (number) - Stay late steps
  * *order* = `0` (nullable number) - Slide order
  * *steps* = `1` (number) - Slide steps
@@ -925,7 +925,7 @@
  * *bend* = `1` (number) - Amount of spherical bend
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = `xyz` (swizzle) - Euler order
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = `[0, 0, 0]` (vec3) - 3D Position
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
@@ -940,7 +940,7 @@
 
  * *axis* = `null` (nullable axis) - Axis to split, e.g. `x`
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *length* = `1` (number) - Tuple length
  * *order* = `"wxyz"` (transpose) - Axis order
  * *overlap* = `1` (number) - Tuple overlap
@@ -957,7 +957,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable vec4) - Depth offset, e.g. `[1.5, 0, 0, 0]`
  * *height* = `null` (nullable vec4) - Height offset, e.g. `[1.5, 0, 0, 0]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `null` (nullable vec4) - Items offset, e.g. `[1.5, 0, 0, 0]`
  * *source* = `"<"` (select) - Input source
  * *unit* = `"relative"` (mapping) - Spread per item (absolute) or array (relative)
@@ -971,7 +971,7 @@
  * *delay* = `0` (number) - Step delay
  * *duration* = `0.3` (number) - Step duration
  * *ease* = `"cosine"` (ease) - Animation ease
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pace* = `0` (number) - Step pace
  * *playback* = `"linear"` (ease) - Playhead ease
  * *realtime* = `false` (bool) - Run on real time, not clock time
@@ -990,7 +990,7 @@
  * *bend* = `1` (number) - Amount of stereographic bend
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = `xyz` (swizzle) - Euler order
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = `[0, 0, 0]` (vec3) - 3D Position
  * *quaternion* = `[0, 0, 0, 1]` (quat) - 3D Quaternion
@@ -1005,7 +1005,7 @@
 
  * *bend* = `1` (number) - Amount of stereographic bend
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = `[0, 0, 0, 0]` (vec4) - 4D Position
  * *range* = `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]` (array vec2) - 4D range in view
@@ -1023,7 +1023,7 @@
  * *colors* = `null` (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = `1` (number) - Depth scaling
  * *fill* = `true` (bool) - Fill mesh
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *line* = `false` (bool) - Draw line
  * *map* = `null` (nullable select) - Texture map, e.g. `"#map"`
  * *opacity* = `1` (positive number) - Opacity
@@ -1053,9 +1053,9 @@
  * *crossed* = `true` (bool) - UVWO map on matching axes
  * *depth* = `1` (number) - Depth scaling
  * *fill* = `true` (bool) - Fill mesh
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
- * *lineX* = `true` (bool) - Draw X lines
- * *lineY* = `true` (bool) - Draw Y lines
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
+ * *lineX* = `false` (bool) - Draw X lines
+ * *lineY* = `false` (bool) - Draw Y lines
  * *map* = `null` (nullable select) - Texture map, e.g. `"#map"`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
@@ -1075,7 +1075,7 @@
 *Swizzle data values*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *order* = `xyzw` (swizzle) - Swizzle order
  * *source* = `"<"` (select) - Input source
 
@@ -1096,12 +1096,12 @@
  * *fps* = `null` (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = `1` (nullable number) - Voxel height
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
  * *limit* = `60` (number) - Maximum frames to track
  * *live* = `true` (bool) - Update continuously
- * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
- * *minFilter* = `"nearest"` (filter) - Texture minification filtering
+ * *magFilter* = `"linear"` (filter) - Texture magnification filtering
+ * *minFilter* = `"linear"` (filter) - Texture minification filtering
  * *observe* = `false` (bool) - Pass clock time to data
  * *realtime* = `false` (bool) - Run on real time, not clock time
  * *sdf* = `5` (number) - Signed distance field range
@@ -1122,7 +1122,7 @@
  * *colors* = `null` (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = `1` (number) - Depth scaling
  * *epsilon* = `0.0001` (number) - Tick epsilon
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *normal* = `true` (bool) - Normal for reference plane
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
@@ -1142,7 +1142,7 @@
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *eulerOrder* = `xyz` (swizzle) - 3D Euler order
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *matrix* = `[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]` (mat4) - 3D Projective Matrix
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = `[0, 0, 0]` (vec3) - 3D Position
@@ -1155,7 +1155,7 @@
 *Transform geometry in 4D*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *matrix* = `[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]` (mat4) - 4D Affine Matrix
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *position* = `[0, 0, 0, 0]` (vec4) - 4D Position
@@ -1166,7 +1166,7 @@
 *Transpose array dimensions*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *order* = `xyzw` (transpose) - Transpose order
  * *source* = `"<"` (select) - Input source
 
@@ -1177,7 +1177,7 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *focus* = `1` (nullable number) - Camera focus distance in world units
  * *fov* = `null` (nullable number) - (Vertical) Field-of-view to calibrate units for (degrees), e.g. `60`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *scale* = `null` (nullable number) - (Vertical) Reference scale of viewport in pixels, e.g. `720`
 
 ####  <a name="draw/vector"></a>`draw/vector`
@@ -1191,7 +1191,7 @@
  * *colors* = `null` (nullable select) - Colors data source, e.g. `"#colors"`
  * *depth* = `1` (number) - Depth scaling
  * *end* = `true` (bool) - Draw end arrow
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
@@ -1210,7 +1210,7 @@
 *Apply custom vertex shader pass*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *shader* = `"<"` (select) - Shader to use
 
@@ -1219,7 +1219,7 @@
 *Adjust view range*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pass* = `"view"` (vertexPass) - Vertex pass (data, view, world, eye)
  * *range* = `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]` (array vec2) - 4D range in view
  * *visible* = `true` (bool) - Visibility for rendering
@@ -1243,7 +1243,7 @@
  * *fps* = `null` (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = `1` (nullable number) - Voxel height
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
  * *limit* = `60` (number) - Maximum frames to track
  * *live* = `true` (bool) - Update continuously
@@ -1275,7 +1275,7 @@
  * *fps* = `null` (nullable number) - Frames-per-second update rate, e.g. `60`
  * *height* = `1` (nullable number) - Voxel height
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
- * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
  * *limit* = `60` (number) - Maximum frames to track
  * *live* = `true` (bool) - Update continuously

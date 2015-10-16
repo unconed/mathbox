@@ -1,11 +1,11 @@
 Classes =
-  axis:              ['draw', 'Draw an axis']
+  axis:              ['draw', 'Draw an axis', {}, {end: "true", zBias: "-1"}]
   face:              ['draw', 'Draw polygon faces']
-  grid:              ['draw', 'Draw a 2D line grid']
+  grid:              ['draw', 'Draw a 2D line grid', {}, {width: "1", zBias: "-2"}]
   line:              ['draw', 'Draw lines']
   point:             ['draw', 'Draw points']
   strip:             ['draw', 'Draw triangle strips']
-  surface:           ['draw', 'Draw surfaces']
+  surface:           ['draw', 'Draw surfaces', {}, {lineX: "false", lineY: "false"}]
   ticks:             ['draw', 'Draw ticks']
   vector:            ['draw', 'Draw vectors']
 
@@ -35,8 +35,8 @@ Classes =
   html:              ['overlay','HTML element source']
   dom:               ['overlay','HTML DOM injector']
 
-  text:              ['text','GL text source']
-  format:            ['text','Text formatter', {expr: "function (x, y, z, w, i, j, k, l, time, delta) { ... }"}]
+  text:              ['text','GL text source', {}, {minFilter: '"linear"', magFilter: '"linear"'}]
+  format:            ['text','Text formatter', {expr: "function (x, y, z, w, i, j, k, l, time, delta) { ... }"}, {minFilter: '"linear"', magFilter: '"linear"'}]
   retext:            ['text','Text atlas resampler']
   label:             ['text','Draw GL labels']
 
@@ -62,8 +62,8 @@ Classes =
 
   camera:            ['camera','Camera instance or proxy']
 
-  rtt:               ['rtt','Render objects to a texture']
-  compose:           ['rtt','Full-screen render pass']
+  rtt:               ['rtt','Render objects to a texture', {}, {minFilter: '"linear"', magFilter: '"linear"', type: '"unsignedByte"'}]
+  compose:           ['rtt','Full-screen render pass', {}, {zWrite: "false", zTest: "false", color: '"white"'}]
 
   clock:             ['time','Relative clock that starts from zero.']
   now:               ['time','Absolute UNIX time in seconds since 01/01/1970']

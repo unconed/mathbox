@@ -14582,7 +14582,7 @@ HTML = (function(superClass) {
 
   HTML.traits = ['node', 'buffer', 'active', 'data', 'voxel', 'html'];
 
-  HTML.defaults = {
+  HTML.finals = {
     channels: 1
   };
 
@@ -16644,10 +16644,6 @@ Label = (function(superClass) {
   }
 
   Label.traits = ['node', 'bind', 'object', 'visible', 'style', 'label', 'attach', 'geometry', 'position'];
-
-  Label.defaults = {
-    color: '#808080'
-  };
 
   Label.prototype.make = function() {
     var color, combine, depth, height, items, labelUniforms, map, mask, pointDims, position, snippet, sprite, styleUniforms, textDims, textIsSDF, uniforms, unitUniforms, width;

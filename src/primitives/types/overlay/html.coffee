@@ -3,7 +3,7 @@ Util = require '../../../util'
 
 class HTML extends Voxel
   @traits = ['node', 'buffer', 'active', 'data', 'voxel', 'html']
-  @defaults =
+  @finals =
     channels: 1
 
   init: () ->

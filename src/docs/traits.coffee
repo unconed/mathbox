@@ -1,6 +1,6 @@
 Traits =
   node:
-    id:                ["Unique ID", "nullable string", "null", "sampler"]
+    id:                ["Unique ID", "nullable string", "null", '"sampler"']
     classes:           ["Custom classes", "string array", "[]", '["big"]']
 
   entity:
