@@ -160,14 +160,15 @@ class Surface extends Primitive
                          changed['line.stroke'] or
                          touched['grid']
 
-    if changed['style.color'] or
-       changed['style.zBias'] or
-       changed['mesh.fill']   or
+    if changed['style.color']   or
+       changed['style.zBias']   or
+       changed['mesh.fill']     or
+       changed['mesh.lineBias'] or
        init
 
-      {fill, color, zBias} = @props
+      {fill, color, zBias, lineBias} = @props
 
-      @wireZBias.value = zBias + if fill then 5 else 0
+      @wireZBias.value = zBias + if fill then lineBias else 0
       @wireColor.copy color
       if fill
         c = @wireScratch

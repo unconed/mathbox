@@ -16,7 +16,7 @@ window.e = Math.E
 # Namespace
 window.MathBox = exports
 window.mathBox = exports.mathBox = mathBox
-exports.version = '2'
+exports.version = '0.0.4'
 
 # Load context and export namespace
 exports.Context = Context = require './context'
@@ -69,7 +69,7 @@ THREE.Bootstrap.registerPlugin 'mathbox',
         @pending = 0
         @warm    = !@options.warmup
 
-        console.log 'MathBox', MathBox.version
+        console.log 'MathBox²', MathBox.version
         three.trigger {type: 'mathbox/init', version: MathBox.version, context: @context}
 
       # Destroy the mathbox context

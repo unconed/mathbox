@@ -21,7 +21,7 @@ For example, a 2D rectangular view containing an array of points, drawn as a con
 
 ![MathBox](http://acko.net/files/mathbox2/graph.png)
 
-[Download MathBox](http://acko.net/files/mathbox2/mathbox-0.0.3.zip) (ZIP). See [README](/README.md) for more info.
+[Download MathBox](http://acko.net/files/mathbox2/mathbox-0.0.4.zip) (ZIP). See [README](/README.md) for more info.
 
 *Note: Open `examples/empty.html` in your text editor and browser to follow along. You can also use the [JSBin](http://jsbin.com/hasuhaw/edit?html,output), but you'll want to turn off "Auto-run" in the top right.*
 

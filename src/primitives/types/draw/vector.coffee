@@ -75,7 +75,7 @@ class Vector extends Primitive
     position = swizzle2 position, 'yzwx', 'yzwx'
     color    = swizzle  color,    'yzwx'
     mask     = swizzle  mask,     'yzwx'
-    material = swizzle  mask,     'yzwx'
+    material = swizzle  material, 'yzwx'
 
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms

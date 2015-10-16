@@ -1,6 +1,6 @@
 {
   "name": "mathbox",
-  "version": "0.0.4-dev",
+  "version": "0.0.4",
   "description": "Presentation-quality WebGL math graphing",
   "repository": {
     "type": "git",

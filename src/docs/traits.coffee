@@ -158,7 +158,8 @@ Traits =
   mesh:
     fill:              ["Fill mesh", "bool", true]
     shaded:            ["Shade mesh", "bool", false]
-    map:               ["Texture map", "nullable select", "null", '"#map"']
+    map:               ["Texture map source", "nullable select", "null", '"#map"']
+    lineBias:          ["Z-Bias for lines on fill", "number", 5]
   strip:
     line:              ["Draw line", "bool", false]
   face:

@@ -125,10 +125,11 @@ class Face extends Primitive
   change: (changed, touched, init) ->
     return @rebuild() if changed['geometry.points'] or touched['mesh']
 
-    if changed['style.zBias'] or
+    if changed['style.zBias']   or
+       changed['mesh.lineBias'] or
        init
 
-      {fill, zBias} = @props
-      @wireZBias.value = zBias + if fill then 5 else 0
+      {fill, zBias, lineBias} = @props
+      @wireZBias.value = zBias + if fill then lineBias else 0
 
 module.exports = Face

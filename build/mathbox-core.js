@@ -7040,7 +7040,7 @@ window.MathBox = exports;
 
 window.mathBox = exports.mathBox = mathBox;
 
-exports.version = '2';
+exports.version = '0.0.4';
 
 exports.Context = Context = require('./context');
 
@@ -7088,7 +7088,7 @@ THREE.Bootstrap.registerPlugin('mathbox', {
           _this.context.setWarmup(_this.options.warmup);
           _this.pending = 0;
           _this.warm = !_this.options.warmup;
-          console.log('MathBox', MathBox.version);
+          console.log('MathBox²', MathBox.version);
           return three.trigger({
             type: 'mathbox/init',
             version: MathBox.version,
@@ -11156,13 +11156,13 @@ Face = (function(superClass) {
   };
 
   Face.prototype.change = function(changed, touched, init) {
-    var fill, ref, zBias;
+    var fill, lineBias, ref, zBias;
     if (changed['geometry.points'] || touched['mesh']) {
       return this.rebuild();
     }
-    if (changed['style.zBias'] || init) {
-      ref = this.props, fill = ref.fill, zBias = ref.zBias;
-      return this.wireZBias.value = zBias + (fill ? 5 : 0);
+    if (changed['style.zBias'] || changed['mesh.lineBias'] || init) {
+      ref = this.props, fill = ref.fill, zBias = ref.zBias, lineBias = ref.lineBias;
+      return this.wireZBias.value = zBias + (fill ? lineBias : 0);
     }
   };
 
@@ -11641,7 +11641,7 @@ Strip = (function(superClass) {
   };
 
   Strip.prototype.make = function() {
-    var color, depth, dims, faceMaterial, fill, height, items, line, lineMaterial, lineUniforms, map, mask, material, objects, position, ref, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width;
+    var color, depth, dims, faceMaterial, fill, height, items, line, lineMaterial, lineUniforms, map, mask, material, objects, position, ref, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width, wireUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -11666,6 +11666,9 @@ Strip = (function(superClass) {
     line = this.props.line;
     shaded = this.props.shaded;
     fill = this.props.fill;
+    wireUniforms = {};
+    wireUniforms.styleZBias = this._attributes.make(this._types.number());
+    this.wireZBias = wireUniforms.styleZBias;
     dims = this.bind.points.getDimensions();
     items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
     if (this.bind.colors) {
@@ -11682,7 +11685,7 @@ Strip = (function(superClass) {
       swizzle = this._shaders.shader();
       swizzle.pipe(Util.GLSL.swizzleVec4('yzwx'));
       swizzle.pipe(position);
-      uniforms = Util.JS.merge(unitUniforms, lineUniforms, styleUniforms);
+      uniforms = Util.JS.merge(unitUniforms, lineUniforms, styleUniforms, wireUniforms);
       this.line = this._renderables.make('line', {
         uniforms: uniforms,
         samples: items,
@@ -11726,8 +11729,13 @@ Strip = (function(superClass) {
   };
 
   Strip.prototype.change = function(changed, touched, init) {
+    var fill, lineBias, ref, zBias;
     if (changed['geometry.points'] || touched['mesh']) {
       return this.rebuild();
+    }
+    if (changed['style.zBias'] || changed['mesh.lineBias'] || init) {
+      ref = this.props, fill = ref.fill, zBias = ref.zBias, lineBias = ref.lineBias;
+      return this.wireZBias.value = zBias + (fill ? lineBias : 0);
     }
   };
 
@@ -11907,13 +11915,13 @@ Surface = (function(superClass) {
   };
 
   Surface.prototype.change = function(changed, touched, init) {
-    var c, color, fill, ref, zBias;
+    var c, color, fill, lineBias, ref, zBias;
     if (changed['geometry.points'] || changed['mesh.shaded'] || changed['mesh.fill'] || changed['line.stroke'] || touched['grid']) {
       return this.rebuild();
     }
-    if (changed['style.color'] || changed['style.zBias'] || changed['mesh.fill'] || init) {
-      ref = this.props, fill = ref.fill, color = ref.color, zBias = ref.zBias;
-      this.wireZBias.value = zBias + (fill ? 5 : 0);
+    if (changed['style.color'] || changed['style.zBias'] || changed['mesh.fill'] || changed['mesh.lineBias'] || init) {
+      ref = this.props, fill = ref.fill, color = ref.color, zBias = ref.zBias, lineBias = ref.lineBias;
+      this.wireZBias.value = zBias + (fill ? lineBias : 0);
       this.wireColor.copy(color);
       if (fill) {
         c = this.wireScratch;
@@ -12136,7 +12144,7 @@ Vector = (function(superClass) {
     position = swizzle2(position, 'yzwx', 'yzwx');
     color = swizzle(color, 'yzwx');
     mask = swizzle(mask, 'yzwx');
-    material = swizzle(mask, 'yzwx');
+    material = swizzle(material, 'yzwx');
     uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms, unitUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
@@ -17277,7 +17285,8 @@ Traits = {
   mesh: {
     fill: Types.bool(true),
     shaded: Types.bool(false),
-    map: Types.nullable(Types.select())
+    map: Types.nullable(Types.select()),
+    lineBias: Types.number(5)
   },
   strip: {
     line: Types.bool(false)
@@ -23303,21 +23312,14 @@ Base = (function(superClass) {
       gamma = true;
     }
     if (material) {
+      if (!join) {
+        f.pipe(Util.GLSL.constant('vec4', 'vec4(1.0)'));
+      }
       if (material === true) {
-        if (!join) {
-          f.pipe(Util.GLSL.constant('vec4', 'vec4(1.0)'));
-        }
         f.pipe('mesh.fragment.shaded', this.uniforms);
       } else {
-        if (join) {
-          f.isolate();
-        }
         f.require(material);
-        f.pipe('mesh.fragment.map', this.uniforms, defs);
-        if (join) {
-          f.end();
-          f.pipe(Util.GLSL.binaryOperator('vec4', '*'));
-        }
+        f.pipe('mesh.fragment.material', this.uniforms, defs);
       }
       gamma = true;
     }

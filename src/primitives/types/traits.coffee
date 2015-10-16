@@ -177,6 +177,7 @@ Traits =
     fill:              Types.bool(true)
     shaded:            Types.bool(false)
     map:               Types.nullable(Types.select())
+    lineBias:          Types.number(5)
   strip:
     line:              Types.bool(false)
   face:

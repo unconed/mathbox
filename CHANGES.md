@@ -1,6 +1,6 @@
 ### MathBox Changelog
 
-0.0.4-dev
+0.0.4
 
  * New <readback /> sink that exposes internal readback functionality.
  * Make <array />, <matrix />, <voxel /> and <text /> auto-detect `null` dimensions from `data` if given.
@@ -16,6 +16,11 @@
  * Clean slate NPM dependencies.
  * Fix `gulp-rename` compatibility.
  * Improved axis, grid, helix, lerp, label, strip examples.
+ * Improved idiomatic time examples.
+ * New color cube, vertex color, fragment color, tiles and ortho examples.
+ * Document instanced traits (e.g. `divideX`) and non-standard defaults.
+ * Support fragment passes on unshaded geometry.
+ * Added `lineBias` prop to set Z-bias between surface/face and its wireframe.
 
 0.0.3
 

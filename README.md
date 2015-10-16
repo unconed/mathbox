@@ -30,7 +30,7 @@ Presentations:
 
 ## Download
 
-* Release: [0.0.3 ZIP](http://acko.net/files/mathbox2/mathbox-0.0.3.zip)
+* Release: [0.0.4 ZIP](http://acko.net/files/mathbox2/mathbox-0.0.4.zip)
 
 or install via bower:
 

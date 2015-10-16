@@ -51,6 +51,11 @@ class Strip extends Primitive
     shaded  = @props.shaded
     fill    = @props.fill
 
+    # Auto z-bias wireframe over surface
+    wireUniforms = {}
+    wireUniforms.styleZBias  = @_attributes.make @_types.number()
+    @wireZBias  = wireUniforms.styleZBias
+
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
     {items, width, height, depth} = dims
@@ -80,7 +85,7 @@ class Strip extends Primitive
       swizzle.pipe Util.GLSL.swizzleVec4 'yzwx'
       swizzle.pipe position
 
-      uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms
+      uniforms = Util.JS.merge unitUniforms, lineUniforms, styleUniforms, wireUniforms
 
       @line = @_renderables.make 'line',
                 uniforms: uniforms
@@ -124,5 +129,12 @@ class Strip extends Primitive
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['geometry.points'] or touched['mesh']
+
+    if changed['style.zBias']   or
+       changed['mesh.lineBias'] or
+       init
+
+      {fill, zBias, lineBias} = @props
+      @wireZBias.value = zBias + if fill then lineBias else 0
 
 module.exports = Strip
