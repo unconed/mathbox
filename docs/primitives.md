@@ -144,6 +144,8 @@
  * *axes* = `[1, 2]` (swizzle(2) axis) - Axis pair
  * *bufferHeight* = `1` (number) - Matrix buffer height
  * *bufferWidth* = `1` (number) - Matrix buffer width
+ * *centeredX* = `false` (bool) - Centered instead of corner sampling
+ * *centeredY* = `false` (bool) - Centered instead of corner sampling
  * *channels* = `4` (number) - Number of channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *data* = `null` (nullable object) - Data array
@@ -159,6 +161,10 @@
  * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
  * *minFilter* = `"nearest"` (filter) - Texture minification filtering
  * *observe* = `false` (bool) - Pass clock time to data
+ * *paddingX* = `0` (number) - Number of samples padding
+ * *paddingY* = `0` (number) - Number of samples padding
+ * *rangeX* = `[-1, 1]` (vec2) - Range on axis
+ * *rangeY* = `[-1, 1]` (vec2) - Range on axis
  * *realtime* = `false` (bool) - Run on real time, not clock time
  * *type* = `"float"` (type) - Texture data type
  * *width* = `1` (nullable number) - Matrix width
@@ -372,6 +378,8 @@
 *Draw a 2D line grid*
 
  * *axes* = `[1, 2]` (swizzle(2) axis) - Axis pair
+ * *baseX* = `10` (number) - Power base for sub/super units
+ * *baseY* = `10` (number) - Power base for sub/super units
  * *blending* = `"normal"` (blending) - Blending mode ('no, normal, add, subtract, multiply)
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *closed* = `false` (bool) - Close line
@@ -379,21 +387,43 @@
  * *closedY* = `false` (bool) - Close Y lines
  * *color* = `"rgb(128, 128, 128)"` (color) - Color
  * *crossed* = `true` (bool) - UVWO map on matching axes
+ * *crossedX* = `true` (bool) - UVWO map on matching axis
+ * *crossedY* = `true` (bool) - UVWO map on matching axis
  * *depth* = `1` (number) - Depth scaling
+ * *detailX* = `1` (number) - Geometric detail
+ * *detailY* = `1` (number) - Geometric detail
+ * *divideX* = `10` (number) - Number of divisions
+ * *divideY* = `10` (number) - Number of divisions
+ * *endX* = `true` (bool) - Include end
+ * *endY* = `true` (bool) - Include end
+ * *factorX* = `1` (positive number) - Scale factor
+ * *factorY* = `1` (positive number) - Scale factor
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *lineX* = `true` (bool) - Draw X lines
  * *lineY* = `true` (bool) - Draw Y lines
+ * *modeX* = `"linear"` (scale) - Scale type
+ * *modeY* = `"linear"` (scale) - Scale type
+ * *niceX* = `true` (bool) - Snap to nice numbers
+ * *niceY* = `true` (bool) - Snap to nice numbers
  * *opacity* = `1` (positive number) - Opacity
  * *origin* = `[0, 0, 0, 0]` (vec4) - 4D Origin
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
+ * *rangeX* = `[-1, 1]` (vec2) - Range on axis
+ * *rangeY* = `[-1, 1]` (vec2) - Range on axis
  * *size* = `2` (positive number) - Line width
+ * *startX* = `true` (bool) - Include start
+ * *startY* = `true` (bool) - Include start
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
+ * *unitX* = `1` (number) - Reference unit
+ * *unitY* = `1` (number) - Reference unit
  * *visible* = `true` (bool) - Visibility for rendering
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = `true` (bool) - Test Z buffer
  * *zWrite* = `true` (bool) - Write Z buffer
+ * *zeroX* = `true` (bool) - Include zero
+ * *zeroY* = `true` (bool) - Include zero
 
 ####  <a name="base/group"></a>`base/group`
 
@@ -525,11 +555,19 @@
 
 *Linear interpolation of data*
 
+ * *centeredDepth* = `false` (bool) - Centered instead of corner sampling
+ * *centeredHeight* = `false` (bool) - Centered instead of corner sampling
+ * *centeredItems* = `false` (bool) - Centered instead of corner sampling
+ * *centeredWidth* = `false` (bool) - Centered instead of corner sampling
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Lerp to depth, e.g. `5`
  * *height* = `null` (nullable number) - Lerp to height, e.g. `5`
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *items* = `null` (nullable number) - Lerp to items, e.g. `5`
+ * *paddingDepth* = `0` (number) - Number of samples padding
+ * *paddingHeight* = `0` (number) - Number of samples padding
+ * *paddingItems* = `0` (number) - Number of samples padding
+ * *paddingWidth* = `0` (number) - Number of samples padding
  * *source* = `"<"` (select) - Input source
  * *width* = `null` (nullable number) - Lerp to width, e.g. `5`
 
@@ -734,6 +772,10 @@
 
 *Resample data to new dimensions with a shader*
 
+ * *centeredDepth* = `false` (bool) - Centered instead of corner sampling
+ * *centeredHeight* = `false` (bool) - Centered instead of corner sampling
+ * *centeredItems* = `false` (bool) - Centered instead of corner sampling
+ * *centeredWidth* = `false` (bool) - Centered instead of corner sampling
  * *channels* = `4` (number) - Resample channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Resample factor depth, e.g. `10`
@@ -741,6 +783,10 @@
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *indices* = `4` (number) - Resample indices
  * *items* = `null` (nullable number) - Resample factor items, e.g. `10`
+ * *paddingDepth* = `0` (number) - Number of samples padding
+ * *paddingHeight* = `0` (number) - Number of samples padding
+ * *paddingItems* = `0` (number) - Number of samples padding
+ * *paddingWidth* = `0` (number) - Number of samples padding
  * *sample* = `"relative"` (mapping) - Source sampling (relative, absolute)
  * *shader* = `"<"` (select) - Shader to use
  * *size* = `"absolute"` (mapping) - Scaling mode (relative, absolute)
@@ -751,6 +797,10 @@
 
 *Text atlas resampler*
 
+ * *centeredDepth* = `false` (bool) - Centered instead of corner sampling
+ * *centeredHeight* = `false` (bool) - Centered instead of corner sampling
+ * *centeredItems* = `false` (bool) - Centered instead of corner sampling
+ * *centeredWidth* = `false` (bool) - Centered instead of corner sampling
  * *channels* = `4` (number) - Resample channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Resample factor depth, e.g. `10`
@@ -758,6 +808,10 @@
  * *id* = `null` (nullable string) - Unique ID, e.g. `sampler`
  * *indices* = `4` (number) - Resample indices
  * *items* = `null` (nullable number) - Resample factor items, e.g. `10`
+ * *paddingDepth* = `0` (number) - Number of samples padding
+ * *paddingHeight* = `0` (number) - Number of samples padding
+ * *paddingItems* = `0` (number) - Number of samples padding
+ * *paddingWidth* = `0` (number) - Number of samples padding
  * *sample* = `"relative"` (mapping) - Source sampling (relative, absolute)
  * *shader* = `"<"` (select) - Shader to use
  * *size* = `"absolute"` (mapping) - Scaling mode (relative, absolute)
@@ -1178,6 +1232,9 @@
  * *bufferDepth* = `1` (number) - Voxel buffer depth
  * *bufferHeight* = `1` (number) - Voxel buffer height
  * *bufferWidth* = `1` (number) - Voxel buffer width
+ * *centeredX* = `false` (bool) - Centered instead of corner sampling
+ * *centeredY* = `false` (bool) - Centered instead of corner sampling
+ * *centeredZ* = `false` (bool) - Centered instead of corner sampling
  * *channels* = `4` (number) - Number of channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *data* = `null` (nullable object) - Data array
@@ -1193,6 +1250,12 @@
  * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
  * *minFilter* = `"nearest"` (filter) - Texture minification filtering
  * *observe* = `false` (bool) - Pass clock time to data
+ * *paddingX* = `0` (number) - Number of samples padding
+ * *paddingY* = `0` (number) - Number of samples padding
+ * *paddingZ* = `0` (number) - Number of samples padding
+ * *rangeX* = `[-1, 1]` (vec2) - Range on axis
+ * *rangeY* = `[-1, 1]` (vec2) - Range on axis
+ * *rangeZ* = `[-1, 1]` (vec2) - Range on axis
  * *realtime* = `false` (bool) - Run on real time, not clock time
  * *type* = `"float"` (type) - Texture data type
  * *width* = `1` (nullable number) - Voxel width

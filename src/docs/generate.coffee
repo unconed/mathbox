@@ -7,10 +7,14 @@ Primitives = require '..//primitives'
 
 defs = {}
 
+titleCase = (v) -> v.slice(0, 1).toUpperCase() + v.slice(1)
+
 for type, klass of Primitives.Types.Classes
   def = defs[type] = {}
   for trait in klass.traits
-    def[k] = v for k, v of TraitDefs[trait] when TraitDefs[trait]?
+    [trait, ns] = trait.split ':'
+    suffix = if ns? then titleCase ns else ''
+    def[k + suffix] = v for k, v of TraitDefs[trait] when TraitDefs[trait]?
 
 docs = {}
 index = {}
