@@ -329,7 +329,8 @@
  * *fill* = `true` (bool) - Fill mesh
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *line* = `false` (bool) - Draw line
- * *map* = `null` (nullable select) - Texture map, e.g. `"#map"`
+ * *lineBias* = `5` (number) - Z-Bias for lines on fill
+ * *map* = `null` (nullable select) - Texture map source, e.g. `"#map"`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
@@ -1025,7 +1026,8 @@
  * *fill* = `true` (bool) - Fill mesh
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *line* = `false` (bool) - Draw line
- * *map* = `null` (nullable select) - Texture map, e.g. `"#map"`
+ * *lineBias* = `5` (number) - Z-Bias for lines on fill
+ * *map* = `null` (nullable select) - Texture map source, e.g. `"#map"`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
@@ -1054,9 +1056,10 @@
  * *depth* = `1` (number) - Depth scaling
  * *fill* = `true` (bool) - Fill mesh
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
+ * *lineBias* = `5` (number) - Z-Bias for lines on fill
  * *lineX* = `false` (bool) - Draw X lines
  * *lineY* = `false` (bool) - Draw Y lines
- * *map* = `null` (nullable select) - Texture map, e.g. `"#map"`
+ * *map* = `null` (nullable select) - Texture map source, e.g. `"#map"`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
