@@ -36,6 +36,7 @@ Traits =
     pass:              ["Vertex pass (data, view, world, eye)", "vertexPass", '"view"']
   fragment:
     pass:              ["Fragment pass (color, light, rgba)", "fragmentPass", '"light"']
+    gamma:             ["Pass RGBA values in sRGB instead of linear RGB", "boolean", "false"]
 
   transform3:
     position:          ["3D Position", "vec3", "[0, 0, 0]"]

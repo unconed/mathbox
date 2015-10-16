@@ -21,6 +21,7 @@
  * Document instanced traits (e.g. `divideX`) and non-standard defaults.
  * Support fragment passes on unshaded geometry.
  * Added `lineBias` prop to set Z-bias between surface/face and its wireframe.
+ * Allow passing modified STPQ coordinates from <vertex /> to <fragment /> (see `fragmentcolor.html` example)
 
 0.0.3
 

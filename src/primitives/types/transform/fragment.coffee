@@ -18,9 +18,10 @@ class Fragment extends Transform
   fragment: (shader, pass) ->
     if @bind.shader?
       if pass == @props.pass
+        shader.pipe 'mesh.gamma.out' if @props.gamma
         shader.pipe @bind.shader.shaderBind()
         shader.split()
-        shader.pipe 'mesh.gamma.in' if @props.gamma
+        shader.pipe 'mesh.gamma.in'  if @props.gamma
         shader.pass()
     super shader, pass
 
