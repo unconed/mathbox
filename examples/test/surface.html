@@ -19,12 +19,6 @@
 
     three.camera.position.set(-3.5, 2.2, -3.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-//    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
-
-    time = 0
-    three.on('update', function () {
-      time = three.Time.clock
-    });
 
     view = mathbox.cartesian({
       range: [[-3, 3], [0, 1], [-3, 3]],
@@ -49,7 +43,7 @@
       width: 64,
       height: 64,
       axes: [1, 3],
-      expr: function (emit, x, y, i, j) {
+      expr: function (emit, x, y, i, j, time) {
         emit(x, .35 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);
         emit(x, .35 + .25 * (Math.sin(x * 1.31 + time * 1.13) * Math.sin(y * 1.46 - time * .94)) + .5, y);
         emit(x, .35 + .25 * (Math.sin(x * 1.25 + Math.sin(y + time) - time * 1.34) * Math.sin(y * 1.17 - time * .79)) + 1, y);
@@ -60,7 +54,7 @@
 
     var color = view.matrix({
       id: 'color',
-      expr: function (emit, i, j) {
+      expr: function (emit, i, j, time) {
         var r = .5 + Math.cos(time * .873) * j;
         var g = .5 + Math.sin(time) * i;
         var b = 1;

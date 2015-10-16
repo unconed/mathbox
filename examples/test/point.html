@@ -19,14 +19,8 @@
       },
     });
     three = mathbox.three;
-    three.Time.set({speed: .5});
     three.camera.position.set(-3.5, 1.4, -2.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-
-    time = 0
-    three.on('update', function () {
-      time = three.Time.clock
-    });
 
     view = mathbox
     .set({
@@ -56,7 +50,7 @@
       width: 32,
       height: 32,
       axes: [1, 3],
-      expr: function (emit, x, y, i, j) {
+      expr: function (emit, x, y, i, j, time) {
         emit(x, .25 + .25 * (Math.sin(x + time) * Math.sin(y + time)), y);
       },
     });
@@ -85,7 +79,7 @@
 
     view.matrix({
       id: 'color',
-      expr: function (emit, i, j) {
+      expr: function (emit, i, j, time) {
         var r = .5 + Math.cos(time * .873) * j;
         var g = .5 + Math.sin(time) * i;
         var b = 1;

@@ -20,11 +20,6 @@
     three.camera.position.set(2.3, 1, 2);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0
-    three.on('update', function () {
-      time = three.Time.now
-    });
-
     view = mathbox.cartesian({
       range: [[-6, 6], [-1, 1], [-1, 1]],
       scale: [6, 1, 1],
@@ -32,14 +27,14 @@
 
     view.interval({
       length: 16, // number of red data points
-      expr: function (emit, x, i) {
+      items: 2,
+      channels: 2,
+      expr: function (emit, x, i, time) {
         var d = Math.sin((x + time) * 2)/2;
 
         emit(x, 0);
         emit(x, d);
       },
-      items: 2,
-      channels: 2,
     }).vector({
       color: 0xc02050,
       width: 16,

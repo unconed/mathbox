@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Color Cube</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls,
+      },
+      camera: {
+      }
+    });
+
+    three = mathbox.three;
+    three.controls.maxDistance = 4;
+    three.camera.position.set(2.5, 1, 2.5);
+    three.renderer.setClearColor(new THREE.Color(0xEEEEEE), 1.0);
+
+    view = mathbox
+    .set({
+      scale: 720,
+      focus: 1
+    })
+    .cartesian({
+      range: [[0, 1], [0, 1], [0, 1]],
+      scale: [1, 1, 1],
+    })
+
+    var rez = 10;
+    view.volume({
+      id: "volume",
+      width: rez,
+      height: rez,
+      depth: rez,
+      items: 1,
+      channels: 4,
+      expr: function(emit, x, y, z){
+          emit(x,y,z,1);
+      }
+    })
+    view.point({
+      // The neat trick: use the same data for position and for color!
+      // We don't actually need to specify the points source since we just defined them
+      // but it emphasizes what's going on.
+      // The w component 1 is ignored as a position but used as opacity as a color.
+      points: "#volume",
+      colors: "#volume",
+      // Multiply every color component in [0..1] by 255
+      color: 0xffffff,
+      size: 20,
+    });
+
+  </script>
+</body>
+</html>

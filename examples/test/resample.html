@@ -20,17 +20,6 @@
     three.camera.position.set(.3, 1, 3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0;
-    origin = new THREE.Vector3();
-    three.on('update', function (event) {
-      time = three.Time.clock;
-      x = Math.cos(time) * 3;
-      z = Math.sin(time) * 3;
-
-      camera.set('position', [x, 0, z]);
-      camera.set('lookAt', origin);
-    });
-
     mathbox
       .set({
         scale: 720
@@ -39,7 +28,15 @@
         history: 2,
         type: 'unsignedByte',
       })
-        .camera()
+        .camera({
+          lookAt: [0, 0, 0]
+        },{
+          position: function(t){
+            x = Math.cos(t) * 3;
+            z = Math.sin(t) * 3;
+            return [x, 0, z];
+          }
+        })
         .shader({
           code:
             "vec4 getSample(vec3 xyz);\n"+

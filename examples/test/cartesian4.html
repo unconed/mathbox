@@ -20,11 +20,6 @@
     three.camera.position.set(2.3, 1, 2);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    time = 0
-    three.on('update', function () {
-      time = three.Time.now
-    });
-
     view = mathbox.transform4({
       matrix: [
         1, 0, 0, .577,
@@ -63,7 +58,7 @@
       rangeY: [-1, 1],
       width: 32,
       height: 8,
-      expr: function (emit, x, y, i, j) {
+      expr: function (emit, x, y, i, j, time) {
         θ = π / 2 * (
               Math.cos(time * .31 + Math.cos(time * .481 - Math.sin(time * .318)) + Math.sin(time * 1.179))
             + Math.cos(time * .61 - Math.sin(time * .305 - Math.cos(time * .573)) + Math.cos(time * 0.962))
@@ -100,7 +95,7 @@
       rangeY: [-1, 1],
       width: 96,
       height: 8,
-      expr: function (emit, x, y, i, j) {
+      expr: function (emit, x, y, i, j, time) {
         θ = π / 2 * (
               Math.cos(time * .31 + Math.cos(time * .481 - Math.sin(time * .318)) + Math.sin(time * 1.179))
             + Math.cos(time * .61 - Math.sin(time * .305 - Math.cos(time * .573)) + Math.cos(time * 0.962))

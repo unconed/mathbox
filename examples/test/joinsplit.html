@@ -19,12 +19,6 @@
 
     three.camera.position.set(-3.5, 1.4, -2.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-//    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
-
-    time = 0
-    three.on('update', function () {
-      time = three.Time.clock
-    });
 
     view = mathbox.cartesian({
       range: [[-3, 3], [0, 1], [-3, 3]],
@@ -51,7 +45,7 @@
       centeredX: true,
       centeredY: true,
       axes: [1, 3],
-      expr: function (emit, x, y, i, j) {
+      expr: function (emit, x, y, i, j, time) {
         emit(x, .5 + .5 * (Math.sin(x + time) * Math.sin(y + time)), y);
       },
       channels: 3,

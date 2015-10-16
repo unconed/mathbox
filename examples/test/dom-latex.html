@@ -11,7 +11,7 @@
 </head>
 <body>
   <script>
-  
+
     // Define global DOM handler to format 'latex' into an HTML span
     MathBox.DOM.Types.latex = MathBox.DOM.createClass({
       render: function (el) {
@@ -19,7 +19,7 @@
         return el('span', this.props);
       }
     });
-  
+
     mathbox = mathBox({
       plugins: ['core', 'controls', 'cursor', 'stats'],
       controls: {
@@ -35,11 +35,6 @@
     three.camera.position.set(1.1, 1.45, 1);
     three.camera.lookAt(new THREE.Vector3())
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-
-    time = 0
-    three.on('update', function () {
-      time = three.Time.clock * .2;
-    });
 
     view = mathbox
     .unit({
@@ -73,8 +68,8 @@
 
     view.interval({
       length: 8,
-      expr: function (emit, x, i) {
-        y = Math.sin(x + time / 4) * .7;
+      expr: function (emit, x, i, time) {
+        y = Math.sin(x + (time*0.2) / 4) * .7;
         emit(x, y);
       },
       channels: 2,
