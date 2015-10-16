@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Shapes</title>
+  <script src="../../build/mathbox-bundle.min.js?a48f"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls,
+        parameters: {
+          noZoom: true
+        },
+      },
+      camera: {
+        fov: 20,
+      },
+      loop: {
+        start: window == window.top,
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(2, 2, 4);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    view = mathbox.set({scale: 500, 'focus': 5}).cartesian({
+      range: [[-2, 2], [-1, 1], [-1, 1]],
+      scale: [3.5, 1, 1],
+    });
+
+    view.voxel({
+      data: [
+             -1, -1, -.5, -.75, -.75, -1.2, -.4, -.6, -1.5, 0, 0, 0, 
+             -1,  1, -.5, -.75,  .75, -1.2, -.4,  .6, -1.5, 0, 0, 0, 
+              1,  1, -.5,  .75,  .75, -1.2,  .4,  .6, -1.5, 0, 0, 0, 
+              1, -1, -.5,  .75, -.75, -1.2,  .4, -.6, -1.5, 0, 0, 0, 
+
+             -1, -1,  .5, -.75, -.75,  1.2, -.4, -.6,  1.5, 0, 0, 0, 
+             -1,  1,  .5, -.75,  .75,  1.2, -.4,  .6,  1.5, 0, 0, 0, 
+              1,  1,  .5,  .75,  .75,  1.2,  .4,  .6,  1.5, 0, 0, 0, 
+              1, -1,  .5,  .75, -.75,  1.2,  .4, -.6,  1.5, 0, 0, 0, 
+            ],
+      width: 4,
+      height: 2,
+      depth: 1,
+      items: 4,
+      channels: 3,
+    });
+
+    view
+    .transform({
+      pass: 'eye',
+      position: [-.8, .4, -4],
+      scale: [1/6, 1/6, 1/6],
+    })
+      .point({
+        color: 0x3090FF,
+        size: 3,
+      })
+      .array({
+        data: [0, 0, 0],
+        channels: 3,
+      })
+      .text({
+        data: ['Point'],
+      })
+      .label({
+        offset: [0, -140],
+        zIndex: 1,
+        color: 'black',
+      });
+
+    view
+    .transform({
+      pass: 'eye',
+      position: [0, .4, -4],
+      scale: [1/6, 1/6, 1/6],
+    })
+      .line({
+        color: 0x3090FF,
+        size: 3,
+      })
+      .array({
+        data: [0, 0, 0],
+        channels: 3,
+      })
+      .text({
+        data: ['Line'],
+      })
+      .label({
+        offset: [0, -140],
+        zIndex: 1,
+        color: 'black',
+      });
+
+    view
+    .transform({
+      pass: 'eye',
+      position: [.8, .4, -4],
+      scale: [1/6, 1/6, 1/6],
+    })
+      .surface({
+        color: 0x3090FF,
+        shaded: true,
+        width: 3,
+      })
+      .surface({
+        color: 0x3090FF,
+        fill: false,
+        lineX: true,
+        lineY: true,
+        width: 3,
+      })
+      .array({
+        data: [0, 0, 0],
+        channels: 3,
+      })
+      .text({
+        data: ['Surface'],
+      })
+      .label({
+        offset: [0, -140],
+        zIndex: 1,
+        color: 'black',
+      });
+
+    view
+    .transform({
+      pass: 'eye',
+      position: [-.8, -.4, -4],
+      scale: [1/6, 1/6, 1/6],
+    })
+      .vector({
+        color: 0x3090FF,
+        width: 3,
+        start: true,
+      })
+      .array({
+        data: [0, 0, 0],
+        channels: 3,
+      })
+      .text({
+        data: ['Vector'],
+      })
+      .label({
+        offset: [0, -140],
+        zIndex: 1,
+        color: 'black',
+      });
+
+    view
+    .transform({
+      pass: 'eye',
+      position: [0, -.4, -4],
+      scale: [1/6, 1/6, 1/6],
+    })
+      .strip({
+        color: 0x0090FF,
+        width: 3,
+        shaded: true,
+      })
+      .strip({
+        color: 0x3090FF,
+        width: 3,
+        fill: false,
+        line: true,
+      })
+      .array({
+        data: [0, 0, 0],
+        channels: 3,
+      })
+      .text({
+        data: ['Strip'],
+      })
+      .label({
+        offset: [0, -140],        
+        zIndex: 1,
+        color: 'black',
+      });
+
+    view
+    .transform({
+      pass: 'eye',
+      position: [.8, -.4, -4],
+      scale: [1/6, 1/6, 1/6],
+    })
+      .face({
+        color: 0x3090FF,
+        width: 3,
+        line: false,
+        shaded: true,
+      })
+      .face({
+        color: 0x3090FF,
+        width: 3,
+        fill: false,
+        line: true,
+      })
+      .array({
+        data: [0, 0, 0],
+        channels: 3,
+      })
+      .text({
+        data: ['Face'],
+      })
+      .label({
+        offset: [0, -140],
+        zIndex: 1,
+        color: 'black',
+      });
+
+  </script>
+</body>
+</html>
