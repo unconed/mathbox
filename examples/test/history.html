@@ -20,7 +20,12 @@
     three.camera.position.set(3.5, 1.4, -2.3);
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    view = mathbox.cartesian({
+    view = mathbox
+    .set({
+      scale: 720,
+      focus: 2,
+    })
+    .cartesian({
       range: [[-3, 3], [-.25, .75], [-3, 3]],
       scale: [2, 1, 2],
     },{

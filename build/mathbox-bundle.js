@@ -46720,6 +46720,7 @@ module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lin
 "mesh.fragment.color": "varying vec4 vColor;\n\nvec4 getColor() {\n  return vColor;\n}\n",
 "mesh.fragment.map": "#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\nvec4 getSample(vec4 uvwo, vec4 stpq);\n\nvec4 getMapColor() {\n  #ifdef POSITION_STPQ\n  vec4 stpq = vSTPQ;\n  #else\n  vec4 stpq = vec4(0.0);\n  #endif\n\n  #ifdef POSITION_U\n  vec4 uvwo = vec4(vU, 0.0, 0.0, 0.0);\n  #endif\n  #ifdef POSITION_UV\n  vec4 uvwo = vec4(vUV, 0.0, 0.0);\n  #endif\n  #ifdef POSITION_UVW\n  vec4 uvwo = vec4(vUVW, 0.0);\n  #endif\n  #ifdef POSITION_UVWO\n  vec4 uvwo = vec4(vUVWO);\n  #endif\n\n  return getSample(uvwo, stpq);\n}\n",
 "mesh.fragment.mask": "varying float vMask;\n\nfloat ease(float t) {\n  t = clamp(t, 0.0, 1.0);\n  return t * t * (3.0 - 2.0 * t);\n}\n\nvec4 maskColor() {\n  if (vMask <= 0.0) discard;\n  return vec4(vec3(1.0), ease(vMask));\n}\n",
+"mesh.fragment.material": "#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\nvec4 getSample(vec4 rgba, vec4 stpq);\n\nvec4 getMaterialColor(vec4 rgba) {\n  #ifdef POSITION_STPQ\n  vec4 stpq = vSTPQ;\n  #else\n  vec4 stpq = vec4(0.0);\n  #endif\n\n  return getSample(rgba, stpq);\n}\n",
 "mesh.fragment.shaded": "varying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 offSpecular(vec3 color) {\n  vec3 c = 1.0 - color;\n  return 1.0 - c * c;\n}\n\nvec4 getShadedColor(vec4 rgba) {\n  \n  vec3 color = rgba.xyz;\n  vec3 color2 = offSpecular(rgba.xyz);\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\treturn vec4(color * (diffuse * .9 + .05) + .25 * color2 * specular, rgba.a);\n}\n",
 "mesh.fragment.texture": "",
 "mesh.gamma.in": "vec4 getGammaInColor(vec4 rgba) {\n  return vec4(rgba.rgb * rgba.rgb, rgba.a);\n}\n",
@@ -46728,7 +46729,7 @@ module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lin
 "mesh.position": "uniform vec4 geometryClip;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getMeshPosition() {\n  vec4 p = min(geometryClip, position4);\n  return getPosition(p, 1.0);\n}\n",
 "mesh.vertex.color": "attribute vec4 position4;\nuniform vec4 geometryClip;\nvarying vec4 vColor;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvoid vertexColor() {\n  vec4 p = min(geometryClip, position4);\n  vColor = getSample(p);\n}\n",
 "mesh.vertex.mask": "attribute vec4 position4;\nuniform vec4 geometryResolution;\nuniform vec4 geometryClip;\nvarying float vMask;\n\n// External\nfloat getSample(vec4 xyzw);\n\nvoid maskLevel() {\n  vec4 p = min(geometryClip, position4);\n  vMask = getSample(p * geometryResolution);\n}\n",
-"mesh.vertex.position": "uniform vec4 geometryResolution;\n\n#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw, vec4 stpq);\n\nvec3 getMeshPosition(vec4 xyzw, float canonical) {\n  vec4 stpq = xyzw * geometryResolution;\n  vec3 xyz = getPosition(xyzw, stpq);\n\n  #ifdef POSITION_MAP\n  if (canonical > 0.5) {\n    #ifdef POSITION_STPQ\n    vSTPQ = stpq;\n    #endif\n    #ifdef POSITION_U\n    vU = stpq.x;\n    #endif\n    #ifdef POSITION_UV\n    vUV = stpq.xy;\n    #endif\n    #ifdef POSITION_UVW\n    vUVW = stpq.xyz;\n    #endif\n    #ifdef POSITION_UVWO\n    vUVWO = stpq;\n    #endif\n  }\n  #endif\n  return xyz;\n}\n",
+"mesh.vertex.position": "uniform vec4 geometryResolution;\n\n#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut);\n\nvec3 getMeshPosition(vec4 xyzw, float canonical) {\n  vec4 stpqOut, stpqIn = xyzw * geometryResolution;\n  vec3 xyz = getPosition(xyzw, stpqIn, stpqOut);\n\n  #ifdef POSITION_MAP\n  if (canonical > 0.5) {\n    #ifdef POSITION_STPQ\n    vSTPQ = stpqOut;\n    #endif\n    #ifdef POSITION_U\n    vU = stpqOut.x;\n    #endif\n    #ifdef POSITION_UV\n    vUV = stpqOut.xy;\n    #endif\n    #ifdef POSITION_UVW\n    vUVW = stpqOut.xyz;\n    #endif\n    #ifdef POSITION_UVWO\n    vUVWO = stpqOut;\n    #endif\n  }\n  #endif\n  return xyz;\n}\n",
 "move.position": "uniform float transitionEnter;\nuniform float transitionExit;\nuniform vec4  transitionScale;\nuniform vec4  transitionBias;\nuniform float transitionSkew;\nuniform float transitionActive;\n\nuniform vec4  moveFrom;\nuniform vec4  moveTo;\n\nfloat ease(float t) {\n  t = clamp(t, 0.0, 1.0);\n  return 1.0 - (2.0 - t) * t;\n}\n\nvec4 getTransitionPosition(vec4 xyzw, inout vec4 stpq) {\n  if (transitionActive < 0.5) return xyzw;\n\n  float enter   = transitionEnter;\n  float exit    = transitionExit;\n  float skew    = transitionSkew;\n  vec4  scale   = transitionScale;\n  vec4  bias    = transitionBias;\n\n  float factor  = 1.0 + skew;\n  float offset  = dot(vec4(1.0), stpq * scale + bias);\n\n  float a1 = ease(enter * factor - offset);\n  float a2 = ease(exit  * factor + offset - skew);\n\n  return xyzw + a1 * moveFrom + a2 * moveTo;\n}",
 "object.mask.default": "vec4 getMask(vec4 xyzw) {\n  return vec4(1.0);\n}",
 "point.alpha.circle": "varying float vPixelSize;\n\nfloat getDiscAlpha(float mask) {\n  // Approximation: 1 - x*x is approximately linear around x = 1 with slope 2\n  return vPixelSize * (1.0 - mask);\n  //  return vPixelSize * 2.0 * (1.0 - sqrt(mask));\n}\n",
@@ -46749,13 +46750,13 @@ module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lin
 "point.size.varying": "uniform float pointSize;\n\nvec4 getSample(vec4 xyzw);\n\nfloat getPointSize(vec4 xyzw) {\n  return pointSize * getSample(xyzw).x;\n}",
 "polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position, inout vec4 stpq) {\n  if (polarBend > 0.0) {\n\n    if (polarBend < 0.001) {\n      // Factor out large addition/subtraction of polarFocus\n      // to avoid numerical error\n      // sin(x) ~ x\n      // cos(x) ~ 1 - x * x / 2\n      vec2 pb = position.xy * polarBend;\n      float ppbbx = pb.x * pb.x;\n      return viewMatrix * vec4(\n        position.x * (1.0 - polarBend + (pb.y * polarAspect)),\n        position.y * (1.0 - .5 * ppbbx) - (.5 * ppbbx) * polarFocus / polarAspect,\n        position.z + position.x * polarHelix * polarBend,\n        1.0\n      );\n    }\n    else {\n      vec2 xy = position.xy * vec2(polarBend, polarAspect);\n      float radius = polarFocus + xy.y;\n      return viewMatrix * vec4(\n        sin(xy.x) * radius,\n        (cos(xy.x) * radius - polarFocus) / polarAspect,\n        position.z + position.x * polarHelix * polarBend,\n        1.0\n      );\n    }\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
 "project.position": "uniform float styleZBias;\nuniform float styleZIndex;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n\n  // Apply relative Z bias\n  float bias  = (1.0 - styleZBias / 32768.0);\n  pos.z *= bias;\n  \n  // Apply large scale Z index changes\n  if (styleZIndex > 0.0) {\n    float z = pos.z / pos.w;\n    pos.z = ((z + 1.0) / (styleZIndex + 1.0) - 1.0) * pos.w;\n  }\n  \n  gl_Position = pos;\n}",
-"project.readback": "// This is three.js' global uniform, missing from fragment shaders.\nuniform mat4 projectionMatrix;\n\nvec4 readbackPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  vec3 final = pos.xyz / pos.w;\n  if (final.z < -1.0) {\n    return vec4(0.0, 0.0, 0.0, -1.0);\n  }\n  else {\n    return vec4(final, -position.z);\n  }\n}\n",
+"project.readback": "// This is three.js' global uniform, missing from fragment shaders.\nuniform mat4 projectionMatrix;\n\nvec4 readbackPosition(vec3 position, vec4 stpq) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  vec3 final = pos.xyz / pos.w;\n  if (final.z < -1.0) {\n    return vec4(0.0, 0.0, 0.0, -1.0);\n  }\n  else {\n    return vec4(final, -position.z);\n  }\n}\n",
 "raw.position.scale": "uniform vec4 geometryScale;\nattribute vec4 position4;\n\nvec4 getRawPositionScale() {\n  return geometryScale * position4;\n}\n",
 "repeat.position": "uniform vec4 repeatModulus;\n\nvec4 getRepeatXYZW(vec4 xyzw) {\n  return mod(xyzw + .5, repeatModulus) - .5;\n}\n",
 "resample.padding": "uniform vec4 resampleBias;\n\nvec4 resamplePadding(vec4 xyzw) {\n  return xyzw + resampleBias;\n}",
 "resample.relative": "uniform vec4 resampleFactor;\n\nvec4 resampleRelative(vec4 xyzw) {\n  return xyzw * resampleFactor;\n}",
 "reveal.mask": "uniform float transitionEnter;\nuniform float transitionExit;\nuniform vec4  transitionScale;\nuniform vec4  transitionBias;\nuniform float transitionSkew;\nuniform float transitionActive;\n\nfloat getTransitionSDFMask(vec4 stpq) {\n  if (transitionActive < 0.5) return 1.0;\n\n  float enter   = transitionEnter;\n  float exit    = transitionExit;\n  float skew    = transitionSkew;\n  vec4  scale   = transitionScale;\n  vec4  bias    = transitionBias;\n\n  float factor  = 1.0 + skew;\n  float offset  = dot(vec4(1.0), stpq * scale + bias);\n\n  vec2 d = vec2(enter, exit) * factor + vec2(-offset, offset - skew);\n  if (exit  == 1.0) return d.x;\n  if (enter == 1.0) return d.y;\n  return min(d.x, d.y);\n}",
-"root.position": "vec3 getRootPosition(vec4 position, in vec4 stpq) {\n  return position.xyz;\n}",
+"root.position": "vec3 getRootPosition(vec4 position, in vec4 stpqIn, out vec4 stpqOut) {\n  stpqOut = stpqIn; // avoid inout confusion\n  return position.xyz;\n}",
 "sample.2d": "uniform sampler2D dataTexture;\n\nvec4 sample2D(vec2 uv) {\n  return texture2D(dataTexture, uv);\n}\n",
 "scale.position": "uniform vec4 scaleAxis;\nuniform vec4 scaleOffset;\n\nvec4 sampleData(float x);\n\nvec4 getScalePosition(vec4 xyzw) {\n  return scaleAxis * sampleData(xyzw.x).x + scaleOffset;\n}\n",
 "screen.map.stpq": "uniform vec4 remapSTPQScale;\n\nvec4 screenMapSTPQ(vec4 xyzw, out vec4 stpq) {\n  stpq = xyzw * remapSTPQScale;\n  return xyzw;\n}\n",
@@ -46778,7 +46779,7 @@ module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lin
 "surface.mask.hollow": "attribute vec4 position4;\n\nfloat getSurfaceHollowMask(vec4 xyzw) {\n  vec4 df = abs(fract(position4) - .5);\n  vec2 df2 = min(df.xy, df.zw);\n  float df3 = min(df2.x, df2.y);\n  return df3;\n}",
 "surface.position": "uniform vec4 geometryClip;\nuniform vec4 geometryResolution;\nuniform vec4 mapSize;\n\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getSurfacePosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 xyz = getPosition(p, 1.0);\n\n  // Overwrite UVs\n#ifdef POSITION_UV\n#ifdef POSITION_UV_INT\n  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;\n#else\n  vUV = position4.xy * geometryResolution.xy;\n#endif\n#endif\n\n  return xyz;\n}\n",
 "surface.position.normal": "uniform vec4 mapSize;\nuniform vec4 geometryResolution;\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 surface;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvoid getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec4 deltaX = vec4(1.0, 0.0, 0.0, 0.0);\n  vec4 deltaY = vec4(0.0, 1.0, 0.0, 0.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xyzw, 1.0);\n  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX, 0.0) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX, 0.0) : center;\n  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY, 0.0) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY, 0.0) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xyzw, 1.0);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX, 0.0) : (2.0 * center - getPosition(xyzw - deltaX, 0.0));\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY, 0.0) : (2.0 * center - getPosition(xyzw - deltaY, 0.0));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  vec4 p = min(geometryClip, position4);\n\n  getSurfaceGeometry(p, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz); // hardcoded directional light\n  vPosition = -center;\n\n#ifdef POSITION_UV\n#ifdef POSITION_UV_INT\n  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;\n#else\n  vUV = position4.xy * geometryResolution.xy;\n#endif\n#endif\n  \n  return center;\n}\n",
-"ticks.position": "uniform float worldUnit;\nuniform float focusDepth;\nuniform float tickSize;\nuniform float tickEpsilon;\nuniform vec3  tickNormal;\nuniform vec2  tickStrip;\n\nvec4 getSample(vec4 xyzw);\n\nvec3 transformPosition(vec4 position, vec4 stpq);\n\nvec3 getTickPosition(vec4 xyzw, vec4 stpq) {\n\n  float epsilon = tickEpsilon;\n\n  // determine tick direction\n  float leftX  = max(tickStrip.x, xyzw.y - 1.0);\n  float rightX = min(tickStrip.y, xyzw.y + 1.0);\n  \n  vec4 left    = getSample(vec4(leftX,  xyzw.zw, 0.0));\n  vec4 right   = getSample(vec4(rightX, xyzw.zw, 0.0));\n  vec4 diff    = right - left;\n\n  vec3 normal  = cross(normalize(diff.xyz + vec3(diff.w)), tickNormal);\n  float bias   = max(0.0, 1.0 - length(normal) * 2.0);\n       normal  = mix(normal, tickNormal.yzx, bias * bias);\n  \n  // transform (point) and (point + delta)\n  vec4 center  = getSample(vec4(xyzw.yzw, 0.0));\n  vec4 delta   = vec4(normal, 0.0) * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + delta;\n\n  vec3 c = transformPosition(a, stpq);\n  vec3 d = transformPosition(b, stpq);\n  \n  // sample on either side to create line\n  float line = xyzw.x - .5;\n  vec3  mid  = c;\n  vec3  side = normalize(d - c);\n\n  return mid + side * line * tickSize * worldUnit * focusDepth;\n}\n",
+"ticks.position": "uniform float worldUnit;\nuniform float focusDepth;\nuniform float tickSize;\nuniform float tickEpsilon;\nuniform vec3  tickNormal;\nuniform vec2  tickStrip;\n\nvec4 getSample(vec4 xyzw);\n\nvec3 transformPosition(vec4 position, in vec4 stpqIn, out vec4 stpqOut);\n\nvec3 getTickPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut) {\n  float epsilon = tickEpsilon;\n\n  // determine tick direction\n  float leftX  = max(tickStrip.x, xyzw.y - 1.0);\n  float rightX = min(tickStrip.y, xyzw.y + 1.0);\n  \n  vec4 left    = getSample(vec4(leftX,  xyzw.zw, 0.0));\n  vec4 right   = getSample(vec4(rightX, xyzw.zw, 0.0));\n  vec4 diff    = right - left;\n\n  vec3 normal  = cross(normalize(diff.xyz + vec3(diff.w)), tickNormal);\n  float bias   = max(0.0, 1.0 - length(normal) * 2.0);\n       normal  = mix(normal, tickNormal.yzx, bias * bias);\n  \n  // transform (point) and (point + delta)\n  vec4 center  = getSample(vec4(xyzw.yzw, 0.0));\n  vec4 delta   = vec4(normal, 0.0) * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + delta;\n\n  vec4 _;\n  vec3 c = transformPosition(a, stpqIn, stpqOut);\n  vec3 d = transformPosition(b, stpqIn, _);\n  \n  // sample on either side to create line\n  float line = xyzw.x - .5;\n  vec3  mid  = c;\n  vec3  side = normalize(d - c);\n\n  return mid + side * line * tickSize * worldUnit * focusDepth;\n}\n",
 "transform3.position": "uniform mat4 transformMatrix;\n\nvec4 transformPosition(vec4 position, inout vec4 stpq) {\n  return transformMatrix * vec4(position.xyz, 1.0);\n}\n",
 "transform4.position": "uniform mat4 transformMatrix;\nuniform vec4 transformOffset;\n\nvec4 transformPosition(vec4 position, inout vec4 stpq) {\n  return transformMatrix * position + transformOffset;\n}\n",
 "view.position": "// Implicit three.js uniform\n// uniform mat4 viewMatrix;\n\nvec4 getViewPosition(vec4 position, inout vec4 stpq) {\n  return (viewMatrix * vec4(position.xyz, 1.0));\n}\n"};
@@ -57600,7 +57601,7 @@ Util = require('../../../util');
 Axis = (function(superClass) {
   extend(Axis, superClass);
 
-  Axis.traits = ['node', 'object', 'visible', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position', 'origin'];
+  Axis.traits = ['node', 'object', 'visible', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position', 'origin', 'shade'];
 
   Axis.defaults = {
     end: true,
@@ -57613,7 +57614,7 @@ Axis = (function(superClass) {
   }
 
   Axis.prototype.make = function() {
-    var arrowUniforms, axis, crossed, detail, end, lineUniforms, mask, position, positionUniforms, ref, ref1, samples, start, stroke, styleUniforms, swizzle, uniforms, unitUniforms;
+    var arrowUniforms, axis, crossed, detail, end, lineUniforms, mask, material, position, positionUniforms, ref, ref1, samples, start, stroke, styleUniforms, swizzle, uniforms, unitUniforms;
     positionUniforms = {
       axisPosition: this._attributes.make(this._types.vec4()),
       axisStep: this._attributes.make(this._types.vec4())
@@ -57633,6 +57634,7 @@ Axis = (function(superClass) {
     ref = this.props, start = ref.start, end = ref.end;
     stroke = this.props.stroke;
     mask = this._helpers.object.mask();
+    material = this._helpers.shade.pipeline() || false;
     ref1 = this.props, crossed = ref1.crossed, axis = ref1.axis;
     if (!crossed && (mask != null) && axis > 1) {
       swizzle = ['x000', 'y000', 'z000', 'w000'][axis];
@@ -57645,7 +57647,8 @@ Axis = (function(superClass) {
       position: position,
       clip: start || end,
       stroke: stroke,
-      mask: mask
+      mask: mask,
+      material: material
     });
     this.arrows = [];
     if (start) {
@@ -57654,7 +57657,8 @@ Axis = (function(superClass) {
         flip: true,
         samples: samples,
         position: position,
-        mask: mask
+        mask: mask,
+        material: material
       }));
     }
     if (end) {
@@ -57662,7 +57666,8 @@ Axis = (function(superClass) {
         uniforms: uniforms,
         samples: samples,
         position: position,
-        mask: mask
+        mask: mask,
+        material: material
       }));
     }
     this._helpers.visible.make();
@@ -57746,7 +57751,7 @@ Face = (function(superClass) {
   };
 
   Face.prototype.make = function() {
-    var color, depth, dims, fill, height, items, line, lineUniforms, map, mask, material, objects, position, ref, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width, wireUniforms;
+    var color, depth, dims, faceMaterial, fill, height, items, line, lineMaterial, lineUniforms, map, mask, material, objects, position, ref, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width, wireUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -57781,7 +57786,9 @@ Face = (function(superClass) {
     }
     mask = this._helpers.object.mask();
     map = this._helpers.shade.map((ref = this.bind.map) != null ? ref.sourceShader(this._shaders.shader()) : void 0);
-    material = this._helpers.shade.pipeline() || shaded;
+    material = this._helpers.shade.pipeline();
+    faceMaterial = material || shaded;
+    lineMaterial = material || false;
     objects = [];
     if (line) {
       swizzle = this._shaders.shader();
@@ -57796,6 +57803,7 @@ Face = (function(superClass) {
         layers: depth,
         position: swizzle,
         color: color,
+        material: lineMaterial,
         mask: mask,
         closed: true
       });
@@ -57811,7 +57819,7 @@ Face = (function(superClass) {
         items: items,
         position: position,
         color: color,
-        material: material,
+        material: faceMaterial,
         mask: mask,
         map: map
       });
@@ -57863,7 +57871,7 @@ Util = require('../../../util');
 Grid = (function(superClass) {
   extend(Grid, superClass);
 
-  Grid.traits = ['node', 'object', 'visible', 'style', 'line', 'grid', 'area', 'position', 'origin', 'axis:x', 'axis:y', 'scale:x', 'scale:y', 'span:x', 'span:y'];
+  Grid.traits = ['node', 'object', 'visible', 'style', 'line', 'grid', 'area', 'position', 'origin', 'shade', 'axis:x', 'axis:y', 'scale:x', 'scale:y', 'span:x', 'span:y'];
 
   Grid.defaults = {
     width: 1,
@@ -57876,8 +57884,9 @@ Grid = (function(superClass) {
   }
 
   Grid.prototype.make = function() {
-    var axes, axis, crossed, lineX, lineY, lines, mask, ref, stroke, transpose;
+    var axes, axis, crossed, lineX, lineY, lines, mask, material, ref, stroke, transpose;
     mask = this._helpers.object.mask();
+    material = this._helpers.shade.pipeline() || false;
     axis = (function(_this) {
       return function(first, second, transpose) {
         var buffer, detail, line, lineUniforms, p, position, positionUniforms, resolution, samples, strips, styleUniforms, uniforms, unitUniforms, values;
@@ -57916,7 +57925,8 @@ Grid = (function(superClass) {
           strips: strips,
           position: position,
           stroke: stroke,
-          mask: mask
+          mask: mask,
+          material: material
         });
         return {
           first: first,
@@ -58024,7 +58034,7 @@ Util = require('../../../util');
 Line = (function(superClass) {
   extend(Line, superClass);
 
-  Line.traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind'];
+  Line.traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind', 'shade'];
 
   function Line(node, context, helpers) {
     Line.__super__.constructor.call(this, node, context, helpers);
@@ -58052,7 +58062,7 @@ Line = (function(superClass) {
   };
 
   Line.prototype.make = function() {
-    var arrowUniforms, color, dims, end, layers, lineUniforms, mask, position, proximity, ref, ref1, ribbons, samples, start, strips, stroke, styleUniforms, uniforms, unitUniforms;
+    var arrowUniforms, color, dims, end, layers, lineUniforms, mask, material, position, proximity, ref, ref1, ribbons, samples, start, strips, stroke, styleUniforms, uniforms, unitUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -58085,6 +58095,7 @@ Line = (function(superClass) {
       this.bind.colors.sourceShader(color);
     }
     mask = this._helpers.object.mask();
+    material = this._helpers.shade.pipeline() || false;
     uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms, unitUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
@@ -58097,7 +58108,8 @@ Line = (function(superClass) {
       clip: start || end,
       stroke: stroke,
       proximity: proximity,
-      mask: mask
+      mask: mask,
+      material: material
     });
     this.arrows = [];
     if (start) {
@@ -58110,7 +58122,8 @@ Line = (function(superClass) {
         layers: layers,
         position: position,
         color: color,
-        mask: mask
+        mask: mask,
+        material: material
       }));
     }
     if (end) {
@@ -58122,7 +58135,8 @@ Line = (function(superClass) {
         layers: layers,
         position: position,
         color: color,
-        mask: mask
+        mask: mask,
+        material: material
       }));
     }
     this._helpers.visible.make();
@@ -58171,7 +58185,7 @@ Util = require('../../../util');
 Point = (function(superClass) {
   extend(Point, superClass);
 
-  Point.traits = ['node', 'object', 'visible', 'style', 'point', 'geometry', 'position', 'bind'];
+  Point.traits = ['node', 'object', 'visible', 'style', 'point', 'geometry', 'position', 'bind', 'shade'];
 
   function Point(node, context, helpers) {
     Point.__super__.constructor.call(this, node, context, helpers);
@@ -58189,7 +58203,7 @@ Point = (function(superClass) {
   };
 
   Point.prototype.make = function() {
-    var color, depth, dims, fill, height, items, mask, optical, pointUniforms, position, shape, size, styleUniforms, uniforms, unitUniforms, width;
+    var color, depth, dims, fill, height, items, mask, material, optical, pointUniforms, position, shape, size, styleUniforms, uniforms, unitUniforms, width;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -58222,6 +58236,7 @@ Point = (function(superClass) {
       this.bind.sizes.sourceShader(size);
     }
     mask = this._helpers.object.mask();
+    material = this._helpers.shade.pipeline() || false;
     shape = this.props.shape;
     fill = this.props.fill;
     optical = this.props.optical;
@@ -58238,7 +58253,8 @@ Point = (function(superClass) {
       shape: shape,
       optical: optical,
       fill: fill,
-      mask: mask
+      mask: mask,
+      material: material
     });
     this._helpers.visible.make();
     return this._helpers.object.make([this.point]);
@@ -58310,7 +58326,7 @@ Strip = (function(superClass) {
   };
 
   Strip.prototype.make = function() {
-    var color, depth, dims, fill, height, items, line, lineUniforms, mask, objects, position, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width;
+    var color, depth, dims, faceMaterial, fill, height, items, line, lineMaterial, lineUniforms, map, mask, material, objects, position, ref, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -58342,6 +58358,10 @@ Strip = (function(superClass) {
       color = this.bind.colors.sourceShader(color);
     }
     mask = this._helpers.object.mask();
+    map = this._helpers.shade.map((ref = this.bind.map) != null ? ref.sourceShader(this._shaders.shader()) : void 0);
+    material = this._helpers.shade.pipeline();
+    faceMaterial = material || shaded;
+    lineMaterial = material || false;
     objects = [];
     if (line) {
       swizzle = this._shaders.shader();
@@ -58356,7 +58376,8 @@ Strip = (function(superClass) {
         layers: depth,
         position: swizzle,
         color: color,
-        mask: mask
+        mask: mask,
+        material: lineMaterial
       });
       objects.push(this.line);
     }
@@ -58370,7 +58391,7 @@ Strip = (function(superClass) {
         items: items,
         position: position,
         color: color,
-        material: shaded
+        material: faceMaterial
       });
       objects.push(this.strip);
     }
@@ -58452,7 +58473,7 @@ Surface = (function(superClass) {
   };
 
   Surface.prototype.make = function() {
-    var closedX, closedY, color, crossed, depth, dims, fill, height, items, lineUniforms, lineX, lineY, map, mask, material, objects, position, proximity, ref, ref1, ref2, shaded, stroke, styleUniforms, surfaceUniforms, swizzle, swizzle2, uniforms, unitUniforms, width, wireUniforms, zUnits;
+    var closedX, closedY, color, crossed, depth, dims, faceMaterial, fill, height, items, lineMaterial, lineUniforms, lineX, lineY, map, mask, material, objects, position, proximity, ref, ref1, ref2, shaded, stroke, styleUniforms, surfaceUniforms, swizzle, swizzle2, uniforms, unitUniforms, width, wireUniforms, zUnits;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -58492,7 +58513,9 @@ Surface = (function(superClass) {
     }
     mask = this._helpers.object.mask();
     map = this._helpers.shade.map((ref1 = this.bind.map) != null ? ref1.sourceShader(this._shaders.shader()) : void 0);
-    material = this._helpers.shade.pipeline() || shaded;
+    material = this._helpers.shade.pipeline();
+    faceMaterial = material || shaded;
+    lineMaterial = material || false;
     ref2 = this._helpers.position, swizzle = ref2.swizzle, swizzle2 = ref2.swizzle2;
     uniforms = Util.JS.merge(unitUniforms, lineUniforms, styleUniforms, wireUniforms);
     zUnits = lineX || lineY ? -50 : 0;
@@ -58508,6 +58531,7 @@ Surface = (function(superClass) {
         zUnits: -zUnits,
         stroke: stroke,
         mask: mask,
+        material: lineMaterial,
         proximity: proximity,
         closed: closedX || closed
       });
@@ -58525,6 +58549,7 @@ Surface = (function(superClass) {
         zUnits: -zUnits,
         stroke: stroke,
         mask: swizzle(mask, crossed ? 'xyzw' : 'yxzw'),
+        material: lineMaterial,
         proximity: proximity,
         closed: closedY || closed
       });
@@ -58540,9 +58565,9 @@ Surface = (function(superClass) {
         layers: items,
         position: position,
         color: color,
-        material: shaded,
         zUnits: zUnits,
         stroke: stroke,
+        material: faceMaterial,
         mask: mask,
         map: map,
         intUV: true,
@@ -58615,7 +58640,7 @@ Ticks = (function(superClass) {
     return Ticks.__super__.constructor.apply(this, arguments);
   }
 
-  Ticks.traits = ['node', 'object', 'visible', 'style', 'line', 'ticks', 'geometry', 'position', 'bind'];
+  Ticks.traits = ['node', 'object', 'visible', 'style', 'line', 'ticks', 'geometry', 'position', 'bind', 'shade'];
 
   Ticks.prototype.init = function() {
     return this.tickStrip = this.line = null;
@@ -58636,7 +58661,7 @@ Ticks = (function(superClass) {
   };
 
   Ticks.prototype.make = function() {
-    var color, dims, layers, lineUniforms, mask, p, position, positionUniforms, ribbons, strips, stroke, styleUniforms, swizzle, uniforms, unitUniforms;
+    var color, dims, layers, lineUniforms, mask, material, p, position, positionUniforms, ref, ribbons, strips, stroke, styleUniforms, swizzle, swizzle2, uniforms, unitUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -58676,7 +58701,8 @@ Ticks = (function(superClass) {
       this.bind.colors.sourceShader(color);
     }
     mask = this._helpers.object.mask();
-    swizzle = this._helpers.position.swizzle;
+    material = this._helpers.shade.pipeline() || false;
+    ref = this._helpers.position, swizzle = ref.swizzle, swizzle2 = ref.swizzle2;
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
       samples: 2,
@@ -58686,7 +58712,8 @@ Ticks = (function(superClass) {
       position: position,
       color: color,
       stroke: stroke,
-      mask: swizzle(mask, 'yzwx')
+      mask: swizzle(mask, 'yzwx'),
+      material: material
     });
     this._helpers.visible.make();
     return this._helpers.object.make([this.line]);
@@ -58728,7 +58755,7 @@ Util = require('../../../util');
 Vector = (function(superClass) {
   extend(Vector, superClass);
 
-  Vector.traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind'];
+  Vector.traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind', 'shade'];
 
   function Vector(node, context, helpers) {
     Vector.__super__.constructor.call(this, node, context, helpers);
@@ -58756,7 +58783,7 @@ Vector = (function(superClass) {
   };
 
   Vector.prototype.make = function() {
-    var arrowUniforms, color, dims, end, layers, lineUniforms, mask, position, proximity, ref, ref1, ref2, ribbons, samples, start, strips, stroke, styleUniforms, swizzle, swizzle2, uniforms, unitUniforms;
+    var arrowUniforms, color, dims, end, layers, lineUniforms, mask, material, position, proximity, ref, ref1, ref2, ribbons, samples, start, strips, stroke, styleUniforms, swizzle, swizzle2, uniforms, unitUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -58789,10 +58816,12 @@ Vector = (function(superClass) {
       this.bind.colors.sourceShader(color);
     }
     mask = this._helpers.object.mask();
+    material = this._helpers.shade.pipeline() || false;
     ref2 = this._helpers.position, swizzle = ref2.swizzle, swizzle2 = ref2.swizzle2;
     position = swizzle2(position, 'yzwx', 'yzwx');
     color = swizzle(color, 'yzwx');
     mask = swizzle(mask, 'yzwx');
+    material = swizzle(mask, 'yzwx');
     uniforms = Util.JS.merge(arrowUniforms, lineUniforms, styleUniforms, unitUniforms);
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
@@ -58805,7 +58834,8 @@ Vector = (function(superClass) {
       clip: start || end,
       stroke: stroke,
       proximity: proximity,
-      mask: mask
+      mask: mask,
+      material: material
     });
     this.arrows = [];
     if (start) {
@@ -58818,7 +58848,8 @@ Vector = (function(superClass) {
         layers: layers,
         position: position,
         color: color,
-        mask: mask
+        mask: mask,
+        material: material
       }));
     }
     if (end) {
@@ -58830,7 +58861,8 @@ Vector = (function(superClass) {
         layers: layers,
         position: position,
         color: color,
-        mask: mask
+        mask: mask,
+        material: material
       }));
     }
     this._helpers.visible.make();
@@ -63789,7 +63821,8 @@ Traits = {
     pass: Types.vertexPass()
   },
   fragment: {
-    pass: Types.fragmentPass()
+    pass: Types.fragmentPass(),
+    gamma: Types.bool(true)
   },
   transform3: {
     position: Types.vec3(),
@@ -64200,7 +64233,7 @@ Fragment = (function(superClass) {
   };
 
   Fragment.prototype.change = function(changed, touched, init) {
-    if (touched['include']) {
+    if (touched['include'] || changed['fragment.gamma']) {
       return this.rebuild();
     }
   };
@@ -64209,6 +64242,11 @@ Fragment = (function(superClass) {
     if (this.bind.shader != null) {
       if (pass === this.props.pass) {
         shader.pipe(this.bind.shader.shaderBind());
+        shader.split();
+        if (this.props.gamma) {
+          shader.pipe('mesh.gamma.in');
+        }
+        shader.pass();
       }
     }
     return Fragment.__super__.fragment.call(this, shader, pass);
@@ -69954,16 +69992,22 @@ Base = (function(superClass) {
       gamma = true;
     }
     if (material) {
-      if (!join) {
-        f.pipe(Util.GLSL.constant('vec4', 'vec4(1.0)'));
-      }
       if (material === true) {
+        if (!join) {
+          f.pipe(Util.GLSL.constant('vec4', 'vec4(1.0)'));
+        }
         f.pipe('mesh.fragment.shaded', this.uniforms);
       } else {
+        if (join) {
+          f.isolate();
+        }
         f.require(material);
         f.pipe('mesh.fragment.map', this.uniforms, defs);
+        if (join) {
+          f.end();
+          f.pipe(Util.GLSL.binaryOperator('vec4', '*'));
+        }
       }
-      join = true;
       gamma = true;
     }
     if (gamma && !linear) {
@@ -77285,8 +77329,8 @@ ShaderGraph = (function() {
     return new Factory.Material(this.shader(config), this.shader(config));
   };
 
-  ShaderGraph.prototype.overlay = function(shader) {
-    return ShaderGraph.overlay(shader);
+  ShaderGraph.prototype.inspect = function(shader) {
+    return ShaderGraph.inspect(shader);
   };
 
   ShaderGraph.prototype.visualize = function(shader) {

@@ -38,6 +38,7 @@ Traits =
     pass:              Types.vertexPass()
   fragment:
     pass:              Types.fragmentPass()
+    gamma:             Types.bool(true)
 
   transform3:
     position:          Types.vec3()

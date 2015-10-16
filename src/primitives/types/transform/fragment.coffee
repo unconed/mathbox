@@ -13,11 +13,15 @@ class Fragment extends Transform
     @_helpers.bind.unmake()
 
   change: (changed, touched, init) ->
-    return @rebuild() if touched['include']
+    return @rebuild() if touched['include'] or changed['fragment.gamma']
 
   fragment: (shader, pass) ->
     if @bind.shader?
-      shader.pipe @bind.shader.shaderBind() if pass == @props.pass
+      if pass == @props.pass
+        shader.pipe @bind.shader.shaderBind()
+        shader.split()
+        shader.pipe 'mesh.gamma.in' if @props.gamma
+        shader.pass()
     super shader, pass
 
 module.exports = Fragment

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Ortho</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  
+  <!--
+    Recreation of https://twitter.com/beesandbombs/status/654702843723563009
+  -->
+  
+  <script type="application/glsl" id="rotateX">
+    uniform float seek;
+
+    float ease(float t) {
+      t = clamp(t, 0.0, 1.0);
+      return (3.0 - 2.0 * t) * t * t;
+    }
+
+    vec4 rotateX(vec4 xyzw, inout vec4 stpq) {
+      float theta = ease(xyzw.x * .25 + seek) * 1.570796;
+      
+      float s = sin(theta);
+      float c = cos(theta);
+      mat2  m2    = mat2(c, s, -s, c);
+      
+      return vec4(xyzw.x, m2 * xyzw.yz, xyzw.w);
+    }
+  </script>
+  <script type="application/glsl" id="rotateY">
+    uniform float seek;
+
+    float ease(float t) {
+      t = clamp(t, 0.0, 1.0);
+      return (3.0 - 2.0 * t) * t * t;
+    }
+
+    vec4 rotateY(vec4 xyzw, inout vec4 stpq) {
+      float theta = ease(xyzw.y * .25 + seek) * 1.570796;
+      
+      float s = sin(theta);
+      float c = cos(theta);
+      mat2  m2    = mat2(c, s, -s, c);
+      
+      vec2 zx = m2 * xyzw.zx;
+      return vec4(zx.t, xyzw.y, zx.s, xyzw.w);
+    }
+  </script>
+  <script type="application/glsl" id="rotateZ">
+    uniform float seek;
+
+    float ease(float t) {
+      t = clamp(t, 0.0, 1.0);
+      return (3.0 - 2.0 * t) * t * t;
+    }
+
+    vec4 rotateZ(vec4 xyzw, inout vec4 stpq) {
+      float theta = ease(xyzw.z * .25 + seek) * 1.570796;
+      
+      float s = sin(theta);
+      float c = cos(theta);
+      mat2  m2    = mat2(c, s, -s, c);
+      
+      return vec4((m2 * xyzw.yx).yx, xyzw.zw);
+    }
+  </script>
+  <script>
+    var ortho = 10000;
+    
+    var mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor', 'mathbox'],
+      controls: {
+        // Orbit controls, i.e. Euler angles, with gimbal lock
+        klass: THREE.OrbitControls,
+
+        // Trackball controls, i.e. Free quaternion rotation
+        //klass: THREE.TrackballControls,
+      },
+      camera: {
+        fov:  Math.atan(1/ortho) * 360 / π,
+        near:  ortho / 4,
+        far:   ortho * 4,
+      },
+    });
+    if (mathbox.fallback) throw "WebGL not supported"
+
+    var pink = new THREE.Color(187/255, 110/255, 185/255);
+
+    var three = mathbox.three;
+    three.renderer.setClearColor(pink, 1.0);
+
+    // Place camera
+    var camera =
+      mathbox
+      .set({
+        focus: ortho,
+        scale: 720,
+      })
+      .camera({
+        proxy: true,
+        position: [ortho, ortho, ortho],
+      });
+
+    // Sample volume
+    var volume =
+      mathbox
+      .volume({
+        width:  17,
+        height: 17,
+        depth:  17,
+      });
+    
+    var xf = mathbox;
+    
+    // Rotate Z axis
+    xf =
+      xf
+      .shader({
+        code: '#rotateZ',
+      })
+      .play({
+        to: 3,
+        pace: 2,
+        delay: 4,
+        loop: true,
+        ease: 'linear',
+        script: {
+          0:       {props: {seek: -.5}},
+          1:       {props: {seek: 1.5}},
+          1.00001: {props: {seek: -.5}},
+        },
+      })
+      .vertex();
+
+    // Rotate Y axis
+    xf =
+      xf
+      .shader({
+        code: '#rotateY',
+      })
+      .play({
+        to: 3,
+        delay: 2,
+        pace: 2,
+        loop: true,
+        ease: 'linear',
+        script: {
+          0:       {props: {seek: -.5}},
+          1:       {props: {seek: 1.5}},
+          1.00001: {props: {seek: -.5}},
+        },
+      })
+      .vertex();
+
+    // Rotate X axis
+    xf =
+      xf
+      .shader({
+        code: '#rotateX',
+      })
+      .play({
+        to: 3,
+        delay: 0,
+        pace: 2,
+        loop: true,
+        ease: 'linear',
+        script: {
+          0:       {props: {seek: -.5}},
+          1:       {props: {seek: 1.5}},
+          1.00001: {props: {seek: -.5}},
+        },
+      })
+      .vertex();
+
+    // Render lines
+    xf.group().resample({ shader: null, height: 9, depth: 9 }).line({ color: '#fff', width: 4 });
+    xf.group().transpose({ order: 'yzxw' }).resample({ shader: null, height: 9, depth: 9 }).line({ color: '#fff', width: 4 });
+    xf.group().transpose({ order: 'zxyw' }).resample({ shader: null, height: 9, depth: 9 }).line({ color: '#fff', width: 4 });
+    
+  </script>
+</body>
+</html>

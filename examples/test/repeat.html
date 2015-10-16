@@ -14,6 +14,10 @@
       controls: {
         klass: THREE.OrbitControls
       },
+      camera: {
+        near: .1,
+        far: 1000,
+      }
     });
     three = mathbox.three;
 
@@ -25,7 +29,6 @@
     time = 0
     three.on('update', function () {
       time = three.Time.now
-
 
       t = Math.max(three.Time.clock, 0) / 20
       t = t < .5 ? t * t : t - .25
@@ -53,7 +56,7 @@
       surface.set('quaternion', [s*cc, 0, s*ss, c]);
     });
 
-    view = mathbox.set({ scale: 360 }).polar({
+    view = mathbox.set({ scale: 720, focus: 3 }).polar({
       bend: 1/128,
       range: [[-π, π], [-1, 1], [-1, 1]],
       scale: [2, 2, 2],

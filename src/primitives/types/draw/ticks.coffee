@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Ticks extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'ticks', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'ticks', 'geometry', 'position', 'bind', 'shade']
 
   init: () ->
     @tickStrip = @line = null
@@ -75,8 +75,11 @@ class Ticks extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
+    # Build fragment material lookup
+    material = @_helpers.shade.pipeline() || false
+
     # Make line renderable
-    swizzle = @_helpers.position.swizzle
+    {swizzle, swizzle2} = @_helpers.position
     @line = @_renderables.make 'line',
               uniforms: uniforms
               samples:  2
@@ -87,6 +90,7 @@ class Ticks extends Primitive
               color:    color
               stroke:   stroke
               mask:     swizzle mask, 'yzwx'
+              material: material
 
     @_helpers.visible.make()
     @_helpers.object.make [@line]

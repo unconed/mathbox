@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Axis extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position', 'origin']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'axis', 'span', 'interval', 'arrow', 'position', 'origin', 'shade']
   @defaults =
     end: true
     zBias: -1
@@ -46,6 +46,9 @@ class Axis extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
+    # Build fragment material lookup
+    material = @_helpers.shade.pipeline() || false
+
     # Indexing by fixed or by given axis
     {crossed, axis} = @props
     if !crossed and mask? and axis > 1
@@ -61,6 +64,7 @@ class Axis extends Primitive
               clip:     start or end
               stroke:   stroke
               mask:     mask
+              material: material
 
     # Make arrow renderables
     @arrows = []
@@ -71,6 +75,7 @@ class Axis extends Primitive
                 samples:  samples
                 position: position
                 mask:     mask
+                material: material
 
     if end
       @arrows.push @_renderables.make 'arrow',
@@ -78,6 +83,7 @@ class Axis extends Primitive
                 samples:  samples
                 position: position
                 mask:     mask
+                material: material
 
     # Visible, object and span traits
     @_helpers.visible.make()

@@ -2,260 +2,119 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MathBox - Vertex Colors</title>
+  <title>MathBox - Vertex Color</title>
   <script src="../../build/mathbox-bundle.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
-
-<script type="application/glsl" id="map-rotate">
-uniform vec3 dataResolution;
-uniform vec3 dataSize;
-const float COS = .995;
-const float SIN = .01;
-vec4 getSample(vec3 xyz);
-vec4 getFramesSample(vec3 xyz) {
-  vec2 pos = xyz.xy * dataResolution.xy - .5;
-  pos = ((pos * vec2(16.0, 9.0)) * mat2(COS, SIN, -SIN, COS) * .99) / vec2(16.0, 9.0);
-  xyz.xy = (pos + .5) * dataSize.xy;
-  return getSample(xyz) - .01;
-}
-</script>
-
-<script type="application/glsl" id="map-temporal-blur">
-vec4 getSample(vec3 xyz);
-vec4 getFramesSample(vec3 xyz) {
-  vec4 color = (
-    getSample(xyz) +
-    getSample(xyz + vec3(0.0, 0.0, 1.0)) +
-    getSample(xyz + vec3(0.0, 0.0, 2.0)) +
-    getSample(xyz + vec3(0.0, 0.0, 3.0))
-  ) / 4.0;
-  float v = color.x + color.y + color.z;
-  return vec4(vec3(v * v) / 8.0, 1.0);
-} 
-</script>
-
-<script type="application/glsl" id="map-xy-to-xyz">
-vec3 getSample(vec3 xyz);
-vec3 getFramesSample(vec3 xyz) {
-  vec3 c = getSample(xyz);
-  vec2 uv = (xyz.xy - vec2(32.0, 18.0)) / vec2(32.0, 18.0) * vec2(16.0 / 9.0, 1.0);
-  float f = xyz.z * 2.0 - 1.0;
-  return vec3(uv, (c.x + c.y + c.z) * .1 * f);
-}
-</script>
-
-<script type="application/glsl" id="map-z-to-color">
-vec4 getSample(vec2 xy);
-vec4 getFramesSample(vec2 xy) {
-  vec4 c = getSample(xy);
-  return vec4(c.z * vec3(c.z * vec2(c.z, 1.0), 1.0), 1.0);
-}
-</script>
-
-<script type="application/glsl" id="map-z-to-color-2">
-vec4 getSample(vec2 xy);
-vec4 getFramesSample(vec2 xy) {
-  vec4 c = getSample(xy);
-  vec3 rgb = (c.z * vec3(c.z * vec2(c.z, 1.0), 1.0));
-  return vec4(sqrt(rgb.yxz) + .2, 1.0);
-}
-</script>
-
 <body>
   <script>
     mathbox = mathBox({
-      plugins: ['core', 'cursor'],
+      plugins: ['core', 'controls', 'cursor', 'stats'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
     });
     three = mathbox.three;
 
-    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
-    gl = three.renderer.getContext()
+    view = mathbox
+    .set({
+      scale: 720,
+      focus: 5,
+    })
+    .camera({
+      proxy: true,
+      position: [2, 1, 3],
+    })
+    .cartesian({
+      range: [[0, 1], [0, 1], [0, 1]],
+      scale: [1, 2/3, 1],
+    });
 
-    mathbox
-      .set({
-        scale: 720
-      })
-      .camera({
-        position: [.3, .1, 2]
-      })
-      .rtt({
-        id: 'render',
-        width: 64*4,
-        height: 36*4,
-        type: 'unsignedByte',
-        minFilter: 'nearest',
-        magFilter: 'nearest',
-      })
-        .camera({
-          lookAt: [0, 0, 0]
-        }, {
-          position: function (t) {
-            time = t * 1.5;
+    view.axis({
+      axis: 1,
+      width: 3,
+    });
+    view.axis({
+      axis: 2,
+      width: 3,
+    });
+    view.axis({
+      axis: 3,
+      width: 3,
+    });
 
-            x = Math.cos(time) * 3;
-            z = Math.sin(time) * 3;
-            y = Math.sin(time * .341) * 3;
+    view.grid({
+      width: 2,
+      opacity: 0.5,
+      axes: [1, 2],
+      zOrder: -1,
+    });
+    view.grid({
+      width: 2,
+      opacity: 0.5,
+      axes: [2, 3],
+      zOrder: -1,
+    });
+    view.grid({
+      width: 2,
+      opacity: 0.5,
+      axes: [1, 3],
+      zOrder: -1,
+    });
 
-            return [x, (x + z) * .2 + y, z];
-          }
-        })
-        .cartesian({
-          range: [[-2, 2], [-1, 1], [-1, 1]],
-          scale: [2, 1, 1],
-        })
-          .transform({
-            scale: [.7, .7, .7],
-          })
-            .grid({
-              divideX: 4,
-              divideY: 4,
-              zBias: 10,
-              opacity: .25,
-              color: 0xffdfe0,
-              width: 10,
-            })
-          .end()
-        .end()
-      .end()
+    var remap = function (v) { return Math.sqrt(.5 + .5 * v); };
 
-      .rtt({
-        id: 'rtt1',
-        history: 4,
-        width: 64*4,
-        height: 36*4,
-        type: 'unsignedByte',
-      })
-        .shader({
-          code: '#map-rotate'
-        })
-        .resample({
-          id: 'resample1',
-          indices:    3,
-          channels: 4,
-        })
-        .compose({
-          color: '#ffffff',
-          zWrite: false,
-        })
-        .compose({
-          source: '#render',
-          blending: THREE.AdditiveBlending,
-          color: '#ffffff',
-          zWrite: false,
-        })
+    var points = view.area({
+      expr: function (emit, x, z, i, j, t) {
+        var y = remap(Math.sin(x * 5 + t + Math.sin(z * 3.41 + x * 1.48)))
+              * remap(Math.sin(z * 5 + t + Math.cos(x * 3.22 + z)));
+        emit(x, y, z);
+      },
+      width:  32,
+      height: 32,
+      channels: 3,
+      axes: [1, 3],
+    });
 
-      .end()
+    var colors = view.area({
+      expr: function (emit, x, z, i, j, t) {
+        var y = remap(Math.sin(x * 5 + t + Math.sin(z * 3.41 + x * 1.48)))
+              * remap(Math.sin(z * 5 + t + Math.cos(x * 3.22 + z)));
 
-      .rtt({
-        id: "rtt2",
-        width: 64*4,
-        height: 36*4,
-        type: 'unsignedByte',
-      })
-        .shader({
-          code: '#map-temporal-blur'
-        })
-        .resample({
-          id: 'resample2',
-          source: '#rtt1',
-          indices:    3,
-          channels: 4
-        })
-        .compose({
-          color: '#fff',
-          zWrite: false,
-        })
-      .end()
-      .resample({
-        width: 65,
-        height: 37,
-      })
-      .repeat({
-        depth: 2,
-        id: 'lerp',
-      })
+        var r = Math.sin(y * 4) + y * y * y; 
+        var g = (.5 - .5 * Math.cos(y * 3) + y * y) * .85;
+        var b = y;
 
-      .shader({
-        code: '#map-xy-to-xyz'
-      })
-      .resample({
-        indices:  3,
-        channels: 3,
-      })
+        emit(r, g, b, 1.0);
+      },
+      width:  32,
+      height: 32,
+      channels: 4,
+      axes: [1, 3],
+    });
 
-      .transpose({
-        order: 'xywz',
-        id: 'transpose',
-      })
+    view.surface({
+      shaded: true,
+      points: '<<',
+      colors: '<',
+      color: 0xFFFFFF,
+    });
 
-      .transpose({
-        source: '#lerp',
-        order: 'xywz',
-        id: 'color',
-      })
-
-      .shader({
-        code: '#map-z-to-color'
-      })
-      .resample({
-        source: '#lerp',
-        id: 'color1',
-        indices:    2,
-        channels: 4,
-      })
-
-      .shader({
-        code: '#map-z-to-color-2'
-      })
-      .resample({
-        source: '#lerp',
-        id: 'color2',
-        indices:    2,
-        channels: 4,
-      })
-
-
-      .cartesian({
-        range: [[-16/9-.001, 16/9+.001], [-1, 1], [-1, 1]],
-        scale: [16/9, 1, 1],
-      }, {
-        quaternion: function (t) {
-          time = t / 3;
-
-          c = Math.cos(time / 4);
-          s = Math.sin(time / 4);
-
-          c2 = Math.cos(time / 11.71) * 1.71;
-          s2 = Math.sin(time / 11.71) * 1.71;
-
-          return [s * s2, s * c2, 0, c];
-        }
-      })
-        .vector({
-          points: '#transpose',
-          colors: '#color1',
-          color: '#ffffff',
-          start: false,
-          end: false,
-          width: 20,
-          opacity: .15,
-          blending: 'add',
-          zWrite: false,
-        })
-        .point({
-          points: '#transpose',
-          colors: '#color2',
-          color: '#ffffff',
-          size: 5,
-          zBias: 5,
-        })
-
-
-    grid = mathbox.select('grid:nth-of-type(2)')
-
+    view.surface({
+      fill: false,
+      lineX: true,
+      lineY: true,
+      points: '<<',
+      colors: '<',
+      color: 0xFFFFFF,
+      width: 2,
+      blending: 'add',
+      opacity: .25,
+      zBias: 5,
+    });
   </script>
 </body>
 </html>

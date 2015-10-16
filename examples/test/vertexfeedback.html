@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - RTT Vertex Feedback</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+
+<script type="application/glsl" id="map-rotate">
+uniform vec3 dataResolution;
+uniform vec3 dataSize;
+const float COS = .995;
+const float SIN = .01;
+vec4 getSample(vec3 xyz);
+vec4 getFramesSample(vec3 xyz) {
+  vec2 pos = xyz.xy * dataResolution.xy - .5;
+  pos = ((pos * vec2(16.0, 9.0)) * mat2(COS, SIN, -SIN, COS) * .99) / vec2(16.0, 9.0);
+  xyz.xy = (pos + .5) * dataSize.xy;
+  return getSample(xyz) - .01;
+}
+</script>
+
+<script type="application/glsl" id="map-temporal-blur">
+vec4 getSample(vec3 xyz);
+vec4 getFramesSample(vec3 xyz) {
+  vec4 color = (
+    getSample(xyz) +
+    getSample(xyz + vec3(0.0, 0.0, 1.0)) +
+    getSample(xyz + vec3(0.0, 0.0, 2.0)) +
+    getSample(xyz + vec3(0.0, 0.0, 3.0))
+  ) / 4.0;
+  float v = color.x + color.y + color.z;
+  return vec4(vec3(v * v) / 8.0, 1.0);
+} 
+</script>
+
+<script type="application/glsl" id="map-xy-to-xyz">
+vec3 getSample(vec3 xyz);
+vec3 getFramesSample(vec3 xyz) {
+  vec3 c = getSample(xyz);
+  vec2 uv = (xyz.xy - vec2(32.0, 18.0)) / vec2(32.0, 18.0) * vec2(16.0 / 9.0, 1.0);
+  float f = xyz.z * 2.0 - 1.0;
+  return vec3(uv, (c.x + c.y + c.z) * .1 * f);
+}
+</script>
+
+<script type="application/glsl" id="map-z-to-color">
+vec4 getSample(vec2 xy);
+vec4 getFramesSample(vec2 xy) {
+  vec4 c = getSample(xy);
+  return vec4(c.z * vec3(c.z * vec2(c.z, 1.0), 1.0), 1.0);
+}
+</script>
+
+<script type="application/glsl" id="map-z-to-color-2">
+vec4 getSample(vec2 xy);
+vec4 getFramesSample(vec2 xy) {
+  vec4 c = getSample(xy);
+  vec3 rgb = (c.z * vec3(c.z * vec2(c.z, 1.0), 1.0));
+  return vec4(sqrt(rgb.yxz) + .2, 1.0);
+}
+</script>
+
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'cursor'],
+    });
+    three = mathbox.three;
+
+    three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+
+    gl = three.renderer.getContext()
+
+    mathbox
+      .set({
+        scale: 720
+      })
+      .camera({
+        position: [.3, .1, 2]
+      })
+      .rtt({
+        id: 'render',
+        width: 64*4,
+        height: 36*4,
+        type: 'unsignedByte',
+        minFilter: 'nearest',
+        magFilter: 'nearest',
+      })
+        .camera({
+          lookAt: [0, 0, 0]
+        }, {
+          position: function (t) {
+            time = t * 1.5;
+
+            x = Math.cos(time) * 3;
+            z = Math.sin(time) * 3;
+            y = Math.sin(time * .341) * 3;
+
+            return [x, (x + z) * .2 + y, z];
+          }
+        })
+        .cartesian({
+          range: [[-2, 2], [-1, 1], [-1, 1]],
+          scale: [2, 1, 1],
+        })
+          .transform({
+            scale: [.7, .7, .7],
+          })
+            .grid({
+              divideX: 4,
+              divideY: 4,
+              zBias: 10,
+              opacity: .25,
+              color: 0xffdfe0,
+              width: 10,
+            })
+          .end()
+        .end()
+      .end()
+
+      .rtt({
+        id: 'rtt1',
+        history: 4,
+        width: 64*4,
+        height: 36*4,
+        type: 'unsignedByte',
+      })
+        .shader({
+          code: '#map-rotate'
+        })
+        .resample({
+          id: 'resample1',
+          indices:    3,
+          channels: 4,
+        })
+        .compose({
+          color: '#ffffff',
+          zWrite: false,
+        })
+        .compose({
+          source: '#render',
+          blending: THREE.AdditiveBlending,
+          color: '#ffffff',
+          zWrite: false,
+        })
+
+      .end()
+
+      .rtt({
+        id: "rtt2",
+        width: 64*4,
+        height: 36*4,
+        type: 'unsignedByte',
+      })
+        .shader({
+          code: '#map-temporal-blur'
+        })
+        .resample({
+          id: 'resample2',
+          source: '#rtt1',
+          indices:    3,
+          channels: 4
+        })
+        .compose({
+          color: '#fff',
+          zWrite: false,
+        })
+      .end()
+      .resample({
+        width: 65,
+        height: 37,
+      })
+      .repeat({
+        depth: 2,
+        id: 'lerp',
+      })
+
+      .shader({
+        code: '#map-xy-to-xyz'
+      })
+      .resample({
+        indices:  3,
+        channels: 3,
+      })
+
+      .transpose({
+        order: 'xywz',
+        id: 'transpose',
+      })
+
+      .transpose({
+        source: '#lerp',
+        order: 'xywz',
+        id: 'color',
+      })
+
+      .shader({
+        code: '#map-z-to-color'
+      })
+      .resample({
+        source: '#lerp',
+        id: 'color1',
+        indices:    2,
+        channels: 4,
+      })
+
+      .shader({
+        code: '#map-z-to-color-2'
+      })
+      .resample({
+        source: '#lerp',
+        id: 'color2',
+        indices:    2,
+        channels: 4,
+      })
+
+
+      .cartesian({
+        range: [[-16/9-.001, 16/9+.001], [-1, 1], [-1, 1]],
+        scale: [16/9, 1, 1],
+      }, {
+        quaternion: function (t) {
+          time = t / 3;
+
+          c = Math.cos(time / 4);
+          s = Math.sin(time / 4);
+
+          c2 = Math.cos(time / 11.71) * 1.71;
+          s2 = Math.sin(time / 11.71) * 1.71;
+
+          return [s * s2, s * c2, 0, c];
+        }
+      })
+        .vector({
+          points: '#transpose',
+          colors: '#color1',
+          color: '#ffffff',
+          start: false,
+          end: false,
+          width: 20,
+          opacity: .15,
+          blending: 'add',
+          zWrite: false,
+        })
+        .point({
+          points: '#transpose',
+          colors: '#color2',
+          color: '#ffffff',
+          size: 5,
+          zBias: 5,
+        })
+
+
+    grid = mathbox.select('grid:nth-of-type(2)')
+
+  </script>
+</body>
+</html>

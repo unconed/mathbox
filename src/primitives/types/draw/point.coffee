@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Point extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'point', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'point', 'geometry', 'position', 'bind', 'shade']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -56,6 +56,9 @@ class Point extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
+    # Build fragment material lookup
+    material = @_helpers.shade.pipeline() || false
+
     # Point style
     shape   = @props.shape
     fill    = @props.fill
@@ -76,6 +79,7 @@ class Point extends Primitive
               optical:  optical
               fill:     fill
               mask:     mask
+              material: material
 
     @_helpers.visible.make()
     @_helpers.object.make [@point]

@@ -63,6 +63,14 @@ class Strip extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
+    # Build texture map lookup
+    map = @_helpers.shade.map @bind.map?.sourceShader @_shaders.shader()
+
+    # Build fragment material lookup
+    material     = @_helpers.shade.pipeline()
+    faceMaterial = material || shaded
+    lineMaterial = material || false
+
     objects = []
 
     # Make line renderable
@@ -83,6 +91,7 @@ class Strip extends Primitive
                 position: swizzle
                 color:    color
                 mask:     mask
+                material: lineMaterial
 
       objects.push @line
 
@@ -98,7 +107,7 @@ class Strip extends Primitive
                 items:    items
                 position: position
                 color:    color
-                material: shaded
+                material: faceMaterial
       objects.push @strip
 
     @_helpers.visible.make()

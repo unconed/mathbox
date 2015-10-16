@@ -7,10 +7,9 @@ uniform vec2  tickStrip;
 
 vec4 getSample(vec4 xyzw);
 
-vec3 transformPosition(vec4 position, vec4 stpq);
+vec3 transformPosition(vec4 position, in vec4 stpqIn, out vec4 stpqOut);
 
-vec3 getTickPosition(vec4 xyzw, vec4 stpq) {
-
+vec3 getTickPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut) {
   float epsilon = tickEpsilon;
 
   // determine tick direction
@@ -32,8 +31,9 @@ vec3 getTickPosition(vec4 xyzw, vec4 stpq) {
   vec4 a = center;
   vec4 b = center + delta;
 
-  vec3 c = transformPosition(a, stpq);
-  vec3 d = transformPosition(b, stpq);
+  vec4 _;
+  vec3 c = transformPosition(a, stpqIn, stpqOut);
+  vec3 d = transformPosition(b, stpqIn, _);
   
   // sample on either side to create line
   float line = xyzw.x - .5;

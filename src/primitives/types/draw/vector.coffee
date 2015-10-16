@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Vector extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind', 'shade']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -67,26 +67,31 @@ class Vector extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
+    # Build fragment material lookup
+    material = @_helpers.shade.pipeline() || false
+
     # Swizzle vector to line
     {swizzle, swizzle2} = @_helpers.position
     position = swizzle2 position, 'yzwx', 'yzwx'
     color    = swizzle  color,    'yzwx'
     mask     = swizzle  mask,     'yzwx'
+    material = swizzle  mask,     'yzwx'
 
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
     @line = @_renderables.make 'line',
-              uniforms: uniforms
-              samples:  samples
-              ribbons:  ribbons
-              strips:   strips
-              layers:   layers
-              position: position
-              color:    color
-              clip:     start or end
-              stroke:   stroke
+              uniforms:  uniforms
+              samples:   samples
+              ribbons:   ribbons
+              strips:    strips
+              layers:    layers
+              position:  position
+              color:     color
+              clip:      start or end
+              stroke:    stroke
               proximity: proximity
-              mask:     mask
+              mask:      mask
+              material:  material
 
     # Make arrow renderables
     @arrows = []
@@ -101,6 +106,7 @@ class Vector extends Primitive
                 position: position
                 color:    color
                 mask:     mask
+                material: material
 
     if end
       @arrows.push @_renderables.make 'arrow',
@@ -112,6 +118,7 @@ class Vector extends Primitive
                 position: position
                 color:    color
                 mask:     mask
+                material: material
 
     @_helpers.visible.make()
     @_helpers.object.make @arrows.concat [@line]

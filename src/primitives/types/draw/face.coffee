@@ -67,7 +67,9 @@ class Face extends Primitive
     map = @_helpers.shade.map @bind.map?.sourceShader @_shaders.shader()
 
     # Build fragment material lookup
-    material = @_helpers.shade.pipeline() || shaded
+    material     = @_helpers.shade.pipeline()
+    faceMaterial = material || shaded
+    lineMaterial = material || false
 
     objects = []
 
@@ -87,6 +89,7 @@ class Face extends Primitive
                 layers:   depth
                 position: swizzle
                 color:    color
+                material: lineMaterial
                 mask:     mask
                 closed:   true
       objects.push @line
@@ -102,7 +105,7 @@ class Face extends Primitive
                 items:    items
                 position: position
                 color:    color
-                material: material
+                material: faceMaterial
                 mask:     mask
                 map:      map
       objects.push @face

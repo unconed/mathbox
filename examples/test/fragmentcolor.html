@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Fragment Color Cube</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+
+  <script type="application/glsl" id="vertex-xyz">
+  // Enable STPQ mapping
+  #define POSITION_STPQ
+  void getPosition(inout vec4 xyzw, inout vec4 stpq) {
+    // Store XYZ per vertex in STPQ
+    stpq = xyzw;
+  }
+  </script>
+
+  <script type="application/glsl" id="fragment-xyz">
+  // Enable STPQ mapping
+  #define POSITION_STPQ
+  vec4 getColor(vec4 rgba, inout vec4 stpq) {
+    // Retrieve interpolated XYZ from vertices and use as RGB color.
+    // Note: gamma correction will be auto-applied unless .fragment({ gamma: false }) is set.
+    vec3 rgb = stpq.xyz;
+    
+    // Add spatial grid
+    vec3 d3 = abs(fract(stpq.xyz * 16.0) - .5);
+    float level = 1.0 - 2.0 * min(d3.x, min(d3.y, d3.z));
+    float grid = clamp(level * 32.0 - 24.0, 0.0, 1.0) * .5 + .5;
+    
+    return vec4(rgb * grid, 1.0);
+  }
+  </script>
+
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor', 'stats'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+    
+    // View XYZ cube [0..1]
+    view = mathbox
+    .set({
+      scale: 720,
+      focus: 5,
+    })
+    .camera({
+      proxy: true,
+      position: [2, 1, 3],
+    })
+    .cartesian({
+      range: [[0, 1], [0, 1], [0, 1]],
+      scale: [1, 1, 1],
+    });
+    
+    // 3 axes and grids
+    view.axis({
+      axis: 1,
+      width: 3,
+    });
+    view.axis({
+      axis: 2,
+      width: 3,
+    });
+    view.axis({
+      axis: 3,
+      width: 3,
+    });
+
+    view.grid({
+      width: 2,
+      opacity: 0.5,
+      axes: [1, 2],
+      zOrder: -1,
+      origin: [-.1, -.1, -.1],
+    });
+    view.grid({
+      width: 2,
+      opacity: 0.5,
+      axes: [2, 3],
+      zOrder: -1,
+      origin: [-.1, -.1, -.1],
+    });
+    view.grid({
+      width: 2,
+      opacity: 0.5,
+      axes: [1, 3],
+      zOrder: -1,
+      origin: [-.1, -.1, -.1],
+    });
+
+    var remap = function (v) { return .5 * v; };
+    var clamp = function (v) { return Math.max(0, Math.min(1, v)); };
+
+    // Visualize points in volume
+    var points = view.volume({
+      expr: function (emit, x, y, z, i, j, k, t) {
+  
+        // Add some jitter
+        x = x + remap(Math.sin(y * 5 + t)) * remap(Math.sin(z * 5.32 + t)) * .25;
+        y = y + remap(Math.sin(z * 5 + t)) * remap(Math.sin(x * 5.32 + t)) * .25;
+        z = z + remap(Math.sin(x * 5 + t)) * remap(Math.sin(y * 5.32 + t)) * .25;
+
+        x = x + remap(Math.sin(y * 10.27 - t)) * remap(Math.sin(z * 10.19 + t)) * .2;
+        y = y + remap(Math.sin(z * 10.27 - t)) * remap(Math.sin(x * 10.19 + t)) * .2;
+        z = z + remap(Math.sin(x * 10.27 - t)) * remap(Math.sin(y * 10.19 + t)) * .2;
+
+        x = x + remap(Math.sin(y * 15.59 + t)) * remap(Math.sin(z * 15.31 - t)) * .15;
+        y = y + remap(Math.sin(z * 15.59 + t)) * remap(Math.sin(x * 15.31 - t)) * .15;
+        z = z + remap(Math.sin(x * 15.59 + t)) * remap(Math.sin(y * 15.31 - t)) * .15;
+
+        x = x + remap(Math.sin(y * 21.17 - t)) * remap(Math.sin(z * 20.03 - t)) * .1;
+        y = y + remap(Math.sin(z * 21.17 - t)) * remap(Math.sin(x * 20.03 - t)) * .1;
+        z = z + remap(Math.sin(x * 21.17 - t)) * remap(Math.sin(y * 20.03 - t)) * .1;
+
+        emit(clamp(x), clamp(y), clamp(z));
+      },
+      width:  9,
+      height: 9,
+      depth:  9,
+      channels: 3,
+    });
+
+    // Nest vertex/fragment transform 
+    var xf = view;
+    xf =
+      xf
+      .shader({
+        code: "#vertex-xyz"
+      })
+      .vertex({
+        // Work in data XYZ instead of view XYZ
+        pass: 'data'
+      });
+      
+    xf =
+      xf
+      .shader({
+        code: "#fragment-xyz"
+      })
+      .fragment();
+
+    // Make surface from data
+    xf.surface({
+      fill: true,
+      lineX: false,
+      lineY: false,
+      width: 2,
+      zBias: 1,
+      color: 0xFFFFFF,
+    });
+
+  </script>
+</body>
+</html>

@@ -167,13 +167,17 @@ class Base extends Renderable
       gamma = true
 
     if material
-      f.pipe Util.GLSL.constant 'vec4', 'vec4(1.0)' if !join
       if material == true
+        f.pipe Util.GLSL.constant 'vec4', 'vec4(1.0)' if !join
         f.pipe 'mesh.fragment.shaded',  @uniforms
       else
+        f.isolate() if join
         f.require material
         f.pipe 'mesh.fragment.map',     @uniforms, defs
-      join  = true
+        if join
+          f.end()
+          f.pipe Util.GLSL.binaryOperator 'vec4', '*'
+
       gamma = true
 
     if gamma and !linear

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Grid extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'grid', 'area', 'position', 'origin'
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'grid', 'area', 'position', 'origin', 'shade',
             'axis:x',  'axis:y',
             'scale:x', 'scale:y',
             'span:x',  'span:y']
@@ -19,6 +19,9 @@ class Grid extends Primitive
 
     # Build transition mask lookup
     mask = @_helpers.object.mask()
+
+    # Build fragment material lookup
+    material = @_helpers.shade.pipeline() || false
 
     axis = (first, second, transpose) =>
       # Prepare data buffer of tick positions
@@ -72,6 +75,7 @@ class Grid extends Primitive
                 position: position
                 stroke:   stroke
                 mask:     mask
+                material: material
 
       # Store axis object for manipulation later
       {first, second, resolution, samples, line, buffer, values}

@@ -2,7 +2,7 @@ Primitive = require '../../primitive'
 Util      = require '../../../util'
 
 class Line extends Primitive
-  @traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind']
+  @traits = ['node', 'object', 'visible', 'style', 'line', 'arrow', 'geometry', 'position', 'bind', 'shade']
 
   constructor: (node, context, helpers) ->
     super node, context, helpers
@@ -67,6 +67,9 @@ class Line extends Primitive
     # Build transition mask lookup
     mask = @_helpers.object.mask()
 
+    # Build fragment material lookup
+    material = @_helpers.shade.pipeline() || false
+
     # Make line renderable
     uniforms = Util.JS.merge arrowUniforms, lineUniforms, styleUniforms, unitUniforms
     @line = @_renderables.make 'line',
@@ -81,6 +84,7 @@ class Line extends Primitive
               stroke:    stroke
               proximity: proximity
               mask:      mask
+              material:  material
 
     # Make arrow renderables
     @arrows = []
@@ -95,6 +99,7 @@ class Line extends Primitive
                 position: position
                 color:    color
                 mask:     mask
+                material: material
 
     if end
       @arrows.push @_renderables.make 'arrow',
@@ -106,6 +111,7 @@ class Line extends Primitive
                 position: position
                 color:    color
                 mask:     mask
+                material: material
 
     @_helpers.visible.make()
     @_helpers.object.make @arrows.concat [@line]

@@ -79,7 +79,9 @@ class Surface extends Primitive
     map = @_helpers.shade.map @bind.map?.sourceShader @_shaders.shader()
 
     # Build fragment material lookup
-    material = @_helpers.shade.pipeline() || shaded
+    material     = @_helpers.shade.pipeline()
+    faceMaterial = material || shaded
+    lineMaterial = material || false
 
     # Make line and surface renderables
     {swizzle, swizzle2}  = @_helpers.position
@@ -97,6 +99,7 @@ class Surface extends Primitive
                 zUnits:    -zUnits
                 stroke:    stroke
                 mask:      mask
+                material:  lineMaterial
                 proximity: proximity
                 closed:    closedX || closed
       objects.push @lineX
@@ -113,6 +116,7 @@ class Surface extends Primitive
                 zUnits:    -zUnits
                 stroke:    stroke
                 mask:      swizzle  mask,     if crossed then 'xyzw' else 'yxzw'
+                material:  lineMaterial
                 proximity: proximity
                 closed:    closedY || closed
       objects.push @lineY
@@ -127,9 +131,9 @@ class Surface extends Primitive
                 layers:   items
                 position: position
                 color:    color
-                material: shaded
                 zUnits:   zUnits
                 stroke:   stroke
+                material: faceMaterial
                 mask:     mask
                 map:      map
                 intUV:    true

@@ -17,28 +17,28 @@ varying vec4 vUVWO;
 #endif
 
 // External
-vec3 getPosition(vec4 xyzw, vec4 stpq);
+vec3 getPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut);
 
 vec3 getMeshPosition(vec4 xyzw, float canonical) {
-  vec4 stpq = xyzw * geometryResolution;
-  vec3 xyz = getPosition(xyzw, stpq);
+  vec4 stpqOut, stpqIn = xyzw * geometryResolution;
+  vec3 xyz = getPosition(xyzw, stpqIn, stpqOut);
 
   #ifdef POSITION_MAP
   if (canonical > 0.5) {
     #ifdef POSITION_STPQ
-    vSTPQ = stpq;
+    vSTPQ = stpqOut;
     #endif
     #ifdef POSITION_U
-    vU = stpq.x;
+    vU = stpqOut.x;
     #endif
     #ifdef POSITION_UV
-    vUV = stpq.xy;
+    vUV = stpqOut.xy;
     #endif
     #ifdef POSITION_UVW
-    vUVW = stpq.xyz;
+    vUVW = stpqOut.xyz;
     #endif
     #ifdef POSITION_UVWO
-    vUVWO = stpq;
+    vUVWO = stpqOut;
     #endif
   }
   #endif
