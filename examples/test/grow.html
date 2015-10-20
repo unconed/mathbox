@@ -84,8 +84,8 @@
         expr: function (emit) {
           var x = Math.random()*2 - 1;
           var y = Math.random()*2 - 1;
-          emit(x, y, 0); // footprint
-          emit(x, y, x*x + y*y); // footprint
+          emit(x, y, 0);         // footprint
+          emit(x, y, x*x + y*y); // point
         },
       })
       // Grow points on step 2
