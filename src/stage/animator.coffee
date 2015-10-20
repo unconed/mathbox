@@ -134,6 +134,7 @@ class Animation
       method = switch ease
         when 'linear', 0 then null
         when 'cosine', 1 then Ease.cosine
+        when 'hold',   2 then Ease.hold
         else                  Ease.cosine
       f = method f if method?
 

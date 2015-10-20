@@ -179,6 +179,7 @@ class Track extends Primitive
       easeMethod = switch ease
         when 'linear', 0 then Ease.clamp
         when 'cosine', 1 then Ease.cosine
+        when 'hold',   2 then Ease.hold
         else                  Ease.cosine
 
       # Callback for live playhead interpolator (linear approx time travel)

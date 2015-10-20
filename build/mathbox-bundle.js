@@ -52066,6 +52066,9 @@ ease = {
   },
   cosine: function(x) {
     return .5 - .5 * Math.cos(ease.clamp(x, 0, 1) * π);
+  },
+  hold: function(x) {
+    return +(x >= .5);
   }
 };
 
@@ -62319,6 +62322,9 @@ Track = (function(superClass) {
           case 'cosine':
           case 1:
             return Ease.cosine;
+          case 'hold':
+          case 2:
+            return Ease.hold;
           default:
             return Ease.cosine;
         }
@@ -65782,7 +65788,7 @@ Types = {
     if (value == null) {
       value = 'linear';
     }
-    keys = ['linear', 'cosine'];
+    keys = ['linear', 'cosine', 'hold'];
     return Types["enum"](value, keys);
   },
   fit: function(value) {
@@ -71244,6 +71250,9 @@ Animation = (function() {
           case 'cosine':
           case 1:
             return Ease.cosine;
+          case 'hold':
+          case 2:
+            return Ease.hold;
           default:
             return Ease.cosine;
         }
@@ -72561,6 +72570,9 @@ ease = {
   },
   cosine: function(x) {
     return .5 - .5 * Math.cos(ease.clamp(x, 0, 1) * π);
+  },
+  hold: function(x) {
+    return +(x >= .5);
   }
 };
 

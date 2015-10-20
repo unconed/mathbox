@@ -1,5 +1,9 @@
 ### MathBox Changelog
 
+0.0.5-dev
+ * Fix anchor logic on <grow /> being applied to unpinned axes.
+ * Add 'hold' ease to force a binary transition.
+
 0.0.4
 
  * New <readback /> sink that exposes internal readback functionality.

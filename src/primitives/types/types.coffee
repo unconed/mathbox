@@ -590,7 +590,7 @@ Types =
     Types.enum value, keys
 
   ease: (value = 'linear') ->
-    keys = ['linear', 'cosine']
+    keys = ['linear', 'cosine', 'hold']
     Types.enum value, keys
 
   fit: (value = 'contain') ->

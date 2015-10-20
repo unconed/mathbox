@@ -332,11 +332,11 @@ Traits =
   track:
     target:            ["Animation target", 'select', '"<"']
     script:            ["Animation script", 'object', "{}", '{ "0": { props: { color: "red" }, expr: { size: function (t) { return Math.sin(t) + 1; }}}, "1": ...}']
-    ease:              ["Animation ease", 'ease', '"cosine"']
+    ease:              ["Animation ease (linear, cosine, hold)", 'ease', '"cosine"']
   trigger:
     trigger:           ["Trigger on step", 'nullable number', 1]
   step:
-    playback:          ["Playhead ease", 'ease', '"linear"']
+    playback:          ["Playhead ease (linear, cosine, hold)", 'ease', '"linear"']
     stops:             ["Playhead stops", 'nullable number array', "null", "[0, 1, 3, 5]"]
     delay:             ["Step delay", "number", "0"]
     duration:          ["Step duration", "number", "0.3"]
