@@ -12812,14 +12812,14 @@ Grow = (function(superClass) {
     dims = this.bind.source.getFutureDimensions();
     order = ['width', 'height', 'depth', 'items'];
     m = function(d, anchor) {
-      return -((d || 1) - 1) * (.5 - anchor * .5);
+      return ((d || 1) - 1) * (.5 - anchor * .5);
     };
     results = [];
     for (i = j = 0, len = order.length; j < len; i = ++j) {
       key = order[i];
       anchor = this.props[key];
-      this.growMask.setComponent(i, +(!anchor));
-      results.push(this.growAnchor.setComponent(i, m(dims[key], anchor)));
+      this.growMask.setComponent(i, +(anchor == null));
+      results.push(this.growAnchor.setComponent(i, anchor != null ? m(dims[key], anchor) : 0));
     }
     return results;
   };

@@ -39,13 +39,13 @@ class Grow extends Operator
 
       order = ['width', 'height', 'depth', 'items']
 
-      m = (d, anchor) -> -((d || 1) - 1) * (.5 - anchor * .5)
+      m = (d, anchor) ->  ((d || 1) - 1) * (.5 - anchor * .5)
 
       for key, i in order
         anchor = @props[key]
 
-        @growMask  .setComponent i, +!anchor
-        @growAnchor.setComponent i, m(dims[key], anchor)
+        @growMask  .setComponent i, +!anchor?
+        @growAnchor.setComponent i, if anchor? then m(dims[key], anchor) else 0
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator']
