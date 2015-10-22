@@ -70,23 +70,41 @@ combines them to 'play' the piano.
   three = mathbox.three;
   three.renderer.setClearColor(new THREE.Color(0x6060A0), 1.0);
  
+  // Insert camera
   view = mathbox.camera({
     lookAt: [0,0,0], // Changing this doesn't seem to make a difference.
     position : [0.7,0.4,-0.2 ],
     up: [0,1,0],
     proxy : true,  // Hands camera control over to THREE.js
-  });
-  view.cartesian({
-    range: [[-1, 1], [0, 1], [-1, 1]],
-    scale: [2, 1, 2],
+  })
+  
+  // Wrap the view inside a presentation slide to control scripts
+  view = view
+  .present({
+    // Start on slide 1
+    index: 1,
+  })
+  .slide({
+    // Consists of two steps
+    steps: 2
   });
 
+  // Add a translucent grid
   view.grid({
     width: 5,
     opacity: 0.5,
     axes: [1, 3],
     color: 0x2020A0,
-    blending: 'add'
+    blending: 'add',
+    zOrder: 1,
+  })
+  // Fade out on step
+  .step({
+    pace: 3,
+    script: [
+      {props: {opacity: 0.5}},
+      {props: {opacity: 0}},
+    ]
   });
 
   // Emits the four points of one face of a cuboid.
@@ -270,6 +288,19 @@ combines them to 'play' the piano.
     order : 'yzxw',
   });
 
+  // Explode the geometry on step
+  view
+  .spread({
+    unit: 'relative',
+  })
+  .step({
+    pace: 3,
+    script: [
+      {props: {width: [0, 0, 0], height: [0, 0, 0]}},
+      {props: {width: [0, 1, 0], height: [0, 0,-1]}},
+    ]
+  });
+
   // Draw the white keys.
   // Take groups of four items, from the full width x height array of points, 
   // and treat those groups as faces (rectangles).
@@ -324,11 +355,37 @@ combines them to 'play' the piano.
   view.swizzle({
     order : 'yzxw',
   });
+
+  // Explode the geometry on step
+  view
+  .spread({
+    unit: 'relative',
+  })
+  .step({
+    pace: 3,
+    script: [
+      {props: {width: [0, 0, 0], height: [0, 0, 0]}},
+      {props: {width: [0, 1, 0], height: [1, 0, 0]}},
+    ]
+  });
+
   // Draw the black keys.
   view.face({
     color: 0x000000,
     shaded: true,
   });
+
+  // Control presentation with button, swap between slide 1 and 2.
+  var present = mathbox.select('present');
+  var toggle = false;
+  var explode = function () {
+    toggle = !toggle;
+    present.set('index', 1 + toggle);
+  };
+
 </script>
+
+<button style="position: absolute; bottom: 15px; left: 50%; margin-left: -60px; width: 120px; font-size: 20px;" onclick="explode()">Explode</button>
+  
 </body>
 </html>
