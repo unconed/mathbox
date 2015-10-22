@@ -18,10 +18,11 @@ keyboard ripple, and there is a keytilt-shader that takes the stream of points
 for the keyboard and a separate stream indicating which keys are down, and 
 combines them to 'play' the piano.
 */
-   
 </script>
 
+
 <script type="application/glsl" id="wavy-shader">
+  // Warps coordinates.  Makes the whole keyboard wave.
   uniform float time;         // Additional declaration to import time.
   vec4 getSample(vec4 xyz);
   
@@ -41,9 +42,10 @@ combines them to 'play' the piano.
 </script>
   
 <script type="application/glsl" id="keytilt-shader">
+  // Moves selected keys down.
   // We stream data in from two sources....
-  vec4 getSampleA(vec4 xyzw);   // One external source
-  vec4 getSample(vec4 xyzw);    // Original resampled source
+  vec4 getSampleA(vec4 xyzw);   // External source, key movement.
+  vec4 getSample(vec4 xyzw);    // Original source, points of all keys.
 
   vec4 getFramesSample(vec4 xyzw) {
     vec4  v = getSample(xyzw);
@@ -52,12 +54,11 @@ combines them to 'play' the piano.
     // whole key down.
     //vec4  u = vec4( 0.0, 0.0, a, 0.0 );
     //This value for 'u' moves the front down more than the back.
-    //As the angle we are tilting through is small, it's good enough.
+    //As the angle we are tilting through is small, that's good enough.
     vec4  u = vec4( 0.0, 0.0, a * (v.y +0.2)* 3.5, 0.0 );
     return vec4( v + u);
   }
 </script>
-
 
 <script>
   mathbox = mathBox({
@@ -79,7 +80,6 @@ combines them to 'play' the piano.
     range: [[-1, 1], [0, 1], [-1, 1]],
     scale: [2, 1, 2],
   });
-
 
   view.grid({
     width: 5,
@@ -125,11 +125,14 @@ combines them to 'play' the piano.
   var keyDepth2 = 3;       // Distance from start of black key to back.
   var keyGap = 0.1;        // Gap between keys.
   var keyPlayInterval = 2; // How often we have a key that's down.
+  
+  // r is the width of one white key, and is used to scale all the other
+  // measurements.
+  var r = 2/(nKeys*nRepeats * (1 + keyGap )) ;
 
   // This array with an item per key can set which keys are down, individually.
-  // Our formula for delta is setting every 3rd key.
+  // Our formula for delta is setting every 2nd key.
   view.array({
-     id : 'whitekeydown',
      length: nKeys * nRepeats,
      expr: function( emit, i, t ){
         key = i;
@@ -142,11 +145,12 @@ combines them to 'play' the piano.
   });
 
   // The next four nodes convert our
-  // (nKeys x nRepeats) array into 
+  // (nKeys x nRepeats) array into the shape 
   // (4) * (12 * nKeys) * (nRepeats)
   view.repeat({
-    items: 4 * 12, // 4 points per face, 12 faces per key.
+    items:  4*12, // 4 points per face, 12 faces per key.
   });
+  // The splits and joins don't affect the number of points.
   view.split({
      axis : "width",
      length : nKeys,
@@ -167,12 +171,10 @@ combines them to 'play' the piano.
     // It is worth it for the convenience of simpler building blocks.
     id : 'whitekeys',
     length: 12 * nKeys,
-    expr: function (emit, x, t) {
-      r = 2/(nKeys*nRepeats * (1 + keyGap )) ;  // r is the unit of size.
-      p = Math.floor( x );  
+    expr: function (emit, i, t) {
 
-      face = p % 6;           // Face number 0..5 for this cuboid.
-      p = Math.floor( p/6);   // Cuboid number.
+      face = i % 6;           // Face number 0..5 for this cuboid.
+      i = Math.floor( i/6);   // Cuboid number.
       
       yDisplace = 0;
       keyWidth  = 1.0;
@@ -180,7 +182,7 @@ combines them to 'play' the piano.
       xDisplace = -1/(r*nRepeats); // Start at left.      
 
       // 2 cuboids per key.
-      key = Math.floor( p/2);      // Key number.
+      key = Math.floor( i/2);      // Key number.
 
       xDisplace += key*(1+keyGap); // Keys are 1 unit apart, plus a gap.
       key = key %7;                // Key shapes repeat after 7.
@@ -188,7 +190,7 @@ combines them to 'play' the piano.
       // Odd numbered cuboids are amongst the black keys
       // and are longer, further back, displaced and narrower
       // than the cuboid at the 'front' of the key.
-      if( (p%2) == 1 ){
+      if( (i%2) == 1 ){
         keyDepth = keyDepth2;  // longer.
         yDisplace = keyDepth1; // Further back.
         
@@ -248,7 +250,6 @@ combines them to 'play' the piano.
   
   // These two steps warp the keyboard.
   view.shader({
-    id : 'wavy',
     code : '#wavy-shader',
   },
   // The second argument to shader (or indeed any node) says what properties
@@ -266,7 +267,6 @@ combines them to 'play' the piano.
   // our 'y' goes into the page and our z goes up.  We wouldn't need this 
   // swizzle if we'd emitted xyz in a different order.
   view.swizzle({
-    id : 'whiteKeyPoints',
     order : 'yzxw',
   });
 
@@ -274,7 +274,6 @@ combines them to 'play' the piano.
   // Take groups of four items, from the full width x height array of points, 
   // and treat those groups as faces (rectangles).
   view.face({
-    points :'#whiteKeyPoints',
     color: 0xFFFFFF,
     shaded: true,
   });
@@ -282,12 +281,10 @@ combines them to 'play' the piano.
   view.array({
     // 6 faces per black key.
     length: 6 * nBlackKeys,
-    expr: function (emit, x, t) {
-      r = 2/(nKeys*nRepeats*(1+keyGap)) ;
-      p = Math.floor( x );
-      face = p % 6;
+    expr: function (emit, i, t) {
+      face = i % 6;
 
-      key = Math.floor( p/6);
+      key = Math.floor( i/6);
       yDisplace = keyDepth1+keyGap;
       keyWidth = 0.5; // Half the width of a white key.
       keyDepth = keyDepth2;
@@ -306,7 +303,6 @@ combines them to 'play' the piano.
     channels: 3, // xyz values for each point.
   });
   
-  
   view.repeat({
     height: nRepeats,
   });
@@ -316,7 +312,6 @@ combines them to 'play' the piano.
   });
   
   view.shader({
-    id : 'wavy2',
     code : '#wavy-shader',
   },{
     time: function (t) { return t; }
@@ -326,15 +321,11 @@ combines them to 'play' the piano.
       width: 6*nBlackKeys,
       height: nRepeats,
   })    
-  
   view.swizzle({
-    id : 'blackKeyPoints',
     order : 'yzxw',
   });
-
   // Draw the black keys.
   view.face({
-    points :'#blackKeyPoints',
     color: 0x000000,
     shaded: true,
   });
