@@ -8,212 +8,336 @@
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
-  <script>
-    mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor'],
-      controls: {
-        klass: THREE.OrbitControls
-      },
-    });
-    three = mathbox.three;
-    three.renderer.setClearColor(new THREE.Color(0x6060A0), 1.0);
-    
+
+<script>
 /*
 {DocComment} Piano
-Generates 5 black and 7 white keys of a piano keyboard, and then uses repeat and spread to make multiple
-copies. 
+Generates 5 black and 7 white keys of a piano keyboard, and then uses repeat 
+and spread to make multiple copies. There is a wavy-shader that makes the 
+keyboard ripple, and there is a keytilt-shader that takes the stream of points 
+for the keyboard and a separate stream indicating which keys are down, and 
+combines them to 'play' the piano.
 */
    
-   
-    view = mathbox.camera({
-      lookAt: [0,0,0], // changing this doesn't seem to make a difference.
-      position : [0.1,0.9,0.01 ],
-      proxy : true,
-    });
+</script>
 
-    view.cartesian({
-      range: [[-1, 1], [0, 1], [-1, 1]],
-      scale: [2, 1, 2],
-    });
+<script type="application/glsl" id="wavy-shader">
+  uniform float time;         // Additional declaration to import time.
+  vec4 getSample(vec4 xyz);
+  
+  vec4 getFramesSample(vec4 wxyz) {
+    vec4 v= getSample(wxyz);
+    float t = v.x + time ;
+    // Use 'beat frequencies' between two close frequencies to make a warping 
+    // in y and z that comes and goes.
+    // We are making a very small adjustment on the coordinate, v.
+    v = v + 0.003*vec4( 
+        0.3*cos( 4.4 * t ),
+        cos( 4.3 * t )-cos( 4.2 * t ),
+        cos( 4.1 * t )-cos( 4.0 * t )+2.5,
+        0.0);
+    return( v );
+  } 
+</script>
+  
+<script type="application/glsl" id="keytilt-shader">
+  // We stream data in from two sources....
+  vec4 getSampleA(vec4 xyzw);   // One external source
+  vec4 getSample(vec4 xyzw);    // Original resampled source
 
+  vec4 getFramesSample(vec4 xyzw) {
+    vec4  v = getSample(xyzw);
+    float a = getSampleA(xyzw).x;
+    //The commented out line for 'u' is an alternative that just moves the 
+    // whole key down.
+    //vec4  u = vec4( 0.0, 0.0, a, 0.0 );
+    //This value for 'u' moves the front down more than the back.
+    //As the angle we are tilting through is small, it's good enough.
+    vec4  u = vec4( 0.0, 0.0, a * (v.y +0.2)* 3.5, 0.0 );
+    return vec4( v + u);
+  }
+</script>
+
+
+<script>
+  mathbox = mathBox({
+    plugins: ['core', 'controls', 'cursor'],
+    controls: {
+      klass: THREE.OrbitControls
+    },
+  });
+  three = mathbox.three;
+  three.renderer.setClearColor(new THREE.Color(0x6060A0), 1.0);
  
-    view.grid({
-      width: 5,
-      opacity: 0.5,
-      axes: [1, 3],
-      color: 0x2020A0,
-      blending: 'add'
-    });
+  view = mathbox.camera({
+    lookAt: [0,0,0], // Changing this doesn't seem to make a difference.
+    position : [0.7,0.4,-0.2 ],
+    up: [0,1,0],
+    proxy : true,  // Hands camera control over to THREE.js
+  });
+  view.cartesian({
+    range: [[-1, 1], [0, 1], [-1, 1]],
+    scale: [2, 1, 2],
+  });
 
-    // Emits the four points of one face of a cuboid.
-    // The faces are numbered 0..5.
-    // The cuboid has dimensions w,h,d and is positioned at x,y,z.
-    function cuboid_face( emit, w,h,d, x,y,z, face ){
-      // faces 3,4,5 are displaced relative to their partner 
-      // faces 1,2,3.
-      if( face == 3) x+=w;
-      if( face == 4) y+=h;
-      if( face == 5) z+=d;
+
+  view.grid({
+    width: 5,
+    opacity: 0.5,
+    axes: [1, 3],
+    color: 0x2020A0,
+    blending: 'add'
+  });
+
+  // Emits the four points of one face of a cuboid.
+  // The faces are numbered 0..5.
+  // The cuboid has dimensions w,h,d and is positioned at x,y,z.
+  function cuboid_face( emit, w,h,d, x,y,z, face ){
+    // faces 3,4,5 are displaced relative to their partner 
+    // faces 1,2,3.
+    if( face == 3) x+=w;
+    if( face == 4) y+=h;
+    if( face == 5) z+=d;
+    
+    // It's now as if we are drawing face 0,1 or 2.
+    face = face % 3;
+    // Each face lacks one of the 3 dimensions.
+    // The conditionals ensure we generate 4 points, not 6.
+    // We are just stepping in two of the dimensions.
+    if( face != 0 ) { x+=w;emit(x,y,z); }
+    if( face != 1 ) { y+=h;emit(x,y,z); }
+    if( face != 2 ) { z+=d;emit(x,y,z); }
+    if( face != 0 ) { x-=w;emit(x,y,z); }
+    if( face != 1 ) { y-=h;emit(x,y,z); }
+    if( face != 2 ) { z-=d;emit(x,y,z); }
+  }
+  
+  // The white keys of a piano repeat after 7 
+  // We could set nKeys to 56 here.  Instead we set it low
+  // and then repeat on the GPU.
+  // This example was originally built without nRepeats, and
+  // then adapted to repeat on the GPU.
+  nKeys = 7;     // White keys generated in javascript
+  nRepeats = 8;  // Number of repeats on GPU. (usually 8, can be as high as 800)
+  // Fewer black keys.
+  nBlackKeys = Math.floor( nKeys * 5.0/7.0 + 0.5);
+  var keyDepth1 = 1.5;     // Distance front edge to black key.
+  var keyDepth2 = 3;       // Distance from start of black key to back.
+  var keyGap = 0.1;        // Gap between keys.
+  var keyPlayInterval = 2; // How often we have a key that's down.
+
+  // This array with an item per key can set which keys are down, individually.
+  // Our formula for delta is setting every 3rd key.
+  view.array({
+     id : 'whitekeydown',
+     length: nKeys * nRepeats,
+     expr: function( emit, i, t ){
+        key = i;
+        adjustedTime = t* (5.0 + (key %7)/10)+key;
+        delta = (0.25 / nRepeats) * 
+           Math.max( 0, Math.sin(adjustedTime )-0.7);
+        emit( (key%keyPlayInterval == 0) ? -delta : 0);
+     },
+     channels : 1,
+  });
+
+  // The next four nodes convert our
+  // (nKeys x nRepeats) array into 
+  // (4) * (12 * nKeys) * (nRepeats)
+  view.repeat({
+    items: 4 * 12, // 4 points per face, 12 faces per key.
+  });
+  view.split({
+     axis : "width",
+     length : nKeys,
+  });
+  view.split({
+     axis : "items",
+     length : 4,
+  });
+  var whitekeydown =  view.join({
+     axis : "width",
+  });
+  
+  // The white keys.
+  view.array({
+    // 12 faces per white key.
+    // (Because we draw each white key as two cuboids).
+    // We are drawing one more face than we need to for each white key.
+    // It is worth it for the convenience of simpler building blocks.
+    id : 'whitekeys',
+    length: 12 * nKeys,
+    expr: function (emit, x, t) {
+      r = 2/(nKeys*nRepeats * (1 + keyGap )) ;  // r is the unit of size.
+      p = Math.floor( x );  
+
+      face = p % 6;           // Face number 0..5 for this cuboid.
+      p = Math.floor( p/6);   // Cuboid number.
       
-      // It's now as if we are drawing face 0,1 or 2.
-      face = face % 3;
-      // Each face lacks one of the 3 dimensions.
-      // The conditionals ensure we generate 4 points, not 6.
-      // We are just stepping in two of the dimensions.
-      if( face != 0 ) { x+=w;emit(x,y,z); }
-      if( face != 1 ) { y+=h;emit(x,y,z); }
-      if( face != 2 ) { z+=d;emit(x,y,z); }
-      if( face != 0 ) { x-=w;emit(x,y,z); }
-      if( face != 1 ) { y-=h;emit(x,y,z); }
-      if( face != 2 ) { z-=d;emit(x,y,z); }
-    }
-    
-    // The white keys of a piano repeat after 7 
-    // We could set nKeys to 56 here.  Instead we set it low
-    // and then repeat on the GPU.
-    // This example was originally built without nRepeats, and
-    // then adapted to repeat on the GPU.
-    nKeys = 7;     // White keys generated in javascript
-    nRepeats = 8;  // Number of repeats on GPU.
-    // Fewer black keys.
-    nBlackKeys = Math.floor( nKeys * 5.0/7.0 + 0.5);
-    var keyDepth1 = 1.5;  // Distance front edge to black key.
-    var keyDepth2 = 3;    // Distance from start of black key to back.
-    var keyGap = 0.1;     // Gap between keys.
-    
-    // The white keys.
-    view.array({
-      // 12 faces per white key.
-      // (Because we draw each white key as two cuboids).
-      // We are drawing one more face than we need to for each white key.
-      // It is worth it for the convenience of simpler building blocks.
-      length: 12 * nKeys,
-      expr: function (emit, x, t) {
-        r = 2/(nKeys*nRepeats * (1 + keyGap )) ;  // r is the unit of size.
-        p = Math.floor( x );  
+      yDisplace = 0;
+      keyWidth  = 1.0;
+      keyDepth  = keyDepth1;
+      xDisplace = -1/(r*nRepeats); // Start at left.      
 
-        face = p % 6;           // Face number 0..5 for this cuboid.
-        p = Math.floor( p/6);   // Cuboid number.
+      // 2 cuboids per key.
+      key = Math.floor( p/2);      // Key number.
+
+      xDisplace += key*(1+keyGap); // Keys are 1 unit apart, plus a gap.
+      key = key %7;                // Key shapes repeat after 7.
+      
+      // Odd numbered cuboids are amongst the black keys
+      // and are longer, further back, displaced and narrower
+      // than the cuboid at the 'front' of the key.
+      if( (p%2) == 1 ){
+        keyDepth = keyDepth2;  // longer.
+        yDisplace = keyDepth1; // Further back.
         
-        yDisplace = 0;
-        keyWidth  = 1.0;
-        keyDepth  = keyDepth1;
-        xDisplace = -1/(r*nRepeats); // Start at left.      
-
-        // 2 cuboids per key.
-        key = Math.floor( p/2);      // Key number.
-
-        xDisplace += key*(1+keyGap); // Keys are 1 unit apart, plus a gap.
-        key = key %7;                // Key shapes repeat after 7.
-        
-        // Odd numbered cuboids are amongst the black keys
-        // and are longer, further back, displaced and narrower
-        // than the cuboid at the 'front' of the key.
-        if( (p%2) == 1 ){
-          keyDepth = keyDepth2;  // longer.
-          yDisplace = keyDepth1; // Further back.
+        // All but 0 & 4 are displaced half a black key width to the right.
+        if( (key % 4) != 0 )
+          xDisplace += 0.25+keyGap/2;
           
-          // All but 0 & 4 are displaced half a black key width to the right.
-          if( (key % 4) != 0 )
-            xDisplace += 0.25+keyGap/2;
-            
-          // 0,3,4 and 6 are slightly wider.  1,2 & 5 narrow.
-          if( (key==0) || (key ==3) || (key==4) || (key==6) )
-            keyWidth = 0.75-keyGap/2;
-          else {
-            keyWidth = 0.5-keyGap;
-          }
+        // 0,3,4 and 6 are slightly wider.  1,2 & 5 narrow.
+        if( (key==0) || (key ==3) || (key==4) || (key==6) )
+          keyWidth = 0.75-keyGap/2;
+        else {
+          keyWidth = 0.5-keyGap;
         }
-        // r is the unit of size.
-        cuboid_face( emit, -r*keyWidth, -r*keyDepth, r/4, -r*xDisplace, -r*yDisplace, 0, face );
-      },
-      items: 4,    // because we output four points for a face.
-      channels: 3, // because we output xyz.
-    });
-   
+      }
+      // r is the unit of size.
+      cuboid_face( emit, -r*keyWidth, -r*keyDepth, r/4,
+         -r*xDisplace, -r*yDisplace, r/4, face );
+    },
     // We are using the items dimension, 4 items, to hold 4 points for a face.
-   
-    // 'repeat' replicates in one of the dimensions.
-    // We were only using the width and items dimensions, so this
-    // repeat on 'height' adds a new dimension to our array of points.
-    // If nRepeats were 3 we would have 3 copies of the data.
-    view.repeat({
-      height: nRepeats,
-    });
-    // 'spread' transfers information from our array dimensions into 
-    // the vec4's actually in the array.
-    // We're spreading based on the newly added dimension.
-    // That's quite a common pattern.
-    view.spread({
-      unit: 'absolute',
-      height: [2/nRepeats, 0, 0, 0], // This means we will affect the 'x' of the vec4s.
-    });
-    
-    // The earlier emits put values in to x,y,z, but the way we are viewing this,
-    // our 'y' goes into the page and our z goes up.  We wouldn't need this swizzle
-    // if we'd emitted xyz in a different order.
-    view.swizzle({
-      id : 'whiteKeyPoints',
-      order : 'yzxw',
-    });
+    items: 4,    // because we output four points for a face.
+    channels: 3, // because we output xyz.
+  });
  
-    // Draw the white keys.
-    // Take groups of four items, from the full width x height array of points, and
-    // Treat those groups as faces (rectangles).
-    view.face({
-      points :'#whiteKeyPoints',
-      color: 0xFFFFFF,
-      shaded: true,
-    });
+  // 'repeat' replicates in one of the dimensions.
+  // We were only using the width and items dimensions, so this
+  // repeat on 'height' adds a new dimension to our array of points.
+  // If nRepeats were 3 we would have 3 copies of the data.
+  view.repeat({
+    height: nRepeats,
+  });
+  
+  // 'spread' transfers information from our array dimensions into 
+  // the vec4's actually in the array.
+  // We're spreading based on the newly added dimension.
+  // That's quite a common pattern.
+  var whitekeys = view.spread({
+    unit: 'absolute',
+    height: [-2/nRepeats, 0, 0, 0], // Affect only the 'x' of the vec4s.
+  });
 
-    view.array({
-      // 6 faces per black key.
-      length: 6 * nBlackKeys,
-      expr: function (emit, x, t) {
-        r = 2/(nKeys*nRepeats*(1+keyGap)) ;
-        p = Math.floor( x );
-        face = p % 6;
+  // This shader is merging two streams of information.
+  // The whitekeydown source has one float item per key.
+  // It's being merged with 48x vec4 for each key that give the faces.
+  // This only defines the shader.
+  view.shader({
+    sources: [whitekeydown], // extra sources, in addition to whitekeys.
+    code: "#keytilt-shader",
+  });
 
-        key = Math.floor( p/6);
-        yDisplace = keyDepth1+keyGap;
-        keyWidth = 0.5; // Half the width of a white key.
-        keyDepth = keyDepth2;
-        xDisplace = -1/(r*nRepeats);        
-
-        // The 7/5 is in there because 5 black keys need to be spread out to the
-        // space that 7 white keys take.
-        // The first black key starts 0.75 of a key over, plus half a key gap. 
-        xDisplace += (Math.floor( key * 7.0/5.0 )) *(1+keyGap) + 0.75 + keyGap/2 ; 
-        key = key %7;
-
-        cuboid_face( emit, -r * keyWidth, -r*keyDepth, r/2, -r*xDisplace,-r*yDisplace,0 ,face );
-      },
-      items: 4,    // 4 points per face.
-      channels: 3, // xyz values for each point.
-    });
-    
-    
-    view.repeat({
+  // This actually invokes the shader.
+  // The shader is implicitly bound.
+  // Leave this out, and the keys won't play.
+  view.resample({
+    width: 12*nKeys,
+    height: nRepeats,
+  })
+  
+  // These two steps warp the keyboard.
+  view.shader({
+    id : 'wavy',
+    code : '#wavy-shader',
+  },
+  // The second argument to shader (or indeed any node) says what properties
+  // are recalculated every tick.  Exception: <expr> is re-evaluated every tick, 
+  // by default, even though in the first argument.
+  {
+    time: function (t) { return t; }
+  });
+  view.resample({
+      width: 12*nKeys,
       height: nRepeats,
-    });
-    view.spread({
-      unit: 'absolute',
-      height: [2/nRepeats, 0, 0, 0],
-    });
-    view.swizzle({
-      id : 'blackKeyPoints',
-      order : 'yzxw',
-    });
+  })    
+  
+  // The earlier emits put values in to x,y,z, but the way we are viewing this,
+  // our 'y' goes into the page and our z goes up.  We wouldn't need this 
+  // swizzle if we'd emitted xyz in a different order.
+  view.swizzle({
+    id : 'whiteKeyPoints',
+    order : 'yzxw',
+  });
 
-    // Draw the black keys.
-    view.face({
-      points :'#blackKeyPoints',
-      color: 0x000000,
-      shaded: true,
-    });
-    
-   
+  // Draw the white keys.
+  // Take groups of four items, from the full width x height array of points, 
+  // and treat those groups as faces (rectangles).
+  view.face({
+    points :'#whiteKeyPoints',
+    color: 0xFFFFFF,
+    shaded: true,
+  });
 
-  </script>
+  view.array({
+    // 6 faces per black key.
+    length: 6 * nBlackKeys,
+    expr: function (emit, x, t) {
+      r = 2/(nKeys*nRepeats*(1+keyGap)) ;
+      p = Math.floor( x );
+      face = p % 6;
+
+      key = Math.floor( p/6);
+      yDisplace = keyDepth1+keyGap;
+      keyWidth = 0.5; // Half the width of a white key.
+      keyDepth = keyDepth2;
+      xDisplace = -1/(r*nRepeats);        
+
+      // The 7/5 is in there because 5 black keys need to be spread out to the
+      // space that 7 white keys take.
+      // The first black key starts 0.75 of a key over, plus half a key gap. 
+      xDisplace += (Math.floor( key * 7.0/5.0 )) *(1+keyGap) + 0.75 + keyGap/2; 
+      key = key %7;
+
+      cuboid_face( emit, -r * keyWidth, -r*keyDepth, r/2, 
+         -r*xDisplace,-r*yDisplace, r/4 ,face );
+    },
+    items: 4,    // 4 points per face.
+    channels: 3, // xyz values for each point.
+  });
+  
+  
+  view.repeat({
+    height: nRepeats,
+  });
+  view.spread({
+    unit: 'absolute',
+    height: [-2/nRepeats, 0, 0, 0],
+  });
+  
+  view.shader({
+    id : 'wavy2',
+    code : '#wavy-shader',
+  },{
+    time: function (t) { return t; }
+  }
+  );
+  view.resample({
+      width: 6*nBlackKeys,
+      height: nRepeats,
+  })    
+  
+  view.swizzle({
+    id : 'blackKeyPoints',
+    order : 'yzxw',
+  });
+
+  // Draw the black keys.
+  view.face({
+    points :'#blackKeyPoints',
+    color: 0x000000,
+    shaded: true,
+  });
+</script>
 </body>
 </html>
