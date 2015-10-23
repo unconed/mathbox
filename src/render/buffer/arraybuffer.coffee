@@ -10,6 +10,7 @@ class ArrayBuffer_ extends DataBuffer
     @history  = options.history  || 1
 
     @samples = @length
+    @wrap    = @history > 1
 
     options.width  = @length
     options.height = @history

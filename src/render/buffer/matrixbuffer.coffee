@@ -11,6 +11,7 @@ class MatrixBuffer extends DataBuffer
     @history  = options.history  || 1
 
     @samples = @width * @height
+    @wrap    = @history > 1
 
     options.depth = @history
     super renderer, shaders, options
