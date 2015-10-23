@@ -76,4 +76,18 @@ class Buffer extends Data
       @bufferStep  = time.step
       callback (()->), @bufferFrames++, 0, 1
 
+  alignShader: (dims, shader) ->
+    {minFilter, magFilter, aligned} = @props
+    mixed = (dims.items > 1 and dims.width > 1) or (dims.height > 1 and dims.depth > 1)
+
+    return if aligned or !mixed
+
+    nearest = minFilter == @node.attributes['texture.minFilter'].enum.nearest or
+              magFilter == @node.attributes['texture.magFilter'].enum.nearest
+
+    if !nearest
+      console.warn "#{@node.toString()} - Cannot use linear min/magFilter with 3D/4D sampling"
+
+    shader.pipe 'map.xyzw.align'
+
 module.exports = Buffer

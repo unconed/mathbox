@@ -108,6 +108,7 @@ Traits =
     limit:             ["Maximum frames to track", "number", 60]
     realtime:          ["Run on real time, not clock time", "bool", false]
     observe:           ["Pass clock time to data", "bool", false]
+    aligned:           ["Use (fast) integer lookups", "bool", false]
   sampler:
     centered:          ["Centered instead of corner sampling", "bool", "false"]
     padding:           ["Number of samples padding", "number", "0"]
@@ -260,15 +261,23 @@ Traits =
     height:            ["Repeat height", "number", "1"]
     depth:             ["Repeat depth",  "number", "1"]
   slice:
-    items:             ["Slice from, to items",  "nullable vec2", "null", "[2, 4]"]
-    width:             ["Slice from, to width",  "nullable vec2", "null", "[2, 4]"]
-    height:            ["Slice from, to height", "nullable vec2", "null", "[2, 4]"]
-    depth:             ["Slice from, to depth",  "nullable vec2", "null", "[2, 4]"]
+    items:             ["Slice from, to items (excluding to)",  "nullable vec2", "null", "[2, 4]"]
+    width:             ["Slice from, to width (excluding to)",  "nullable vec2", "null", "[2, 4]"]
+    height:            ["Slice from, to height (excluding to)", "nullable vec2", "null", "[2, 4]"]
+    depth:             ["Slice from, to depth (excluding to)",  "nullable vec2", "null", "[2, 4]"]
   lerp:
+    size:              ["Scaling mode (relative, absolute)", "mapping", '"absolute"']
     items:             ["Lerp to items",  "nullable number", "null", "5"]
     width:             ["Lerp to width",  "nullable number", "null", "5"]
     height:            ["Lerp to height", "nullable number", "null", "5"]
     depth:             ["Lerp to depth",  "nullable number", "null", "5"]
+  subdivide:
+    items:             ["Divisions of items",  "nullable positive int", "null", "5"]
+    width:             ["Divisions of width",  "nullable positive int", "null", "5"]
+    height:            ["Divisions of height", "nullable positive int", "null", "5"]
+    depth:             ["Divisions of depth",  "nullable positive int", "null", "5"]
+    bevel:             ["Fraction to end outward from vertices", "number", "1"]
+    lerp:              ["Interpolate values with computed indices", "boolean", "true"]
   resample:
     indices:           ["Resample indices", "number", 4]
     channels:          ["Resample channels", "number", 4]
@@ -332,11 +341,11 @@ Traits =
   track:
     target:            ["Animation target", 'select', '"<"']
     script:            ["Animation script", 'object', "{}", '{ "0": { props: { color: "red" }, expr: { size: function (t) { return Math.sin(t) + 1; }}}, "1": ...}']
-    ease:              ["Animation ease (linear, cosine, hold)", 'ease', '"cosine"']
+    ease:              ["Animation ease (linear, cosine, binary, hold)", 'ease', '"cosine"']
   trigger:
     trigger:           ["Trigger on step", 'nullable number', 1]
   step:
-    playback:          ["Playhead ease (linear, cosine, hold)", 'ease', '"linear"']
+    playback:          ["Playhead ease (linear, cosine, binary, hold)", 'ease', '"linear"']
     stops:             ["Playhead stops", 'nullable number array', "null", "[0, 1, 3, 5]"]
     delay:             ["Step delay", "number", "0"]
     duration:          ["Step duration", "number", "0.3"]

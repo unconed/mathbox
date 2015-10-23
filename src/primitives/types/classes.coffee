@@ -40,6 +40,7 @@ Classes =
   label:             require './text/label'
   retext:            require './text/retext'
 
+  clamp:             require './operator/clamp'
   grow:              require './operator/grow'
   join:              require './operator/join'
   lerp:              require './operator/lerp'
@@ -51,6 +52,7 @@ Classes =
   spread:            require './operator/spread'
   split:             require './operator/split'
   slice:             require './operator/slice'
+  subdivide:         require './operator/subdivide'
   transpose:         require './operator/transpose'
 
   group:             require './base/group'

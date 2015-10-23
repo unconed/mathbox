@@ -40,6 +40,7 @@ Classes =
   retext:            ['text','Text atlas resampler']
   label:             ['text','Draw GL labels']
 
+  clamp:             ['operator','Clamp out-of-bounds samples to the nearest data point']
   grow:              ['operator','Scale data relative to reference data point']
   join:              ['operator','Join two array dimensions into one by concatenating rows/columns/stacks']
   lerp:              ['operator','Linear interpolation of data']
@@ -51,6 +52,7 @@ Classes =
   spread:            ['operator','Spread data values according to array indices']
   split:             ['operator','Split one array dimension into two by splitting rows/columns/etc']
   slice:             ['operator','Select one or more rows/columns/stacks']
+  subdivide:         ['operator','Subdivide data points evenly or with a bevel']
   transpose:         ['operator','Transpose array dimensions']
 
   group:             ['base','Group elements for visibility and activity']

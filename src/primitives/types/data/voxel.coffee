@@ -23,6 +23,8 @@ class Voxel extends Buffer
     super
 
   sourceShader: (shader) ->
+    dims = @getDimensions()
+    @alignShader dims, shader
     @buffer.shader shader
 
   getDimensions: () ->

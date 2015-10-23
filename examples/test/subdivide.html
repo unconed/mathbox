@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Subdivide</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script type="application/glsl" id="blur-2d">
+  uniform vec2 dataSize;
+  vec4 getSample(vec2 xy);
+  vec4 getSmoothSample(vec2 xy) {
+    vec4 c = getSample(xy);
+    vec4 u = getSample(xy + vec2( 0.0,  1.0));
+    vec4 d = getSample(xy + vec2( 0.0, -1.0));
+    vec4 l = getSample(xy + vec2( 1.0,  0.0));
+    vec4 r = getSample(xy + vec2(-1.0,  0.0));
+    return (u + d + l + r + c) / 5.0;
+  }
+  </script>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor', 'stats'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(-3.5, 2.2, -3.3);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    // Cartesian view
+    view = mathbox
+    .set({
+      focus: 3.5,
+    })
+    .cartesian({
+      range: [[-3, 3], [0, 1], [-3, 3]],
+      scale: [2, 1, 2],
+    });
+
+    view.axis({
+      axis: 1,
+    });
+    view.axis({
+      axis: 3,
+    });
+
+    view.grid({
+      width: 5,
+      opacity: 0.5,
+      axes: [1, 3],
+    });
+
+    // Three identical surfaces stacked above each other
+    view
+    .area({
+      width:  9,
+      height: 9,
+      axes: 'xz',
+      expr: function (emit, x, z, i, j, time) {
+        var y = .25 * (
+                    Math.sin(x * 1.25 + Math.sin(z + time) - time * 1.34)
+                  * Math.sin(z * 1.17 - time * .79)
+                ) + 1;
+        emit(x, y - .66, z);
+        emit(x, y, z);
+        emit(x, y + .66, z);
+      },
+      channels: 3,
+      items: 3,
+    })
+
+    // Draw first surface
+    .group()
+      .slice({ items: [0, 1] })
+      .group()
+        .slice({ height: [0, 5] })
+        .surface({
+          fill: false,
+          lineX: true,
+          lineY: true,
+          color: 0xFFAFAF,
+          width: 2,
+          zBias: 3,
+        })
+      .end()
+      // Subdivide with near-invisible bevel to flat shade
+      .subdivide({
+        width:  3,
+        height: 3,
+        bevel: 0.001,
+      })
+      .surface({
+        shaded: true,
+        color: 0xFFAFAF,
+      })
+    .end()
+
+    // Draw second surface
+    .group()
+      .slice({ items: [1, 2] })
+      .group()
+        // Draw partial undivided wireframe
+        .slice({ height: [0, 5] })
+        .surface({
+          fill: false,
+          lineX: true,
+          lineY: true,
+          color: 0x5FCFFF,
+          width: 2,
+          zBias: 3,
+        })
+      .end()
+      // Subdivide with fractional bevel to flat shade with rounded joins
+      .subdivide({
+        width:  3,
+        height: 3,
+        bevel: 1/3,
+      })
+      .surface({
+        shaded: true,
+        color: 0x5FCFFF,
+      })
+      .group()
+        // Draw partial divided wireframe
+        .slice({ height: [0, 12] })
+        .surface({
+          fill: false,
+          lineX: true,
+          lineY: true,
+          color: 0x5FCFFF,
+          width: 1,
+          opacity: .75,
+          zBias: 3,
+        })
+      .end()
+    .end()
+
+    // Draw third surface
+    .group()
+      .slice({ items: [2, 3] })
+      // Subdivide evenly
+      .subdivide({
+        width:  2,
+        height: 2,
+      })
+      // Memoize to cache data
+      .memo()
+
+      // Apply 2D blur to smooth mesh
+      // Clamp to ensure edge samples don't go out of bounds
+      .clamp()
+      .shader({
+        code: '#blur-2d'
+      })
+      .resample({
+        indices: 2
+      })
+      // Memoize to cache data
+      .memo()
+
+      // Subdivide evenly
+      .subdivide({
+        width:  2,
+        height: 2,
+      })
+      // Memoize to cache data
+      .memo()
+
+      // Apply 2D blur to smooth mesh
+      // Clamp to ensure edge samples don't go out of bounds
+      .clamp()
+      .shader({
+        code: '#blur-2d'
+      })
+      .resample({
+        indices: 2
+      })
+      // Memoize to cache data
+      .memo()
+
+      // Subdivide evenly
+      .subdivide({
+        width:  2,
+        height: 2,
+      })
+      // Memoize to cache data
+      .memo()
+    
+      // Apply 2D blur to smooth mesh
+      // Clamp to ensure edge samples don't go out of bounds
+      .clamp()
+      .shader({
+        code: '#blur-2d'
+      })
+      .resample({
+        indices: 2
+      })
+
+      // Memoize to cache data
+      .memo()
+    
+      // Apply 2D blur to smooth mesh
+      // Clamp to ensure edge samples don't go out of bounds
+      .clamp()
+      .shader({
+        code: '#blur-2d'
+      })
+      .resample({
+        indices: 2
+      })
+
+      // Draw surface and wire
+      .surface({
+        shaded: true,
+        color: 0x4FFF0F,
+      })
+      .group()
+        // Draw partial divided wireframe
+        .slice({ height: [0, 33] })
+        .surface({
+          fill: false,
+          lineX: true,
+          lineY: true,
+          color: 0x4FFF6F,
+          width: 1,
+          opacity: .75,
+          zBias: 3,
+        })
+      .end()
+      .group()
+        .resample({
+          shader: null,
+          size: 'relative',
+          height: 1/8
+        })
+        // Draw partial subsampled wireframe
+        .slice({ height: [0, 5] })
+        .line({
+          color: 0x4FFF6F,
+          width: 2,
+          zBias: 3,
+        })
+      .end()
+      .group()
+        .transpose({
+          order: 'yx',
+        })
+        .resample({
+          shader: null,
+          size: 'relative',
+          height: 1/8
+        })
+        // Draw partial subsampled wireframe
+        .slice({ width: [0, 33], height: [0, 5] })
+        .line({
+          color: 0x4FFF6F,
+          width: 2,
+          zBias: 3,
+        })
+      .end()
+    .end()
+
+  </script>
+</body>
+</html>

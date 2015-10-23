@@ -2,9 +2,15 @@
 
 0.0.5-dev
  * Fix anchor logic on `<grow />` being applied to unpinned axes.
- * Add 'hold' ease to force a binary transition.
+ * Add 'binary' / 'hold' ease to force a binary (halfway) or hold (to end) transition.
  * Flatten selector arrays recursively, e.g. `sources: [array1, "#array2"]` now works.
  * Reverse the polarity on `zOrder`, higher zOrder should be drawn later.
+ * Refactor `<resample />` and `<lerp />` to handle relative sizes/padding correctly with uncentered sampling.
+ * Rename resample/lerp `centeredWidth`, `centeredHeight`, ... to `centeredX`, `centeredY` for consistency.
+ * Add `<subdivide />` operator to lerp geometries non-evenly, see `test/subdivide.html` for uses.
+ * Add `<clamp />` for clamp-to-edge sampling in 4D.
+ * Change data sampler to not auto-wrap/repeat since it was 2D. Out-of-bounds sampling is now undefined unless you add `<repeat />` or `<clamp />` (works in 4D).
+ * Round fractional sample indices for 3D/4D buffers to ensure correct alignment when resampling. Set `aligned: true` on `array`/`matrix`/... to disable this when integer lookups are guaranteed.
 
 0.0.4
 
