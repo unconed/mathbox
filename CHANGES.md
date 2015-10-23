@@ -4,12 +4,13 @@
  * Fix anchor logic on `<grow />` being applied to unpinned axes.
  * Add 'hold' ease to force a binary transition.
  * Flatten selector arrays recursively, e.g. `sources: [array1, "#array2"]` now works.
+ * Reverse the polarity on `zOrder`, higher zOrder should be drawn later.
 
 0.0.4
 
  * New `<readback />` sink that exposes internal readback functionality.
  * Make `<array />`, `<matrix />`, `<voxel />` and `<text />` auto-detect `null` dimensions from `data` if given.
- * Fix `<text />` not parsing >`1 string from an array.
+ * Fix `<text />` not parsing >1 string from an array.
  * Fix public `channels` on `<text />` being 4 instead of 1.
  * Removed unused font properties from `<retext />`.
  * Fix final/const props being overwritable on initial set.

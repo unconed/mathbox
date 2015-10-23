@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - zOrder</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(2.3, 1, 2);
+    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    view = mathbox.cartesian({
+      range: [[-1, 1], [-1, 1], [-1, 1]],
+      scale: [1, 1, 1],
+    });
+
+    // Left: Draw in document order, front-to-back, with incorrect occlusion
+    view.transform({
+      position: [-1.1, 0, 0],
+    })
+      .area({
+        width: 2,
+        height: 2,
+      })
+      .transform({
+        position: [0, 0, .2]
+      })
+        .surface({
+          opacity: 0.5,
+          color: '#c04000',
+        })
+      .end()
+      .transform({
+        position: [0, 0, 0]
+      })
+        .surface({
+          opacity: 0.5,
+          color: '#40c000',
+        })
+      .end()
+      .transform({
+        position: [0, 0, -.2]
+      })
+        .surface({
+          opacity: 0.5,
+          color: '#3090ff',
+        })
+      .end()
+
+    // Right: Draw in manual order, back-to-front, with correct occlusion from front side
+    view.transform({
+      position: [1.1, 0, 0],
+    })
+      .area({
+        width: 2,
+        height: 2,
+      })
+      .transform({
+        position: [0, 0, .2]
+      })
+        .surface({
+          opacity: 0.5,
+          color: '#c04000',
+          zOrder: 3,
+        })
+      .end()
+      .transform({
+        position: [0, 0, 0]
+      })
+        .surface({
+          opacity: 0.5,
+          color: '#40c000',
+          zOrder: 2,
+        })
+      .end()
+      .transform({
+        position: [0, 0, -.2]
+      })
+        .surface({
+          opacity: 0.5,
+          color: '#3090ff',
+          zOrder: 1,
+        })
+      .end()
+
+  </script>
+</body>
+</html>

@@ -12575,7 +12575,7 @@ helpers = {
       onVisible = (function(_this) {
         return function() {
           var i, j, l, len, len1, len2, o, order, ref, ref1, ref2, ref3, results, results1, results2, visible;
-          order = zOrder != null ? zOrder : _this.node.order;
+          order = zOrder != null ? -zOrder : _this.node.order;
           visible = ((ref = _this.isVisible) != null ? ref : true) && opacity > 0;
           if (visible) {
             if (hasStyle) {

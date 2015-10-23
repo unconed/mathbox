@@ -673,7 +673,7 @@ vec4 getFramesSample(vec2 xy) {
           color: '#ffffff',
           size: 10,
           zBias: 5,
-          zOrder: 1,
+          zOrder: -1,
           blending: 'add',
           zWrite: false,
         })
@@ -694,7 +694,7 @@ vec4 getFramesSample(vec2 xy) {
           color: '#ffffff',
           size: 5,
           zBias: 5,
-          zOrder: 1,
+          zOrder: -1,
           blending: 'add',
           zWrite: false,
         })
@@ -718,7 +718,7 @@ vec4 getFramesSample(vec2 xy) {
         opacity: .03,
         blending: 'add',
         zWrite: false,
-        zOrder: -2
+        zOrder: 2
       })
 
   </script>

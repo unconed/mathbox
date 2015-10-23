@@ -268,7 +268,7 @@ helpers =
 
       last = null
       onVisible = () =>
-        order  = zOrder ? @node.order
+        order  = if zOrder? then -zOrder else @node.order
 
         visible = (@isVisible ? true) and opacity > 0
 
