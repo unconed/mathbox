@@ -3,6 +3,7 @@
 0.0.5-dev
  * Fix anchor logic on `<grow />` being applied to unpinned axes.
  * Add 'hold' ease to force a binary transition.
+ * Flatten selector arrays recursively, e.g. `sources: [array1, "#array2"]` now works.
 
 0.0.4
 

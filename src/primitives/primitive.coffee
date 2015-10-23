@@ -144,9 +144,10 @@ class Primitive
   # Attach to controller by trait and watch the selector
   _attach: (selector, trait, method, self = @, start = @, optional = false, multiple = false) ->
 
-    filter  = (node) -> node.controller if node? and trait in node.traits
+    filter  = (node) -> node if node? and trait in node.traits
     map     = (node) -> node?.controller
     flatten = (list) ->
+      return list if !list?
       out = []
       for sub in list
         if sub instanceof Array
@@ -155,71 +156,83 @@ class Primitive
           out.push sub
       out
 
-    # Direct JS binding, no watcher.
-    if typeof selector == 'object'
-      if !multiple
-        node       = selector
-        node       = node[0] if node._up              # Unwrap an API object
-        node       = node[0] if node instanceof Array # Unwrap an array of nodes
-        node       = node[0] if node._up              # Unwrap an array of API objects
-        controller = map node if filter node
-        return controller  if controller?
-      else
-        nodes = selector
-        nodes = [].slice.call nodes if nodes._up   # Convert API object to array of nodes
-        nodes = [nodes] if nodes !instanceof Array # Make an array out of a single node
-        nodes = flatten nodes.map (n) -> if n._up then n._targets else n
-        controllers = nodes.filter(filter).map(map)
-        return controllers if controllers.length
+    resolve = (selector) =>
 
-    # Auto-link selector '<'
-    if typeof selector == 'string' and selector[0] == '<'
-      discard = 0
-      discard = +match[1] - 1 if match = selector.match /^<([0-9])+$/
-      discard = +selector.length - 1  if selector.match /^<+$/
+      # Direct JS binding, no watcher.
+      if typeof selector == 'object'
+        node = selector
 
-      controllers = []
+        # API object
+        if node?._up
+          selector = if multiple then node._targets else [node[0]]
+          return selector
 
-      # Implicitly associated node (scan backwards until we find one)
-      previous = start.node
-      while previous
-        # Find previous node
-        parent   = previous.parent
-        break if !parent
-        previous = parent.children[previous.index - 1]
+        # Array of things
+        if node instanceof Array
+          selector = if multiple then flatten node.map resolve else resolve node[0]
+          return selector
 
-        # If we reached the first child, ascend if nothing found yet
-        previous = parent unless previous or controllers.length
+        # Node
+        if node instanceof Model.Node
+          return [node]
 
-        # Include if matched
-        controller = null
-        controller = map previous   if filter previous
-        controllers.push controller if controller? && discard-- <= 0
+      # Auto-link selector '<'
+      else if typeof selector == 'string' and selector[0] == '<'
+        discard = 0
+        discard = +match[1] - 1 if match = selector.match /^<([0-9])+$/
+        discard = +selector.length - 1  if selector.match /^<+$/
 
-        # Return solo match
-        return controllers[0] if !multiple and controllers.length
+        nodes = []
 
-      # Return list match
-      return controllers if multiple and controllers.length
+        # Implicitly associated node (scan backwards until we find one)
+        previous = start.node
+        while previous
+          # Find previous node
+          parent   = previous.parent
+          break if !parent
+          previous = parent.children[previous.index - 1]
 
-    # Selector binding
-    else if typeof selector == 'string'
-      watcher = method.bind self
-      @_handlers.watch.push watcher
+          # If we reached the first child, ascend if nothing found yet
+          previous = parent unless previous or nodes.length
 
-      selection = @_root.watch selector, watcher
-      if !multiple
-        controller = map selection[0] if filter selection[0]
-        return controller if controller?
-      else
-        controllers = selection.filter(filter).map(map)
-        return controllers if controllers.length
+          # Include if matched
+          node = null
+          node = previous if filter previous
+          nodes.push node if node? && discard-- <= 0
 
-    id = "#" + @node.id if @node.id?
-    if !optional
-      console.warn @node.toMarkup()
-      throw new Error "#{@node.toString()} - Could not find #{trait} `#{selector}`"
-    if multiple then [] else null
+          # Return solo match
+          return nodes if !multiple and nodes.length
+
+        # Return list match
+        return nodes if multiple and nodes.length
+
+      # Selector binding
+      else if typeof selector == 'string'
+        watcher = method.bind self
+        @_handlers.watch.push watcher
+
+        selection = @_root.watch selector, watcher
+        if !multiple
+          node = selection[0] if filter selection[0]
+          return [node] if node?
+        else
+          nodes = selection.filter filter
+          return nodes if nodes.length
+
+      # Nothing found
+      if !optional
+        console.warn @node.toMarkup()
+        throw new Error "#{@node.toString()} - Could not find #{trait} `#{selector}`"
+      if multiple then [] else null
+
+    # Resolve selection recursively
+    nodes = flatten resolve selector
+
+    # Return node's controllers if found
+    if multiple
+      return if nodes? then nodes.map map else null
+    else
+      return if nodes? then map nodes[0] else null
 
   # Remove watcher attachments
   _unattach: () ->

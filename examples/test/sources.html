@@ -111,6 +111,7 @@
 
     // Make 1D array of values
     var array2 = view.interval({
+      id: "array2",
       length: 64,
       channels: 1,
       expr: function (emit, x, i, t) {
@@ -139,7 +140,7 @@
 
     // Use resample shader to multiply two 1D arrays as X and Y.
     .shader({
-      sources: [array1, array2],
+      sources: [array1, "#array2"], // Array of selections and selectors
       code: "#combine-samples",
     })
     .resample({

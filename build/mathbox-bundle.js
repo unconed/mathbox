@@ -54533,7 +54533,7 @@ exports.Node = require('./node');
 
 
 },{"./attributes":31,"./group":32,"./guard":33,"./model":35,"./node":36}],35:[function(require,module,exports){
-var ALL, CLASS, ID, Model, TRAIT, TYPE, cssauron, language,
+var ALL, AUTO, CLASS, ID, Model, TRAIT, TYPE, cssauron, language,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 cssauron = require('cssauron');
@@ -54547,6 +54547,8 @@ CLASS = /^\.([A-Za-z0-9_]+)$/;
 TRAIT = /^\[([A-Za-z0-9_]+)\]$/;
 
 TYPE = /^[A-Za-z0-9_]+$/;
+
+AUTO = /^<([0-9]+|<*)$/;
 
 language = null;
 
@@ -54894,6 +54896,7 @@ Model = (function() {
       };
     })(this);
     handler.watcher = watcher = {
+      selector: selector,
       handler: handler,
       matcher: this._matcher(selector),
       match: false,
@@ -54915,7 +54918,7 @@ Model = (function() {
   };
 
   Model.prototype._simplify = function(s) {
-    var all, found, id, klass, ref, ref1, ref2, ref3, trait, type;
+    var all, auto, found, id, klass, ref, ref1, ref2, ref3, ref4, trait, type;
     s = s.replace(/^\s+/, '');
     s = s.replace(/\s+$/, '');
     found = all = s === ALL;
@@ -54931,12 +54934,15 @@ Model = (function() {
     if (!found) {
       found = type = (ref3 = s.match(TYPE)) != null ? ref3[0] : void 0;
     }
-    return [all, id, klass, trait, type];
+    if (!found) {
+      found = auto = (ref4 = s.match(AUTO)) != null ? ref4[0] : void 0;
+    }
+    return [all, id, klass, trait, type, auto];
   };
 
   Model.prototype._matcher = function(s) {
-    var all, id, klass, ref, trait, type;
-    ref = this._simplify(s), all = ref[0], id = ref[1], klass = ref[2], trait = ref[3], type = ref[4];
+    var all, auto, id, klass, ref, trait, type;
+    ref = this._simplify(s), all = ref[0], id = ref[1], klass = ref[2], trait = ref[3], type = ref[4], auto = ref[5];
     if (all) {
       return (function(node) {
         return true;
@@ -54963,6 +54969,9 @@ Model = (function() {
       return (function(node) {
         return node.type === type;
       });
+    }
+    if (auto) {
+      throw "Auto-link matcher unsupported";
     }
     return language(s);
   };
@@ -55655,7 +55664,7 @@ Primitive = (function() {
   };
 
   Primitive.prototype._attach = function(selector, trait, method, self, start, optional, multiple) {
-    var controller, controllers, discard, filter, flatten, id, map, match, node, nodes, parent, previous, selection, watcher;
+    var filter, flatten, map, nodes, resolve;
     if (self == null) {
       self = this;
     }
@@ -55670,7 +55679,7 @@ Primitive = (function() {
     }
     filter = function(node) {
       if ((node != null) && indexOf.call(node.traits, trait) >= 0) {
-        return node.controller;
+        return node;
       }
     };
     map = function(node) {
@@ -55678,6 +55687,9 @@ Primitive = (function() {
     };
     flatten = function(list) {
       var i, len, out, sub;
+      if (list == null) {
+        return list;
+      }
       out = [];
       for (i = 0, len = list.length; i < len; i++) {
         sub = list[i];
@@ -55689,107 +55701,97 @@ Primitive = (function() {
       }
       return out;
     };
-    if (typeof selector === 'object') {
-      if (!multiple) {
-        node = selector;
-        if (node._up) {
-          node = node[0];
-        }
-        if (node instanceof Array) {
-          node = node[0];
-        }
-        if (node._up) {
-          node = node[0];
-        }
-        if (filter(node)) {
-          controller = map(node);
-        }
-        if (controller != null) {
-          return controller;
-        }
-      } else {
-        nodes = selector;
-        if (nodes._up) {
-          nodes = [].slice.call(nodes);
-        }
-        if (!(nodes instanceof Array)) {
-          nodes = [nodes];
-        }
-        nodes = flatten(nodes.map(function(n) {
-          if (n._up) {
-            return n._targets;
-          } else {
-            return n;
+    resolve = (function(_this) {
+      return function(selector) {
+        var discard, match, node, nodes, parent, previous, selection, watcher;
+        if (typeof selector === 'object') {
+          node = selector;
+          if (node != null ? node._up : void 0) {
+            selector = multiple ? node._targets : [node[0]];
+            return selector;
           }
-        }));
-        controllers = nodes.filter(filter).map(map);
-        if (controllers.length) {
-          return controllers;
+          if (node instanceof Array) {
+            selector = multiple ? flatten(node.map(resolve)) : resolve(node[0]);
+            return selector;
+          }
+          if (node instanceof Model.Node) {
+            return [node];
+          }
+        } else if (typeof selector === 'string' && selector[0] === '<') {
+          discard = 0;
+          if (match = selector.match(/^<([0-9])+$/)) {
+            discard = +match[1] - 1;
+          }
+          if (selector.match(/^<+$/)) {
+            discard = +selector.length - 1;
+          }
+          nodes = [];
+          previous = start.node;
+          while (previous) {
+            parent = previous.parent;
+            if (!parent) {
+              break;
+            }
+            previous = parent.children[previous.index - 1];
+            if (!(previous || nodes.length)) {
+              previous = parent;
+            }
+            node = null;
+            if (filter(previous)) {
+              node = previous;
+            }
+            if ((node != null) && discard-- <= 0) {
+              nodes.push(node);
+            }
+            if (!multiple && nodes.length) {
+              return nodes;
+            }
+          }
+          if (multiple && nodes.length) {
+            return nodes;
+          }
+        } else if (typeof selector === 'string') {
+          watcher = method.bind(self);
+          _this._handlers.watch.push(watcher);
+          selection = _this._root.watch(selector, watcher);
+          if (!multiple) {
+            if (filter(selection[0])) {
+              node = selection[0];
+            }
+            if (node != null) {
+              return [node];
+            }
+          } else {
+            nodes = selection.filter(filter);
+            if (nodes.length) {
+              return nodes;
+            }
+          }
         }
-      }
-    }
-    if (typeof selector === 'string' && selector[0] === '<') {
-      discard = 0;
-      if (match = selector.match(/^<([0-9])+$/)) {
-        discard = +match[1] - 1;
-      }
-      if (selector.match(/^<+$/)) {
-        discard = +selector.length - 1;
-      }
-      controllers = [];
-      previous = start.node;
-      while (previous) {
-        parent = previous.parent;
-        if (!parent) {
-          break;
+        if (!optional) {
+          console.warn(_this.node.toMarkup());
+          throw new Error((_this.node.toString()) + " - Could not find " + trait + " `" + selector + "`");
         }
-        previous = parent.children[previous.index - 1];
-        if (!(previous || controllers.length)) {
-          previous = parent;
+        if (multiple) {
+          return [];
+        } else {
+          return null;
         }
-        controller = null;
-        if (filter(previous)) {
-          controller = map(previous);
-        }
-        if ((controller != null) && discard-- <= 0) {
-          controllers.push(controller);
-        }
-        if (!multiple && controllers.length) {
-          return controllers[0];
-        }
-      }
-      if (multiple && controllers.length) {
-        return controllers;
-      }
-    } else if (typeof selector === 'string') {
-      watcher = method.bind(self);
-      this._handlers.watch.push(watcher);
-      selection = this._root.watch(selector, watcher);
-      if (!multiple) {
-        if (filter(selection[0])) {
-          controller = map(selection[0]);
-        }
-        if (controller != null) {
-          return controller;
-        }
-      } else {
-        controllers = selection.filter(filter).map(map);
-        if (controllers.length) {
-          return controllers;
-        }
-      }
-    }
-    if (this.node.id != null) {
-      id = "#" + this.node.id;
-    }
-    if (!optional) {
-      console.warn(this.node.toMarkup());
-      throw new Error((this.node.toString()) + " - Could not find " + trait + " `" + selector + "`");
-    }
+      };
+    })(this);
+    nodes = flatten(resolve(selector));
     if (multiple) {
-      return [];
+      if (nodes != null) {
+        return nodes.map(map);
+      } else {
+        return null;
+      }
     } else {
-      return null;
+      if (nodes != null) {
+        return map(nodes[0]);
+      } else {
+        return null;
+      }
     }
   };
 

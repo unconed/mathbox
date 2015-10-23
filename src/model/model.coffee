@@ -5,6 +5,7 @@ ID     = /^#([A-Za-z0-9_])$/
 CLASS  = /^\.([A-Za-z0-9_]+)$/
 TRAIT  = /^\[([A-Za-z0-9_]+)\]$/
 TYPE   = /^[A-Za-z0-9_]+$/
+AUTO   = /^<([0-9]+|<*)$/
 
 # Lazy load CSSauron
 language = null
@@ -232,6 +233,7 @@ class Model
   watch: (selector, handler) ->
     handler.unwatch = () => @unwatch handler
     handler.watcher = watcher = {
+      selector: selector
       handler: handler
       matcher: @_matcher selector
       match:   false
@@ -255,23 +257,25 @@ class Model
     s = s.replace /^\s+/, ''
     s = s.replace /\s+$/, ''
 
-    # Look for *, #id, .class, type
+    # Look for *, #id, .class, type, auto
     found = all   = s == ALL
     found = id    = s.match(ID)?[1]    if !found
     found = klass = s.match(CLASS)?[1] if !found
     found = trait = s.match(TRAIT)?[1] if !found
     found = type  = s.match(TYPE)?[0]  if !found
-    [all, id, klass, trait, type]
+    found = auto  = s.match(AUTO)?[0]  if !found
+    [all, id, klass, trait, type, auto]
 
   # Make a matcher for a single selector
   _matcher: (s) ->
     # Check for simple *, #id, .class or type selector
-    [all, id, klass, trait, type] = @_simplify s
+    [all, id, klass, trait, type, auto] = @_simplify s
     return ((node) -> true)                       if all
     return ((node) -> node.id == id)              if id
     return ((node) -> node.classes?.hash?[klass]) if klass
     return ((node) -> node.traits?. hash?[trait]) if trait
     return ((node) -> node.type == type)          if type
+    throw  "Auto-link matcher unsupported"        if auto
 
     # Otherwise apply CSSauron filter
     return language s
