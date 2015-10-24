@@ -70,7 +70,6 @@
     });
 
     view.matrix({
-      id: 'color',
       expr: function (emit, i, j) {
         var r = .5 + Math.cos(time * .873) * j;
         var g = .5 + Math.sin(time) * i;
@@ -98,6 +97,9 @@
       height: 2,
       items:  3,
       channels: 4,
+    })
+    .repeat({
+      id: 'color',
     });
 
     var move = view.move({
