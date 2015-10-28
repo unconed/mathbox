@@ -41,7 +41,7 @@ class Axis extends Primitive
     {start, end} = @props
 
     # Stroke style
-    {stroke} = @props
+    {stroke, join} = @props
 
     # Build transition mask lookup
     mask = @_helpers.object.mask()
@@ -63,6 +63,7 @@ class Axis extends Primitive
               position: position
               clip:     start or end
               stroke:   stroke
+              join:     join
               mask:     mask
               material: material
 
@@ -101,6 +102,7 @@ class Axis extends Primitive
   change: (changed, touched, init) ->
     return @rebuild() if changed['axis.detail']   or
                          changed['line.stroke']   or
+                         changed['line.join']     or
                          changed['axis.crossed']  or
                          (changed['interval.axis'] and @props.crossed)
 

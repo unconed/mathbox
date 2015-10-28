@@ -49,7 +49,7 @@ class Vector extends Primitive
     {start, end} = @props
 
     # Stroke style
-    {stroke, proximity} = @props
+    {stroke, join, proximity} = @props
     @proximity = proximity
 
     # Fetch geometry dimensions
@@ -89,6 +89,7 @@ class Vector extends Primitive
               color:     color
               clip:      start or end
               stroke:    stroke
+              join:      join
               proximity: proximity
               mask:      mask
               material:  material
@@ -135,6 +136,7 @@ class Vector extends Primitive
   change: (changed, touched, init) ->
     return @rebuild() if changed['geometry.points'] or
                          changed['line.stroke']     or
+                         changed['line.join']       or
                          changed['arrow.start']     or
                          changed['arrow.end']
 

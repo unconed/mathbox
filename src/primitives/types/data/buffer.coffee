@@ -82,7 +82,7 @@ class Buffer extends Data
 
     return if aligned or !mixed
 
-    nearest = minFilter == @node.attributes['texture.minFilter'].enum.nearest or
+    nearest = minFilter == @node.attributes['texture.minFilter'].enum.nearest and
               magFilter == @node.attributes['texture.magFilter'].enum.nearest
 
     if !nearest

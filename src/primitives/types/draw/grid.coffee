@@ -74,6 +74,7 @@ class Grid extends Primitive
                 strips:   strips
                 position: position
                 stroke:   stroke
+                join:     join
                 mask:     mask
                 material: material
 
@@ -85,7 +86,7 @@ class Grid extends Primitive
     transpose = ['0000', 'x000', 'y000', 'z000', 'w000'][axes[1]]
 
     # Stroke style
-    {stroke}  = @props
+    {stroke, join}  = @props
 
     @axes = []
     lineX && @axes.push axis 'x.', 'y.', null
@@ -119,6 +120,7 @@ class Grid extends Primitive
                          changed['grid.lineX']    or
                          changed['grid.lineY']    or
                          changed['line.stroke']   or
+                         changed['line.join']     or
                          changed['grid.crossed']  or
                          (changed['grid.axes']    and @props.crossed)
 

@@ -51,9 +51,7 @@ class Face extends Primitive
     {items, width, height, depth} = dims
 
     # Get display properties
-    line    = @props.line
-    shaded  = @props.shaded
-    fill    = @props.fill
+    {line, shaded, fill, stroke, join} = @props
 
     # Build color lookup
     if @bind.colors
@@ -89,6 +87,8 @@ class Face extends Primitive
                 layers:   depth
                 position: swizzle
                 color:    color
+                stroke:   stroke
+                join:     join
                 material: lineMaterial
                 mask:     mask
                 closed:   true

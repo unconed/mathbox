@@ -10103,7 +10103,7 @@ Buffer = (function(superClass) {
     if (aligned || !mixed) {
       return;
     }
-    nearest = minFilter === this.node.attributes['texture.minFilter']["enum"].nearest || magFilter === this.node.attributes['texture.magFilter']["enum"].nearest;
+    nearest = minFilter === this.node.attributes['texture.minFilter']["enum"].nearest && magFilter === this.node.attributes['texture.magFilter']["enum"].nearest;
     if (!nearest) {
       console.warn((this.node.toString()) + " - Cannot use linear min/magFilter with 3D/4D sampling");
     }
@@ -10973,7 +10973,7 @@ Axis = (function(superClass) {
   }
 
   Axis.prototype.make = function() {
-    var arrowUniforms, axis, crossed, detail, end, lineUniforms, mask, material, position, positionUniforms, ref, ref1, samples, start, stroke, styleUniforms, swizzle, uniforms, unitUniforms;
+    var arrowUniforms, axis, crossed, detail, end, join, lineUniforms, mask, material, position, positionUniforms, ref, ref1, ref2, samples, start, stroke, styleUniforms, swizzle, uniforms, unitUniforms;
     positionUniforms = {
       axisPosition: this._attributes.make(this._types.vec4()),
       axisStep: this._attributes.make(this._types.vec4())
@@ -10991,10 +10991,10 @@ Axis = (function(superClass) {
     samples = detail + 1;
     this.resolution = 1 / detail;
     ref = this.props, start = ref.start, end = ref.end;
-    stroke = this.props.stroke;
+    ref1 = this.props, stroke = ref1.stroke, join = ref1.join;
     mask = this._helpers.object.mask();
     material = this._helpers.shade.pipeline() || false;
-    ref1 = this.props, crossed = ref1.crossed, axis = ref1.axis;
+    ref2 = this.props, crossed = ref2.crossed, axis = ref2.axis;
     if (!crossed && (mask != null) && axis > 1) {
       swizzle = ['x000', 'y000', 'z000', 'w000'][axis];
       mask = this._helpers.position.swizzle(mask, swizzle);
@@ -11006,6 +11006,7 @@ Axis = (function(superClass) {
       position: position,
       clip: start || end,
       stroke: stroke,
+      join: join,
       mask: mask,
       material: material
     });
@@ -11042,7 +11043,7 @@ Axis = (function(superClass) {
   };
 
   Axis.prototype.change = function(changed, touched, init) {
-    if (changed['axis.detail'] || changed['line.stroke'] || changed['axis.crossed'] || (changed['interval.axis'] && this.props.crossed)) {
+    if (changed['axis.detail'] || changed['line.stroke'] || changed['line.join'] || changed['axis.crossed'] || (changed['interval.axis'] && this.props.crossed)) {
       return this.rebuild();
     }
     if (touched['interval'] || touched['span'] || touched['view'] || init) {
@@ -11110,7 +11111,7 @@ Face = (function(superClass) {
   };
 
   Face.prototype.make = function() {
-    var color, depth, dims, faceMaterial, fill, height, items, line, lineMaterial, lineUniforms, map, mask, material, objects, position, ref, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width, wireUniforms;
+    var color, depth, dims, faceMaterial, fill, height, items, join, line, lineMaterial, lineUniforms, map, mask, material, objects, position, ref, ref1, shaded, stroke, styleUniforms, swizzle, uniforms, unitUniforms, width, wireUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -11136,15 +11137,13 @@ Face = (function(superClass) {
     this.wireZBias = wireUniforms.styleZBias;
     dims = this.bind.points.getDimensions();
     items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
-    line = this.props.line;
-    shaded = this.props.shaded;
-    fill = this.props.fill;
+    ref = this.props, line = ref.line, shaded = ref.shaded, fill = ref.fill, stroke = ref.stroke, join = ref.join;
     if (this.bind.colors) {
       color = this._shaders.shader();
       this.bind.colors.sourceShader(color);
     }
     mask = this._helpers.object.mask();
-    map = this._helpers.shade.map((ref = this.bind.map) != null ? ref.sourceShader(this._shaders.shader()) : void 0);
+    map = this._helpers.shade.map((ref1 = this.bind.map) != null ? ref1.sourceShader(this._shaders.shader()) : void 0);
     material = this._helpers.shade.pipeline();
     faceMaterial = material || shaded;
     lineMaterial = material || false;
@@ -11162,6 +11161,8 @@ Face = (function(superClass) {
         layers: depth,
         position: swizzle,
         color: color,
+        stroke: stroke,
+        join: join,
         material: lineMaterial,
         mask: mask,
         closed: true
@@ -11243,7 +11244,7 @@ Grid = (function(superClass) {
   }
 
   Grid.prototype.make = function() {
-    var axes, axis, crossed, lineX, lineY, lines, mask, material, ref, stroke, transpose;
+    var axes, axis, crossed, join, lineX, lineY, lines, mask, material, ref, ref1, stroke, transpose;
     mask = this._helpers.object.mask();
     material = this._helpers.shade.pipeline() || false;
     axis = (function(_this) {
@@ -11284,6 +11285,7 @@ Grid = (function(superClass) {
           strips: strips,
           position: position,
           stroke: stroke,
+          join: join,
           mask: mask,
           material: material
         });
@@ -11300,16 +11302,16 @@ Grid = (function(superClass) {
     })(this);
     ref = this.props, lineX = ref.lineX, lineY = ref.lineY, crossed = ref.crossed, axes = ref.axes;
     transpose = ['0000', 'x000', 'y000', 'z000', 'w000'][axes[1]];
-    stroke = this.props.stroke;
+    ref1 = this.props, stroke = ref1.stroke, join = ref1.join;
     this.axes = [];
     lineX && this.axes.push(axis('x.', 'y.', null));
     lineY && this.axes.push(axis('y.', 'x.', crossed ? null : transpose));
     lines = (function() {
-      var i, len, ref1, results;
-      ref1 = this.axes;
+      var i, len, ref2, results;
+      ref2 = this.axes;
       results = [];
-      for (i = 0, len = ref1.length; i < len; i++) {
-        axis = ref1[i];
+      for (i = 0, len = ref2.length; i < len; i++) {
+        axis = ref2[i];
         results.push(axis.line);
       }
       return results;
@@ -11334,7 +11336,7 @@ Grid = (function(superClass) {
   };
 
   Grid.prototype.change = function(changed, touched, init) {
-    if (changed['x.axis.detail'] || changed['y.axis.detail'] || changed['x.axis.factor'] || changed['y.axis.factor'] || changed['grid.lineX'] || changed['grid.lineY'] || changed['line.stroke'] || changed['grid.crossed'] || (changed['grid.axes'] && this.props.crossed)) {
+    if (changed['x.axis.detail'] || changed['y.axis.detail'] || changed['x.axis.factor'] || changed['y.axis.factor'] || changed['grid.lineX'] || changed['grid.lineY'] || changed['line.stroke'] || changed['line.join'] || changed['grid.crossed'] || (changed['grid.axes'] && this.props.crossed)) {
       return this.rebuild();
     }
     if (touched['x'] || touched['y'] || touched['area'] || touched['grid'] || touched['view'] || init) {
@@ -11421,7 +11423,7 @@ Line = (function(superClass) {
   };
 
   Line.prototype.make = function() {
-    var arrowUniforms, color, dims, end, layers, lineUniforms, mask, material, position, proximity, ref, ref1, ribbons, samples, start, strips, stroke, styleUniforms, uniforms, unitUniforms;
+    var arrowUniforms, color, dims, end, join, layers, lineUniforms, mask, material, position, proximity, ref, ref1, ribbons, samples, start, strips, stroke, styleUniforms, uniforms, unitUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -11442,7 +11444,7 @@ Line = (function(superClass) {
     arrowUniforms = this._helpers.arrow.uniforms();
     unitUniforms = this._inherit('unit').getUnitUniforms();
     ref = this.props, start = ref.start, end = ref.end;
-    ref1 = this.props, stroke = ref1.stroke, proximity = ref1.proximity;
+    ref1 = this.props, stroke = ref1.stroke, join = ref1.join, proximity = ref1.proximity;
     this.proximity = proximity;
     dims = this.bind.points.getDimensions();
     samples = dims.width;
@@ -11466,6 +11468,7 @@ Line = (function(superClass) {
       color: color,
       clip: start || end,
       stroke: stroke,
+      join: join,
       proximity: proximity,
       mask: mask,
       material: material
@@ -11514,7 +11517,7 @@ Line = (function(superClass) {
   };
 
   Line.prototype.change = function(changed, touched, init) {
-    if (changed['geometry.points'] || changed['line.stroke'] || changed['arrow.start'] || changed['arrow.end']) {
+    if (changed['geometry.points'] || changed['line.stroke'] || changed['line.join'] || changed['arrow.start'] || changed['arrow.end']) {
       return this.rebuild();
     }
     if (changed['line.proximity']) {
@@ -11685,7 +11688,7 @@ Strip = (function(superClass) {
   };
 
   Strip.prototype.make = function() {
-    var color, depth, dims, faceMaterial, fill, height, items, line, lineMaterial, lineUniforms, map, mask, material, objects, position, ref, shaded, styleUniforms, swizzle, uniforms, unitUniforms, width, wireUniforms;
+    var color, depth, dims, faceMaterial, fill, height, items, join, line, lineMaterial, lineUniforms, map, mask, material, objects, position, ref, ref1, shaded, stroke, styleUniforms, swizzle, uniforms, unitUniforms, width, wireUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -11715,12 +11718,13 @@ Strip = (function(superClass) {
     this.wireZBias = wireUniforms.styleZBias;
     dims = this.bind.points.getDimensions();
     items = dims.items, width = dims.width, height = dims.height, depth = dims.depth;
+    ref = this.props, line = ref.line, shaded = ref.shaded, fill = ref.fill, stroke = ref.stroke, join = ref.join;
     if (this.bind.colors) {
       color = this._shaders.shader();
       color = this.bind.colors.sourceShader(color);
     }
     mask = this._helpers.object.mask();
-    map = this._helpers.shade.map((ref = this.bind.map) != null ? ref.sourceShader(this._shaders.shader()) : void 0);
+    map = this._helpers.shade.map((ref1 = this.bind.map) != null ? ref1.sourceShader(this._shaders.shader()) : void 0);
     material = this._helpers.shade.pipeline();
     faceMaterial = material || shaded;
     lineMaterial = material || false;
@@ -11738,6 +11742,8 @@ Strip = (function(superClass) {
         layers: depth,
         position: swizzle,
         color: color,
+        stroke: stroke,
+        join: join,
         mask: mask,
         material: lineMaterial
       });
@@ -11840,7 +11846,7 @@ Surface = (function(superClass) {
   };
 
   Surface.prototype.make = function() {
-    var closedX, closedY, color, crossed, depth, dims, faceMaterial, fill, height, items, lineMaterial, lineUniforms, lineX, lineY, map, mask, material, objects, position, proximity, ref, ref1, ref2, shaded, stroke, styleUniforms, surfaceUniforms, swizzle, swizzle2, uniforms, unitUniforms, width, wireUniforms, zUnits;
+    var closedX, closedY, color, crossed, depth, dims, faceMaterial, fill, height, items, join, lineMaterial, lineUniforms, lineX, lineY, map, mask, material, objects, position, proximity, ref, ref1, ref2, shaded, stroke, styleUniforms, surfaceUniforms, swizzle, swizzle2, uniforms, unitUniforms, width, wireUniforms, zUnits;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -11871,7 +11877,7 @@ Surface = (function(superClass) {
     this.wireScratch = new THREE.Color;
     dims = this.bind.points.getDimensions();
     width = dims.width, height = dims.height, depth = dims.depth, items = dims.items;
-    ref = this.props, shaded = ref.shaded, fill = ref.fill, lineX = ref.lineX, lineY = ref.lineY, closedX = ref.closedX, closedY = ref.closedY, stroke = ref.stroke, proximity = ref.proximity, crossed = ref.crossed;
+    ref = this.props, shaded = ref.shaded, fill = ref.fill, lineX = ref.lineX, lineY = ref.lineY, closedX = ref.closedX, closedY = ref.closedY, stroke = ref.stroke, join = ref.join, proximity = ref.proximity, crossed = ref.crossed;
     objects = [];
     this.proximity = proximity;
     if (this.bind.colors) {
@@ -11897,6 +11903,7 @@ Surface = (function(superClass) {
         color: color,
         zUnits: -zUnits,
         stroke: stroke,
+        join: join,
         mask: mask,
         material: lineMaterial,
         proximity: proximity,
@@ -11915,6 +11922,7 @@ Surface = (function(superClass) {
         color: swizzle(color, 'yxzw'),
         zUnits: -zUnits,
         stroke: stroke,
+        join: join,
         mask: swizzle(mask, crossed ? 'xyzw' : 'yxzw'),
         material: lineMaterial,
         proximity: proximity,
@@ -11960,7 +11968,7 @@ Surface = (function(superClass) {
 
   Surface.prototype.change = function(changed, touched, init) {
     var c, color, fill, lineBias, ref, zBias;
-    if (changed['geometry.points'] || changed['mesh.shaded'] || changed['mesh.fill'] || changed['line.stroke'] || touched['grid']) {
+    if (changed['geometry.points'] || changed['mesh.shaded'] || changed['mesh.fill'] || changed['line.stroke'] || changed['line.join'] || touched['grid']) {
       return this.rebuild();
     }
     if (changed['style.color'] || changed['style.zBias'] || changed['mesh.fill'] || changed['mesh.lineBias'] || init) {
@@ -12028,7 +12036,7 @@ Ticks = (function(superClass) {
   };
 
   Ticks.prototype.make = function() {
-    var color, dims, layers, lineUniforms, mask, material, p, position, positionUniforms, ref, ribbons, strips, stroke, styleUniforms, swizzle, swizzle2, uniforms, unitUniforms;
+    var color, dims, join, layers, lineUniforms, mask, material, p, position, positionUniforms, ref, ref1, ribbons, strips, stroke, styleUniforms, swizzle, swizzle2, uniforms, unitUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -12058,7 +12066,7 @@ Ticks = (function(superClass) {
     p.require(this.bind.points.sourceShader(this._shaders.shader()));
     p.require(this._helpers.position.pipeline(this._shaders.shader()));
     p.pipe('ticks.position', positionUniforms);
-    stroke = this.props.stroke;
+    ref = this.props, stroke = ref.stroke, join = ref.join;
     dims = this.bind.points.getDimensions();
     strips = dims.width;
     ribbons = dims.height;
@@ -12069,7 +12077,7 @@ Ticks = (function(superClass) {
     }
     mask = this._helpers.object.mask();
     material = this._helpers.shade.pipeline() || false;
-    ref = this._helpers.position, swizzle = ref.swizzle, swizzle2 = ref.swizzle2;
+    ref1 = this._helpers.position, swizzle = ref1.swizzle, swizzle2 = ref1.swizzle2;
     this.line = this._renderables.make('line', {
       uniforms: uniforms,
       samples: 2,
@@ -12079,6 +12087,7 @@ Ticks = (function(superClass) {
       position: position,
       color: color,
       stroke: stroke,
+      join: join,
       mask: swizzle(mask, 'yzwx'),
       material: material
     });
@@ -12097,7 +12106,7 @@ Ticks = (function(superClass) {
   };
 
   Ticks.prototype.change = function(changed, touched, init) {
-    if (changed['geometry.points'] || changed['line.stroke']) {
+    if (changed['geometry.points'] || changed['line.stroke'] || changed['line.join']) {
       return this.rebuild();
     }
   };
@@ -12150,7 +12159,7 @@ Vector = (function(superClass) {
   };
 
   Vector.prototype.make = function() {
-    var arrowUniforms, color, dims, end, layers, lineUniforms, mask, material, position, proximity, ref, ref1, ref2, ribbons, samples, start, strips, stroke, styleUniforms, swizzle, swizzle2, uniforms, unitUniforms;
+    var arrowUniforms, color, dims, end, join, layers, lineUniforms, mask, material, position, proximity, ref, ref1, ref2, ribbons, samples, start, strips, stroke, styleUniforms, swizzle, swizzle2, uniforms, unitUniforms;
     this._helpers.bind.make([
       {
         to: 'geometry.points',
@@ -12171,7 +12180,7 @@ Vector = (function(superClass) {
     arrowUniforms = this._helpers.arrow.uniforms();
     unitUniforms = this._inherit('unit').getUnitUniforms();
     ref = this.props, start = ref.start, end = ref.end;
-    ref1 = this.props, stroke = ref1.stroke, proximity = ref1.proximity;
+    ref1 = this.props, stroke = ref1.stroke, join = ref1.join, proximity = ref1.proximity;
     this.proximity = proximity;
     dims = this.bind.points.getDimensions();
     samples = dims.items;
@@ -12200,6 +12209,7 @@ Vector = (function(superClass) {
       color: color,
       clip: start || end,
       stroke: stroke,
+      join: join,
       proximity: proximity,
       mask: mask,
       material: material
@@ -12248,7 +12258,7 @@ Vector = (function(superClass) {
   };
 
   Vector.prototype.change = function(changed, touched, init) {
-    if (changed['geometry.points'] || changed['line.stroke'] || changed['arrow.start'] || changed['arrow.end']) {
+    if (changed['geometry.points'] || changed['line.stroke'] || changed['line.join'] || changed['arrow.start'] || changed['arrow.end']) {
       return this.rebuild();
     }
     if (changed['line.proximity']) {
@@ -17731,6 +17741,7 @@ Traits = {
   line: {
     width: Types.positive(Types.number(2)),
     depth: Types.positive(Types.number(1)),
+    join: Types.join(),
     stroke: Types.stroke(),
     proximity: Types.nullable(Types.number(Infinity)),
     closed: Types.bool(false)
@@ -19528,6 +19539,14 @@ Types = {
       value = 'circle';
     }
     keys = ['circle', 'square', 'diamond', 'up', 'down', 'left', 'right'];
+    return Types["enum"](value, keys);
+  },
+  join: function(value) {
+    var keys;
+    if (value == null) {
+      value = 'miter';
+    }
+    keys = ['miter', 'round', 'bevel'];
     return Types["enum"](value, keys);
   },
   stroke: function(value) {
@@ -22944,7 +22963,7 @@ LineGeometry = (function(superClass) {
   extend(LineGeometry, superClass);
 
   function LineGeometry(options) {
-    var base, closed, edge, edger, i, index, j, k, l, layers, line, m, n, o, p, points, position, q, quads, r, ref, ref1, ref2, ref3, ref4, ref5, ref6, ribbons, s, samples, segments, strip, strips, triangles, wrap, x, y, z;
+    var aa, ab, base, closed, detail, edge, edger, i, index, j, join, joins, k, l, layers, line, lines, m, n, o, p, points, position, q, quads, r, ref, ref1, ref10, ref11, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, ribbons, s, samples, segments, strip, strips, t, triangles, u, v, vertices, w, wrap, x, y, z;
     LineGeometry.__super__.constructor.call(this, options);
     this._clipUniforms();
     this.closed = closed = options.closed || false;
@@ -22952,24 +22971,34 @@ LineGeometry = (function(superClass) {
     this.strips = strips = +options.strips || 1;
     this.ribbons = ribbons = +options.ribbons || 1;
     this.layers = layers = +options.layers || 1;
-    this.segments = segments = samples - 1;
+    this.detail = detail = +options.detail || 1;
+    lines = samples - 1 + (closed ? 1 : 0);
+    this.joins = joins = detail - 1;
+    this.vertices = vertices = (lines - 1) * joins + samples;
+    this.segments = segments = (lines - 1) * joins + lines;
     wrap = samples - (closed ? 1 : 0);
-    points = samples * strips * ribbons * layers * 2;
+    points = vertices * strips * ribbons * layers * 2;
     quads = segments * strips * ribbons * layers;
     triangles = quads * 2;
     this.addAttribute('index', new THREE.BufferAttribute(new Uint16Array(triangles * 3), 1));
     this.addAttribute('position4', new THREE.BufferAttribute(new Float32Array(points * 4), 4));
     this.addAttribute('line', new THREE.BufferAttribute(new Float32Array(points * 2), 2));
     this.addAttribute('strip', new THREE.BufferAttribute(new Float32Array(points * 2), 2));
+    if (detail > 1) {
+      this.addAttribute('join', new THREE.BufferAttribute(new Float32Array(points), 1));
+    }
     this._autochunk();
     index = this._emitter('index');
     position = this._emitter('position4');
     line = this._emitter('line');
     strip = this._emitter('strip');
+    if (detail > 1) {
+      join = this._emitter('join');
+    }
     base = 0;
-    for (i = m = 0, ref = ribbons * layers; 0 <= ref ? m < ref : m > ref; i = 0 <= ref ? ++m : --m) {
-      for (j = n = 0, ref1 = strips; 0 <= ref1 ? n < ref1 : n > ref1; j = 0 <= ref1 ? ++n : --n) {
-        for (k = o = 0, ref2 = segments; 0 <= ref2 ? o < ref2 : o > ref2; k = 0 <= ref2 ? ++o : --o) {
+    for (i = n = 0, ref = ribbons * layers; 0 <= ref ? n < ref : n > ref; i = 0 <= ref ? ++n : --n) {
+      for (j = o = 0, ref1 = strips; 0 <= ref1 ? o < ref1 : o > ref1; j = 0 <= ref1 ? ++o : --o) {
+        for (k = p = 0, ref2 = segments; 0 <= ref2 ? p < ref2 : p > ref2; k = 0 <= ref2 ? ++p : --p) {
           index(base);
           index(base + 1);
           index(base + 2);
@@ -22992,20 +23021,54 @@ LineGeometry = (function(superClass) {
         return 0;
       }
     };
-    for (l = p = 0, ref3 = layers; 0 <= ref3 ? p < ref3 : p > ref3; l = 0 <= ref3 ? ++p : --p) {
-      for (z = q = 0, ref4 = ribbons; 0 <= ref4 ? q < ref4 : q > ref4; z = 0 <= ref4 ? ++q : --q) {
-        for (y = r = 0, ref5 = strips; 0 <= ref5 ? r < ref5 : r > ref5; y = 0 <= ref5 ? ++r : --r) {
-          for (x = s = 0, ref6 = samples; 0 <= ref6 ? s < ref6 : s > ref6; x = 0 <= ref6 ? ++s : --s) {
-            if (closed) {
-              x = x % wrap;
+    if (detail > 1) {
+      for (l = q = 0, ref3 = layers; 0 <= ref3 ? q < ref3 : q > ref3; l = 0 <= ref3 ? ++q : --q) {
+        for (z = r = 0, ref4 = ribbons; 0 <= ref4 ? r < ref4 : r > ref4; z = 0 <= ref4 ? ++r : --r) {
+          for (y = s = 0, ref5 = strips; 0 <= ref5 ? s < ref5 : s > ref5; y = 0 <= ref5 ? ++s : --s) {
+            for (x = t = 0, ref6 = samples; 0 <= ref6 ? t < ref6 : t > ref6; x = 0 <= ref6 ? ++t : --t) {
+              if (closed) {
+                x = x % wrap;
+              }
+              edge = edger(x);
+              if (edge !== 0) {
+                position(x, y, z, l);
+                position(x, y, z, l);
+                line(edge, 1);
+                line(edge, -1);
+                strip(0, segments);
+                strip(0, segments);
+                join(0);
+              } else {
+                for (m = u = 0, ref7 = detail; 0 <= ref7 ? u < ref7 : u > ref7; m = 0 <= ref7 ? ++u : --u) {
+                  position(x, y, z, l);
+                  position(x, y, z, l);
+                  line(edge, 1);
+                  line(edge, -1);
+                  strip(0, segments);
+                  strip(0, segments);
+                  join(m);
+                }
+              }
             }
-            edge = edger(x);
-            position(x, y, z, l);
-            position(x, y, z, l);
-            line(edge, 1);
-            line(edge, -1);
-            strip(0, segments);
-            strip(0, segments);
+          }
+        }
+      }
+    } else {
+      for (l = v = 0, ref8 = layers; 0 <= ref8 ? v < ref8 : v > ref8; l = 0 <= ref8 ? ++v : --v) {
+        for (z = w = 0, ref9 = ribbons; 0 <= ref9 ? w < ref9 : w > ref9; z = 0 <= ref9 ? ++w : --w) {
+          for (y = aa = 0, ref10 = strips; 0 <= ref10 ? aa < ref10 : aa > ref10; y = 0 <= ref10 ? ++aa : --aa) {
+            for (x = ab = 0, ref11 = samples; 0 <= ref11 ? ab < ref11 : ab > ref11; x = 0 <= ref11 ? ++ab : --ab) {
+              if (closed) {
+                x = x % wrap;
+              }
+              edge = edger(x);
+              position(x, y, z, l);
+              position(x, y, z, l);
+              line(edge, 1);
+              line(edge, -1);
+              strip(0, segments);
+              strip(0, segments);
+            }
           }
         }
       }
@@ -23016,7 +23079,7 @@ LineGeometry = (function(superClass) {
   }
 
   LineGeometry.prototype.clip = function(samples, strips, ribbons, layers) {
-    var segments;
+    var segments, vertices;
     if (samples == null) {
       samples = this.samples - this.closed;
     }
@@ -23030,7 +23093,9 @@ LineGeometry = (function(superClass) {
       layers = this.layers;
     }
     segments = Math.max(0, samples - (this.closed ? 0 : 1));
-    this._clipGeometry(samples, strips, ribbons, layers);
+    vertices = samples + (samples - 2) * this.joins;
+    segments = vertices - 1;
+    this._clipGeometry(vertices, strips, ribbons, layers);
     return this._clipOffsets(6, segments, strips, ribbons, layers, this.segments, this.strips, this.ribbons, this.layers);
   };
 
@@ -23934,21 +23999,28 @@ Line = (function(superClass) {
   extend(Line, superClass);
 
   function Line(renderer, shaders, options) {
-    var clip, color, combine, defs, f, factory, hasStyle, linear, map, mask, material, object, position, proximity, stpq, stroke, uniforms, v;
+    var clip, color, combine, defs, detail, f, factory, hasStyle, join, linear, map, mask, material, object, position, proximity, ref, stpq, stroke, uniforms, v;
     Line.__super__.constructor.call(this, renderer, shaders, options);
-    uniforms = options.uniforms, material = options.material, position = options.position, color = options.color, mask = options.mask, map = options.map, combine = options.combine, stpq = options.stpq, linear = options.linear, clip = options.clip, stroke = options.stroke, proximity = options.proximity;
+    uniforms = options.uniforms, material = options.material, position = options.position, color = options.color, mask = options.mask, map = options.map, combine = options.combine, stpq = options.stpq, linear = options.linear, clip = options.clip, stroke = options.stroke, join = options.join, proximity = options.proximity;
     if (uniforms == null) {
       uniforms = {};
     }
     stroke = [null, 'dotted', 'dashed'][stroke];
     hasStyle = uniforms.styleColor != null;
+    join = (ref = ['miter', 'round', 'bevel'][join]) != null ? ref : 'miter';
+    detail = {
+      miter: 1,
+      round: 4,
+      bevel: 2
+    }[join];
     this.geometry = new LineGeometry({
       samples: options.samples,
       strips: options.strips,
       ribbons: options.ribbons,
       layers: options.layers,
       anchor: options.anchor,
-      closed: options.closed
+      closed: options.closed,
+      detail: detail
     });
     this._adopt(uniforms);
     this._adopt(this.geometry.uniforms);
@@ -23963,6 +24035,7 @@ Line = (function(superClass) {
     if (proximity != null) {
       defs.LINE_PROXIMITY = '';
     }
+    defs['LINE_JOIN_' + join.toUpperCase()] = '';
     v = factory.vertex;
     v.pipe(this._vertexColor(color, mask));
     v.require(this._vertexPosition(position, material, map, 2, stpq));

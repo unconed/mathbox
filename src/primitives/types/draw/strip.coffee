@@ -60,6 +60,9 @@ class Strip extends Primitive
     dims    = @bind.points.getDimensions()
     {items, width, height, depth} = dims
 
+    # Get display properties
+    {line, shaded, fill, stroke, join} = @props
+
     # Build color lookup
     if @bind.colors
       color = @_shaders.shader()
@@ -95,6 +98,8 @@ class Strip extends Primitive
                 layers:   depth
                 position: swizzle
                 color:    color
+                stroke:   stroke
+                join:     join
                 mask:     mask
                 material: lineMaterial
 

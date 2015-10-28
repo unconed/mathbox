@@ -5,12 +5,16 @@ class Line extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, material, position, color, mask, map, combine, stpq, linear, clip, stroke, proximity} = options
+    {uniforms, material, position, color, mask, map, combine, stpq, linear, clip, stroke, join, proximity} = options
 
     uniforms ?= {}
     stroke   = [null, 'dotted', 'dashed'][stroke]
 
     hasStyle = uniforms.styleColor?
+
+    # Line join
+    join   = ['miter', 'round', 'bevel'][join] ? 'miter'
+    detail = {miter: 1, round: 4, bevel: 2}[join]
 
     @geometry = new LineGeometry
       samples: options.samples
@@ -19,6 +23,7 @@ class Line extends Base
       layers:  options.layers
       anchor:  options.anchor
       closed:  options.closed
+      detail:  detail
 
     @_adopt uniforms
     @_adopt @geometry.uniforms
@@ -29,6 +34,8 @@ class Line extends Base
     defs.LINE_STROKE    = '' if stroke
     defs.LINE_CLIP      = '' if clip
     defs.LINE_PROXIMITY = '' if proximity?
+
+    defs['LINE_JOIN_' + join.toUpperCase()] = ''
 
     v = factory.vertex
 

@@ -59,7 +59,7 @@ class Ticks extends Primitive
     p.pipe 'ticks.position', positionUniforms
 
     # Stroke style
-    stroke  = @props.stroke
+    {stroke, join} = @props
 
     # Fetch geometry dimensions
     dims    = @bind.points.getDimensions()
@@ -89,6 +89,7 @@ class Ticks extends Primitive
               position: position
               color:    color
               stroke:   stroke
+              join:     join
               mask:     swizzle mask, 'yzwx'
               material: material
 
@@ -106,7 +107,8 @@ class Ticks extends Primitive
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['geometry.points'] or
-                         changed['line.stroke']
+                         changed['line.stroke'] or
+                         changed['line.join']
 
 
 module.exports = Ticks

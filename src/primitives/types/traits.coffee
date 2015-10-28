@@ -171,6 +171,7 @@ Traits =
   line:
     width:             Types.positive(Types.number(2))
     depth:             Types.positive(Types.number(1))
+    join:              Types.join()
     stroke:            Types.stroke()
     proximity:         Types.nullable(Types.number(Infinity))
     closed:            Types.bool(false)

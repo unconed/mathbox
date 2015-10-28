@@ -63,7 +63,7 @@ class Surface extends Primitive
     {width, height, depth, items} = dims
 
     # Get display properties
-    {shaded, fill, lineX, lineY, closedX, closedY, stroke, proximity, crossed} = @props
+    {shaded, fill, lineX, lineY, closedX, closedY, stroke, join, proximity, crossed} = @props
     objects = []
     @proximity = proximity
 
@@ -98,6 +98,7 @@ class Surface extends Primitive
                 color:     color
                 zUnits:    -zUnits
                 stroke:    stroke
+                join:      join
                 mask:      mask
                 material:  lineMaterial
                 proximity: proximity
@@ -115,6 +116,7 @@ class Surface extends Primitive
                 color:     swizzle  color,    'yxzw'
                 zUnits:    -zUnits
                 stroke:    stroke
+                join:      join
                 mask:      swizzle  mask,     if crossed then 'xyzw' else 'yxzw'
                 material:  lineMaterial
                 proximity: proximity
@@ -158,6 +160,7 @@ class Surface extends Primitive
                          changed['mesh.shaded'] or
                          changed['mesh.fill'] or
                          changed['line.stroke'] or
+                         changed['line.join'] or
                          touched['grid']
 
     if changed['style.color']   or
