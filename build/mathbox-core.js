@@ -17238,7 +17238,7 @@ Retext = (function(superClass) {
     return Retext.__super__.constructor.apply(this, arguments);
   }
 
-  Retext.traits = ['node', 'bind', 'operator', 'resample', 'sampler:width', 'sampler:height', 'sampler:depth', 'sampler:items', 'include', 'text'];
+  Retext.traits = ['node', 'bind', 'operator', 'resample', 'sampler:x', 'sampler:y', 'sampler:z', 'sampler:w', 'include', 'text'];
 
   Retext.prototype.init = function() {
     return this.sourceSpec = [
