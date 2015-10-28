@@ -22,10 +22,10 @@ The shader snippet it references will look something like this:
       }
     </script>
 
- * Global parameters are defined as `uniforms` and can be set like any other prop on the `<shader>` node, e.g. `.shader({ code: "...", intensity: 2 })`.
  * The names of the functions are not relevant outside the `<script>` block.  The functions are considered anonymous lambdas. The name that matters is the id in the script tag.
  * These scripts have type `application/glsl` and use different conventions from JavaScript.
  * The script shown here has random access to inputs using `getSample()`.  Here it is accessing four different values.
+ * Global parameters are defined as `uniforms` and can be set like any other prop on the `<shader>` node, e.g. `.shader({ code: "...", intensity: 2 })`.
 
 ## Multiple Sources
 
