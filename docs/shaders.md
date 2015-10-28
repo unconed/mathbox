@@ -31,9 +31,9 @@ The shader snippet it references will look something like this:
 
 Shaders are not limited to sampling from one (implied) source. You can specify an array of additional `sources` as a prop. This can be an array of selectors and/or nodes. Note you can also pass the code inline instead of via a `<script>` tag, though this is awkward without multi-line strings in classic JavaScript.
 
-For example, for a `.shader({ sources: ["#array1", "#array2"] })`, the GLSL code would look like this:
+For example, for a `.shader({ code: "#multi-shader", sources: ["#array1", "#array2"] })`, the GLSL code would look like this:
 
-    <script type="application/glsl" id="map-temporal-blur">
+    <script type="application/glsl" id="multi-shader">
       // External sources
       vec4 getArray1Sample(vec4 xyzw);
       vec4 getArray2Sample(vec4 xyzw);
