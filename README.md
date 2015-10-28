@@ -47,7 +47,9 @@ Open the included `/examples` to see more demos.
 See:
 
  * [Quick Start](/docs/intro.md) for a hands on introduction.
+ * [Glossary](/docs/glossary.md) of terms to help get familiar with WebGL.
  * [List of Primitives](/docs/primitives.md) for a full element reference.
+ * [Writing Custom Shaders](/docs/shaders.md) for info on GPU-side processing.
  * [Context API](/docs/context.md) for advanced usage.
 
 Join us in the [MathBox Google Group](https://groups.google.com/forum/#!forum/mathbox) or #mathbox on Freenode.
