@@ -135,8 +135,8 @@ The coordinates `stpq` passed in are in the range 0...1 across the source data, 
 
     <script type="application/glsl" id="mask-shader">
     float getMask(vec4 stpq) {
-      vec2 sines = sin(stpq.st * 10.0 + time);
-      return (sines.x * sines.y) + value;
+      vec2 sines = sin(stpq.st * 10.0);
+      return (sines.x * sines.y);
     }
     </script>
 
@@ -189,7 +189,7 @@ Fragment is a raw fragment shader stage (per pixel/sample). It takes a color (rg
       code: "#fragment-shader",
     })
     .fragment()
-      // vertex shaded shapes
+      // Fragment shaded shapes
     .end()
   
   * Colors outside the range 0...1 may be used in a floating point render-to-texture.
