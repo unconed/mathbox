@@ -51,15 +51,15 @@ This samples both arrays and combines it with the third (implied) source. The or
 
 This will take a data array and produce a new one, of the same or different size.
 
-The callback signature depends on both indices and channels, mapping to float/vec2/vec3/vec4. Indices specifies the type of the argument, channels the return type. The example above and below are `{indices: 3, channels: 4}`:
+The callback signature depends on both indices and channels, mapping to float/vec2/vec3/vec4. Indices specifies the type of the argument, channels the return type. The example below is `{indices: 3, channels: 4}`:
 
     <script type="application/glsl" id="resample-shader">
-      uniform vec4 dataResolution;   // indices 4
-      uniform vec4 dataSize;         //
-      uniform vec4 targetResolution; //
-      uniform vec4 targetSize;       //
+      uniform vec3 dataResolution;   // inverse dimensions (sample-adjusted)
+      uniform vec3 dataSize;         // dimensions
+      uniform vec3 targetResolution; //
+      uniform vec3 targetSize;       //
       
-      vec4 getSample(vec3 xyzw);        // indices 4, channels 3
+      vec4 getSample(vec3 xyz);         // indices 3, channels 4
       vec4 getFramesSample(vec3 xyz) {  //
         return getSample(xyz);          //
       }
