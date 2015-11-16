@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Scatterplot</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(2.3, 1, 2);
+    three.controls.maxDistance = 5;
+    three.renderer.setClearColor(new THREE.Color(0xFAFAF8), 1.0);
+
+    view = mathbox.cartesian({
+      range: [[0, 2], [0, 1], [0, 1]],
+      scale: [2, 1, 1],
+    });
+
+    var colors = {
+      x: 0xFF4136,   // red
+      y: 0xFFDC00,   // yellow
+      z: 0x0074D9,   // blue
+      xy: 0xFF851B,  // orange
+      xz: 0xB10DC9,  // purple
+      yz: 0x2ECC40,  // green
+      xyz: 0x654321, // brown
+    }
+
+    view.scale({
+      divide: 5,
+      origin: [0,0,1,0],
+      axis: "x",
+    }).text({
+      live: false,
+      data: [0, "½", 1, "1½", 2]
+    }).label({
+      color: colors.x,
+    })
+
+    view.scale({
+      divide: 3,
+      origin: [0,0,1,0],
+      axis: "y",
+    }).text({
+      live: false,
+      data: [0, "½", 1]
+    }).label({
+      color: colors.y,
+      offset: [-16, 0]
+    })
+
+    view.scale({
+      divide: 3,
+      origin: [2,0,0,0],
+      axis: "z",
+    }).text({
+      live: false,
+      data: [0, "½", 1]
+    }).label({
+      color: colors.z,
+      offset: [16, 0]
+    })
+
+
+    view.grid({
+      axes: "xy",
+      divideX: 3,
+      divideY: 3
+    })
+    .grid({
+      axes: "xz",
+      divideX: 3,
+      divideY: 3,
+    })
+    .grid({
+      axes: "yz",
+      divideX: 3,
+      divideY: 3,
+    })
+
+    var n = 32; // number of data points
+    view.array({
+      id: 'data',
+      length: n,
+      items: 1,
+      channels: 3, // 3 spacial dimensions
+      live: false,
+      expr: function (emit) {
+        emit(Math.random()*2, Math.random(), Math.random())
+      },
+    }).point({
+      color: 0x222222,
+      size: 12,
+    });
+
+    view.swizzle({
+      source: '#data',
+      order: "xyww"
+    }).point({
+      color: colors.xy,
+      size: 7,
+    });
+
+    view.swizzle({
+      source: '#data',
+      order: "xwzw"
+    }).point({
+      color: colors.xz,
+      size: 7,
+    });
+
+    view.swizzle({
+      source: '#data',
+      order: "wyzw"
+    }).point({
+      color: colors.yz,
+      size: 7,
+    });
+
+    view.transform({
+      position: [0, 1.01, 0],
+    }).swizzle({
+      source: '#data',
+      order: "xwww"
+    }).point({
+      color: colors.x,
+      size: 7,
+    });
+
+    view.transform({
+      position: [2.01, 0, 0],
+    }).swizzle({
+      source: '#data',
+      order: "wyww"
+    }).point({
+      color: colors.y,
+      size: 7,
+    });
+
+    view.transform({
+      position: [0, 1.01, 0],
+    }).swizzle({
+      source: '#data',
+      order: "wwzw"
+    }).point({
+      color: colors.z,
+      size: 7,
+    });
+
+  </script>
+</body>
+</html>
