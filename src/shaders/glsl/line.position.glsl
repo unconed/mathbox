@@ -260,10 +260,10 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
 #endif
 
 #ifdef LINE_JOIN_DETAIL
-      // Check if on inside our outside of joint
+      // Check if on inside or outside of joint
       float crossProduct = nl.x * nr.y - nl.y * nr.x;
       if (offset * crossProduct < 0.0) {
-        // Apply correction near 180 degree bend to avoid discontinuity
+        // For near-180-degree bends, correct back to a miter to avoid discontinuities
         float ratio = clamp(-dotProduct * 2.0 - 1.0, 0.0, 1.0);
         join = mix(tc * scale, join, ratio * ratio * ratio);
       }
