@@ -3,7 +3,7 @@
 0.0.5-dev
  * ⚠️ Reverse the polarity on `zOrder`, higher zOrder should be drawn later.
  * ⚠️ Rename resample/lerp `centeredWidth`, `centeredHeight`, ... to `centeredX`, `centeredY` for consistency.
- * ⚠️ Change data sampler to not auto-wrap/repeat since it was 2D. Out-of-bounds sampling is now undefined unless you add `<repeat />` or `<clamp />` (works in 4D).
+ * ⚠️ Change data sampler to not auto-wrap/repeat since it was 2D only. Out-of-bounds sampling is now undefined unless you add `<repeat />` or `<clamp />` (works in 4D).
  * Add miter/round/bevel `join` prop for lines, with improved handling of degenerate cases in 3D.
  * Fix anchor logic on `<grow />` being applied to unpinned axes.
  * Add 'binary' / 'hold' ease to force a binary (halfway) or hold (to end) transition.

@@ -1,23 +1,30 @@
+// Units and calibration
 uniform float worldUnit;
 uniform float lineWidth;
 uniform float lineDepth;
 uniform float focusDepth;
 
+// General data index
 uniform vec4 geometryClip;
-attribute vec2 line;
 attribute vec4 position4;
 
+// (Start/mid/end -1/0/1, top/bottom -1,1) 
+attribute vec2 line;
+
+// 0...1 for round or bevel joins
 #ifdef LINE_JOIN_DETAIL
 attribute float joint;
 #else
 const float joint = 0.0;
 #endif
 
+// Knock out excessively long line segments (e.g. for asymtpotes)
 #ifdef LINE_PROXIMITY
 uniform float lineProximity;
 varying float vClipProximity;
 #endif
 
+// Ghetto line stroking (local only, not global)
 #ifdef LINE_STROKE
 varying float vClipStrokeWidth;
 varying float vClipStrokeIndex;
@@ -29,6 +36,7 @@ varying vec3  vClipStrokePosition;
 // External
 vec3 getPosition(vec4 xyzw, float canonical);
 
+// Clip line ends for arrows / decoration
 #ifdef LINE_CLIP
 uniform float clipRange;
 uniform vec2  clipStyle;
@@ -107,6 +115,7 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
 }
 #endif
 
+// Adjust left/center/right to be inside near/far z range
 const float epsilon = 1e-5;
 void fixCenter(inout vec3 left, inout vec3 center, inout vec3 right) {
   if (center.z >= 0.0) {
@@ -135,7 +144,7 @@ void fixCenter(inout vec3 left, inout vec3 center, inout vec3 right) {
   }
 }
 
-
+// Sample the source data in an edge-aware manner
 void getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {
   vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);
 
@@ -144,6 +153,7 @@ void getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out 
   right  = (edge < 0.5)  ? getPosition(xyzw + delta, 0.0) : center;
 }
 
+// Calculate the position for a vertex along the line, including joins
 vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float width, float offset, float joint) {
   vec2 join = vec2(1.0, 0.0);
 
@@ -162,10 +172,6 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
 
   if (l1 + l2 > 0.0) {
     
-    // Flip normal direction if behind camera
-    float flipL = left.z  < 0.0 ? 1.0 : -1.0;
-    float flipR = right.z < 0.0 ? 1.0 : -1.0;
-
     if (edge > 0.5 || l2 == 0.0) {
       vec2 nl = normalize(d.xy);
       vec2 tl = vec2(nl.y, -nl.x);
@@ -221,11 +227,13 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
       vec2 tc = normalize(tl + tr);
 #endif
     
+      // Miter join
       float cosA   = dot(nl, tc);
       float sinA   = max(0.1, abs(dot(tl, tc)));
       float factor = cosA / sinA;
       float scale  = sqrt(1.0 + min(lmin2, factor * factor));
 
+      // Stroke normals
 #ifdef LINE_STROKE
       vec3 stroke1 = normalize(left - center);
       vec3 stroke2 = normalize(center - right);
@@ -241,12 +249,12 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
 #endif
 
 #ifdef LINE_JOIN_MITER
-      // Straight up miter
+      // Apply straight up miter
       join = tc * scale;
 #endif
 
 #ifdef LINE_JOIN_ROUND
-      // Slerp straight edge into circular arc
+      // Slerp bevel join into circular arc
       float dotProduct = dot(nl, nr);
       float angle = acos(dotProduct);
       float sinT  = sin(angle);
@@ -254,7 +262,7 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
 #endif
 
 #ifdef LINE_JOIN_BEVEL
-      // Lerp directly between both sides of the joint
+      // Direct bevel join between two flat ends
       float dotProduct = dot(nl, nr);
       join = mix(tl, tr, joint);
 #endif
@@ -265,6 +273,7 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
       if (offset * crossProduct < 0.0) {
         // For near-180-degree bends, correct back to a miter to avoid discontinuities
         float ratio = clamp(-dotProduct * 2.0 - 1.0, 0.0, 1.0);
+        // Otherwise collapse the inside vertices into one.
         join = mix(tc * scale, join, ratio * ratio * ratio);
       }
 #endif
@@ -278,12 +287,16 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
 
 }
 
+// Calculate final line position
 vec3 getLinePosition() {
   vec3 left, center, right, join;
 
+  // left/center/right
   float edge = line.x;
+  // up/down
   float offset = line.y;
 
+  // Clip data
   vec4 p = min(geometryClip, position4);
   edge += max(0.0, position4.x - geometryClip.x);
 
@@ -313,13 +326,13 @@ vec3 getLinePosition() {
   // Convert to world units
   width *= worldUnit;
 
+  // Calculate line join
   join = getLineJoin(edge, odd, left, center, right, width, offset, joint);
+  vec3 pos = center + join * offset * width;
 
 #ifdef LINE_STROKE
   vClipStrokeWidth = width;
 #endif
-
-  vec3 pos = center + join * offset * width;
 
 #ifdef LINE_CLIP
   clipEnds(p, center, pos);
