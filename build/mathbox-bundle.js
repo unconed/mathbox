@@ -53742,7 +53742,7 @@ window.MathBox = exports;
 
 window.mathBox = exports.mathBox = mathBox;
 
-exports.version = '0.0.4';
+exports.version = '0.0.5';
 
 exports.Context = Context = require('./context');
 
@@ -62346,7 +62346,7 @@ Slide = (function(superClass) {
 
   Slide.prototype.change = function(changed, touched, init) {
     if (changed['slide.early'] || changed['slide.late'] || changed['slide.steps'] || changed['slide.from'] || changed['slide.to']) {
-      return this.rebuild;
+      return this.rebuild();
     }
   };
 

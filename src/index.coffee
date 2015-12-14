@@ -16,7 +16,7 @@ window.e = Math.E
 # Namespace
 window.MathBox = exports
 window.mathBox = exports.mathBox = mathBox
-exports.version = '0.0.4'
+exports.version = '0.0.5'
 
 # Load context and export namespace
 exports.Context = Context = require './context'

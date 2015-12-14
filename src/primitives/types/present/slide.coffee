@@ -18,11 +18,11 @@ class Slide extends Parent
     @_inherit('present') unadopt @
 
   change: (changed, touched, init) ->
-    return @rebuild if changed['slide.early'] or
-                       changed['slide.late']  or
-                       changed['slide.steps'] or
-                       changed['slide.from']  or
-                       changed['slide.to']
+    return @rebuild() if changed['slide.early'] or
+                         changed['slide.late']  or
+                         changed['slide.steps'] or
+                         changed['slide.from']  or
+                         changed['slide.to']
 
   slideLatch: (enabled, step) ->
     #console.log 'slide:latch', @node.toString(), enabled, step
