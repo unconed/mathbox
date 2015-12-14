@@ -25,10 +25,10 @@ class LineGeometry extends ClipGeometry
     @detail   = detail   = +options.detail  || 1
 
     lines     = samples - 1 + if closed then 1 else 0
-    @joins    = joins = detail  - 1
+    @joints   = joints = detail  - 1
 
-    @vertices = vertices = (lines - 1) * joins + samples
-    @segments = segments = (lines - 1) * joins + lines
+    @vertices = vertices = (lines - 1) * joints + samples
+    @segments = segments = (lines - 1) * joints + lines
 
     wrap      = samples  - if closed then 1 else 0
     points    = vertices * strips * ribbons * layers * 2
@@ -39,7 +39,7 @@ class LineGeometry extends ClipGeometry
     @addAttribute 'position4', new THREE.BufferAttribute new Float32Array(points * 4),    4
     @addAttribute 'line',      new THREE.BufferAttribute new Float32Array(points * 2),    2
     @addAttribute 'strip',     new THREE.BufferAttribute new Float32Array(points * 2),    2
-    @addAttribute 'join',      new THREE.BufferAttribute new Float32Array(points),        1 if detail > 1
+    @addAttribute 'joint',     new THREE.BufferAttribute new Float32Array(points),        1 if detail > 1
 
     @_autochunk()
 
@@ -47,7 +47,7 @@ class LineGeometry extends ClipGeometry
     position = @_emitter 'position4'
     line     = @_emitter 'line'
     strip    = @_emitter 'strip'
-    join     = @_emitter 'join' if detail > 1
+    joint    = @_emitter 'joint' if detail > 1
 
     base = 0
     for i in [0...ribbons * layers]
@@ -68,7 +68,7 @@ class LineGeometry extends ClipGeometry
       if closed
         () -> 0
       else
-        (x) -> if x == 0 then -1 else if x == segments then 1 else 0
+        (x) -> if x == 0 then -1 else if x == samples - 1 then 1 else 0
 
     if detail > 1
 
@@ -90,7 +90,8 @@ class LineGeometry extends ClipGeometry
                 strip 0, segments
                 strip 0, segments
 
-                join 0
+                joint 0.5
+                joint 0.5
 
               else for m in [0...detail]
                 position x, y, z, l
@@ -102,7 +103,8 @@ class LineGeometry extends ClipGeometry
                 strip 0, segments
                 strip 0, segments
 
-                join m
+                joint m / joints
+                joint m / joints
 
     else
 
@@ -131,7 +133,7 @@ class LineGeometry extends ClipGeometry
   clip: (samples = @samples - @closed, strips = @strips, ribbons = @ribbons, layers = @layers) ->
     segments = Math.max 0, samples - if @closed then 0 else 1
 
-    vertices = samples + (samples - 2) * @joins
+    vertices = samples + (samples - 2) * @joints
     segments = vertices - 1
 
     @_clipGeometry   vertices, strips, ribbons, layers

@@ -36,6 +36,7 @@ class Line extends Base
     defs.LINE_PROXIMITY = '' if proximity?
 
     defs['LINE_JOIN_' + join.toUpperCase()] = ''
+    defs['LINE_JOIN_DETAIL'] = detail if detail > 1
 
     v = factory.vertex
 
