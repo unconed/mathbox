@@ -59,7 +59,7 @@ class Atlas extends Renderable
   collapse: (row) ->
     rows = @rows
     rows.splice rows.indexOf(row), 1
-    @bottom = rows[rows.length - 1].bottom
+    @bottom = rows[rows.length - 1]?.bottom ? 0
     @last = null if @last == row
 
   allocate: (key, width, height, emit) ->

@@ -12,6 +12,7 @@
  * Add `<subdivide />` operator to lerp geometries non-evenly, see `test/subdivide.html` for uses.
  * Add `<clamp />` for clamp-to-edge sampling in 4D.
  * Round fractional sample indices for 3D/4D buffers to ensure correct alignment when resampling. Set `aligned: true` on `array`/`matrix`/... to disable this when integer lookups are guaranteed.
+ * Fix bug when a text atlas is emptied completely.
 
 0.0.4
 
