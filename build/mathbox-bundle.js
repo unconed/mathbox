@@ -53742,7 +53742,7 @@ window.MathBox = exports;
 
 window.mathBox = exports.mathBox = mathBox;
 
-exports.version = '0.0.4';
+exports.version = '0.0.5';
 
 exports.Context = Context = require('./context');
 
@@ -62356,7 +62356,7 @@ Slide = (function(superClass) {
 
   Slide.prototype.change = function(changed, touched, init) {
     if (changed['slide.early'] || changed['slide.late'] || changed['slide.steps'] || changed['slide.from'] || changed['slide.to']) {
-      return this.rebuild;
+      return this.rebuild();
     }
   };
 
@@ -63933,7 +63933,7 @@ Retext = (function(superClass) {
     return Retext.__super__.constructor.apply(this, arguments);
   }
 
-  Retext.traits = ['node', 'bind', 'operator', 'resample', 'sampler:width', 'sampler:height', 'sampler:depth', 'sampler:items', 'include', 'text'];
+  Retext.traits = ['node', 'bind', 'operator', 'resample', 'sampler:x', 'sampler:y', 'sampler:z', 'sampler:w', 'include', 'text'];
 
   Retext.prototype.init = function() {
     return this.sourceSpec = [

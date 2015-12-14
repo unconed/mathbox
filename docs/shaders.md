@@ -22,18 +22,18 @@ The shader snippet it references will look something like this:
       }
     </script>
 
- * Global parameters are defined as `uniforms` and can be set like any other prop on the `<shader>` node, e.g. `.shader({ code: "...", intensity: 2 })`.
  * The names of the functions are not relevant outside the `<script>` block.  The functions are considered anonymous lambdas. The name that matters is the id in the script tag.
  * These scripts have type `application/glsl` and use different conventions from JavaScript.
  * The script shown here has random access to inputs using `getSample()`.  Here it is accessing four different values.
+ * Global parameters are defined as `uniforms` and can be set like any other prop on the `<shader>` node, e.g. `.shader({ code: "...", intensity: 2 })`.
 
 ## Multiple Sources
 
 Shaders are not limited to sampling from one (implied) source. You can specify an array of additional `sources` as a prop. This can be an array of selectors and/or nodes. Note you can also pass the code inline instead of via a `<script>` tag, though this is awkward without multi-line strings in classic JavaScript.
 
-For example, for a `.shader({ sources: ["#array1", "#array2"] })`, the GLSL code would look like this:
+For example, for a `.shader({ code: "#multi-shader", sources: ["#array1", "#array2"] })`, the GLSL code would look like this:
 
-    <script type="application/glsl" id="map-temporal-blur">
+    <script type="application/glsl" id="multi-shader">
       // External sources
       vec4 getArray1Sample(vec4 xyzw);
       vec4 getArray2Sample(vec4 xyzw);
@@ -51,15 +51,15 @@ This samples both arrays and combines it with the third (implied) source. The or
 
 This will take a data array and produce a new one, of the same or different size.
 
-The callback signature depends on both indices and channels, mapping to float/vec2/vec3/vec4. Indices specifies the type of the argument, channels the return type. The example above and below are `{indices: 3, channels: 4}`:
+The callback signature depends on both indices and channels, mapping to float/vec2/vec3/vec4. Indices specifies the type of the argument, channels the return type. The example below is `{indices: 3, channels: 4}`:
 
     <script type="application/glsl" id="resample-shader">
-      uniform vec4 dataResolution;   // indices 4
-      uniform vec4 dataSize;         //
-      uniform vec4 targetResolution; //
-      uniform vec4 targetSize;       //
+      uniform vec3 dataResolution;   // inverse dimensions (sample-adjusted)
+      uniform vec3 dataSize;         // dimensions
+      uniform vec3 targetResolution; //
+      uniform vec3 targetSize;       //
       
-      vec4 getSample(vec3 xyzw);        // indices 4, channels 3
+      vec4 getSample(vec3 xyz);         // indices 3, channels 4
       vec4 getFramesSample(vec3 xyz) {  //
         return getSample(xyz);          //
       }
@@ -135,8 +135,8 @@ The coordinates `stpq` passed in are in the range 0...1 across the source data, 
 
     <script type="application/glsl" id="mask-shader">
     float getMask(vec4 stpq) {
-      vec2 sines = sin(stpq.st * 10.0 + time);
-      return (sines.x * sines.y) + value;
+      vec2 sines = sin(stpq.st * 10.0);
+      return (sines.x * sines.y);
     }
     </script>
 
@@ -189,7 +189,7 @@ Fragment is a raw fragment shader stage (per pixel/sample). It takes a color (rg
       code: "#fragment-shader",
     })
     .fragment()
-      // vertex shaded shapes
+      // Fragment shaded shapes
     .end()
   
   * Colors outside the range 0...1 may be used in a floating point render-to-texture.

@@ -2,7 +2,7 @@ Resample = require '../operator/resample'
 Util     = require '../../../util'
 
 class Retext extends Resample
-  @traits = ['node', 'bind', 'operator', 'resample', 'sampler:width', 'sampler:height', 'sampler:depth', 'sampler:items', 'include', 'text']
+  @traits = ['node', 'bind', 'operator', 'resample', 'sampler:x', 'sampler:y', 'sampler:z', 'sampler:w', 'include', 'text']
 
   init: () ->
     @sourceSpec = [
