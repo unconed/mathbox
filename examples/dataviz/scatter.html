@@ -128,33 +128,45 @@
     });
 
     view.transform({
-      position: [0, 1.01, 0],
+      position: [0, 1.02, 0],
     }).swizzle({
       source: '#data',
       order: "xwww"
-    }).point({
+    }).repeat({
+      items: 2,
+    }).spread({
+      unit: "absolute",
+      items: [0, 0.04, 0, 0],
+    }).vector({
       color: colors.x,
-      size: 7,
     });
 
     view.transform({
-      position: [2.01, 0, 0],
+      position: [2.02, 0, 0],
     }).swizzle({
       source: '#data',
       order: "wyww"
-    }).point({
+    }).repeat({
+      items: 2,
+    }).spread({
+      unit: "absolute",
+      items: [0.04, 0, 0, 0],
+    }).vector({
       color: colors.y,
-      size: 7,
     });
 
     view.transform({
-      position: [0, 1.01, 0],
+      position: [0, 1.02, 0],
     }).swizzle({
       source: '#data',
       order: "wwzw"
-    }).point({
+    }).repeat({
+      items: 2,
+    }).spread({
+      unit: "absolute",
+      items: [0, 0.04, 0, 0],
+    }).vector({
       color: colors.z,
-      size: 7,
     });
 
   </script>
