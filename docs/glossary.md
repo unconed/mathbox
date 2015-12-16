@@ -20,7 +20,7 @@
   * `i, j, k` - One to three indices of the current point.
   * `t` - Time elapsed since program start, in seconds.
   * `d` - Time delta since last frame, in seconds.
-* Width - The size of the data in the *x* direction, i.e. the number of rows. (For arrays, the term *length* is used, but this will likely be changed soon.)
+* Width - The size of the data in the *x* direction, i.e. the number of rows.
 * Height - The size of the data in the *y* direction, i.e. the number of columns.
 * Depth - The size of the data in the *z* direction, i.e. the number of stacks.
 * Items - The size of the data in the *w* direction, i.e. the number of data points per spatial location. The number of times `emit` is called in the `expr` function.
