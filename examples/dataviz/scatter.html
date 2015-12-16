@@ -128,7 +128,7 @@
     });
 
     view.transform({
-      position: [0, 1.02, 0],
+      position: [0, 1, 0],
     }).swizzle({
       source: '#data',
       order: "xwww"
@@ -136,13 +136,14 @@
       items: 2,
     }).spread({
       unit: "absolute",
+      alignItems: "first",
       items: [0, 0.04, 0, 0],
     }).vector({
       color: colors.x,
     });
 
     view.transform({
-      position: [2.02, 0, 0],
+      position: [2, 0, 0],
     }).swizzle({
       source: '#data',
       order: "wyww"
@@ -150,13 +151,14 @@
       items: 2,
     }).spread({
       unit: "absolute",
+      alignItems: "first",
       items: [0.04, 0, 0, 0],
     }).vector({
       color: colors.y,
     });
 
     view.transform({
-      position: [0, 1.02, 0],
+      position: [0, 1, 0],
     }).swizzle({
       source: '#data',
       order: "wwzw"
@@ -164,6 +166,7 @@
       items: 2,
     }).spread({
       unit: "absolute",
+      alignItems: "first",
       items: [0, 0.04, 0, 0],
     }).vector({
       color: colors.z,
