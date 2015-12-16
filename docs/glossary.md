@@ -13,21 +13,6 @@
 * ShaderGraph - A component/dependency of MathBox that dynamically compiles small GLSL functions (snippets) into a single shader.
 * WebGL - JavaScript API for rendering 3D scenes, used by MathBox.
 
-## Functions on Selections
-* `select("selector")` - A function on `mathbox` that returns a selection of all the nodes matching the selector. Like CSS, the selector may be the name of a primitive (e.g. `"camera"`), an id (e.g. `"#colors"`), or a class (e.g. `".points"`).
-* `get("propName")` - Get the current value of an prop.
-* `set("propName", value)` - Set an prop to the value provided.
-* `bind("propName", function(t, d){ ... })` - Invoke the function every frame and set the prop to its return value. The function's arguments are the time since page load and the time delta since the last frame, both in seconds.
-
-Example: `present.set('index', present.get('index') + 1);`
-
-Note: `set` and `bind` should be used only when setting props dynamically. When creating a node, place the values and functions in first and second (respectively) objects passed to the node.
-
-* `inspect()` - Print (in the console) the DOM nodes in this selection. Called automatically on first load.
-* `debug()` - Display a visual representation of all shader snippets, how they are wired, with the GLSL available on mouseover.
-* `orig("propName")` - Return the value of the prop as passed in, i.e. without renormalization. Used mostly for pretty-printing.
-* `end()` - Indicate that subsequent nodes are siblings rather than children of the current node. Example: `group().child().child().end().sibling();`
-
 ## Data
 * `expr` - A prop on data primitives that expects a function, whose arguments are:
   * `emit` - Another function. When called, its arguments become data.
@@ -41,4 +26,3 @@ Note: `set` and `bind` should be used only when setting props dynamically. When 
 * Items - The size of the data in the *w* direction, i.e. the number of data points per spatial location. The number of times `emit` is called in the `expr` function.
 * Channels - How many numbers are associated with a data point. The number of arguments passed to `emit`. This is not an array dimension; it is how many numbers make up one array element.
 * History - The process of storing previous 1D or 2D data in an unused dimension.
-
