@@ -16,16 +16,24 @@
 
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
 
+    function previous() {
+      present.set('index', present.get('index') - 1);
+    }
+    
+    function next() {
+      present.set('index', present.get('index') + 1);
+    }
+
     if (window == top)
       window.onkeydown = function (e) {
         switch (e.keyCode) {
           case 37:
           case 38:
-            present.set('index', present.get('index') - 1);
+            previous()
             break;
           case 39:
           case 40:
-            present.set('index', present.get('index') + 1);
+            next()
             break;
         }
         //console.log(present.get('index'));
@@ -149,5 +157,7 @@
           })
 
   </script>
+
+  <div style="position: absolute; bottom: 15px; left: 50%; margin-left: -60px; width: 120px; font-size: 20px; text-align: center"><button onclick="previous()">&lt;</button><button onclick="next()">&gt;</button></div>
 </body>
 </html>
