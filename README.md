@@ -48,6 +48,7 @@ See:
 
  * [Quick Start](/docs/intro.md) for a hands on introduction.
  * [Glossary](/docs/glossary.md) of terms to help get familiar with MathBox and WebGL.
+ * [MathBox API](/docs/api.md) for typical usage.
  * [List of Primitives](/docs/primitives.md) for a full element reference.
  * [Writing Custom Shaders](/docs/shaders.md) for info on custom shaders and GPU-side processing.
  * [Context API](/docs/context.md) for advanced usage.
