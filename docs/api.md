@@ -31,7 +31,7 @@ mathbox.line({
   // ...
 }, {
   width: function (time, delta) {
-    return 2 + Math.sin(t);
+    return 2 + Math.sin(time);
   }
 })
 ```
