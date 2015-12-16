@@ -56,7 +56,7 @@
     });
 
     view.array({
-      length: 2,
+      width: 2,
       channels: 4,
       data: [[0xc0/255, 0x20/255, 0x50/255, 1], [0x50/255, 0xc0/255, 0x20/255, 1]],
     })
@@ -65,7 +65,7 @@
     });
 
     view.interval({
-      length: 16,
+      width: 16,
       expr: function (emit, x, i, time) {
         y = Math.sin(x + (time*0.2) / 4) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);

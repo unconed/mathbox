@@ -50,7 +50,7 @@
     })
     .interval({
       id: 'sampler',
-      length: 64,
+      width: 64,
       expr: function (emit, x, i) {
         y = Math.sin(x + three.Time.now) * .7;
         emit(x, y);

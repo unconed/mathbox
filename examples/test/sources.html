@@ -87,7 +87,7 @@
 
     // Make 1D array of values
     var array1 = view.interval({
-      length: 64,
+      width: 64,
       channels: 1,
       expr: function (emit, x, i, t) {
         emit(Math.sin(x * 5 + t) * .5 + .5);
@@ -112,7 +112,7 @@
     // Make 1D array of values
     var array2 = view.interval({
       id: "array2",
-      length: 64,
+      width: 64,
       channels: 1,
       expr: function (emit, x, i, t) {
         emit(Math.cos(x * 5 - t) * .5 + .5);

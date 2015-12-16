@@ -51,7 +51,7 @@
     });
 
     view.interval({
-      length: 16,
+      width: 16,
       expr: function (emit, x, i, time) {
         y = Math.sin(x + (time*0.2) / 4) * .7;// + (i%2)*Math.sin(x * 400000 + time * 5 + x * x * 10000)*.05;
         emit(x, y);

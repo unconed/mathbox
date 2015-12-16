@@ -54,7 +54,7 @@
 
     view.interval({
       id: 'sampler',
-      length: 64,
+      width: 64,
       expr: function (emit, x, i, t) {
         y = Math.sin(x + t) * .7;// + (i%2)*Math.sin(x * 400000 + t * 5 + x * x * 10000)*.05;
         emit(x, y);

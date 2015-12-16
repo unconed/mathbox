@@ -73,7 +73,7 @@
     view
     .interval({
       id: 'sampler',
-      length: 256,
+      width: 256,
       expr: function (emit, x, i, t) {
         emit(x, .5 + .5 * Math.sin((x + t) * 3));
       },

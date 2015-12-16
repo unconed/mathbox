@@ -141,7 +141,7 @@ var data =
     expr: function (emit, x, i, t) {
       emit(x, Math.sin(x + t));
     },
-    length: 64,
+    width: 64,
     channels: 2,
   });
 ```
@@ -171,7 +171,7 @@ The DOM now looks like:
     <grid width={2} divideX={20} divideY={10} />
     <interval expr={(emit, x, i, t) => {
           emit(x, Math.sin(x + t));
-        }} length={64} channels={2} />
+        }} width={64} channels={2} />
     <line width={5} color="#3090FF" />
   </cartesian>
 </root>
@@ -200,7 +200,7 @@ var vector =
       emit(x, 0);
       emit(x, -Math.sin(x + t));
     },
-    length: 64,
+    width: 64,
     channels: 2,
     items: 2,
   })
@@ -221,13 +221,13 @@ var vector =
     <grid width={2} divideX={20} divideY={10} />
     <interval expr={(emit, x, i, t) => {
           emit(x, Math.sin(x + t));
-        }} length={64} channels={2} />
+        }} width={64} channels={2} />
     <line width={5} color="#3090FF" />
     <point size={8} color="#3090FF" />
     <interval expr={(emit, x, i, t) => {
           emit(x, 0);
           emit(x, -Math.sin(x + t));
-        }} length={64} channels={2} items={2} />
+        }} width={64} channels={2} items={2} />
     <vector end={true} width={5} color="#50A000" />
   </cartesian>
 </root>
@@ -313,13 +313,13 @@ We set the `pace` of the animation to 5 seconds per step, tell it to play till k
     <grid width={2} divideX={20} divideY={10} />
     <interval expr={(emit, x, i, t) => {
           emit(x, Math.sin(x + t));
-        }} length={64} channels={2} />
+        }} width={64} channels={2} />
     <line width={5} color="#3090FF" />
     <point size={8} color="#3090FF" />
     <interval expr={(emit, x, i, t) => {
           emit(x, 0);
           emit(x, -Math.sin(x + t));
-        }} length={64} channels={2} items={2} />
+        }} width={64} channels={2} items={2} />
     <vector end={true} width={5} color="#50A000" />
     <scale divide={10} />
     <ticks width={5} size={15} color="black" />

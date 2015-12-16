@@ -124,7 +124,7 @@
     
     view.interval({
       id: 'sampler',
-      length: 512,
+      width: 512,
       expr: function (emit, x, i, t) {
         emit(x, .5 + .25 * Math.sin(x + t) + .25 * Math.sin(x * 1.91 + t * 1.81));
       },

@@ -8,11 +8,11 @@ class Array_ extends Buffer
     @buffer = @spec = null
 
     @space =
-      length:  0
+      width:   0
       history: 0
 
     @used =
-      length:  0
+      width:   0
 
     @storage = 'arrayBuffer'
     @passthrough = (emit, x) -> emit x, 0, 0, 0
@@ -26,25 +26,25 @@ class Array_ extends Buffer
 
   getDimensions: () ->
     items:  @items
-    width:  @space.length
+    width:  @space.width
     height: @space.history
     depth:  1
 
   getActiveDimensions: () ->
     items:  @items
-    width:  @used.length
+    width:  @used.width
     height: @buffer.getFilled()
     depth:  1
 
   getFutureDimensions: () ->
     items:  @items
-    width:  @used.length
+    width:  @used.width
     height: @space.history
     depth:  1
 
   getRawDimensions: () ->
     items:  @items
-    width:  space.length
+    width:  space.width
     height: 1
     depth:  1
 
@@ -57,13 +57,13 @@ class Array_ extends Buffer
     type      = @type      ? @props.type
 
     # Read given dimensions
-    length   = @props.length
+    width    = @props.width
     history  = @props.history
-    reserve  = @props.bufferLength
+    reserve  = @props.bufferWidth
     channels = @props.channels
     items    = @props.items
 
-    dims = @spec = {channels, items, width: length}
+    dims = @spec = {channels, items, width}
 
     @items    = dims.items
     @channels = dims.channels
@@ -73,12 +73,12 @@ class Array_ extends Buffer
     dims = Util.Data.getDimensions data, dims
 
     space = @space
-    space.length  = Math.max reserve, dims.width || 1
+    space.width   = Math.max reserve, dims.width || 1
     space.history = history
 
     # Create array buffer
     @buffer = @_renderables.make @storage,
-              length:    space.length
+              width:     space.width
               history:   space.history
               channels:  channels
               items:     items
@@ -97,13 +97,13 @@ class Array_ extends Buffer
                          changed['history.history'] or
                          changed['buffer.channels'] or
                          changed['buffer.items'] or
-                         changed['array.bufferLength']
+                         changed['array.bufferWidth']
 
     return unless @buffer
 
-    if changed['array.length']
-      length = @props.length
-      return @rebuild() if length > @space.length
+    if changed['array.width']
+      width = @props.width
+      return @rebuild() if width > @space.width
 
     if changed['data.map'] or
        changed['data.data'] or
@@ -125,7 +125,7 @@ class Array_ extends Buffer
 
     {data} = @props
     {space, used} = @
-    l = used.length
+    l = used.width
 
     filled = @buffer.getFilled()
 
@@ -134,14 +134,14 @@ class Array_ extends Buffer
       if data?
         dims = Util.Data.getDimensions data, @spec
 
-        # Grow length if needed
-        if dims.width > space.length
+        # Grow width if needed
+        if dims.width > space.width
           abort()
           return @rebuild()
 
-        used.length = dims.width
+        used.width = dims.width
 
-        @buffer.setActive used.length
+        @buffer.setActive used.width
         @buffer.callback.rebind? data
         @buffer.update()
       else
@@ -149,10 +149,10 @@ class Array_ extends Buffer
 
         @buffer.setActive width
 
-        length = @buffer.update()
-        used.length = length
+        width = @buffer.update()
+        used.width = width
 
-    if used.length != l or
+    if used.width != l or
        filled != @buffer.getFilled()
       @trigger
         type: 'source.resize'

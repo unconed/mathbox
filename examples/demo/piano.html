@@ -151,7 +151,7 @@ combines them to 'play' the piano.
   // This array with an item per key can set which keys are down, individually.
   // Our formula for delta is setting every 2nd key.
   view.array({
-     length: nKeys * nRepeats,
+     width: nKeys * nRepeats,
      channels : 1,
      expr: function( emit, key, t ){
         adjustedTime = t*(5 + (key %7)/10) + key;
@@ -188,7 +188,7 @@ combines them to 'play' the piano.
     // We are drawing one more face than we need to for each white key.
     // It is worth it for the convenience of simpler building blocks.
     id : 'whitekeys',
-    length: 12 * nKeys,
+    width: 12 * nKeys,
     items: 4,    // Four points per face
     channels: 3, // Three dimensions per point
     expr: function (emit, i, t) {
@@ -307,7 +307,7 @@ combines them to 'play' the piano.
 
   // The black keys
   view.array({
-    length: 6 * nBlackKeys,
+    width: 6 * nBlackKeys,
     expr: function (emit, i, t) {
       var face = i % 6;          // Face number 0..5 within cuboid
       var key = Math.floor(i/6); // Key number 0..nBlackKeys-1

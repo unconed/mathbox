@@ -94,7 +94,7 @@
     });
 
     view.interval({
-      length: 48,
+      width: 48,
       expr: function (emit, x, i, t) {
         y = Math.sin(x + t / 4) * .5 + .75;
         emit(x, y);
@@ -133,7 +133,7 @@
     });
 
     view.interval({
-      length: 192,
+      width: 192,
       expr: function (emit, x, i, t) {
         y = Math.sin(x + t / 4) * .5 + .25;
         emit(x, y);
@@ -190,7 +190,7 @@
     .end();
 
     view.interval({
-      length: 48,
+      width: 48,
       expr: function (emit, x, i, t) {
         y = Math.sin(x + t / 4) * .5 - .25;
         emit(x, y);
@@ -242,7 +242,7 @@
     });
   
     view.interval({
-      length: 48,
+      width: 48,
       expr: function (emit, x, i, t) {
         y = Math.sin(x + t / 4) * .5 - .75;
         emit(x, y);
@@ -274,7 +274,7 @@
       },
     })
     .array({
-      length:  8,
+      width:  8,
       expr: function (emit, i, t) {
         var color = [[192,192,192],[40,40,40]][i%2];
         emit(color[0]/255, color[1]/255, color[2]/255, 1);

@@ -124,8 +124,8 @@ Traits =
     centered:          Types.bool(false)
     padding:           Types.number(0)
   array:
-    length:            Types.nullable(Types.positive(Types.int(1), true))
-    bufferLength:      Types.int(1)
+    width:             Types.nullable(Types.positive(Types.int(1), true))
+    bufferWidth:       Types.int(1)
     history:           Types.int(1)
   matrix:
     width:             Types.nullable(Types.positive(Types.int(1), true))

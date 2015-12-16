@@ -140,7 +140,7 @@
           duration: 1,
         })
           .interval({
-            length: 128,
+            width: 128,
             expr: function (emit, x, i, t) {
               if (i == 0) console.log('emitting')
               emit(x, .5 + .5 * Math.sin((x + t) * 3));

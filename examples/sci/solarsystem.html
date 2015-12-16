@@ -250,7 +250,7 @@
     // Current position
     view
       .array({
-        length: names.length,
+        width: names.length,
         channels: 3,
         expr: function (emit, i, t) {
           var key = names[i];
@@ -259,7 +259,7 @@
       })
       .array({
         id: 'colors',
-        length: names.length,
+        width: names.length,
         channels: 4,
         expr: function (emit, i) {
           emit(colors[i].r, colors[i].g, colors[i].b, 1);
@@ -289,7 +289,7 @@
     view
       .layer()
         .array({
-          length: 1,
+          width: 1,
           data: [0, -.9, 0],
         })
         .format({

@@ -27,7 +27,7 @@
     });
 
     view.interval({
-      length: 16,
+      width: 16,
       history: 16,
       range: [0, 1],
       expr: function (emit, x, i, t) {
@@ -35,7 +35,7 @@
         var y = Math.sin(j * .1) * .5 + .5;
         emit(x + y, i % 2, Math.cos(y) * .5 + .5, 1.0);
       },
-      bufferLength: 32,
+      bufferWidth: 32,
     });
     view.memo({
       minFilter: 'linear',

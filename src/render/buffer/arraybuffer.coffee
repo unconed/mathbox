@@ -6,13 +6,13 @@ Util        = require '../../util'
 ###
 class ArrayBuffer_ extends DataBuffer
   constructor: (renderer, shaders, options) ->
-    @length   = options.length   || 1
+    @width    = options.width    || 1
     @history  = options.history  || 1
 
-    @samples = @length
+    @samples = @width
     @wrap    = @history > 1
 
-    options.width  = @length
+    options.width  = @width
     options.height = @history
     options.depth  = 1
     super renderer, shaders, options
@@ -24,7 +24,7 @@ class ArrayBuffer_ extends DataBuffer
     @pad      = 0
     @streamer = @generate @data
 
-  setActive: (i) -> @pad = Math.max 0, @length - i
+  setActive: (i) -> @pad = Math.max 0, @width - i
 
   fill: () ->
     callback = @callback

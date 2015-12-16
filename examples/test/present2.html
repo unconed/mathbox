@@ -58,7 +58,7 @@
       .present()
         .slide().reveal()
           .interval({
-            length: 32,
+            width: 32,
             channels: 2,
             expr: function (emit, x, i, t) { emit(x, Math.sin(x + t)); }
           })
@@ -83,7 +83,7 @@
 
         .slide().reveal()
           .interval({
-            length: 32,
+            width: 32,
             channels: 2,
             expr: function (emit, x, i, t) { emit(x, Math.cos(x - t)); }
           })
@@ -108,7 +108,7 @@
 
         .slide().reveal()
           .interval({
-            length: 32,
+            width: 32,
             channels: 2,
             expr: function (emit, x, i, t) { emit(x, Math.sin(x * 2 + t)); }
           })

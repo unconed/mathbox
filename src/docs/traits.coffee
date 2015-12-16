@@ -113,8 +113,8 @@ Traits =
     centered:          ["Centered instead of corner sampling", "bool", "false"]
     padding:           ["Number of samples padding", "number", "0"]
   array:
-    length:            ["Array length", "nullable number", "1"]
-    bufferLength:      ["Array buffer length", "number", "1"]
+    width:             ["Array width", "nullable number", "1"]
+    bufferWidth:       ["Array buffer width", "number", "1"]
     history:           ["Array history", "number", "1"]
   matrix:
     width:             ["Matrix width", "nullable number", "1"]

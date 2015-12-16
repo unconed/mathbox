@@ -56502,11 +56502,11 @@ Array_ = (function(superClass) {
   Array_.prototype.init = function() {
     this.buffer = this.spec = null;
     this.space = {
-      length: 0,
+      width: 0,
       history: 0
     };
     this.used = {
-      length: 0
+      width: 0
     };
     this.storage = 'arrayBuffer';
     this.passthrough = function(emit, x) {
@@ -56525,7 +56525,7 @@ Array_ = (function(superClass) {
   Array_.prototype.getDimensions = function() {
     return {
       items: this.items,
-      width: this.space.length,
+      width: this.space.width,
       height: this.space.history,
       depth: 1
     };
@@ -56534,7 +56534,7 @@ Array_ = (function(superClass) {
   Array_.prototype.getActiveDimensions = function() {
     return {
       items: this.items,
-      width: this.used.length,
+      width: this.used.width,
       height: this.buffer.getFilled(),
       depth: 1
     };
@@ -56543,7 +56543,7 @@ Array_ = (function(superClass) {
   Array_.prototype.getFutureDimensions = function() {
     return {
       items: this.items,
-      width: this.used.length,
+      width: this.used.width,
       height: this.space.history,
       depth: 1
     };
@@ -56552,37 +56552,37 @@ Array_ = (function(superClass) {
   Array_.prototype.getRawDimensions = function() {
     return {
       items: this.items,
-      width: space.length,
+      width: space.width,
       height: 1,
       depth: 1
     };
   };
 
   Array_.prototype.make = function() {
-    var channels, data, dims, history, items, length, magFilter, minFilter, ref, ref1, ref2, reserve, space, type;
+    var channels, data, dims, history, items, magFilter, minFilter, ref, ref1, ref2, reserve, space, type, width;
     Array_.__super__.make.apply(this, arguments);
     minFilter = (ref = this.minFilter) != null ? ref : this.props.minFilter;
     magFilter = (ref1 = this.magFilter) != null ? ref1 : this.props.magFilter;
     type = (ref2 = this.type) != null ? ref2 : this.props.type;
-    length = this.props.length;
+    width = this.props.width;
     history = this.props.history;
-    reserve = this.props.bufferLength;
+    reserve = this.props.bufferWidth;
     channels = this.props.channels;
     items = this.props.items;
     dims = this.spec = {
       channels: channels,
       items: items,
-      width: length
+      width: width
     };
     this.items = dims.items;
     this.channels = dims.channels;
     data = this.props.data;
     dims = Util.Data.getDimensions(data, dims);
     space = this.space;
-    space.length = Math.max(reserve, dims.width || 1);
+    space.width = Math.max(reserve, dims.width || 1);
     space.history = history;
     return this.buffer = this._renderables.make(this.storage, {
-      length: space.length,
+      width: space.width,
       history: space.history,
       channels: channels,
       items: items,
@@ -56601,16 +56601,16 @@ Array_ = (function(superClass) {
   };
 
   Array_.prototype.change = function(changed, touched, init) {
-    var length;
-    if (touched['texture'] || changed['history.history'] || changed['buffer.channels'] || changed['buffer.items'] || changed['array.bufferLength']) {
+    var width;
+    if (touched['texture'] || changed['history.history'] || changed['buffer.channels'] || changed['buffer.items'] || changed['array.bufferWidth']) {
       return this.rebuild();
     }
     if (!this.buffer) {
       return;
     }
-    if (changed['array.length']) {
-      length = this.props.length;
-      if (length > this.space.length) {
+    if (changed['array.width']) {
+      width = this.props.width;
+      if (width > this.space.width) {
         return this.rebuild();
       }
     }
@@ -56638,19 +56638,19 @@ Array_ = (function(superClass) {
     }
     data = this.props.data;
     space = this.space, used = this.used;
-    l = used.length;
+    l = used.width;
     filled = this.buffer.getFilled();
     this.syncBuffer((function(_this) {
       return function(abort) {
-        var base, dims, length, width;
+        var base, dims, width;
         if (data != null) {
           dims = Util.Data.getDimensions(data, _this.spec);
-          if (dims.width > space.length) {
+          if (dims.width > space.width) {
             abort();
             return _this.rebuild();
           }
-          used.length = dims.width;
-          _this.buffer.setActive(used.length);
+          used.width = dims.width;
+          _this.buffer.setActive(used.width);
           if (typeof (base = _this.buffer.callback).rebind === "function") {
             base.rebind(data);
           }
@@ -56658,12 +56658,12 @@ Array_ = (function(superClass) {
         } else {
           width = _this.spec.width || 1;
           _this.buffer.setActive(width);
-          length = _this.buffer.update();
-          return used.length = length;
+          width = _this.buffer.update();
+          return used.width = width;
         }
       };
     })(this));
-    if (used.length !== l || filled !== this.buffer.getFilled()) {
+    if (used.width !== l || filled !== this.buffer.getFilled()) {
       return this.trigger({
         type: 'source.resize'
       });
@@ -56903,20 +56903,20 @@ Interval = (function(superClass) {
   Interval.traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'array', 'span', 'interval', 'sampler', 'raw'];
 
   Interval.prototype.updateSpan = function() {
-    var centered, dimension, inverse, length, pad, range, span;
+    var centered, dimension, inverse, pad, range, span, width;
     dimension = this.props.axis;
-    length = this.props.length;
+    width = this.props.width;
     centered = this.props.centered;
     pad = this.props.padding;
     range = this._helpers.span.get('', dimension);
-    length += pad * 2;
+    width += pad * 2;
     this.a = range.x;
     span = range.y - range.x;
     if (centered) {
-      inverse = 1 / Math.max(1, length);
+      inverse = 1 / Math.max(1, width);
       this.a += span * inverse / 2;
     } else {
-      inverse = 1 / Math.max(1, length - 1);
+      inverse = 1 / Math.max(1, width - 1);
     }
     this.b = span * inverse;
     return this.a += pad * this.b;
@@ -64395,8 +64395,8 @@ Traits = {
     padding: Types.number(0)
   },
   array: {
-    length: Types.nullable(Types.positive(Types.int(1), true)),
-    bufferLength: Types.int(1),
+    width: Types.nullable(Types.positive(Types.int(1), true)),
+    bufferWidth: Types.int(1),
     history: Types.int(1)
   },
   matrix: {
@@ -67027,11 +67027,11 @@ ArrayBuffer_ = (function(superClass) {
   extend(ArrayBuffer_, superClass);
 
   function ArrayBuffer_(renderer, shaders, options) {
-    this.length = options.length || 1;
+    this.width = options.width || 1;
     this.history = options.history || 1;
-    this.samples = this.length;
+    this.samples = this.width;
     this.wrap = this.history > 1;
-    options.width = this.length;
+    options.width = this.width;
     options.height = this.history;
     options.depth = 1;
     ArrayBuffer_.__super__.constructor.call(this, renderer, shaders, options);
@@ -67045,7 +67045,7 @@ ArrayBuffer_ = (function(superClass) {
   };
 
   ArrayBuffer_.prototype.setActive = function(i) {
-    return this.pad = Math.max(0, this.length - i);
+    return this.pad = Math.max(0, this.width - i);
   };
 
   ArrayBuffer_.prototype.fill = function() {
@@ -69674,7 +69674,7 @@ LineGeometry = (function(superClass) {
     this.ribbons = ribbons = +options.ribbons || 1;
     this.layers = layers = +options.layers || 1;
     this.detail = detail = +options.detail || 1;
-    lines = samples - 1 + (closed ? 1 : 0);
+    lines = samples - 1;
     this.joints = joints = detail - 1;
     this.vertices = vertices = (lines - 1) * joints + samples;
     this.segments = segments = (lines - 1) * joints + lines;

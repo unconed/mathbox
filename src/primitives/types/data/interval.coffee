@@ -6,22 +6,22 @@ class Interval extends _Array
 
   updateSpan: () ->
     dimension = @props.axis
-    length    = @props.length
+    width     = @props.width
     centered  = @props.centered
     pad       = @props.padding
 
     range     = @_helpers.span.get '', dimension
 
-    length += pad * 2
+    width += pad * 2
 
     @a = range.x
     span = range.y - range.x
 
     if centered
-      inverse   = 1 / Math.max 1, length
+      inverse   = 1 / Math.max 1, width
       @a += span * inverse / 2
     else
-      inverse   = 1 / Math.max 1, length - 1
+      inverse   = 1 / Math.max 1, width - 1
 
     @b = span * inverse
 

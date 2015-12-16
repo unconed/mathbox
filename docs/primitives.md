@@ -46,6 +46,7 @@
 #### operator
 
 
+ * [clamp](#operator/clamp) - Clamp out-of-bounds samples to the nearest data point
  * [grow](#operator/grow) - Scale data relative to reference data point
  * [join](#operator/join) - Join two array dimensions into one by concatenating rows/columns/stacks
  * [lerp](#operator/lerp) - Linear interpolation of data
@@ -57,6 +58,7 @@
  * [spread](#operator/spread) - Spread data values according to array indices
  * [split](#operator/split) - Split one array dimension into two by splitting rows/columns/etc
  * [slice](#operator/slice) - Select one or more rows/columns/stacks
+ * [subdivide](#operator/subdivide) - Subdivide data points evenly or with a bevel
  * [transpose](#operator/transpose) - Transpose array dimensions
 
 
@@ -141,6 +143,7 @@
 
 *2D sampled matrix*
 
+ * *aligned* = `false` (bool) - Use (fast) integer lookups
  * *axes* = `[1, 2]` (swizzle(2) axis) - Axis pair
  * *bufferHeight* = `1` (number) - Matrix buffer height
  * *bufferWidth* = `1` (number) - Matrix buffer width
@@ -173,7 +176,8 @@
 
 *1D array*
 
- * *bufferLength* = `1` (number) - Array buffer length
+ * *aligned* = `false` (bool) - Use (fast) integer lookups
+ * *bufferWidth* = `1` (number) - Array buffer width
  * *channels* = `4` (number) - Number of channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *data* = `null` (nullable object) - Data array
@@ -183,7 +187,6 @@
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
- * *length* = `1` (nullable number) - Array length
  * *limit* = `60` (number) - Maximum frames to track
  * *live* = `true` (bool) - Update continuously
  * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
@@ -191,6 +194,7 @@
  * *observe* = `false` (bool) - Pass clock time to data
  * *realtime* = `false` (bool) - Run on real time, not clock time
  * *type* = `"float"` (type) - Texture data type
+ * *width* = `1` (nullable number) - Array width
 
 ####  <a name="draw/axis"></a>`draw/axis`
 
@@ -261,6 +265,14 @@
  * *range* = `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]` (array vec2) - 4D range in view
  * *scale* = `[1, 1, 1, 1]` (vec4) - 4D Scale
  * *visible* = `true` (bool) - Visibility for rendering
+
+####  <a name="operator/clamp"></a>`operator/clamp`
+
+*Clamp out-of-bounds samples to the nearest data point*
+
+ * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
+ * *source* = `"<"` (select) - Input source
 
 ####  <a name="time/clock"></a>`time/clock`
 
@@ -453,6 +465,7 @@
 
 *HTML element source*
 
+ * *aligned* = `false` (bool) - Use (fast) integer lookups
  * *bufferDepth* = `1` (number) - Voxel buffer depth
  * *bufferHeight* = `1` (number) - Voxel buffer height
  * *bufferWidth* = `1` (number) - Voxel buffer width
@@ -483,8 +496,9 @@
 
 *1D sampled array*
 
+ * *aligned* = `false` (bool) - Use (fast) integer lookups
  * *axis* = `1` (axis) - Axis
- * *bufferLength* = `1` (number) - Array buffer length
+ * *bufferWidth* = `1` (number) - Array buffer width
  * *centered* = `false` (bool) - Centered instead of corner sampling
  * *channels* = `4` (number) - Number of channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
@@ -495,7 +509,6 @@
  * *hurry* = `5` (number) - Maximum frames to hurry per frame
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `4` (number) - Number of items
- * *length* = `1` (nullable number) - Array length
  * *limit* = `60` (number) - Maximum frames to track
  * *live* = `true` (bool) - Update continuously
  * *magFilter* = `"nearest"` (filter) - Texture magnification filtering
@@ -505,6 +518,7 @@
  * *range* = `[-1, 1]` (vec2) - Range on axis
  * *realtime* = `false` (bool) - Run on real time, not clock time
  * *type* = `"float"` (type) - Texture data type
+ * *width* = `1` (nullable number) - Array width
 
 ####  <a name="operator/join"></a>`operator/join`
 
@@ -557,19 +571,20 @@
 
 *Linear interpolation of data*
 
- * *centeredDepth* = `false` (bool) - Centered instead of corner sampling
- * *centeredHeight* = `false` (bool) - Centered instead of corner sampling
- * *centeredItems* = `false` (bool) - Centered instead of corner sampling
- * *centeredWidth* = `false` (bool) - Centered instead of corner sampling
+ * *centeredW* = `false` (bool) - Centered instead of corner sampling
+ * *centeredX* = `false` (bool) - Centered instead of corner sampling
+ * *centeredY* = `false` (bool) - Centered instead of corner sampling
+ * *centeredZ* = `false` (bool) - Centered instead of corner sampling
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Lerp to depth, e.g. `5`
  * *height* = `null` (nullable number) - Lerp to height, e.g. `5`
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *items* = `null` (nullable number) - Lerp to items, e.g. `5`
- * *paddingDepth* = `0` (number) - Number of samples padding
- * *paddingHeight* = `0` (number) - Number of samples padding
- * *paddingItems* = `0` (number) - Number of samples padding
- * *paddingWidth* = `0` (number) - Number of samples padding
+ * *paddingW* = `0` (number) - Number of samples padding
+ * *paddingX* = `0` (number) - Number of samples padding
+ * *paddingY* = `0` (number) - Number of samples padding
+ * *paddingZ* = `0` (number) - Number of samples padding
+ * *size* = `"absolute"` (mapping) - Scaling mode (relative, absolute)
  * *source* = `"<"` (select) - Input source
  * *width* = `null` (nullable number) - Lerp to width, e.g. `5`
 
@@ -610,6 +625,7 @@
 
 *2D matrix*
 
+ * *aligned* = `false` (bool) - Use (fast) integer lookups
  * *bufferHeight* = `1` (number) - Matrix buffer height
  * *bufferWidth* = `1` (number) - Matrix buffer width
  * *channels* = `4` (number) - Number of channels
@@ -678,7 +694,7 @@
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *delay* = `0` (number) - Play delay
- * *ease* = `"cosine"` (ease) - Animation ease (linear, cosine, hold)
+ * *ease* = `"cosine"` (ease) - Animation ease (linear, cosine, binary, hold)
  * *from* = `0` (number) - Play from
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *loop* = `false` (bool) - Loop
@@ -774,10 +790,10 @@
 
 *Resample data to new dimensions with a shader*
 
- * *centeredDepth* = `false` (bool) - Centered instead of corner sampling
- * *centeredHeight* = `false` (bool) - Centered instead of corner sampling
- * *centeredItems* = `false` (bool) - Centered instead of corner sampling
- * *centeredWidth* = `false` (bool) - Centered instead of corner sampling
+ * *centeredW* = `false` (bool) - Centered instead of corner sampling
+ * *centeredX* = `false` (bool) - Centered instead of corner sampling
+ * *centeredY* = `false` (bool) - Centered instead of corner sampling
+ * *centeredZ* = `false` (bool) - Centered instead of corner sampling
  * *channels* = `4` (number) - Resample channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Resample factor depth, e.g. `10`
@@ -785,10 +801,10 @@
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *indices* = `4` (number) - Resample indices
  * *items* = `null` (nullable number) - Resample factor items, e.g. `10`
- * *paddingDepth* = `0` (number) - Number of samples padding
- * *paddingHeight* = `0` (number) - Number of samples padding
- * *paddingItems* = `0` (number) - Number of samples padding
- * *paddingWidth* = `0` (number) - Number of samples padding
+ * *paddingW* = `0` (number) - Number of samples padding
+ * *paddingX* = `0` (number) - Number of samples padding
+ * *paddingY* = `0` (number) - Number of samples padding
+ * *paddingZ* = `0` (number) - Number of samples padding
  * *sample* = `"relative"` (mapping) - Source sampling (relative, absolute)
  * *shader* = `"<"` (select) - Shader to use
  * *size* = `"absolute"` (mapping) - Scaling mode (relative, absolute)
@@ -799,10 +815,10 @@
 
 *Text atlas resampler*
 
- * *centeredDepth* = `false` (bool) - Centered instead of corner sampling
- * *centeredHeight* = `false` (bool) - Centered instead of corner sampling
- * *centeredItems* = `false` (bool) - Centered instead of corner sampling
- * *centeredWidth* = `false` (bool) - Centered instead of corner sampling
+ * *centeredW* = `false` (bool) - Centered instead of corner sampling
+ * *centeredX* = `false` (bool) - Centered instead of corner sampling
+ * *centeredY* = `false` (bool) - Centered instead of corner sampling
+ * *centeredZ* = `false` (bool) - Centered instead of corner sampling
  * *channels* = `4` (number) - Resample channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *depth* = `null` (nullable number) - Resample factor depth, e.g. `10`
@@ -810,10 +826,10 @@
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *indices* = `4` (number) - Resample indices
  * *items* = `null` (nullable number) - Resample factor items, e.g. `10`
- * *paddingDepth* = `0` (number) - Number of samples padding
- * *paddingHeight* = `0` (number) - Number of samples padding
- * *paddingItems* = `0` (number) - Number of samples padding
- * *paddingWidth* = `0` (number) - Number of samples padding
+ * *paddingW* = `0` (number) - Number of samples padding
+ * *paddingX* = `0` (number) - Number of samples padding
+ * *paddingY* = `0` (number) - Number of samples padding
+ * *paddingZ* = `0` (number) - Number of samples padding
  * *sample* = `"relative"` (mapping) - Source sampling (relative, absolute)
  * *shader* = `"<"` (select) - Shader to use
  * *size* = `"absolute"` (mapping) - Scaling mode (relative, absolute)
@@ -900,12 +916,12 @@
 *Select one or more rows/columns/stacks*
 
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
- * *depth* = `null` (nullable vec2) - Slice from, to depth, e.g. `[2, 4]`
- * *height* = `null` (nullable vec2) - Slice from, to height, e.g. `[2, 4]`
+ * *depth* = `null` (nullable vec2) - Slice from, to depth (excluding to), e.g. `[2, 4]`
+ * *height* = `null` (nullable vec2) - Slice from, to height (excluding to), e.g. `[2, 4]`
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
- * *items* = `null` (nullable vec2) - Slice from, to items, e.g. `[2, 4]`
+ * *items* = `null` (nullable vec2) - Slice from, to items (excluding to), e.g. `[2, 4]`
  * *source* = `"<"` (select) - Input source
- * *width* = `null` (nullable vec2) - Slice from, to width, e.g. `[2, 4]`
+ * *width* = `null` (nullable vec2) - Slice from, to width (excluding to), e.g. `[2, 4]`
 
 ####  <a name="present/slide"></a>`present/slide`
 
@@ -972,10 +988,10 @@
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *delay* = `0` (number) - Step delay
  * *duration* = `0.3` (number) - Step duration
- * *ease* = `"cosine"` (ease) - Animation ease (linear, cosine, hold)
+ * *ease* = `"cosine"` (ease) - Animation ease (linear, cosine, binary, hold)
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *pace* = `0` (number) - Step pace
- * *playback* = `"linear"` (ease) - Playhead ease (linear, cosine, hold)
+ * *playback* = `"linear"` (ease) - Playhead ease (linear, cosine, binary, hold)
  * *realtime* = `false` (bool) - Run on real time, not clock time
  * *rewind* = `2` (number) - Step rewind factor
  * *script* = `{}` (object) - Animation script, e.g. `{ "0": { props: { color: "red" }, expr: { size: function (t) { return Math.sin(t) + 1; }}}, "1": ...}`
@@ -1042,6 +1058,20 @@
  * *zTest* = `true` (bool) - Test Z buffer
  * *zWrite* = `true` (bool) - Write Z buffer
 
+####  <a name="operator/subdivide"></a>`operator/subdivide`
+
+*Subdivide data points evenly or with a bevel*
+
+ * *bevel* = `1` (number) - Fraction to end outward from vertices
+ * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
+ * *depth* = `null` (nullable positive int) - Divisions of depth, e.g. `5`
+ * *height* = `null` (nullable positive int) - Divisions of height, e.g. `5`
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
+ * *items* = `null` (nullable positive int) - Divisions of items, e.g. `5`
+ * *lerp* = `true` (boolean) - Interpolate values with computed indices
+ * *source* = `"<"` (select) - Input source
+ * *width* = `null` (nullable positive int) - Divisions of width, e.g. `5`
+
 ####  <a name="draw/surface"></a>`draw/surface`
 
 *Draw surfaces*
@@ -1087,6 +1117,7 @@
 
 *GL text source*
 
+ * *aligned* = `false` (bool) - Use (fast) integer lookups
  * *bufferDepth* = `1` (number) - Voxel buffer depth
  * *bufferHeight* = `1` (number) - Voxel buffer height
  * *bufferWidth* = `1` (number) - Voxel buffer width
@@ -1232,6 +1263,7 @@
 
 *3D sampled voxels*
 
+ * *aligned* = `false` (bool) - Use (fast) integer lookups
  * *axes* = `[1, 2, 3]` (swizzle(3) axis) - Axis triplet
  * *bufferDepth* = `1` (number) - Voxel buffer depth
  * *bufferHeight* = `1` (number) - Voxel buffer height
@@ -1268,6 +1300,7 @@
 
 *3D voxels*
 
+ * *aligned* = `false` (bool) - Use (fast) integer lookups
  * *bufferDepth* = `1` (number) - Voxel buffer depth
  * *bufferHeight* = `1` (number) - Voxel buffer height
  * *bufferWidth* = `1` (number) - Voxel buffer width

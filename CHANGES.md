@@ -1,6 +1,7 @@
 ### MathBox Changelog
 
-0.0.5-dev
+0.0.5
+ * ⚠️ Rename array `length` to `width` for consistency.
  * ⚠️ Reverse the polarity on `zOrder`, higher zOrder should be drawn later.
  * ⚠️ Rename resample/lerp `centeredWidth`, `centeredHeight`, ... to `centeredX`, `centeredY` for consistency.
  * ⚠️ Change data sampler to not auto-wrap/repeat since it was 2D only. Out-of-bounds sampling is now undefined unless you add `<repeat />` or `<clamp />` (works in 4D).
@@ -13,6 +14,7 @@
  * Add `<clamp />` for clamp-to-edge sampling in 4D.
  * Round fractional sample indices for 3D/4D buffers to ensure correct alignment when resampling. Set `aligned: true` on `array`/`matrix`/... to disable this when integer lookups are guaranteed.
  * Fix bug when a text atlas is emptied completely.
+ * Minor documentation improvements (basic API).
 
 0.0.4
 

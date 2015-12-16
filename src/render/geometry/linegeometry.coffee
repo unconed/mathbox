@@ -24,7 +24,7 @@ class LineGeometry extends ClipGeometry
     @layers   = layers   = +options.layers  || 1
     @detail   = detail   = +options.detail  || 1
 
-    lines     = samples - 1 + if closed then 1 else 0
+    lines     = samples - 1
     @joints   = joints = detail  - 1
 
     @vertices = vertices = (lines - 1) * joints + samples
