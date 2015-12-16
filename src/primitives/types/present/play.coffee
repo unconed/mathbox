@@ -6,9 +6,11 @@ class Play extends Track
   init: () ->
     super
     @skew = null
+    @start = null
 
   reset: (go = true) ->
     @skew = if go then 0 else null
+    @start = null
 
   make: () ->
     super
@@ -29,20 +31,20 @@ class Play extends Track
 
       time = parentClock.getTime()
 
-      @playhead =
-        if @skew?
-          now   = if realtime then time.time  else time.clock
-          delta = if realtime then time.delta else time.step
-          ratio = speed / pace
+      if @skew?
+        now   = if realtime then time.time  else time.clock
+        delta = if realtime then time.delta else time.step
+        ratio = speed / pace
 
-          @skew += delta * (ratio - 1)
+        @start = now if !@start?
+        @skew += delta * (ratio - 1)
 
-          offset = Math.max 0, now + @skew - delay * ratio
-          offset = offset % (to - from) if @props.loop
+        offset = Math.max 0, now - @start + @skew - delay * ratio
+        offset = offset % (to - from) if @props.loop
 
-          @playhead = Math.min to, from + offset
-        else
-          0
+        @playhead = Math.min to, from + offset
+      else
+        @playhead = 0
 
       @update()
 

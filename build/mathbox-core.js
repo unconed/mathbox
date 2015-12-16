@@ -15173,14 +15173,16 @@ Play = (function(superClass) {
 
   Play.prototype.init = function() {
     Play.__super__.init.apply(this, arguments);
-    return this.skew = null;
+    this.skew = null;
+    return this.start = null;
   };
 
   Play.prototype.reset = function(go) {
     if (go == null) {
       go = true;
     }
-    return this.skew = go ? 0 : null;
+    this.skew = go ? 0 : null;
+    return this.start = null;
   };
 
   Play.prototype.make = function() {
@@ -15207,7 +15209,22 @@ Play = (function(superClass) {
         var delay, delta, from, now, offset, pace, ratio, realtime, ref, speed, time, to;
         ref = _this.props, from = ref.from, to = ref.to, speed = ref.speed, pace = ref.pace, delay = ref.delay, realtime = ref.realtime;
         time = parentClock.getTime();
-        _this.playhead = _this.skew != null ? (now = realtime ? time.time : time.clock, delta = realtime ? time.delta : time.step, ratio = speed / pace, _this.skew += delta * (ratio - 1), offset = Math.max(0, now + _this.skew - delay * ratio), _this.props.loop ? offset = offset % (to - from) : void 0, _this.playhead = Math.min(to, from + offset)) : 0;
+        if (_this.skew != null) {
+          now = realtime ? time.time : time.clock;
+          delta = realtime ? time.delta : time.step;
+          ratio = speed / pace;
+          if (_this.start == null) {
+            _this.start = now;
+          }
+          _this.skew += delta * (ratio - 1);
+          offset = Math.max(0, now - _this.start + _this.skew - delay * ratio);
+          if (_this.props.loop) {
+            offset = offset % (to - from);
+          }
+          _this.playhead = Math.min(to, from + offset);
+        } else {
+          _this.playhead = 0;
+        }
         return _this.update();
       };
     })(this));
