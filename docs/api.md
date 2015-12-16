@@ -41,13 +41,13 @@ This is equivalent to calling `.bind()` after creation, which works similarly to
 ```javascript
 // Single
 mathbox.bind("width", function (time, delta) {
-  return 2 + Math.sin(t);
+  return 2 + Math.sin(time);
 });
 
 // Multiple
 mathbox.bind({
   width: function (time, delta) {
-    return 2 + Math.sin(t);
+    return 2 + Math.sin(time);
   }
 })
 ```
