@@ -160,7 +160,7 @@
     };
 
     three.canvas.addEventListener('mousemove', function (event) {
-      mouse = [event.offsetX, event.offsetY];
+      mouse = [event.offsetX * window.devicePixelRatio, event.offsetY * window.devicePixelRatio];
     });
     
     three.on('post', function () {
