@@ -6971,7 +6971,7 @@ Context = (function() {
 
   Context.prototype.update = function() {
     var base;
-    this.animator.update(this.time);
+    this.animator.update();
     this.attributes.compute();
     this.guard.iterate({
       step: (function(_this) {
@@ -25399,8 +25399,8 @@ API = (function() {
     return ShaderGraph.inspect(shaders);
   };
 
-  API.prototype.inspect = function(selector, print) {
-    var _info, flatten, info, j, k, len, make, map, recurse, ref, renderables, self, target, trait;
+  API.prototype.inspect = function(selector, trait, print) {
+    var _info, flatten, info, j, k, len, make, map, recurse, ref, renderables, self, target;
     if (typeof trait === 'boolean') {
       print = trait;
       trait = null;

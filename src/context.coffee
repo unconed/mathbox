@@ -118,7 +118,7 @@ class Context
 
   update: () ->
 
-    @animator.update @time
+    @animator.update()
     @attributes.compute()
 
     @guard.iterate

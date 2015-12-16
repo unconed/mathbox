@@ -133,7 +133,7 @@ class API
       shaders.push shader.fragment
     ShaderGraph.inspect shaders
 
-  inspect: (selector, print) ->
+  inspect: (selector, trait, print) ->
     if typeof trait == 'boolean'
       print = trait
       trait = null
