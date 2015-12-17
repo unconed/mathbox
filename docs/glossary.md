@@ -5,12 +5,14 @@
 * Node - An instance of a primitive, inserted into the MathBox DOM.
 * Primitive - One of the basic building blocks of MathBox.
 * Prop or Property - An individual value set on a node. Collectively *props*.
-* Selection - A subset of the DOM. Can be the entire DOM or all nodes matching a selector.
+* Selection - A subset of the DOM. Can be the entire DOM or all nodes matching a selector. Selections typically match a CSS-like selector, for example the name of a primitive (`"camera"`), an id (`"#colors"`), or a class (`".points"`).
 
 ## Graphics
 * RTT - Render To Texture. Rather than drawing directly to the screen, renders to an image that can be processed further.
 * Shader - A program written in GLSL that runs on the GPU. GLSL syntax is similar to C++.
-* ShaderGraph - A component/dependency of MathBox that dynamically compiles small GLSL functions (snippets) into a single shader.
+* [ShaderGraph](https://github.com/unconed/shadergraph) - A component/dependency of MathBox that dynamically compiles small GLSL functions (snippets) into a single shader.
+* [Three.js](http://threejs.org/) - A popular library for WebGL. Used by MathBox for cameras and controls.
+* [Threestrap](https://github.com/unconed/threestrap) - A bootstrapping tool to set options for Three.js.
 * WebGL - JavaScript API for rendering 3D scenes, used by MathBox.
 
 ## Data
@@ -26,3 +28,4 @@
 * Items - The size of the data in the *w* direction, i.e. the number of data points per spatial location. The number of times `emit` is called in the `expr` function.
 * Channels - How many numbers are associated with a data point. The number of arguments passed to `emit`. This is not an array dimension; it is how many numbers make up one array element.
 * History - The process of storing previous 1D or 2D data in an unused dimension.
+* Swizzling - The process of isolating, reordering, and/or duplicating elements of a vector, by listing indices. For example, the swizzle `"yxz"` switches x and y. The `swizzle` primitive operates on array elements; the `transpose` primitive operates on the dimensions of the array itself.

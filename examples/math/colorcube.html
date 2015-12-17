@@ -9,6 +9,7 @@
 </head>
 <body>
   <script>
+    // Color Cube by Max Goldstein, CC-BY
     mathbox = mathBox({
       plugins: ['core', 'controls', 'cursor'],
       controls: {
@@ -41,6 +42,7 @@
       depth: rez,
       items: 1,
       channels: 4,
+      live: false,
       expr: function(emit, x, y, z){
           emit(x,y,z,1);
       }
