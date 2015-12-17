@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Scatterplot</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    // 3D Scatterplot by Max Goldstein, CC-BY
+    mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+    three = mathbox.three;
+
+    three.camera.position.set(2.3, 1, 2);
+    three.controls.maxDistance = 5;
+    three.renderer.setClearColor(new THREE.Color(0xFAFAF8), 1.0);
+
+    view = mathbox.cartesian({
+      range: [[0, 2], [0, 1], [0, 1]],
+      scale: [2, 1, 1],
+    });
+
+    var dataMaximums = [7.9, 4.4, 6.9, 2.5];
+    var dataMinimums = [4.3, 2, 1, 0.1];
+    var dataRanges = [0,1,2,3].map(function(i){ return dataMaximums[i] - dataMinimums[i] })
+    var dataScaledMinimums = [0,1,2,3].map(function(i){ return dataMinimums[i] / dataRanges[i] })
+
+    var colors = {
+      x: 0xFF4136,   // red
+      y: 0xFFDC00,   // yellow
+      z: 0x0074D9,   // blue
+      xy: 0xFF851B,  // orange
+      xz: 0xB10DC9,  // purple
+      yz: 0x2ECC40,  // green
+      xyz: 0x654321, // brown
+    }
+
+    function interpolate(lo, hi, n){
+      n--; // go to end of range
+      var vals = [];
+      for (var i = 0; i <= n; i++){
+        vals.push(Math.round(10 * (lo + (hi - lo)*(i/n)))/10);
+      }
+      return vals;
+    }
+
+    view.scale({
+      divide: 5,
+      origin: [0,0,1,0],
+      axis: "x",
+    }).text({
+      live: false,
+      data: interpolate(dataMinimums[0], dataMaximums[0], 5)
+    }).label({
+      color: colors.x,
+    })
+
+    view.scale({
+      divide: 3,
+      origin: [0,0,1,0],
+      axis: "y",
+    }).text({
+      live: false,
+      data: interpolate(dataMinimums[1], dataMaximums[1], 3)
+    }).label({
+      color: colors.y,
+      offset: [-16, 0]
+    })
+
+    view.scale({
+      divide: 3,
+      origin: [2,0,0,0],
+      axis: "z",
+    }).text({
+      live: false,
+      data: interpolate(dataMinimums[2], dataMaximums[2], 3)
+    }).label({
+      color: colors.z,
+      offset: [16, 0]
+    })
+
+
+    view.grid({
+      axes: "xy",
+      divideX: 3,
+      divideY: 3
+    })
+    .grid({
+      axes: "xz",
+      divideX: 3,
+      divideY: 3,
+    })
+    .grid({
+      axes: "yz",
+      divideX: 3,
+      divideY: 3,
+    })
+
+    view.array({
+      items: 1,
+      channels: 4,
+      live: false,
+      id: 'data',
+      // data: is set below
+    }).swizzle({
+      order: "xyz"
+    }).transform({
+      scale: dataRanges.slice(0,3).map(function(d,i){return i ? 1/d : 2/d}),
+      position: dataScaledMinimums.slice(0,3).map(function(d,i){return i ? -d : -2*d}),
+    }).point({
+      color: 0x222222,
+      size: 12,
+    })
+
+    .transform({
+      scale: [1, 1, 0],
+      position: [0, 0, dataMinimums[2]],
+    }).point({
+      color: colors.xy,
+      size: 7,
+    }).end()
+
+    .transform({
+      scale: [1, 0, 1],
+      position: [0, dataMinimums[1], 0],
+    }).point({
+      color: colors.xz,
+      size: 7,
+    }).end()
+
+    .transform({
+      scale: [0, 1, 1],
+      position: [dataMinimums[0], 0, 0],
+    }).point({
+      color: colors.yz,
+      size: 7,
+    }).end()
+
+    .transform({
+      position: [0, dataMaximums[1], dataMinimums[2]],
+      scale: [1, 0.001, 0],
+    }).repeat({
+      items: 2,
+    }).spread({
+      unit: "absolute",
+      alignItems: "first",
+      items: [0, 100, 0, 0],
+    }).vector({
+      color: colors.x,
+    }).end()
+
+    .transform({
+      position: [dataMaximums[0], 0, dataMinimums[2]],
+      scale: [0.001, 1, 0],
+    }).repeat({
+      items: 2,
+    }).spread({
+      unit: "absolute",
+      alignItems: "first",
+      items: [100, 0, 0, 0],
+    }).vector({
+      color: colors.y,
+    }).end()
+
+    .transform({
+      position: [dataMinimums[0], dataMaximums[1], 0],
+      scale: [0, 0.001, 1],
+    }).repeat({
+      items: 2,
+    }).spread({
+      unit: "absolute",
+      alignItems: "first",
+      items: [0, 100, 0, 0],
+    }).vector({
+      color: colors.z,
+    }).end()
+
+    view.select('#data').set('data', [
+      // http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data
+      [5.1,3.5,1.4,0.2],
+      [4.9,3.0,1.4,0.2],
+      [4.7,3.2,1.3,0.2],
+      [4.6,3.1,1.5,0.2],
+      [5.0,3.6,1.4,0.2],
+      [5.4,3.9,1.7,0.4],
+      [4.6,3.4,1.4,0.3],
+      [5.0,3.4,1.5,0.2],
+      [4.4,2.9,1.4,0.2],
+      [4.9,3.1,1.5,0.1],
+      [5.4,3.7,1.5,0.2],
+      [4.8,3.4,1.6,0.2],
+      [4.8,3.0,1.4,0.1],
+      [4.3,3.0,1.1,0.1],
+      [5.8,4.0,1.2,0.2],
+      [5.7,4.4,1.5,0.4],
+      [5.4,3.9,1.3,0.4],
+      [5.1,3.5,1.4,0.3],
+      [5.7,3.8,1.7,0.3],
+      [5.1,3.8,1.5,0.3],
+      [5.4,3.4,1.7,0.2],
+      [5.1,3.7,1.5,0.4],
+      [4.6,3.6,1.0,0.2],
+      [5.1,3.3,1.7,0.5],
+      [4.8,3.4,1.9,0.2],
+      [5.0,3.0,1.6,0.2],
+      [5.0,3.4,1.6,0.4],
+      [5.2,3.5,1.5,0.2],
+      [5.2,3.4,1.4,0.2],
+      [4.7,3.2,1.6,0.2],
+      [4.8,3.1,1.6,0.2],
+      [5.4,3.4,1.5,0.4],
+      [5.2,4.1,1.5,0.1],
+      [5.5,4.2,1.4,0.2],
+      [4.9,3.1,1.5,0.1],
+      [5.0,3.2,1.2,0.2],
+      [5.5,3.5,1.3,0.2],
+      [4.9,3.1,1.5,0.1],
+      [4.4,3.0,1.3,0.2],
+      [5.1,3.4,1.5,0.2],
+      [5.0,3.5,1.3,0.3],
+      [4.5,2.3,1.3,0.3],
+      [4.4,3.2,1.3,0.2],
+      [5.0,3.5,1.6,0.6],
+      [5.1,3.8,1.9,0.4],
+      [4.8,3.0,1.4,0.3],
+      [5.1,3.8,1.6,0.2],
+      [4.6,3.2,1.4,0.2],
+      [5.3,3.7,1.5,0.2],
+      [5.0,3.3,1.4,0.2],
+      [7.0,3.2,4.7,1.4],
+      [6.4,3.2,4.5,1.5],
+      [6.9,3.1,4.9,1.5],
+      [5.5,2.3,4.0,1.3],
+      [6.5,2.8,4.6,1.5],
+      [5.7,2.8,4.5,1.3],
+      [6.3,3.3,4.7,1.6],
+      [4.9,2.4,3.3,1.0],
+      [6.6,2.9,4.6,1.3],
+      [5.2,2.7,3.9,1.4],
+      [5.0,2.0,3.5,1.0],
+      [5.9,3.0,4.2,1.5],
+      [6.0,2.2,4.0,1.0],
+      [6.1,2.9,4.7,1.4],
+      [5.6,2.9,3.6,1.3],
+      [6.7,3.1,4.4,1.4],
+      [5.6,3.0,4.5,1.5],
+      [5.8,2.7,4.1,1.0],
+      [6.2,2.2,4.5,1.5],
+      [5.6,2.5,3.9,1.1],
+      [5.9,3.2,4.8,1.8],
+      [6.1,2.8,4.0,1.3],
+      [6.3,2.5,4.9,1.5],
+      [6.1,2.8,4.7,1.2],
+      [6.4,2.9,4.3,1.3],
+      [6.6,3.0,4.4,1.4],
+      [6.8,2.8,4.8,1.4],
+      [6.7,3.0,5.0,1.7],
+      [6.0,2.9,4.5,1.5],
+      [5.7,2.6,3.5,1.0],
+      [5.5,2.4,3.8,1.1],
+      [5.5,2.4,3.7,1.0],
+      [5.8,2.7,3.9,1.2],
+      [6.0,2.7,5.1,1.6],
+      [5.4,3.0,4.5,1.5],
+      [6.0,3.4,4.5,1.6],
+      [6.7,3.1,4.7,1.5],
+      [6.3,2.3,4.4,1.3],
+      [5.6,3.0,4.1,1.3],
+      [5.5,2.5,4.0,1.3],
+      [5.5,2.6,4.4,1.2],
+      [6.1,3.0,4.6,1.4],
+      [5.8,2.6,4.0,1.2],
+      [5.0,2.3,3.3,1.0],
+      [5.6,2.7,4.2,1.3],
+      [5.7,3.0,4.2,1.2],
+      [5.7,2.9,4.2,1.3],
+      [6.2,2.9,4.3,1.3],
+      [5.1,2.5,3.0,1.1],
+      [5.7,2.8,4.1,1.3],
+      [6.3,3.3,6.0,2.5],
+      [5.8,2.7,5.1,1.9],
+      [7.1,3.0,5.9,2.1],
+      [6.3,2.9,5.6,1.8],
+      [6.5,3.0,5.8,2.2],
+      [7.6,3.0,6.6,2.1],
+      [4.9,2.5,4.5,1.7],
+      [7.3,2.9,6.3,1.8],
+      [6.7,2.5,5.8,1.8],
+      [7.2,3.6,6.1,2.5],
+      [6.5,3.2,5.1,2.0],
+      [6.4,2.7,5.3,1.9],
+      [6.8,3.0,5.5,2.1],
+      [5.7,2.5,5.0,2.0],
+      [5.8,2.8,5.1,2.4],
+      [6.4,3.2,5.3,2.3],
+      [6.5,3.0,5.5,1.8],
+      [7.7,3.8,6.7,2.2],
+      [7.7,2.6,6.9,2.3],
+      [6.0,2.2,5.0,1.5],
+      [6.9,3.2,5.7,2.3],
+      [5.6,2.8,4.9,2.0],
+      [7.7,2.8,6.7,2.0],
+      [6.3,2.7,4.9,1.8],
+      [6.7,3.3,5.7,2.1],
+      [7.2,3.2,6.0,1.8],
+      [6.2,2.8,4.8,1.8],
+      [6.1,3.0,4.9,1.8],
+      [6.4,2.8,5.6,2.1],
+      [7.2,3.0,5.8,1.6],
+      [7.4,2.8,6.1,1.9],
+      [7.9,3.8,6.4,2.0],
+      [6.4,2.8,5.6,2.2],
+      [6.3,2.8,5.1,1.5],
+      [6.1,2.6,5.6,1.4],
+      [7.7,3.0,6.1,2.3],
+      [6.3,3.4,5.6,2.4],
+      [6.4,3.1,5.5,1.8],
+      [6.0,3.0,4.8,1.8],
+      [6.9,3.1,5.4,2.1],
+      [6.7,3.1,5.6,2.4],
+      [6.9,3.1,5.1,2.3],
+      [5.8,2.7,5.1,1.9],
+      [6.8,3.2,5.9,2.3],
+      [6.7,3.3,5.7,2.5],
+      [6.7,3.0,5.2,2.3],
+      [6.3,2.5,5.0,1.9],
+      [6.5,3.0,5.2,2.0],
+      [6.2,3.4,5.4,2.3],
+      [5.9,3.0,5.1,1.8],
+    ])
+
+
+</script>
+</body>
+</html>
+
+
