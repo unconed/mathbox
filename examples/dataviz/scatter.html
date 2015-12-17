@@ -42,13 +42,22 @@
       xyz: 0x654321, // brown
     }
 
+    function interpolate(lo, hi, n){
+      n--; // go to end of range
+      var vals = [];
+      for (var i = 0; i <= n; i++){
+        vals.push(Math.round(10 * (lo + (hi - lo)*(i/n)))/10);
+      }
+      return vals;
+    }
+
     view.scale({
       divide: 5,
       origin: [0,0,1,0],
       axis: "x",
     }).text({
       live: false,
-      data: [0, "½", 1, "1½", 2]
+      data: interpolate(dataMinimums[0], dataMaximums[0], 5)
     }).label({
       color: colors.x,
     })
@@ -59,7 +68,7 @@
       axis: "y",
     }).text({
       live: false,
-      data: [0, "½", 1]
+      data: interpolate(dataMinimums[1], dataMaximums[1], 3)
     }).label({
       color: colors.y,
       offset: [-16, 0]
@@ -71,7 +80,7 @@
       axis: "z",
     }).text({
       live: false,
-      data: [0, "½", 1]
+      data: interpolate(dataMinimums[2], dataMaximums[2], 3)
     }).label({
       color: colors.z,
       offset: [16, 0]
