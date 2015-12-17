@@ -136,40 +136,40 @@
 
     .transform({
       position: [0, dataMaximums[1], dataMinimums[2]],
-      scale: [1, 0, 0],
+      scale: [1, 0.001, 0],
     }).repeat({
       items: 2,
     }).spread({
       unit: "absolute",
       alignItems: "first",
-      items: [0, 40, 0, 0],
-    }).point({
+      items: [0, 100, 0, 0],
+    }).vector({
       color: colors.x,
     }).end()
 
     .transform({
       position: [dataMaximums[0], 0, dataMinimums[2]],
-      scale: [0, 1, 0],
+      scale: [0.001, 1, 0],
     }).repeat({
       items: 2,
     }).spread({
       unit: "absolute",
       alignItems: "first",
-      items: [0, 40, 0, 0],
-    }).point({
+      items: [100, 0, 0, 0],
+    }).vector({
       color: colors.y,
     }).end()
 
     .transform({
       position: [dataMinimums[0], dataMaximums[1], 0],
-      scale: [0, 0, 1],
+      scale: [0, 0.001, 1],
     }).repeat({
       items: 2,
     }).spread({
       unit: "absolute",
       alignItems: "first",
-      items: [0, 40, 0, 0],
-    }).point({
+      items: [0, 100, 0, 0],
+    }).vector({
       color: colors.z,
     }).end()
 
