@@ -9,7 +9,7 @@ Util       = require './util'
 class Context
   # Export for extending
   @Namespace = { Model, Overlay, Primitives, Render, Shaders, Stage, Util, DOM: Util.VDOM }
-  @Version   = '0.0.5-dev'
+  @Version   = '0.0.6-dev'
 
   #-------------------------------------------------------------------
 

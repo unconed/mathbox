@@ -1,5 +1,8 @@
 ### MathBox Changelog
 
+0.0.6-dev
+ * When specifying `fps` on a data buffer, catch up correctly if starting late (e.g. on a slide)
+
 0.0.5
  * ⚠️ Rename array `length` to `width` for consistency.
  * ⚠️ Reverse the polarity on `zOrder`, higher zOrder should be drawn later.

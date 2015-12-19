@@ -53542,7 +53542,7 @@ Context = (function() {
     DOM: Util.VDOM
   };
 
-  Context.Version = '0.0.5-dev';
+  Context.Version = '0.0.6-dev';
 
   function Context(renderer, scene, camera) {
     var canvas;
