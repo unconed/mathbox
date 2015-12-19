@@ -6857,6 +6857,8 @@ Context = (function() {
     DOM: Util.VDOM
   };
 
+  Context.Version = '0.0.5-dev';
+
   function Context(renderer, scene, camera) {
     var canvas;
     if (scene == null) {
@@ -7057,9 +7059,9 @@ window.MathBox = exports;
 
 window.mathBox = exports.mathBox = mathBox;
 
-exports.version = '0.0.5';
-
 exports.Context = Context = require('./context');
+
+exports.version = Context.Version;
 
 ref = Context.Namespace;
 for (k in ref) {
@@ -10065,6 +10067,10 @@ Buffer = (function(superClass) {
       delta = realtime ? time.delta : time.step;
       frame = 1 / fps;
       step = realtime && observe ? speed * frame : frame;
+      if (Math.abs(time.time - this.bufferTime) > time.step * limit) {
+        this.bufferTime = time.time;
+        this.bufferClock = time.clock;
+      }
       this.bufferSlack = Math.min(limit / fps, slack + delta);
       this.bufferDelta = delta;
       this.bufferStep = step;

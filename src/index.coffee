@@ -16,12 +16,11 @@ window.e = Math.E
 # Namespace
 window.MathBox = exports
 window.mathBox = exports.mathBox = mathBox
-exports.version = '0.0.5'
 
 # Load context and export namespace
 exports.Context = Context = require './context'
+exports.version = Context.Version
 exports[k] = v for k, v of Context.Namespace
-
 
 # Splash screen plugin
 require './splash'

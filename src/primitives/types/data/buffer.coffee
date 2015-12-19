@@ -52,6 +52,10 @@ class Buffer extends Data
       frame = 1 / fps
       step  = if realtime and observe then speed * frame else frame
 
+      if Math.abs(time.time - @bufferTime) > time.step * limit
+        @bufferTime  = time.time
+        @bufferClock = time.clock
+
       @bufferSlack = Math.min limit / fps, slack + delta
       @bufferDelta = delta
       @bufferStep  = step
