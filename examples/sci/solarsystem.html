@@ -4,11 +4,19 @@
   <meta charset="utf-8">
   <title>MathBox - Solar System</title>
   <script src="../../build/mathbox-bundle.js"></script>
+  <script src="../../vendor/dat.gui.min.js"></script>
   <link rel="stylesheet" href="../../build/mathbox.css">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
 </head>
 <body>
   <script>
+
+    // Dat GUI
+    var gui = new dat.GUI();
+    var props = {
+      speed: 1,
+    };
+    gui.add(props, 'speed').min(-5).max(5).step(1)
   
     // Unix timestamp in seconds to (floating point) day number
     var zulu = +new Date("1999-12-31T00:00Z") / 1000;
@@ -125,6 +133,7 @@
     }
 
     // Emit planet position
+    var tt = 0;
     var planet = function (emit, key, d) {
       var orbit = orbits[key];
       var p = orbit(d);
@@ -173,7 +182,11 @@
       })
     
     // Absolute time w/ controlled time travel (1 second => 1 day)
-    var clock = mathbox.clock({ speed: 86400 });
+    var clock = mathbox.clock({}, { speed: function () {
+      var sign = props.speed > 0 ? 1 : props.speed < 0 ? -1 : 0;
+      var speed = sign * Math.pow(10, Math.abs(props.speed) - 1) * 86400;
+      return speed;
+    }});
     var now   = clock.now();
 
     // Prepare labels and colors
@@ -305,9 +318,6 @@
         })
 
   </script>
-      
-  <!-- Kerbal ftw -->
-  <iframe style="opacity: 0; position: absolute; top: -1000px;" width="420" height="315" src="https://www.youtube.com/embed/aQ-r0mpVbbo?autoplay=1" frameborder="0" allowfullscreen></iframe>
-  
+        
 </body>
 </html>
