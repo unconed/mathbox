@@ -65,7 +65,7 @@ Include the bundle:
 <script src="./mathbox-bundle.js"></script>
 ```
 
-MathBox uses [threestrap](https://github.com/unconed/threestrap) to launch and shares all of its options.
+Construct a MathBox instance using the provided `mathBox()` constructor:
 
 ```javascript
 var mathbox = mathBox(options);
@@ -73,6 +73,13 @@ if (mathbox.fallback) throw "WebGL not supported";
 
 var three = mathbox.three;
 // three.renderer, three.scene, three.camera
+```
+
+See [threestrap](https://github.com/unconed/threestrap) for all available `options`. e.g. To spawn inside a specific element, do:
+
+```
+var element = document.querySelector('#my-thing');
+var mathbox = mathBox({ element: element });
 ```
 
 On initialization, it returns a MathBox API object, wrapping the MathBox <root>. You can spawn new nodes:
