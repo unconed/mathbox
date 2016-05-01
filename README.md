@@ -77,7 +77,7 @@ var three = mathbox.three;
 
 See [threestrap](https://github.com/unconed/threestrap) for all available `options`. e.g. To spawn inside a specific element, do:
 
-```
+```javascript
 var element = document.querySelector('#my-thing');
 var mathbox = mathBox({ element: element });
 ```
