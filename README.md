@@ -46,12 +46,12 @@ Open the included `/examples` to see more demos.
 
 See:
 
- * [Quick Start](/docs/intro.md) for a hands on introduction.
- * [Glossary](/docs/glossary.md) of terms to help get familiar with MathBox and WebGL.
- * [MathBox API](/docs/api.md) for typical usage.
- * [List of Primitives](/docs/primitives.md) for a full element reference.
- * [Writing Custom Shaders](/docs/shaders.md) for info on custom shaders and GPU-side processing.
- * [Context API](/docs/context.md) for advanced usage.
+ * [Quick Start](docs/intro.md) for a hands on introduction.
+ * [Glossary](docs/glossary.md) of terms to help get familiar with MathBox and WebGL.
+ * [MathBox API](docs/api.md) for typical usage.
+ * [List of Primitives](docs/primitives.md) for a full element reference.
+ * [Writing Custom Shaders](docs/shaders.md) for info on custom shaders and GPU-side processing.
+ * [Context API](docs/context.md) for advanced usage.
 
 Join us in the [MathBox Google Group](https://groups.google.com/forum/#!forum/mathbox) or #mathbox on Freenode.
 
