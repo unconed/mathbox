@@ -1,4 +1,4 @@
-Util = require '../../../Util'
+Util = require '../../../util'
 
 ###
 Manually allocated GL texture for data streaming.

@@ -1,4 +1,4 @@
-Util = require '../../../Util'
+Util = require '../../../util'
 DataTexture = require './datatexture'
 
 ###
