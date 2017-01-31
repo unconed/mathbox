@@ -68,7 +68,7 @@ Example: `present.set('index', present.get('index') + 1);`
 
 ## Additional APIs
 
-* `inspect()` - Print (in the console) the DOM nodes in this selection. Called automatically on first load.
+* `inspect()` - Print (in the console) the DOM nodes in this selection. Called automatically on first load. Returns the mathbox. 
 * `debug()` - Display a visual representation of all shader snippets, how they are wired, with the GLSL available on mouseover.
 * `orig("propName")` - Return the value of the prop as passed in, i.e. without renormalization. Used mostly for pretty-printing.
 * `orig()` - Return the values of all props as passed in, i.e. without renormalization. Used mostly for pretty-printing.
@@ -76,3 +76,5 @@ Example: `present.set('index', present.get('index') + 1);`
 * `each(function (node) { ... })` - Iterate over a selection's nodes in document order and discard the return values.
 * `map(function (node) { return ... })` - Iterate over a selection's nodes in document order and return the resulting values as an array.
 * `eq(i)` - Select the i'th node where i is a 0-indexed number of the node in question.
+* `toMarkup()` - Return a string version of the DOM nodes in this selection, without console styling. 
+
