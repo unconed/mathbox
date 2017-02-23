@@ -73,6 +73,8 @@ class DataTexture
     # Write to rectangle
     gl.bindTexture gl.TEXTURE_2D, @texture
     gl.pixelStorei gl.UNPACK_ALIGNMENT, 1
+    gl.pixelStorei gl.UNPACK_FLIP_Y_WEBGL, false
+    gl.pixelStorei gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false
     gl.texSubImage2D gl.TEXTURE_2D, 0, x, y, w, h, @format, @type, data
 
   dispose: () ->
