@@ -25,6 +25,20 @@ class Base extends Renderable
     @_hide object for object in @renders
     null
 
+  _injectPreamble: (preamble, code) ->
+    program = preamble + "\n" + code
+    if code.match /#extension/ then @_hoist program else program
+
+  _hoist: (code) ->
+    lines = code.split("\n")
+    out = []
+    for line in lines
+      if line.match /^\s*#extension/
+        out.unshift line
+      else
+        out.push line
+    out.join("\n")
+
   _material: (options) ->
     precision = @renderer.getPrecision()
 
@@ -48,8 +62,8 @@ class Base extends Renderable
 
     material = new THREE.RawShaderMaterial options
     material[key] = options[key] for key in ['vertexGraph', 'fragmentGraph']
-    material.vertexShader   = [vertexPrefix,   material.vertexShader  ].join '\n'
-    material.fragmentShader = [fragmentPrefix, material.fragmentShader].join '\n'
+    material.vertexShader   = @_injectPreamble vertexPrefix,   material.vertexShader
+    material.fragmentShader = @_injectPreamble fragmentPrefix, material.fragmentShader
     material
 
   _raw: (object) ->

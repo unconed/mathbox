@@ -60,7 +60,7 @@ class Shader extends Primitive
                          changed['shader.language']
 
   shaderBind: (uniforms = {}) ->
-    {language, code} = @props
+    {language, code, indices, channels} = @props
 
     # Merge in prop attributes as uniforms
     uniforms[v.short] ?= v for k, v of @node.attributes when v.type? and v.short? and v.ns == 'uniform'
@@ -73,7 +73,12 @@ class Shader extends Primitive
 
     # Require sources
     if @bind.sources?
-      s.require source.sourceShader @_shaders.shader() for source in @bind.sources
+      for source in @bind.sources
+        s.callback()
+        s.pipe Util.GLSL.extendVec indices, 4           if indices != 4
+        s.pipe source.sourceShader @_shaders.shader()
+        s.pipe Util.GLSL.truncateVec 4, channels        if channels != 4
+        s.join()
 
     # Build bound shader
     s.pipe(code, uniforms)

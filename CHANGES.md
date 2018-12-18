@@ -2,6 +2,8 @@
 
 0.0.6-dev
  * When specifying `fps` on a data buffer, catch up correctly if starting late (e.g. on a slide)
+ * Add `indices` and `channels` props to `<shader />` to match `<resample />`.
+ * Add missing docs for line `width`.
 
 0.0.5
  * ⚠️ Rename array `length` to `width` for consistency.

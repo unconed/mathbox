@@ -172,8 +172,8 @@ prettyJSXPair = do ->
               when 'function'
                 v = "#{v}"
                 if v.match "\n" then "\n#{v}\n" else "#{v}"
-                v = v.replace /^function (\([^)]+\))/, "$1 =>"
-                v = v.replace /^(\([^)]+\)) =>\s*{\s*return\s*([^}]+)\s*;\s*}/, "$1 => $2"
+                v = v.replace /^function (\([^)]*\))/, "$1 =>"
+                v = v.replace /^(\([^)]*\)) =>\s*{\s*return\s*([^}]+)\s*;\s*}/, "$1 => $2"
               when 'number'
                 formatNumber v
               else

@@ -67,7 +67,7 @@ class Sprite extends Base
     @geometry.dispose()
     @edgeMaterial.dispose()
     @fillMaterial.dispose()
-    @nreders = @geometry = @edgeMaterial = @fillMaterial = @edgeObject = @fillObject = null
+    @renders = @geometry = @edgeMaterial = @fillMaterial = @edgeObject = @fillObject = null
     super
 
 module.exports = Sprite

@@ -236,6 +236,8 @@ Traits =
 
   shader:
     sources:           Types.nullable(Types.select())
+    indices:           Types.number(4)
+    channels:          Types.number(4)
     language:          Types.string('glsl')
     code:              Types.string()
     uniforms:          Types.nullable(Types.object())

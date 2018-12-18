@@ -45,7 +45,9 @@ For example, for a `.shader({ code: "#multi-shader", sources: ["#array1", "#arra
       }
     </script>
 
-This samples both arrays and combines it with the third (implied) source. The order of the function definitions is matched with the array, their names are ignored. Note that external sources always have the signature `vec4 function(vec4)`, unlike implied sources, which depend on use (see below).
+This samples both arrays and combines it with the third (implied) source. The order of the function definitions is matched with the array, their names are ignored.
+
+The callback signature depends on both indices and channels, mapping to float/vec2/vec3/vec4. Indices specifies the type of the argument, channels the return type. The example above is the default `{indices: 4, channels: 4}`:
 
 ## Resample
 

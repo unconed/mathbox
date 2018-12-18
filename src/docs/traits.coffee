@@ -152,7 +152,7 @@ Traits =
     fill:              ["Fill shape", "bool", true]
     depth:             ["Depth scaling", "number", 1]
   line:
-    size:              ["Line width", "positive number", 2]
+    width:             ["Line width", "positive number", 2]
     stroke:            ["Line stroke (solid, dotted, dashed)", "stroke", '"solid"']
     depth:             ["Depth scaling", "number", 1]
     proximity:         ["Proximity threshold", "nullable number", "null", "10"]
@@ -218,6 +218,8 @@ Traits =
 
   shader:
     sources:           ["Sampler sources", "nullable select", "null", '["#pressure", "#divergence"]']
+    indices:           ["Source indices", "number", 4]
+    channels:          ["Source channels", "number", 4]
     language:          ["Shader language", "string", '"glsl"']
     code:              ["Shader code", "string", '""']
     uniforms:          ["Shader uniform objects (three.js style)", "nullable object", "null", "{ time: { type: 'f', value: 3 }}"]

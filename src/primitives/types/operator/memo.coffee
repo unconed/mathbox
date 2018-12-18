@@ -48,15 +48,16 @@ class Memo extends Operator
     @renders = @compose.renders
 
   unmake: () ->
-    super
+    @_helpers.active.unmake()
 
     if @bind.source?
-      @_helpers.active.unmake()
 
       @memo.unadopt @compose
       @memo.dispose()
 
       @memo = @compose = null
+
+    super
 
   update: () ->
     @memo?.render()

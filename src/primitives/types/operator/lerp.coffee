@@ -106,7 +106,7 @@ class Lerp extends Operator
     any = false
     for key, i in ['width', 'height', 'depth', 'items']
       centered = @centered[key]
-      any || = centered
+      any ||= centered
       vec[i] = if centered then "0.5" else "0.0"
 
     # Add centered sampling offset (from source)

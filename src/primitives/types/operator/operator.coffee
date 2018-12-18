@@ -13,7 +13,7 @@ class Operator extends Source
 
   init: () ->
     @sourceSpec = [
-      { to: 'operator.source', trait: 'source' }
+      { to: 'operator.source', trait: 'source', optional: true }
     ]
 
   make: () ->
