@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MathBox - Complex Exponential</title>
+  <script src="../../build/mathbox-bundle.js"></script>
+  <script src="../../vendor/dat.gui.min.js"></script>
+  <link rel="stylesheet" href="../../build/mathbox.css">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+</head>
+<body>
+  <script>
+    var blue = 0x3090FF;
+    var white = 0xffffff;
+
+    var props = {
+      projectionAngle: 90,
+    };
+    var gui = new dat.GUI();
+    gui.add(props, 'projectionAngle').min(0).max(360).step(.5)
+
+    var mathbox = mathBox({
+      plugins: ['core', 'controls', 'cursor'],
+      controls: {
+        klass: THREE.OrbitControls
+      },
+    });
+
+    mathbox.three.camera.position.set(3, 2, 5);
+    mathbox.three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+
+    var view = mathbox
+      .set({
+        scale: 500,
+      })
+      .cartesian()
+      .transform4({ }, {
+        matrix: function () {
+          var a = props.projectionAngle * τ / 360;
+          return [
+            1, 0, 0, Math.cos(a),
+            0, 1, 0, 0,
+            0, 0, 1, Math.sin(a),
+            0, 0, 0, 1,
+          ];
+        }
+      });
+
+    view.area({
+      rangeX: [-3, 1],
+      rangeY: [-2*π, 2*π],
+      width:  129,
+      height: 65,
+      expr: function (emit, x, y, i, j) {
+        var r = Math.exp(x);
+        
+        emit(
+          Math.cos(y) * r,
+          Math.sin(y) * r,
+          x,
+          y
+        );
+      },
+      channels: 4,
+    })
+    .surface({
+      color: white,
+      zBias: -.25
+    })
+    .line({
+      color: blue,
+      width: 4,
+    })
+    .transpose({
+      order: 'yxzw',
+    })
+    .line({
+      color: blue,
+      width: 4,
+    });    
+    
+    
+  </script>
+</body>
+</html>
