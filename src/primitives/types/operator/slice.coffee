@@ -51,7 +51,7 @@ class Slice extends Operator
     @uniforms.sliceOffset.value.set(
       @_resolve('width',  dims)[0],
       @_resolve('height', dims)[0],
-      @_resolve('depth',  dims)[0]
+      @_resolve('depth',  dims)[0],
       @_resolve('items',  dims)[0],
     )
 
