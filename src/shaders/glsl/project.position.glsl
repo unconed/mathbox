@@ -5,8 +5,8 @@ void setPosition(vec3 position) {
 
   #ifdef PROJECT_ORTHOGONAL
   // Orthogonal projection with depth preservation around z = 1
-  vec4 pos = vec4(position, 1.0);
-  pos.z = -(pos.z + 1.0);
+  vec4 pos = projectionMatrix * vec4(position, 1.0);
+  pos.xy *= -position.z;
   #else
   // Normal perspective projection
   vec4 pos = projectionMatrix * vec4(position, 1.0);
