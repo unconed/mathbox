@@ -34,9 +34,9 @@ class Layer extends Transform
     # Fit x/y
     switch fit
       when _enum.x
-        @uniforms.layerScale.value.set pitch * aspect, pitch * aspect
+        @uniforms.layerScale.value.set pitch * aspect, pitch * aspect, 1, 1
       when _enum.y
-        @uniforms.layerScale.value.set pitch, pitch
+        @uniforms.layerScale.value.set pitch, pitch, 1, 1
 
     @uniforms.layerBias.value.set 0, 0, -depth, 0
 
