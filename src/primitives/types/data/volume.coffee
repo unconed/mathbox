@@ -88,4 +88,11 @@ class Volume extends Voxel
     super
     @_helpers.span.unmake()
 
+  change: (changed, touched, init) ->
+    super
+    if touched['x'] or
+       touched['y'] or
+       touched['z']
+      @updateSpan()
+
 module.exports = Volume

@@ -71,4 +71,10 @@ class Area extends Matrix
     super
     @_helpers.span.unmake()
 
+  change: (changed, touched, init) ->
+    super
+    if touched['x'] or
+       touched['y']
+      @updateSpan()
+
 module.exports = Area

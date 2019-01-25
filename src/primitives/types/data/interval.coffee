@@ -51,4 +51,9 @@ class Interval extends _Array
     super
     @_helpers.span.unmake()
 
+  change: (changed, touched, init) ->
+    super
+    if touched['span']
+      @updateSpan()
+
 module.exports = Interval
