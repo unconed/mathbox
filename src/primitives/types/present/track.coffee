@@ -78,13 +78,13 @@ class Track extends Primitive
       step ?= []
 
       if step instanceof Array
-        # [props, expr] array
+        # [props, bind] array
         step =
           key: +key
           props: if step[0]? then deepCopy(step[0]) else {}
-          expr:  if step[1]? then deepCopy(step[1]) else {}
+          bind:  if step[1]? then deepCopy(step[1]) else {}
       else
-        if !step.key? and !step.props and !step.expr
+        if !step.key? and !step.props and !step.bind
           # Direct props object (iffy, but people will do this anyhow)
           step = {props: deepCopy step}
         else
@@ -94,7 +94,7 @@ class Track extends Primitive
         # Prepare step object
         step.key = if step.key? then +step.key else +key
         step.props ?= {}
-        step.expr  ?= {}
+        step.bind  ?= {}
 
       s.push step
     script = s
@@ -119,7 +119,7 @@ class Track extends Primitive
     props  = {}
     values = {}
     props[k]  = true         for k, v of step.props for key, step of script
-    props[k]  = true         for k, v of step.expr  for key, step of script
+    props[k]  = true         for k, v of step.bind  for key, step of script
     props[k]  = object.get k for k    of props
     try
       # Need two sources and one destination value for correct mixing of live expressions
@@ -141,9 +141,9 @@ class Track extends Primitive
         v = object.validate k, step.props[k] ? v
         props[k] = step.props[k] = v
 
-        if step.expr[k]? && typeof step.expr[k] != 'function'
+        if step.bind[k]? && typeof step.bind[k] != 'function'
           console.warn @node.toMarkup()
-          message = "#{@node.toString()} - Expression `#{step.expr[k]}` on property `#{k}` is not a function"
+          message = "#{@node.toString()} - Bind expression `#{step.bind[k]}` on property `#{k}` is not a function"
           throw new Error message
       result.push step
 
@@ -197,8 +197,8 @@ class Track extends Primitive
       # Create prop expression interpolator
       live = (key) =>
 
-        fromE = from.expr[key]
-        toE   = to  .expr[key]
+        fromE = from.bind[key]
+        toE   = to  .bind[key]
         fromP = from.props[key]
         toP   = to  .props[key]
 
@@ -240,8 +240,8 @@ class Track extends Primitive
 
       # Handle expr / props on both ends
       expr = {}
-      expr[k] ?= live k for k of from.expr
-      expr[k] ?= live k for k of to  .expr
+      expr[k] ?= live k for k of from.bind
+      expr[k] ?= live k for k of to  .bind
       expr[k] ?= live k for k of from.props
       expr[k] ?= live k for k of to  .props
 

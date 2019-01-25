@@ -124,11 +124,12 @@ class Grid extends Primitive
                          changed['grid.crossed']  or
                          (changed['grid.axes']    and @props.crossed)
 
-    if touched['x']    or
-       touched['y']    or
-       touched['area'] or
-       touched['grid'] or
-       touched['view'] or
+    if touched['x']      or
+       touched['y']      or
+       touched['area']   or
+       touched['grid']   or
+       touched['view']   or
+       touched['origin'] or
        init
 
       @updateRanges()

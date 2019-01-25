@@ -4,6 +4,7 @@
  * When specifying `fps` on a data buffer, catch up correctly if starting late (e.g. on a slide)
  * Add `indices` and `channels` props to `<shader />` to match `<resample />`.
  * Add missing docs for line `width`.
+ * Rename `expr` in script steps (steps, play, ...) to `bind` to avoid collision with `expr` prop.
 
 0.0.5
  * ⚠️ Rename array `length` to `width` for consistency.

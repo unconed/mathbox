@@ -109,6 +109,7 @@ class Axis extends Primitive
     if touched['interval'] or
        touched['span']     or
        touched['view']     or
+       touched['origin']   or
        init
 
       @updateRanges()

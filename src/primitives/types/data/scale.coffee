@@ -67,6 +67,7 @@ class Scale extends Source
        touched['interval'] or
        touched['span']     or
        touched['scale']    or
+       touched['origin']   or
        init
 
       @updateRanges()
