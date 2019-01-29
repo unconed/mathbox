@@ -11,6 +11,7 @@
  * Make closed lines/vectors work properly
  * Make closed surfaces work properly
  * Add optional `normals` to `<surface />`
+ * Add `<latch />` to control expr/data updates when conditions change
 
 0.0.5
  * ⚠️ Rename array `length` to `width` for consistency.
