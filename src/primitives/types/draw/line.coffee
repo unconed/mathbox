@@ -49,7 +49,7 @@ class Line extends Primitive
     {start, end} = @props
 
     # Stroke style
-    {stroke, join, proximity} = @props
+    {stroke, join, proximity, closed} = @props
     @proximity = proximity
 
     # Fetch geometry dimensions
@@ -84,6 +84,7 @@ class Line extends Primitive
               stroke:    stroke
               join:      join
               proximity: proximity
+              closed:    closed
               mask:      mask
               material:  material
 
@@ -99,6 +100,7 @@ class Line extends Primitive
                 layers:   layers
                 position: position
                 color:    color
+                closed:   closed
                 mask:     mask
                 material: material
 
@@ -111,6 +113,7 @@ class Line extends Primitive
                 layers:   layers
                 position: position
                 color:    color
+                closed:   closed
                 mask:     mask
                 material: material
 

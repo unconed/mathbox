@@ -5,7 +5,7 @@ class Line extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, material, position, color, mask, map, combine, stpq, linear, clip, stroke, join, proximity} = options
+    {uniforms, material, position, color, mask, map, combine, stpq, linear, clip, stroke, join, proximity, closed} = options
 
     uniforms ?= {}
     stroke   = [null, 'dotted', 'dashed'][stroke]
@@ -37,6 +37,7 @@ class Line extends Base
 
     defs['LINE_JOIN_' + join.toUpperCase()] = ''
     defs['LINE_JOIN_DETAIL'] = detail if detail > 1
+    defs['LINE_CLOSED'] = '' if closed
 
     v = factory.vertex
 

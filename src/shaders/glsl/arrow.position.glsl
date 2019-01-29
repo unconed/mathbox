@@ -14,13 +14,14 @@ attribute vec2 attach;
 // External
 vec3 getPosition(vec4 xyzw, float canonical);
 
-void getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {
-  right = getPosition(xyzw, 1.0);
-  left  = getPosition(vec4(near, xyzw.yzw), 0.0);
-  start = getPosition(vec4(far, xyzw.yzw), 0.0);
+void getArrowGeometry(vec4 xyzw, float near, float mid, float far, out vec3 left, out vec3 right, out vec3 middle, out vec3 start) {
+  right  = getPosition(xyzw, 1.0);
+  left   = getPosition(vec4(near, xyzw.yzw), 0.0);
+  middle = getPosition(vec4(mid,  xyzw.yzw), 0.0);
+  start  = getPosition(vec4(far,  xyzw.yzw), 0.0);
 }
 
-mat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {
+mat4 getArrowMatrix(vec3 left, vec3 right, vec3 middle, vec3 start) {
 
   float depth = focusDepth;
   if (lineDepth < 1.0) {
@@ -28,7 +29,7 @@ mat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {
     float z = max(0.00001, -right.z);
     depth = mix(z, focusDepth, lineDepth);
   }
-    
+
   vec3 diff = left - right;
   float l = length(diff);
   if (l == 0.0) {
@@ -46,12 +47,11 @@ mat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {
   // Shrink arrows when vector gets too small
   // Approach linear scaling with cubic ease the smaller we get
   float size = arrowSize * lineWidth * worldUnit * depth * 1.25;
-  diff = right - start;
-  l = length(diff) * arrowSpace;
+  l = max(length(right - middle), length(middle - start)) * 2.0 * arrowSpace;
   float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);
   float scale = 1.0 - mini * mini * mini;
   float range = size * scale;
-  
+
   // Size to 2.5:1 ratio
   float rangeNB = range / 2.5;
 
@@ -63,12 +63,14 @@ mat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {
 }
 
 vec3 getArrowPosition() {
-  vec3 left, right, start;
+  vec3 left, right, middle, start;
   
+  // Clip arrow position and attachment anchors to data
   vec4 p = min(geometryClip, position4);
-  
-  getArrowGeometry(p, attach.x, attach.y, left, right, start);
-  mat4 matrix = getArrowMatrix(left, right, start);
+  vec3 a = vec3(min(geometryClip.x, p.x + attach.x), geometryClip.x / 2.0, min(geometryClip.x, attach.y));
+
+  getArrowGeometry(p, a.x, a.y, a.z, left, right, middle, start);
+  mat4 matrix = getArrowMatrix(left, right, middle, start);
   return (matrix * vec4(arrow.xyz, 1.0)).xyz;
 
 }

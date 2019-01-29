@@ -18,9 +18,13 @@ class Arrow extends Base
       layers:  options.layers
       anchor:  options.anchor
       flip:    options.flip
+      closed:  options.closed
 
     @_adopt uniforms
     @_adopt @geometry.uniforms
+
+    defs = {}
+    defs['ARROW_CLOSED'] = '' if closed
 
     factory = shaders.material()
 
@@ -29,7 +33,7 @@ class Arrow extends Base
     v.pipe @_vertexColor color, mask
 
     v.require @_vertexPosition position, material, map, 1, stpq
-    v.pipe 'arrow.position',        @uniforms
+    v.pipe 'arrow.position',        @uniforms, defs
     v.pipe 'project.position',      @uniforms
 
     factory.fragment = f =

@@ -102,7 +102,7 @@ class Array_ extends Buffer
     return unless @buffer
 
     if changed['array.width']
-      width = @props.width
+      @spec.width = width = @props.width
       return @rebuild() if width > @space.width
 
     if changed['data.map'] or
@@ -123,7 +123,7 @@ class Array_ extends Buffer
   update: () ->
     return unless @buffer
 
-    {data} = @props
+    {data, width} = @props
     {space, used} = @
     l = used.width
 

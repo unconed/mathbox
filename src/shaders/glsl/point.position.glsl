@@ -19,7 +19,15 @@ float getPointSize(vec4 xyzw);
 vec3 getPosition(vec4 xyzw, float canonical);
 
 vec3 getPointPosition() {
-  vec4 p = min(geometryClip, position4);
+  // Discard out-of-range points by generating degenerate face
+  if (
+    position4.x > geometryClip.x ||
+    position4.y > geometryClip.y ||
+    position4.z > geometryClip.z ||
+    position4.w > geometryClip.w
+  ) return vec3(0.0, 0.0, 0.0);
+  vec4 p = position4;
+
   vec3 center = getPosition(p, 1.0);
 
   // Depth blending

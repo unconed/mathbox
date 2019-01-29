@@ -101,15 +101,15 @@ class Voxel extends Buffer
     return unless @buffer
 
     if changed['voxel.width']
-      width = @props.width
+      @spec.width = width = @props.width
       return @rebuild() if width  > @space.width
 
     if changed['voxel.height']
-      height = @props.height
+      @spec.height = height = @props.height
       return @rebuild() if height > @space.height
 
     if changed['voxel.depth']
-      depth = @props.depth
+      @spec.depth = depth = @props.depth
       return @rebuild() if depth  > @space.depth
 
     if changed['data.map'] or
@@ -130,7 +130,7 @@ class Voxel extends Buffer
   update: () =>
     return unless @buffer
 
-    {data} = @props
+    {data, width, height, depth} = @props
     {space, used} = @
     w = used.width
     h = used.height
@@ -168,11 +168,11 @@ class Voxel extends Buffer
 
         used.width  = _w = width
         used.height = _h = height
-        used.depth  = Math.ceil length / _w / _h
+        used.depth  = Math.min depth, Math.ceil length / _w / _h
 
         if used.depth == 1
-          used.height = Math.ceil length / _w
-          used.width  = length if used.height == 1
+          used.height = Math.min height, Math.ceil length / _w
+          used.width  = Math.min width, length if used.height == 1
 
     if used.width  != w or
        used.height != h or

@@ -109,11 +109,11 @@ class Matrix extends Buffer
     return unless @buffer
 
     if changed['matrix.width']
-      width = @props.width
+      @spec.width = width = @props.width
       return @rebuild() if width  > @space.width
 
     if changed['matrix.height']
-      height = @props.height
+      @spec.height = height = @props.height
       return @rebuild() if height > @space.height
 
     if changed['data.map'] or
@@ -134,7 +134,7 @@ class Matrix extends Buffer
   update: () ->
     return unless @buffer
 
-    {data} = @props
+    {data, width, height} = @props
     {space, used} = @
     w = used.width
     h = used.height
@@ -167,8 +167,8 @@ class Matrix extends Buffer
         length = @buffer.update()
 
         used.width  = _w = width
-        used.height = Math.ceil length / _w
-        used.width  = length if used.height == 1
+        used.height = Math.min height, Math.ceil length / _w
+        used.width  = Math.min width, length if used.height == 1
 
     if used.width  != w or
        used.height != h or

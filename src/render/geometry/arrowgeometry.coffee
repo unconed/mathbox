@@ -23,7 +23,8 @@ class ArrowGeometry extends ClipGeometry
     @ribbons  = ribbons = +options.ribbons || 1
     @layers   = layers  = +options.layers  || 1
     @flip     = flip    =  options.flip    ? false
-    @anchor   = anchor  =  options.anchor  ? if flip then 0 else samples - 1
+    @closed   = closed  =  options.closed  ? false
+    @anchor   = anchor  =  options.anchor  ? if flip or closed then 0 else samples - 1
 
     arrows    = strips * ribbons * layers
     points    = (sides + 2) * arrows
@@ -65,9 +66,8 @@ class ArrowGeometry extends ClipGeometry
 
       base += sides + 1
 
-    step = if flip then 1           else -1
-    far  = if flip then samples - 1 else 0
-    near = anchor + step
+    near = if flip then 1 else if closed then samples - 1 else -1
+    far  = if flip and !closed then samples - 1 else 0
     x    = anchor
 
     for l in [0...layers]
@@ -100,9 +100,9 @@ class ArrowGeometry extends ClipGeometry
 
     segments = Math.max 0, samples - 1
 
-    @_clipGeometry   samples, strips, ribbons, layers
+    @_clipGeometry samples, strips, ribbons, layers
 
-    if samples > @anchor
+    if samples > 0
       dims  = [ layers,  ribbons,  strips]
       maxs  = [@layers, @ribbons, @strips]
       quads = @sides * @_reduce dims, maxs
