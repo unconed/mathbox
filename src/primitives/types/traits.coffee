@@ -285,6 +285,11 @@ Traits =
     width:             Types.nullable(Types.vec2())
     height:            Types.nullable(Types.vec2())
     depth:             Types.nullable(Types.vec2())
+  reverse:
+    items:             Types.bool(false)
+    width:             Types.bool(false)
+    height:            Types.bool(false)
+    depth:             Types.bool(false)
   lerp:
     size:              Types.mapping('absolute')
     items:             Types.nullable(Types.number())

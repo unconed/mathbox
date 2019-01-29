@@ -262,6 +262,11 @@ Traits =
     width:             ["Repeat width",  "number", "1"]
     height:            ["Repeat height", "number", "1"]
     depth:             ["Repeat depth",  "number", "1"]
+  reverse:
+    items:             ["Reverse items",  "boolean", "false"]
+    width:             ["Reverse width",  "boolean", "false"]
+    height:            ["Reverse height", "boolean", "false"]
+    depth:             ["Reverse depth",  "boolean", "false"]
   slice:
     items:             ["Slice from, to items (excluding to)",  "nullable vec2", "null", "[2, 4]"]
     width:             ["Slice from, to width (excluding to)",  "nullable vec2", "null", "[2, 4]"]

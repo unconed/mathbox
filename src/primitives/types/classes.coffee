@@ -48,6 +48,7 @@ Classes =
   readback:          require './operator/readback'
   resample:          require './operator/resample'
   repeat:            require './operator/repeat'
+  reverse:           require './operator/reverse'
   swizzle:           require './operator/swizzle'
   spread:            require './operator/spread'
   split:             require './operator/split'
