@@ -22,7 +22,7 @@ vec3 getSurfacePositionNormal() {
 #endif
 
   vec3 center = getPosition(p, 1.0);
-  vNormal   = normalize(getNormal(p));
+  vNormal   = normalMatrix * normalize(getNormal(p));
   vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz); // hardcoded directional light
   vPosition = -center;
 
