@@ -11,6 +11,10 @@ Traits =
   object:
     visible:           Types.bool(true)
 
+  latch:
+    data:              Types.nullable(Types.object())
+    deep:              Types.nullable(Types.bool(true))
+
   unit:
     scale:             Types.nullable(Types.number())
     fov:               Types.nullable(Types.number())

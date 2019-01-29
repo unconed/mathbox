@@ -9,6 +9,10 @@ Traits =
   object:
     visible:           ["Visibility for rendering", "bool", "true"]
 
+  latch:
+    data:              ["Data to monitor for changes", "nullable object", null]
+    deep:              ["Do deep value comparison", "boolean", true]
+
   unit:
     scale:             ["(Vertical) Reference scale of viewport in pixels", "nullable number", "null", 720]
     fov:               ["(Vertical) Field-of-view to calibrate units for (degrees)", "nullable number", "null", 60]

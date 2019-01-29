@@ -19,6 +19,7 @@ class Buffer extends Data
     super
 
     @clockParent = @_inherit 'clock'
+    @latchParent = @_inherit 'latch'
 
   unmake: () ->
     super
@@ -41,7 +42,8 @@ class Buffer extends Data
     {live, fps, hurry, limit, realtime, observe} = @props
 
     filled = @buffer.getFilled()
-    return unless !filled or live
+    return if filled and !live
+    return if @latchParent and !@latchParent.isDirty
 
     time = @clockParent.getTime()
 
