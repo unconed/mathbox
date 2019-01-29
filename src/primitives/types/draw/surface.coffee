@@ -29,9 +29,10 @@ class Surface extends Primitive
   make: () ->
     # Bind to attached data sources
     @_helpers.bind.make [
-      { to: 'geometry.points', trait: 'source' }
-      { to: 'geometry.colors', trait: 'source' }
-      { to: 'mesh.map',        trait: 'source' }
+      { to: 'geometry.points',   trait: 'source' }
+      { to: 'geometry.colors',   trait: 'source' }
+      { to: 'mesh.normals',      trait: 'source' }
+      { to: 'mesh.map',          trait: 'source' }
     ]
 
     return unless @bind.points?
@@ -67,8 +68,14 @@ class Surface extends Primitive
     objects = []
     @proximity = proximity
 
+    # Fetch normals
+    if @bind.normals?
+      normal = @_shaders.shader()
+      @bind.normals.sourceShader normal
+      @_helpers.shade.normal normal
+
     # Build color lookup
-    if @bind.colors
+    if @bind.colors?
       color = @_shaders.shader()
       @bind.colors.sourceShader color
 
@@ -133,6 +140,7 @@ class Surface extends Primitive
                 layers:   items
                 position: position
                 color:    color
+                normal:   normal
                 zUnits:   zUnits
                 stroke:   stroke
                 material: faceMaterial

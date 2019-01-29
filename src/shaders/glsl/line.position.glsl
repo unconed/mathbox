@@ -153,21 +153,22 @@ void fixCenter(inout vec3 left, inout vec3 center, inout vec3 right) {
   }
 }
 
+vec4 wrapAround(vec4 xyzw) {
+#ifdef LINE_CLOSED
+  float gx = geometryClip.x;
+  if (xyzw.x < 0.0) xyzw.x += gx;
+  if (xyzw.x >= gx) xyzw.x -= gx;
+#endif
+  return xyzw;
+}
+
 // Sample the source data in an edge-aware manner
 void getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {
   vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);
-  float end  = geometryClip.x;
-  float wrap = geometryClip.x - 1.0;
 
-#ifdef LINE_CLOSED
-  center = (xyzw.x < end) ? getPosition(xyzw,         1.0) : getPosition(vec4(0.0, xyzw.yzw), 1.0);
-  left   = (edge > -0.5)  ? getPosition(xyzw - delta, 0.0) : getPosition(vec4(wrap, xyzw.yzw), 0.0);
-  right  = (edge < 0.5)   ? getPosition(xyzw + delta, 0.0) : getPosition(vec4(xyzw.x - wrap, xyzw.yzw), 0.0);
-#else
   center = getPosition(xyzw, 1.0);
-  left   = (edge > -0.5) ? getPosition(xyzw - delta, 0.0) : center;
-  right  = (edge < 0.5)  ? getPosition(xyzw + delta, 0.0) : center;
-#endif
+  left   = (edge > -0.5) ? getPosition(wrapAround(xyzw - delta), 0.0) : center;
+  right  = (edge < 0.5)  ? getPosition(wrapAround(xyzw + delta), 0.0) : center;
 }
 
 // Calculate the position for a vertex along the line, including joins
@@ -317,11 +318,11 @@ vec3 getLinePosition() {
   // Left/center/right
   float edge = 0.0;
 #ifdef LINE_CLOSED
-  if (position4.x >= geometryClip.x - 1.0) edge = 1.0;
+  if (p.x == geometryClip.x) p.x = 0.0;
 #else
-  if (position4.x == geometryClip.x) edge = 1.0;
+  if (p.x == geometryClip.x) edge = 1.0;
+  if (p.x == 0.0) edge = -1.0;
 #endif
-  if (position4.x == 0.0) edge = -1.0;
 
   // Get position + adjacent neighbours
   getLineGeometry(p, edge, left, center, right);

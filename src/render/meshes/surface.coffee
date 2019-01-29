@@ -6,7 +6,7 @@ class Surface extends Base
   constructor: (renderer, shaders, options) ->
     super renderer, shaders, options
 
-    {uniforms, material, position, color, mask, map, combine, linear, stpq, intUV} = options
+    {uniforms, material, position, color, normal, mask, map, combine, linear, stpq, intUV} = options
 
     uniforms ?= {}
     material ?= true
@@ -25,20 +25,27 @@ class Surface extends Base
     @_adopt uniforms
     @_adopt @geometry.uniforms
 
+    defs = {}
+    defs.SURFACE_CLOSED_X = '' if options.closedX
+    defs.SURFACE_CLOSED_Y = '' if options.closedY
+
+    if intUV
+      defs.POSITION_UV_INT = ''
+
     factory = shaders.material()
 
     v = factory.vertex
 
-    if intUV
-      defs =
-        POSITION_UV_INT: ''
-
     v.pipe @_vertexColor color, mask
 
     v.require @_vertexPosition position, material, map, 2, stpq
-    v.pipe 'surface.position',        @uniforms, defs if !material
-    v.pipe 'surface.position.normal', @uniforms, defs if  material
-    v.pipe 'project.position',        @uniforms
+    if normal
+      v.require normal
+      v.pipe 'surface.position.normal', @uniforms, defs
+    else
+      v.pipe 'surface.position',        @uniforms, defs if !material
+      v.pipe 'surface.position.shaded', @uniforms, defs if  material
+    v.pipe 'project.position',          @uniforms
 
     factory.fragment = f =
       @_fragmentColor hasStyle, material, color, mask, map, 2, stpq, combine, linear

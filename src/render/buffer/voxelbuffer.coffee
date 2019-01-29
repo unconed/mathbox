@@ -35,9 +35,11 @@ class VoxelBuffer extends DataBuffer
         repeat = callback emit, i, j, k
         if ++i == n - padX
           skip padX
+          l += padX
           i = 0
           if ++j == m - padY
             skip n * padY
+            l += n * padY
             j = 0
             k++
         if repeat == false

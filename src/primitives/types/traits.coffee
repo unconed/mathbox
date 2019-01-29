@@ -178,6 +178,7 @@ Traits =
   mesh:
     fill:              Types.bool(true)
     shaded:            Types.bool(false)
+    normals:           Types.nullable(Types.select())
     map:               Types.nullable(Types.select())
     lineBias:          Types.number(5)
   strip:

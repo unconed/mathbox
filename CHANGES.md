@@ -6,7 +6,11 @@
  * Add missing docs for line `width`.
  * Rename `expr` in script steps (steps, play, ...) to `bind` to avoid collision with `expr` prop.
  * Fix origin/range changes not being picked up
- * Force `<layer />` to flatten to an orthogonal view.
+ * Force `<layer />` to flatten to an orthogonal view
+ * Fix rendering of partially filled buffers
+ * Make closed lines/vectors work properly
+ * Make closed surfaces work properly
+ * Add optional `normals` to `<surface />`
 
 0.0.5
  * ⚠️ Rename array `length` to `width` for consistency.

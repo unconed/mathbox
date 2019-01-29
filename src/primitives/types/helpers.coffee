@@ -149,6 +149,10 @@ helpers =
       shader.pipe 'fragment.map.rgba'
       shader
 
+    normal: (shader) ->
+      shader.pipe Util.GLSL.swizzleVec4 'xyz'
+      return shader
+
     map: (shader) ->
       return shader unless shader
       shader = @_shaders.shader().pipe('mesh.map.uvwo').pipe shader

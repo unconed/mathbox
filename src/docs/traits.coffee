@@ -160,6 +160,7 @@ Traits =
   mesh:
     fill:              ["Fill mesh", "bool", true]
     shaded:            ["Shade mesh", "bool", false]
+    normals:           ["Normals data source", "nullable select", "null", "#normals"]
     map:               ["Texture map source", "nullable select", "null", '"#map"']
     lineBias:          ["Z-Bias for lines on fill", "number", 5]
   strip:
