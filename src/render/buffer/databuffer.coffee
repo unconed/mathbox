@@ -10,15 +10,22 @@ Util        = require '../../util'
 # => specialized into Array/Matrix/VoxelBuffer
 ###
 class DataBuffer extends Buffer
-  constructor: (renderer, shaders, options) ->
-    @width    = options.width    || 1
-    @height   = options.height   || 1
-    @depth    = options.depth    || 1
+  constructor: (renderer, shaders, options, build = true) ->
+    width    = options.width    || 1
+    height   = options.height   || 1
+    depth    = options.depth    || 1
+    samples  = width * height * depth
 
-    @samples ?= @width * @height * @depth
+    options.samples ||= samples
+
     super renderer, shaders, options
 
-    @build options
+    @width = width
+    @height = height
+    @depth = depth
+    @samples ?= samples
+
+    @build options if build
 
   shader: (shader, indices = 4) ->
     if @items > 1 or @depth > 1
@@ -52,7 +59,7 @@ class DataBuffer extends Buffer
   dispose: () ->
     @data = null
     @texture.dispose()
-    super
+    super()
 
   getFilled: () -> @filled
   setCallback: (@callback) -> @filled = 0

@@ -17,7 +17,7 @@ class Array_ extends Buffer
     @storage = 'arrayBuffer'
     @passthrough = (emit, x) -> emit x, 0, 0, 0
 
-    super
+    super()
 
   sourceShader: (shader) ->
     dims = @getDimensions()
@@ -49,7 +49,7 @@ class Array_ extends Buffer
     depth:  1
 
   make: () ->
-    super
+    super()
 
     # Read sampling parameters
     minFilter = @minFilter ? @props.minFilter
@@ -87,7 +87,7 @@ class Array_ extends Buffer
               type:      type
 
   unmake: () ->
-    super
+    super()
     if @buffer
       @buffer.dispose()
       @buffer = @spec = null

@@ -9,7 +9,7 @@ class DOM extends Primitive
     @active = {}
 
   make: () ->
-    super
+    super()
 
     # Bind to attached objects
     @_helpers.bind.make [

@@ -5,7 +5,7 @@ class Spherical extends View
   @traits = ['node', 'object', 'visible', 'view', 'view3', 'spherical', 'vertex']
 
   make: () ->
-    super
+    super()
 
     types = @_attributes.types
     @uniforms =
@@ -23,7 +23,7 @@ class Spherical extends View
     @aspectY = 1
 
   unmake: () ->
-    super
+    super()
 
     delete @viewMatrix
     delete @objectMatrix

@@ -9,7 +9,8 @@ tick = () ->
 
 class Geometry extends THREE.BufferGeometry
   constructor: () ->
-    THREE.BufferGeometry.call @
+    super()
+    new THREE.BufferGeometry(@)
     @uniforms ?= {}
     @offsets  ?= []
 

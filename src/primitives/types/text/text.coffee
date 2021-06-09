@@ -11,7 +11,7 @@ class Text extends Voxel
     channels: 1
 
   init: () ->
-    super
+    super()
     @atlas = null
 
   textShader: (shader) ->
@@ -93,14 +93,14 @@ class Text extends Voxel
     @buffer.streamer.emit = (text) -> atlas.map text, emit
 
   unmake: () ->
-    super
+    super()
     if @atlas
       @atlas.dispose()
       @atlas = null
 
   update: () ->
     @atlas.begin()
-    super
+    super()
     @atlas.end()
 
   change: (changed, touched, init) ->

@@ -6,7 +6,7 @@ Util        = require '../../util'
 #
 class VoxelBuffer extends DataBuffer
   build: (options) ->
-    super
+    super()
     @pad      = {x: 0, y: 0, z: 0}
     @streamer = @generate @data
 
@@ -70,7 +70,6 @@ class VoxelBuffer extends DataBuffer
     () =>
       src.reset()
       dst.reset()
-
       n     = @width
       m     = @height
       o     = @depth

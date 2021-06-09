@@ -5,7 +5,7 @@ class Stereographic4 extends View
   @traits = ['node', 'object', 'visible', 'view', 'view4', 'stereographic', 'vertex']
 
   make: () ->
-    super
+    super()
 
     @uniforms =
       basisOffset:         @_attributes.make @_types.vec4()
@@ -16,7 +16,7 @@ class Stereographic4 extends View
     @basisOffset         = @uniforms.basisOffset.value
 
   unmake: () ->
-    super
+    super()
 
     delete @basisScale
     delete @basisOffset

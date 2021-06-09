@@ -6,15 +6,15 @@ Util       = require '../../util'
 ###
 class Buffer extends Renderable
   constructor: (renderer, shaders, options) ->
+    super renderer, shaders
+
     @items    ?= options.items    || 1
     @samples  ?= options.samples  || 1
     @channels ?= options.channels || 4
     @callback ?= options.callback || () ->
 
-    super renderer, shaders
-
   dispose: () ->
-    super
+    super()
 
   update: () ->
     n = @fill()

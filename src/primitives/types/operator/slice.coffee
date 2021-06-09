@@ -34,14 +34,14 @@ class Slice extends Operator
     dims
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     @uniforms =
       sliceOffset: @_attributes.make @_types.vec4()
 
   unmake: () ->
-    super
+    super()
 
   resize: () ->
     return unless @bind.source?
@@ -55,7 +55,7 @@ class Slice extends Operator
       @_resolve('items',  dims)[0],
     )
 
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator']

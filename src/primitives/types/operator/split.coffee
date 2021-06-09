@@ -50,7 +50,7 @@ class Split extends Operator
     out
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     order   = @props.order
@@ -76,7 +76,7 @@ class Split extends Operator
     split: xy
     rest:  w0z0
             s
-    
+
     axis: y
     index: 2
     split: yz
@@ -88,7 +88,7 @@ class Split extends Operator
     split: z0
     rest: wxy0
              s
-    
+
     ###
 
     permute = order.join ''
@@ -122,7 +122,7 @@ class Split extends Operator
     @stride  = stride
 
   unmake: () ->
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['split.axis'] or

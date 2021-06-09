@@ -63,12 +63,12 @@ class Area extends Matrix
         callback emit, x, y, i, j, @bufferClock, @bufferStep
 
   make: () ->
-    super
+    super()
     @_helpers.span.make()
     @_listen @, 'span.range', @updateSpan
 
   unmake: () ->
-    super
+    super()
     @_helpers.span.unmake()
 
 module.exports = Area

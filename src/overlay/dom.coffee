@@ -12,7 +12,7 @@ class DOM extends Overlay
 
   dispose: () ->
     @unmount()
-    super
+    super()
 
   mount: () ->
     overlay = document.createElement 'div'

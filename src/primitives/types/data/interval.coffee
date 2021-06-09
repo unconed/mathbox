@@ -43,12 +43,12 @@ class Interval extends _Array
         callback emit, x, i, @bufferClock, @bufferStep
 
   make: () ->
-    super
+    super()
     @_helpers.span.make()
     @_listen @, 'span.range', @updateSpan
 
   unmake: () ->
-    super
+    super()
     @_helpers.span.unmake()
 
 module.exports = Interval

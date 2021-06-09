@@ -21,6 +21,6 @@ class Debug extends Base
     @geometry.dispose()
     @material.dispose()
     @objects = @geometry = @material = null
-    super
+    super()
 
 module.exports = Debug

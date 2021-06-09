@@ -6,18 +6,24 @@ Util        = require '../../util'
 ###
 class MatrixBuffer extends DataBuffer
   constructor: (renderer, shaders, options) ->
-    @width    = options.width    || 1
-    @height   = options.height   || 1
-    @history  = options.history  || 1
+    width    = options.width   || 1
+    height   = options.height  || 1
+    history  = options.history || 1
 
-    @samples = @width * @height
-    @wrap    = @history > 1
+    options.depth = history
 
-    options.depth = @history
-    super renderer, shaders, options
+    super renderer, shaders, options, false
+
+    @width   = width
+    @height  = height
+    @history = history
+    @samples = width * height
+    @wrap    = history > 1
+
+    @build options
 
   build: (options) ->
-    super
+    super()
 
     @index    = 0
     @pad      = {x: 0,  y: 0}

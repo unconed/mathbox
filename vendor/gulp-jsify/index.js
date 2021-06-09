@@ -1,9 +1,8 @@
 var through = require('through');
 var os = require('os');
 var path = require('path');
-var gutil = require('gulp-util');
-var PluginError = gutil.PluginError;
-var File = gutil.File;
+var PluginError = require('plugin-error');
+var File = require('vinyl');
 
 module.exports = function(fileName, global){
   if (!fileName) throw new PluginError('gulp-concat',  'Missing fileName option for gulp-jsify');
@@ -35,7 +34,7 @@ module.exports = function(fileName, global){
       cwd: firstFile.cwd,
       base: firstFile.base,
       path: joinedPath,
-      contents: new Buffer(joinedContents)
+      contents: Buffer.from(joinedContents)
     });
 
     this.emit('data', joinedFile);

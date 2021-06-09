@@ -11,7 +11,7 @@ class Readback extends Primitive
     @active = {}
 
   make: () ->
-    super
+    super()
 
     @_compute 'readback.data',   () => @readback?.data
     @_compute 'readback.items',  () => @readback?.items

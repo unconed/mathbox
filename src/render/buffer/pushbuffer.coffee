@@ -6,12 +6,19 @@ Util        = require '../../util'
 ###
 class PushBuffer extends Buffer
   constructor: (renderer, shaders, options) ->
-    @width    = options.width    || 1
-    @height   = options.height   || 1
-    @depth    = options.depth    || 1
+    width    = options.width    || 1
+    height   = options.height   || 1
+    depth    = options.depth    || 1
+    samples  = width * height * depth
 
-    @samples ?= @width * @height * @depth
+    options.samples ||= samples
+
     super renderer, shaders, options
+
+    @width = width
+    @height = height
+    @depth = depth
+    @samples ?= samples
 
     @build options
 
@@ -25,7 +32,7 @@ class PushBuffer extends Buffer
 
   dispose: () ->
     @data = null
-    super
+    super()
 
   getFilled: () -> @filled
 

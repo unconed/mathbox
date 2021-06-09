@@ -66,4 +66,4 @@ for module in modules
 console.log "\n\n---\n\n### Reference\n\n"
 
 for type in types
-  console.log docs[type] 
+  console.log docs[type]

@@ -5,7 +5,7 @@ Renderable = require './renderable'
 ###
 class MathBox extends THREE.Object3D
   constructor: () ->
-    super
+    super()
     @rotationAutoUpdate = false
     @frustumCulled      = false
     @matrixAutoUpdate   = false

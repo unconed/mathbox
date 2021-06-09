@@ -7,7 +7,7 @@ class Memo extends Operator
   sourceShader: (shader) -> @memo.shaderAbsolute shader, 1
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Listen for updates
@@ -48,7 +48,7 @@ class Memo extends Operator
     @renders = @compose.renders
 
   unmake: () ->
-    super
+    super()
 
     if @bind.source?
       @_helpers.active.unmake()
@@ -71,7 +71,7 @@ class Memo extends Operator
     # Cover only part of the RTT viewport
     @compose.cover width, height, depth
 
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['texture'] or

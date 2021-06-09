@@ -37,7 +37,7 @@ class Subdivide extends Operator
     dims
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Get resampled dimensions
@@ -91,7 +91,7 @@ class Subdivide extends Operator
     @indexer  = indexer
 
   unmake: () ->
-    super
+    super()
     @operator = null
 
   resize: () ->
@@ -109,7 +109,7 @@ class Subdivide extends Operator
 
     @resampleFactor.value.set   rw, rh, rd, ri
 
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator'] or

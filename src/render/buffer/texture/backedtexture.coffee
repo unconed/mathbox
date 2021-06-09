@@ -58,7 +58,6 @@ class BackedTexture extends DataTexture
 
   dispose: () ->
     @data = null
-    super
+    super()
 
 module.exports = BackedTexture
-

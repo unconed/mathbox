@@ -5,6 +5,8 @@ class Voxel extends Buffer
   @traits = ['node', 'buffer', 'active', 'data', 'source', 'index', 'texture', 'voxel', 'raw']
 
   init: () ->
+    super()
+
     @buffer = @spec = null
 
     @space =
@@ -19,8 +21,6 @@ class Voxel extends Buffer
 
     @storage = 'voxelBuffer'
     @passthrough = (emit, x, y, z) -> emit x, y, z, 0
-
-    super
 
   sourceShader: (shader) ->
     dims = @getDimensions()
@@ -42,7 +42,7 @@ class Voxel extends Buffer
   getRawDimensions: () -> @getDimensions()
 
   make: () ->
-    super
+    super()
 
     # Read sampling parameters
     minFilter = @minFilter ? @props.minFilter
@@ -85,7 +85,7 @@ class Voxel extends Buffer
               type:      type
 
   unmake: () ->
-    super
+    super()
     if @buffer
       @buffer.dispose()
       @buffer = @spec = null

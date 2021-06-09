@@ -94,6 +94,6 @@ class Point extends Base
     @edgeMaterial.dispose()
     @fillMaterial.dispose()
     @renders = @edgeObject = @fillObject = @geometry = @edgeMaterial = @fillMaterial = null
-    super
+    super()
 
 module.exports = Point

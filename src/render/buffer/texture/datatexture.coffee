@@ -10,9 +10,9 @@ class DataTexture
     @n = @width * @height * @channels
 
     gl = @gl
-    minFilter = options.minFilter ? THREE.NearestFilter
-    magFilter = options.magFilter ? THREE.NearestFilter
-    type      = options.type      ? THREE.FloatType
+    minFilter = options?.minFilter ? THREE.NearestFilter
+    magFilter = options?.magFilter ? THREE.NearestFilter
+    type      = options?.type      ? THREE.FloatType
 
     @minFilter = Util.Three.paramToGL gl, minFilter
     @magFilter = Util.Three.paramToGL gl, magFilter
@@ -46,8 +46,8 @@ class DataTexture
       THREE.UVMapping,
       THREE.ClampToEdgeWrapping,
       THREE.ClampToEdgeWrapping,
-      options.minFilter,
-      options.magFilter)
+      options?.minFilter,
+      options?.magFilter)
 
     # Pre-init texture to trick WebGLRenderer
     @textureObject.__webglInit     = true
@@ -83,6 +83,3 @@ class DataTexture
     @textureObject = @texture = null
 
 module.exports = DataTexture
-
-
-

@@ -56,7 +56,7 @@ class Lerp extends Operator
     dims
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Get resampled dimensions
@@ -106,7 +106,7 @@ class Lerp extends Operator
     any = false
     for key, i in ['width', 'height', 'depth', 'items']
       centered = @centered[key]
-      any || = centered
+      any ||= centered
       vec[i] = if centered then "0.5" else "0.0"
 
     # Add centered sampling offset (from source)
@@ -148,7 +148,7 @@ class Lerp extends Operator
     @relativeSize   = relativeSize
 
   unmake: () ->
-    super
+    super()
     @operator = null
 
   resize: () ->
@@ -178,7 +178,7 @@ class Lerp extends Operator
     @resampleFactor.value.set   rw, rh, rd, ri
     @resampleBias.value.set     bw, bh, bd, bi
 
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator'] or

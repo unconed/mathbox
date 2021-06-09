@@ -5,7 +5,7 @@ class Label extends Primitive
   @traits = ['node', 'bind', 'object', 'visible', 'style', 'label', 'attach', 'geometry', 'position']
 
   make: () ->
-    super
+    super()
 
     # Bind to attached objects
     @_helpers.bind.make [

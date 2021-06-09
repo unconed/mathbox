@@ -4,7 +4,7 @@ class Move extends Transition
   @traits = ['node', 'transition', 'vertex', 'move', 'visible', 'active']
 
   make: () ->
-    super
+    super()
 
     @uniforms[k] = v for k, v of {
       moveFrom:  @node.attributes['move.from']

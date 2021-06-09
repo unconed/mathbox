@@ -13,15 +13,15 @@ class Buffer extends Data
 
     @bufferClock  = 0
     @bufferStep   = 0
-    super
+    super()
 
   make: () ->
-    super
+    super()
 
     @clockParent = @_inherit 'clock'
 
   unmake: () ->
-    super
+    super()
 
   rawBuffer: () -> @buffer
 

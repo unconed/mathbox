@@ -50,7 +50,7 @@ class Join extends Operator
     out
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     order   = @props.order
@@ -71,7 +71,7 @@ class Join extends Operator
     axis: x
     index: 1
     rest: w00y
-    
+
     axis: y
     index: 2
     rest: wx00
@@ -79,7 +79,7 @@ class Join extends Operator
     axis: z
     index: 3
     rest: wxy0
-    
+
     ###
 
     permute = order.join ''
@@ -118,7 +118,7 @@ class Join extends Operator
     @stride  = stride
 
   unmake: () ->
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['join'] or

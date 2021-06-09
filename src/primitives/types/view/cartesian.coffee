@@ -5,7 +5,7 @@ class Cartesian extends View
   @traits = ['node', 'object', 'visible', 'view', 'view3', 'vertex']
 
   make: () ->
-    super
+    super()
 
     @uniforms =
       viewMatrix:          @_attributes.make @_types.mat4()
@@ -14,7 +14,7 @@ class Cartesian extends View
     @composer   = Util.Three.transformComposer()
 
   unmake: () ->
-    super
+    super()
 
     delete @viewMatrix
     delete @objectMatrix

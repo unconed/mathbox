@@ -13,7 +13,7 @@ class Compose extends Primitive
 
   #rebuild: () ->
   #  console.log 'compose.rebuild', @node.get(null, true), @bind.source?
-  #  super
+  #  super()
 
   resize: () ->
     return unless @compose and @bind.source

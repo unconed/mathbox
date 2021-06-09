@@ -6,19 +6,24 @@ Util        = require '../../util'
 ###
 class ArrayBuffer_ extends DataBuffer
   constructor: (renderer, shaders, options) ->
-    @width    = options.width    || 1
-    @history  = options.history  || 1
+    width    = options.width    || 1
+    history  = options.history  || 1
 
-    @samples = @width
-    @wrap    = @history > 1
-
-    options.width  = @width
-    options.height = @history
+    options.width  = width
+    options.height = history
     options.depth  = 1
-    super renderer, shaders, options
+
+    super renderer, shaders, options, false
+
+    @width   = width
+    @history = history
+    @samples = width
+    @wrap    = history > 1
+
+    @build options
 
   build: (options) ->
-    super
+    super()
 
     @index    = 0
     @pad      = 0

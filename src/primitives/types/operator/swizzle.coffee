@@ -10,7 +10,7 @@ class Swizzle extends Operator
     shader
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Swizzling order
@@ -18,7 +18,7 @@ class Swizzle extends Operator
     @swizzler = Util.GLSL.swizzleVec4 order, 4 if order.join() != '1234'
 
   unmake: () ->
-    super
+    super()
     @swizzler = null
 
   change: (changed, touched, init) ->

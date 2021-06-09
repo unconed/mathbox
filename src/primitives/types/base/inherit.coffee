@@ -15,6 +15,6 @@ class Inherit extends Parent
   _find: (trait) ->
     if @bind.source and (trait in @props.traits)
       return @bind.source._inherit trait
-    super
+    super()
 
 module.exports = Inherit

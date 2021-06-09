@@ -8,10 +8,11 @@ Util         = require '../../util'
 class RenderToTexture extends Renderable
 
   constructor: (renderer, shaders, options) ->
+    super renderer, shaders
+
     @scene  = options.scene  ? new THREE.Scene()
     @camera = options.camera
 
-    super renderer, shaders
     @build options
 
   shaderRelative: (shader) ->
@@ -73,6 +74,6 @@ class RenderToTexture extends Renderable
 
     @target.dispose()
 
-    super
+    super()
 
 module.exports = RenderToTexture

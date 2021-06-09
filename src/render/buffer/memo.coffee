@@ -9,16 +9,16 @@ class Memo extends RenderToTexture
 
   constructor: (renderer, shaders, options) ->
 
-    @items    ?= options.items    || 1
-    @channels ?= options.channels || 4
-    @width    ?= options.width    || 1
-    @height   ?= options.height   || 1
-    @depth    ?= options.depth    || 1
+    items    = options.items    || 1
+    channels = options.channels || 4
+    width    = options.width    || 1
+    height   = options.height   || 1
+    depth    = options.depth    || 1
 
     #options.format = [null, THREE.LuminanceFormat, THREE.LuminanceAlphaFormat, THREE.RGBFormat, THREE.RGBAFormat][@channels]
     options.format = THREE.RGBAFormat
-    options.width  = @_width  = @items  * @width
-    options.height = @_height = @height * @depth
+    options.width  = _width  = items  * width
+    options.height = _height = height * depth
     options.frames = 1
 
     delete options.items
@@ -26,6 +26,14 @@ class Memo extends RenderToTexture
     delete options.channels
 
     super renderer, shaders, options
+
+    @items ?= items
+    @channels ?= channels
+    @width ?= width
+    @_width = _width
+    @height ?= height
+    @_height = _height
+    @depth ?= depth
 
     @_adopt
       textureItems:  { type: 'f', value: @items }

@@ -6,7 +6,7 @@ Util        = require '../../util'
 ###
 class ItemBuffer extends DataBuffer
   build: (options) ->
-    super
+    super()
     @pad      = {x: 0, y: 0, z: 0, w: 0}
     @streamer = @generate @data
 

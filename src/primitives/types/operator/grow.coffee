@@ -7,7 +7,7 @@ class Grow extends Operator
     shader.pipe @operator
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Uniforms
@@ -27,11 +27,11 @@ class Grow extends Operator
     @operator = transform
 
   unmake: () ->
-    super
+    super()
 
   resize: () ->
     @update()
-    super
+    super()
 
   update: () ->
       # Size to fit to include future history

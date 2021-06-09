@@ -17,7 +17,7 @@ class Resolve extends Data
       height: 0
       depth:  0
 
-    super
+    super()
 
   sourceShader: (shader) ->
     @buffer.shader shader
@@ -39,7 +39,7 @@ class Resolve extends Data
     depth:  used.depth * @buffer.getFilled()
 
   make: () ->
-    super
+    super()
 
     # Read given dimensions
     width    = @props.width
@@ -76,12 +76,12 @@ class Resolve extends Data
   # Decorate emit callback for a bound source
   callback: () ->
 
-  # 
+  #
   emitter: () ->
     super 1, 1
 
   change: (changed, touched, init) ->
-    super
+    super()
     return @rebuild() if false
     return unless @buffer
 

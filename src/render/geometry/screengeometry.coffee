@@ -19,17 +19,18 @@ Grid Surface in normalized screen space
 class ScreenGeometry extends SurfaceGeometry
 
   constructor: (options) ->
+    options.width  = Math.max 2, +options.width  ? 2
+    options.height = Math.max 2, +options.height ? 2
+
+    super options, false
+
     @uniforms ?= {}
     @uniforms.geometryScale =
       type: 'v4'
       value: new THREE.Vector4
 
-    options.width  = Math.max 2, +options.width  ? 2
-    options.height = Math.max 2, +options.height ? 2
-
     @cover()
-
-    super options
+    @construct(options)
 
   cover: (@scaleX = 1, @scaleY = 1, @scaleZ = 1, @scaleW = 1) ->
 

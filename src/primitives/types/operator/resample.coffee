@@ -56,7 +56,7 @@ class Resample extends Operator
     dims
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Bind to attached shader
@@ -127,7 +127,7 @@ class Resample extends Operator
     any = false
     for key, i in ['width', 'height', 'depth', 'items']
       centered = @centered[key]
-      any || = centered
+      any ||= centered
       vec[i] = if centered then "0.5" else "0.0"
 
     if any
@@ -170,7 +170,7 @@ class Resample extends Operator
     @relativeSize   = relativeSize
 
   unmake: () ->
-    super
+    super()
     @operator = null
 
   resize: () ->
@@ -214,7 +214,7 @@ class Resample extends Operator
     @resampleFactor.value.set   rw, rh, rd, ri
     @resampleBias.value.set     bw, bh, bd, bi
 
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator'] or

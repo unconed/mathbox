@@ -4,7 +4,7 @@ class Cartesian4 extends View
   @traits = ['node', 'object', 'visible', 'view', 'view4', 'vertex']
 
   make: () ->
-    super
+    super()
 
     @uniforms =
       basisOffset:         @_attributes.make @_types.vec4()
@@ -14,7 +14,7 @@ class Cartesian4 extends View
     @basisOffset         = @uniforms.basisOffset.value
 
   unmake: () ->
-    super
+    super()
     delete @basisScale
     delete @basisOffset
     delete @uniforms

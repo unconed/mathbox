@@ -12,7 +12,7 @@ class Clamp extends Operator
     super shader
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Max index on all 4 dimensions
@@ -26,14 +26,14 @@ class Clamp extends Operator
     @operator = transform
 
   unmake: () ->
-    super
+    super()
 
   resize: () ->
     if @bind.source?
       dims = @bind.source.getActiveDimensions()
       @clampLimit.value.set dims.width - 1, dims.height - 1, dims.depth - 1, dims.items - 1
 
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator'] or

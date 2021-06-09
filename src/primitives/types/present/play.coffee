@@ -4,7 +4,7 @@ class Play extends Track
   @traits = ['node', 'track', 'trigger', 'play', 'bind']
 
   init: () ->
-    super
+    super()
     @skew = null
     @start = null
 
@@ -13,7 +13,7 @@ class Play extends Track
     @start = null
 
   make: () ->
-    super
+    super()
 
     # Start on slide, or immediately if not inside slide
     @_listen 'slide', 'slide.step', (e) =>
@@ -30,7 +30,6 @@ class Play extends Track
       {from, to, speed, pace, delay, realtime} = @props
 
       time = parentClock.getTime()
-
       if @skew?
         now   = if realtime then time.time  else time.clock
         delta = if realtime then time.delta else time.step
@@ -49,7 +48,7 @@ class Play extends Track
       @update()
 
   update: () ->
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['trigger.trigger'] or changed['play.realtime']

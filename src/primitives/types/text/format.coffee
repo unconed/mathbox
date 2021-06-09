@@ -8,7 +8,7 @@ class Format extends Operator
     magFilter: 'linear'
 
   init: () ->
-    super
+    super()
     @atlas = @buffer = @used = @time = null
     @filled = false
 
@@ -22,7 +22,7 @@ class Format extends Operator
   textHeight: () -> @props.detail
 
   make: () ->
-    # Bind to attached data sources    # super
+    # Bind to attached data sources    # super()
     @_helpers.bind.make [
       { to: 'operator.source', trait: 'raw' }
     ]
@@ -75,11 +75,11 @@ class Format extends Operator
     @_listen 'root', 'root.update', @update
 
   made: () ->
-    super
+    super()
     @resize()
 
   unmake: () ->
-    super
+    super()
     if @buffer
       @buffer.dispose()
       @buffer = null

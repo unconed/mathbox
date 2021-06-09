@@ -10,28 +10,29 @@ SCRATCH_SIZE = 512 / 16
 ###
 class TextAtlas extends Atlas
   constructor: (renderer, shaders, options) ->
+    options.width    ||= 256
+    options.height   ||= 256
+    options.type     = THREE.UnsignedByteType
+    options.channels = 1
+    options.backed   = true
+
+    super renderer, shaders, options, false
+
     @font    = options.font ? ['sans-serif']
     @size    = options.size || 24
     @style   = options.style ? 'normal'
     @variant = options.variant ? 'normal'
     @weight  = options.weight ? 'normal'
     @outline = +(options.outline ? 5) ? 0
-
-    options.width    ||= 256
-    options.height   ||= 256
-
-    options.type     = THREE.UnsignedByteType
-    options.channels = 1
-    options.backed   = true
-
     @gamma = 1
+
     if typeof navigator != 'undefined'
       ua = navigator.userAgent
       @gamma = .5 if ua.match(/Chrome/) and ua.match(/OS X/)
 
     @scratchW = @scratchH = 0
 
-    super renderer, shaders, options
+    @build options
 
   build: (options) ->
     super options
@@ -85,7 +86,7 @@ class TextAtlas extends Atlas
     @_write    = @write   .bind @
 
   reset: () ->
-    super
+    super()
     @mapped = {}
 
   begin: () ->

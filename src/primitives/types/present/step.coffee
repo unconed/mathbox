@@ -4,7 +4,7 @@ class Step extends Track
   @traits = ['node', 'track', 'step', 'trigger', 'bind']
 
   make: () ->
-    super
+    super()
 
     clock = @_inherit 'clock'
 
@@ -82,7 +82,7 @@ class Step extends Track
     @animateStep .dispose()
     @animateIndex = @animateStep = null
 
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if changed['step.stops'] or changed['step.realtime']

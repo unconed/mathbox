@@ -51,12 +51,13 @@ class Track extends Primitive
 
     # Measure playhead velocity on attribute computation
     {clock} = @targetNode
+    self = @
     @_attributes.bind @measure = do ->
       playhead = null
       () =>
         {step} = clock.getTime()
-        @velocity = (@playhead - playhead) / step if playhead?
-        playhead = @playhead
+        self.velocity = (self.playhead - playhead) / step if playhead?
+        playhead = self.playhead
 
   unbindExpr: () ->
     @targetNode .unbind @expr, true if @expr?

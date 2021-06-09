@@ -7,11 +7,11 @@ class HTML extends Voxel
     channels: 1
 
   init: () ->
-    super
+    super()
     @storage = 'pushBuffer'
 
   make: () ->
-    super
+    super()
 
     # Get our own size
     {items, width, height, depth} = @getDimensions()
@@ -21,13 +21,13 @@ class HTML extends Voxel
     @dom.hint items * width * height * depth
 
   unmake: () ->
-    super
+    super()
     if @dom?
       @dom.dispose()
       @dom = null
 
   update: () ->
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['html']

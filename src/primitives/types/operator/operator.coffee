@@ -17,14 +17,14 @@ class Operator extends Source
     ]
 
   make: () ->
-    super
+    super()
 
     # Bind to attached data sources
     @_helpers.bind.make @sourceSpec
 
   made: () ->
     @resize()
-    super
+    super()
 
   unmake: () ->
     @_helpers.bind.unmake()

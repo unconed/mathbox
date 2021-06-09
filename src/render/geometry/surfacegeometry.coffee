@@ -18,9 +18,13 @@ Grid Surface
 
 class SurfaceGeometry extends ClipGeometry
 
-  constructor: (options) ->
-    super options
+  constructor: (options, build = true) ->
+    super()
+    # TODO not great... but use this pattern, maybe, to defer construction if
+    # options are missing, NOT the boolean.
+    @construct options if build
 
+  construct: (options) ->
     @_clipUniforms()
 
     @closedX  = closedX  =  options.closedX  || false

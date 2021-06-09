@@ -10,6 +10,8 @@ Util            = require '../../util'
 class Readback extends Renderable
 
   constructor: (renderer, shaders, options) ->
+    super renderer, shaders
+
     @items    ?= options.items    || 1
     @channels ?= options.channels || 4
     @width    ?= options.width    || 1
@@ -20,7 +22,6 @@ class Readback extends Renderable
     @isFloat   = @type == THREE.FloatType
 
     @active = @sampled = @rect = @pad = null
-    super renderer, shaders
 
     @build options
 

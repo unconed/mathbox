@@ -19,7 +19,7 @@ class Matrix extends Buffer
     @storage = 'matrixBuffer'
     @passthrough = (emit, x, y) -> emit x, y, 0, 0
 
-    super
+    super()
 
   sourceShader: (shader) ->
     dims = @getDimensions()
@@ -51,7 +51,7 @@ class Matrix extends Buffer
     depth:  1
 
   make: () ->
-    super
+    super()
 
     # Read sampling parameters
     minFilter = @minFilter ? @props.minFilter
@@ -93,7 +93,7 @@ class Matrix extends Buffer
               type:      type
 
   unmake: () ->
-    super
+    super()
     if @buffer
       @buffer.dispose()
       @buffer = @spec = null

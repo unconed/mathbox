@@ -10,16 +10,16 @@ BackedTexture = require './texture/backedtexture'
 # - Will grow itself when full
 ###
 class Atlas extends Renderable
-  constructor: (renderer, shaders, options) ->
+  constructor: (renderer, shaders, options, build = true) ->
+    super renderer, shaders
+
     @width    ?= options.width    || 512
     @height   ?= options.height   || 512
     @channels ?= options.channels || 4
     @backed   ?= options.backed   || false
-
     @samples = @width * @height
 
-    super renderer, shaders
-    @build options
+    @build options if build
 
   shader: (shader) ->
     shader.pipe "map.2d.data", @uniforms
@@ -135,7 +135,7 @@ class Atlas extends Renderable
   dispose: () ->
     @texture.dispose()
     @data = null
-    super
+    super()
 
 class Row
   constructor: (top, height) ->

@@ -5,7 +5,7 @@ class Polar extends View
   @traits = ['node', 'object', 'visible', 'view', 'view3', 'polar', 'vertex']
 
   make: () ->
-    super
+    super()
 
     types = @_attributes.types
     @uniforms =
@@ -21,7 +21,7 @@ class Polar extends View
     @aspect = 1
 
   unmake: () ->
-    super
+    super()
 
     delete @viewMatrix
     delete @objectMatrix

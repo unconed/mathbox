@@ -67,6 +67,6 @@ class Line extends Base
     @geometry.dispose()
     @material.dispose()
     @renders = @geometry = @material = null
-    super
+    super()
 
 module.exports = Line

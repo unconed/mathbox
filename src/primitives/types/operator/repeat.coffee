@@ -24,7 +24,7 @@ class Repeat extends Operator
     depth:  r.depth  * dims.depth
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Repeat multipliers
@@ -41,14 +41,14 @@ class Repeat extends Operator
     @operator = transform
 
   unmake: () ->
-    super
+    super()
 
   resize: () ->
     if @bind.source?
       dims = @bind.source.getActiveDimensions()
       @repeatModulus.value.set dims.width, dims.height, dims.depth, dims.items
 
-    super
+    super()
 
   change: (changed, touched, init) ->
     return @rebuild() if touched['operator'] or

@@ -5,7 +5,7 @@ class Stereographic extends View
   @traits = ['node', 'object', 'visible', 'view', 'view3', 'stereographic', 'vertex']
 
   make: () ->
-    super
+    super()
 
     types = @_attributes.types
     @uniforms =
@@ -16,7 +16,7 @@ class Stereographic extends View
     @composer   = Util.Three.transformComposer()
 
   unmake: () ->
-    super
+    super()
 
     delete @viewMatrix
     delete @rotationMatrix

@@ -35,7 +35,7 @@ class Transpose extends Operator
     out
 
   make: () ->
-    super
+    super()
     return unless @bind.source?
 
     # Transposition order
@@ -48,7 +48,7 @@ class Transpose extends Operator
       type: 'source.rebuild'
 
   unmake: () ->
-    super
+    super()
     @swizzler = null
 
   change: (changed, touched, init) ->
