@@ -71,8 +71,9 @@ gulp.task('browserify', function () {
     //detectGlobals: false,
     entries: 'src/index.coffee',
     extensions: ['.coffee'],
-    bare: true,
-    transform: [coffeeify]
+    bare: true
+  }).transform(coffeeify).transform("babelify", {
+    presets: ["@babel/preset-env"]
   });
 
   return b.bundle()
@@ -129,9 +130,7 @@ gulp.task('watch-karma', function() {
 });
 
 gulp.task('watch-build-watch', function () {
-  watch(source.concat([
-    'vendor/shadergraph/src/**/*.coffee'
-  ]), gulp.series('build'));
+  watch(source, gulp.series('build'));
 });
 
 // Main tasks

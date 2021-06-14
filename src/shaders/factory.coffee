@@ -1,4 +1,4 @@
-ShaderGraph = require '../../vendor/shadergraph/src'
+ShaderGraph = require '@mentat/shadergraph'
 
 Factory = (snippets) ->
   fetch = (name) ->
@@ -15,7 +15,7 @@ Factory = (snippets) ->
 
     throw new Error "Unknown shader `#{name}`"
 
-  new ShaderGraph fetch,
+  ShaderGraph.load fetch,
     autoInspect: true
 
 module.exports = Factory
