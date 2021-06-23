@@ -24,3 +24,13 @@ When you get prompted for `lsp`, do `json-ls`.
 ### Safari
 
 - Develop, Experimental Features, WebGL 2.0
+
+### Random
+
+Make sure to delete:
+
+```sh
+rm -rf node_modules/gulp-eslint/node_modules/eslint
+```
+
+to get eslint working. This dependency keeps an old eslint on the classpath.
