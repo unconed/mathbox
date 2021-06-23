@@ -1,6 +1,9 @@
-require('coffee-script/register')
+import * as Binder from "../src/util/binder";
+import * as THREE from "three";
 
-global.THREE        = require('three')
-global.THREE.Binder = require('../src/util/binder')
+// TODO this should really be in threestrap!!
 
-module.exports = require('./context')
+// eslint-disable-next-line no-import-assign
+THREE.Binder = Binder;
+
+export * from "./context";

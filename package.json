@@ -12,34 +12,34 @@
     "docs": "gulp docs",
     "build": "gulp"
   },
+  "prettier": {},
   "dependencies": {
-    "coffeescript": "^2.5.1",
-    "@mentat/shadergraph": "file:./vendor/shadergraph",
-    "three": "^0.72.0"
+    "@mentat/threestrap": "file:../threestrap",
+    "@mentat/shadergraph": "file:../shadergraph"
+  },
+  "peerDependencies": {
+    "three": "0.71.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.5",
-    "@babel/preset-env": "^7.14.5",
-    "babelify": "^10.0.0",
-    "browserify": "^11.2.0",
-    "coffeeify": "^3.0.0",
     "cssauron": "^1.4.0",
+    "eslint": "^7.28.0",
+    "eslint-plugin-jasmine": "^4.1.2",
     "gulp": "^4.0.2",
-    "gulp-browserify": "^0.5.1",
     "gulp-concat": "^2.6.1",
+    "gulp-eslint": "^6.0.0",
     "gulp-jsify": "file:./vendor/gulp-jsify",
     "gulp-rename": "^2.0.0",
     "gulp-shell": "^0.8.0",
-    "gulp-uglify": "^3.0.2",
     "gulp-watch": "^5.0.1",
     "jasmine-core": "^3.7.1",
     "karma": "^6.3.3",
-    "karma-browserify": "^8.0.0",
     "karma-chrome-launcher": "^3.1.0",
-    "karma-coffee2-preprocessor": "1.0.0-rc.3",
     "karma-jasmine": "^4.0.1",
-    "vinyl-source-stream": "2.0.0",
-    "vinyl-transform": "^1.0.0"
+    "prettier": "2.3.1",
+    "stream-browserify": "^2.0.2",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.2",
+    "webpack-stream": "^6.1.2"
   },
   "author": "Steven Wittens",
   "license": "MIT"

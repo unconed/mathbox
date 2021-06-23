@@ -1,172 +1,174 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>MathBox - Readback (Manual Picking)</title>
-  <script src="../../build/mathbox-bundle.js"></script>
-  <link rel="stylesheet" href="../../build/mathbox.css">
-  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
-</head>
-<body>
-  <script>
-    var mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor', 'stats'],
-      controls: {
-        klass: THREE.OrbitControls
-      },
-      camera: {
-        fov: 60
-      },
-    });
-
-    var three = mathbox.three;
-    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
-
-    // Draw blue points inside a box
-    var blue  = new THREE.Color(0x3090FF);
-
-    var view = mathbox
-    .set({
-      scale: 720,
-      focus: 3,
-    })
-    .camera({
-      position: [2, 2, 3],
-      proxy: true,
-    });
-
-    view
-    .grid({
-      width: 4,
-      opacity: 0.5,
-      axes: [1, 3],
-      origin: [-1, -1, -1],
-    })
-    .grid({
-      width: 4,
-      opacity: 0.5,
-      axes: [1, 2],
-      origin: [-1, -1, -1],
-    })
-    .grid({
-      width: 4,
-      opacity: 0.5,
-      axes: [2, 3],
-      origin: [-1, -1, -1],
-    });
-
-    view
-    .area({
-      id: 'points',
-      centeredX: true,
-      centeredY: true,
-      width: 32,
-      height: 32,
-      axes: [1, 3],
-      expr: function (emit, x, y, i, j, t) {
-        emit(x, .5 * (Math.sin(x + t) * Math.sin(y + t)), y);
-      },
-    })
-    .area({
-      id: 'colors',
-      centeredX: true,
-      centeredY: true,
-      width: 32,
-      height: 32,
-      axes: [1, 3],
-      expr: function (emit, x, y, i, j, t) {
-        var selectedI = i == hovered[0];
-        var selectedJ = j == hovered[1];
-        var alpha = hovered != none ? ((selectedI + selectedJ) / 3 + .5) : 1;
-        emit(1, 1, 1, alpha);
-      },
-    })
-    .area({
-      id: 'indexes',
-      centeredX: true,
-      centeredY: true,
-      width: 32,
-      height: 32,
-      axes: [1, 3],
-      expr: function (emit, x, y, i, j, t) {
-        // Store I/J indices in red/green
-        // Use alpha channel to mark occupancy
-        emit(i / 255, j / 255, 0, 0);
-      },
-    })
-    .point({
-      points: '#points',
-      colors: '#colors',
-      color: blue,
-      size: 10,
-    });
-    
-    // Draw points in RTT, colored with indexes, at reduced resolution.
-    var scale = 1 / 4;
-
-    view
-    .rtt({
-      size:   'relative',
-      width:  scale,
-      height: scale,
-    })
-      .point({
-        points: '#points',
-        colors: '#indexes',
-        color: '#ffffff',
-        size: 13,
-        blending: 'no',
-      })
-    .end();
-    
-    // Readback RTT pixels
-    var readback =
-      view
-      .readback({
-        id: 'indexbuffer',
-        type: 'unsignedByte',
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Readback (Manual Picking)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/71/three.min.js"></script>
+    <script src="../../vendor/OrbitControls.js"></script>
+    <script src="../../build/mathbox-bundle.js"></script>
+    <link rel="stylesheet" href="../../build/mathbox.css" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "stats"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+        camera: {
+          fov: 60,
+        },
       });
-      
-    // Render RTT for debugging
-    /*
+
+      var three = mathbox.three;
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      // Draw blue points inside a box
+      var blue = new THREE.Color(0x3090ff);
+
+      var view = mathbox
+        .set({
+          scale: 720,
+          focus: 3,
+        })
+        .camera({
+          position: [2, 2, 3],
+          proxy: true,
+        });
+
+      view
+        .grid({
+          width: 4,
+          opacity: 0.5,
+          axes: [1, 3],
+          origin: [-1, -1, -1],
+        })
+        .grid({
+          width: 4,
+          opacity: 0.5,
+          axes: [1, 2],
+          origin: [-1, -1, -1],
+        })
+        .grid({
+          width: 4,
+          opacity: 0.5,
+          axes: [2, 3],
+          origin: [-1, -1, -1],
+        });
+
+      view
+        .area({
+          id: "points",
+          centeredX: true,
+          centeredY: true,
+          width: 32,
+          height: 32,
+          axes: [1, 3],
+          expr: function (emit, x, y, i, j, t) {
+            emit(x, 0.5 * (Math.sin(x + t) * Math.sin(y + t)), y);
+          },
+        })
+        .area({
+          id: "colors",
+          centeredX: true,
+          centeredY: true,
+          width: 32,
+          height: 32,
+          axes: [1, 3],
+          expr: function (emit, x, y, i, j, t) {
+            var selectedI = i == hovered[0];
+            var selectedJ = j == hovered[1];
+            var alpha = hovered != none ? (selectedI + selectedJ) / 3 + 0.5 : 1;
+            emit(1, 1, 1, alpha);
+          },
+        })
+        .area({
+          id: "indexes",
+          centeredX: true,
+          centeredY: true,
+          width: 32,
+          height: 32,
+          axes: [1, 3],
+          expr: function (emit, x, y, i, j, t) {
+            // Store I/J indices in red/green
+            // Use alpha channel to mark occupancy
+            emit(i / 255, j / 255, 0, 0);
+          },
+        })
+        .point({
+          points: "#points",
+          colors: "#colors",
+          color: blue,
+          size: 10,
+        });
+
+      // Draw points in RTT, colored with indexes, at reduced resolution.
+      var scale = 1 / 4;
+
+      view
+        .rtt({
+          size: "relative",
+          width: scale,
+          height: scale,
+        })
+        .point({
+          points: "#points",
+          colors: "#indexes",
+          color: "#ffffff",
+          size: 13,
+          blending: "no",
+        })
+        .end();
+
+      // Readback RTT pixels
+      var readback = view.readback({
+        id: "indexbuffer",
+        type: "unsignedByte",
+      });
+
+      // Render RTT for debugging
+      /*
     readback.compose({
       zTest: false,
     });
     //*/
-    
-    // Query readback buffer
-    var mouse    = [-1, -1];
-    var none     = [-1, -1];
-    var hovered  = none;
-    
-    var getIndexAt = function (x, y) {
-      var data = readback.get('data');
-      if (!data) {
-        return none;
-      }
 
-      x = Math.round(x * scale);
-      y = Math.round(y * scale);
-      
-      var w = readback.get('width');
-      var h = readback.get('height');
-      
-      var o = (x + w * (h - y)) * 4;
-      var r = data[o];
-      var g = data[o + 1];
-      var a = data[o + 3];
+      // Query readback buffer
+      var mouse = [-1, -1];
+      var none = [-1, -1];
+      var hovered = none;
 
-      return (a == 0) ? [r, g] : none;
-    };
+      var getIndexAt = function (x, y) {
+        var data = readback.get("data");
+        if (!data) {
+          return none;
+        }
 
-    three.canvas.addEventListener('mousemove', function (event) {
-      mouse = [event.offsetX * window.devicePixelRatio, event.offsetY * window.devicePixelRatio];
-    });
-    
-    three.on('post', function () {
-      hovered = getIndexAt(mouse[0], mouse[1]);
-    });
+        x = Math.round(x * scale);
+        y = Math.round(y * scale);
 
-  </script>
-</body>
+        var w = readback.get("width");
+        var h = readback.get("height");
+
+        var o = (x + w * (h - y)) * 4;
+        var r = data[o];
+        var g = data[o + 1];
+        var a = data[o + 3];
+
+        return a == 0 ? [r, g] : none;
+      };
+
+      three.canvas.addEventListener("mousemove", function (event) {
+        mouse = [
+          event.offsetX * window.devicePixelRatio,
+          event.offsetY * window.devicePixelRatio,
+        ];
+      });
+
+      three.on("post", function () {
+        hovered = getIndexAt(mouse[0], mouse[1]);
+      });
+    </script>
+  </body>
 </html>

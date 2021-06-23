@@ -4,11 +4,6 @@
 module.exports = function(config) {
   config.set({
 
-    // preprocess coffeescript
-    preprocessors: {
-      '**/*.coffee': ['coffee2']
-    },
-
     // base path, that will be used to resolve files and exclude
     basePath: '',
 

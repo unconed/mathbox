@@ -9,10 +9,7 @@ nvm install node
 
 ## Editing in Spacemacs
 
-Here are the [Spacemacs docs](https://develop.spacemacs.org/layers/+lang/coffeescript/README.html) for this mode.
-
 ```
-npm install -g coffeelint
 npm install -g eslint
 ```
 
@@ -22,7 +19,7 @@ When you get prompted for `lsp`, do `json-ls`.
 
 ### Spacemacs Layers
 
-- `gpu`, `coffee`...
+- `gpu`
 
 ### Safari
 

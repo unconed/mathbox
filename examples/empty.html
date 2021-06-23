@@ -1,34 +1,35 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>MathBox - Empty</title>
-  <script src="../build/mathbox-bundle.js"></script>
-  <link rel="stylesheet" href="../build/mathbox.css">
-  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
-</head>
-<body>
-  <script>
-    var mathbox = mathBox({
-      plugins: ['core', 'controls', 'cursor', 'mathbox'],
-      controls: {
-        // Orbit controls, i.e. Euler angles, with gimbal lock
-        klass: THREE.OrbitControls,
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Empty</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/71/three.min.js"></script>
+    <script src="../vendor/OrbitControls.js"></script>
+    <script src="../vendor/TrackballControls.js"></script>
+    <script src="../build/mathbox-bundle.js"></script>
+    <link rel="stylesheet" href="../build/mathbox.css" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "mathbox"],
+        controls: {
+          // Orbit controls, i.e. Euler angles, with gimbal lock
+          klass: THREE.OrbitControls,
 
-        // Trackball controls, i.e. Free quaternion rotation
-        //klass: THREE.TrackballControls,
-      },
-    });
-    if (mathbox.fallback) throw "WebGL not supported"
+          // Trackball controls, i.e. Free quaternion rotation
+          //klass: THREE.TrackballControls,
+        },
+      });
+      if (mathbox.fallback) throw "WebGL not supported";
 
-    var three = mathbox.three;
-    three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
+      var three = mathbox.three;
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
 
-
-
-    // Do stuff with mathbox,
-    // for example: (see docs/intro.md)
-    /*
+      // Do stuff with mathbox,
+      // for example: (see docs/intro.md)
+      /*
 
     // Place camera
     var camera =
@@ -57,9 +58,9 @@
         width: 3,
       })
       .grid({
-        width: 2,  
+        width: 2,
         divideX: 20,
-        divideY: 10,        
+        divideY: 10,
       });
 
     // Make axes black
@@ -78,7 +79,7 @@
         width: 64,
         channels: 2,
       });
-    
+
     // Draw a curve
     var curve =
       view
@@ -94,7 +95,7 @@
         size: 8,
         color: '#3090FF',
       });
-    
+
     // Draw vectors
     var vector =
       view.interval({
@@ -111,20 +112,20 @@
         width: 5,
         color: '#50A000',
       });
-    
+
     // Draw ticks and labels
     var scale =
       view.scale({
         divide: 10,
       });
-    
+
     var ticks =
       view.ticks({
         width: 5,
         size: 15,
         color: 'black',
       });
-    
+
     var format =
       view.format({
         digits: 2,
@@ -136,7 +137,7 @@
         color: 'red',
         zIndex: 1,
       });
-          
+
     // Animate
     var play = mathbox.play({
       target: 'cartesian',
@@ -149,10 +150,8 @@
         {props: {range: [[-2, 2], [-1, 1]]}},
       ]
     });
-            
-    //*/
 
-    
-  </script>
-</body>
+    //*/
+    </script>
+  </body>
 </html>
