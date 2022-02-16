@@ -1,9 +1,5 @@
 # MathBox
 
-### TO FILE
-
-- `webpack-stream`, delete webpack from node_modules for eslint to work. maybe pub new version.
-
 ### Presentation-quality WebGL math graphing
 
 ![MathBox](http://acko.net/files/mathbox2/cover1.jpg)
