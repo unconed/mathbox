@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "through": "~2.3.4",
-    "gulp-util": "~2.2.5"
+    "through": "~2.3.8",
+    "plugin-error": "~1.0.1",
+    "vinyl": "~2.2.1"
   },
   "scripts": {
   },
