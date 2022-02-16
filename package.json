@@ -1,43 +1,45 @@
 {
   "name": "mathbox",
-  "version": "0.0.5",
+  "version": "2.0.0",
   "description": "Presentation-quality WebGL math graphing",
   "repository": {
     "type": "git",
-    "url": "https://gitgud.io/unconed/mathbox.git"
+    "url": "https://gitgud.io/unconed/mathbox"
   },
-  "main": "build/mathbox-bundle.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "gulp test",
     "docs": "gulp docs",
     "build": "gulp"
   },
+  "prettier": {},
   "dependencies": {
-    "coffee-script": "^1.10.0",
-    "three": "^0.72.0"
+    "cssauron": "^1.4.0",
+    "shadergraph": "^2.1.0",
+    "threestrap": "^0.3.0"
+  },
+  "peerDependencies": {
+    "three": ">=0.118.0"
   },
   "devDependencies": {
-    "browserify": "^11.2.0",
-    "coffeeify": "^1.1.0",
-    "cssauron": "^1.2.0",
-    "gulp": "^3.9.0",
-    "gulp-batch": "^1.0.5",
-    "gulp-browserify": "^0.5.1",
-    "gulp-concat": "^2.6.0",
-    "gulp-karma": "0.0.5",
-    "gulp-plumber": "^1.0.1",
-    "gulp-rename": "^1.2.2",
-    "gulp-shell": "^0.5.0",
-    "gulp-uglify": "^1.4.1",
-    "gulp-util": "^3.0.6",
-    "gulp-watch": "^4.3.5",
-    "jasmine-core": "^2.3.4",
-    "karma": "^0.13.10",
-    "karma-browserify": "^4.4.0",
-    "karma-chrome-launcher": "^0.2.1",
-    "karma-coffee-preprocessor": "^0.3.0",
-    "karma-jasmine": "^0.3.6",
-    "run-sequence": "^1.1.4"
+    "eslint": "^7.28.0",
+    "eslint-plugin-jasmine": "^4.1.2",
+    "gulp": "^4.0.2",
+    "gulp-concat": "^2.6.1",
+    "gulp-eslint": "^6.0.0",
+    "gulp-jsify": "file:./vendor/gulp-jsify",
+    "gulp-rename": "^2.0.0",
+    "gulp-shell": "^0.8.0",
+    "gulp-watch": "^5.0.1",
+    "jasmine-core": "^3.7.1",
+    "karma": "^6.3.3",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-jasmine": "^4.0.1",
+    "prettier": "2.3.1",
+    "stream-browserify": "^2.0.2",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.2",
+    "webpack-stream": "^6.1.2"
   },
   "author": "Steven Wittens",
   "license": "MIT"
