@@ -189,7 +189,7 @@ class Animation {
       invalid = true;
       return null;
     });
-    if (value !== undefined) {
+    if (value !== undefined && !invalid) {
       target = value;
     }
 
