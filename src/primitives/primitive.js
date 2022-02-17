@@ -11,7 +11,7 @@
  */
 
 import * as Model from "../model";
-import { Binder } from "threestrap/src/binder.js";
+import { Binder } from "@sicmutils/threestrap/src/binder.js";
 
 export class Primitive {
   static initClass() {

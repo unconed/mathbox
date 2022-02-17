@@ -7,6 +7,12 @@
     "url": "https://gitgud.io/unconed/mathbox"
   },
   "main": "src/index.js",
+  "files": [
+    "/src",
+    "build",
+    "*.md",
+    "FUNDING.yml"
+  ],
   "scripts": {
     "test": "gulp test",
     "docs": "gulp docs",
@@ -15,8 +21,8 @@
   "prettier": {},
   "dependencies": {
     "cssauron": "^1.4.0",
-    "shadergraph": "^2.1.0",
-    "threestrap": "^0.3.0"
+    "shadergraph": "^2.1.1",
+    "@sicmutils/threestrap": "^0.3.0"
   },
   "peerDependencies": {
     "three": ">=0.118.0"

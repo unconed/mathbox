@@ -11,7 +11,7 @@
  */
 
 import * as Pretty from "../util/pretty.js";
-import { Binder } from "threestrap/src/binder.js";
+import { Binder } from "@sicmutils/threestrap/src/binder.js";
 
 let nodeIndex = 0;
 
