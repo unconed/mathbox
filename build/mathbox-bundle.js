@@ -3487,6 +3487,2224 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
 
 /***/ }),
 
+/***/ 706:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var parse = __webpack_require__(324)
+
+module.exports = parseArray
+
+function parseArray(tokens) {
+  var parser = parse()
+
+  for (var i = 0; i < tokens.length; i++) {
+    parser(tokens[i])
+  }
+
+  return parser(null)
+}
+
+
+/***/ }),
+
+/***/ 268:
+/***/ ((module) => {
+
+var state
+  , token
+  , tokens
+  , idx
+
+var original_symbol = {
+    nud: function() { return this.children && this.children.length ? this : fail('unexpected')() }
+  , led: fail('missing operator')
+}
+
+var symbol_table = {}
+
+function itself() {
+  return this
+}
+
+symbol('(ident)').nud = itself
+symbol('(keyword)').nud = itself
+symbol('(builtin)').nud = itself
+symbol('(literal)').nud = itself
+symbol('(end)')
+
+symbol(':')
+symbol(';')
+symbol(',')
+symbol(')')
+symbol(']')
+symbol('}')
+
+infixr('&&', 30)
+infixr('||', 30)
+infix('|', 43)
+infix('^', 44)
+infix('&', 45)
+infix('==', 46)
+infix('!=', 46)
+infix('<', 47)
+infix('<=', 47)
+infix('>', 47)
+infix('>=', 47)
+infix('>>', 48)
+infix('<<', 48)
+infix('+', 50)
+infix('-', 50)
+infix('*', 60)
+infix('/', 60)
+infix('%', 60)
+infix('?', 20, function(left) {
+  this.children = [left, expression(0), (advance(':'), expression(0))]
+  this.type = 'ternary'
+  return this
+})
+infix('.', 80, function(left) {
+  token.type = 'literal'
+  state.fake(token)
+  this.children = [left, token]
+  advance()
+  return this
+})
+infix('[', 80, function(left) {
+  this.children = [left, expression(0)]
+  this.type = 'binary'
+  advance(']')
+  return this
+})
+infix('(', 80, function(left) {
+  this.children = [left]
+  this.type = 'call'
+
+  if(token.data !== ')') while(1) {
+    this.children.push(expression(0))
+    if(token.data !== ',') break
+    advance(',')
+  }
+  advance(')')
+  return this
+})
+
+prefix('-')
+prefix('+')
+prefix('!')
+prefix('~')
+prefix('defined')
+prefix('(', function() {
+  this.type = 'group'
+  this.children = [expression(0)]
+  advance(')')
+  return this
+})
+prefix('++')
+prefix('--')
+suffix('++')
+suffix('--')
+
+assignment('=')
+assignment('+=')
+assignment('-=')
+assignment('*=')
+assignment('/=')
+assignment('%=')
+assignment('&=')
+assignment('|=')
+assignment('^=')
+assignment('>>=')
+assignment('<<=')
+
+module.exports = function(incoming_state, incoming_tokens) {
+  state = incoming_state
+  tokens = incoming_tokens
+  idx = 0
+  var result
+
+  if(!tokens.length) return
+
+  advance()
+  result = expression(0)
+  result.parent = state[0]
+  emit(result)
+
+  if(idx < tokens.length) {
+    throw new Error('did not use all tokens')
+  }
+
+  result.parent.children = [result]
+
+  function emit(node) {
+    state.unshift(node, false)
+    for(var i = 0, len = node.children.length; i < len; ++i) {
+      emit(node.children[i])
+    }
+    state.shift()
+  }
+
+}
+
+function symbol(id, binding_power) {
+  var sym = symbol_table[id]
+  binding_power = binding_power || 0
+  if(sym) {
+    if(binding_power > sym.lbp) {
+      sym.lbp = binding_power
+    }
+  } else {
+    sym = Object.create(original_symbol)
+    sym.id = id
+    sym.lbp = binding_power
+    symbol_table[id] = sym
+  }
+  return sym
+}
+
+function expression(rbp) {
+  var left, t = token
+  advance()
+
+  left = t.nud()
+  while(rbp < token.lbp) {
+    t = token
+    advance()
+    left = t.led(left)
+  }
+  return left
+}
+
+function infix(id, bp, led) {
+  var sym = symbol(id, bp)
+  sym.led = led || function(left) {
+    this.children = [left, expression(bp)]
+    this.type = 'binary'
+    return this
+  }
+}
+
+function infixr(id, bp, led) {
+  var sym = symbol(id, bp)
+  sym.led = led || function(left) {
+    this.children = [left, expression(bp - 1)]
+    this.type = 'binary'
+    return this
+  }
+  return sym
+}
+
+function prefix(id, nud) {
+  var sym = symbol(id)
+  sym.nud = nud || function() {
+    this.children = [expression(70)]
+    this.type = 'unary'
+    return this
+  }
+  return sym
+}
+
+function suffix(id) {
+  var sym = symbol(id, 150)
+  sym.led = function(left) {
+    this.children = [left]
+    this.type = 'suffix'
+    return this
+  }
+}
+
+function assignment(id) {
+  return infixr(id, 10, function(left) {
+    this.children = [left, expression(9)]
+    this.assignment = true
+    this.type = 'assign'
+    return this
+  })
+}
+
+function advance(id) {
+  var next
+    , value
+    , type
+    , output
+
+  if(id && token.data !== id) {
+    return state.unexpected('expected `'+ id + '`, got `'+token.data+'`')
+  }
+
+  if(idx >= tokens.length) {
+    token = symbol_table['(end)']
+    return
+  }
+
+  next = tokens[idx++]
+  value = next.data
+  type = next.type
+
+  if(type === 'ident') {
+    output = state.scope.find(value) || state.create_node()
+    type = output.type
+  } else if(type === 'builtin') {
+    output = symbol_table['(builtin)']
+  } else if(type === 'keyword') {
+    output = symbol_table['(keyword)']
+  } else if(type === 'operator') {
+    output = symbol_table[value]
+    if(!output) {
+      return state.unexpected('unknown operator `'+value+'`')
+    }
+  } else if(type === 'float' || type === 'integer') {
+    type = 'literal'
+    output = symbol_table['(literal)']
+  } else {
+    return state.unexpected('unexpected token.')
+  }
+
+  if(output) {
+    if(!output.nud) { output.nud = itself }
+    if(!output.children) { output.children = [] }
+  }
+
+  output = Object.create(output)
+  output.token = next
+  output.type = type
+  if(!output.data) output.data = value
+
+  return token = output
+}
+
+function fail(message) {
+  return function() { return state.unexpected(message) }
+}
+
+
+/***/ }),
+
+/***/ 324:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+module.exports = parser
+
+var full_parse_expr = __webpack_require__(268)
+  , Scope = __webpack_require__(745)
+
+// singleton!
+var Advance = new Object
+
+var DEBUG = false
+
+var _ = 0
+  , IDENT = _++
+  , STMT = _++
+  , STMTLIST = _++
+  , STRUCT = _++
+  , FUNCTION = _++
+  , FUNCTIONARGS = _++
+  , DECL = _++
+  , DECLLIST = _++
+  , FORLOOP = _++
+  , WHILELOOP = _++
+  , IF = _++
+  , EXPR = _++
+  , PRECISION = _++
+  , COMMENT = _++
+  , PREPROCESSOR = _++
+  , KEYWORD = _++
+  , KEYWORD_OR_IDENT = _++
+  , RETURN = _++
+  , BREAK = _++
+  , CONTINUE = _++
+  , DISCARD = _++
+  , DOWHILELOOP = _++
+  , PLACEHOLDER = _++
+  , QUANTIFIER = _++
+
+var DECL_ALLOW_ASSIGN = 0x1
+  , DECL_ALLOW_COMMA = 0x2
+  , DECL_REQUIRE_NAME = 0x4
+  , DECL_ALLOW_INVARIANT = 0x8
+  , DECL_ALLOW_STORAGE = 0x10
+  , DECL_NO_INOUT = 0x20
+  , DECL_ALLOW_STRUCT = 0x40
+  , DECL_STATEMENT = 0xFF
+  , DECL_FUNCTION = DECL_STATEMENT & ~(DECL_ALLOW_ASSIGN | DECL_ALLOW_COMMA | DECL_NO_INOUT | DECL_ALLOW_INVARIANT | DECL_REQUIRE_NAME)
+  , DECL_STRUCT = DECL_STATEMENT & ~(DECL_ALLOW_ASSIGN | DECL_ALLOW_INVARIANT | DECL_ALLOW_STORAGE | DECL_ALLOW_STRUCT)
+
+var QUALIFIERS = (/* unused pure expression or super */ null && (['const', 'attribute', 'uniform', 'varying']))
+
+var NO_ASSIGN_ALLOWED = false
+  , NO_COMMA_ALLOWED = false
+
+// map of tokens to stmt types
+var token_map = {
+    'block-comment': COMMENT
+  , 'line-comment': COMMENT
+  , 'preprocessor': PREPROCESSOR
+}
+
+// map of stmt types to human
+var stmt_type = _ = [
+    'ident'
+  , 'stmt'
+  , 'stmtlist'
+  , 'struct'
+  , 'function'
+  , 'functionargs'
+  , 'decl'
+  , 'decllist'
+  , 'forloop'
+  , 'whileloop'
+  , 'if'
+  , 'expr'
+  , 'precision'
+  , 'comment'
+  , 'preprocessor'
+  , 'keyword'
+  , 'keyword_or_ident'
+  , 'return'
+  , 'break'
+  , 'continue'
+  , 'discard'
+  , 'do-while'
+  , 'placeholder'
+  , 'quantifier'
+]
+
+function parser() {
+  var stmtlist = n(STMTLIST)
+    , stmt = n(STMT)
+    , decllist = n(DECLLIST)
+    , precision = n(PRECISION)
+    , ident = n(IDENT)
+    , keyword_or_ident = n(KEYWORD_OR_IDENT)
+    , fn = n(FUNCTION)
+    , fnargs = n(FUNCTIONARGS)
+    , forstmt = n(FORLOOP)
+    , ifstmt = n(IF)
+    , whilestmt = n(WHILELOOP)
+    , returnstmt = n(RETURN)
+    , dowhilestmt = n(DOWHILELOOP)
+    , quantifier = n(QUANTIFIER)
+
+  var parse_struct
+    , parse_precision
+    , parse_quantifier
+    , parse_forloop
+    , parse_if
+    , parse_return
+    , parse_whileloop
+    , parse_dowhileloop
+    , parse_function
+    , parse_function_args
+
+  var check = arguments.length ? [].slice.call(arguments) : []
+    , complete = false
+    , ended = false
+    , depth = 0
+    , state = []
+    , nodes = []
+    , tokens = []
+    , whitespace = []
+    , errored = false
+    , program
+    , token
+    , node
+
+  // setup state
+  state.shift = special_shift
+  state.unshift = special_unshift
+  state.fake = special_fake
+  state.unexpected = unexpected
+  state.scope = new Scope(state)
+  state.create_node = function() {
+    var n = mknode(IDENT, token)
+    n.parent = reader.program
+    return n
+  }
+
+  setup_stative_parsers()
+
+  // setup root node
+  node = stmtlist()
+  node.expecting = '(eof)'
+  node.mode = STMTLIST
+  node.token = {type: '(program)', data: '(program)'}
+  program = node
+
+  reader.program = program
+  reader.scope = function(scope) {
+    if(arguments.length === 1) {
+      state.scope = scope
+    }
+    return state.scope
+  }
+
+  state.unshift(node)
+  return reader
+
+  function reader(data) {
+    if (data === null) {
+      return end(), program
+    }
+
+    nodes = []
+    write(data)
+    return nodes
+  }
+
+  // stream functions ---------------------------------------------
+
+  function write(input) {
+    if(input.type === 'whitespace' || input.type === 'line-comment' || input.type === 'block-comment') {
+
+      whitespace.push(input)
+      return
+    }
+    tokens.push(input)
+    token = token || tokens[0]
+
+    if(token && whitespace.length) {
+      token.preceding = token.preceding || []
+      token.preceding = token.preceding.concat(whitespace)
+      whitespace = []
+    }
+
+    while(take()) switch(state[0].mode) {
+      case STMT: parse_stmt(); break
+      case STMTLIST: parse_stmtlist(); break
+      case DECL: parse_decl(); break
+      case DECLLIST: parse_decllist(); break
+      case EXPR: parse_expr(); break
+      case STRUCT: parse_struct(true, true); break
+      case PRECISION: parse_precision(); break
+      case IDENT: parse_ident(); break
+      case KEYWORD: parse_keyword(); break
+      case KEYWORD_OR_IDENT: parse_keyword_or_ident(); break
+      case FUNCTION: parse_function(); break
+      case FUNCTIONARGS: parse_function_args(); break
+      case FORLOOP: parse_forloop(); break
+      case WHILELOOP: parse_whileloop(); break
+      case DOWHILELOOP: parse_dowhileloop(); break
+      case RETURN: parse_return(); break
+      case IF: parse_if(); break
+      case QUANTIFIER: parse_quantifier(); break
+    }
+  }
+
+  function end(tokens) {
+    if(arguments.length) {
+      write(tokens)
+    }
+
+    if(state.length > 1) {
+      unexpected('unexpected EOF')
+      return
+    }
+
+    complete = true
+  }
+
+  function take() {
+    if(errored || !state.length)
+      return false
+
+    return (token = tokens[0])
+  }
+
+  // ----- state manipulation --------
+
+  function special_fake(x) {
+    state.unshift(x)
+    state.shift()
+  }
+
+  function special_unshift(_node, add_child) {
+    _node.parent = state[0]
+
+    var ret = [].unshift.call(this, _node)
+
+    add_child = add_child === undefined ? true : add_child
+
+    if(DEBUG) {
+      var pad = ''
+      for(var i = 0, len = this.length - 1; i < len; ++i) {
+        pad += ' |'
+      }
+      console.log(pad, '\\'+_node.type, _node.token.data)
+    }
+
+    if(add_child && node !== _node) node.children.push(_node)
+    node = _node
+
+    return ret
+  }
+
+  function special_shift() {
+    var _node = [].shift.call(this)
+      , okay = check[this.length]
+      , emit = false
+
+    if(DEBUG) {
+      var pad = ''
+      for(var i = 0, len = this.length; i < len; ++i) {
+        pad += ' |'
+      }
+      console.log(pad, '/'+_node.type)
+    }
+
+    if(check.length) {
+      if(typeof check[0] === 'function') {
+        emit = check[0](_node)
+      } else if(okay !== undefined) {
+        emit = okay.test ? okay.test(_node.type) : okay === _node.type
+      }
+    } else {
+      emit = true
+    }
+
+    if(emit && !errored) nodes.push(_node)
+
+    node = _node.parent
+    return _node
+  }
+
+  // parse states ---------------
+
+  function parse_stmtlist() {
+    // determine the type of the statement
+    // and then start parsing
+    return stative(
+      function() { state.scope.enter(); return Advance }
+    , normal_mode
+    )()
+
+    function normal_mode() {
+      if(token.data === state[0].expecting) {
+        return state.scope.exit(), state.shift()
+      }
+      switch(token.type) {
+        case 'preprocessor':
+          state.fake(adhoc())
+          tokens.shift()
+        return
+        default:
+          state.unshift(stmt())
+        return
+      }
+    }
+  }
+
+  function parse_stmt() {
+    if(state[0].brace) {
+      if(token.data !== '}') {
+        return unexpected('expected `}`, got '+token.data)
+      }
+      state[0].brace = false
+      return tokens.shift(), state.shift()
+    }
+    switch(token.type) {
+      case 'eof': return got_eof()
+      case 'keyword':
+        switch(token.data) {
+          case 'for': return state.unshift(forstmt());
+          case 'if': return state.unshift(ifstmt());
+          case 'while': return state.unshift(whilestmt());
+          case 'do': return state.unshift(dowhilestmt());
+          case 'break': return state.fake(mknode(BREAK, token)), tokens.shift()
+          case 'continue': return state.fake(mknode(CONTINUE, token)), tokens.shift()
+          case 'discard': return state.fake(mknode(DISCARD, token)), tokens.shift()
+          case 'return': return state.unshift(returnstmt());
+          case 'precision': return state.unshift(precision());
+        }
+        return state.unshift(decl(DECL_STATEMENT))
+      case 'ident':
+        var lookup
+        if(lookup = state.scope.find(token.data)) {
+          if(lookup.parent.type === 'struct') {
+            // this is strictly untrue, you could have an
+            // expr that starts with a struct constructor.
+            //      ... sigh
+            return state.unshift(decl(DECL_STATEMENT))
+          }
+          return state.unshift(expr(';'))
+        }
+      case 'operator':
+        if(token.data === '{') {
+          state[0].brace = true
+          var n = stmtlist()
+          n.expecting = '}'
+          return tokens.shift(), state.unshift(n)
+        }
+        if(token.data === ';') {
+          return tokens.shift(), state.shift()
+        }
+      default: return state.unshift(expr(';'))
+    }
+  }
+
+  function got_eof() {
+    if (ended) errored = true
+    ended = true
+    return state.shift()
+  }
+
+  function parse_decl() {
+    var stmt = state[0]
+
+    return stative(
+      invariant_or_not,
+      storage_or_not,
+      parameter_or_not,
+      precision_or_not,
+      struct_or_type,
+      maybe_name,
+      maybe_lparen,     // lparen means we're a function
+      is_decllist,
+      done
+    )()
+
+    function invariant_or_not() {
+      if(token.data === 'invariant') {
+        if(stmt.flags & DECL_ALLOW_INVARIANT) {
+          state.unshift(keyword())
+          return Advance
+        } else {
+          return unexpected('`invariant` is not allowed here')
+        }
+      } else {
+        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
+        return Advance
+      }
+    }
+
+    function storage_or_not() {
+      if(is_storage(token)) {
+        if(stmt.flags & DECL_ALLOW_STORAGE) {
+          state.unshift(keyword())
+          return Advance
+        } else {
+          return unexpected('storage is not allowed here')
+        }
+      } else {
+        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
+        return Advance
+      }
+    }
+
+    function parameter_or_not() {
+      if(is_parameter(token)) {
+        if(!(stmt.flags & DECL_NO_INOUT)) {
+          state.unshift(keyword())
+          return Advance
+        } else {
+          return unexpected('parameter is not allowed here')
+        }
+      } else {
+        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
+        return Advance
+      }
+    }
+
+    function precision_or_not() {
+      if(is_precision(token)) {
+        state.unshift(keyword())
+        return Advance
+      } else {
+        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
+        return Advance
+      }
+    }
+
+    function struct_or_type() {
+      if(token.data === 'struct') {
+        if(!(stmt.flags & DECL_ALLOW_STRUCT)) {
+          return unexpected('cannot nest structs')
+        }
+        state.unshift(struct())
+        return Advance
+      }
+
+      if(token.type === 'keyword') {
+        state.unshift(keyword())
+        return Advance
+      }
+
+      var lookup = state.scope.find(token.data)
+
+      if(lookup) {
+        state.fake(Object.create(lookup))
+        tokens.shift()
+        return Advance
+      }
+      return unexpected('expected user defined type, struct or keyword, got '+token.data)
+    }
+
+    function maybe_name() {
+      if(token.data === ',' && !(stmt.flags & DECL_ALLOW_COMMA)) {
+        return state.shift()
+      }
+
+      if(token.data === '[') {
+        // oh lord.
+        state.unshift(quantifier())
+        return
+      }
+
+      if(token.data === ')') return state.shift()
+
+      if(token.data === ';') {
+        return stmt.stage + 3
+      }
+
+      if(token.type !== 'ident' && token.type !== 'builtin') {
+        return unexpected('expected identifier, got '+token.data)
+      }
+
+      stmt.collected_name = tokens.shift()
+      return Advance
+    }
+
+    function maybe_lparen() {
+      if(token.data === '(') {
+        tokens.unshift(stmt.collected_name)
+        delete stmt.collected_name
+        state.unshift(fn())
+        return stmt.stage + 2
+      }
+      return Advance
+    }
+
+    function is_decllist() {
+      tokens.unshift(stmt.collected_name)
+      delete stmt.collected_name
+      state.unshift(decllist())
+      return Advance
+    }
+
+    function done() {
+      return state.shift()
+    }
+  }
+
+  function parse_decllist() {
+    // grab ident
+
+    if(token.type === 'ident' || token.type === 'builtin') {
+      var name = token.data
+      state.unshift(ident())
+      state.scope.define(name)
+      return
+    }
+
+    if(token.type === 'operator') {
+
+      if(token.data === ',') {
+        // multi-decl!
+        if(!(state[1].flags & DECL_ALLOW_COMMA)) {
+          return state.shift()
+        }
+
+        return tokens.shift()
+      } else if(token.data === '=') {
+        if(!(state[1].flags & DECL_ALLOW_ASSIGN)) return unexpected('`=` is not allowed here.')
+
+        tokens.shift()
+
+        state.unshift(expr(',', ';'))
+        return
+      } else if(token.data === '[') {
+        state.unshift(quantifier())
+        return
+      }
+    }
+    return state.shift()
+  }
+
+  function parse_keyword_or_ident() {
+    if(token.type === 'keyword') {
+      state[0].type = 'keyword'
+      state[0].mode = KEYWORD
+      return
+    }
+
+    if(token.type === 'ident') {
+      state[0].type = 'ident'
+      state[0].mode = IDENT
+      return
+    }
+
+    return unexpected('expected keyword or user-defined name, got '+token.data)
+  }
+
+  function parse_keyword() {
+    if(token.type !== 'keyword') {
+      return unexpected('expected keyword, got '+token.data)
+    }
+
+    return state.shift(), tokens.shift()
+  }
+
+  function parse_ident() {
+    if(token.type !== 'ident' && token.type !== 'builtin') {
+      return unexpected('expected user-defined name, got '+token.data)
+    }
+
+    state[0].data = token.data
+    return state.shift(), tokens.shift()
+  }
+
+
+  function parse_expr() {
+    var expecting = state[0].expecting
+
+    state[0].tokens = state[0].tokens || []
+
+    if(state[0].parenlevel === undefined) {
+      state[0].parenlevel = 0
+      state[0].bracelevel = 0
+    }
+    if(state[0].parenlevel < 1 && expecting.indexOf(token.data) > -1) {
+      return parseexpr(state[0].tokens)
+    }
+    if(token.data === '(') {
+      ++state[0].parenlevel
+    } else if(token.data === ')') {
+      --state[0].parenlevel
+    }
+
+    switch(token.data) {
+      case '{': ++state[0].bracelevel; break
+      case '}': --state[0].bracelevel; break
+      case '(': ++state[0].parenlevel; break
+      case ')': --state[0].parenlevel; break
+    }
+
+    if(state[0].parenlevel < 0) return unexpected('unexpected `)`')
+    if(state[0].bracelevel < 0) return unexpected('unexpected `}`')
+
+    state[0].tokens.push(tokens.shift())
+    return
+
+    function parseexpr(tokens) {
+      try {
+        full_parse_expr(state, tokens)
+      } catch(err) {
+        errored = true
+        throw err
+      }
+
+      return state.shift()
+    }
+  }
+
+  // node types ---------------
+
+  function n(type) {
+    // this is a function factory that suffices for most kinds of expressions and statements
+    return function() {
+      return mknode(type, token)
+    }
+  }
+
+  function adhoc() {
+    return mknode(token_map[token.type], token, node)
+  }
+
+  function decl(flags) {
+    var _ = mknode(DECL, token, node)
+    _.flags = flags
+
+    return _
+  }
+
+  function struct(allow_assign, allow_comma) {
+    var _ = mknode(STRUCT, token, node)
+    _.allow_assign = allow_assign === undefined ? true : allow_assign
+    _.allow_comma = allow_comma === undefined ? true : allow_comma
+    return _
+  }
+
+  function expr() {
+    var n = mknode(EXPR, token, node)
+
+    n.expecting = [].slice.call(arguments)
+    return n
+  }
+
+  function keyword(default_value) {
+    var t = token
+    if(default_value) {
+      t = {'type': '(implied)', data: '(default)', position: t.position}
+    }
+    return mknode(KEYWORD, t, node)
+  }
+
+  // utils ----------------------------
+
+  function unexpected(str) {
+    errored = true
+    throw new Error(
+      (str || 'unexpected '+state) +
+      ' at line '+state[0].token.line
+    )
+  }
+
+  function assert(type, data) {
+    return 1,
+      assert_null_string_or_array(type, token.type) &&
+      assert_null_string_or_array(data, token.data)
+  }
+
+  function assert_null_string_or_array(x, y) {
+    switch(typeof x) {
+      case 'string': if(y !== x) {
+        unexpected('expected `'+x+'`, got '+y+'\n'+token.data);
+      } return !errored
+
+      case 'object': if(x && x.indexOf(y) === -1) {
+        unexpected('expected one of `'+x.join('`, `')+'`, got '+y);
+      } return !errored
+    }
+    return true
+  }
+
+  // stative ----------------------------
+
+  function stative() {
+    var steps = [].slice.call(arguments)
+      , step
+      , result
+
+    return function() {
+      var current = state[0]
+
+      current.stage || (current.stage = 0)
+
+      step = steps[current.stage]
+      if(!step) return unexpected('parser in undefined state!')
+
+      result = step()
+
+      if(result === Advance) return ++current.stage
+      if(result === undefined) return
+      current.stage = result
+    }
+  }
+
+  function advance(op, t) {
+    t = t || 'operator'
+    return function() {
+      if(!assert(t, op)) return
+
+      var last = tokens.shift()
+        , children = state[0].children
+        , last_node = children[children.length - 1]
+
+      if(last_node && last_node.token && last.preceding) {
+        last_node.token.succeeding = last_node.token.succeeding || []
+        last_node.token.succeeding = last_node.token.succeeding.concat(last.preceding)
+      }
+      return Advance
+    }
+  }
+
+  function advance_expr(until) {
+    return function() {
+      state.unshift(expr(until))
+      return Advance
+    }
+  }
+
+  function advance_ident(declare) {
+    return declare ? function() {
+      var name = token.data
+      return assert('ident') && (state.unshift(ident()), state.scope.define(name), Advance)
+    } :  function() {
+      if(!assert('ident')) return
+
+      var s = Object.create(state.scope.find(token.data))
+      s.token = token
+
+      return (tokens.shift(), Advance)
+    }
+  }
+
+  function advance_stmtlist() {
+    return function() {
+      var n = stmtlist()
+      n.expecting = '}'
+      return state.unshift(n), Advance
+    }
+  }
+
+  function maybe_stmtlist(skip) {
+    return function() {
+      var current = state[0].stage
+      if(token.data !== '{') { return state.unshift(stmt()), current + skip }
+      return tokens.shift(), Advance
+    }
+  }
+
+  function popstmt() {
+    return function() { return state.shift(), state.shift() }
+  }
+
+
+  function setup_stative_parsers() {
+
+    // could also be
+    // struct { } decllist
+    parse_struct =
+        stative(
+          advance('struct', 'keyword')
+        , function() {
+            if(token.data === '{') {
+              state.fake(mknode(IDENT, {data:'', position: token.position, type:'ident'}))
+              return Advance
+            }
+
+            return advance_ident(true)()
+          }
+        , function() { state.scope.enter(); return Advance }
+        , advance('{')
+        , function() {
+            if(token.type === 'preprocessor') {
+              state.fake(adhoc())
+              tokens.shift()
+              return
+            }
+            if(token.data === '}') {
+              state.scope.exit()
+              tokens.shift()
+              return state.shift()
+            }
+            if(token.data === ';') { tokens.shift(); return }
+            state.unshift(decl(DECL_STRUCT))
+          }
+        )
+
+    parse_precision =
+        stative(
+          function() { return tokens.shift(), Advance }
+        , function() {
+            return assert(
+            'keyword', ['lowp', 'mediump', 'highp']
+            ) && (state.unshift(keyword()), Advance)
+          }
+        , function() { return (state.unshift(keyword()), Advance) }
+        , function() { return state.shift() }
+        )
+
+    parse_quantifier =
+        stative(
+          advance('[')
+        , advance_expr(']')
+        , advance(']')
+        , function() { return state.shift() }
+        )
+
+    parse_forloop =
+        stative(
+          advance('for', 'keyword')
+        , advance('(')
+        , function() {
+            var lookup
+            if(token.type === 'ident') {
+              if(!(lookup = state.scope.find(token.data))) {
+                lookup = state.create_node()
+              }
+
+              if(lookup.parent.type === 'struct') {
+                return state.unshift(decl(DECL_STATEMENT)), Advance
+              }
+            } else if(token.type === 'builtin' || token.type === 'keyword') {
+              return state.unshift(decl(DECL_STATEMENT)), Advance
+            }
+            return advance_expr(';')()
+          }
+        , advance(';')
+        , advance_expr(';')
+        , advance(';')
+        , advance_expr(')')
+        , advance(')')
+        , maybe_stmtlist(3)
+        , advance_stmtlist()
+        , advance('}')
+        , popstmt()
+        )
+
+    parse_if =
+        stative(
+          advance('if', 'keyword')
+        , advance('(')
+        , advance_expr(')')
+        , advance(')')
+        , maybe_stmtlist(3)
+        , advance_stmtlist()
+        , advance('}')
+        , function() {
+            if(token.data === 'else') {
+              return tokens.shift(), state.unshift(stmt()), Advance
+            }
+            return popstmt()()
+          }
+        , popstmt()
+        )
+
+    parse_return =
+        stative(
+          advance('return', 'keyword')
+        , function() {
+            if(token.data === ';') return Advance
+            return state.unshift(expr(';')), Advance
+          }
+        , function() { tokens.shift(), popstmt()() }
+        )
+
+    parse_whileloop =
+        stative(
+          advance('while', 'keyword')
+        , advance('(')
+        , advance_expr(')')
+        , advance(')')
+        , maybe_stmtlist(3)
+        , advance_stmtlist()
+        , advance('}')
+        , popstmt()
+        )
+
+    parse_dowhileloop =
+      stative(
+        advance('do', 'keyword')
+      , maybe_stmtlist(3)
+      , advance_stmtlist()
+      , advance('}')
+      , advance('while', 'keyword')
+      , advance('(')
+      , advance_expr(')')
+      , advance(')')
+      , popstmt()
+      )
+
+    parse_function =
+      stative(
+        function() {
+          for(var i = 1, len = state.length; i < len; ++i) if(state[i].mode === FUNCTION) {
+            return unexpected('function definition is not allowed within another function')
+          }
+
+          return Advance
+        }
+      , function() {
+          if(!assert("ident")) return
+
+          var name = token.data
+            , lookup = state.scope.find(name)
+
+          state.unshift(ident())
+          state.scope.define(name)
+
+          state.scope.enter(lookup ? lookup.scope : null)
+          return Advance
+        }
+      , advance('(')
+      , function() { return state.unshift(fnargs()), Advance }
+      , advance(')')
+      , function() {
+          // forward decl
+          if(token.data === ';') {
+            return state.scope.exit(), state.shift(), state.shift()
+          }
+          return Advance
+        }
+      , advance('{')
+      , advance_stmtlist()
+      , advance('}')
+      , function() { state.scope.exit(); return Advance }
+      , function() { return state.shift(), state.shift(), state.shift() }
+      )
+
+    parse_function_args =
+      stative(
+        function() {
+          if(token.data === 'void') { state.fake(keyword()); tokens.shift(); return Advance }
+          if(token.data === ')') { state.shift(); return }
+          if(token.data === 'struct') {
+            state.unshift(struct(NO_ASSIGN_ALLOWED, NO_COMMA_ALLOWED))
+            return Advance
+          }
+          state.unshift(decl(DECL_FUNCTION))
+          return Advance
+        }
+      , function() {
+          if(token.data === ',') { tokens.shift(); return 0 }
+          if(token.data === ')') { state.shift(); return }
+          unexpected('expected one of `,` or `)`, got '+token.data)
+        }
+      )
+  }
+}
+
+function mknode(mode, sourcetoken) {
+  return {
+      mode: mode
+    , token: sourcetoken
+    , children: []
+    , type: stmt_type[mode]
+    , id: (Math.random() * 0xFFFFFFFF).toString(16)
+  }
+}
+
+function is_storage(token) {
+  return token.data === 'const' ||
+         token.data === 'attribute' ||
+         token.data === 'uniform' ||
+         token.data === 'varying'
+}
+
+function is_parameter(token) {
+  return token.data === 'in' ||
+         token.data === 'inout' ||
+         token.data === 'out'
+}
+
+function is_precision(token) {
+  return token.data === 'highp' ||
+         token.data === 'mediump' ||
+         token.data === 'lowp'
+}
+
+
+/***/ }),
+
+/***/ 745:
+/***/ ((module) => {
+
+module.exports = scope
+
+function scope(state) {
+  if(this.constructor !== scope)
+    return new scope(state)
+
+  this.state = state
+  this.scopes = []
+  this.current = null
+}
+
+var cons = scope
+  , proto = cons.prototype
+
+proto.enter = function(s) {
+  this.scopes.push(
+    this.current = this.state[0].scope = s || {}
+  )
+}
+
+proto.exit = function() {
+  this.scopes.pop()
+  this.current = this.scopes[this.scopes.length - 1]
+}
+
+proto.define = function(str) {
+  this.current[str] = this.state[0]
+}
+
+proto.find = function(name, fail) {
+  for(var i = this.scopes.length - 1; i > -1; --i) {
+    if(this.scopes[i].hasOwnProperty(name)) {
+      return this.scopes[i][name]
+    }
+  }
+
+  return null
+}
+
+
+/***/ }),
+
+/***/ 460:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+module.exports = tokenize
+
+var literals100 = __webpack_require__(529)
+  , operators = __webpack_require__(679)
+  , builtins100 = __webpack_require__(222)
+  , literals300es = __webpack_require__(914)
+  , builtins300es = __webpack_require__(537)
+
+var NORMAL = 999          // <-- never emitted
+  , TOKEN = 9999          // <-- never emitted
+  , BLOCK_COMMENT = 0
+  , LINE_COMMENT = 1
+  , PREPROCESSOR = 2
+  , OPERATOR = 3
+  , INTEGER = 4
+  , FLOAT = 5
+  , IDENT = 6
+  , BUILTIN = 7
+  , KEYWORD = 8
+  , WHITESPACE = 9
+  , EOF = 10
+  , HEX = 11
+
+var map = [
+    'block-comment'
+  , 'line-comment'
+  , 'preprocessor'
+  , 'operator'
+  , 'integer'
+  , 'float'
+  , 'ident'
+  , 'builtin'
+  , 'keyword'
+  , 'whitespace'
+  , 'eof'
+  , 'integer'
+]
+
+function tokenize(opt) {
+  var i = 0
+    , total = 0
+    , mode = NORMAL
+    , c
+    , last
+    , content = []
+    , tokens = []
+    , token_idx = 0
+    , token_offs = 0
+    , line = 1
+    , col = 0
+    , start = 0
+    , isnum = false
+    , isoperator = false
+    , input = ''
+    , len
+
+  opt = opt || {}
+  var allBuiltins = builtins100
+  var allLiterals = literals100
+  if (opt.version === '300 es') {
+    allBuiltins = builtins300es
+    allLiterals = literals300es
+  }
+
+  // cache by name
+  var builtinsDict = {}, literalsDict = {}
+  for (var i = 0; i < allBuiltins.length; i++) {
+    builtinsDict[allBuiltins[i]] = true
+  }
+  for (var i = 0; i < allLiterals.length; i++) {
+    literalsDict[allLiterals[i]] = true
+  }
+
+  return function(data) {
+    tokens = []
+    if (data !== null) return write(data)
+    return end()
+  }
+
+  function token(data) {
+    if (data.length) {
+      tokens.push({
+        type: map[mode]
+      , data: data
+      , position: start
+      , line: line
+      , column: col
+      })
+    }
+  }
+
+  function write(chunk) {
+    i = 0
+
+    if (chunk.toString) chunk = chunk.toString()
+
+    input += chunk.replace(/\r\n/g, '\n')
+    len = input.length
+
+
+    var last
+
+    while(c = input[i], i < len) {
+      last = i
+
+      switch(mode) {
+        case BLOCK_COMMENT: i = block_comment(); break
+        case LINE_COMMENT: i = line_comment(); break
+        case PREPROCESSOR: i = preprocessor(); break
+        case OPERATOR: i = operator(); break
+        case INTEGER: i = integer(); break
+        case HEX: i = hex(); break
+        case FLOAT: i = decimal(); break
+        case TOKEN: i = readtoken(); break
+        case WHITESPACE: i = whitespace(); break
+        case NORMAL: i = normal(); break
+      }
+
+      if(last !== i) {
+        switch(input[last]) {
+          case '\n': col = 0; ++line; break
+          default: ++col; break
+        }
+      }
+    }
+
+    total += i
+    input = input.slice(i)
+    return tokens
+  }
+
+  function end(chunk) {
+    if(content.length) {
+      token(content.join(''))
+    }
+
+    mode = EOF
+    token('(eof)')
+    return tokens
+  }
+
+  function normal() {
+    content = content.length ? [] : content
+
+    if(last === '/' && c === '*') {
+      start = total + i - 1
+      mode = BLOCK_COMMENT
+      last = c
+      return i + 1
+    }
+
+    if(last === '/' && c === '/') {
+      start = total + i - 1
+      mode = LINE_COMMENT
+      last = c
+      return i + 1
+    }
+
+    if(c === '#') {
+      mode = PREPROCESSOR
+      start = total + i
+      return i
+    }
+
+    if(/\s/.test(c)) {
+      mode = WHITESPACE
+      start = total + i
+      return i
+    }
+
+    isnum = /\d/.test(c)
+    isoperator = /[^\w_]/.test(c)
+
+    start = total + i
+    mode = isnum ? INTEGER : isoperator ? OPERATOR : TOKEN
+    return i
+  }
+
+  function whitespace() {
+    if(/[^\s]/g.test(c)) {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function preprocessor() {
+    if((c === '\r' || c === '\n') && last !== '\\') {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function line_comment() {
+    return preprocessor()
+  }
+
+  function block_comment() {
+    if(c === '/' && last === '*') {
+      content.push(c)
+      token(content.join(''))
+      mode = NORMAL
+      return i + 1
+    }
+
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function operator() {
+    if(last === '.' && /\d/.test(c)) {
+      mode = FLOAT
+      return i
+    }
+
+    if(last === '/' && c === '*') {
+      mode = BLOCK_COMMENT
+      return i
+    }
+
+    if(last === '/' && c === '/') {
+      mode = LINE_COMMENT
+      return i
+    }
+
+    if(c === '.' && content.length) {
+      while(determine_operator(content));
+
+      mode = FLOAT
+      return i
+    }
+
+    if(c === ';' || c === ')' || c === '(') {
+      if(content.length) while(determine_operator(content));
+      token(c)
+      mode = NORMAL
+      return i + 1
+    }
+
+    var is_composite_operator = content.length === 2 && c !== '='
+    if(/[\w_\d\s]/.test(c) || is_composite_operator) {
+      while(determine_operator(content));
+      mode = NORMAL
+      return i
+    }
+
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function determine_operator(buf) {
+    var j = 0
+      , idx
+      , res
+
+    do {
+      idx = operators.indexOf(buf.slice(0, buf.length + j).join(''))
+      res = operators[idx]
+
+      if(idx === -1) {
+        if(j-- + buf.length > 0) continue
+        res = buf.slice(0, 1).join('')
+      }
+
+      token(res)
+
+      start += res.length
+      content = content.slice(res.length)
+      return content.length
+    } while(1)
+  }
+
+  function hex() {
+    if(/[^a-fA-F0-9]/.test(c)) {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function integer() {
+    if(c === '.') {
+      content.push(c)
+      mode = FLOAT
+      last = c
+      return i + 1
+    }
+
+    if(/[eE]/.test(c)) {
+      content.push(c)
+      mode = FLOAT
+      last = c
+      return i + 1
+    }
+
+    if(c === 'x' && content.length === 1 && content[0] === '0') {
+      mode = HEX
+      content.push(c)
+      last = c
+      return i + 1
+    }
+
+    if(/[^\d]/.test(c)) {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function decimal() {
+    if(c === 'f') {
+      content.push(c)
+      last = c
+      i += 1
+    }
+
+    if(/[eE]/.test(c)) {
+      content.push(c)
+      last = c
+      return i + 1
+    }
+
+    if ((c === '-' || c === '+') && /[eE]/.test(last)) {
+      content.push(c)
+      last = c
+      return i + 1
+    }
+
+    if(/[^\d]/.test(c)) {
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+
+    content.push(c)
+    last = c
+    return i + 1
+  }
+
+  function readtoken() {
+    if(/[^\d\w_]/.test(c)) {
+      var contentstr = content.join('')
+      if(literalsDict[contentstr]) {
+        mode = KEYWORD
+      } else if(builtinsDict[contentstr]) {
+        mode = BUILTIN
+      } else {
+        mode = IDENT
+      }
+      token(content.join(''))
+      mode = NORMAL
+      return i
+    }
+    content.push(c)
+    last = c
+    return i + 1
+  }
+}
+
+
+/***/ }),
+
+/***/ 537:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+// 300es builtins/reserved words that were previously valid in v100
+var v100 = __webpack_require__(222)
+
+// The texture2D|Cube functions have been removed
+// And the gl_ features are updated
+v100 = v100.slice().filter(function (b) {
+  return !/^(gl\_|texture)/.test(b)
+})
+
+module.exports = v100.concat([
+  // the updated gl_ constants
+    'gl_VertexID'
+  , 'gl_InstanceID'
+  , 'gl_Position'
+  , 'gl_PointSize'
+  , 'gl_FragCoord'
+  , 'gl_FrontFacing'
+  , 'gl_FragDepth'
+  , 'gl_PointCoord'
+  , 'gl_MaxVertexAttribs'
+  , 'gl_MaxVertexUniformVectors'
+  , 'gl_MaxVertexOutputVectors'
+  , 'gl_MaxFragmentInputVectors'
+  , 'gl_MaxVertexTextureImageUnits'
+  , 'gl_MaxCombinedTextureImageUnits'
+  , 'gl_MaxTextureImageUnits'
+  , 'gl_MaxFragmentUniformVectors'
+  , 'gl_MaxDrawBuffers'
+  , 'gl_MinProgramTexelOffset'
+  , 'gl_MaxProgramTexelOffset'
+  , 'gl_DepthRangeParameters'
+  , 'gl_DepthRange'
+
+  // other builtins
+  , 'trunc'
+  , 'round'
+  , 'roundEven'
+  , 'isnan'
+  , 'isinf'
+  , 'floatBitsToInt'
+  , 'floatBitsToUint'
+  , 'intBitsToFloat'
+  , 'uintBitsToFloat'
+  , 'packSnorm2x16'
+  , 'unpackSnorm2x16'
+  , 'packUnorm2x16'
+  , 'unpackUnorm2x16'
+  , 'packHalf2x16'
+  , 'unpackHalf2x16'
+  , 'outerProduct'
+  , 'transpose'
+  , 'determinant'
+  , 'inverse'
+  , 'texture'
+  , 'textureSize'
+  , 'textureProj'
+  , 'textureLod'
+  , 'textureOffset'
+  , 'texelFetch'
+  , 'texelFetchOffset'
+  , 'textureProjOffset'
+  , 'textureLodOffset'
+  , 'textureProjLod'
+  , 'textureProjLodOffset'
+  , 'textureGrad'
+  , 'textureGradOffset'
+  , 'textureProjGrad'
+  , 'textureProjGradOffset'
+])
+
+
+/***/ }),
+
+/***/ 222:
+/***/ ((module) => {
+
+module.exports = [
+  // Keep this list sorted
+  'abs'
+  , 'acos'
+  , 'all'
+  , 'any'
+  , 'asin'
+  , 'atan'
+  , 'ceil'
+  , 'clamp'
+  , 'cos'
+  , 'cross'
+  , 'dFdx'
+  , 'dFdy'
+  , 'degrees'
+  , 'distance'
+  , 'dot'
+  , 'equal'
+  , 'exp'
+  , 'exp2'
+  , 'faceforward'
+  , 'floor'
+  , 'fract'
+  , 'gl_BackColor'
+  , 'gl_BackLightModelProduct'
+  , 'gl_BackLightProduct'
+  , 'gl_BackMaterial'
+  , 'gl_BackSecondaryColor'
+  , 'gl_ClipPlane'
+  , 'gl_ClipVertex'
+  , 'gl_Color'
+  , 'gl_DepthRange'
+  , 'gl_DepthRangeParameters'
+  , 'gl_EyePlaneQ'
+  , 'gl_EyePlaneR'
+  , 'gl_EyePlaneS'
+  , 'gl_EyePlaneT'
+  , 'gl_Fog'
+  , 'gl_FogCoord'
+  , 'gl_FogFragCoord'
+  , 'gl_FogParameters'
+  , 'gl_FragColor'
+  , 'gl_FragCoord'
+  , 'gl_FragData'
+  , 'gl_FragDepth'
+  , 'gl_FragDepthEXT'
+  , 'gl_FrontColor'
+  , 'gl_FrontFacing'
+  , 'gl_FrontLightModelProduct'
+  , 'gl_FrontLightProduct'
+  , 'gl_FrontMaterial'
+  , 'gl_FrontSecondaryColor'
+  , 'gl_LightModel'
+  , 'gl_LightModelParameters'
+  , 'gl_LightModelProducts'
+  , 'gl_LightProducts'
+  , 'gl_LightSource'
+  , 'gl_LightSourceParameters'
+  , 'gl_MaterialParameters'
+  , 'gl_MaxClipPlanes'
+  , 'gl_MaxCombinedTextureImageUnits'
+  , 'gl_MaxDrawBuffers'
+  , 'gl_MaxFragmentUniformComponents'
+  , 'gl_MaxLights'
+  , 'gl_MaxTextureCoords'
+  , 'gl_MaxTextureImageUnits'
+  , 'gl_MaxTextureUnits'
+  , 'gl_MaxVaryingFloats'
+  , 'gl_MaxVertexAttribs'
+  , 'gl_MaxVertexTextureImageUnits'
+  , 'gl_MaxVertexUniformComponents'
+  , 'gl_ModelViewMatrix'
+  , 'gl_ModelViewMatrixInverse'
+  , 'gl_ModelViewMatrixInverseTranspose'
+  , 'gl_ModelViewMatrixTranspose'
+  , 'gl_ModelViewProjectionMatrix'
+  , 'gl_ModelViewProjectionMatrixInverse'
+  , 'gl_ModelViewProjectionMatrixInverseTranspose'
+  , 'gl_ModelViewProjectionMatrixTranspose'
+  , 'gl_MultiTexCoord0'
+  , 'gl_MultiTexCoord1'
+  , 'gl_MultiTexCoord2'
+  , 'gl_MultiTexCoord3'
+  , 'gl_MultiTexCoord4'
+  , 'gl_MultiTexCoord5'
+  , 'gl_MultiTexCoord6'
+  , 'gl_MultiTexCoord7'
+  , 'gl_Normal'
+  , 'gl_NormalMatrix'
+  , 'gl_NormalScale'
+  , 'gl_ObjectPlaneQ'
+  , 'gl_ObjectPlaneR'
+  , 'gl_ObjectPlaneS'
+  , 'gl_ObjectPlaneT'
+  , 'gl_Point'
+  , 'gl_PointCoord'
+  , 'gl_PointParameters'
+  , 'gl_PointSize'
+  , 'gl_Position'
+  , 'gl_ProjectionMatrix'
+  , 'gl_ProjectionMatrixInverse'
+  , 'gl_ProjectionMatrixInverseTranspose'
+  , 'gl_ProjectionMatrixTranspose'
+  , 'gl_SecondaryColor'
+  , 'gl_TexCoord'
+  , 'gl_TextureEnvColor'
+  , 'gl_TextureMatrix'
+  , 'gl_TextureMatrixInverse'
+  , 'gl_TextureMatrixInverseTranspose'
+  , 'gl_TextureMatrixTranspose'
+  , 'gl_Vertex'
+  , 'greaterThan'
+  , 'greaterThanEqual'
+  , 'inversesqrt'
+  , 'length'
+  , 'lessThan'
+  , 'lessThanEqual'
+  , 'log'
+  , 'log2'
+  , 'matrixCompMult'
+  , 'max'
+  , 'min'
+  , 'mix'
+  , 'mod'
+  , 'normalize'
+  , 'not'
+  , 'notEqual'
+  , 'pow'
+  , 'radians'
+  , 'reflect'
+  , 'refract'
+  , 'sign'
+  , 'sin'
+  , 'smoothstep'
+  , 'sqrt'
+  , 'step'
+  , 'tan'
+  , 'texture2D'
+  , 'texture2DLod'
+  , 'texture2DProj'
+  , 'texture2DProjLod'
+  , 'textureCube'
+  , 'textureCubeLod'
+  , 'texture2DLodEXT'
+  , 'texture2DProjLodEXT'
+  , 'textureCubeLodEXT'
+  , 'texture2DGradEXT'
+  , 'texture2DProjGradEXT'
+  , 'textureCubeGradEXT'
+]
+
+
+/***/ }),
+
+/***/ 914:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var v100 = __webpack_require__(529)
+
+module.exports = v100.slice().concat([
+   'layout'
+  , 'centroid'
+  , 'smooth'
+  , 'case'
+  , 'mat2x2'
+  , 'mat2x3'
+  , 'mat2x4'
+  , 'mat3x2'
+  , 'mat3x3'
+  , 'mat3x4'
+  , 'mat4x2'
+  , 'mat4x3'
+  , 'mat4x4'
+  , 'uvec2'
+  , 'uvec3'
+  , 'uvec4'
+  , 'samplerCubeShadow'
+  , 'sampler2DArray'
+  , 'sampler2DArrayShadow'
+  , 'isampler2D'
+  , 'isampler3D'
+  , 'isamplerCube'
+  , 'isampler2DArray'
+  , 'usampler2D'
+  , 'usampler3D'
+  , 'usamplerCube'
+  , 'usampler2DArray'
+  , 'coherent'
+  , 'restrict'
+  , 'readonly'
+  , 'writeonly'
+  , 'resource'
+  , 'atomic_uint'
+  , 'noperspective'
+  , 'patch'
+  , 'sample'
+  , 'subroutine'
+  , 'common'
+  , 'partition'
+  , 'active'
+  , 'filter'
+  , 'image1D'
+  , 'image2D'
+  , 'image3D'
+  , 'imageCube'
+  , 'iimage1D'
+  , 'iimage2D'
+  , 'iimage3D'
+  , 'iimageCube'
+  , 'uimage1D'
+  , 'uimage2D'
+  , 'uimage3D'
+  , 'uimageCube'
+  , 'image1DArray'
+  , 'image2DArray'
+  , 'iimage1DArray'
+  , 'iimage2DArray'
+  , 'uimage1DArray'
+  , 'uimage2DArray'
+  , 'image1DShadow'
+  , 'image2DShadow'
+  , 'image1DArrayShadow'
+  , 'image2DArrayShadow'
+  , 'imageBuffer'
+  , 'iimageBuffer'
+  , 'uimageBuffer'
+  , 'sampler1DArray'
+  , 'sampler1DArrayShadow'
+  , 'isampler1D'
+  , 'isampler1DArray'
+  , 'usampler1D'
+  , 'usampler1DArray'
+  , 'isampler2DRect'
+  , 'usampler2DRect'
+  , 'samplerBuffer'
+  , 'isamplerBuffer'
+  , 'usamplerBuffer'
+  , 'sampler2DMS'
+  , 'isampler2DMS'
+  , 'usampler2DMS'
+  , 'sampler2DMSArray'
+  , 'isampler2DMSArray'
+  , 'usampler2DMSArray'
+])
+
+
+/***/ }),
+
+/***/ 529:
+/***/ ((module) => {
+
+module.exports = [
+  // current
+    'precision'
+  , 'highp'
+  , 'mediump'
+  , 'lowp'
+  , 'attribute'
+  , 'const'
+  , 'uniform'
+  , 'varying'
+  , 'break'
+  , 'continue'
+  , 'do'
+  , 'for'
+  , 'while'
+  , 'if'
+  , 'else'
+  , 'in'
+  , 'out'
+  , 'inout'
+  , 'float'
+  , 'int'
+  , 'uint'
+  , 'void'
+  , 'bool'
+  , 'true'
+  , 'false'
+  , 'discard'
+  , 'return'
+  , 'mat2'
+  , 'mat3'
+  , 'mat4'
+  , 'vec2'
+  , 'vec3'
+  , 'vec4'
+  , 'ivec2'
+  , 'ivec3'
+  , 'ivec4'
+  , 'bvec2'
+  , 'bvec3'
+  , 'bvec4'
+  , 'sampler1D'
+  , 'sampler2D'
+  , 'sampler3D'
+  , 'samplerCube'
+  , 'sampler1DShadow'
+  , 'sampler2DShadow'
+  , 'struct'
+
+  // future
+  , 'asm'
+  , 'class'
+  , 'union'
+  , 'enum'
+  , 'typedef'
+  , 'template'
+  , 'this'
+  , 'packed'
+  , 'goto'
+  , 'switch'
+  , 'default'
+  , 'inline'
+  , 'noinline'
+  , 'volatile'
+  , 'public'
+  , 'static'
+  , 'extern'
+  , 'external'
+  , 'interface'
+  , 'long'
+  , 'short'
+  , 'double'
+  , 'half'
+  , 'fixed'
+  , 'unsigned'
+  , 'input'
+  , 'output'
+  , 'hvec2'
+  , 'hvec3'
+  , 'hvec4'
+  , 'dvec2'
+  , 'dvec3'
+  , 'dvec4'
+  , 'fvec2'
+  , 'fvec3'
+  , 'fvec4'
+  , 'sampler2DRect'
+  , 'sampler3DRect'
+  , 'sampler2DRectShadow'
+  , 'sizeof'
+  , 'cast'
+  , 'namespace'
+  , 'using'
+]
+
+
+/***/ }),
+
+/***/ 679:
+/***/ ((module) => {
+
+module.exports = [
+    '<<='
+  , '>>='
+  , '++'
+  , '--'
+  , '<<'
+  , '>>'
+  , '<='
+  , '>='
+  , '=='
+  , '!='
+  , '&&'
+  , '||'
+  , '+='
+  , '-='
+  , '*='
+  , '/='
+  , '%='
+  , '&='
+  , '^^'
+  , '^='
+  , '|='
+  , '('
+  , ')'
+  , '['
+  , ']'
+  , '.'
+  , '!'
+  , '~'
+  , '*'
+  , '/'
+  , '%'
+  , '+'
+  , '-'
+  , '<'
+  , '>'
+  , '&'
+  , '^'
+  , '|'
+  , '?'
+  , ':'
+  , '='
+  , ','
+  , ';'
+  , '{'
+  , '}'
+]
+
+
+/***/ }),
+
+/***/ 932:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var tokenize = __webpack_require__(460)
+
+module.exports = tokenizeString
+
+function tokenizeString(str, opt) {
+  var generator = tokenize(opt)
+  var tokens = []
+
+  tokens = tokens.concat(generator(str))
+  tokens = tokens.concat(generator(null))
+
+  return tokens
+}
+
+
+/***/ }),
+
 /***/ 645:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -6295,6 +8513,66 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 
 /***/ }),
 
+/***/ 981:
+/***/ ((__unused_webpack_module, exports) => {
+
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * DS202: Simplify dynamic range loops
+ * DS207: Consider shorter variations of null checks
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
+exports.make = function (x) {
+  if (x == null) {
+    x = [];
+  }
+  if (!(x instanceof Array)) {
+    x = [+x != null ? +x : 0];
+  }
+  return x;
+};
+
+exports.nest = (a, b) => a.concat(b);
+
+exports.compare = function (a, b) {
+  const n = Math.min(a.length, b.length);
+  for (
+    let i = 0, end = n, asc = 0 <= end;
+    asc ? i < end : i > end;
+    asc ? i++ : i--
+  ) {
+    const p = a[i];
+    const q = b[i];
+    if (p > q) {
+      return -1;
+    }
+    if (p < q) {
+      return 1;
+    }
+  }
+  a = a.length;
+  b = b.length;
+  if (a > b) {
+    return -1;
+  } else if (a < b) {
+    return 1;
+  } else {
+    return 0;
+  }
+};
+
+exports.max = function (a, b) {
+  if (exports.compare(a, b) > 0) {
+    return b;
+  } else {
+    return a;
+  }
+};
+
+
+/***/ }),
+
 /***/ 466:
 /***/ (function(module) {
 
@@ -6934,2284 +9212,6 @@ function config (name) {
 
 /***/ }),
 
-/***/ 150:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-var parse = __webpack_require__(602)
-
-module.exports = parseArray
-
-function parseArray(tokens) {
-  var parser = parse()
-
-  for (var i = 0; i < tokens.length; i++) {
-    parser(tokens[i])
-  }
-
-  return parser(null)
-}
-
-
-/***/ }),
-
-/***/ 533:
-/***/ ((module) => {
-
-var state
-  , token
-  , tokens
-  , idx
-
-var original_symbol = {
-    nud: function() { return this.children && this.children.length ? this : fail('unexpected')() }
-  , led: fail('missing operator')
-}
-
-var symbol_table = {}
-
-function itself() {
-  return this
-}
-
-symbol('(ident)').nud = itself
-symbol('(keyword)').nud = itself
-symbol('(builtin)').nud = itself
-symbol('(literal)').nud = itself
-symbol('(end)')
-
-symbol(':')
-symbol(';')
-symbol(',')
-symbol(')')
-symbol(']')
-symbol('}')
-
-infixr('&&', 30)
-infixr('||', 30)
-infix('|', 43)
-infix('^', 44)
-infix('&', 45)
-infix('==', 46)
-infix('!=', 46)
-infix('<', 47)
-infix('<=', 47)
-infix('>', 47)
-infix('>=', 47)
-infix('>>', 48)
-infix('<<', 48)
-infix('+', 50)
-infix('-', 50)
-infix('*', 60)
-infix('/', 60)
-infix('%', 60)
-infix('?', 20, function(left) {
-  this.children = [left, expression(0), (advance(':'), expression(0))]
-  this.type = 'ternary'
-  return this
-})
-infix('.', 80, function(left) {
-  token.type = 'literal'
-  state.fake(token)
-  this.children = [left, token]
-  advance()
-  return this
-})
-infix('[', 80, function(left) {
-  this.children = [left, expression(0)]
-  this.type = 'binary'
-  advance(']')
-  return this
-})
-infix('(', 80, function(left) {
-  this.children = [left]
-  this.type = 'call'
-
-  if(token.data !== ')') while(1) {
-    this.children.push(expression(0))
-    if(token.data !== ',') break
-    advance(',')
-  }
-  advance(')')
-  return this
-})
-
-prefix('-')
-prefix('+')
-prefix('!')
-prefix('~')
-prefix('defined')
-prefix('(', function() {
-  this.type = 'group'
-  this.children = [expression(0)]
-  advance(')')
-  return this
-})
-prefix('++')
-prefix('--')
-suffix('++')
-suffix('--')
-
-assignment('=')
-assignment('+=')
-assignment('-=')
-assignment('*=')
-assignment('/=')
-assignment('%=')
-assignment('&=')
-assignment('|=')
-assignment('^=')
-assignment('>>=')
-assignment('<<=')
-
-module.exports = function(incoming_state, incoming_tokens) {
-  state = incoming_state
-  tokens = incoming_tokens
-  idx = 0
-  var result
-
-  if(!tokens.length) return
-
-  advance()
-  result = expression(0)
-  result.parent = state[0]
-  emit(result)
-
-  if(idx < tokens.length) {
-    throw new Error('did not use all tokens')
-  }
-
-  result.parent.children = [result]
-
-  function emit(node) {
-    state.unshift(node, false)
-    for(var i = 0, len = node.children.length; i < len; ++i) {
-      emit(node.children[i])
-    }
-    state.shift()
-  }
-
-}
-
-function symbol(id, binding_power) {
-  var sym = symbol_table[id]
-  binding_power = binding_power || 0
-  if(sym) {
-    if(binding_power > sym.lbp) {
-      sym.lbp = binding_power
-    }
-  } else {
-    sym = Object.create(original_symbol)
-    sym.id = id
-    sym.lbp = binding_power
-    symbol_table[id] = sym
-  }
-  return sym
-}
-
-function expression(rbp) {
-  var left, t = token
-  advance()
-
-  left = t.nud()
-  while(rbp < token.lbp) {
-    t = token
-    advance()
-    left = t.led(left)
-  }
-  return left
-}
-
-function infix(id, bp, led) {
-  var sym = symbol(id, bp)
-  sym.led = led || function(left) {
-    this.children = [left, expression(bp)]
-    this.type = 'binary'
-    return this
-  }
-}
-
-function infixr(id, bp, led) {
-  var sym = symbol(id, bp)
-  sym.led = led || function(left) {
-    this.children = [left, expression(bp - 1)]
-    this.type = 'binary'
-    return this
-  }
-  return sym
-}
-
-function prefix(id, nud) {
-  var sym = symbol(id)
-  sym.nud = nud || function() {
-    this.children = [expression(70)]
-    this.type = 'unary'
-    return this
-  }
-  return sym
-}
-
-function suffix(id) {
-  var sym = symbol(id, 150)
-  sym.led = function(left) {
-    this.children = [left]
-    this.type = 'suffix'
-    return this
-  }
-}
-
-function assignment(id) {
-  return infixr(id, 10, function(left) {
-    this.children = [left, expression(9)]
-    this.assignment = true
-    this.type = 'assign'
-    return this
-  })
-}
-
-function advance(id) {
-  var next
-    , value
-    , type
-    , output
-
-  if(id && token.data !== id) {
-    return state.unexpected('expected `'+ id + '`, got `'+token.data+'`')
-  }
-
-  if(idx >= tokens.length) {
-    token = symbol_table['(end)']
-    return
-  }
-
-  next = tokens[idx++]
-  value = next.data
-  type = next.type
-
-  if(type === 'ident') {
-    output = state.scope.find(value) || state.create_node()
-    type = output.type
-  } else if(type === 'builtin') {
-    output = symbol_table['(builtin)']
-  } else if(type === 'keyword') {
-    output = symbol_table['(keyword)']
-  } else if(type === 'operator') {
-    output = symbol_table[value]
-    if(!output) {
-      return state.unexpected('unknown operator `'+value+'`')
-    }
-  } else if(type === 'float' || type === 'integer') {
-    type = 'literal'
-    output = symbol_table['(literal)']
-  } else {
-    return state.unexpected('unexpected token.')
-  }
-
-  if(output) {
-    if(!output.nud) { output.nud = itself }
-    if(!output.children) { output.children = [] }
-  }
-
-  output = Object.create(output)
-  output.token = next
-  output.type = type
-  if(!output.data) output.data = value
-
-  return token = output
-}
-
-function fail(message) {
-  return function() { return state.unexpected(message) }
-}
-
-
-/***/ }),
-
-/***/ 602:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-module.exports = parser
-
-var full_parse_expr = __webpack_require__(533)
-  , Scope = __webpack_require__(99)
-
-// singleton!
-var Advance = new Object
-
-var DEBUG = false
-
-var _ = 0
-  , IDENT = _++
-  , STMT = _++
-  , STMTLIST = _++
-  , STRUCT = _++
-  , FUNCTION = _++
-  , FUNCTIONARGS = _++
-  , DECL = _++
-  , DECLLIST = _++
-  , FORLOOP = _++
-  , WHILELOOP = _++
-  , IF = _++
-  , EXPR = _++
-  , PRECISION = _++
-  , COMMENT = _++
-  , PREPROCESSOR = _++
-  , KEYWORD = _++
-  , KEYWORD_OR_IDENT = _++
-  , RETURN = _++
-  , BREAK = _++
-  , CONTINUE = _++
-  , DISCARD = _++
-  , DOWHILELOOP = _++
-  , PLACEHOLDER = _++
-  , QUANTIFIER = _++
-
-var DECL_ALLOW_ASSIGN = 0x1
-  , DECL_ALLOW_COMMA = 0x2
-  , DECL_REQUIRE_NAME = 0x4
-  , DECL_ALLOW_INVARIANT = 0x8
-  , DECL_ALLOW_STORAGE = 0x10
-  , DECL_NO_INOUT = 0x20
-  , DECL_ALLOW_STRUCT = 0x40
-  , DECL_STATEMENT = 0xFF
-  , DECL_FUNCTION = DECL_STATEMENT & ~(DECL_ALLOW_ASSIGN | DECL_ALLOW_COMMA | DECL_NO_INOUT | DECL_ALLOW_INVARIANT | DECL_REQUIRE_NAME)
-  , DECL_STRUCT = DECL_STATEMENT & ~(DECL_ALLOW_ASSIGN | DECL_ALLOW_INVARIANT | DECL_ALLOW_STORAGE | DECL_ALLOW_STRUCT)
-
-var QUALIFIERS = (/* unused pure expression or super */ null && (['const', 'attribute', 'uniform', 'varying']))
-
-var NO_ASSIGN_ALLOWED = false
-  , NO_COMMA_ALLOWED = false
-
-// map of tokens to stmt types
-var token_map = {
-    'block-comment': COMMENT
-  , 'line-comment': COMMENT
-  , 'preprocessor': PREPROCESSOR
-}
-
-// map of stmt types to human
-var stmt_type = _ = [
-    'ident'
-  , 'stmt'
-  , 'stmtlist'
-  , 'struct'
-  , 'function'
-  , 'functionargs'
-  , 'decl'
-  , 'decllist'
-  , 'forloop'
-  , 'whileloop'
-  , 'if'
-  , 'expr'
-  , 'precision'
-  , 'comment'
-  , 'preprocessor'
-  , 'keyword'
-  , 'keyword_or_ident'
-  , 'return'
-  , 'break'
-  , 'continue'
-  , 'discard'
-  , 'do-while'
-  , 'placeholder'
-  , 'quantifier'
-]
-
-function parser() {
-  var stmtlist = n(STMTLIST)
-    , stmt = n(STMT)
-    , decllist = n(DECLLIST)
-    , precision = n(PRECISION)
-    , ident = n(IDENT)
-    , keyword_or_ident = n(KEYWORD_OR_IDENT)
-    , fn = n(FUNCTION)
-    , fnargs = n(FUNCTIONARGS)
-    , forstmt = n(FORLOOP)
-    , ifstmt = n(IF)
-    , whilestmt = n(WHILELOOP)
-    , returnstmt = n(RETURN)
-    , dowhilestmt = n(DOWHILELOOP)
-    , quantifier = n(QUANTIFIER)
-
-  var parse_struct
-    , parse_precision
-    , parse_quantifier
-    , parse_forloop
-    , parse_if
-    , parse_return
-    , parse_whileloop
-    , parse_dowhileloop
-    , parse_function
-    , parse_function_args
-
-  var check = arguments.length ? [].slice.call(arguments) : []
-    , complete = false
-    , ended = false
-    , depth = 0
-    , state = []
-    , nodes = []
-    , tokens = []
-    , whitespace = []
-    , errored = false
-    , program
-    , token
-    , node
-
-  // setup state
-  state.shift = special_shift
-  state.unshift = special_unshift
-  state.fake = special_fake
-  state.unexpected = unexpected
-  state.scope = new Scope(state)
-  state.create_node = function() {
-    var n = mknode(IDENT, token)
-    n.parent = reader.program
-    return n
-  }
-
-  setup_stative_parsers()
-
-  // setup root node
-  node = stmtlist()
-  node.expecting = '(eof)'
-  node.mode = STMTLIST
-  node.token = {type: '(program)', data: '(program)'}
-  program = node
-
-  reader.program = program
-  reader.scope = function(scope) {
-    if(arguments.length === 1) {
-      state.scope = scope
-    }
-    return state.scope
-  }
-
-  state.unshift(node)
-  return reader
-
-  function reader(data) {
-    if (data === null) {
-      return end(), program
-    }
-
-    nodes = []
-    write(data)
-    return nodes
-  }
-
-  // stream functions ---------------------------------------------
-
-  function write(input) {
-    if(input.type === 'whitespace' || input.type === 'line-comment' || input.type === 'block-comment') {
-
-      whitespace.push(input)
-      return
-    }
-    tokens.push(input)
-    token = token || tokens[0]
-
-    if(token && whitespace.length) {
-      token.preceding = token.preceding || []
-      token.preceding = token.preceding.concat(whitespace)
-      whitespace = []
-    }
-
-    while(take()) switch(state[0].mode) {
-      case STMT: parse_stmt(); break
-      case STMTLIST: parse_stmtlist(); break
-      case DECL: parse_decl(); break
-      case DECLLIST: parse_decllist(); break
-      case EXPR: parse_expr(); break
-      case STRUCT: parse_struct(true, true); break
-      case PRECISION: parse_precision(); break
-      case IDENT: parse_ident(); break
-      case KEYWORD: parse_keyword(); break
-      case KEYWORD_OR_IDENT: parse_keyword_or_ident(); break
-      case FUNCTION: parse_function(); break
-      case FUNCTIONARGS: parse_function_args(); break
-      case FORLOOP: parse_forloop(); break
-      case WHILELOOP: parse_whileloop(); break
-      case DOWHILELOOP: parse_dowhileloop(); break
-      case RETURN: parse_return(); break
-      case IF: parse_if(); break
-      case QUANTIFIER: parse_quantifier(); break
-    }
-  }
-
-  function end(tokens) {
-    if(arguments.length) {
-      write(tokens)
-    }
-
-    if(state.length > 1) {
-      unexpected('unexpected EOF')
-      return
-    }
-
-    complete = true
-  }
-
-  function take() {
-    if(errored || !state.length)
-      return false
-
-    return (token = tokens[0])
-  }
-
-  // ----- state manipulation --------
-
-  function special_fake(x) {
-    state.unshift(x)
-    state.shift()
-  }
-
-  function special_unshift(_node, add_child) {
-    _node.parent = state[0]
-
-    var ret = [].unshift.call(this, _node)
-
-    add_child = add_child === undefined ? true : add_child
-
-    if(DEBUG) {
-      var pad = ''
-      for(var i = 0, len = this.length - 1; i < len; ++i) {
-        pad += ' |'
-      }
-      console.log(pad, '\\'+_node.type, _node.token.data)
-    }
-
-    if(add_child && node !== _node) node.children.push(_node)
-    node = _node
-
-    return ret
-  }
-
-  function special_shift() {
-    var _node = [].shift.call(this)
-      , okay = check[this.length]
-      , emit = false
-
-    if(DEBUG) {
-      var pad = ''
-      for(var i = 0, len = this.length; i < len; ++i) {
-        pad += ' |'
-      }
-      console.log(pad, '/'+_node.type)
-    }
-
-    if(check.length) {
-      if(typeof check[0] === 'function') {
-        emit = check[0](_node)
-      } else if(okay !== undefined) {
-        emit = okay.test ? okay.test(_node.type) : okay === _node.type
-      }
-    } else {
-      emit = true
-    }
-
-    if(emit && !errored) nodes.push(_node)
-
-    node = _node.parent
-    return _node
-  }
-
-  // parse states ---------------
-
-  function parse_stmtlist() {
-    // determine the type of the statement
-    // and then start parsing
-    return stative(
-      function() { state.scope.enter(); return Advance }
-    , normal_mode
-    )()
-
-    function normal_mode() {
-      if(token.data === state[0].expecting) {
-        return state.scope.exit(), state.shift()
-      }
-      switch(token.type) {
-        case 'preprocessor':
-          state.fake(adhoc())
-          tokens.shift()
-        return
-        default:
-          state.unshift(stmt())
-        return
-      }
-    }
-  }
-
-  function parse_stmt() {
-    if(state[0].brace) {
-      if(token.data !== '}') {
-        return unexpected('expected `}`, got '+token.data)
-      }
-      state[0].brace = false
-      return tokens.shift(), state.shift()
-    }
-    switch(token.type) {
-      case 'eof': return got_eof()
-      case 'keyword':
-        switch(token.data) {
-          case 'for': return state.unshift(forstmt());
-          case 'if': return state.unshift(ifstmt());
-          case 'while': return state.unshift(whilestmt());
-          case 'do': return state.unshift(dowhilestmt());
-          case 'break': return state.fake(mknode(BREAK, token)), tokens.shift()
-          case 'continue': return state.fake(mknode(CONTINUE, token)), tokens.shift()
-          case 'discard': return state.fake(mknode(DISCARD, token)), tokens.shift()
-          case 'return': return state.unshift(returnstmt());
-          case 'precision': return state.unshift(precision());
-        }
-        return state.unshift(decl(DECL_STATEMENT))
-      case 'ident':
-        var lookup
-        if(lookup = state.scope.find(token.data)) {
-          if(lookup.parent.type === 'struct') {
-            // this is strictly untrue, you could have an
-            // expr that starts with a struct constructor.
-            //      ... sigh
-            return state.unshift(decl(DECL_STATEMENT))
-          }
-          return state.unshift(expr(';'))
-        }
-      case 'operator':
-        if(token.data === '{') {
-          state[0].brace = true
-          var n = stmtlist()
-          n.expecting = '}'
-          return tokens.shift(), state.unshift(n)
-        }
-        if(token.data === ';') {
-          return tokens.shift(), state.shift()
-        }
-      default: return state.unshift(expr(';'))
-    }
-  }
-
-  function got_eof() {
-    if (ended) errored = true
-    ended = true
-    return state.shift()
-  }
-
-  function parse_decl() {
-    var stmt = state[0]
-
-    return stative(
-      invariant_or_not,
-      storage_or_not,
-      parameter_or_not,
-      precision_or_not,
-      struct_or_type,
-      maybe_name,
-      maybe_lparen,     // lparen means we're a function
-      is_decllist,
-      done
-    )()
-
-    function invariant_or_not() {
-      if(token.data === 'invariant') {
-        if(stmt.flags & DECL_ALLOW_INVARIANT) {
-          state.unshift(keyword())
-          return Advance
-        } else {
-          return unexpected('`invariant` is not allowed here')
-        }
-      } else {
-        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
-        return Advance
-      }
-    }
-
-    function storage_or_not() {
-      if(is_storage(token)) {
-        if(stmt.flags & DECL_ALLOW_STORAGE) {
-          state.unshift(keyword())
-          return Advance
-        } else {
-          return unexpected('storage is not allowed here')
-        }
-      } else {
-        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
-        return Advance
-      }
-    }
-
-    function parameter_or_not() {
-      if(is_parameter(token)) {
-        if(!(stmt.flags & DECL_NO_INOUT)) {
-          state.unshift(keyword())
-          return Advance
-        } else {
-          return unexpected('parameter is not allowed here')
-        }
-      } else {
-        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
-        return Advance
-      }
-    }
-
-    function precision_or_not() {
-      if(is_precision(token)) {
-        state.unshift(keyword())
-        return Advance
-      } else {
-        state.fake(mknode(PLACEHOLDER, {data: '', position: token.position}))
-        return Advance
-      }
-    }
-
-    function struct_or_type() {
-      if(token.data === 'struct') {
-        if(!(stmt.flags & DECL_ALLOW_STRUCT)) {
-          return unexpected('cannot nest structs')
-        }
-        state.unshift(struct())
-        return Advance
-      }
-
-      if(token.type === 'keyword') {
-        state.unshift(keyword())
-        return Advance
-      }
-
-      var lookup = state.scope.find(token.data)
-
-      if(lookup) {
-        state.fake(Object.create(lookup))
-        tokens.shift()
-        return Advance
-      }
-      return unexpected('expected user defined type, struct or keyword, got '+token.data)
-    }
-
-    function maybe_name() {
-      if(token.data === ',' && !(stmt.flags & DECL_ALLOW_COMMA)) {
-        return state.shift()
-      }
-
-      if(token.data === '[') {
-        // oh lord.
-        state.unshift(quantifier())
-        return
-      }
-
-      if(token.data === ')') return state.shift()
-
-      if(token.data === ';') {
-        return stmt.stage + 3
-      }
-
-      if(token.type !== 'ident' && token.type !== 'builtin') {
-        return unexpected('expected identifier, got '+token.data)
-      }
-
-      stmt.collected_name = tokens.shift()
-      return Advance
-    }
-
-    function maybe_lparen() {
-      if(token.data === '(') {
-        tokens.unshift(stmt.collected_name)
-        delete stmt.collected_name
-        state.unshift(fn())
-        return stmt.stage + 2
-      }
-      return Advance
-    }
-
-    function is_decllist() {
-      tokens.unshift(stmt.collected_name)
-      delete stmt.collected_name
-      state.unshift(decllist())
-      return Advance
-    }
-
-    function done() {
-      return state.shift()
-    }
-  }
-
-  function parse_decllist() {
-    // grab ident
-
-    if(token.type === 'ident' || token.type === 'builtin') {
-      var name = token.data
-      state.unshift(ident())
-      state.scope.define(name)
-      return
-    }
-
-    if(token.type === 'operator') {
-
-      if(token.data === ',') {
-        // multi-decl!
-        if(!(state[1].flags & DECL_ALLOW_COMMA)) {
-          return state.shift()
-        }
-
-        return tokens.shift()
-      } else if(token.data === '=') {
-        if(!(state[1].flags & DECL_ALLOW_ASSIGN)) return unexpected('`=` is not allowed here.')
-
-        tokens.shift()
-
-        state.unshift(expr(',', ';'))
-        return
-      } else if(token.data === '[') {
-        state.unshift(quantifier())
-        return
-      }
-    }
-    return state.shift()
-  }
-
-  function parse_keyword_or_ident() {
-    if(token.type === 'keyword') {
-      state[0].type = 'keyword'
-      state[0].mode = KEYWORD
-      return
-    }
-
-    if(token.type === 'ident') {
-      state[0].type = 'ident'
-      state[0].mode = IDENT
-      return
-    }
-
-    return unexpected('expected keyword or user-defined name, got '+token.data)
-  }
-
-  function parse_keyword() {
-    if(token.type !== 'keyword') {
-      return unexpected('expected keyword, got '+token.data)
-    }
-
-    return state.shift(), tokens.shift()
-  }
-
-  function parse_ident() {
-    if(token.type !== 'ident' && token.type !== 'builtin') {
-      return unexpected('expected user-defined name, got '+token.data)
-    }
-
-    state[0].data = token.data
-    return state.shift(), tokens.shift()
-  }
-
-
-  function parse_expr() {
-    var expecting = state[0].expecting
-
-    state[0].tokens = state[0].tokens || []
-
-    if(state[0].parenlevel === undefined) {
-      state[0].parenlevel = 0
-      state[0].bracelevel = 0
-    }
-    if(state[0].parenlevel < 1 && expecting.indexOf(token.data) > -1) {
-      return parseexpr(state[0].tokens)
-    }
-    if(token.data === '(') {
-      ++state[0].parenlevel
-    } else if(token.data === ')') {
-      --state[0].parenlevel
-    }
-
-    switch(token.data) {
-      case '{': ++state[0].bracelevel; break
-      case '}': --state[0].bracelevel; break
-      case '(': ++state[0].parenlevel; break
-      case ')': --state[0].parenlevel; break
-    }
-
-    if(state[0].parenlevel < 0) return unexpected('unexpected `)`')
-    if(state[0].bracelevel < 0) return unexpected('unexpected `}`')
-
-    state[0].tokens.push(tokens.shift())
-    return
-
-    function parseexpr(tokens) {
-      try {
-        full_parse_expr(state, tokens)
-      } catch(err) {
-        errored = true
-        throw err
-      }
-
-      return state.shift()
-    }
-  }
-
-  // node types ---------------
-
-  function n(type) {
-    // this is a function factory that suffices for most kinds of expressions and statements
-    return function() {
-      return mknode(type, token)
-    }
-  }
-
-  function adhoc() {
-    return mknode(token_map[token.type], token, node)
-  }
-
-  function decl(flags) {
-    var _ = mknode(DECL, token, node)
-    _.flags = flags
-
-    return _
-  }
-
-  function struct(allow_assign, allow_comma) {
-    var _ = mknode(STRUCT, token, node)
-    _.allow_assign = allow_assign === undefined ? true : allow_assign
-    _.allow_comma = allow_comma === undefined ? true : allow_comma
-    return _
-  }
-
-  function expr() {
-    var n = mknode(EXPR, token, node)
-
-    n.expecting = [].slice.call(arguments)
-    return n
-  }
-
-  function keyword(default_value) {
-    var t = token
-    if(default_value) {
-      t = {'type': '(implied)', data: '(default)', position: t.position}
-    }
-    return mknode(KEYWORD, t, node)
-  }
-
-  // utils ----------------------------
-
-  function unexpected(str) {
-    errored = true
-    throw new Error(
-      (str || 'unexpected '+state) +
-      ' at line '+state[0].token.line
-    )
-  }
-
-  function assert(type, data) {
-    return 1,
-      assert_null_string_or_array(type, token.type) &&
-      assert_null_string_or_array(data, token.data)
-  }
-
-  function assert_null_string_or_array(x, y) {
-    switch(typeof x) {
-      case 'string': if(y !== x) {
-        unexpected('expected `'+x+'`, got '+y+'\n'+token.data);
-      } return !errored
-
-      case 'object': if(x && x.indexOf(y) === -1) {
-        unexpected('expected one of `'+x.join('`, `')+'`, got '+y);
-      } return !errored
-    }
-    return true
-  }
-
-  // stative ----------------------------
-
-  function stative() {
-    var steps = [].slice.call(arguments)
-      , step
-      , result
-
-    return function() {
-      var current = state[0]
-
-      current.stage || (current.stage = 0)
-
-      step = steps[current.stage]
-      if(!step) return unexpected('parser in undefined state!')
-
-      result = step()
-
-      if(result === Advance) return ++current.stage
-      if(result === undefined) return
-      current.stage = result
-    }
-  }
-
-  function advance(op, t) {
-    t = t || 'operator'
-    return function() {
-      if(!assert(t, op)) return
-
-      var last = tokens.shift()
-        , children = state[0].children
-        , last_node = children[children.length - 1]
-
-      if(last_node && last_node.token && last.preceding) {
-        last_node.token.succeeding = last_node.token.succeeding || []
-        last_node.token.succeeding = last_node.token.succeeding.concat(last.preceding)
-      }
-      return Advance
-    }
-  }
-
-  function advance_expr(until) {
-    return function() {
-      state.unshift(expr(until))
-      return Advance
-    }
-  }
-
-  function advance_ident(declare) {
-    return declare ? function() {
-      var name = token.data
-      return assert('ident') && (state.unshift(ident()), state.scope.define(name), Advance)
-    } :  function() {
-      if(!assert('ident')) return
-
-      var s = Object.create(state.scope.find(token.data))
-      s.token = token
-
-      return (tokens.shift(), Advance)
-    }
-  }
-
-  function advance_stmtlist() {
-    return function() {
-      var n = stmtlist()
-      n.expecting = '}'
-      return state.unshift(n), Advance
-    }
-  }
-
-  function maybe_stmtlist(skip) {
-    return function() {
-      var current = state[0].stage
-      if(token.data !== '{') { return state.unshift(stmt()), current + skip }
-      return tokens.shift(), Advance
-    }
-  }
-
-  function popstmt() {
-    return function() { return state.shift(), state.shift() }
-  }
-
-
-  function setup_stative_parsers() {
-
-    // could also be
-    // struct { } decllist
-    parse_struct =
-        stative(
-          advance('struct', 'keyword')
-        , function() {
-            if(token.data === '{') {
-              state.fake(mknode(IDENT, {data:'', position: token.position, type:'ident'}))
-              return Advance
-            }
-
-            return advance_ident(true)()
-          }
-        , function() { state.scope.enter(); return Advance }
-        , advance('{')
-        , function() {
-            if(token.type === 'preprocessor') {
-              state.fake(adhoc())
-              tokens.shift()
-              return
-            }
-            if(token.data === '}') {
-              state.scope.exit()
-              tokens.shift()
-              return state.shift()
-            }
-            if(token.data === ';') { tokens.shift(); return }
-            state.unshift(decl(DECL_STRUCT))
-          }
-        )
-
-    parse_precision =
-        stative(
-          function() { return tokens.shift(), Advance }
-        , function() {
-            return assert(
-            'keyword', ['lowp', 'mediump', 'highp']
-            ) && (state.unshift(keyword()), Advance)
-          }
-        , function() { return (state.unshift(keyword()), Advance) }
-        , function() { return state.shift() }
-        )
-
-    parse_quantifier =
-        stative(
-          advance('[')
-        , advance_expr(']')
-        , advance(']')
-        , function() { return state.shift() }
-        )
-
-    parse_forloop =
-        stative(
-          advance('for', 'keyword')
-        , advance('(')
-        , function() {
-            var lookup
-            if(token.type === 'ident') {
-              if(!(lookup = state.scope.find(token.data))) {
-                lookup = state.create_node()
-              }
-
-              if(lookup.parent.type === 'struct') {
-                return state.unshift(decl(DECL_STATEMENT)), Advance
-              }
-            } else if(token.type === 'builtin' || token.type === 'keyword') {
-              return state.unshift(decl(DECL_STATEMENT)), Advance
-            }
-            return advance_expr(';')()
-          }
-        , advance(';')
-        , advance_expr(';')
-        , advance(';')
-        , advance_expr(')')
-        , advance(')')
-        , maybe_stmtlist(3)
-        , advance_stmtlist()
-        , advance('}')
-        , popstmt()
-        )
-
-    parse_if =
-        stative(
-          advance('if', 'keyword')
-        , advance('(')
-        , advance_expr(')')
-        , advance(')')
-        , maybe_stmtlist(3)
-        , advance_stmtlist()
-        , advance('}')
-        , function() {
-            if(token.data === 'else') {
-              return tokens.shift(), state.unshift(stmt()), Advance
-            }
-            return popstmt()()
-          }
-        , popstmt()
-        )
-
-    parse_return =
-        stative(
-          advance('return', 'keyword')
-        , function() {
-            if(token.data === ';') return Advance
-            return state.unshift(expr(';')), Advance
-          }
-        , function() { tokens.shift(), popstmt()() }
-        )
-
-    parse_whileloop =
-        stative(
-          advance('while', 'keyword')
-        , advance('(')
-        , advance_expr(')')
-        , advance(')')
-        , maybe_stmtlist(3)
-        , advance_stmtlist()
-        , advance('}')
-        , popstmt()
-        )
-
-    parse_dowhileloop =
-      stative(
-        advance('do', 'keyword')
-      , maybe_stmtlist(3)
-      , advance_stmtlist()
-      , advance('}')
-      , advance('while', 'keyword')
-      , advance('(')
-      , advance_expr(')')
-      , advance(')')
-      , popstmt()
-      )
-
-    parse_function =
-      stative(
-        function() {
-          for(var i = 1, len = state.length; i < len; ++i) if(state[i].mode === FUNCTION) {
-            return unexpected('function definition is not allowed within another function')
-          }
-
-          return Advance
-        }
-      , function() {
-          if(!assert("ident")) return
-
-          var name = token.data
-            , lookup = state.scope.find(name)
-
-          state.unshift(ident())
-          state.scope.define(name)
-
-          state.scope.enter(lookup ? lookup.scope : null)
-          return Advance
-        }
-      , advance('(')
-      , function() { return state.unshift(fnargs()), Advance }
-      , advance(')')
-      , function() {
-          // forward decl
-          if(token.data === ';') {
-            return state.scope.exit(), state.shift(), state.shift()
-          }
-          return Advance
-        }
-      , advance('{')
-      , advance_stmtlist()
-      , advance('}')
-      , function() { state.scope.exit(); return Advance }
-      , function() { return state.shift(), state.shift(), state.shift() }
-      )
-
-    parse_function_args =
-      stative(
-        function() {
-          if(token.data === 'void') { state.fake(keyword()); tokens.shift(); return Advance }
-          if(token.data === ')') { state.shift(); return }
-          if(token.data === 'struct') {
-            state.unshift(struct(NO_ASSIGN_ALLOWED, NO_COMMA_ALLOWED))
-            return Advance
-          }
-          state.unshift(decl(DECL_FUNCTION))
-          return Advance
-        }
-      , function() {
-          if(token.data === ',') { tokens.shift(); return 0 }
-          if(token.data === ')') { state.shift(); return }
-          unexpected('expected one of `,` or `)`, got '+token.data)
-        }
-      )
-  }
-}
-
-function mknode(mode, sourcetoken) {
-  return {
-      mode: mode
-    , token: sourcetoken
-    , children: []
-    , type: stmt_type[mode]
-    , id: (Math.random() * 0xFFFFFFFF).toString(16)
-  }
-}
-
-function is_storage(token) {
-  return token.data === 'const' ||
-         token.data === 'attribute' ||
-         token.data === 'uniform' ||
-         token.data === 'varying'
-}
-
-function is_parameter(token) {
-  return token.data === 'in' ||
-         token.data === 'inout' ||
-         token.data === 'out'
-}
-
-function is_precision(token) {
-  return token.data === 'highp' ||
-         token.data === 'mediump' ||
-         token.data === 'lowp'
-}
-
-
-/***/ }),
-
-/***/ 99:
-/***/ ((module) => {
-
-module.exports = scope
-
-function scope(state) {
-  if(this.constructor !== scope)
-    return new scope(state)
-
-  this.state = state
-  this.scopes = []
-  this.current = null
-}
-
-var cons = scope
-  , proto = cons.prototype
-
-proto.enter = function(s) {
-  this.scopes.push(
-    this.current = this.state[0].scope = s || {}
-  )
-}
-
-proto.exit = function() {
-  this.scopes.pop()
-  this.current = this.scopes[this.scopes.length - 1]
-}
-
-proto.define = function(str) {
-  this.current[str] = this.state[0]
-}
-
-proto.find = function(name, fail) {
-  for(var i = this.scopes.length - 1; i > -1; --i) {
-    if(this.scopes[i].hasOwnProperty(name)) {
-      return this.scopes[i][name]
-    }
-  }
-
-  return null
-}
-
-
-/***/ }),
-
-/***/ 26:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-module.exports = tokenize
-
-var literals100 = __webpack_require__(935)
-  , operators = __webpack_require__(598)
-  , builtins100 = __webpack_require__(791)
-  , literals300es = __webpack_require__(959)
-  , builtins300es = __webpack_require__(4)
-
-var NORMAL = 999          // <-- never emitted
-  , TOKEN = 9999          // <-- never emitted
-  , BLOCK_COMMENT = 0
-  , LINE_COMMENT = 1
-  , PREPROCESSOR = 2
-  , OPERATOR = 3
-  , INTEGER = 4
-  , FLOAT = 5
-  , IDENT = 6
-  , BUILTIN = 7
-  , KEYWORD = 8
-  , WHITESPACE = 9
-  , EOF = 10
-  , HEX = 11
-
-var map = [
-    'block-comment'
-  , 'line-comment'
-  , 'preprocessor'
-  , 'operator'
-  , 'integer'
-  , 'float'
-  , 'ident'
-  , 'builtin'
-  , 'keyword'
-  , 'whitespace'
-  , 'eof'
-  , 'integer'
-]
-
-function tokenize(opt) {
-  var i = 0
-    , total = 0
-    , mode = NORMAL
-    , c
-    , last
-    , content = []
-    , tokens = []
-    , token_idx = 0
-    , token_offs = 0
-    , line = 1
-    , col = 0
-    , start = 0
-    , isnum = false
-    , isoperator = false
-    , input = ''
-    , len
-
-  opt = opt || {}
-  var allBuiltins = builtins100
-  var allLiterals = literals100
-  if (opt.version === '300 es') {
-    allBuiltins = builtins300es
-    allLiterals = literals300es
-  }
-
-  // cache by name
-  var builtinsDict = {}, literalsDict = {}
-  for (var i = 0; i < allBuiltins.length; i++) {
-    builtinsDict[allBuiltins[i]] = true
-  }
-  for (var i = 0; i < allLiterals.length; i++) {
-    literalsDict[allLiterals[i]] = true
-  }
-
-  return function(data) {
-    tokens = []
-    if (data !== null) return write(data)
-    return end()
-  }
-
-  function token(data) {
-    if (data.length) {
-      tokens.push({
-        type: map[mode]
-      , data: data
-      , position: start
-      , line: line
-      , column: col
-      })
-    }
-  }
-
-  function write(chunk) {
-    i = 0
-
-    if (chunk.toString) chunk = chunk.toString()
-
-    input += chunk.replace(/\r\n/g, '\n')
-    len = input.length
-
-
-    var last
-
-    while(c = input[i], i < len) {
-      last = i
-
-      switch(mode) {
-        case BLOCK_COMMENT: i = block_comment(); break
-        case LINE_COMMENT: i = line_comment(); break
-        case PREPROCESSOR: i = preprocessor(); break
-        case OPERATOR: i = operator(); break
-        case INTEGER: i = integer(); break
-        case HEX: i = hex(); break
-        case FLOAT: i = decimal(); break
-        case TOKEN: i = readtoken(); break
-        case WHITESPACE: i = whitespace(); break
-        case NORMAL: i = normal(); break
-      }
-
-      if(last !== i) {
-        switch(input[last]) {
-          case '\n': col = 0; ++line; break
-          default: ++col; break
-        }
-      }
-    }
-
-    total += i
-    input = input.slice(i)
-    return tokens
-  }
-
-  function end(chunk) {
-    if(content.length) {
-      token(content.join(''))
-    }
-
-    mode = EOF
-    token('(eof)')
-    return tokens
-  }
-
-  function normal() {
-    content = content.length ? [] : content
-
-    if(last === '/' && c === '*') {
-      start = total + i - 1
-      mode = BLOCK_COMMENT
-      last = c
-      return i + 1
-    }
-
-    if(last === '/' && c === '/') {
-      start = total + i - 1
-      mode = LINE_COMMENT
-      last = c
-      return i + 1
-    }
-
-    if(c === '#') {
-      mode = PREPROCESSOR
-      start = total + i
-      return i
-    }
-
-    if(/\s/.test(c)) {
-      mode = WHITESPACE
-      start = total + i
-      return i
-    }
-
-    isnum = /\d/.test(c)
-    isoperator = /[^\w_]/.test(c)
-
-    start = total + i
-    mode = isnum ? INTEGER : isoperator ? OPERATOR : TOKEN
-    return i
-  }
-
-  function whitespace() {
-    if(/[^\s]/g.test(c)) {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function preprocessor() {
-    if((c === '\r' || c === '\n') && last !== '\\') {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function line_comment() {
-    return preprocessor()
-  }
-
-  function block_comment() {
-    if(c === '/' && last === '*') {
-      content.push(c)
-      token(content.join(''))
-      mode = NORMAL
-      return i + 1
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function operator() {
-    if(last === '.' && /\d/.test(c)) {
-      mode = FLOAT
-      return i
-    }
-
-    if(last === '/' && c === '*') {
-      mode = BLOCK_COMMENT
-      return i
-    }
-
-    if(last === '/' && c === '/') {
-      mode = LINE_COMMENT
-      return i
-    }
-
-    if(c === '.' && content.length) {
-      while(determine_operator(content));
-
-      mode = FLOAT
-      return i
-    }
-
-    if(c === ';' || c === ')' || c === '(') {
-      if(content.length) while(determine_operator(content));
-      token(c)
-      mode = NORMAL
-      return i + 1
-    }
-
-    var is_composite_operator = content.length === 2 && c !== '='
-    if(/[\w_\d\s]/.test(c) || is_composite_operator) {
-      while(determine_operator(content));
-      mode = NORMAL
-      return i
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function determine_operator(buf) {
-    var j = 0
-      , idx
-      , res
-
-    do {
-      idx = operators.indexOf(buf.slice(0, buf.length + j).join(''))
-      res = operators[idx]
-
-      if(idx === -1) {
-        if(j-- + buf.length > 0) continue
-        res = buf.slice(0, 1).join('')
-      }
-
-      token(res)
-
-      start += res.length
-      content = content.slice(res.length)
-      return content.length
-    } while(1)
-  }
-
-  function hex() {
-    if(/[^a-fA-F0-9]/.test(c)) {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function integer() {
-    if(c === '.') {
-      content.push(c)
-      mode = FLOAT
-      last = c
-      return i + 1
-    }
-
-    if(/[eE]/.test(c)) {
-      content.push(c)
-      mode = FLOAT
-      last = c
-      return i + 1
-    }
-
-    if(c === 'x' && content.length === 1 && content[0] === '0') {
-      mode = HEX
-      content.push(c)
-      last = c
-      return i + 1
-    }
-
-    if(/[^\d]/.test(c)) {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function decimal() {
-    if(c === 'f') {
-      content.push(c)
-      last = c
-      i += 1
-    }
-
-    if(/[eE]/.test(c)) {
-      content.push(c)
-      last = c
-      return i + 1
-    }
-
-    if ((c === '-' || c === '+') && /[eE]/.test(last)) {
-      content.push(c)
-      last = c
-      return i + 1
-    }
-
-    if(/[^\d]/.test(c)) {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function readtoken() {
-    if(/[^\d\w_]/.test(c)) {
-      var contentstr = content.join('')
-      if(literalsDict[contentstr]) {
-        mode = KEYWORD
-      } else if(builtinsDict[contentstr]) {
-        mode = BUILTIN
-      } else {
-        mode = IDENT
-      }
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-    content.push(c)
-    last = c
-    return i + 1
-  }
-}
-
-
-/***/ }),
-
-/***/ 4:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-// 300es builtins/reserved words that were previously valid in v100
-var v100 = __webpack_require__(791)
-
-// The texture2D|Cube functions have been removed
-// And the gl_ features are updated
-v100 = v100.slice().filter(function (b) {
-  return !/^(gl\_|texture)/.test(b)
-})
-
-module.exports = v100.concat([
-  // the updated gl_ constants
-    'gl_VertexID'
-  , 'gl_InstanceID'
-  , 'gl_Position'
-  , 'gl_PointSize'
-  , 'gl_FragCoord'
-  , 'gl_FrontFacing'
-  , 'gl_FragDepth'
-  , 'gl_PointCoord'
-  , 'gl_MaxVertexAttribs'
-  , 'gl_MaxVertexUniformVectors'
-  , 'gl_MaxVertexOutputVectors'
-  , 'gl_MaxFragmentInputVectors'
-  , 'gl_MaxVertexTextureImageUnits'
-  , 'gl_MaxCombinedTextureImageUnits'
-  , 'gl_MaxTextureImageUnits'
-  , 'gl_MaxFragmentUniformVectors'
-  , 'gl_MaxDrawBuffers'
-  , 'gl_MinProgramTexelOffset'
-  , 'gl_MaxProgramTexelOffset'
-  , 'gl_DepthRangeParameters'
-  , 'gl_DepthRange'
-
-  // other builtins
-  , 'trunc'
-  , 'round'
-  , 'roundEven'
-  , 'isnan'
-  , 'isinf'
-  , 'floatBitsToInt'
-  , 'floatBitsToUint'
-  , 'intBitsToFloat'
-  , 'uintBitsToFloat'
-  , 'packSnorm2x16'
-  , 'unpackSnorm2x16'
-  , 'packUnorm2x16'
-  , 'unpackUnorm2x16'
-  , 'packHalf2x16'
-  , 'unpackHalf2x16'
-  , 'outerProduct'
-  , 'transpose'
-  , 'determinant'
-  , 'inverse'
-  , 'texture'
-  , 'textureSize'
-  , 'textureProj'
-  , 'textureLod'
-  , 'textureOffset'
-  , 'texelFetch'
-  , 'texelFetchOffset'
-  , 'textureProjOffset'
-  , 'textureLodOffset'
-  , 'textureProjLod'
-  , 'textureProjLodOffset'
-  , 'textureGrad'
-  , 'textureGradOffset'
-  , 'textureProjGrad'
-  , 'textureProjGradOffset'
-])
-
-
-/***/ }),
-
-/***/ 791:
-/***/ ((module) => {
-
-module.exports = [
-  // Keep this list sorted
-  'abs'
-  , 'acos'
-  , 'all'
-  , 'any'
-  , 'asin'
-  , 'atan'
-  , 'ceil'
-  , 'clamp'
-  , 'cos'
-  , 'cross'
-  , 'dFdx'
-  , 'dFdy'
-  , 'degrees'
-  , 'distance'
-  , 'dot'
-  , 'equal'
-  , 'exp'
-  , 'exp2'
-  , 'faceforward'
-  , 'floor'
-  , 'fract'
-  , 'gl_BackColor'
-  , 'gl_BackLightModelProduct'
-  , 'gl_BackLightProduct'
-  , 'gl_BackMaterial'
-  , 'gl_BackSecondaryColor'
-  , 'gl_ClipPlane'
-  , 'gl_ClipVertex'
-  , 'gl_Color'
-  , 'gl_DepthRange'
-  , 'gl_DepthRangeParameters'
-  , 'gl_EyePlaneQ'
-  , 'gl_EyePlaneR'
-  , 'gl_EyePlaneS'
-  , 'gl_EyePlaneT'
-  , 'gl_Fog'
-  , 'gl_FogCoord'
-  , 'gl_FogFragCoord'
-  , 'gl_FogParameters'
-  , 'gl_FragColor'
-  , 'gl_FragCoord'
-  , 'gl_FragData'
-  , 'gl_FragDepth'
-  , 'gl_FragDepthEXT'
-  , 'gl_FrontColor'
-  , 'gl_FrontFacing'
-  , 'gl_FrontLightModelProduct'
-  , 'gl_FrontLightProduct'
-  , 'gl_FrontMaterial'
-  , 'gl_FrontSecondaryColor'
-  , 'gl_LightModel'
-  , 'gl_LightModelParameters'
-  , 'gl_LightModelProducts'
-  , 'gl_LightProducts'
-  , 'gl_LightSource'
-  , 'gl_LightSourceParameters'
-  , 'gl_MaterialParameters'
-  , 'gl_MaxClipPlanes'
-  , 'gl_MaxCombinedTextureImageUnits'
-  , 'gl_MaxDrawBuffers'
-  , 'gl_MaxFragmentUniformComponents'
-  , 'gl_MaxLights'
-  , 'gl_MaxTextureCoords'
-  , 'gl_MaxTextureImageUnits'
-  , 'gl_MaxTextureUnits'
-  , 'gl_MaxVaryingFloats'
-  , 'gl_MaxVertexAttribs'
-  , 'gl_MaxVertexTextureImageUnits'
-  , 'gl_MaxVertexUniformComponents'
-  , 'gl_ModelViewMatrix'
-  , 'gl_ModelViewMatrixInverse'
-  , 'gl_ModelViewMatrixInverseTranspose'
-  , 'gl_ModelViewMatrixTranspose'
-  , 'gl_ModelViewProjectionMatrix'
-  , 'gl_ModelViewProjectionMatrixInverse'
-  , 'gl_ModelViewProjectionMatrixInverseTranspose'
-  , 'gl_ModelViewProjectionMatrixTranspose'
-  , 'gl_MultiTexCoord0'
-  , 'gl_MultiTexCoord1'
-  , 'gl_MultiTexCoord2'
-  , 'gl_MultiTexCoord3'
-  , 'gl_MultiTexCoord4'
-  , 'gl_MultiTexCoord5'
-  , 'gl_MultiTexCoord6'
-  , 'gl_MultiTexCoord7'
-  , 'gl_Normal'
-  , 'gl_NormalMatrix'
-  , 'gl_NormalScale'
-  , 'gl_ObjectPlaneQ'
-  , 'gl_ObjectPlaneR'
-  , 'gl_ObjectPlaneS'
-  , 'gl_ObjectPlaneT'
-  , 'gl_Point'
-  , 'gl_PointCoord'
-  , 'gl_PointParameters'
-  , 'gl_PointSize'
-  , 'gl_Position'
-  , 'gl_ProjectionMatrix'
-  , 'gl_ProjectionMatrixInverse'
-  , 'gl_ProjectionMatrixInverseTranspose'
-  , 'gl_ProjectionMatrixTranspose'
-  , 'gl_SecondaryColor'
-  , 'gl_TexCoord'
-  , 'gl_TextureEnvColor'
-  , 'gl_TextureMatrix'
-  , 'gl_TextureMatrixInverse'
-  , 'gl_TextureMatrixInverseTranspose'
-  , 'gl_TextureMatrixTranspose'
-  , 'gl_Vertex'
-  , 'greaterThan'
-  , 'greaterThanEqual'
-  , 'inversesqrt'
-  , 'length'
-  , 'lessThan'
-  , 'lessThanEqual'
-  , 'log'
-  , 'log2'
-  , 'matrixCompMult'
-  , 'max'
-  , 'min'
-  , 'mix'
-  , 'mod'
-  , 'normalize'
-  , 'not'
-  , 'notEqual'
-  , 'pow'
-  , 'radians'
-  , 'reflect'
-  , 'refract'
-  , 'sign'
-  , 'sin'
-  , 'smoothstep'
-  , 'sqrt'
-  , 'step'
-  , 'tan'
-  , 'texture2D'
-  , 'texture2DLod'
-  , 'texture2DProj'
-  , 'texture2DProjLod'
-  , 'textureCube'
-  , 'textureCubeLod'
-  , 'texture2DLodEXT'
-  , 'texture2DProjLodEXT'
-  , 'textureCubeLodEXT'
-  , 'texture2DGradEXT'
-  , 'texture2DProjGradEXT'
-  , 'textureCubeGradEXT'
-]
-
-
-/***/ }),
-
-/***/ 959:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-var v100 = __webpack_require__(935)
-
-module.exports = v100.slice().concat([
-   'layout'
-  , 'centroid'
-  , 'smooth'
-  , 'case'
-  , 'mat2x2'
-  , 'mat2x3'
-  , 'mat2x4'
-  , 'mat3x2'
-  , 'mat3x3'
-  , 'mat3x4'
-  , 'mat4x2'
-  , 'mat4x3'
-  , 'mat4x4'
-  , 'uvec2'
-  , 'uvec3'
-  , 'uvec4'
-  , 'samplerCubeShadow'
-  , 'sampler2DArray'
-  , 'sampler2DArrayShadow'
-  , 'isampler2D'
-  , 'isampler3D'
-  , 'isamplerCube'
-  , 'isampler2DArray'
-  , 'usampler2D'
-  , 'usampler3D'
-  , 'usamplerCube'
-  , 'usampler2DArray'
-  , 'coherent'
-  , 'restrict'
-  , 'readonly'
-  , 'writeonly'
-  , 'resource'
-  , 'atomic_uint'
-  , 'noperspective'
-  , 'patch'
-  , 'sample'
-  , 'subroutine'
-  , 'common'
-  , 'partition'
-  , 'active'
-  , 'filter'
-  , 'image1D'
-  , 'image2D'
-  , 'image3D'
-  , 'imageCube'
-  , 'iimage1D'
-  , 'iimage2D'
-  , 'iimage3D'
-  , 'iimageCube'
-  , 'uimage1D'
-  , 'uimage2D'
-  , 'uimage3D'
-  , 'uimageCube'
-  , 'image1DArray'
-  , 'image2DArray'
-  , 'iimage1DArray'
-  , 'iimage2DArray'
-  , 'uimage1DArray'
-  , 'uimage2DArray'
-  , 'image1DShadow'
-  , 'image2DShadow'
-  , 'image1DArrayShadow'
-  , 'image2DArrayShadow'
-  , 'imageBuffer'
-  , 'iimageBuffer'
-  , 'uimageBuffer'
-  , 'sampler1DArray'
-  , 'sampler1DArrayShadow'
-  , 'isampler1D'
-  , 'isampler1DArray'
-  , 'usampler1D'
-  , 'usampler1DArray'
-  , 'isampler2DRect'
-  , 'usampler2DRect'
-  , 'samplerBuffer'
-  , 'isamplerBuffer'
-  , 'usamplerBuffer'
-  , 'sampler2DMS'
-  , 'isampler2DMS'
-  , 'usampler2DMS'
-  , 'sampler2DMSArray'
-  , 'isampler2DMSArray'
-  , 'usampler2DMSArray'
-])
-
-
-/***/ }),
-
-/***/ 935:
-/***/ ((module) => {
-
-module.exports = [
-  // current
-    'precision'
-  , 'highp'
-  , 'mediump'
-  , 'lowp'
-  , 'attribute'
-  , 'const'
-  , 'uniform'
-  , 'varying'
-  , 'break'
-  , 'continue'
-  , 'do'
-  , 'for'
-  , 'while'
-  , 'if'
-  , 'else'
-  , 'in'
-  , 'out'
-  , 'inout'
-  , 'float'
-  , 'int'
-  , 'uint'
-  , 'void'
-  , 'bool'
-  , 'true'
-  , 'false'
-  , 'discard'
-  , 'return'
-  , 'mat2'
-  , 'mat3'
-  , 'mat4'
-  , 'vec2'
-  , 'vec3'
-  , 'vec4'
-  , 'ivec2'
-  , 'ivec3'
-  , 'ivec4'
-  , 'bvec2'
-  , 'bvec3'
-  , 'bvec4'
-  , 'sampler1D'
-  , 'sampler2D'
-  , 'sampler3D'
-  , 'samplerCube'
-  , 'sampler1DShadow'
-  , 'sampler2DShadow'
-  , 'struct'
-
-  // future
-  , 'asm'
-  , 'class'
-  , 'union'
-  , 'enum'
-  , 'typedef'
-  , 'template'
-  , 'this'
-  , 'packed'
-  , 'goto'
-  , 'switch'
-  , 'default'
-  , 'inline'
-  , 'noinline'
-  , 'volatile'
-  , 'public'
-  , 'static'
-  , 'extern'
-  , 'external'
-  , 'interface'
-  , 'long'
-  , 'short'
-  , 'double'
-  , 'half'
-  , 'fixed'
-  , 'unsigned'
-  , 'input'
-  , 'output'
-  , 'hvec2'
-  , 'hvec3'
-  , 'hvec4'
-  , 'dvec2'
-  , 'dvec3'
-  , 'dvec4'
-  , 'fvec2'
-  , 'fvec3'
-  , 'fvec4'
-  , 'sampler2DRect'
-  , 'sampler3DRect'
-  , 'sampler2DRectShadow'
-  , 'sizeof'
-  , 'cast'
-  , 'namespace'
-  , 'using'
-]
-
-
-/***/ }),
-
-/***/ 598:
-/***/ ((module) => {
-
-module.exports = [
-    '<<='
-  , '>>='
-  , '++'
-  , '--'
-  , '<<'
-  , '>>'
-  , '<='
-  , '>='
-  , '=='
-  , '!='
-  , '&&'
-  , '||'
-  , '+='
-  , '-='
-  , '*='
-  , '/='
-  , '%='
-  , '&='
-  , '^^'
-  , '^='
-  , '|='
-  , '('
-  , ')'
-  , '['
-  , ']'
-  , '.'
-  , '!'
-  , '~'
-  , '*'
-  , '/'
-  , '%'
-  , '+'
-  , '-'
-  , '<'
-  , '>'
-  , '&'
-  , '^'
-  , '|'
-  , '?'
-  , ':'
-  , '='
-  , ','
-  , ';'
-  , '{'
-  , '}'
-]
-
-
-/***/ }),
-
-/***/ 664:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-var tokenize = __webpack_require__(26)
-
-module.exports = tokenizeString
-
-function tokenizeString(str, opt) {
-  var generator = tokenize(opt)
-  var tokens = []
-
-  tokens = tokens.concat(generator(str))
-  tokens = tokens.concat(generator(null))
-
-  return tokens
-}
-
-
-/***/ }),
-
-/***/ 737:
-/***/ ((__unused_webpack_module, exports) => {
-
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * DS202: Simplify dynamic range loops
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-exports.make = function (x) {
-  if (x == null) {
-    x = [];
-  }
-  if (!(x instanceof Array)) {
-    x = [+x != null ? +x : 0];
-  }
-  return x;
-};
-
-exports.nest = (a, b) => a.concat(b);
-
-exports.compare = function (a, b) {
-  const n = Math.min(a.length, b.length);
-  for (
-    let i = 0, end = n, asc = 0 <= end;
-    asc ? i < end : i > end;
-    asc ? i++ : i--
-  ) {
-    const p = a[i];
-    const q = b[i];
-    if (p > q) {
-      return -1;
-    }
-    if (p < q) {
-      return 1;
-    }
-  }
-  a = a.length;
-  b = b.length;
-  if (a > b) {
-    return -1;
-  } else if (a < b) {
-    return 1;
-  } else {
-    return 0;
-  }
-};
-
-exports.max = function (a, b) {
-  if (exports.compare(a, b) > 0) {
-    return b;
-  } else {
-    return a;
-  }
-};
-
-
-/***/ }),
-
 /***/ 824:
 /***/ ((module) => {
 
@@ -9490,7 +9490,7 @@ __webpack_require__.d(src_render_namespaceObject, {
   "Scene": () => (Scene)
 });
 
-// NAMESPACE OBJECT: ../shadergraph/src/graph/index.js
+// NAMESPACE OBJECT: ./node_modules/shadergraph/src/graph/index.js
 var src_graph_namespaceObject = {};
 __webpack_require__.r(src_graph_namespaceObject);
 __webpack_require__.d(src_graph_namespaceObject, {
@@ -9501,7 +9501,7 @@ __webpack_require__.d(src_graph_namespaceObject, {
   "Outlet": () => (Outlet)
 });
 
-// NAMESPACE OBJECT: ../shadergraph/src/linker/index.js
+// NAMESPACE OBJECT: ./node_modules/shadergraph/src/linker/index.js
 var linker_namespaceObject = {};
 __webpack_require__.r(linker_namespaceObject);
 __webpack_require__.d(linker_namespaceObject, {
@@ -9517,7 +9517,7 @@ __webpack_require__.d(linker_namespaceObject, {
   "nest": () => (linker_priority.nest)
 });
 
-// NAMESPACE OBJECT: ../shadergraph/src/visualize/markup.js
+// NAMESPACE OBJECT: ./node_modules/shadergraph/src/visualize/markup.js
 var markup_namespaceObject = {};
 __webpack_require__.r(markup_namespaceObject);
 __webpack_require__.d(markup_namespaceObject, {
@@ -9526,7 +9526,7 @@ __webpack_require__.d(markup_namespaceObject, {
   "process": () => (process)
 });
 
-// NAMESPACE OBJECT: ../shadergraph/src/visualize/index.js
+// NAMESPACE OBJECT: ./node_modules/shadergraph/src/visualize/index.js
 var visualize_namespaceObject = {};
 __webpack_require__.r(visualize_namespaceObject);
 __webpack_require__.d(visualize_namespaceObject, {
@@ -9536,7 +9536,7 @@ __webpack_require__.d(visualize_namespaceObject, {
   "visualize": () => (visualize)
 });
 
-// NAMESPACE OBJECT: ../shadergraph/src/factory/index.js
+// NAMESPACE OBJECT: ./node_modules/shadergraph/src/factory/index.js
 var src_factory_namespaceObject = {};
 __webpack_require__.r(src_factory_namespaceObject);
 __webpack_require__.d(src_factory_namespaceObject, {
@@ -9548,7 +9548,7 @@ __webpack_require__.d(src_factory_namespaceObject, {
   "queue": () => (queue)
 });
 
-// NAMESPACE OBJECT: ../shadergraph/src/glsl/index.js
+// NAMESPACE OBJECT: ./node_modules/shadergraph/src/glsl/index.js
 var src_glsl_namespaceObject = {};
 __webpack_require__.r(src_glsl_namespaceObject);
 __webpack_require__.d(src_glsl_namespaceObject, {
@@ -9607,8 +9607,6 @@ __webpack_require__.d(util_namespaceObject, {
   "VDOM": () => (VDOM)
 });
 
-// EXTERNAL MODULE: external "THREE"
-var external_THREE_ = __webpack_require__(824);
 ;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/api.js
 class Api {
   static apply(object) {
@@ -9636,7 +9634,9 @@ class Api {
     };
 
     object.api = function (object, context) {
-      object ||= {};
+      if (!object) {
+        object = {};
+      }
 
       // Append context argument to API methods
       context &&
@@ -9876,8 +9876,6 @@ class Binder {
 }
 
 ;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/bootstrap.js
-
-
 
 
 
@@ -10138,9 +10136,6 @@ Binder.apply(Bootstrap.prototype);
 Binder.apply(Bootstrap.Plugin.prototype);
 Api.apply(Bootstrap.Plugin.prototype);
 
-// eslint-disable-next-line no-import-assign
-external_THREE_.Bootstrap = Bootstrap;
-
 ;// CONCATENATED MODULE: ./src/splash.js
 // TODO: This file was created by bulk-decaffeinate.
 // Sanity-check the conversion and remove this comment.
@@ -10343,486 +10338,6 @@ Bootstrap.registerPlugin("bind", {
     three.unbind(event.plugin);
   },
 });
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/camera.js
-
-
-
-Bootstrap.registerPlugin("camera", {
-  defaults: {
-    near: 0.01,
-    far: 10000,
-
-    type: "perspective",
-    fov: 60,
-    aspect: null,
-
-    // type: 'orthographic',
-    left: -1,
-    right: 1,
-    bottom: -1,
-    top: 1,
-
-    klass: null,
-    parameters: null,
-  },
-
-  listen: ["resize", "this.change"],
-
-  install: function (three) {
-    three.Camera = this.api();
-    three.camera = null;
-
-    this.aspect = 1;
-    this.change({}, three);
-  },
-
-  uninstall: function (three) {
-    delete three.Camera;
-    delete three.camera;
-  },
-
-  change: function (event, three) {
-    var o = this.options;
-    var old = three.camera;
-
-    if (!three.camera || event.changes.type || event.changes.klass) {
-      var klass =
-        o.klass ||
-        {
-          perspective: external_THREE_.PerspectiveCamera,
-          orthographic: external_THREE_.OrthographicCamera,
-        }[o.type] ||
-        external_THREE_.Camera;
-
-      three.camera = o.parameters ? new klass(o.parameters) : new klass();
-    }
-
-    Object.entries(o).forEach(
-      function ([key]) {
-        if (Object.prototype.hasOwnProperty.call(three.camera, key))
-          three.camera[key] = o[key];
-      }.bind(this)
-    );
-
-    this.update(three);
-
-    old === three.camera ||
-      three.trigger({
-        type: "camera",
-        camera: three.camera,
-      });
-  },
-
-  resize: function (event, three) {
-    this.aspect = event.viewWidth / Math.max(1, event.viewHeight);
-
-    this.update(three);
-  },
-
-  update: function (three) {
-    three.camera.aspect = this.options.aspect || this.aspect;
-    three.camera.updateProjectionMatrix();
-  },
-});
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/fallback.js
-
-
-Bootstrap.registerPlugin("fallback", {
-  defaults: {
-    force: false,
-    fill: true,
-    begin:
-      '<div class="threestrap-fallback" style="display: table; width: 100%; height: 100%;' +
-      'box-sizing: border-box; border: 1px dashed rgba(0, 0, 0, .25);">' +
-      '<div style="display: table-cell; padding: 10px; vertical-align: middle; text-align: center;">',
-    end: "</div></div>",
-    message:
-      "<big><strong>This example requires WebGL</strong></big><br>" +
-      'Visit <a target="_blank" href="http://get.webgl.org/">get.webgl.org</a> for more info</a>',
-  },
-
-  install: function (three) {
-    var cnv, gl;
-    try {
-      cnv = document.createElement("canvas");
-      gl = cnv.getContext("webgl") || cnv.getContext("experimental-webgl");
-      if (!gl || this.options.force) {
-        throw "WebGL unavailable.";
-      }
-      three.fallback = false;
-    } catch (e) {
-      var message = this.options.message;
-      var begin = this.options.begin;
-      var end = this.options.end;
-      var fill = this.options.fill;
-
-      var div = document.createElement("div");
-      div.innerHTML = begin + message + end;
-
-      this.children = [];
-
-      while (div.childNodes.length > 0) {
-        this.children.push(div.firstChild);
-        three.element.appendChild(div.firstChild);
-      }
-
-      if (fill) {
-        three.install("fill");
-      }
-
-      this.div = div;
-      three.fallback = true;
-      return false; // Abort install
-    }
-  },
-
-  uninstall: function (three) {
-    if (this.children) {
-      this.children.forEach(function (child) {
-        child.parentNode.removeChild(child);
-      });
-      this.children = null;
-    }
-
-    delete three.fallback;
-  },
-});
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/fill.js
-
-
-Bootstrap.registerPlugin("fill", {
-  defaults: {
-    block: true,
-    body: true,
-    layout: true,
-  },
-
-  install: function (three) {
-    function is(element) {
-      var h = element.style.height;
-      return h == "auto" || h == "";
-    }
-
-    function set(element) {
-      element.style.height = "100%";
-      element.style.margin = 0;
-      element.style.padding = 0;
-      return element;
-    }
-
-    if (this.options.body && three.element == document.body) {
-      // Fix body height if we're naked
-      this.applied = [three.element, document.documentElement]
-        .filter(is)
-        .map(set);
-    }
-
-    if (this.options.block && three.canvas) {
-      three.canvas.style.display = "block";
-      this.block = true;
-    }
-
-    if (this.options.layout && three.element) {
-      var style = window.getComputedStyle(three.element);
-      if (style.position == "static") {
-        three.element.style.position = "relative";
-        this.layout = true;
-      }
-    }
-  },
-
-  uninstall: function (three) {
-    if (this.applied) {
-      const set = function (element) {
-        element.style.height = "";
-        element.style.margin = "";
-        element.style.padding = "";
-        return element;
-      };
-
-      this.applied.map(set);
-      delete this.applied;
-    }
-
-    if (this.block && three.canvas) {
-      three.canvas.style.display = "";
-      delete this.block;
-    }
-
-    if (this.layout && three.element) {
-      three.element.style.position = "";
-      delete this.layout;
-    }
-  },
-
-  change: function (three) {
-    this.uninstall(three);
-    this.install(three);
-  },
-});
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/loop.js
-
-
-Bootstrap.registerPlugin("loop", {
-  defaults: {
-    start: true,
-    each: 1,
-  },
-
-  listen: ["ready"],
-
-  install: function (three) {
-    this.running = false;
-    this.lastRequestId = null;
-
-    three.Loop = this.api(
-      {
-        start: this.start.bind(this),
-        stop: this.stop.bind(this),
-        running: false,
-        window: window,
-      },
-      three
-    );
-
-    this.events = ["pre", "update", "render", "post"].map(function (type) {
-      return { type: type };
-    });
-  },
-
-  uninstall: function (three) {
-    this.stop(three);
-  },
-
-  ready: function (event, three) {
-    if (this.options.start) this.start(three);
-  },
-
-  start: function (three) {
-    if (this.running) return;
-
-    three.Loop.running = this.running = true;
-
-    var trigger = three.trigger.bind(three);
-    var loop = function () {
-      if (!this.running) return;
-      this.lastRequestId = three.Loop.window.requestAnimationFrame(loop);
-      this.events.map(trigger);
-    }.bind(this);
-
-    this.lastRequestId = three.Loop.window.requestAnimationFrame(loop);
-
-    three.trigger({ type: "start" });
-  },
-
-  stop: function (three) {
-    if (!this.running) return;
-    three.Loop.running = this.running = false;
-
-    three.Loop.window.cancelAnimationFrame(this.lastRequestId);
-    this.lastRequestId = null;
-
-    three.trigger({ type: "stop" });
-  },
-});
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/render.js
-
-
-Bootstrap.registerPlugin("render", {
-  listen: ["render"],
-
-  render: function (event, three) {
-    if (three.scene && three.camera) {
-      three.renderer.render(three.scene, three.camera);
-    }
-  },
-});
-
-;// CONCATENATED MODULE: ./node_modules/three/src/constants.js
-const REVISION = '137';
-const MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
-const TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
-const CullFaceNone = 0;
-const CullFaceBack = 1;
-const CullFaceFront = 2;
-const CullFaceFrontBack = 3;
-const BasicShadowMap = 0;
-const PCFShadowMap = 1;
-const PCFSoftShadowMap = 2;
-const VSMShadowMap = 3;
-const FrontSide = 0;
-const BackSide = 1;
-const DoubleSide = 2;
-const FlatShading = 1;
-const SmoothShading = 2;
-const NoBlending = 0;
-const NormalBlending = 1;
-const AdditiveBlending = 2;
-const SubtractiveBlending = 3;
-const MultiplyBlending = 4;
-const CustomBlending = 5;
-const AddEquation = 100;
-const SubtractEquation = 101;
-const ReverseSubtractEquation = 102;
-const MinEquation = 103;
-const MaxEquation = 104;
-const ZeroFactor = 200;
-const OneFactor = 201;
-const SrcColorFactor = 202;
-const OneMinusSrcColorFactor = 203;
-const SrcAlphaFactor = 204;
-const OneMinusSrcAlphaFactor = 205;
-const DstAlphaFactor = 206;
-const OneMinusDstAlphaFactor = 207;
-const DstColorFactor = 208;
-const OneMinusDstColorFactor = 209;
-const SrcAlphaSaturateFactor = 210;
-const NeverDepth = 0;
-const AlwaysDepth = 1;
-const LessDepth = 2;
-const LessEqualDepth = 3;
-const EqualDepth = 4;
-const GreaterEqualDepth = 5;
-const GreaterDepth = 6;
-const NotEqualDepth = 7;
-const MultiplyOperation = 0;
-const MixOperation = 1;
-const AddOperation = 2;
-const NoToneMapping = 0;
-const LinearToneMapping = 1;
-const ReinhardToneMapping = 2;
-const CineonToneMapping = 3;
-const ACESFilmicToneMapping = 4;
-const CustomToneMapping = 5;
-
-const UVMapping = 300;
-const CubeReflectionMapping = 301;
-const CubeRefractionMapping = 302;
-const EquirectangularReflectionMapping = 303;
-const EquirectangularRefractionMapping = 304;
-const CubeUVReflectionMapping = 306;
-const CubeUVRefractionMapping = 307;
-const RepeatWrapping = 1000;
-const ClampToEdgeWrapping = 1001;
-const MirroredRepeatWrapping = 1002;
-const NearestFilter = 1003;
-const NearestMipmapNearestFilter = 1004;
-const NearestMipMapNearestFilter = 1004;
-const NearestMipmapLinearFilter = 1005;
-const NearestMipMapLinearFilter = 1005;
-const LinearFilter = 1006;
-const LinearMipmapNearestFilter = 1007;
-const LinearMipMapNearestFilter = 1007;
-const LinearMipmapLinearFilter = 1008;
-const LinearMipMapLinearFilter = 1008;
-const UnsignedByteType = 1009;
-const ByteType = 1010;
-const ShortType = 1011;
-const UnsignedShortType = 1012;
-const IntType = 1013;
-const UnsignedIntType = 1014;
-const FloatType = 1015;
-const HalfFloatType = 1016;
-const UnsignedShort4444Type = 1017;
-const UnsignedShort5551Type = 1018;
-const UnsignedInt248Type = 1020;
-const AlphaFormat = 1021;
-const RGBFormat = 1022;
-const RGBAFormat = 1023;
-const LuminanceFormat = 1024;
-const LuminanceAlphaFormat = 1025;
-const DepthFormat = 1026;
-const DepthStencilFormat = 1027;
-const RedFormat = 1028;
-const RedIntegerFormat = 1029;
-const RGFormat = 1030;
-const RGIntegerFormat = 1031;
-const RGBAIntegerFormat = 1033;
-
-const RGB_S3TC_DXT1_Format = 33776;
-const RGBA_S3TC_DXT1_Format = 33777;
-const RGBA_S3TC_DXT3_Format = 33778;
-const RGBA_S3TC_DXT5_Format = 33779;
-const RGB_PVRTC_4BPPV1_Format = 35840;
-const RGB_PVRTC_2BPPV1_Format = 35841;
-const RGBA_PVRTC_4BPPV1_Format = 35842;
-const RGBA_PVRTC_2BPPV1_Format = 35843;
-const RGB_ETC1_Format = 36196;
-const RGB_ETC2_Format = 37492;
-const RGBA_ETC2_EAC_Format = 37496;
-const RGBA_ASTC_4x4_Format = 37808;
-const RGBA_ASTC_5x4_Format = 37809;
-const RGBA_ASTC_5x5_Format = 37810;
-const RGBA_ASTC_6x5_Format = 37811;
-const RGBA_ASTC_6x6_Format = 37812;
-const RGBA_ASTC_8x5_Format = 37813;
-const RGBA_ASTC_8x6_Format = 37814;
-const RGBA_ASTC_8x8_Format = 37815;
-const RGBA_ASTC_10x5_Format = 37816;
-const RGBA_ASTC_10x6_Format = 37817;
-const RGBA_ASTC_10x8_Format = 37818;
-const RGBA_ASTC_10x10_Format = 37819;
-const RGBA_ASTC_12x10_Format = 37820;
-const RGBA_ASTC_12x12_Format = 37821;
-const RGBA_BPTC_Format = 36492;
-const LoopOnce = 2200;
-const LoopRepeat = 2201;
-const LoopPingPong = 2202;
-const InterpolateDiscrete = 2300;
-const InterpolateLinear = 2301;
-const InterpolateSmooth = 2302;
-const ZeroCurvatureEnding = 2400;
-const ZeroSlopeEnding = 2401;
-const WrapAroundEnding = 2402;
-const NormalAnimationBlendMode = 2500;
-const AdditiveAnimationBlendMode = 2501;
-const TrianglesDrawMode = 0;
-const TriangleStripDrawMode = 1;
-const TriangleFanDrawMode = 2;
-const LinearEncoding = 3000;
-const sRGBEncoding = 3001;
-const BasicDepthPacking = 3200;
-const RGBADepthPacking = 3201;
-const TangentSpaceNormalMap = 0;
-const ObjectSpaceNormalMap = 1;
-
-const ZeroStencilOp = 0;
-const KeepStencilOp = 7680;
-const ReplaceStencilOp = 7681;
-const IncrementStencilOp = 7682;
-const DecrementStencilOp = 7683;
-const IncrementWrapStencilOp = 34055;
-const DecrementWrapStencilOp = 34056;
-const InvertStencilOp = 5386;
-
-const NeverStencilFunc = 512;
-const LessStencilFunc = 513;
-const EqualStencilFunc = 514;
-const LessEqualStencilFunc = 515;
-const GreaterStencilFunc = 516;
-const NotEqualStencilFunc = 517;
-const GreaterEqualStencilFunc = 518;
-const AlwaysStencilFunc = 519;
-
-const StaticDrawUsage = 35044;
-const DynamicDrawUsage = 35048;
-const StreamDrawUsage = 35040;
-const StaticReadUsage = 35045;
-const DynamicReadUsage = 35049;
-const StreamReadUsage = 35041;
-const StaticCopyUsage = 35046;
-const DynamicCopyUsage = 35050;
-const StreamCopyUsage = 35042;
-
-const GLSL1 = '100';
-const GLSL3 = '300 es';
-
-const _SRGBAFormat = 1035; // fallback for WebGL 1
 
 ;// CONCATENATED MODULE: ./node_modules/three/src/math/MathUtils.js
 const _lut = [];
@@ -12499,1486 +12014,10 @@ const _quaternion = /*@__PURE__*/ new Quaternion();
 
 
 
-;// CONCATENATED MODULE: ./node_modules/three/src/math/Box3.js
-
-
-class Box3 {
-
-	constructor( min = new Vector3( + Infinity, + Infinity, + Infinity ), max = new Vector3( - Infinity, - Infinity, - Infinity ) ) {
-
-		this.min = min;
-		this.max = max;
-
-	}
-
-	set( min, max ) {
-
-		this.min.copy( min );
-		this.max.copy( max );
-
-		return this;
-
-	}
-
-	setFromArray( array ) {
-
-		let minX = + Infinity;
-		let minY = + Infinity;
-		let minZ = + Infinity;
-
-		let maxX = - Infinity;
-		let maxY = - Infinity;
-		let maxZ = - Infinity;
-
-		for ( let i = 0, l = array.length; i < l; i += 3 ) {
-
-			const x = array[ i ];
-			const y = array[ i + 1 ];
-			const z = array[ i + 2 ];
-
-			if ( x < minX ) minX = x;
-			if ( y < minY ) minY = y;
-			if ( z < minZ ) minZ = z;
-
-			if ( x > maxX ) maxX = x;
-			if ( y > maxY ) maxY = y;
-			if ( z > maxZ ) maxZ = z;
-
-		}
-
-		this.min.set( minX, minY, minZ );
-		this.max.set( maxX, maxY, maxZ );
-
-		return this;
-
-	}
-
-	setFromBufferAttribute( attribute ) {
-
-		let minX = + Infinity;
-		let minY = + Infinity;
-		let minZ = + Infinity;
-
-		let maxX = - Infinity;
-		let maxY = - Infinity;
-		let maxZ = - Infinity;
-
-		for ( let i = 0, l = attribute.count; i < l; i ++ ) {
-
-			const x = attribute.getX( i );
-			const y = attribute.getY( i );
-			const z = attribute.getZ( i );
-
-			if ( x < minX ) minX = x;
-			if ( y < minY ) minY = y;
-			if ( z < minZ ) minZ = z;
-
-			if ( x > maxX ) maxX = x;
-			if ( y > maxY ) maxY = y;
-			if ( z > maxZ ) maxZ = z;
-
-		}
-
-		this.min.set( minX, minY, minZ );
-		this.max.set( maxX, maxY, maxZ );
-
-		return this;
-
-	}
-
-	setFromPoints( points ) {
-
-		this.makeEmpty();
-
-		for ( let i = 0, il = points.length; i < il; i ++ ) {
-
-			this.expandByPoint( points[ i ] );
-
-		}
-
-		return this;
-
-	}
-
-	setFromCenterAndSize( center, size ) {
-
-		const halfSize = Box3_vector.copy( size ).multiplyScalar( 0.5 );
-
-		this.min.copy( center ).sub( halfSize );
-		this.max.copy( center ).add( halfSize );
-
-		return this;
-
-	}
-
-	setFromObject( object, precise = false ) {
-
-		this.makeEmpty();
-
-		return this.expandByObject( object, precise );
-
-	}
-
-	clone() {
-
-		return new this.constructor().copy( this );
-
-	}
-
-	copy( box ) {
-
-		this.min.copy( box.min );
-		this.max.copy( box.max );
-
-		return this;
-
-	}
-
-	makeEmpty() {
-
-		this.min.x = this.min.y = this.min.z = + Infinity;
-		this.max.x = this.max.y = this.max.z = - Infinity;
-
-		return this;
-
-	}
-
-	isEmpty() {
-
-		// this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
-
-		return ( this.max.x < this.min.x ) || ( this.max.y < this.min.y ) || ( this.max.z < this.min.z );
-
-	}
-
-	getCenter( target ) {
-
-		return this.isEmpty() ? target.set( 0, 0, 0 ) : target.addVectors( this.min, this.max ).multiplyScalar( 0.5 );
-
-	}
-
-	getSize( target ) {
-
-		return this.isEmpty() ? target.set( 0, 0, 0 ) : target.subVectors( this.max, this.min );
-
-	}
-
-	expandByPoint( point ) {
-
-		this.min.min( point );
-		this.max.max( point );
-
-		return this;
-
-	}
-
-	expandByVector( vector ) {
-
-		this.min.sub( vector );
-		this.max.add( vector );
-
-		return this;
-
-	}
-
-	expandByScalar( scalar ) {
-
-		this.min.addScalar( - scalar );
-		this.max.addScalar( scalar );
-
-		return this;
-
-	}
-
-	expandByObject( object, precise = false ) {
-
-		// Computes the world-axis-aligned bounding box of an object (including its children),
-		// accounting for both the object's, and children's, world transforms
-
-		object.updateWorldMatrix( false, false );
-
-		const geometry = object.geometry;
-
-		if ( geometry !== undefined ) {
-
-			if ( precise && geometry.attributes != undefined && geometry.attributes.position !== undefined ) {
-
-				const position = geometry.attributes.position;
-				for ( let i = 0, l = position.count; i < l; i ++ ) {
-
-					Box3_vector.fromBufferAttribute( position, i ).applyMatrix4( object.matrixWorld );
-					this.expandByPoint( Box3_vector );
-
-				}
-
-			} else {
-
-				if ( geometry.boundingBox === null ) {
-
-					geometry.computeBoundingBox();
-
-				}
-
-				_box.copy( geometry.boundingBox );
-				_box.applyMatrix4( object.matrixWorld );
-
-				this.union( _box );
-
-			}
-
-		}
-
-		const children = object.children;
-
-		for ( let i = 0, l = children.length; i < l; i ++ ) {
-
-			this.expandByObject( children[ i ], precise );
-
-		}
-
-		return this;
-
-	}
-
-	containsPoint( point ) {
-
-		return point.x < this.min.x || point.x > this.max.x ||
-			point.y < this.min.y || point.y > this.max.y ||
-			point.z < this.min.z || point.z > this.max.z ? false : true;
-
-	}
-
-	containsBox( box ) {
-
-		return this.min.x <= box.min.x && box.max.x <= this.max.x &&
-			this.min.y <= box.min.y && box.max.y <= this.max.y &&
-			this.min.z <= box.min.z && box.max.z <= this.max.z;
-
-	}
-
-	getParameter( point, target ) {
-
-		// This can potentially have a divide by zero if the box
-		// has a size dimension of 0.
-
-		return target.set(
-			( point.x - this.min.x ) / ( this.max.x - this.min.x ),
-			( point.y - this.min.y ) / ( this.max.y - this.min.y ),
-			( point.z - this.min.z ) / ( this.max.z - this.min.z )
-		);
-
-	}
-
-	intersectsBox( box ) {
-
-		// using 6 splitting planes to rule out intersections.
-		return box.max.x < this.min.x || box.min.x > this.max.x ||
-			box.max.y < this.min.y || box.min.y > this.max.y ||
-			box.max.z < this.min.z || box.min.z > this.max.z ? false : true;
-
-	}
-
-	intersectsSphere( sphere ) {
-
-		// Find the point on the AABB closest to the sphere center.
-		this.clampPoint( sphere.center, Box3_vector );
-
-		// If that point is inside the sphere, the AABB and sphere intersect.
-		return Box3_vector.distanceToSquared( sphere.center ) <= ( sphere.radius * sphere.radius );
-
-	}
-
-	intersectsPlane( plane ) {
-
-		// We compute the minimum and maximum dot product values. If those values
-		// are on the same side (back or front) of the plane, then there is no intersection.
-
-		let min, max;
-
-		if ( plane.normal.x > 0 ) {
-
-			min = plane.normal.x * this.min.x;
-			max = plane.normal.x * this.max.x;
-
-		} else {
-
-			min = plane.normal.x * this.max.x;
-			max = plane.normal.x * this.min.x;
-
-		}
-
-		if ( plane.normal.y > 0 ) {
-
-			min += plane.normal.y * this.min.y;
-			max += plane.normal.y * this.max.y;
-
-		} else {
-
-			min += plane.normal.y * this.max.y;
-			max += plane.normal.y * this.min.y;
-
-		}
-
-		if ( plane.normal.z > 0 ) {
-
-			min += plane.normal.z * this.min.z;
-			max += plane.normal.z * this.max.z;
-
-		} else {
-
-			min += plane.normal.z * this.max.z;
-			max += plane.normal.z * this.min.z;
-
-		}
-
-		return ( min <= - plane.constant && max >= - plane.constant );
-
-	}
-
-	intersectsTriangle( triangle ) {
-
-		if ( this.isEmpty() ) {
-
-			return false;
-
-		}
-
-		// compute box center and extents
-		this.getCenter( _center );
-		_extents.subVectors( this.max, _center );
-
-		// translate triangle to aabb origin
-		_v0.subVectors( triangle.a, _center );
-		_v1.subVectors( triangle.b, _center );
-		_v2.subVectors( triangle.c, _center );
-
-		// compute edge vectors for triangle
-		_f0.subVectors( _v1, _v0 );
-		_f1.subVectors( _v2, _v1 );
-		_f2.subVectors( _v0, _v2 );
-
-		// test against axes that are given by cross product combinations of the edges of the triangle and the edges of the aabb
-		// make an axis testing of each of the 3 sides of the aabb against each of the 3 sides of the triangle = 9 axis of separation
-		// axis_ij = u_i x f_j (u0, u1, u2 = face normals of aabb = x,y,z axes vectors since aabb is axis aligned)
-		let axes = [
-			0, - _f0.z, _f0.y, 0, - _f1.z, _f1.y, 0, - _f2.z, _f2.y,
-			_f0.z, 0, - _f0.x, _f1.z, 0, - _f1.x, _f2.z, 0, - _f2.x,
-			- _f0.y, _f0.x, 0, - _f1.y, _f1.x, 0, - _f2.y, _f2.x, 0
-		];
-		if ( ! satForAxes( axes, _v0, _v1, _v2, _extents ) ) {
-
-			return false;
-
-		}
-
-		// test 3 face normals from the aabb
-		axes = [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ];
-		if ( ! satForAxes( axes, _v0, _v1, _v2, _extents ) ) {
-
-			return false;
-
-		}
-
-		// finally testing the face normal of the triangle
-		// use already existing triangle edge vectors here
-		_triangleNormal.crossVectors( _f0, _f1 );
-		axes = [ _triangleNormal.x, _triangleNormal.y, _triangleNormal.z ];
-
-		return satForAxes( axes, _v0, _v1, _v2, _extents );
-
-	}
-
-	clampPoint( point, target ) {
-
-		return target.copy( point ).clamp( this.min, this.max );
-
-	}
-
-	distanceToPoint( point ) {
-
-		const clampedPoint = Box3_vector.copy( point ).clamp( this.min, this.max );
-
-		return clampedPoint.sub( point ).length();
-
-	}
-
-	getBoundingSphere( target ) {
-
-		this.getCenter( target.center );
-
-		target.radius = this.getSize( Box3_vector ).length() * 0.5;
-
-		return target;
-
-	}
-
-	intersect( box ) {
-
-		this.min.max( box.min );
-		this.max.min( box.max );
-
-		// ensure that if there is no overlap, the result is fully empty, not slightly empty with non-inf/+inf values that will cause subsequence intersects to erroneously return valid values.
-		if ( this.isEmpty() ) this.makeEmpty();
-
-		return this;
-
-	}
-
-	union( box ) {
-
-		this.min.min( box.min );
-		this.max.max( box.max );
-
-		return this;
-
-	}
-
-	applyMatrix4( matrix ) {
-
-		// transform of empty box is an empty box.
-		if ( this.isEmpty() ) return this;
-
-		// NOTE: I am using a binary pattern to specify all 2^3 combinations below
-		_points[ 0 ].set( this.min.x, this.min.y, this.min.z ).applyMatrix4( matrix ); // 000
-		_points[ 1 ].set( this.min.x, this.min.y, this.max.z ).applyMatrix4( matrix ); // 001
-		_points[ 2 ].set( this.min.x, this.max.y, this.min.z ).applyMatrix4( matrix ); // 010
-		_points[ 3 ].set( this.min.x, this.max.y, this.max.z ).applyMatrix4( matrix ); // 011
-		_points[ 4 ].set( this.max.x, this.min.y, this.min.z ).applyMatrix4( matrix ); // 100
-		_points[ 5 ].set( this.max.x, this.min.y, this.max.z ).applyMatrix4( matrix ); // 101
-		_points[ 6 ].set( this.max.x, this.max.y, this.min.z ).applyMatrix4( matrix ); // 110
-		_points[ 7 ].set( this.max.x, this.max.y, this.max.z ).applyMatrix4( matrix ); // 111
-
-		this.setFromPoints( _points );
-
-		return this;
-
-	}
-
-	translate( offset ) {
-
-		this.min.add( offset );
-		this.max.add( offset );
-
-		return this;
-
-	}
-
-	equals( box ) {
-
-		return box.min.equals( this.min ) && box.max.equals( this.max );
-
-	}
-
-}
-
-Box3.prototype.isBox3 = true;
-
-const _points = [
-	/*@__PURE__*/ new Vector3(),
-	/*@__PURE__*/ new Vector3(),
-	/*@__PURE__*/ new Vector3(),
-	/*@__PURE__*/ new Vector3(),
-	/*@__PURE__*/ new Vector3(),
-	/*@__PURE__*/ new Vector3(),
-	/*@__PURE__*/ new Vector3(),
-	/*@__PURE__*/ new Vector3()
-];
-
-const Box3_vector = /*@__PURE__*/ new Vector3();
-
-const _box = /*@__PURE__*/ new Box3();
-
-// triangle centered vertices
-
-const _v0 = /*@__PURE__*/ new Vector3();
-const _v1 = /*@__PURE__*/ new Vector3();
-const _v2 = /*@__PURE__*/ new Vector3();
-
-// triangle edge vectors
-
-const _f0 = /*@__PURE__*/ new Vector3();
-const _f1 = /*@__PURE__*/ new Vector3();
-const _f2 = /*@__PURE__*/ new Vector3();
-
-const _center = /*@__PURE__*/ new Vector3();
-const _extents = /*@__PURE__*/ new Vector3();
-const _triangleNormal = /*@__PURE__*/ new Vector3();
-const _testAxis = /*@__PURE__*/ new Vector3();
-
-function satForAxes( axes, v0, v1, v2, extents ) {
-
-	for ( let i = 0, j = axes.length - 3; i <= j; i += 3 ) {
-
-		_testAxis.fromArray( axes, i );
-		// project the aabb onto the seperating axis
-		const r = extents.x * Math.abs( _testAxis.x ) + extents.y * Math.abs( _testAxis.y ) + extents.z * Math.abs( _testAxis.z );
-		// project all 3 vertices of the triangle onto the seperating axis
-		const p0 = v0.dot( _testAxis );
-		const p1 = v1.dot( _testAxis );
-		const p2 = v2.dot( _testAxis );
-		// actual test, basically see if either of the most extreme of the triangle points intersects r
-		if ( Math.max( - Math.max( p0, p1, p2 ), Math.min( p0, p1, p2 ) ) > r ) {
-
-			// points of the projected triangle are outside the projected half-length of the aabb
-			// the axis is seperating and we can exit
-			return false;
-
-		}
-
-	}
-
-	return true;
-
-}
-
-
-
-;// CONCATENATED MODULE: ./node_modules/three/src/math/Sphere.js
-
-
-
-const Sphere_box = /*@__PURE__*/ new Box3();
-const Sphere_v1 = /*@__PURE__*/ new Vector3();
-const _toFarthestPoint = /*@__PURE__*/ new Vector3();
-const _toPoint = /*@__PURE__*/ new Vector3();
-
-class Sphere {
-
-	constructor( center = new Vector3(), radius = - 1 ) {
-
-		this.center = center;
-		this.radius = radius;
-
-	}
-
-	set( center, radius ) {
-
-		this.center.copy( center );
-		this.radius = radius;
-
-		return this;
-
-	}
-
-	setFromPoints( points, optionalCenter ) {
-
-		const center = this.center;
-
-		if ( optionalCenter !== undefined ) {
-
-			center.copy( optionalCenter );
-
-		} else {
-
-			Sphere_box.setFromPoints( points ).getCenter( center );
-
-		}
-
-		let maxRadiusSq = 0;
-
-		for ( let i = 0, il = points.length; i < il; i ++ ) {
-
-			maxRadiusSq = Math.max( maxRadiusSq, center.distanceToSquared( points[ i ] ) );
-
-		}
-
-		this.radius = Math.sqrt( maxRadiusSq );
-
-		return this;
-
-	}
-
-	copy( sphere ) {
-
-		this.center.copy( sphere.center );
-		this.radius = sphere.radius;
-
-		return this;
-
-	}
-
-	isEmpty() {
-
-		return ( this.radius < 0 );
-
-	}
-
-	makeEmpty() {
-
-		this.center.set( 0, 0, 0 );
-		this.radius = - 1;
-
-		return this;
-
-	}
-
-	containsPoint( point ) {
-
-		return ( point.distanceToSquared( this.center ) <= ( this.radius * this.radius ) );
-
-	}
-
-	distanceToPoint( point ) {
-
-		return ( point.distanceTo( this.center ) - this.radius );
-
-	}
-
-	intersectsSphere( sphere ) {
-
-		const radiusSum = this.radius + sphere.radius;
-
-		return sphere.center.distanceToSquared( this.center ) <= ( radiusSum * radiusSum );
-
-	}
-
-	intersectsBox( box ) {
-
-		return box.intersectsSphere( this );
-
-	}
-
-	intersectsPlane( plane ) {
-
-		return Math.abs( plane.distanceToPoint( this.center ) ) <= this.radius;
-
-	}
-
-	clampPoint( point, target ) {
-
-		const deltaLengthSq = this.center.distanceToSquared( point );
-
-		target.copy( point );
-
-		if ( deltaLengthSq > ( this.radius * this.radius ) ) {
-
-			target.sub( this.center ).normalize();
-			target.multiplyScalar( this.radius ).add( this.center );
-
-		}
-
-		return target;
-
-	}
-
-	getBoundingBox( target ) {
-
-		if ( this.isEmpty() ) {
-
-			// Empty sphere produces empty bounding box
-			target.makeEmpty();
-			return target;
-
-		}
-
-		target.set( this.center, this.center );
-		target.expandByScalar( this.radius );
-
-		return target;
-
-	}
-
-	applyMatrix4( matrix ) {
-
-		this.center.applyMatrix4( matrix );
-		this.radius = this.radius * matrix.getMaxScaleOnAxis();
-
-		return this;
-
-	}
-
-	translate( offset ) {
-
-		this.center.add( offset );
-
-		return this;
-
-	}
-
-	expandByPoint( point ) {
-
-		// from https://github.com/juj/MathGeoLib/blob/2940b99b99cfe575dd45103ef20f4019dee15b54/src/Geometry/Sphere.cpp#L649-L671
-
-		_toPoint.subVectors( point, this.center );
-
-		const lengthSq = _toPoint.lengthSq();
-
-		if ( lengthSq > ( this.radius * this.radius ) ) {
-
-			const length = Math.sqrt( lengthSq );
-			const missingRadiusHalf = ( length - this.radius ) * 0.5;
-
-			// Nudge this sphere towards the target point. Add half the missing distance to radius,
-			// and the other half to position. This gives a tighter enclosure, instead of if
-			// the whole missing distance were just added to radius.
-
-			this.center.add( _toPoint.multiplyScalar( missingRadiusHalf / length ) );
-			this.radius += missingRadiusHalf;
-
-		}
-
-		return this;
-
-	}
-
-	union( sphere ) {
-
-		// from https://github.com/juj/MathGeoLib/blob/2940b99b99cfe575dd45103ef20f4019dee15b54/src/Geometry/Sphere.cpp#L759-L769
-
-		// To enclose another sphere into this sphere, we only need to enclose two points:
-		// 1) Enclose the farthest point on the other sphere into this sphere.
-		// 2) Enclose the opposite point of the farthest point into this sphere.
-
-		 if ( this.center.equals( sphere.center ) === true ) {
-
-			 _toFarthestPoint.set( 0, 0, 1 ).multiplyScalar( sphere.radius );
-
-
-		} else {
-
-			_toFarthestPoint.subVectors( sphere.center, this.center ).normalize().multiplyScalar( sphere.radius );
-
-		}
-
-		this.expandByPoint( Sphere_v1.copy( sphere.center ).add( _toFarthestPoint ) );
-		this.expandByPoint( Sphere_v1.copy( sphere.center ).sub( _toFarthestPoint ) );
-
-		return this;
-
-	}
-
-	equals( sphere ) {
-
-		return sphere.center.equals( this.center ) && ( sphere.radius === this.radius );
-
-	}
-
-	clone() {
-
-		return new this.constructor().copy( this );
-
-	}
-
-}
-
-
-
-;// CONCATENATED MODULE: ./node_modules/three/src/math/Matrix3.js
-class Matrix3 {
-
-	constructor() {
-
-		this.elements = [
-
-			1, 0, 0,
-			0, 1, 0,
-			0, 0, 1
-
-		];
-
-		if ( arguments.length > 0 ) {
-
-			console.error( 'THREE.Matrix3: the constructor no longer reads arguments. use .set() instead.' );
-
-		}
-
-	}
-
-	set( n11, n12, n13, n21, n22, n23, n31, n32, n33 ) {
-
-		const te = this.elements;
-
-		te[ 0 ] = n11; te[ 1 ] = n21; te[ 2 ] = n31;
-		te[ 3 ] = n12; te[ 4 ] = n22; te[ 5 ] = n32;
-		te[ 6 ] = n13; te[ 7 ] = n23; te[ 8 ] = n33;
-
-		return this;
-
-	}
-
-	identity() {
-
-		this.set(
-
-			1, 0, 0,
-			0, 1, 0,
-			0, 0, 1
-
-		);
-
-		return this;
-
-	}
-
-	copy( m ) {
-
-		const te = this.elements;
-		const me = m.elements;
-
-		te[ 0 ] = me[ 0 ]; te[ 1 ] = me[ 1 ]; te[ 2 ] = me[ 2 ];
-		te[ 3 ] = me[ 3 ]; te[ 4 ] = me[ 4 ]; te[ 5 ] = me[ 5 ];
-		te[ 6 ] = me[ 6 ]; te[ 7 ] = me[ 7 ]; te[ 8 ] = me[ 8 ];
-
-		return this;
-
-	}
-
-	extractBasis( xAxis, yAxis, zAxis ) {
-
-		xAxis.setFromMatrix3Column( this, 0 );
-		yAxis.setFromMatrix3Column( this, 1 );
-		zAxis.setFromMatrix3Column( this, 2 );
-
-		return this;
-
-	}
-
-	setFromMatrix4( m ) {
-
-		const me = m.elements;
-
-		this.set(
-
-			me[ 0 ], me[ 4 ], me[ 8 ],
-			me[ 1 ], me[ 5 ], me[ 9 ],
-			me[ 2 ], me[ 6 ], me[ 10 ]
-
-		);
-
-		return this;
-
-	}
-
-	multiply( m ) {
-
-		return this.multiplyMatrices( this, m );
-
-	}
-
-	premultiply( m ) {
-
-		return this.multiplyMatrices( m, this );
-
-	}
-
-	multiplyMatrices( a, b ) {
-
-		const ae = a.elements;
-		const be = b.elements;
-		const te = this.elements;
-
-		const a11 = ae[ 0 ], a12 = ae[ 3 ], a13 = ae[ 6 ];
-		const a21 = ae[ 1 ], a22 = ae[ 4 ], a23 = ae[ 7 ];
-		const a31 = ae[ 2 ], a32 = ae[ 5 ], a33 = ae[ 8 ];
-
-		const b11 = be[ 0 ], b12 = be[ 3 ], b13 = be[ 6 ];
-		const b21 = be[ 1 ], b22 = be[ 4 ], b23 = be[ 7 ];
-		const b31 = be[ 2 ], b32 = be[ 5 ], b33 = be[ 8 ];
-
-		te[ 0 ] = a11 * b11 + a12 * b21 + a13 * b31;
-		te[ 3 ] = a11 * b12 + a12 * b22 + a13 * b32;
-		te[ 6 ] = a11 * b13 + a12 * b23 + a13 * b33;
-
-		te[ 1 ] = a21 * b11 + a22 * b21 + a23 * b31;
-		te[ 4 ] = a21 * b12 + a22 * b22 + a23 * b32;
-		te[ 7 ] = a21 * b13 + a22 * b23 + a23 * b33;
-
-		te[ 2 ] = a31 * b11 + a32 * b21 + a33 * b31;
-		te[ 5 ] = a31 * b12 + a32 * b22 + a33 * b32;
-		te[ 8 ] = a31 * b13 + a32 * b23 + a33 * b33;
-
-		return this;
-
-	}
-
-	multiplyScalar( s ) {
-
-		const te = this.elements;
-
-		te[ 0 ] *= s; te[ 3 ] *= s; te[ 6 ] *= s;
-		te[ 1 ] *= s; te[ 4 ] *= s; te[ 7 ] *= s;
-		te[ 2 ] *= s; te[ 5 ] *= s; te[ 8 ] *= s;
-
-		return this;
-
-	}
-
-	determinant() {
-
-		const te = this.elements;
-
-		const a = te[ 0 ], b = te[ 1 ], c = te[ 2 ],
-			d = te[ 3 ], e = te[ 4 ], f = te[ 5 ],
-			g = te[ 6 ], h = te[ 7 ], i = te[ 8 ];
-
-		return a * e * i - a * f * h - b * d * i + b * f * g + c * d * h - c * e * g;
-
-	}
-
-	invert() {
-
-		const te = this.elements,
-
-			n11 = te[ 0 ], n21 = te[ 1 ], n31 = te[ 2 ],
-			n12 = te[ 3 ], n22 = te[ 4 ], n32 = te[ 5 ],
-			n13 = te[ 6 ], n23 = te[ 7 ], n33 = te[ 8 ],
-
-			t11 = n33 * n22 - n32 * n23,
-			t12 = n32 * n13 - n33 * n12,
-			t13 = n23 * n12 - n22 * n13,
-
-			det = n11 * t11 + n21 * t12 + n31 * t13;
-
-		if ( det === 0 ) return this.set( 0, 0, 0, 0, 0, 0, 0, 0, 0 );
-
-		const detInv = 1 / det;
-
-		te[ 0 ] = t11 * detInv;
-		te[ 1 ] = ( n31 * n23 - n33 * n21 ) * detInv;
-		te[ 2 ] = ( n32 * n21 - n31 * n22 ) * detInv;
-
-		te[ 3 ] = t12 * detInv;
-		te[ 4 ] = ( n33 * n11 - n31 * n13 ) * detInv;
-		te[ 5 ] = ( n31 * n12 - n32 * n11 ) * detInv;
-
-		te[ 6 ] = t13 * detInv;
-		te[ 7 ] = ( n21 * n13 - n23 * n11 ) * detInv;
-		te[ 8 ] = ( n22 * n11 - n21 * n12 ) * detInv;
-
-		return this;
-
-	}
-
-	transpose() {
-
-		let tmp;
-		const m = this.elements;
-
-		tmp = m[ 1 ]; m[ 1 ] = m[ 3 ]; m[ 3 ] = tmp;
-		tmp = m[ 2 ]; m[ 2 ] = m[ 6 ]; m[ 6 ] = tmp;
-		tmp = m[ 5 ]; m[ 5 ] = m[ 7 ]; m[ 7 ] = tmp;
-
-		return this;
-
-	}
-
-	getNormalMatrix( matrix4 ) {
-
-		return this.setFromMatrix4( matrix4 ).invert().transpose();
-
-	}
-
-	transposeIntoArray( r ) {
-
-		const m = this.elements;
-
-		r[ 0 ] = m[ 0 ];
-		r[ 1 ] = m[ 3 ];
-		r[ 2 ] = m[ 6 ];
-		r[ 3 ] = m[ 1 ];
-		r[ 4 ] = m[ 4 ];
-		r[ 5 ] = m[ 7 ];
-		r[ 6 ] = m[ 2 ];
-		r[ 7 ] = m[ 5 ];
-		r[ 8 ] = m[ 8 ];
-
-		return this;
-
-	}
-
-	setUvTransform( tx, ty, sx, sy, rotation, cx, cy ) {
-
-		const c = Math.cos( rotation );
-		const s = Math.sin( rotation );
-
-		this.set(
-			sx * c, sx * s, - sx * ( c * cx + s * cy ) + cx + tx,
-			- sy * s, sy * c, - sy * ( - s * cx + c * cy ) + cy + ty,
-			0, 0, 1
-		);
-
-		return this;
-
-	}
-
-	scale( sx, sy ) {
-
-		const te = this.elements;
-
-		te[ 0 ] *= sx; te[ 3 ] *= sx; te[ 6 ] *= sx;
-		te[ 1 ] *= sy; te[ 4 ] *= sy; te[ 7 ] *= sy;
-
-		return this;
-
-	}
-
-	rotate( theta ) {
-
-		const c = Math.cos( theta );
-		const s = Math.sin( theta );
-
-		const te = this.elements;
-
-		const a11 = te[ 0 ], a12 = te[ 3 ], a13 = te[ 6 ];
-		const a21 = te[ 1 ], a22 = te[ 4 ], a23 = te[ 7 ];
-
-		te[ 0 ] = c * a11 + s * a21;
-		te[ 3 ] = c * a12 + s * a22;
-		te[ 6 ] = c * a13 + s * a23;
-
-		te[ 1 ] = - s * a11 + c * a21;
-		te[ 4 ] = - s * a12 + c * a22;
-		te[ 7 ] = - s * a13 + c * a23;
-
-		return this;
-
-	}
-
-	translate( tx, ty ) {
-
-		const te = this.elements;
-
-		te[ 0 ] += tx * te[ 2 ]; te[ 3 ] += tx * te[ 5 ]; te[ 6 ] += tx * te[ 8 ];
-		te[ 1 ] += ty * te[ 2 ]; te[ 4 ] += ty * te[ 5 ]; te[ 7 ] += ty * te[ 8 ];
-
-		return this;
-
-	}
-
-	equals( matrix ) {
-
-		const te = this.elements;
-		const me = matrix.elements;
-
-		for ( let i = 0; i < 9; i ++ ) {
-
-			if ( te[ i ] !== me[ i ] ) return false;
-
-		}
-
-		return true;
-
-	}
-
-	fromArray( array, offset = 0 ) {
-
-		for ( let i = 0; i < 9; i ++ ) {
-
-			this.elements[ i ] = array[ i + offset ];
-
-		}
-
-		return this;
-
-	}
-
-	toArray( array = [], offset = 0 ) {
-
-		const te = this.elements;
-
-		array[ offset ] = te[ 0 ];
-		array[ offset + 1 ] = te[ 1 ];
-		array[ offset + 2 ] = te[ 2 ];
-
-		array[ offset + 3 ] = te[ 3 ];
-		array[ offset + 4 ] = te[ 4 ];
-		array[ offset + 5 ] = te[ 5 ];
-
-		array[ offset + 6 ] = te[ 6 ];
-		array[ offset + 7 ] = te[ 7 ];
-		array[ offset + 8 ] = te[ 8 ];
-
-		return array;
-
-	}
-
-	clone() {
-
-		return new this.constructor().fromArray( this.elements );
-
-	}
-
-}
-
-Matrix3.prototype.isMatrix3 = true;
-
-
-
-;// CONCATENATED MODULE: ./node_modules/three/src/math/Plane.js
-
-
-
-const _vector1 = /*@__PURE__*/ new Vector3();
-const _vector2 = /*@__PURE__*/ new Vector3();
-const _normalMatrix = /*@__PURE__*/ new Matrix3();
-
-class Plane {
-
-	constructor( normal = new Vector3( 1, 0, 0 ), constant = 0 ) {
-
-		// normal is assumed to be normalized
-
-		this.normal = normal;
-		this.constant = constant;
-
-	}
-
-	set( normal, constant ) {
-
-		this.normal.copy( normal );
-		this.constant = constant;
-
-		return this;
-
-	}
-
-	setComponents( x, y, z, w ) {
-
-		this.normal.set( x, y, z );
-		this.constant = w;
-
-		return this;
-
-	}
-
-	setFromNormalAndCoplanarPoint( normal, point ) {
-
-		this.normal.copy( normal );
-		this.constant = - point.dot( this.normal );
-
-		return this;
-
-	}
-
-	setFromCoplanarPoints( a, b, c ) {
-
-		const normal = _vector1.subVectors( c, b ).cross( _vector2.subVectors( a, b ) ).normalize();
-
-		// Q: should an error be thrown if normal is zero (e.g. degenerate plane)?
-
-		this.setFromNormalAndCoplanarPoint( normal, a );
-
-		return this;
-
-	}
-
-	copy( plane ) {
-
-		this.normal.copy( plane.normal );
-		this.constant = plane.constant;
-
-		return this;
-
-	}
-
-	normalize() {
-
-		// Note: will lead to a divide by zero if the plane is invalid.
-
-		const inverseNormalLength = 1.0 / this.normal.length();
-		this.normal.multiplyScalar( inverseNormalLength );
-		this.constant *= inverseNormalLength;
-
-		return this;
-
-	}
-
-	negate() {
-
-		this.constant *= - 1;
-		this.normal.negate();
-
-		return this;
-
-	}
-
-	distanceToPoint( point ) {
-
-		return this.normal.dot( point ) + this.constant;
-
-	}
-
-	distanceToSphere( sphere ) {
-
-		return this.distanceToPoint( sphere.center ) - sphere.radius;
-
-	}
-
-	projectPoint( point, target ) {
-
-		return target.copy( this.normal ).multiplyScalar( - this.distanceToPoint( point ) ).add( point );
-
-	}
-
-	intersectLine( line, target ) {
-
-		const direction = line.delta( _vector1 );
-
-		const denominator = this.normal.dot( direction );
-
-		if ( denominator === 0 ) {
-
-			// line is coplanar, return origin
-			if ( this.distanceToPoint( line.start ) === 0 ) {
-
-				return target.copy( line.start );
-
-			}
-
-			// Unsure if this is the correct method to handle this case.
-			return null;
-
-		}
-
-		const t = - ( line.start.dot( this.normal ) + this.constant ) / denominator;
-
-		if ( t < 0 || t > 1 ) {
-
-			return null;
-
-		}
-
-		return target.copy( direction ).multiplyScalar( t ).add( line.start );
-
-	}
-
-	intersectsLine( line ) {
-
-		// Note: this tests if a line intersects the plane, not whether it (or its end-points) are coplanar with it.
-
-		const startSign = this.distanceToPoint( line.start );
-		const endSign = this.distanceToPoint( line.end );
-
-		return ( startSign < 0 && endSign > 0 ) || ( endSign < 0 && startSign > 0 );
-
-	}
-
-	intersectsBox( box ) {
-
-		return box.intersectsPlane( this );
-
-	}
-
-	intersectsSphere( sphere ) {
-
-		return sphere.intersectsPlane( this );
-
-	}
-
-	coplanarPoint( target ) {
-
-		return target.copy( this.normal ).multiplyScalar( - this.constant );
-
-	}
-
-	applyMatrix4( matrix, optionalNormalMatrix ) {
-
-		const normalMatrix = optionalNormalMatrix || _normalMatrix.getNormalMatrix( matrix );
-
-		const referencePoint = this.coplanarPoint( _vector1 ).applyMatrix4( matrix );
-
-		const normal = this.normal.applyMatrix3( normalMatrix ).normalize();
-
-		this.constant = - referencePoint.dot( normal );
-
-		return this;
-
-	}
-
-	translate( offset ) {
-
-		this.constant -= offset.dot( this.normal );
-
-		return this;
-
-	}
-
-	equals( plane ) {
-
-		return plane.normal.equals( this.normal ) && ( plane.constant === this.constant );
-
-	}
-
-	clone() {
-
-		return new this.constructor().copy( this );
-
-	}
-
-}
-
-Plane.prototype.isPlane = true;
-
-
-
-;// CONCATENATED MODULE: ./node_modules/three/src/math/Frustum.js
-
-
-
-
-const _sphere = /*@__PURE__*/ new Sphere();
-const Frustum_vector = /*@__PURE__*/ new Vector3();
-
-class Frustum {
-
-	constructor( p0 = new Plane(), p1 = new Plane(), p2 = new Plane(), p3 = new Plane(), p4 = new Plane(), p5 = new Plane() ) {
-
-		this.planes = [ p0, p1, p2, p3, p4, p5 ];
-
-	}
-
-	set( p0, p1, p2, p3, p4, p5 ) {
-
-		const planes = this.planes;
-
-		planes[ 0 ].copy( p0 );
-		planes[ 1 ].copy( p1 );
-		planes[ 2 ].copy( p2 );
-		planes[ 3 ].copy( p3 );
-		planes[ 4 ].copy( p4 );
-		planes[ 5 ].copy( p5 );
-
-		return this;
-
-	}
-
-	copy( frustum ) {
-
-		const planes = this.planes;
-
-		for ( let i = 0; i < 6; i ++ ) {
-
-			planes[ i ].copy( frustum.planes[ i ] );
-
-		}
-
-		return this;
-
-	}
-
-	setFromProjectionMatrix( m ) {
-
-		const planes = this.planes;
-		const me = m.elements;
-		const me0 = me[ 0 ], me1 = me[ 1 ], me2 = me[ 2 ], me3 = me[ 3 ];
-		const me4 = me[ 4 ], me5 = me[ 5 ], me6 = me[ 6 ], me7 = me[ 7 ];
-		const me8 = me[ 8 ], me9 = me[ 9 ], me10 = me[ 10 ], me11 = me[ 11 ];
-		const me12 = me[ 12 ], me13 = me[ 13 ], me14 = me[ 14 ], me15 = me[ 15 ];
-
-		planes[ 0 ].setComponents( me3 - me0, me7 - me4, me11 - me8, me15 - me12 ).normalize();
-		planes[ 1 ].setComponents( me3 + me0, me7 + me4, me11 + me8, me15 + me12 ).normalize();
-		planes[ 2 ].setComponents( me3 + me1, me7 + me5, me11 + me9, me15 + me13 ).normalize();
-		planes[ 3 ].setComponents( me3 - me1, me7 - me5, me11 - me9, me15 - me13 ).normalize();
-		planes[ 4 ].setComponents( me3 - me2, me7 - me6, me11 - me10, me15 - me14 ).normalize();
-		planes[ 5 ].setComponents( me3 + me2, me7 + me6, me11 + me10, me15 + me14 ).normalize();
-
-		return this;
-
-	}
-
-	intersectsObject( object ) {
-
-		const geometry = object.geometry;
-
-		if ( geometry.boundingSphere === null ) geometry.computeBoundingSphere();
-
-		_sphere.copy( geometry.boundingSphere ).applyMatrix4( object.matrixWorld );
-
-		return this.intersectsSphere( _sphere );
-
-	}
-
-	intersectsSprite( sprite ) {
-
-		_sphere.center.set( 0, 0, 0 );
-		_sphere.radius = 0.7071067811865476;
-		_sphere.applyMatrix4( sprite.matrixWorld );
-
-		return this.intersectsSphere( _sphere );
-
-	}
-
-	intersectsSphere( sphere ) {
-
-		const planes = this.planes;
-		const center = sphere.center;
-		const negRadius = - sphere.radius;
-
-		for ( let i = 0; i < 6; i ++ ) {
-
-			const distance = planes[ i ].distanceToPoint( center );
-
-			if ( distance < negRadius ) {
-
-				return false;
-
-			}
-
-		}
-
-		return true;
-
-	}
-
-	intersectsBox( box ) {
-
-		const planes = this.planes;
-
-		for ( let i = 0; i < 6; i ++ ) {
-
-			const plane = planes[ i ];
-
-			// corner at max distance
-
-			Frustum_vector.x = plane.normal.x > 0 ? box.max.x : box.min.x;
-			Frustum_vector.y = plane.normal.y > 0 ? box.max.y : box.min.y;
-			Frustum_vector.z = plane.normal.z > 0 ? box.max.z : box.min.z;
-
-			if ( plane.distanceToPoint( Frustum_vector ) < 0 ) {
-
-				return false;
-
-			}
-
-		}
-
-		return true;
-
-	}
-
-	containsPoint( point ) {
-
-		const planes = this.planes;
-
-		for ( let i = 0; i < 6; i ++ ) {
-
-			if ( planes[ i ].distanceToPoint( point ) < 0 ) {
-
-				return false;
-
-			}
-
-		}
-
-		return true;
-
-	}
-
-	clone() {
-
-		return new this.constructor().copy( this );
-
-	}
-
-}
-
-
-
-
 ;// CONCATENATED MODULE: ./node_modules/three/src/math/Matrix4.js
 
 
-class Matrix4 {
+class Matrix4_Matrix4 {
 
 	constructor() {
 
@@ -14029,7 +12068,7 @@ class Matrix4 {
 
 	clone() {
 
-		return new Matrix4().fromArray( this.elements );
+		return new Matrix4_Matrix4().fromArray( this.elements );
 
 	}
 
@@ -14106,9 +12145,9 @@ class Matrix4 {
 		const te = this.elements;
 		const me = m.elements;
 
-		const scaleX = 1 / Matrix4_v1.setFromMatrixColumn( m, 0 ).length();
-		const scaleY = 1 / Matrix4_v1.setFromMatrixColumn( m, 1 ).length();
-		const scaleZ = 1 / Matrix4_v1.setFromMatrixColumn( m, 2 ).length();
+		const scaleX = 1 / _v1.setFromMatrixColumn( m, 0 ).length();
+		const scaleY = 1 / _v1.setFromMatrixColumn( m, 1 ).length();
+		const scaleZ = 1 / _v1.setFromMatrixColumn( m, 2 ).length();
 
 		te[ 0 ] = me[ 0 ] * scaleX;
 		te[ 1 ] = me[ 1 ] * scaleX;
@@ -14706,9 +12745,9 @@ class Matrix4 {
 
 		const te = this.elements;
 
-		let sx = Matrix4_v1.set( te[ 0 ], te[ 1 ], te[ 2 ] ).length();
-		const sy = Matrix4_v1.set( te[ 4 ], te[ 5 ], te[ 6 ] ).length();
-		const sz = Matrix4_v1.set( te[ 8 ], te[ 9 ], te[ 10 ] ).length();
+		let sx = _v1.set( te[ 0 ], te[ 1 ], te[ 2 ] ).length();
+		const sy = _v1.set( te[ 4 ], te[ 5 ], te[ 6 ] ).length();
+		const sz = _v1.set( te[ 8 ], te[ 9 ], te[ 10 ] ).length();
 
 		// if determine is negative, we need to invert one scale
 		const det = this.determinant();
@@ -14850,15 +12889,3495 @@ class Matrix4 {
 
 }
 
-Matrix4.prototype.isMatrix4 = true;
+Matrix4_Matrix4.prototype.isMatrix4 = true;
 
-const Matrix4_v1 = /*@__PURE__*/ new Vector3();
-const _m1 = /*@__PURE__*/ new Matrix4();
+const _v1 = /*@__PURE__*/ new Vector3();
+const _m1 = /*@__PURE__*/ new Matrix4_Matrix4();
 const _zero = /*@__PURE__*/ new Vector3( 0, 0, 0 );
 const _one = /*@__PURE__*/ new Vector3( 1, 1, 1 );
 const _x = /*@__PURE__*/ new Vector3();
 const _y = /*@__PURE__*/ new Vector3();
 const _z = /*@__PURE__*/ new Vector3();
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/math/Euler.js
+
+
+
+
+
+const _matrix = /*@__PURE__*/ new Matrix4_Matrix4();
+const Euler_quaternion = /*@__PURE__*/ new Quaternion();
+
+class Euler {
+
+	constructor( x = 0, y = 0, z = 0, order = Euler.DefaultOrder ) {
+
+		this._x = x;
+		this._y = y;
+		this._z = z;
+		this._order = order;
+
+	}
+
+	get x() {
+
+		return this._x;
+
+	}
+
+	set x( value ) {
+
+		this._x = value;
+		this._onChangeCallback();
+
+	}
+
+	get y() {
+
+		return this._y;
+
+	}
+
+	set y( value ) {
+
+		this._y = value;
+		this._onChangeCallback();
+
+	}
+
+	get z() {
+
+		return this._z;
+
+	}
+
+	set z( value ) {
+
+		this._z = value;
+		this._onChangeCallback();
+
+	}
+
+	get order() {
+
+		return this._order;
+
+	}
+
+	set order( value ) {
+
+		this._order = value;
+		this._onChangeCallback();
+
+	}
+
+	set( x, y, z, order = this._order ) {
+
+		this._x = x;
+		this._y = y;
+		this._z = z;
+		this._order = order;
+
+		this._onChangeCallback();
+
+		return this;
+
+	}
+
+	clone() {
+
+		return new this.constructor( this._x, this._y, this._z, this._order );
+
+	}
+
+	copy( euler ) {
+
+		this._x = euler._x;
+		this._y = euler._y;
+		this._z = euler._z;
+		this._order = euler._order;
+
+		this._onChangeCallback();
+
+		return this;
+
+	}
+
+	setFromRotationMatrix( m, order = this._order, update = true ) {
+
+		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
+
+		const te = m.elements;
+		const m11 = te[ 0 ], m12 = te[ 4 ], m13 = te[ 8 ];
+		const m21 = te[ 1 ], m22 = te[ 5 ], m23 = te[ 9 ];
+		const m31 = te[ 2 ], m32 = te[ 6 ], m33 = te[ 10 ];
+
+		switch ( order ) {
+
+			case 'XYZ':
+
+				this._y = Math.asin( clamp( m13, - 1, 1 ) );
+
+				if ( Math.abs( m13 ) < 0.9999999 ) {
+
+					this._x = Math.atan2( - m23, m33 );
+					this._z = Math.atan2( - m12, m11 );
+
+				} else {
+
+					this._x = Math.atan2( m32, m22 );
+					this._z = 0;
+
+				}
+
+				break;
+
+			case 'YXZ':
+
+				this._x = Math.asin( - clamp( m23, - 1, 1 ) );
+
+				if ( Math.abs( m23 ) < 0.9999999 ) {
+
+					this._y = Math.atan2( m13, m33 );
+					this._z = Math.atan2( m21, m22 );
+
+				} else {
+
+					this._y = Math.atan2( - m31, m11 );
+					this._z = 0;
+
+				}
+
+				break;
+
+			case 'ZXY':
+
+				this._x = Math.asin( clamp( m32, - 1, 1 ) );
+
+				if ( Math.abs( m32 ) < 0.9999999 ) {
+
+					this._y = Math.atan2( - m31, m33 );
+					this._z = Math.atan2( - m12, m22 );
+
+				} else {
+
+					this._y = 0;
+					this._z = Math.atan2( m21, m11 );
+
+				}
+
+				break;
+
+			case 'ZYX':
+
+				this._y = Math.asin( - clamp( m31, - 1, 1 ) );
+
+				if ( Math.abs( m31 ) < 0.9999999 ) {
+
+					this._x = Math.atan2( m32, m33 );
+					this._z = Math.atan2( m21, m11 );
+
+				} else {
+
+					this._x = 0;
+					this._z = Math.atan2( - m12, m22 );
+
+				}
+
+				break;
+
+			case 'YZX':
+
+				this._z = Math.asin( clamp( m21, - 1, 1 ) );
+
+				if ( Math.abs( m21 ) < 0.9999999 ) {
+
+					this._x = Math.atan2( - m23, m22 );
+					this._y = Math.atan2( - m31, m11 );
+
+				} else {
+
+					this._x = 0;
+					this._y = Math.atan2( m13, m33 );
+
+				}
+
+				break;
+
+			case 'XZY':
+
+				this._z = Math.asin( - clamp( m12, - 1, 1 ) );
+
+				if ( Math.abs( m12 ) < 0.9999999 ) {
+
+					this._x = Math.atan2( m32, m22 );
+					this._y = Math.atan2( m13, m11 );
+
+				} else {
+
+					this._x = Math.atan2( - m23, m33 );
+					this._y = 0;
+
+				}
+
+				break;
+
+			default:
+
+				console.warn( 'THREE.Euler: .setFromRotationMatrix() encountered an unknown order: ' + order );
+
+		}
+
+		this._order = order;
+
+		if ( update === true ) this._onChangeCallback();
+
+		return this;
+
+	}
+
+	setFromQuaternion( q, order, update ) {
+
+		_matrix.makeRotationFromQuaternion( q );
+
+		return this.setFromRotationMatrix( _matrix, order, update );
+
+	}
+
+	setFromVector3( v, order = this._order ) {
+
+		return this.set( v.x, v.y, v.z, order );
+
+	}
+
+	reorder( newOrder ) {
+
+		// WARNING: this discards revolution information -bhouston
+
+		Euler_quaternion.setFromEuler( this );
+
+		return this.setFromQuaternion( Euler_quaternion, newOrder );
+
+	}
+
+	equals( euler ) {
+
+		return ( euler._x === this._x ) && ( euler._y === this._y ) && ( euler._z === this._z ) && ( euler._order === this._order );
+
+	}
+
+	fromArray( array ) {
+
+		this._x = array[ 0 ];
+		this._y = array[ 1 ];
+		this._z = array[ 2 ];
+		if ( array[ 3 ] !== undefined ) this._order = array[ 3 ];
+
+		this._onChangeCallback();
+
+		return this;
+
+	}
+
+	toArray( array = [], offset = 0 ) {
+
+		array[ offset ] = this._x;
+		array[ offset + 1 ] = this._y;
+		array[ offset + 2 ] = this._z;
+		array[ offset + 3 ] = this._order;
+
+		return array;
+
+	}
+
+	toVector3( optionalResult ) {
+
+		if ( optionalResult ) {
+
+			return optionalResult.set( this._x, this._y, this._z );
+
+		} else {
+
+			return new Vector3( this._x, this._y, this._z );
+
+		}
+
+	}
+
+	_onChange( callback ) {
+
+		this._onChangeCallback = callback;
+
+		return this;
+
+	}
+
+	_onChangeCallback() {}
+
+}
+
+Euler.prototype.isEuler = true;
+
+Euler.DefaultOrder = 'XYZ';
+Euler.RotationOrders = [ 'XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX' ];
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/core/Layers.js
+class Layers {
+
+	constructor() {
+
+		this.mask = 1 | 0;
+
+	}
+
+	set( channel ) {
+
+		this.mask = ( 1 << channel | 0 ) >>> 0;
+
+	}
+
+	enable( channel ) {
+
+		this.mask |= 1 << channel | 0;
+
+	}
+
+	enableAll() {
+
+		this.mask = 0xffffffff | 0;
+
+	}
+
+	toggle( channel ) {
+
+		this.mask ^= 1 << channel | 0;
+
+	}
+
+	disable( channel ) {
+
+		this.mask &= ~ ( 1 << channel | 0 );
+
+	}
+
+	disableAll() {
+
+		this.mask = 0;
+
+	}
+
+	test( layers ) {
+
+		return ( this.mask & layers.mask ) !== 0;
+
+	}
+
+	isEnabled( channel ) {
+
+		return ( this.mask & ( 1 << channel | 0 ) ) !== 0;
+
+	}
+
+}
+
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/math/Matrix3.js
+class Matrix3 {
+
+	constructor() {
+
+		this.elements = [
+
+			1, 0, 0,
+			0, 1, 0,
+			0, 0, 1
+
+		];
+
+		if ( arguments.length > 0 ) {
+
+			console.error( 'THREE.Matrix3: the constructor no longer reads arguments. use .set() instead.' );
+
+		}
+
+	}
+
+	set( n11, n12, n13, n21, n22, n23, n31, n32, n33 ) {
+
+		const te = this.elements;
+
+		te[ 0 ] = n11; te[ 1 ] = n21; te[ 2 ] = n31;
+		te[ 3 ] = n12; te[ 4 ] = n22; te[ 5 ] = n32;
+		te[ 6 ] = n13; te[ 7 ] = n23; te[ 8 ] = n33;
+
+		return this;
+
+	}
+
+	identity() {
+
+		this.set(
+
+			1, 0, 0,
+			0, 1, 0,
+			0, 0, 1
+
+		);
+
+		return this;
+
+	}
+
+	copy( m ) {
+
+		const te = this.elements;
+		const me = m.elements;
+
+		te[ 0 ] = me[ 0 ]; te[ 1 ] = me[ 1 ]; te[ 2 ] = me[ 2 ];
+		te[ 3 ] = me[ 3 ]; te[ 4 ] = me[ 4 ]; te[ 5 ] = me[ 5 ];
+		te[ 6 ] = me[ 6 ]; te[ 7 ] = me[ 7 ]; te[ 8 ] = me[ 8 ];
+
+		return this;
+
+	}
+
+	extractBasis( xAxis, yAxis, zAxis ) {
+
+		xAxis.setFromMatrix3Column( this, 0 );
+		yAxis.setFromMatrix3Column( this, 1 );
+		zAxis.setFromMatrix3Column( this, 2 );
+
+		return this;
+
+	}
+
+	setFromMatrix4( m ) {
+
+		const me = m.elements;
+
+		this.set(
+
+			me[ 0 ], me[ 4 ], me[ 8 ],
+			me[ 1 ], me[ 5 ], me[ 9 ],
+			me[ 2 ], me[ 6 ], me[ 10 ]
+
+		);
+
+		return this;
+
+	}
+
+	multiply( m ) {
+
+		return this.multiplyMatrices( this, m );
+
+	}
+
+	premultiply( m ) {
+
+		return this.multiplyMatrices( m, this );
+
+	}
+
+	multiplyMatrices( a, b ) {
+
+		const ae = a.elements;
+		const be = b.elements;
+		const te = this.elements;
+
+		const a11 = ae[ 0 ], a12 = ae[ 3 ], a13 = ae[ 6 ];
+		const a21 = ae[ 1 ], a22 = ae[ 4 ], a23 = ae[ 7 ];
+		const a31 = ae[ 2 ], a32 = ae[ 5 ], a33 = ae[ 8 ];
+
+		const b11 = be[ 0 ], b12 = be[ 3 ], b13 = be[ 6 ];
+		const b21 = be[ 1 ], b22 = be[ 4 ], b23 = be[ 7 ];
+		const b31 = be[ 2 ], b32 = be[ 5 ], b33 = be[ 8 ];
+
+		te[ 0 ] = a11 * b11 + a12 * b21 + a13 * b31;
+		te[ 3 ] = a11 * b12 + a12 * b22 + a13 * b32;
+		te[ 6 ] = a11 * b13 + a12 * b23 + a13 * b33;
+
+		te[ 1 ] = a21 * b11 + a22 * b21 + a23 * b31;
+		te[ 4 ] = a21 * b12 + a22 * b22 + a23 * b32;
+		te[ 7 ] = a21 * b13 + a22 * b23 + a23 * b33;
+
+		te[ 2 ] = a31 * b11 + a32 * b21 + a33 * b31;
+		te[ 5 ] = a31 * b12 + a32 * b22 + a33 * b32;
+		te[ 8 ] = a31 * b13 + a32 * b23 + a33 * b33;
+
+		return this;
+
+	}
+
+	multiplyScalar( s ) {
+
+		const te = this.elements;
+
+		te[ 0 ] *= s; te[ 3 ] *= s; te[ 6 ] *= s;
+		te[ 1 ] *= s; te[ 4 ] *= s; te[ 7 ] *= s;
+		te[ 2 ] *= s; te[ 5 ] *= s; te[ 8 ] *= s;
+
+		return this;
+
+	}
+
+	determinant() {
+
+		const te = this.elements;
+
+		const a = te[ 0 ], b = te[ 1 ], c = te[ 2 ],
+			d = te[ 3 ], e = te[ 4 ], f = te[ 5 ],
+			g = te[ 6 ], h = te[ 7 ], i = te[ 8 ];
+
+		return a * e * i - a * f * h - b * d * i + b * f * g + c * d * h - c * e * g;
+
+	}
+
+	invert() {
+
+		const te = this.elements,
+
+			n11 = te[ 0 ], n21 = te[ 1 ], n31 = te[ 2 ],
+			n12 = te[ 3 ], n22 = te[ 4 ], n32 = te[ 5 ],
+			n13 = te[ 6 ], n23 = te[ 7 ], n33 = te[ 8 ],
+
+			t11 = n33 * n22 - n32 * n23,
+			t12 = n32 * n13 - n33 * n12,
+			t13 = n23 * n12 - n22 * n13,
+
+			det = n11 * t11 + n21 * t12 + n31 * t13;
+
+		if ( det === 0 ) return this.set( 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+
+		const detInv = 1 / det;
+
+		te[ 0 ] = t11 * detInv;
+		te[ 1 ] = ( n31 * n23 - n33 * n21 ) * detInv;
+		te[ 2 ] = ( n32 * n21 - n31 * n22 ) * detInv;
+
+		te[ 3 ] = t12 * detInv;
+		te[ 4 ] = ( n33 * n11 - n31 * n13 ) * detInv;
+		te[ 5 ] = ( n31 * n12 - n32 * n11 ) * detInv;
+
+		te[ 6 ] = t13 * detInv;
+		te[ 7 ] = ( n21 * n13 - n23 * n11 ) * detInv;
+		te[ 8 ] = ( n22 * n11 - n21 * n12 ) * detInv;
+
+		return this;
+
+	}
+
+	transpose() {
+
+		let tmp;
+		const m = this.elements;
+
+		tmp = m[ 1 ]; m[ 1 ] = m[ 3 ]; m[ 3 ] = tmp;
+		tmp = m[ 2 ]; m[ 2 ] = m[ 6 ]; m[ 6 ] = tmp;
+		tmp = m[ 5 ]; m[ 5 ] = m[ 7 ]; m[ 7 ] = tmp;
+
+		return this;
+
+	}
+
+	getNormalMatrix( matrix4 ) {
+
+		return this.setFromMatrix4( matrix4 ).invert().transpose();
+
+	}
+
+	transposeIntoArray( r ) {
+
+		const m = this.elements;
+
+		r[ 0 ] = m[ 0 ];
+		r[ 1 ] = m[ 3 ];
+		r[ 2 ] = m[ 6 ];
+		r[ 3 ] = m[ 1 ];
+		r[ 4 ] = m[ 4 ];
+		r[ 5 ] = m[ 7 ];
+		r[ 6 ] = m[ 2 ];
+		r[ 7 ] = m[ 5 ];
+		r[ 8 ] = m[ 8 ];
+
+		return this;
+
+	}
+
+	setUvTransform( tx, ty, sx, sy, rotation, cx, cy ) {
+
+		const c = Math.cos( rotation );
+		const s = Math.sin( rotation );
+
+		this.set(
+			sx * c, sx * s, - sx * ( c * cx + s * cy ) + cx + tx,
+			- sy * s, sy * c, - sy * ( - s * cx + c * cy ) + cy + ty,
+			0, 0, 1
+		);
+
+		return this;
+
+	}
+
+	scale( sx, sy ) {
+
+		const te = this.elements;
+
+		te[ 0 ] *= sx; te[ 3 ] *= sx; te[ 6 ] *= sx;
+		te[ 1 ] *= sy; te[ 4 ] *= sy; te[ 7 ] *= sy;
+
+		return this;
+
+	}
+
+	rotate( theta ) {
+
+		const c = Math.cos( theta );
+		const s = Math.sin( theta );
+
+		const te = this.elements;
+
+		const a11 = te[ 0 ], a12 = te[ 3 ], a13 = te[ 6 ];
+		const a21 = te[ 1 ], a22 = te[ 4 ], a23 = te[ 7 ];
+
+		te[ 0 ] = c * a11 + s * a21;
+		te[ 3 ] = c * a12 + s * a22;
+		te[ 6 ] = c * a13 + s * a23;
+
+		te[ 1 ] = - s * a11 + c * a21;
+		te[ 4 ] = - s * a12 + c * a22;
+		te[ 7 ] = - s * a13 + c * a23;
+
+		return this;
+
+	}
+
+	translate( tx, ty ) {
+
+		const te = this.elements;
+
+		te[ 0 ] += tx * te[ 2 ]; te[ 3 ] += tx * te[ 5 ]; te[ 6 ] += tx * te[ 8 ];
+		te[ 1 ] += ty * te[ 2 ]; te[ 4 ] += ty * te[ 5 ]; te[ 7 ] += ty * te[ 8 ];
+
+		return this;
+
+	}
+
+	equals( matrix ) {
+
+		const te = this.elements;
+		const me = matrix.elements;
+
+		for ( let i = 0; i < 9; i ++ ) {
+
+			if ( te[ i ] !== me[ i ] ) return false;
+
+		}
+
+		return true;
+
+	}
+
+	fromArray( array, offset = 0 ) {
+
+		for ( let i = 0; i < 9; i ++ ) {
+
+			this.elements[ i ] = array[ i + offset ];
+
+		}
+
+		return this;
+
+	}
+
+	toArray( array = [], offset = 0 ) {
+
+		const te = this.elements;
+
+		array[ offset ] = te[ 0 ];
+		array[ offset + 1 ] = te[ 1 ];
+		array[ offset + 2 ] = te[ 2 ];
+
+		array[ offset + 3 ] = te[ 3 ];
+		array[ offset + 4 ] = te[ 4 ];
+		array[ offset + 5 ] = te[ 5 ];
+
+		array[ offset + 6 ] = te[ 6 ];
+		array[ offset + 7 ] = te[ 7 ];
+		array[ offset + 8 ] = te[ 8 ];
+
+		return array;
+
+	}
+
+	clone() {
+
+		return new this.constructor().fromArray( this.elements );
+
+	}
+
+}
+
+Matrix3.prototype.isMatrix3 = true;
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/core/Object3D.js
+
+
+
+
+
+
+
+
+
+let _object3DId = 0;
+
+const Object3D_v1 = /*@__PURE__*/ new Vector3();
+const _q1 = /*@__PURE__*/ new Quaternion();
+const Object3D_m1 = /*@__PURE__*/ new Matrix4_Matrix4();
+const _target = /*@__PURE__*/ new Vector3();
+
+const _position = /*@__PURE__*/ new Vector3();
+const _scale = /*@__PURE__*/ new Vector3();
+const Object3D_quaternion = /*@__PURE__*/ new Quaternion();
+
+const _xAxis = /*@__PURE__*/ new Vector3( 1, 0, 0 );
+const _yAxis = /*@__PURE__*/ new Vector3( 0, 1, 0 );
+const _zAxis = /*@__PURE__*/ new Vector3( 0, 0, 1 );
+
+const _addedEvent = { type: 'added' };
+const _removedEvent = { type: 'removed' };
+
+class Object3D extends EventDispatcher {
+
+	constructor() {
+
+		super();
+
+		Object.defineProperty( this, 'id', { value: _object3DId ++ } );
+
+		this.uuid = generateUUID();
+
+		this.name = '';
+		this.type = 'Object3D';
+
+		this.parent = null;
+		this.children = [];
+
+		this.up = Object3D.DefaultUp.clone();
+
+		const position = new Vector3();
+		const rotation = new Euler();
+		const quaternion = new Quaternion();
+		const scale = new Vector3( 1, 1, 1 );
+
+		function onRotationChange() {
+
+			quaternion.setFromEuler( rotation, false );
+
+		}
+
+		function onQuaternionChange() {
+
+			rotation.setFromQuaternion( quaternion, undefined, false );
+
+		}
+
+		rotation._onChange( onRotationChange );
+		quaternion._onChange( onQuaternionChange );
+
+		Object.defineProperties( this, {
+			position: {
+				configurable: true,
+				enumerable: true,
+				value: position
+			},
+			rotation: {
+				configurable: true,
+				enumerable: true,
+				value: rotation
+			},
+			quaternion: {
+				configurable: true,
+				enumerable: true,
+				value: quaternion
+			},
+			scale: {
+				configurable: true,
+				enumerable: true,
+				value: scale
+			},
+			modelViewMatrix: {
+				value: new Matrix4_Matrix4()
+			},
+			normalMatrix: {
+				value: new Matrix3()
+			}
+		} );
+
+		this.matrix = new Matrix4_Matrix4();
+		this.matrixWorld = new Matrix4_Matrix4();
+
+		this.matrixAutoUpdate = Object3D.DefaultMatrixAutoUpdate;
+		this.matrixWorldNeedsUpdate = false;
+
+		this.layers = new Layers();
+		this.visible = true;
+
+		this.castShadow = false;
+		this.receiveShadow = false;
+
+		this.frustumCulled = true;
+		this.renderOrder = 0;
+
+		this.animations = [];
+
+		this.userData = {};
+
+	}
+
+	onBeforeRender( /* renderer, scene, camera, geometry, material, group */ ) {}
+
+	onAfterRender( /* renderer, scene, camera, geometry, material, group */ ) {}
+
+	applyMatrix4( matrix ) {
+
+		if ( this.matrixAutoUpdate ) this.updateMatrix();
+
+		this.matrix.premultiply( matrix );
+
+		this.matrix.decompose( this.position, this.quaternion, this.scale );
+
+	}
+
+	applyQuaternion( q ) {
+
+		this.quaternion.premultiply( q );
+
+		return this;
+
+	}
+
+	setRotationFromAxisAngle( axis, angle ) {
+
+		// assumes axis is normalized
+
+		this.quaternion.setFromAxisAngle( axis, angle );
+
+	}
+
+	setRotationFromEuler( euler ) {
+
+		this.quaternion.setFromEuler( euler, true );
+
+	}
+
+	setRotationFromMatrix( m ) {
+
+		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
+
+		this.quaternion.setFromRotationMatrix( m );
+
+	}
+
+	setRotationFromQuaternion( q ) {
+
+		// assumes q is normalized
+
+		this.quaternion.copy( q );
+
+	}
+
+	rotateOnAxis( axis, angle ) {
+
+		// rotate object on axis in object space
+		// axis is assumed to be normalized
+
+		_q1.setFromAxisAngle( axis, angle );
+
+		this.quaternion.multiply( _q1 );
+
+		return this;
+
+	}
+
+	rotateOnWorldAxis( axis, angle ) {
+
+		// rotate object on axis in world space
+		// axis is assumed to be normalized
+		// method assumes no rotated parent
+
+		_q1.setFromAxisAngle( axis, angle );
+
+		this.quaternion.premultiply( _q1 );
+
+		return this;
+
+	}
+
+	rotateX( angle ) {
+
+		return this.rotateOnAxis( _xAxis, angle );
+
+	}
+
+	rotateY( angle ) {
+
+		return this.rotateOnAxis( _yAxis, angle );
+
+	}
+
+	rotateZ( angle ) {
+
+		return this.rotateOnAxis( _zAxis, angle );
+
+	}
+
+	translateOnAxis( axis, distance ) {
+
+		// translate object by distance along axis in object space
+		// axis is assumed to be normalized
+
+		Object3D_v1.copy( axis ).applyQuaternion( this.quaternion );
+
+		this.position.add( Object3D_v1.multiplyScalar( distance ) );
+
+		return this;
+
+	}
+
+	translateX( distance ) {
+
+		return this.translateOnAxis( _xAxis, distance );
+
+	}
+
+	translateY( distance ) {
+
+		return this.translateOnAxis( _yAxis, distance );
+
+	}
+
+	translateZ( distance ) {
+
+		return this.translateOnAxis( _zAxis, distance );
+
+	}
+
+	localToWorld( vector ) {
+
+		return vector.applyMatrix4( this.matrixWorld );
+
+	}
+
+	worldToLocal( vector ) {
+
+		return vector.applyMatrix4( Object3D_m1.copy( this.matrixWorld ).invert() );
+
+	}
+
+	lookAt( x, y, z ) {
+
+		// This method does not support objects having non-uniformly-scaled parent(s)
+
+		if ( x.isVector3 ) {
+
+			_target.copy( x );
+
+		} else {
+
+			_target.set( x, y, z );
+
+		}
+
+		const parent = this.parent;
+
+		this.updateWorldMatrix( true, false );
+
+		_position.setFromMatrixPosition( this.matrixWorld );
+
+		if ( this.isCamera || this.isLight ) {
+
+			Object3D_m1.lookAt( _position, _target, this.up );
+
+		} else {
+
+			Object3D_m1.lookAt( _target, _position, this.up );
+
+		}
+
+		this.quaternion.setFromRotationMatrix( Object3D_m1 );
+
+		if ( parent ) {
+
+			Object3D_m1.extractRotation( parent.matrixWorld );
+			_q1.setFromRotationMatrix( Object3D_m1 );
+			this.quaternion.premultiply( _q1.invert() );
+
+		}
+
+	}
+
+	add( object ) {
+
+		if ( arguments.length > 1 ) {
+
+			for ( let i = 0; i < arguments.length; i ++ ) {
+
+				this.add( arguments[ i ] );
+
+			}
+
+			return this;
+
+		}
+
+		if ( object === this ) {
+
+			console.error( 'THREE.Object3D.add: object can\'t be added as a child of itself.', object );
+			return this;
+
+		}
+
+		if ( object && object.isObject3D ) {
+
+			if ( object.parent !== null ) {
+
+				object.parent.remove( object );
+
+			}
+
+			object.parent = this;
+			this.children.push( object );
+
+			object.dispatchEvent( _addedEvent );
+
+		} else {
+
+			console.error( 'THREE.Object3D.add: object not an instance of THREE.Object3D.', object );
+
+		}
+
+		return this;
+
+	}
+
+	remove( object ) {
+
+		if ( arguments.length > 1 ) {
+
+			for ( let i = 0; i < arguments.length; i ++ ) {
+
+				this.remove( arguments[ i ] );
+
+			}
+
+			return this;
+
+		}
+
+		const index = this.children.indexOf( object );
+
+		if ( index !== - 1 ) {
+
+			object.parent = null;
+			this.children.splice( index, 1 );
+
+			object.dispatchEvent( _removedEvent );
+
+		}
+
+		return this;
+
+	}
+
+	removeFromParent() {
+
+		const parent = this.parent;
+
+		if ( parent !== null ) {
+
+			parent.remove( this );
+
+		}
+
+		return this;
+
+	}
+
+	clear() {
+
+		for ( let i = 0; i < this.children.length; i ++ ) {
+
+			const object = this.children[ i ];
+
+			object.parent = null;
+
+			object.dispatchEvent( _removedEvent );
+
+		}
+
+		this.children.length = 0;
+
+		return this;
+
+
+	}
+
+	attach( object ) {
+
+		// adds object as a child of this, while maintaining the object's world transform
+
+		// Note: This method does not support scene graphs having non-uniformly-scaled nodes(s)
+
+		this.updateWorldMatrix( true, false );
+
+		Object3D_m1.copy( this.matrixWorld ).invert();
+
+		if ( object.parent !== null ) {
+
+			object.parent.updateWorldMatrix( true, false );
+
+			Object3D_m1.multiply( object.parent.matrixWorld );
+
+		}
+
+		object.applyMatrix4( Object3D_m1 );
+
+		this.add( object );
+
+		object.updateWorldMatrix( false, true );
+
+		return this;
+
+	}
+
+	getObjectById( id ) {
+
+		return this.getObjectByProperty( 'id', id );
+
+	}
+
+	getObjectByName( name ) {
+
+		return this.getObjectByProperty( 'name', name );
+
+	}
+
+	getObjectByProperty( name, value ) {
+
+		if ( this[ name ] === value ) return this;
+
+		for ( let i = 0, l = this.children.length; i < l; i ++ ) {
+
+			const child = this.children[ i ];
+			const object = child.getObjectByProperty( name, value );
+
+			if ( object !== undefined ) {
+
+				return object;
+
+			}
+
+		}
+
+		return undefined;
+
+	}
+
+	getWorldPosition( target ) {
+
+		this.updateWorldMatrix( true, false );
+
+		return target.setFromMatrixPosition( this.matrixWorld );
+
+	}
+
+	getWorldQuaternion( target ) {
+
+		this.updateWorldMatrix( true, false );
+
+		this.matrixWorld.decompose( _position, target, _scale );
+
+		return target;
+
+	}
+
+	getWorldScale( target ) {
+
+		this.updateWorldMatrix( true, false );
+
+		this.matrixWorld.decompose( _position, Object3D_quaternion, target );
+
+		return target;
+
+	}
+
+	getWorldDirection( target ) {
+
+		this.updateWorldMatrix( true, false );
+
+		const e = this.matrixWorld.elements;
+
+		return target.set( e[ 8 ], e[ 9 ], e[ 10 ] ).normalize();
+
+	}
+
+	raycast( /* raycaster, intersects */ ) {}
+
+	traverse( callback ) {
+
+		callback( this );
+
+		const children = this.children;
+
+		for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+			children[ i ].traverse( callback );
+
+		}
+
+	}
+
+	traverseVisible( callback ) {
+
+		if ( this.visible === false ) return;
+
+		callback( this );
+
+		const children = this.children;
+
+		for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+			children[ i ].traverseVisible( callback );
+
+		}
+
+	}
+
+	traverseAncestors( callback ) {
+
+		const parent = this.parent;
+
+		if ( parent !== null ) {
+
+			callback( parent );
+
+			parent.traverseAncestors( callback );
+
+		}
+
+	}
+
+	updateMatrix() {
+
+		this.matrix.compose( this.position, this.quaternion, this.scale );
+
+		this.matrixWorldNeedsUpdate = true;
+
+	}
+
+	updateMatrixWorld( force ) {
+
+		if ( this.matrixAutoUpdate ) this.updateMatrix();
+
+		if ( this.matrixWorldNeedsUpdate || force ) {
+
+			if ( this.parent === null ) {
+
+				this.matrixWorld.copy( this.matrix );
+
+			} else {
+
+				this.matrixWorld.multiplyMatrices( this.parent.matrixWorld, this.matrix );
+
+			}
+
+			this.matrixWorldNeedsUpdate = false;
+
+			force = true;
+
+		}
+
+		// update children
+
+		const children = this.children;
+
+		for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+			children[ i ].updateMatrixWorld( force );
+
+		}
+
+	}
+
+	updateWorldMatrix( updateParents, updateChildren ) {
+
+		const parent = this.parent;
+
+		if ( updateParents === true && parent !== null ) {
+
+			parent.updateWorldMatrix( true, false );
+
+		}
+
+		if ( this.matrixAutoUpdate ) this.updateMatrix();
+
+		if ( this.parent === null ) {
+
+			this.matrixWorld.copy( this.matrix );
+
+		} else {
+
+			this.matrixWorld.multiplyMatrices( this.parent.matrixWorld, this.matrix );
+
+		}
+
+		// update children
+
+		if ( updateChildren === true ) {
+
+			const children = this.children;
+
+			for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+				children[ i ].updateWorldMatrix( false, true );
+
+			}
+
+		}
+
+	}
+
+	toJSON( meta ) {
+
+		// meta is a string when called from JSON.stringify
+		const isRootObject = ( meta === undefined || typeof meta === 'string' );
+
+		const output = {};
+
+		// meta is a hash used to collect geometries, materials.
+		// not providing it implies that this is the root object
+		// being serialized.
+		if ( isRootObject ) {
+
+			// initialize meta obj
+			meta = {
+				geometries: {},
+				materials: {},
+				textures: {},
+				images: {},
+				shapes: {},
+				skeletons: {},
+				animations: {}
+			};
+
+			output.metadata = {
+				version: 4.5,
+				type: 'Object',
+				generator: 'Object3D.toJSON'
+			};
+
+		}
+
+		// standard Object3D serialization
+
+		const object = {};
+
+		object.uuid = this.uuid;
+		object.type = this.type;
+
+		if ( this.name !== '' ) object.name = this.name;
+		if ( this.castShadow === true ) object.castShadow = true;
+		if ( this.receiveShadow === true ) object.receiveShadow = true;
+		if ( this.visible === false ) object.visible = false;
+		if ( this.frustumCulled === false ) object.frustumCulled = false;
+		if ( this.renderOrder !== 0 ) object.renderOrder = this.renderOrder;
+		if ( JSON.stringify( this.userData ) !== '{}' ) object.userData = this.userData;
+
+		object.layers = this.layers.mask;
+		object.matrix = this.matrix.toArray();
+
+		if ( this.matrixAutoUpdate === false ) object.matrixAutoUpdate = false;
+
+		// object specific properties
+
+		if ( this.isInstancedMesh ) {
+
+			object.type = 'InstancedMesh';
+			object.count = this.count;
+			object.instanceMatrix = this.instanceMatrix.toJSON();
+			if ( this.instanceColor !== null ) object.instanceColor = this.instanceColor.toJSON();
+
+		}
+
+		//
+
+		function serialize( library, element ) {
+
+			if ( library[ element.uuid ] === undefined ) {
+
+				library[ element.uuid ] = element.toJSON( meta );
+
+			}
+
+			return element.uuid;
+
+		}
+
+		if ( this.isScene ) {
+
+			if ( this.background ) {
+
+				if ( this.background.isColor ) {
+
+					object.background = this.background.toJSON();
+
+				} else if ( this.background.isTexture ) {
+
+					object.background = this.background.toJSON( meta ).uuid;
+
+				}
+
+			}
+
+			if ( this.environment && this.environment.isTexture ) {
+
+				object.environment = this.environment.toJSON( meta ).uuid;
+
+			}
+
+		} else if ( this.isMesh || this.isLine || this.isPoints ) {
+
+			object.geometry = serialize( meta.geometries, this.geometry );
+
+			const parameters = this.geometry.parameters;
+
+			if ( parameters !== undefined && parameters.shapes !== undefined ) {
+
+				const shapes = parameters.shapes;
+
+				if ( Array.isArray( shapes ) ) {
+
+					for ( let i = 0, l = shapes.length; i < l; i ++ ) {
+
+						const shape = shapes[ i ];
+
+						serialize( meta.shapes, shape );
+
+					}
+
+				} else {
+
+					serialize( meta.shapes, shapes );
+
+				}
+
+			}
+
+		}
+
+		if ( this.isSkinnedMesh ) {
+
+			object.bindMode = this.bindMode;
+			object.bindMatrix = this.bindMatrix.toArray();
+
+			if ( this.skeleton !== undefined ) {
+
+				serialize( meta.skeletons, this.skeleton );
+
+				object.skeleton = this.skeleton.uuid;
+
+			}
+
+		}
+
+		if ( this.material !== undefined ) {
+
+			if ( Array.isArray( this.material ) ) {
+
+				const uuids = [];
+
+				for ( let i = 0, l = this.material.length; i < l; i ++ ) {
+
+					uuids.push( serialize( meta.materials, this.material[ i ] ) );
+
+				}
+
+				object.material = uuids;
+
+			} else {
+
+				object.material = serialize( meta.materials, this.material );
+
+			}
+
+		}
+
+		//
+
+		if ( this.children.length > 0 ) {
+
+			object.children = [];
+
+			for ( let i = 0; i < this.children.length; i ++ ) {
+
+				object.children.push( this.children[ i ].toJSON( meta ).object );
+
+			}
+
+		}
+
+		//
+
+		if ( this.animations.length > 0 ) {
+
+			object.animations = [];
+
+			for ( let i = 0; i < this.animations.length; i ++ ) {
+
+				const animation = this.animations[ i ];
+
+				object.animations.push( serialize( meta.animations, animation ) );
+
+			}
+
+		}
+
+		if ( isRootObject ) {
+
+			const geometries = extractFromCache( meta.geometries );
+			const materials = extractFromCache( meta.materials );
+			const textures = extractFromCache( meta.textures );
+			const images = extractFromCache( meta.images );
+			const shapes = extractFromCache( meta.shapes );
+			const skeletons = extractFromCache( meta.skeletons );
+			const animations = extractFromCache( meta.animations );
+
+			if ( geometries.length > 0 ) output.geometries = geometries;
+			if ( materials.length > 0 ) output.materials = materials;
+			if ( textures.length > 0 ) output.textures = textures;
+			if ( images.length > 0 ) output.images = images;
+			if ( shapes.length > 0 ) output.shapes = shapes;
+			if ( skeletons.length > 0 ) output.skeletons = skeletons;
+			if ( animations.length > 0 ) output.animations = animations;
+
+		}
+
+		output.object = object;
+
+		return output;
+
+		// extract data from the cache hash
+		// remove metadata on each item
+		// and return as array
+		function extractFromCache( cache ) {
+
+			const values = [];
+			for ( const key in cache ) {
+
+				const data = cache[ key ];
+				delete data.metadata;
+				values.push( data );
+
+			}
+
+			return values;
+
+		}
+
+	}
+
+	clone( recursive ) {
+
+		return new this.constructor().copy( this, recursive );
+
+	}
+
+	copy( source, recursive = true ) {
+
+		this.name = source.name;
+
+		this.up.copy( source.up );
+
+		this.position.copy( source.position );
+		this.rotation.order = source.rotation.order;
+		this.quaternion.copy( source.quaternion );
+		this.scale.copy( source.scale );
+
+		this.matrix.copy( source.matrix );
+		this.matrixWorld.copy( source.matrixWorld );
+
+		this.matrixAutoUpdate = source.matrixAutoUpdate;
+		this.matrixWorldNeedsUpdate = source.matrixWorldNeedsUpdate;
+
+		this.layers.mask = source.layers.mask;
+		this.visible = source.visible;
+
+		this.castShadow = source.castShadow;
+		this.receiveShadow = source.receiveShadow;
+
+		this.frustumCulled = source.frustumCulled;
+		this.renderOrder = source.renderOrder;
+
+		this.userData = JSON.parse( JSON.stringify( source.userData ) );
+
+		if ( recursive === true ) {
+
+			for ( let i = 0; i < source.children.length; i ++ ) {
+
+				const child = source.children[ i ];
+				this.add( child.clone() );
+
+			}
+
+		}
+
+		return this;
+
+	}
+
+}
+
+Object3D.DefaultUp = new Vector3( 0, 1, 0 );
+Object3D.DefaultMatrixAutoUpdate = true;
+
+Object3D.prototype.isObject3D = true;
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/cameras/Camera.js
+
+
+
+class Camera extends Object3D {
+
+	constructor() {
+
+		super();
+
+		this.type = 'Camera';
+
+		this.matrixWorldInverse = new Matrix4_Matrix4();
+
+		this.projectionMatrix = new Matrix4_Matrix4();
+		this.projectionMatrixInverse = new Matrix4_Matrix4();
+
+	}
+
+	copy( source, recursive ) {
+
+		super.copy( source, recursive );
+
+		this.matrixWorldInverse.copy( source.matrixWorldInverse );
+
+		this.projectionMatrix.copy( source.projectionMatrix );
+		this.projectionMatrixInverse.copy( source.projectionMatrixInverse );
+
+		return this;
+
+	}
+
+	getWorldDirection( target ) {
+
+		this.updateWorldMatrix( true, false );
+
+		const e = this.matrixWorld.elements;
+
+		return target.set( - e[ 8 ], - e[ 9 ], - e[ 10 ] ).normalize();
+
+	}
+
+	updateMatrixWorld( force ) {
+
+		super.updateMatrixWorld( force );
+
+		this.matrixWorldInverse.copy( this.matrixWorld ).invert();
+
+	}
+
+	updateWorldMatrix( updateParents, updateChildren ) {
+
+		super.updateWorldMatrix( updateParents, updateChildren );
+
+		this.matrixWorldInverse.copy( this.matrixWorld ).invert();
+
+	}
+
+	clone() {
+
+		return new this.constructor().copy( this );
+
+	}
+
+}
+
+Camera.prototype.isCamera = true;
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/cameras/OrthographicCamera.js
+
+
+class OrthographicCamera extends Camera {
+
+	constructor( left = - 1, right = 1, top = 1, bottom = - 1, near = 0.1, far = 2000 ) {
+
+		super();
+
+		this.type = 'OrthographicCamera';
+
+		this.zoom = 1;
+		this.view = null;
+
+		this.left = left;
+		this.right = right;
+		this.top = top;
+		this.bottom = bottom;
+
+		this.near = near;
+		this.far = far;
+
+		this.updateProjectionMatrix();
+
+	}
+
+	copy( source, recursive ) {
+
+		super.copy( source, recursive );
+
+		this.left = source.left;
+		this.right = source.right;
+		this.top = source.top;
+		this.bottom = source.bottom;
+		this.near = source.near;
+		this.far = source.far;
+
+		this.zoom = source.zoom;
+		this.view = source.view === null ? null : Object.assign( {}, source.view );
+
+		return this;
+
+	}
+
+	setViewOffset( fullWidth, fullHeight, x, y, width, height ) {
+
+		if ( this.view === null ) {
+
+			this.view = {
+				enabled: true,
+				fullWidth: 1,
+				fullHeight: 1,
+				offsetX: 0,
+				offsetY: 0,
+				width: 1,
+				height: 1
+			};
+
+		}
+
+		this.view.enabled = true;
+		this.view.fullWidth = fullWidth;
+		this.view.fullHeight = fullHeight;
+		this.view.offsetX = x;
+		this.view.offsetY = y;
+		this.view.width = width;
+		this.view.height = height;
+
+		this.updateProjectionMatrix();
+
+	}
+
+	clearViewOffset() {
+
+		if ( this.view !== null ) {
+
+			this.view.enabled = false;
+
+		}
+
+		this.updateProjectionMatrix();
+
+	}
+
+	updateProjectionMatrix() {
+
+		const dx = ( this.right - this.left ) / ( 2 * this.zoom );
+		const dy = ( this.top - this.bottom ) / ( 2 * this.zoom );
+		const cx = ( this.right + this.left ) / 2;
+		const cy = ( this.top + this.bottom ) / 2;
+
+		let left = cx - dx;
+		let right = cx + dx;
+		let top = cy + dy;
+		let bottom = cy - dy;
+
+		if ( this.view !== null && this.view.enabled ) {
+
+			const scaleW = ( this.right - this.left ) / this.view.fullWidth / this.zoom;
+			const scaleH = ( this.top - this.bottom ) / this.view.fullHeight / this.zoom;
+
+			left += scaleW * this.view.offsetX;
+			right = left + scaleW * this.view.width;
+			top -= scaleH * this.view.offsetY;
+			bottom = top - scaleH * this.view.height;
+
+		}
+
+		this.projectionMatrix.makeOrthographic( left, right, top, bottom, this.near, this.far );
+
+		this.projectionMatrixInverse.copy( this.projectionMatrix ).invert();
+
+	}
+
+	toJSON( meta ) {
+
+		const data = super.toJSON( meta );
+
+		data.object.zoom = this.zoom;
+		data.object.left = this.left;
+		data.object.right = this.right;
+		data.object.top = this.top;
+		data.object.bottom = this.bottom;
+		data.object.near = this.near;
+		data.object.far = this.far;
+
+		if ( this.view !== null ) data.object.view = Object.assign( {}, this.view );
+
+		return data;
+
+	}
+
+}
+
+OrthographicCamera.prototype.isOrthographicCamera = true;
+
+
+
+// EXTERNAL MODULE: external "THREE"
+var external_THREE_ = __webpack_require__(824);
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/camera.js
+
+
+
+
+
+Bootstrap.registerPlugin("camera", {
+  defaults: {
+    near: 0.01,
+    far: 10000,
+
+    type: "perspective",
+    fov: 60,
+    aspect: null,
+
+    // type: 'orthographic',
+    left: -1,
+    right: 1,
+    bottom: -1,
+    top: 1,
+
+    klass: null,
+    parameters: null,
+  },
+
+  listen: ["resize", "this.change"],
+
+  install: function (three) {
+    three.Camera = this.api();
+    three.camera = null;
+
+    this.aspect = 1;
+    this.change({}, three);
+  },
+
+  uninstall: function (three) {
+    delete three.Camera;
+    delete three.camera;
+  },
+
+  change: function (event, three) {
+    var o = this.options;
+    var old = three.camera;
+
+    if (!three.camera || event.changes.type || event.changes.klass) {
+      var klass =
+        o.klass ||
+        {
+          perspective: external_THREE_.PerspectiveCamera,
+          orthographic: OrthographicCamera,
+        }[o.type] ||
+        Camera;
+
+      three.camera = o.parameters ? new klass(o.parameters) : new klass();
+    }
+
+    Object.entries(o).forEach(
+      function ([key]) {
+        if (Object.prototype.hasOwnProperty.call(three.camera, key))
+          three.camera[key] = o[key];
+      }.bind(this)
+    );
+
+    this.update(three);
+
+    old === three.camera ||
+      three.trigger({
+        type: "camera",
+        camera: three.camera,
+      });
+  },
+
+  resize: function (event, three) {
+    this.aspect = event.viewWidth / Math.max(1, event.viewHeight);
+
+    this.update(three);
+  },
+
+  update: function (three) {
+    three.camera.aspect = this.options.aspect || this.aspect;
+    three.camera.updateProjectionMatrix();
+  },
+});
+
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/fallback.js
+
+
+Bootstrap.registerPlugin("fallback", {
+  defaults: {
+    force: false,
+    fill: true,
+    begin:
+      '<div class="threestrap-fallback" style="display: table; width: 100%; height: 100%;' +
+      'box-sizing: border-box; border: 1px dashed rgba(0, 0, 0, .25);">' +
+      '<div style="display: table-cell; padding: 10px; vertical-align: middle; text-align: center;">',
+    end: "</div></div>",
+    message:
+      "<big><strong>This example requires WebGL</strong></big><br>" +
+      'Visit <a target="_blank" href="http://get.webgl.org/">get.webgl.org</a> for more info</a>',
+  },
+
+  install: function (three) {
+    var cnv, gl;
+    try {
+      cnv = document.createElement("canvas");
+      gl = cnv.getContext("webgl") || cnv.getContext("experimental-webgl");
+      if (!gl || this.options.force) {
+        throw "WebGL unavailable.";
+      }
+      three.fallback = false;
+    } catch (e) {
+      var message = this.options.message;
+      var begin = this.options.begin;
+      var end = this.options.end;
+      var fill = this.options.fill;
+
+      var div = document.createElement("div");
+      div.innerHTML = begin + message + end;
+
+      this.children = [];
+
+      while (div.childNodes.length > 0) {
+        this.children.push(div.firstChild);
+        three.element.appendChild(div.firstChild);
+      }
+
+      if (fill) {
+        three.install("fill");
+      }
+
+      this.div = div;
+      three.fallback = true;
+      return false; // Abort install
+    }
+  },
+
+  uninstall: function (three) {
+    if (this.children) {
+      this.children.forEach(function (child) {
+        child.parentNode.removeChild(child);
+      });
+      this.children = null;
+    }
+
+    delete three.fallback;
+  },
+});
+
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/fill.js
+
+
+Bootstrap.registerPlugin("fill", {
+  defaults: {
+    block: true,
+    body: true,
+    layout: true,
+  },
+
+  install: function (three) {
+    function is(element) {
+      var h = element.style.height;
+      return h == "auto" || h == "";
+    }
+
+    function set(element) {
+      element.style.height = "100%";
+      element.style.margin = 0;
+      element.style.padding = 0;
+      return element;
+    }
+
+    if (this.options.body && three.element == document.body) {
+      // Fix body height if we're naked
+      this.applied = [three.element, document.documentElement]
+        .filter(is)
+        .map(set);
+    }
+
+    if (this.options.block && three.canvas) {
+      three.canvas.style.display = "block";
+      this.block = true;
+    }
+
+    if (this.options.layout && three.element) {
+      var style = window.getComputedStyle(three.element);
+      if (style.position == "static") {
+        three.element.style.position = "relative";
+        this.layout = true;
+      }
+    }
+  },
+
+  uninstall: function (three) {
+    if (this.applied) {
+      const set = function (element) {
+        element.style.height = "";
+        element.style.margin = "";
+        element.style.padding = "";
+        return element;
+      };
+
+      this.applied.map(set);
+      delete this.applied;
+    }
+
+    if (this.block && three.canvas) {
+      three.canvas.style.display = "";
+      delete this.block;
+    }
+
+    if (this.layout && three.element) {
+      three.element.style.position = "";
+      delete this.layout;
+    }
+  },
+
+  change: function (three) {
+    this.uninstall(three);
+    this.install(three);
+  },
+});
+
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/loop.js
+
+
+Bootstrap.registerPlugin("loop", {
+  defaults: {
+    start: true,
+    each: 1,
+  },
+
+  listen: ["ready"],
+
+  install: function (three) {
+    this.running = false;
+    this.lastRequestId = null;
+
+    three.Loop = this.api(
+      {
+        start: this.start.bind(this),
+        stop: this.stop.bind(this),
+        running: false,
+        window: window,
+      },
+      three
+    );
+
+    this.events = ["pre", "update", "render", "post"].map(function (type) {
+      return { type: type };
+    });
+  },
+
+  uninstall: function (three) {
+    this.stop(three);
+  },
+
+  ready: function (event, three) {
+    if (this.options.start) this.start(three);
+  },
+
+  start: function (three) {
+    if (this.running) return;
+
+    three.Loop.running = this.running = true;
+
+    var trigger = three.trigger.bind(three);
+    var loop = function () {
+      if (!this.running) return;
+      this.lastRequestId = three.Loop.window.requestAnimationFrame(loop);
+      this.events.map(trigger);
+    }.bind(this);
+
+    this.lastRequestId = three.Loop.window.requestAnimationFrame(loop);
+
+    three.trigger({ type: "start" });
+  },
+
+  stop: function (three) {
+    if (!this.running) return;
+    three.Loop.running = this.running = false;
+
+    three.Loop.window.cancelAnimationFrame(this.lastRequestId);
+    this.lastRequestId = null;
+
+    three.trigger({ type: "stop" });
+  },
+});
+
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/core/render.js
+
+
+Bootstrap.registerPlugin("render", {
+  listen: ["render"],
+
+  render: function (event, three) {
+    if (three.scene && three.camera) {
+      three.renderer.render(three.scene, three.camera);
+    }
+  },
+});
+
+;// CONCATENATED MODULE: ./node_modules/three/src/constants.js
+const constants_REVISION = '137';
+const MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
+const TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
+const CullFaceNone = 0;
+const CullFaceBack = 1;
+const CullFaceFront = 2;
+const CullFaceFrontBack = 3;
+const BasicShadowMap = 0;
+const PCFShadowMap = 1;
+const PCFSoftShadowMap = 2;
+const VSMShadowMap = 3;
+const FrontSide = 0;
+const BackSide = 1;
+const DoubleSide = 2;
+const FlatShading = 1;
+const SmoothShading = 2;
+const NoBlending = 0;
+const NormalBlending = 1;
+const AdditiveBlending = 2;
+const SubtractiveBlending = 3;
+const MultiplyBlending = 4;
+const CustomBlending = 5;
+const AddEquation = 100;
+const SubtractEquation = 101;
+const ReverseSubtractEquation = 102;
+const MinEquation = 103;
+const MaxEquation = 104;
+const ZeroFactor = 200;
+const OneFactor = 201;
+const SrcColorFactor = 202;
+const OneMinusSrcColorFactor = 203;
+const SrcAlphaFactor = 204;
+const OneMinusSrcAlphaFactor = 205;
+const DstAlphaFactor = 206;
+const OneMinusDstAlphaFactor = 207;
+const DstColorFactor = 208;
+const OneMinusDstColorFactor = 209;
+const SrcAlphaSaturateFactor = 210;
+const NeverDepth = 0;
+const AlwaysDepth = 1;
+const LessDepth = 2;
+const LessEqualDepth = 3;
+const EqualDepth = 4;
+const GreaterEqualDepth = 5;
+const GreaterDepth = 6;
+const NotEqualDepth = 7;
+const MultiplyOperation = 0;
+const MixOperation = 1;
+const AddOperation = 2;
+const NoToneMapping = 0;
+const LinearToneMapping = 1;
+const ReinhardToneMapping = 2;
+const CineonToneMapping = 3;
+const ACESFilmicToneMapping = 4;
+const CustomToneMapping = 5;
+
+const UVMapping = 300;
+const CubeReflectionMapping = 301;
+const CubeRefractionMapping = 302;
+const EquirectangularReflectionMapping = 303;
+const EquirectangularRefractionMapping = 304;
+const CubeUVReflectionMapping = 306;
+const CubeUVRefractionMapping = 307;
+const RepeatWrapping = 1000;
+const ClampToEdgeWrapping = 1001;
+const MirroredRepeatWrapping = 1002;
+const NearestFilter = 1003;
+const NearestMipmapNearestFilter = 1004;
+const NearestMipMapNearestFilter = 1004;
+const NearestMipmapLinearFilter = 1005;
+const NearestMipMapLinearFilter = 1005;
+const LinearFilter = 1006;
+const LinearMipmapNearestFilter = 1007;
+const LinearMipMapNearestFilter = 1007;
+const LinearMipmapLinearFilter = 1008;
+const LinearMipMapLinearFilter = 1008;
+const UnsignedByteType = 1009;
+const ByteType = 1010;
+const ShortType = 1011;
+const UnsignedShortType = 1012;
+const IntType = 1013;
+const UnsignedIntType = 1014;
+const FloatType = 1015;
+const HalfFloatType = 1016;
+const UnsignedShort4444Type = 1017;
+const UnsignedShort5551Type = 1018;
+const UnsignedInt248Type = 1020;
+const AlphaFormat = 1021;
+const RGBFormat = 1022;
+const RGBAFormat = 1023;
+const LuminanceFormat = 1024;
+const LuminanceAlphaFormat = 1025;
+const DepthFormat = 1026;
+const DepthStencilFormat = 1027;
+const RedFormat = 1028;
+const RedIntegerFormat = 1029;
+const RGFormat = 1030;
+const RGIntegerFormat = 1031;
+const RGBAIntegerFormat = 1033;
+
+const RGB_S3TC_DXT1_Format = 33776;
+const RGBA_S3TC_DXT1_Format = 33777;
+const RGBA_S3TC_DXT3_Format = 33778;
+const RGBA_S3TC_DXT5_Format = 33779;
+const RGB_PVRTC_4BPPV1_Format = 35840;
+const RGB_PVRTC_2BPPV1_Format = 35841;
+const RGBA_PVRTC_4BPPV1_Format = 35842;
+const RGBA_PVRTC_2BPPV1_Format = 35843;
+const RGB_ETC1_Format = 36196;
+const RGB_ETC2_Format = 37492;
+const RGBA_ETC2_EAC_Format = 37496;
+const RGBA_ASTC_4x4_Format = 37808;
+const RGBA_ASTC_5x4_Format = 37809;
+const RGBA_ASTC_5x5_Format = 37810;
+const RGBA_ASTC_6x5_Format = 37811;
+const RGBA_ASTC_6x6_Format = 37812;
+const RGBA_ASTC_8x5_Format = 37813;
+const RGBA_ASTC_8x6_Format = 37814;
+const RGBA_ASTC_8x8_Format = 37815;
+const RGBA_ASTC_10x5_Format = 37816;
+const RGBA_ASTC_10x6_Format = 37817;
+const RGBA_ASTC_10x8_Format = 37818;
+const RGBA_ASTC_10x10_Format = 37819;
+const RGBA_ASTC_12x10_Format = 37820;
+const RGBA_ASTC_12x12_Format = 37821;
+const RGBA_BPTC_Format = 36492;
+const LoopOnce = 2200;
+const LoopRepeat = 2201;
+const LoopPingPong = 2202;
+const InterpolateDiscrete = 2300;
+const InterpolateLinear = 2301;
+const InterpolateSmooth = 2302;
+const ZeroCurvatureEnding = 2400;
+const ZeroSlopeEnding = 2401;
+const WrapAroundEnding = 2402;
+const NormalAnimationBlendMode = 2500;
+const AdditiveAnimationBlendMode = 2501;
+const TrianglesDrawMode = 0;
+const TriangleStripDrawMode = 1;
+const TriangleFanDrawMode = 2;
+const LinearEncoding = 3000;
+const sRGBEncoding = 3001;
+const BasicDepthPacking = 3200;
+const RGBADepthPacking = 3201;
+const TangentSpaceNormalMap = 0;
+const ObjectSpaceNormalMap = 1;
+
+const ZeroStencilOp = 0;
+const KeepStencilOp = 7680;
+const ReplaceStencilOp = 7681;
+const IncrementStencilOp = 7682;
+const DecrementStencilOp = 7683;
+const IncrementWrapStencilOp = 34055;
+const DecrementWrapStencilOp = 34056;
+const InvertStencilOp = 5386;
+
+const NeverStencilFunc = 512;
+const LessStencilFunc = 513;
+const EqualStencilFunc = 514;
+const LessEqualStencilFunc = 515;
+const GreaterStencilFunc = 516;
+const NotEqualStencilFunc = 517;
+const GreaterEqualStencilFunc = 518;
+const AlwaysStencilFunc = 519;
+
+const StaticDrawUsage = 35044;
+const DynamicDrawUsage = 35048;
+const StreamDrawUsage = 35040;
+const StaticReadUsage = 35045;
+const DynamicReadUsage = 35049;
+const StreamReadUsage = 35041;
+const StaticCopyUsage = 35046;
+const DynamicCopyUsage = 35050;
+const StreamCopyUsage = 35042;
+
+const GLSL1 = '100';
+const GLSL3 = '300 es';
+
+const _SRGBAFormat = 1035; // fallback for WebGL 1
+
+;// CONCATENATED MODULE: ./node_modules/three/src/math/Box3.js
+
+
+class Box3 {
+
+	constructor( min = new Vector3( + Infinity, + Infinity, + Infinity ), max = new Vector3( - Infinity, - Infinity, - Infinity ) ) {
+
+		this.min = min;
+		this.max = max;
+
+	}
+
+	set( min, max ) {
+
+		this.min.copy( min );
+		this.max.copy( max );
+
+		return this;
+
+	}
+
+	setFromArray( array ) {
+
+		let minX = + Infinity;
+		let minY = + Infinity;
+		let minZ = + Infinity;
+
+		let maxX = - Infinity;
+		let maxY = - Infinity;
+		let maxZ = - Infinity;
+
+		for ( let i = 0, l = array.length; i < l; i += 3 ) {
+
+			const x = array[ i ];
+			const y = array[ i + 1 ];
+			const z = array[ i + 2 ];
+
+			if ( x < minX ) minX = x;
+			if ( y < minY ) minY = y;
+			if ( z < minZ ) minZ = z;
+
+			if ( x > maxX ) maxX = x;
+			if ( y > maxY ) maxY = y;
+			if ( z > maxZ ) maxZ = z;
+
+		}
+
+		this.min.set( minX, minY, minZ );
+		this.max.set( maxX, maxY, maxZ );
+
+		return this;
+
+	}
+
+	setFromBufferAttribute( attribute ) {
+
+		let minX = + Infinity;
+		let minY = + Infinity;
+		let minZ = + Infinity;
+
+		let maxX = - Infinity;
+		let maxY = - Infinity;
+		let maxZ = - Infinity;
+
+		for ( let i = 0, l = attribute.count; i < l; i ++ ) {
+
+			const x = attribute.getX( i );
+			const y = attribute.getY( i );
+			const z = attribute.getZ( i );
+
+			if ( x < minX ) minX = x;
+			if ( y < minY ) minY = y;
+			if ( z < minZ ) minZ = z;
+
+			if ( x > maxX ) maxX = x;
+			if ( y > maxY ) maxY = y;
+			if ( z > maxZ ) maxZ = z;
+
+		}
+
+		this.min.set( minX, minY, minZ );
+		this.max.set( maxX, maxY, maxZ );
+
+		return this;
+
+	}
+
+	setFromPoints( points ) {
+
+		this.makeEmpty();
+
+		for ( let i = 0, il = points.length; i < il; i ++ ) {
+
+			this.expandByPoint( points[ i ] );
+
+		}
+
+		return this;
+
+	}
+
+	setFromCenterAndSize( center, size ) {
+
+		const halfSize = Box3_vector.copy( size ).multiplyScalar( 0.5 );
+
+		this.min.copy( center ).sub( halfSize );
+		this.max.copy( center ).add( halfSize );
+
+		return this;
+
+	}
+
+	setFromObject( object, precise = false ) {
+
+		this.makeEmpty();
+
+		return this.expandByObject( object, precise );
+
+	}
+
+	clone() {
+
+		return new this.constructor().copy( this );
+
+	}
+
+	copy( box ) {
+
+		this.min.copy( box.min );
+		this.max.copy( box.max );
+
+		return this;
+
+	}
+
+	makeEmpty() {
+
+		this.min.x = this.min.y = this.min.z = + Infinity;
+		this.max.x = this.max.y = this.max.z = - Infinity;
+
+		return this;
+
+	}
+
+	isEmpty() {
+
+		// this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
+
+		return ( this.max.x < this.min.x ) || ( this.max.y < this.min.y ) || ( this.max.z < this.min.z );
+
+	}
+
+	getCenter( target ) {
+
+		return this.isEmpty() ? target.set( 0, 0, 0 ) : target.addVectors( this.min, this.max ).multiplyScalar( 0.5 );
+
+	}
+
+	getSize( target ) {
+
+		return this.isEmpty() ? target.set( 0, 0, 0 ) : target.subVectors( this.max, this.min );
+
+	}
+
+	expandByPoint( point ) {
+
+		this.min.min( point );
+		this.max.max( point );
+
+		return this;
+
+	}
+
+	expandByVector( vector ) {
+
+		this.min.sub( vector );
+		this.max.add( vector );
+
+		return this;
+
+	}
+
+	expandByScalar( scalar ) {
+
+		this.min.addScalar( - scalar );
+		this.max.addScalar( scalar );
+
+		return this;
+
+	}
+
+	expandByObject( object, precise = false ) {
+
+		// Computes the world-axis-aligned bounding box of an object (including its children),
+		// accounting for both the object's, and children's, world transforms
+
+		object.updateWorldMatrix( false, false );
+
+		const geometry = object.geometry;
+
+		if ( geometry !== undefined ) {
+
+			if ( precise && geometry.attributes != undefined && geometry.attributes.position !== undefined ) {
+
+				const position = geometry.attributes.position;
+				for ( let i = 0, l = position.count; i < l; i ++ ) {
+
+					Box3_vector.fromBufferAttribute( position, i ).applyMatrix4( object.matrixWorld );
+					this.expandByPoint( Box3_vector );
+
+				}
+
+			} else {
+
+				if ( geometry.boundingBox === null ) {
+
+					geometry.computeBoundingBox();
+
+				}
+
+				_box.copy( geometry.boundingBox );
+				_box.applyMatrix4( object.matrixWorld );
+
+				this.union( _box );
+
+			}
+
+		}
+
+		const children = object.children;
+
+		for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+			this.expandByObject( children[ i ], precise );
+
+		}
+
+		return this;
+
+	}
+
+	containsPoint( point ) {
+
+		return point.x < this.min.x || point.x > this.max.x ||
+			point.y < this.min.y || point.y > this.max.y ||
+			point.z < this.min.z || point.z > this.max.z ? false : true;
+
+	}
+
+	containsBox( box ) {
+
+		return this.min.x <= box.min.x && box.max.x <= this.max.x &&
+			this.min.y <= box.min.y && box.max.y <= this.max.y &&
+			this.min.z <= box.min.z && box.max.z <= this.max.z;
+
+	}
+
+	getParameter( point, target ) {
+
+		// This can potentially have a divide by zero if the box
+		// has a size dimension of 0.
+
+		return target.set(
+			( point.x - this.min.x ) / ( this.max.x - this.min.x ),
+			( point.y - this.min.y ) / ( this.max.y - this.min.y ),
+			( point.z - this.min.z ) / ( this.max.z - this.min.z )
+		);
+
+	}
+
+	intersectsBox( box ) {
+
+		// using 6 splitting planes to rule out intersections.
+		return box.max.x < this.min.x || box.min.x > this.max.x ||
+			box.max.y < this.min.y || box.min.y > this.max.y ||
+			box.max.z < this.min.z || box.min.z > this.max.z ? false : true;
+
+	}
+
+	intersectsSphere( sphere ) {
+
+		// Find the point on the AABB closest to the sphere center.
+		this.clampPoint( sphere.center, Box3_vector );
+
+		// If that point is inside the sphere, the AABB and sphere intersect.
+		return Box3_vector.distanceToSquared( sphere.center ) <= ( sphere.radius * sphere.radius );
+
+	}
+
+	intersectsPlane( plane ) {
+
+		// We compute the minimum and maximum dot product values. If those values
+		// are on the same side (back or front) of the plane, then there is no intersection.
+
+		let min, max;
+
+		if ( plane.normal.x > 0 ) {
+
+			min = plane.normal.x * this.min.x;
+			max = plane.normal.x * this.max.x;
+
+		} else {
+
+			min = plane.normal.x * this.max.x;
+			max = plane.normal.x * this.min.x;
+
+		}
+
+		if ( plane.normal.y > 0 ) {
+
+			min += plane.normal.y * this.min.y;
+			max += plane.normal.y * this.max.y;
+
+		} else {
+
+			min += plane.normal.y * this.max.y;
+			max += plane.normal.y * this.min.y;
+
+		}
+
+		if ( plane.normal.z > 0 ) {
+
+			min += plane.normal.z * this.min.z;
+			max += plane.normal.z * this.max.z;
+
+		} else {
+
+			min += plane.normal.z * this.max.z;
+			max += plane.normal.z * this.min.z;
+
+		}
+
+		return ( min <= - plane.constant && max >= - plane.constant );
+
+	}
+
+	intersectsTriangle( triangle ) {
+
+		if ( this.isEmpty() ) {
+
+			return false;
+
+		}
+
+		// compute box center and extents
+		this.getCenter( _center );
+		_extents.subVectors( this.max, _center );
+
+		// translate triangle to aabb origin
+		_v0.subVectors( triangle.a, _center );
+		Box3_v1.subVectors( triangle.b, _center );
+		_v2.subVectors( triangle.c, _center );
+
+		// compute edge vectors for triangle
+		_f0.subVectors( Box3_v1, _v0 );
+		_f1.subVectors( _v2, Box3_v1 );
+		_f2.subVectors( _v0, _v2 );
+
+		// test against axes that are given by cross product combinations of the edges of the triangle and the edges of the aabb
+		// make an axis testing of each of the 3 sides of the aabb against each of the 3 sides of the triangle = 9 axis of separation
+		// axis_ij = u_i x f_j (u0, u1, u2 = face normals of aabb = x,y,z axes vectors since aabb is axis aligned)
+		let axes = [
+			0, - _f0.z, _f0.y, 0, - _f1.z, _f1.y, 0, - _f2.z, _f2.y,
+			_f0.z, 0, - _f0.x, _f1.z, 0, - _f1.x, _f2.z, 0, - _f2.x,
+			- _f0.y, _f0.x, 0, - _f1.y, _f1.x, 0, - _f2.y, _f2.x, 0
+		];
+		if ( ! satForAxes( axes, _v0, Box3_v1, _v2, _extents ) ) {
+
+			return false;
+
+		}
+
+		// test 3 face normals from the aabb
+		axes = [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ];
+		if ( ! satForAxes( axes, _v0, Box3_v1, _v2, _extents ) ) {
+
+			return false;
+
+		}
+
+		// finally testing the face normal of the triangle
+		// use already existing triangle edge vectors here
+		_triangleNormal.crossVectors( _f0, _f1 );
+		axes = [ _triangleNormal.x, _triangleNormal.y, _triangleNormal.z ];
+
+		return satForAxes( axes, _v0, Box3_v1, _v2, _extents );
+
+	}
+
+	clampPoint( point, target ) {
+
+		return target.copy( point ).clamp( this.min, this.max );
+
+	}
+
+	distanceToPoint( point ) {
+
+		const clampedPoint = Box3_vector.copy( point ).clamp( this.min, this.max );
+
+		return clampedPoint.sub( point ).length();
+
+	}
+
+	getBoundingSphere( target ) {
+
+		this.getCenter( target.center );
+
+		target.radius = this.getSize( Box3_vector ).length() * 0.5;
+
+		return target;
+
+	}
+
+	intersect( box ) {
+
+		this.min.max( box.min );
+		this.max.min( box.max );
+
+		// ensure that if there is no overlap, the result is fully empty, not slightly empty with non-inf/+inf values that will cause subsequence intersects to erroneously return valid values.
+		if ( this.isEmpty() ) this.makeEmpty();
+
+		return this;
+
+	}
+
+	union( box ) {
+
+		this.min.min( box.min );
+		this.max.max( box.max );
+
+		return this;
+
+	}
+
+	applyMatrix4( matrix ) {
+
+		// transform of empty box is an empty box.
+		if ( this.isEmpty() ) return this;
+
+		// NOTE: I am using a binary pattern to specify all 2^3 combinations below
+		_points[ 0 ].set( this.min.x, this.min.y, this.min.z ).applyMatrix4( matrix ); // 000
+		_points[ 1 ].set( this.min.x, this.min.y, this.max.z ).applyMatrix4( matrix ); // 001
+		_points[ 2 ].set( this.min.x, this.max.y, this.min.z ).applyMatrix4( matrix ); // 010
+		_points[ 3 ].set( this.min.x, this.max.y, this.max.z ).applyMatrix4( matrix ); // 011
+		_points[ 4 ].set( this.max.x, this.min.y, this.min.z ).applyMatrix4( matrix ); // 100
+		_points[ 5 ].set( this.max.x, this.min.y, this.max.z ).applyMatrix4( matrix ); // 101
+		_points[ 6 ].set( this.max.x, this.max.y, this.min.z ).applyMatrix4( matrix ); // 110
+		_points[ 7 ].set( this.max.x, this.max.y, this.max.z ).applyMatrix4( matrix ); // 111
+
+		this.setFromPoints( _points );
+
+		return this;
+
+	}
+
+	translate( offset ) {
+
+		this.min.add( offset );
+		this.max.add( offset );
+
+		return this;
+
+	}
+
+	equals( box ) {
+
+		return box.min.equals( this.min ) && box.max.equals( this.max );
+
+	}
+
+}
+
+Box3.prototype.isBox3 = true;
+
+const _points = [
+	/*@__PURE__*/ new Vector3(),
+	/*@__PURE__*/ new Vector3(),
+	/*@__PURE__*/ new Vector3(),
+	/*@__PURE__*/ new Vector3(),
+	/*@__PURE__*/ new Vector3(),
+	/*@__PURE__*/ new Vector3(),
+	/*@__PURE__*/ new Vector3(),
+	/*@__PURE__*/ new Vector3()
+];
+
+const Box3_vector = /*@__PURE__*/ new Vector3();
+
+const _box = /*@__PURE__*/ new Box3();
+
+// triangle centered vertices
+
+const _v0 = /*@__PURE__*/ new Vector3();
+const Box3_v1 = /*@__PURE__*/ new Vector3();
+const _v2 = /*@__PURE__*/ new Vector3();
+
+// triangle edge vectors
+
+const _f0 = /*@__PURE__*/ new Vector3();
+const _f1 = /*@__PURE__*/ new Vector3();
+const _f2 = /*@__PURE__*/ new Vector3();
+
+const _center = /*@__PURE__*/ new Vector3();
+const _extents = /*@__PURE__*/ new Vector3();
+const _triangleNormal = /*@__PURE__*/ new Vector3();
+const _testAxis = /*@__PURE__*/ new Vector3();
+
+function satForAxes( axes, v0, v1, v2, extents ) {
+
+	for ( let i = 0, j = axes.length - 3; i <= j; i += 3 ) {
+
+		_testAxis.fromArray( axes, i );
+		// project the aabb onto the seperating axis
+		const r = extents.x * Math.abs( _testAxis.x ) + extents.y * Math.abs( _testAxis.y ) + extents.z * Math.abs( _testAxis.z );
+		// project all 3 vertices of the triangle onto the seperating axis
+		const p0 = v0.dot( _testAxis );
+		const p1 = v1.dot( _testAxis );
+		const p2 = v2.dot( _testAxis );
+		// actual test, basically see if either of the most extreme of the triangle points intersects r
+		if ( Math.max( - Math.max( p0, p1, p2 ), Math.min( p0, p1, p2 ) ) > r ) {
+
+			// points of the projected triangle are outside the projected half-length of the aabb
+			// the axis is seperating and we can exit
+			return false;
+
+		}
+
+	}
+
+	return true;
+
+}
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/math/Sphere.js
+
+
+
+const Sphere_box = /*@__PURE__*/ new Box3();
+const Sphere_v1 = /*@__PURE__*/ new Vector3();
+const _toFarthestPoint = /*@__PURE__*/ new Vector3();
+const _toPoint = /*@__PURE__*/ new Vector3();
+
+class Sphere {
+
+	constructor( center = new Vector3(), radius = - 1 ) {
+
+		this.center = center;
+		this.radius = radius;
+
+	}
+
+	set( center, radius ) {
+
+		this.center.copy( center );
+		this.radius = radius;
+
+		return this;
+
+	}
+
+	setFromPoints( points, optionalCenter ) {
+
+		const center = this.center;
+
+		if ( optionalCenter !== undefined ) {
+
+			center.copy( optionalCenter );
+
+		} else {
+
+			Sphere_box.setFromPoints( points ).getCenter( center );
+
+		}
+
+		let maxRadiusSq = 0;
+
+		for ( let i = 0, il = points.length; i < il; i ++ ) {
+
+			maxRadiusSq = Math.max( maxRadiusSq, center.distanceToSquared( points[ i ] ) );
+
+		}
+
+		this.radius = Math.sqrt( maxRadiusSq );
+
+		return this;
+
+	}
+
+	copy( sphere ) {
+
+		this.center.copy( sphere.center );
+		this.radius = sphere.radius;
+
+		return this;
+
+	}
+
+	isEmpty() {
+
+		return ( this.radius < 0 );
+
+	}
+
+	makeEmpty() {
+
+		this.center.set( 0, 0, 0 );
+		this.radius = - 1;
+
+		return this;
+
+	}
+
+	containsPoint( point ) {
+
+		return ( point.distanceToSquared( this.center ) <= ( this.radius * this.radius ) );
+
+	}
+
+	distanceToPoint( point ) {
+
+		return ( point.distanceTo( this.center ) - this.radius );
+
+	}
+
+	intersectsSphere( sphere ) {
+
+		const radiusSum = this.radius + sphere.radius;
+
+		return sphere.center.distanceToSquared( this.center ) <= ( radiusSum * radiusSum );
+
+	}
+
+	intersectsBox( box ) {
+
+		return box.intersectsSphere( this );
+
+	}
+
+	intersectsPlane( plane ) {
+
+		return Math.abs( plane.distanceToPoint( this.center ) ) <= this.radius;
+
+	}
+
+	clampPoint( point, target ) {
+
+		const deltaLengthSq = this.center.distanceToSquared( point );
+
+		target.copy( point );
+
+		if ( deltaLengthSq > ( this.radius * this.radius ) ) {
+
+			target.sub( this.center ).normalize();
+			target.multiplyScalar( this.radius ).add( this.center );
+
+		}
+
+		return target;
+
+	}
+
+	getBoundingBox( target ) {
+
+		if ( this.isEmpty() ) {
+
+			// Empty sphere produces empty bounding box
+			target.makeEmpty();
+			return target;
+
+		}
+
+		target.set( this.center, this.center );
+		target.expandByScalar( this.radius );
+
+		return target;
+
+	}
+
+	applyMatrix4( matrix ) {
+
+		this.center.applyMatrix4( matrix );
+		this.radius = this.radius * matrix.getMaxScaleOnAxis();
+
+		return this;
+
+	}
+
+	translate( offset ) {
+
+		this.center.add( offset );
+
+		return this;
+
+	}
+
+	expandByPoint( point ) {
+
+		// from https://github.com/juj/MathGeoLib/blob/2940b99b99cfe575dd45103ef20f4019dee15b54/src/Geometry/Sphere.cpp#L649-L671
+
+		_toPoint.subVectors( point, this.center );
+
+		const lengthSq = _toPoint.lengthSq();
+
+		if ( lengthSq > ( this.radius * this.radius ) ) {
+
+			const length = Math.sqrt( lengthSq );
+			const missingRadiusHalf = ( length - this.radius ) * 0.5;
+
+			// Nudge this sphere towards the target point. Add half the missing distance to radius,
+			// and the other half to position. This gives a tighter enclosure, instead of if
+			// the whole missing distance were just added to radius.
+
+			this.center.add( _toPoint.multiplyScalar( missingRadiusHalf / length ) );
+			this.radius += missingRadiusHalf;
+
+		}
+
+		return this;
+
+	}
+
+	union( sphere ) {
+
+		// from https://github.com/juj/MathGeoLib/blob/2940b99b99cfe575dd45103ef20f4019dee15b54/src/Geometry/Sphere.cpp#L759-L769
+
+		// To enclose another sphere into this sphere, we only need to enclose two points:
+		// 1) Enclose the farthest point on the other sphere into this sphere.
+		// 2) Enclose the opposite point of the farthest point into this sphere.
+
+		 if ( this.center.equals( sphere.center ) === true ) {
+
+			 _toFarthestPoint.set( 0, 0, 1 ).multiplyScalar( sphere.radius );
+
+
+		} else {
+
+			_toFarthestPoint.subVectors( sphere.center, this.center ).normalize().multiplyScalar( sphere.radius );
+
+		}
+
+		this.expandByPoint( Sphere_v1.copy( sphere.center ).add( _toFarthestPoint ) );
+		this.expandByPoint( Sphere_v1.copy( sphere.center ).sub( _toFarthestPoint ) );
+
+		return this;
+
+	}
+
+	equals( sphere ) {
+
+		return sphere.center.equals( this.center ) && ( sphere.radius === this.radius );
+
+	}
+
+	clone() {
+
+		return new this.constructor().copy( this );
+
+	}
+
+}
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/math/Plane.js
+
+
+
+const _vector1 = /*@__PURE__*/ new Vector3();
+const _vector2 = /*@__PURE__*/ new Vector3();
+const _normalMatrix = /*@__PURE__*/ new Matrix3();
+
+class Plane {
+
+	constructor( normal = new Vector3( 1, 0, 0 ), constant = 0 ) {
+
+		// normal is assumed to be normalized
+
+		this.normal = normal;
+		this.constant = constant;
+
+	}
+
+	set( normal, constant ) {
+
+		this.normal.copy( normal );
+		this.constant = constant;
+
+		return this;
+
+	}
+
+	setComponents( x, y, z, w ) {
+
+		this.normal.set( x, y, z );
+		this.constant = w;
+
+		return this;
+
+	}
+
+	setFromNormalAndCoplanarPoint( normal, point ) {
+
+		this.normal.copy( normal );
+		this.constant = - point.dot( this.normal );
+
+		return this;
+
+	}
+
+	setFromCoplanarPoints( a, b, c ) {
+
+		const normal = _vector1.subVectors( c, b ).cross( _vector2.subVectors( a, b ) ).normalize();
+
+		// Q: should an error be thrown if normal is zero (e.g. degenerate plane)?
+
+		this.setFromNormalAndCoplanarPoint( normal, a );
+
+		return this;
+
+	}
+
+	copy( plane ) {
+
+		this.normal.copy( plane.normal );
+		this.constant = plane.constant;
+
+		return this;
+
+	}
+
+	normalize() {
+
+		// Note: will lead to a divide by zero if the plane is invalid.
+
+		const inverseNormalLength = 1.0 / this.normal.length();
+		this.normal.multiplyScalar( inverseNormalLength );
+		this.constant *= inverseNormalLength;
+
+		return this;
+
+	}
+
+	negate() {
+
+		this.constant *= - 1;
+		this.normal.negate();
+
+		return this;
+
+	}
+
+	distanceToPoint( point ) {
+
+		return this.normal.dot( point ) + this.constant;
+
+	}
+
+	distanceToSphere( sphere ) {
+
+		return this.distanceToPoint( sphere.center ) - sphere.radius;
+
+	}
+
+	projectPoint( point, target ) {
+
+		return target.copy( this.normal ).multiplyScalar( - this.distanceToPoint( point ) ).add( point );
+
+	}
+
+	intersectLine( line, target ) {
+
+		const direction = line.delta( _vector1 );
+
+		const denominator = this.normal.dot( direction );
+
+		if ( denominator === 0 ) {
+
+			// line is coplanar, return origin
+			if ( this.distanceToPoint( line.start ) === 0 ) {
+
+				return target.copy( line.start );
+
+			}
+
+			// Unsure if this is the correct method to handle this case.
+			return null;
+
+		}
+
+		const t = - ( line.start.dot( this.normal ) + this.constant ) / denominator;
+
+		if ( t < 0 || t > 1 ) {
+
+			return null;
+
+		}
+
+		return target.copy( direction ).multiplyScalar( t ).add( line.start );
+
+	}
+
+	intersectsLine( line ) {
+
+		// Note: this tests if a line intersects the plane, not whether it (or its end-points) are coplanar with it.
+
+		const startSign = this.distanceToPoint( line.start );
+		const endSign = this.distanceToPoint( line.end );
+
+		return ( startSign < 0 && endSign > 0 ) || ( endSign < 0 && startSign > 0 );
+
+	}
+
+	intersectsBox( box ) {
+
+		return box.intersectsPlane( this );
+
+	}
+
+	intersectsSphere( sphere ) {
+
+		return sphere.intersectsPlane( this );
+
+	}
+
+	coplanarPoint( target ) {
+
+		return target.copy( this.normal ).multiplyScalar( - this.constant );
+
+	}
+
+	applyMatrix4( matrix, optionalNormalMatrix ) {
+
+		const normalMatrix = optionalNormalMatrix || _normalMatrix.getNormalMatrix( matrix );
+
+		const referencePoint = this.coplanarPoint( _vector1 ).applyMatrix4( matrix );
+
+		const normal = this.normal.applyMatrix3( normalMatrix ).normalize();
+
+		this.constant = - referencePoint.dot( normal );
+
+		return this;
+
+	}
+
+	translate( offset ) {
+
+		this.constant -= offset.dot( this.normal );
+
+		return this;
+
+	}
+
+	equals( plane ) {
+
+		return plane.normal.equals( this.normal ) && ( plane.constant === this.constant );
+
+	}
+
+	clone() {
+
+		return new this.constructor().copy( this );
+
+	}
+
+}
+
+Plane.prototype.isPlane = true;
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/src/math/Frustum.js
+
+
+
+
+const _sphere = /*@__PURE__*/ new Sphere();
+const Frustum_vector = /*@__PURE__*/ new Vector3();
+
+class Frustum {
+
+	constructor( p0 = new Plane(), p1 = new Plane(), p2 = new Plane(), p3 = new Plane(), p4 = new Plane(), p5 = new Plane() ) {
+
+		this.planes = [ p0, p1, p2, p3, p4, p5 ];
+
+	}
+
+	set( p0, p1, p2, p3, p4, p5 ) {
+
+		const planes = this.planes;
+
+		planes[ 0 ].copy( p0 );
+		planes[ 1 ].copy( p1 );
+		planes[ 2 ].copy( p2 );
+		planes[ 3 ].copy( p3 );
+		planes[ 4 ].copy( p4 );
+		planes[ 5 ].copy( p5 );
+
+		return this;
+
+	}
+
+	copy( frustum ) {
+
+		const planes = this.planes;
+
+		for ( let i = 0; i < 6; i ++ ) {
+
+			planes[ i ].copy( frustum.planes[ i ] );
+
+		}
+
+		return this;
+
+	}
+
+	setFromProjectionMatrix( m ) {
+
+		const planes = this.planes;
+		const me = m.elements;
+		const me0 = me[ 0 ], me1 = me[ 1 ], me2 = me[ 2 ], me3 = me[ 3 ];
+		const me4 = me[ 4 ], me5 = me[ 5 ], me6 = me[ 6 ], me7 = me[ 7 ];
+		const me8 = me[ 8 ], me9 = me[ 9 ], me10 = me[ 10 ], me11 = me[ 11 ];
+		const me12 = me[ 12 ], me13 = me[ 13 ], me14 = me[ 14 ], me15 = me[ 15 ];
+
+		planes[ 0 ].setComponents( me3 - me0, me7 - me4, me11 - me8, me15 - me12 ).normalize();
+		planes[ 1 ].setComponents( me3 + me0, me7 + me4, me11 + me8, me15 + me12 ).normalize();
+		planes[ 2 ].setComponents( me3 + me1, me7 + me5, me11 + me9, me15 + me13 ).normalize();
+		planes[ 3 ].setComponents( me3 - me1, me7 - me5, me11 - me9, me15 - me13 ).normalize();
+		planes[ 4 ].setComponents( me3 - me2, me7 - me6, me11 - me10, me15 - me14 ).normalize();
+		planes[ 5 ].setComponents( me3 + me2, me7 + me6, me11 + me10, me15 + me14 ).normalize();
+
+		return this;
+
+	}
+
+	intersectsObject( object ) {
+
+		const geometry = object.geometry;
+
+		if ( geometry.boundingSphere === null ) geometry.computeBoundingSphere();
+
+		_sphere.copy( geometry.boundingSphere ).applyMatrix4( object.matrixWorld );
+
+		return this.intersectsSphere( _sphere );
+
+	}
+
+	intersectsSprite( sprite ) {
+
+		_sphere.center.set( 0, 0, 0 );
+		_sphere.radius = 0.7071067811865476;
+		_sphere.applyMatrix4( sprite.matrixWorld );
+
+		return this.intersectsSphere( _sphere );
+
+	}
+
+	intersectsSphere( sphere ) {
+
+		const planes = this.planes;
+		const center = sphere.center;
+		const negRadius = - sphere.radius;
+
+		for ( let i = 0; i < 6; i ++ ) {
+
+			const distance = planes[ i ].distanceToPoint( center );
+
+			if ( distance < negRadius ) {
+
+				return false;
+
+			}
+
+		}
+
+		return true;
+
+	}
+
+	intersectsBox( box ) {
+
+		const planes = this.planes;
+
+		for ( let i = 0; i < 6; i ++ ) {
+
+			const plane = planes[ i ];
+
+			// corner at max distance
+
+			Frustum_vector.x = plane.normal.x > 0 ? box.max.x : box.min.x;
+			Frustum_vector.y = plane.normal.y > 0 ? box.max.y : box.min.y;
+			Frustum_vector.z = plane.normal.z > 0 ? box.max.z : box.min.z;
+
+			if ( plane.distanceToPoint( Frustum_vector ) < 0 ) {
+
+				return false;
+
+			}
+
+		}
+
+		return true;
+
+	}
+
+	containsPoint( point ) {
+
+		const planes = this.planes;
+
+		for ( let i = 0; i < 6; i ++ ) {
+
+			if ( planes[ i ].distanceToPoint( point ) < 0 ) {
+
+				return false;
+
+			}
+
+		}
+
+		return true;
+
+	}
+
+	clone() {
+
+		return new this.constructor().copy( this );
+
+	}
+
+}
+
 
 
 
@@ -17350,1318 +18869,6 @@ class Float64BufferAttribute extends (/* unused pure expression or super */ null
 
 
 
-;// CONCATENATED MODULE: ./node_modules/three/src/math/Euler.js
-
-
-
-
-
-const _matrix = /*@__PURE__*/ new Matrix4();
-const Euler_quaternion = /*@__PURE__*/ new Quaternion();
-
-class Euler {
-
-	constructor( x = 0, y = 0, z = 0, order = Euler.DefaultOrder ) {
-
-		this._x = x;
-		this._y = y;
-		this._z = z;
-		this._order = order;
-
-	}
-
-	get x() {
-
-		return this._x;
-
-	}
-
-	set x( value ) {
-
-		this._x = value;
-		this._onChangeCallback();
-
-	}
-
-	get y() {
-
-		return this._y;
-
-	}
-
-	set y( value ) {
-
-		this._y = value;
-		this._onChangeCallback();
-
-	}
-
-	get z() {
-
-		return this._z;
-
-	}
-
-	set z( value ) {
-
-		this._z = value;
-		this._onChangeCallback();
-
-	}
-
-	get order() {
-
-		return this._order;
-
-	}
-
-	set order( value ) {
-
-		this._order = value;
-		this._onChangeCallback();
-
-	}
-
-	set( x, y, z, order = this._order ) {
-
-		this._x = x;
-		this._y = y;
-		this._z = z;
-		this._order = order;
-
-		this._onChangeCallback();
-
-		return this;
-
-	}
-
-	clone() {
-
-		return new this.constructor( this._x, this._y, this._z, this._order );
-
-	}
-
-	copy( euler ) {
-
-		this._x = euler._x;
-		this._y = euler._y;
-		this._z = euler._z;
-		this._order = euler._order;
-
-		this._onChangeCallback();
-
-		return this;
-
-	}
-
-	setFromRotationMatrix( m, order = this._order, update = true ) {
-
-		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
-
-		const te = m.elements;
-		const m11 = te[ 0 ], m12 = te[ 4 ], m13 = te[ 8 ];
-		const m21 = te[ 1 ], m22 = te[ 5 ], m23 = te[ 9 ];
-		const m31 = te[ 2 ], m32 = te[ 6 ], m33 = te[ 10 ];
-
-		switch ( order ) {
-
-			case 'XYZ':
-
-				this._y = Math.asin( clamp( m13, - 1, 1 ) );
-
-				if ( Math.abs( m13 ) < 0.9999999 ) {
-
-					this._x = Math.atan2( - m23, m33 );
-					this._z = Math.atan2( - m12, m11 );
-
-				} else {
-
-					this._x = Math.atan2( m32, m22 );
-					this._z = 0;
-
-				}
-
-				break;
-
-			case 'YXZ':
-
-				this._x = Math.asin( - clamp( m23, - 1, 1 ) );
-
-				if ( Math.abs( m23 ) < 0.9999999 ) {
-
-					this._y = Math.atan2( m13, m33 );
-					this._z = Math.atan2( m21, m22 );
-
-				} else {
-
-					this._y = Math.atan2( - m31, m11 );
-					this._z = 0;
-
-				}
-
-				break;
-
-			case 'ZXY':
-
-				this._x = Math.asin( clamp( m32, - 1, 1 ) );
-
-				if ( Math.abs( m32 ) < 0.9999999 ) {
-
-					this._y = Math.atan2( - m31, m33 );
-					this._z = Math.atan2( - m12, m22 );
-
-				} else {
-
-					this._y = 0;
-					this._z = Math.atan2( m21, m11 );
-
-				}
-
-				break;
-
-			case 'ZYX':
-
-				this._y = Math.asin( - clamp( m31, - 1, 1 ) );
-
-				if ( Math.abs( m31 ) < 0.9999999 ) {
-
-					this._x = Math.atan2( m32, m33 );
-					this._z = Math.atan2( m21, m11 );
-
-				} else {
-
-					this._x = 0;
-					this._z = Math.atan2( - m12, m22 );
-
-				}
-
-				break;
-
-			case 'YZX':
-
-				this._z = Math.asin( clamp( m21, - 1, 1 ) );
-
-				if ( Math.abs( m21 ) < 0.9999999 ) {
-
-					this._x = Math.atan2( - m23, m22 );
-					this._y = Math.atan2( - m31, m11 );
-
-				} else {
-
-					this._x = 0;
-					this._y = Math.atan2( m13, m33 );
-
-				}
-
-				break;
-
-			case 'XZY':
-
-				this._z = Math.asin( - clamp( m12, - 1, 1 ) );
-
-				if ( Math.abs( m12 ) < 0.9999999 ) {
-
-					this._x = Math.atan2( m32, m22 );
-					this._y = Math.atan2( m13, m11 );
-
-				} else {
-
-					this._x = Math.atan2( - m23, m33 );
-					this._y = 0;
-
-				}
-
-				break;
-
-			default:
-
-				console.warn( 'THREE.Euler: .setFromRotationMatrix() encountered an unknown order: ' + order );
-
-		}
-
-		this._order = order;
-
-		if ( update === true ) this._onChangeCallback();
-
-		return this;
-
-	}
-
-	setFromQuaternion( q, order, update ) {
-
-		_matrix.makeRotationFromQuaternion( q );
-
-		return this.setFromRotationMatrix( _matrix, order, update );
-
-	}
-
-	setFromVector3( v, order = this._order ) {
-
-		return this.set( v.x, v.y, v.z, order );
-
-	}
-
-	reorder( newOrder ) {
-
-		// WARNING: this discards revolution information -bhouston
-
-		Euler_quaternion.setFromEuler( this );
-
-		return this.setFromQuaternion( Euler_quaternion, newOrder );
-
-	}
-
-	equals( euler ) {
-
-		return ( euler._x === this._x ) && ( euler._y === this._y ) && ( euler._z === this._z ) && ( euler._order === this._order );
-
-	}
-
-	fromArray( array ) {
-
-		this._x = array[ 0 ];
-		this._y = array[ 1 ];
-		this._z = array[ 2 ];
-		if ( array[ 3 ] !== undefined ) this._order = array[ 3 ];
-
-		this._onChangeCallback();
-
-		return this;
-
-	}
-
-	toArray( array = [], offset = 0 ) {
-
-		array[ offset ] = this._x;
-		array[ offset + 1 ] = this._y;
-		array[ offset + 2 ] = this._z;
-		array[ offset + 3 ] = this._order;
-
-		return array;
-
-	}
-
-	toVector3( optionalResult ) {
-
-		if ( optionalResult ) {
-
-			return optionalResult.set( this._x, this._y, this._z );
-
-		} else {
-
-			return new Vector3( this._x, this._y, this._z );
-
-		}
-
-	}
-
-	_onChange( callback ) {
-
-		this._onChangeCallback = callback;
-
-		return this;
-
-	}
-
-	_onChangeCallback() {}
-
-}
-
-Euler.prototype.isEuler = true;
-
-Euler.DefaultOrder = 'XYZ';
-Euler.RotationOrders = [ 'XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX' ];
-
-
-
-;// CONCATENATED MODULE: ./node_modules/three/src/core/Layers.js
-class Layers {
-
-	constructor() {
-
-		this.mask = 1 | 0;
-
-	}
-
-	set( channel ) {
-
-		this.mask = ( 1 << channel | 0 ) >>> 0;
-
-	}
-
-	enable( channel ) {
-
-		this.mask |= 1 << channel | 0;
-
-	}
-
-	enableAll() {
-
-		this.mask = 0xffffffff | 0;
-
-	}
-
-	toggle( channel ) {
-
-		this.mask ^= 1 << channel | 0;
-
-	}
-
-	disable( channel ) {
-
-		this.mask &= ~ ( 1 << channel | 0 );
-
-	}
-
-	disableAll() {
-
-		this.mask = 0;
-
-	}
-
-	test( layers ) {
-
-		return ( this.mask & layers.mask ) !== 0;
-
-	}
-
-	isEnabled( channel ) {
-
-		return ( this.mask & ( 1 << channel | 0 ) ) !== 0;
-
-	}
-
-}
-
-
-
-
-;// CONCATENATED MODULE: ./node_modules/three/src/core/Object3D.js
-
-
-
-
-
-
-
-
-
-let _object3DId = 0;
-
-const Object3D_v1 = /*@__PURE__*/ new Vector3();
-const _q1 = /*@__PURE__*/ new Quaternion();
-const Object3D_m1 = /*@__PURE__*/ new Matrix4();
-const _target = /*@__PURE__*/ new Vector3();
-
-const _position = /*@__PURE__*/ new Vector3();
-const _scale = /*@__PURE__*/ new Vector3();
-const Object3D_quaternion = /*@__PURE__*/ new Quaternion();
-
-const _xAxis = /*@__PURE__*/ new Vector3( 1, 0, 0 );
-const _yAxis = /*@__PURE__*/ new Vector3( 0, 1, 0 );
-const _zAxis = /*@__PURE__*/ new Vector3( 0, 0, 1 );
-
-const _addedEvent = { type: 'added' };
-const _removedEvent = { type: 'removed' };
-
-class Object3D extends EventDispatcher {
-
-	constructor() {
-
-		super();
-
-		Object.defineProperty( this, 'id', { value: _object3DId ++ } );
-
-		this.uuid = generateUUID();
-
-		this.name = '';
-		this.type = 'Object3D';
-
-		this.parent = null;
-		this.children = [];
-
-		this.up = Object3D.DefaultUp.clone();
-
-		const position = new Vector3();
-		const rotation = new Euler();
-		const quaternion = new Quaternion();
-		const scale = new Vector3( 1, 1, 1 );
-
-		function onRotationChange() {
-
-			quaternion.setFromEuler( rotation, false );
-
-		}
-
-		function onQuaternionChange() {
-
-			rotation.setFromQuaternion( quaternion, undefined, false );
-
-		}
-
-		rotation._onChange( onRotationChange );
-		quaternion._onChange( onQuaternionChange );
-
-		Object.defineProperties( this, {
-			position: {
-				configurable: true,
-				enumerable: true,
-				value: position
-			},
-			rotation: {
-				configurable: true,
-				enumerable: true,
-				value: rotation
-			},
-			quaternion: {
-				configurable: true,
-				enumerable: true,
-				value: quaternion
-			},
-			scale: {
-				configurable: true,
-				enumerable: true,
-				value: scale
-			},
-			modelViewMatrix: {
-				value: new Matrix4()
-			},
-			normalMatrix: {
-				value: new Matrix3()
-			}
-		} );
-
-		this.matrix = new Matrix4();
-		this.matrixWorld = new Matrix4();
-
-		this.matrixAutoUpdate = Object3D.DefaultMatrixAutoUpdate;
-		this.matrixWorldNeedsUpdate = false;
-
-		this.layers = new Layers();
-		this.visible = true;
-
-		this.castShadow = false;
-		this.receiveShadow = false;
-
-		this.frustumCulled = true;
-		this.renderOrder = 0;
-
-		this.animations = [];
-
-		this.userData = {};
-
-	}
-
-	onBeforeRender( /* renderer, scene, camera, geometry, material, group */ ) {}
-
-	onAfterRender( /* renderer, scene, camera, geometry, material, group */ ) {}
-
-	applyMatrix4( matrix ) {
-
-		if ( this.matrixAutoUpdate ) this.updateMatrix();
-
-		this.matrix.premultiply( matrix );
-
-		this.matrix.decompose( this.position, this.quaternion, this.scale );
-
-	}
-
-	applyQuaternion( q ) {
-
-		this.quaternion.premultiply( q );
-
-		return this;
-
-	}
-
-	setRotationFromAxisAngle( axis, angle ) {
-
-		// assumes axis is normalized
-
-		this.quaternion.setFromAxisAngle( axis, angle );
-
-	}
-
-	setRotationFromEuler( euler ) {
-
-		this.quaternion.setFromEuler( euler, true );
-
-	}
-
-	setRotationFromMatrix( m ) {
-
-		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
-
-		this.quaternion.setFromRotationMatrix( m );
-
-	}
-
-	setRotationFromQuaternion( q ) {
-
-		// assumes q is normalized
-
-		this.quaternion.copy( q );
-
-	}
-
-	rotateOnAxis( axis, angle ) {
-
-		// rotate object on axis in object space
-		// axis is assumed to be normalized
-
-		_q1.setFromAxisAngle( axis, angle );
-
-		this.quaternion.multiply( _q1 );
-
-		return this;
-
-	}
-
-	rotateOnWorldAxis( axis, angle ) {
-
-		// rotate object on axis in world space
-		// axis is assumed to be normalized
-		// method assumes no rotated parent
-
-		_q1.setFromAxisAngle( axis, angle );
-
-		this.quaternion.premultiply( _q1 );
-
-		return this;
-
-	}
-
-	rotateX( angle ) {
-
-		return this.rotateOnAxis( _xAxis, angle );
-
-	}
-
-	rotateY( angle ) {
-
-		return this.rotateOnAxis( _yAxis, angle );
-
-	}
-
-	rotateZ( angle ) {
-
-		return this.rotateOnAxis( _zAxis, angle );
-
-	}
-
-	translateOnAxis( axis, distance ) {
-
-		// translate object by distance along axis in object space
-		// axis is assumed to be normalized
-
-		Object3D_v1.copy( axis ).applyQuaternion( this.quaternion );
-
-		this.position.add( Object3D_v1.multiplyScalar( distance ) );
-
-		return this;
-
-	}
-
-	translateX( distance ) {
-
-		return this.translateOnAxis( _xAxis, distance );
-
-	}
-
-	translateY( distance ) {
-
-		return this.translateOnAxis( _yAxis, distance );
-
-	}
-
-	translateZ( distance ) {
-
-		return this.translateOnAxis( _zAxis, distance );
-
-	}
-
-	localToWorld( vector ) {
-
-		return vector.applyMatrix4( this.matrixWorld );
-
-	}
-
-	worldToLocal( vector ) {
-
-		return vector.applyMatrix4( Object3D_m1.copy( this.matrixWorld ).invert() );
-
-	}
-
-	lookAt( x, y, z ) {
-
-		// This method does not support objects having non-uniformly-scaled parent(s)
-
-		if ( x.isVector3 ) {
-
-			_target.copy( x );
-
-		} else {
-
-			_target.set( x, y, z );
-
-		}
-
-		const parent = this.parent;
-
-		this.updateWorldMatrix( true, false );
-
-		_position.setFromMatrixPosition( this.matrixWorld );
-
-		if ( this.isCamera || this.isLight ) {
-
-			Object3D_m1.lookAt( _position, _target, this.up );
-
-		} else {
-
-			Object3D_m1.lookAt( _target, _position, this.up );
-
-		}
-
-		this.quaternion.setFromRotationMatrix( Object3D_m1 );
-
-		if ( parent ) {
-
-			Object3D_m1.extractRotation( parent.matrixWorld );
-			_q1.setFromRotationMatrix( Object3D_m1 );
-			this.quaternion.premultiply( _q1.invert() );
-
-		}
-
-	}
-
-	add( object ) {
-
-		if ( arguments.length > 1 ) {
-
-			for ( let i = 0; i < arguments.length; i ++ ) {
-
-				this.add( arguments[ i ] );
-
-			}
-
-			return this;
-
-		}
-
-		if ( object === this ) {
-
-			console.error( 'THREE.Object3D.add: object can\'t be added as a child of itself.', object );
-			return this;
-
-		}
-
-		if ( object && object.isObject3D ) {
-
-			if ( object.parent !== null ) {
-
-				object.parent.remove( object );
-
-			}
-
-			object.parent = this;
-			this.children.push( object );
-
-			object.dispatchEvent( _addedEvent );
-
-		} else {
-
-			console.error( 'THREE.Object3D.add: object not an instance of THREE.Object3D.', object );
-
-		}
-
-		return this;
-
-	}
-
-	remove( object ) {
-
-		if ( arguments.length > 1 ) {
-
-			for ( let i = 0; i < arguments.length; i ++ ) {
-
-				this.remove( arguments[ i ] );
-
-			}
-
-			return this;
-
-		}
-
-		const index = this.children.indexOf( object );
-
-		if ( index !== - 1 ) {
-
-			object.parent = null;
-			this.children.splice( index, 1 );
-
-			object.dispatchEvent( _removedEvent );
-
-		}
-
-		return this;
-
-	}
-
-	removeFromParent() {
-
-		const parent = this.parent;
-
-		if ( parent !== null ) {
-
-			parent.remove( this );
-
-		}
-
-		return this;
-
-	}
-
-	clear() {
-
-		for ( let i = 0; i < this.children.length; i ++ ) {
-
-			const object = this.children[ i ];
-
-			object.parent = null;
-
-			object.dispatchEvent( _removedEvent );
-
-		}
-
-		this.children.length = 0;
-
-		return this;
-
-
-	}
-
-	attach( object ) {
-
-		// adds object as a child of this, while maintaining the object's world transform
-
-		// Note: This method does not support scene graphs having non-uniformly-scaled nodes(s)
-
-		this.updateWorldMatrix( true, false );
-
-		Object3D_m1.copy( this.matrixWorld ).invert();
-
-		if ( object.parent !== null ) {
-
-			object.parent.updateWorldMatrix( true, false );
-
-			Object3D_m1.multiply( object.parent.matrixWorld );
-
-		}
-
-		object.applyMatrix4( Object3D_m1 );
-
-		this.add( object );
-
-		object.updateWorldMatrix( false, true );
-
-		return this;
-
-	}
-
-	getObjectById( id ) {
-
-		return this.getObjectByProperty( 'id', id );
-
-	}
-
-	getObjectByName( name ) {
-
-		return this.getObjectByProperty( 'name', name );
-
-	}
-
-	getObjectByProperty( name, value ) {
-
-		if ( this[ name ] === value ) return this;
-
-		for ( let i = 0, l = this.children.length; i < l; i ++ ) {
-
-			const child = this.children[ i ];
-			const object = child.getObjectByProperty( name, value );
-
-			if ( object !== undefined ) {
-
-				return object;
-
-			}
-
-		}
-
-		return undefined;
-
-	}
-
-	getWorldPosition( target ) {
-
-		this.updateWorldMatrix( true, false );
-
-		return target.setFromMatrixPosition( this.matrixWorld );
-
-	}
-
-	getWorldQuaternion( target ) {
-
-		this.updateWorldMatrix( true, false );
-
-		this.matrixWorld.decompose( _position, target, _scale );
-
-		return target;
-
-	}
-
-	getWorldScale( target ) {
-
-		this.updateWorldMatrix( true, false );
-
-		this.matrixWorld.decompose( _position, Object3D_quaternion, target );
-
-		return target;
-
-	}
-
-	getWorldDirection( target ) {
-
-		this.updateWorldMatrix( true, false );
-
-		const e = this.matrixWorld.elements;
-
-		return target.set( e[ 8 ], e[ 9 ], e[ 10 ] ).normalize();
-
-	}
-
-	raycast( /* raycaster, intersects */ ) {}
-
-	traverse( callback ) {
-
-		callback( this );
-
-		const children = this.children;
-
-		for ( let i = 0, l = children.length; i < l; i ++ ) {
-
-			children[ i ].traverse( callback );
-
-		}
-
-	}
-
-	traverseVisible( callback ) {
-
-		if ( this.visible === false ) return;
-
-		callback( this );
-
-		const children = this.children;
-
-		for ( let i = 0, l = children.length; i < l; i ++ ) {
-
-			children[ i ].traverseVisible( callback );
-
-		}
-
-	}
-
-	traverseAncestors( callback ) {
-
-		const parent = this.parent;
-
-		if ( parent !== null ) {
-
-			callback( parent );
-
-			parent.traverseAncestors( callback );
-
-		}
-
-	}
-
-	updateMatrix() {
-
-		this.matrix.compose( this.position, this.quaternion, this.scale );
-
-		this.matrixWorldNeedsUpdate = true;
-
-	}
-
-	updateMatrixWorld( force ) {
-
-		if ( this.matrixAutoUpdate ) this.updateMatrix();
-
-		if ( this.matrixWorldNeedsUpdate || force ) {
-
-			if ( this.parent === null ) {
-
-				this.matrixWorld.copy( this.matrix );
-
-			} else {
-
-				this.matrixWorld.multiplyMatrices( this.parent.matrixWorld, this.matrix );
-
-			}
-
-			this.matrixWorldNeedsUpdate = false;
-
-			force = true;
-
-		}
-
-		// update children
-
-		const children = this.children;
-
-		for ( let i = 0, l = children.length; i < l; i ++ ) {
-
-			children[ i ].updateMatrixWorld( force );
-
-		}
-
-	}
-
-	updateWorldMatrix( updateParents, updateChildren ) {
-
-		const parent = this.parent;
-
-		if ( updateParents === true && parent !== null ) {
-
-			parent.updateWorldMatrix( true, false );
-
-		}
-
-		if ( this.matrixAutoUpdate ) this.updateMatrix();
-
-		if ( this.parent === null ) {
-
-			this.matrixWorld.copy( this.matrix );
-
-		} else {
-
-			this.matrixWorld.multiplyMatrices( this.parent.matrixWorld, this.matrix );
-
-		}
-
-		// update children
-
-		if ( updateChildren === true ) {
-
-			const children = this.children;
-
-			for ( let i = 0, l = children.length; i < l; i ++ ) {
-
-				children[ i ].updateWorldMatrix( false, true );
-
-			}
-
-		}
-
-	}
-
-	toJSON( meta ) {
-
-		// meta is a string when called from JSON.stringify
-		const isRootObject = ( meta === undefined || typeof meta === 'string' );
-
-		const output = {};
-
-		// meta is a hash used to collect geometries, materials.
-		// not providing it implies that this is the root object
-		// being serialized.
-		if ( isRootObject ) {
-
-			// initialize meta obj
-			meta = {
-				geometries: {},
-				materials: {},
-				textures: {},
-				images: {},
-				shapes: {},
-				skeletons: {},
-				animations: {}
-			};
-
-			output.metadata = {
-				version: 4.5,
-				type: 'Object',
-				generator: 'Object3D.toJSON'
-			};
-
-		}
-
-		// standard Object3D serialization
-
-		const object = {};
-
-		object.uuid = this.uuid;
-		object.type = this.type;
-
-		if ( this.name !== '' ) object.name = this.name;
-		if ( this.castShadow === true ) object.castShadow = true;
-		if ( this.receiveShadow === true ) object.receiveShadow = true;
-		if ( this.visible === false ) object.visible = false;
-		if ( this.frustumCulled === false ) object.frustumCulled = false;
-		if ( this.renderOrder !== 0 ) object.renderOrder = this.renderOrder;
-		if ( JSON.stringify( this.userData ) !== '{}' ) object.userData = this.userData;
-
-		object.layers = this.layers.mask;
-		object.matrix = this.matrix.toArray();
-
-		if ( this.matrixAutoUpdate === false ) object.matrixAutoUpdate = false;
-
-		// object specific properties
-
-		if ( this.isInstancedMesh ) {
-
-			object.type = 'InstancedMesh';
-			object.count = this.count;
-			object.instanceMatrix = this.instanceMatrix.toJSON();
-			if ( this.instanceColor !== null ) object.instanceColor = this.instanceColor.toJSON();
-
-		}
-
-		//
-
-		function serialize( library, element ) {
-
-			if ( library[ element.uuid ] === undefined ) {
-
-				library[ element.uuid ] = element.toJSON( meta );
-
-			}
-
-			return element.uuid;
-
-		}
-
-		if ( this.isScene ) {
-
-			if ( this.background ) {
-
-				if ( this.background.isColor ) {
-
-					object.background = this.background.toJSON();
-
-				} else if ( this.background.isTexture ) {
-
-					object.background = this.background.toJSON( meta ).uuid;
-
-				}
-
-			}
-
-			if ( this.environment && this.environment.isTexture ) {
-
-				object.environment = this.environment.toJSON( meta ).uuid;
-
-			}
-
-		} else if ( this.isMesh || this.isLine || this.isPoints ) {
-
-			object.geometry = serialize( meta.geometries, this.geometry );
-
-			const parameters = this.geometry.parameters;
-
-			if ( parameters !== undefined && parameters.shapes !== undefined ) {
-
-				const shapes = parameters.shapes;
-
-				if ( Array.isArray( shapes ) ) {
-
-					for ( let i = 0, l = shapes.length; i < l; i ++ ) {
-
-						const shape = shapes[ i ];
-
-						serialize( meta.shapes, shape );
-
-					}
-
-				} else {
-
-					serialize( meta.shapes, shapes );
-
-				}
-
-			}
-
-		}
-
-		if ( this.isSkinnedMesh ) {
-
-			object.bindMode = this.bindMode;
-			object.bindMatrix = this.bindMatrix.toArray();
-
-			if ( this.skeleton !== undefined ) {
-
-				serialize( meta.skeletons, this.skeleton );
-
-				object.skeleton = this.skeleton.uuid;
-
-			}
-
-		}
-
-		if ( this.material !== undefined ) {
-
-			if ( Array.isArray( this.material ) ) {
-
-				const uuids = [];
-
-				for ( let i = 0, l = this.material.length; i < l; i ++ ) {
-
-					uuids.push( serialize( meta.materials, this.material[ i ] ) );
-
-				}
-
-				object.material = uuids;
-
-			} else {
-
-				object.material = serialize( meta.materials, this.material );
-
-			}
-
-		}
-
-		//
-
-		if ( this.children.length > 0 ) {
-
-			object.children = [];
-
-			for ( let i = 0; i < this.children.length; i ++ ) {
-
-				object.children.push( this.children[ i ].toJSON( meta ).object );
-
-			}
-
-		}
-
-		//
-
-		if ( this.animations.length > 0 ) {
-
-			object.animations = [];
-
-			for ( let i = 0; i < this.animations.length; i ++ ) {
-
-				const animation = this.animations[ i ];
-
-				object.animations.push( serialize( meta.animations, animation ) );
-
-			}
-
-		}
-
-		if ( isRootObject ) {
-
-			const geometries = extractFromCache( meta.geometries );
-			const materials = extractFromCache( meta.materials );
-			const textures = extractFromCache( meta.textures );
-			const images = extractFromCache( meta.images );
-			const shapes = extractFromCache( meta.shapes );
-			const skeletons = extractFromCache( meta.skeletons );
-			const animations = extractFromCache( meta.animations );
-
-			if ( geometries.length > 0 ) output.geometries = geometries;
-			if ( materials.length > 0 ) output.materials = materials;
-			if ( textures.length > 0 ) output.textures = textures;
-			if ( images.length > 0 ) output.images = images;
-			if ( shapes.length > 0 ) output.shapes = shapes;
-			if ( skeletons.length > 0 ) output.skeletons = skeletons;
-			if ( animations.length > 0 ) output.animations = animations;
-
-		}
-
-		output.object = object;
-
-		return output;
-
-		// extract data from the cache hash
-		// remove metadata on each item
-		// and return as array
-		function extractFromCache( cache ) {
-
-			const values = [];
-			for ( const key in cache ) {
-
-				const data = cache[ key ];
-				delete data.metadata;
-				values.push( data );
-
-			}
-
-			return values;
-
-		}
-
-	}
-
-	clone( recursive ) {
-
-		return new this.constructor().copy( this, recursive );
-
-	}
-
-	copy( source, recursive = true ) {
-
-		this.name = source.name;
-
-		this.up.copy( source.up );
-
-		this.position.copy( source.position );
-		this.rotation.order = source.rotation.order;
-		this.quaternion.copy( source.quaternion );
-		this.scale.copy( source.scale );
-
-		this.matrix.copy( source.matrix );
-		this.matrixWorld.copy( source.matrixWorld );
-
-		this.matrixAutoUpdate = source.matrixAutoUpdate;
-		this.matrixWorldNeedsUpdate = source.matrixWorldNeedsUpdate;
-
-		this.layers.mask = source.layers.mask;
-		this.visible = source.visible;
-
-		this.castShadow = source.castShadow;
-		this.receiveShadow = source.receiveShadow;
-
-		this.frustumCulled = source.frustumCulled;
-		this.renderOrder = source.renderOrder;
-
-		this.userData = JSON.parse( JSON.stringify( source.userData ) );
-
-		if ( recursive === true ) {
-
-			for ( let i = 0; i < source.children.length; i ++ ) {
-
-				const child = source.children[ i ];
-				this.add( child.clone() );
-
-			}
-
-		}
-
-		return this;
-
-	}
-
-}
-
-Object3D.DefaultUp = new Vector3( 0, 1, 0 );
-Object3D.DefaultMatrixAutoUpdate = true;
-
-Object3D.prototype.isObject3D = true;
-
-
-
 ;// CONCATENATED MODULE: ./node_modules/three/src/utils.js
 function arrayMin( array ) {
 
@@ -18750,7 +18957,7 @@ function createElementNS( name ) {
 
 let _id = 0;
 
-const BufferGeometry_m1 = /*@__PURE__*/ new Matrix4();
+const BufferGeometry_m1 = /*@__PURE__*/ new Matrix4_Matrix4();
 const _obj = /*@__PURE__*/ new Object3D();
 const _offset = /*@__PURE__*/ new Vector3();
 const BufferGeometry_box = /*@__PURE__*/ new Box3();
@@ -21821,7 +22028,7 @@ MeshBasicMaterial.prototype.isMeshBasicMaterial = true;
 
 
 
-const _inverseMatrix = /*@__PURE__*/ new Matrix4();
+const _inverseMatrix = /*@__PURE__*/ new Matrix4_Matrix4();
 const _ray = /*@__PURE__*/ new Ray();
 const Mesh_sphere = /*@__PURE__*/ new Sphere();
 
@@ -30133,76 +30340,6 @@ WebGLRenderTarget.prototype.isWebGLRenderTarget = true;
 
 
 
-;// CONCATENATED MODULE: ./node_modules/three/src/cameras/Camera.js
-
-
-
-class Camera extends Object3D {
-
-	constructor() {
-
-		super();
-
-		this.type = 'Camera';
-
-		this.matrixWorldInverse = new Matrix4();
-
-		this.projectionMatrix = new Matrix4();
-		this.projectionMatrixInverse = new Matrix4();
-
-	}
-
-	copy( source, recursive ) {
-
-		super.copy( source, recursive );
-
-		this.matrixWorldInverse.copy( source.matrixWorldInverse );
-
-		this.projectionMatrix.copy( source.projectionMatrix );
-		this.projectionMatrixInverse.copy( source.projectionMatrixInverse );
-
-		return this;
-
-	}
-
-	getWorldDirection( target ) {
-
-		this.updateWorldMatrix( true, false );
-
-		const e = this.matrixWorld.elements;
-
-		return target.set( - e[ 8 ], - e[ 9 ], - e[ 10 ] ).normalize();
-
-	}
-
-	updateMatrixWorld( force ) {
-
-		super.updateMatrixWorld( force );
-
-		this.matrixWorldInverse.copy( this.matrixWorld ).invert();
-
-	}
-
-	updateWorldMatrix( updateParents, updateChildren ) {
-
-		super.updateWorldMatrix( updateParents, updateChildren );
-
-		this.matrixWorldInverse.copy( this.matrixWorld ).invert();
-
-	}
-
-	clone() {
-
-		return new this.constructor().copy( this );
-
-	}
-
-}
-
-Camera.prototype.isCamera = true;
-
-
-
 ;// CONCATENATED MODULE: ./node_modules/three/src/cameras/PerspectiveCamera.js
 
 
@@ -30837,144 +30974,6 @@ function WebGLCubeMaps( renderer ) {
 	};
 
 }
-
-
-
-;// CONCATENATED MODULE: ./node_modules/three/src/cameras/OrthographicCamera.js
-
-
-class OrthographicCamera extends Camera {
-
-	constructor( left = - 1, right = 1, top = 1, bottom = - 1, near = 0.1, far = 2000 ) {
-
-		super();
-
-		this.type = 'OrthographicCamera';
-
-		this.zoom = 1;
-		this.view = null;
-
-		this.left = left;
-		this.right = right;
-		this.top = top;
-		this.bottom = bottom;
-
-		this.near = near;
-		this.far = far;
-
-		this.updateProjectionMatrix();
-
-	}
-
-	copy( source, recursive ) {
-
-		super.copy( source, recursive );
-
-		this.left = source.left;
-		this.right = source.right;
-		this.top = source.top;
-		this.bottom = source.bottom;
-		this.near = source.near;
-		this.far = source.far;
-
-		this.zoom = source.zoom;
-		this.view = source.view === null ? null : Object.assign( {}, source.view );
-
-		return this;
-
-	}
-
-	setViewOffset( fullWidth, fullHeight, x, y, width, height ) {
-
-		if ( this.view === null ) {
-
-			this.view = {
-				enabled: true,
-				fullWidth: 1,
-				fullHeight: 1,
-				offsetX: 0,
-				offsetY: 0,
-				width: 1,
-				height: 1
-			};
-
-		}
-
-		this.view.enabled = true;
-		this.view.fullWidth = fullWidth;
-		this.view.fullHeight = fullHeight;
-		this.view.offsetX = x;
-		this.view.offsetY = y;
-		this.view.width = width;
-		this.view.height = height;
-
-		this.updateProjectionMatrix();
-
-	}
-
-	clearViewOffset() {
-
-		if ( this.view !== null ) {
-
-			this.view.enabled = false;
-
-		}
-
-		this.updateProjectionMatrix();
-
-	}
-
-	updateProjectionMatrix() {
-
-		const dx = ( this.right - this.left ) / ( 2 * this.zoom );
-		const dy = ( this.top - this.bottom ) / ( 2 * this.zoom );
-		const cx = ( this.right + this.left ) / 2;
-		const cy = ( this.top + this.bottom ) / 2;
-
-		let left = cx - dx;
-		let right = cx + dx;
-		let top = cy + dy;
-		let bottom = cy - dy;
-
-		if ( this.view !== null && this.view.enabled ) {
-
-			const scaleW = ( this.right - this.left ) / this.view.fullWidth / this.zoom;
-			const scaleH = ( this.top - this.bottom ) / this.view.fullHeight / this.zoom;
-
-			left += scaleW * this.view.offsetX;
-			right = left + scaleW * this.view.width;
-			top -= scaleH * this.view.offsetY;
-			bottom = top - scaleH * this.view.height;
-
-		}
-
-		this.projectionMatrix.makeOrthographic( left, right, top, bottom, this.near, this.far );
-
-		this.projectionMatrixInverse.copy( this.projectionMatrix ).invert();
-
-	}
-
-	toJSON( meta ) {
-
-		const data = super.toJSON( meta );
-
-		data.object.zoom = this.zoom;
-		data.object.left = this.left;
-		data.object.right = this.right;
-		data.object.top = this.top;
-		data.object.bottom = this.bottom;
-		data.object.near = this.near;
-		data.object.far = this.far;
-
-		if ( this.view !== null ) data.object.view = Object.assign( {}, this.view );
-
-		return data;
-
-	}
-
-}
-
-OrthographicCamera.prototype.isOrthographicCamera = true;
 
 
 
@@ -35976,8 +35975,8 @@ function WebGLLights( extensions, capabilities ) {
 	for ( let i = 0; i < 9; i ++ ) state.probe.push( new Vector3() );
 
 	const vector3 = new Vector3();
-	const matrix4 = new Matrix4();
-	const matrix42 = new Matrix4();
+	const matrix4 = new Matrix4_Matrix4();
+	const matrix42 = new Matrix4_Matrix4();
 
 	function setup( lights, physicallyCorrectLights ) {
 
@@ -42275,7 +42274,7 @@ function WebGLRenderer( parameters = {} ) {
 
 	// camera matrices cache
 
-	const _projScreenMatrix = new Matrix4();
+	const _projScreenMatrix = new Matrix4_Matrix4();
 
 	const _vector3 = new Vector3();
 
@@ -42319,7 +42318,7 @@ function WebGLRenderer( parameters = {} ) {
 		};
 
 		// OffscreenCanvas does not have setAttribute, see #22811
-		if ( 'setAttribute' in _canvas ) _canvas.setAttribute( 'data-engine', `three.js r${REVISION}` );
+		if ( 'setAttribute' in _canvas ) _canvas.setAttribute( 'data-engine', `three.js r${constants_REVISION}` );
 
 		// event listeners must be registered before WebGL context is created, see #12753
 		_canvas.addEventListener( 'webglcontextlost', onContextLost, false );
@@ -44949,436 +44948,6 @@ Bootstrap.registerPlugin("ui", {
   },
 });
 
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/extra/vr.js
-
-
-
-/*
-VR sensor / HMD hookup.
-*/
-Bootstrap.registerPlugin("vr", {
-  defaults: {
-    mode: "auto", // 'auto', '2d'
-    device: null,
-    fov: 80, // emulated FOV for fallback
-  },
-
-  listen: ["window.load", "pre", "render", "resize", "this.change"],
-
-  install: function (three) {
-    three.VR = this.api(
-      {
-        active: false,
-        devices: [],
-        hmd: null,
-        sensor: null,
-        renderer: null,
-        state: null,
-      },
-      three
-    );
-  },
-
-  uninstall: function (three) {
-    delete three.VR;
-  },
-
-  mocks: function (three, fov, def) {
-    // Fake VR device for cardboard / desktop
-
-    // Interpuppilary distance
-    var ipd = 0.03;
-
-    // Symmetric eye FOVs (Cardboard style)
-    var getEyeTranslation = function (key) {
-      return { left: { x: -ipd, y: 0, z: 0 }, right: { x: ipd, y: 0, z: 0 } }[
-        key
-      ];
-    };
-    var getRecommendedEyeFieldOfView = function (key) {
-      var camera = three.camera;
-      var aspect = (camera && camera.aspect) || 16 / 9;
-      var fov2 = (fov || (camera && camera.fov) || def) / 2;
-      var fovX =
-        (Math.atan((Math.tan((fov2 * Math.PI) / 180) * aspect) / 2) * 180) /
-        Math.PI;
-      var fovY = fov2;
-
-      return {
-        left: {
-          rightDegrees: fovX,
-          leftDegrees: fovX,
-          downDegrees: fovY,
-          upDegrees: fovY,
-        },
-        right: {
-          rightDegrees: fovX,
-          leftDegrees: fovX,
-          downDegrees: fovY,
-          upDegrees: fovY,
-        },
-      }[key];
-    };
-    // Will be replaced with orbit controls or device orientation controls by THREE.VRControls
-    var getState = function () {
-      return {};
-    };
-
-    return [
-      {
-        fake: true,
-        force: 1,
-        deviceId: "emu",
-        deviceName: "Emulated",
-        getEyeTranslation: getEyeTranslation,
-        getRecommendedEyeFieldOfView: getRecommendedEyeFieldOfView,
-      },
-      {
-        force: 2,
-        getState: getState,
-      },
-    ];
-  },
-
-  load: function (event, three) {
-    var callback = function (devs) {
-      this.callback(devs, three);
-    }.bind(this);
-
-    if (navigator.getVRDevices) {
-      navigator.getVRDevices().then(callback);
-    } else if (navigator.mozGetVRDevices) {
-      navigator.mozGetVRDevices(callback);
-    } else {
-      console.warn("No native VR support detected.");
-      callback(this.mocks(three, this.options.fov, this.defaults.fov), three);
-    }
-  },
-
-  callback: function (vrdevs, three) {
-    var hmd, sensor;
-
-    var HMD = window.HMDVRDevice || function () {};
-    var SENSOR = window.PositionSensorVRDevice || function () {};
-
-    // Export list of devices
-    vrdevs = three.VR.devices = vrdevs || three.VR.devices;
-
-    // Get HMD device
-    var deviceId = this.options.device;
-    let dev;
-
-    for (let i = 0; i < vrdevs.length; ++i) {
-      dev = vrdevs[i];
-      if (dev.force == 1 || dev instanceof HMD) {
-        if (deviceId && deviceId != dev.deviceId) continue;
-        hmd = dev;
-        break;
-      }
-    }
-
-    if (hmd) {
-      // Get sensor device
-      let dev;
-      for (let i = 0; i < vrdevs.length; ++i) {
-        dev = vrdevs[i];
-        if (
-          dev.force == 2 ||
-          (dev instanceof SENSOR && dev.hardwareUnitId == hmd.hardwareUnitId)
-        ) {
-          sensor = dev;
-          break;
-        }
-      }
-
-      this.hookup(hmd, sensor, three);
-    }
-  },
-
-  hookup: function (hmd, sensor, three) {
-    if (!external_THREE_.VRRenderer) console.log("THREE.VRRenderer not found");
-    var klass = external_THREE_.VRRenderer || function () {};
-
-    this.renderer = new klass(three.renderer, hmd);
-    this.hmd = hmd;
-    this.sensor = sensor;
-
-    three.VR.renderer = this.renderer;
-    three.VR.hmd = hmd;
-    three.VR.sensor = sensor;
-
-    console.log("THREE.VRRenderer", hmd.deviceName);
-  },
-
-  change: function (event, three) {
-    if (event.changes.device) {
-      this.callback(null, three);
-    }
-    this.pre(event, three);
-  },
-
-  pre: function (event, three) {
-    var last = this.active;
-
-    // Global active flag
-    var active = (this.active = this.renderer && this.options.mode != "2d");
-    three.VR.active = active;
-
-    // Load sensor state
-    if (active && this.sensor) {
-      var state = this.sensor.getState();
-      three.VR.state = state;
-    } else {
-      three.VR.state = null;
-    }
-
-    // Notify if VR state changed
-    if (last != this.active) {
-      three.trigger({
-        type: "vr",
-        active: active,
-        hmd: this.hmd,
-        sensor: this.sensor,
-      });
-    }
-  },
-
-  resize: function (_event, _three) {
-    if (this.active) {
-      // Reinit HMD projection
-      this.renderer.initialize();
-    }
-  },
-
-  render: function (event, three) {
-    if (three.scene && three.camera) {
-      var renderer = this.active ? this.renderer : three.renderer;
-
-      if (this.last != renderer) {
-        if (renderer == three.renderer) {
-          // Cleanup leftover renderer state when swapping back to normal
-          var dpr = renderer.getPixelRatio();
-          var width = renderer.domElement.width / dpr;
-          var height = renderer.domElement.height / dpr;
-          renderer.setScissorTest(false);
-          renderer.setViewport(0, 0, width, height);
-        }
-      }
-
-      this.last = renderer;
-
-      renderer.render(three.scene, three.camera);
-    }
-  },
-});
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/extra/index.js
-
-
-
-
-
-
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/controls/VRControls.js
-/**
- * @author dmarcos / https://github.com/dmarcos
- * @author mrdoob / http://mrdoob.com
- *
- * VRControls from
- * https://cdn.jsdelivr.net/npm/three@0.93.0/examples/js/controls/VRControls.js.
- * Added here so that the existing VR examples still work... this will stay
- * until we get everything upgraded to the modern three.js approach to VR. See
- * https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content
- * for more info.
- */
-
-
-
-class VRControls {
-  constructor(object, onError) {
-    this.object = object;
-    this.standingMatrix = new external_THREE_.Matrix4();
-    this.frameData = null;
-
-    if ("VRFrameData" in window) {
-      // eslint-disable-next-line no-undef
-      this.frameData = new VRFrameData();
-    }
-
-    function gotVRDisplays(displays) {
-      this.vrDisplays = displays;
-
-      if (displays.length > 0) {
-        this.vrDisplay = displays[0];
-      } else {
-        if (onError) onError("VR input not available.");
-      }
-    }
-
-    if (navigator.getVRDisplays) {
-      navigator
-        .getVRDisplays()
-        .then(gotVRDisplays)
-        .catch(function () {
-          console.warn("THREE.VRControls: Unable to get VR Displays");
-        });
-    }
-
-    // the Rift SDK returns the position in meters
-    // this scale factor allows the user to define how meters
-    // are converted to scene units.
-
-    this.scale = 1;
-
-    // If true will use "standing space" coordinate system where y=0 is the
-    // floor and x=0, z=0 is the center of the room.
-    this.standing = false;
-
-    // Distance from the users eyes to the floor in meters. Used when
-    // standing=true but the VRDisplay doesn't provide stageParameters.
-    this.userHeight = 1.6;
-  }
-
-  getVRDisplay() {
-    return this.vrDisplay;
-  }
-
-  setVRDisplay(value) {
-    this.vrDisplay = value;
-  }
-
-  getVRDisplays() {
-    console.warn("THREE.VRControls: getVRDisplays() is being deprecated.");
-    return this.vrDisplays;
-  }
-
-  getStandingMatrix() {
-    return this.standingMatrix;
-  }
-
-  update() {
-    if (this.vrDisplay) {
-      var pose;
-
-      if (this.vrDisplay.getFrameData) {
-        this.vrDisplay.getFrameData(this.frameData);
-        pose = this.frameData.pose;
-      } else if (this.vrDisplay.getPose) {
-        pose = this.vrDisplay.getPose();
-      }
-
-      if (pose.orientation !== null) {
-        this.object.quaternion.fromArray(pose.orientation);
-      }
-
-      if (pose.position !== null) {
-        this.object.position.fromArray(pose.position);
-      } else {
-        this.object.position.set(0, 0, 0);
-      }
-
-      if (this.standing) {
-        if (this.vrDisplay.stageParameters) {
-          this.object.updateMatrix();
-
-          this.standingMatrix.fromArray(
-            this.vrDisplay.stageParameters.sittingToStandingTransform
-          );
-          this.object.applyMatrix(this.standingMatrix);
-        } else {
-          this.object.position.setY(this.object.position.y + this.userHeight);
-        }
-      }
-
-      this.object.position.multiplyScalar(this.scale);
-    }
-  }
-
-  dispose() {
-    this.vrDisplay = null;
-  }
-}
-
-// eslint-disable-next-line no-import-assign
-external_THREE_.VRControls = VRControls;
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/controls/index.js
-
-
-;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/renderers/MultiRenderer.js
-/**
- * Allows a stack of renderers to be treated as a single renderer.
- * @author Gheric Speiginer
- */
-
-
-
-// eslint-disable-next-line no-import-assign
-class MultiRenderer {
-  constructor(parameters) {
-    console.log("THREE.MultiRenderer", external_THREE_.REVISION);
-
-    this.domElement = document.createElement("div");
-    this.domElement.style.position = "relative";
-
-    this.renderers = [];
-    this._renderSizeSet = false;
-
-    var rendererClasses = parameters.renderers || [];
-    var rendererParameters = parameters.parameters || [];
-
-    // elements are stacked back-to-front
-    for (var i = 0; i < rendererClasses.length; i++) {
-      var renderer = new rendererClasses[i](rendererParameters[i]);
-      renderer.domElement.style.position = "absolute";
-      renderer.domElement.style.top = "0px";
-      renderer.domElement.style.left = "0px";
-      this.domElement.appendChild(renderer.domElement);
-      this.renderers.push(renderer);
-    }
-  }
-
-  setSize(w, h) {
-    this.domElement.style.width = w + "px";
-    this.domElement.style.height = h + "px";
-
-    for (var i = 0; i < this.renderers.length; i++) {
-      var renderer = this.renderers[i];
-      var el = renderer.domElement;
-
-      if (!this._renderSizeSet || (el && el.tagName !== "CANVAS")) {
-        renderer.setSize(w, h);
-      }
-
-      el.style.width = w + "px";
-      el.style.height = h + "px";
-    }
-  }
-
-  setRenderSize(rw, rh) {
-    this._renderSizeSet = true;
-
-    for (var i = 0; i < this.renderers.length; i++) {
-      var renderer = this.renderers[i];
-      var el = renderer.domElement;
-
-      if (el && el.tagName === "CANVAS") {
-        renderer.setSize(rw, rh, false);
-      }
-    }
-  }
-
-  render(scene, camera) {
-    for (var i = 0; i < this.renderers.length; i++) {
-      this.renderers[i].render(scene, camera);
-    }
-  }
-}
-
-// eslint-disable-next-line no-import-assign
-external_THREE_.MultiRenderer = MultiRenderer;
-
 ;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/renderers/VRRenderer.js
 /**
  * VRRenderer
@@ -45386,6 +44955,7 @@ external_THREE_.MultiRenderer = MultiRenderer;
  * @author wwwtyro https://github.com/wwwtyro
  * @author unconed https://github.com/unconed
  */
+
 
 
 class VRRenderer {
@@ -45502,8 +45072,427 @@ class VRRenderer {
   }
 }
 
-// eslint-disable-next-line no-import-assign
-external_THREE_.VRRenderer = VRRenderer;
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/extra/vr.js
+
+
+
+/*
+VR sensor / HMD hookup.
+*/
+Bootstrap.registerPlugin("vr", {
+  defaults: {
+    mode: "auto", // 'auto', '2d'
+    device: null,
+    fov: 80, // emulated FOV for fallback
+  },
+
+  listen: ["window.load", "pre", "render", "resize", "this.change"],
+
+  install: function (three) {
+    three.VR = this.api(
+      {
+        active: false,
+        devices: [],
+        hmd: null,
+        sensor: null,
+        renderer: null,
+        state: null,
+      },
+      three
+    );
+  },
+
+  uninstall: function (three) {
+    delete three.VR;
+  },
+
+  mocks: function (three, fov, def) {
+    // Fake VR device for cardboard / desktop
+
+    // Interpuppilary distance
+    var ipd = 0.03;
+
+    // Symmetric eye FOVs (Cardboard style)
+    var getEyeTranslation = function (key) {
+      return { left: { x: -ipd, y: 0, z: 0 }, right: { x: ipd, y: 0, z: 0 } }[
+        key
+      ];
+    };
+    var getRecommendedEyeFieldOfView = function (key) {
+      var camera = three.camera;
+      var aspect = (camera && camera.aspect) || 16 / 9;
+      var fov2 = (fov || (camera && camera.fov) || def) / 2;
+      var fovX =
+        (Math.atan((Math.tan((fov2 * Math.PI) / 180) * aspect) / 2) * 180) /
+        Math.PI;
+      var fovY = fov2;
+
+      return {
+        left: {
+          rightDegrees: fovX,
+          leftDegrees: fovX,
+          downDegrees: fovY,
+          upDegrees: fovY,
+        },
+        right: {
+          rightDegrees: fovX,
+          leftDegrees: fovX,
+          downDegrees: fovY,
+          upDegrees: fovY,
+        },
+      }[key];
+    };
+    // Will be replaced with orbit controls or device orientation controls by VRControls
+    var getState = function () {
+      return {};
+    };
+
+    return [
+      {
+        fake: true,
+        force: 1,
+        deviceId: "emu",
+        deviceName: "Emulated",
+        getEyeTranslation: getEyeTranslation,
+        getRecommendedEyeFieldOfView: getRecommendedEyeFieldOfView,
+      },
+      {
+        force: 2,
+        getState: getState,
+      },
+    ];
+  },
+
+  load: function (event, three) {
+    var callback = function (devs) {
+      this.callback(devs, three);
+    }.bind(this);
+
+    if (navigator.getVRDevices) {
+      navigator.getVRDevices().then(callback);
+    } else if (navigator.mozGetVRDevices) {
+      navigator.mozGetVRDevices(callback);
+    } else {
+      console.warn("No native VR support detected.");
+      callback(this.mocks(three, this.options.fov, this.defaults.fov), three);
+    }
+  },
+
+  callback: function (vrdevs, three) {
+    var hmd, sensor;
+
+    var HMD = window.HMDVRDevice || function () {};
+    var SENSOR = window.PositionSensorVRDevice || function () {};
+
+    // Export list of devices
+    vrdevs = three.VR.devices = vrdevs || three.VR.devices;
+
+    // Get HMD device
+    var deviceId = this.options.device;
+    let dev;
+
+    for (let i = 0; i < vrdevs.length; ++i) {
+      dev = vrdevs[i];
+      if (dev.force == 1 || dev instanceof HMD) {
+        if (deviceId && deviceId != dev.deviceId) continue;
+        hmd = dev;
+        break;
+      }
+    }
+
+    if (hmd) {
+      // Get sensor device
+      let dev;
+      for (let i = 0; i < vrdevs.length; ++i) {
+        dev = vrdevs[i];
+        if (
+          dev.force == 2 ||
+          (dev instanceof SENSOR && dev.hardwareUnitId == hmd.hardwareUnitId)
+        ) {
+          sensor = dev;
+          break;
+        }
+      }
+
+      this.hookup(hmd, sensor, three);
+    }
+  },
+
+  hookup: function (hmd, sensor, three) {
+    if (!VRRenderer) console.log("VRRenderer not found");
+    var klass = VRRenderer || function () {};
+
+    this.renderer = new klass(three.renderer, hmd);
+    this.hmd = hmd;
+    this.sensor = sensor;
+
+    three.VR.renderer = this.renderer;
+    three.VR.hmd = hmd;
+    three.VR.sensor = sensor;
+
+    console.log("VRRenderer", hmd.deviceName);
+  },
+
+  change: function (event, three) {
+    if (event.changes.device) {
+      this.callback(null, three);
+    }
+    this.pre(event, three);
+  },
+
+  pre: function (event, three) {
+    var last = this.active;
+
+    // Global active flag
+    var active = (this.active = this.renderer && this.options.mode != "2d");
+    three.VR.active = active;
+
+    // Load sensor state
+    if (active && this.sensor) {
+      var state = this.sensor.getState();
+      three.VR.state = state;
+    } else {
+      three.VR.state = null;
+    }
+
+    // Notify if VR state changed
+    if (last != this.active) {
+      three.trigger({
+        type: "vr",
+        active: active,
+        hmd: this.hmd,
+        sensor: this.sensor,
+      });
+    }
+  },
+
+  resize: function (_event, _three) {
+    if (this.active) {
+      // Reinit HMD projection
+      this.renderer.initialize();
+    }
+  },
+
+  render: function (event, three) {
+    if (three.scene && three.camera) {
+      var renderer = this.active ? this.renderer : three.renderer;
+
+      if (this.last != renderer) {
+        if (renderer == three.renderer) {
+          // Cleanup leftover renderer state when swapping back to normal
+          var dpr = renderer.getPixelRatio();
+          var width = renderer.domElement.width / dpr;
+          var height = renderer.domElement.height / dpr;
+          renderer.setScissorTest(false);
+          renderer.setViewport(0, 0, width, height);
+        }
+      }
+
+      this.last = renderer;
+
+      renderer.render(three.scene, three.camera);
+    }
+  },
+});
+
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/extra/index.js
+
+
+
+
+
+
+
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/controls/VRControls.js
+/**
+ * @author dmarcos / https://github.com/dmarcos
+ * @author mrdoob / http://mrdoob.com
+ *
+ * VRControls from
+ * https://cdn.jsdelivr.net/npm/three@0.93.0/examples/js/controls/VRControls.js.
+ * Added here so that the existing VR examples still work... this will stay
+ * until we get everything upgraded to the modern three.js approach to VR. See
+ * https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content
+ * for more info.
+ */
+
+
+
+class VRControls {
+  constructor(object, onError) {
+    this.object = object;
+    this.standingMatrix = new Matrix4();
+    this.frameData = null;
+
+    if ("VRFrameData" in window) {
+      // eslint-disable-next-line no-undef
+      this.frameData = new VRFrameData();
+    }
+
+    function gotVRDisplays(displays) {
+      this.vrDisplays = displays;
+
+      if (displays.length > 0) {
+        this.vrDisplay = displays[0];
+      } else {
+        if (onError) onError("VR input not available.");
+      }
+    }
+
+    if (navigator.getVRDisplays) {
+      navigator
+        .getVRDisplays()
+        .then(gotVRDisplays)
+        .catch(function () {
+          console.warn("VRControls: Unable to get VR Displays");
+        });
+    }
+
+    // the Rift SDK returns the position in meters
+    // this scale factor allows the user to define how meters
+    // are converted to scene units.
+
+    this.scale = 1;
+
+    // If true will use "standing space" coordinate system where y=0 is the
+    // floor and x=0, z=0 is the center of the room.
+    this.standing = false;
+
+    // Distance from the users eyes to the floor in meters. Used when
+    // standing=true but the VRDisplay doesn't provide stageParameters.
+    this.userHeight = 1.6;
+  }
+
+  getVRDisplay() {
+    return this.vrDisplay;
+  }
+
+  setVRDisplay(value) {
+    this.vrDisplay = value;
+  }
+
+  getVRDisplays() {
+    console.warn("VRControls: getVRDisplays() is being deprecated.");
+    return this.vrDisplays;
+  }
+
+  getStandingMatrix() {
+    return this.standingMatrix;
+  }
+
+  update() {
+    if (this.vrDisplay) {
+      var pose;
+
+      if (this.vrDisplay.getFrameData) {
+        this.vrDisplay.getFrameData(this.frameData);
+        pose = this.frameData.pose;
+      } else if (this.vrDisplay.getPose) {
+        pose = this.vrDisplay.getPose();
+      }
+
+      if (pose.orientation !== null) {
+        this.object.quaternion.fromArray(pose.orientation);
+      }
+
+      if (pose.position !== null) {
+        this.object.position.fromArray(pose.position);
+      } else {
+        this.object.position.set(0, 0, 0);
+      }
+
+      if (this.standing) {
+        if (this.vrDisplay.stageParameters) {
+          this.object.updateMatrix();
+
+          this.standingMatrix.fromArray(
+            this.vrDisplay.stageParameters.sittingToStandingTransform
+          );
+          this.object.applyMatrix(this.standingMatrix);
+        } else {
+          this.object.position.setY(this.object.position.y + this.userHeight);
+        }
+      }
+
+      this.object.position.multiplyScalar(this.scale);
+    }
+  }
+
+  dispose() {
+    this.vrDisplay = null;
+  }
+}
+
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/controls/index.js
+
+
+;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/renderers/MultiRenderer.js
+/**
+ * Allows a stack of renderers to be treated as a single renderer.
+ * @author Gheric Speiginer
+ */
+
+
+class MultiRenderer {
+  constructor(parameters) {
+    console.log("MultiRenderer", REVISION);
+
+    this.domElement = document.createElement("div");
+    this.domElement.style.position = "relative";
+
+    this.renderers = [];
+    this._renderSizeSet = false;
+
+    var rendererClasses = parameters.renderers || [];
+    var rendererParameters = parameters.parameters || [];
+
+    // elements are stacked back-to-front
+    for (var i = 0; i < rendererClasses.length; i++) {
+      var renderer = new rendererClasses[i](rendererParameters[i]);
+      renderer.domElement.style.position = "absolute";
+      renderer.domElement.style.top = "0px";
+      renderer.domElement.style.left = "0px";
+      this.domElement.appendChild(renderer.domElement);
+      this.renderers.push(renderer);
+    }
+  }
+
+  setSize(w, h) {
+    this.domElement.style.width = w + "px";
+    this.domElement.style.height = h + "px";
+
+    for (var i = 0; i < this.renderers.length; i++) {
+      var renderer = this.renderers[i];
+      var el = renderer.domElement;
+
+      if (!this._renderSizeSet || (el && el.tagName !== "CANVAS")) {
+        renderer.setSize(w, h);
+      }
+
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+    }
+  }
+
+  setRenderSize(rw, rh) {
+    this._renderSizeSet = true;
+
+    for (var i = 0; i < this.renderers.length; i++) {
+      var renderer = this.renderers[i];
+      var el = renderer.domElement;
+
+      if (el && el.tagName === "CANVAS") {
+        renderer.setSize(rw, rh, false);
+      }
+    }
+  }
+
+  render(scene, camera) {
+    for (var i = 0; i < this.renderers.length; i++) {
+      this.renderers[i].render(scene, camera);
+    }
+  }
+}
 
 ;// CONCATENATED MODULE: ./node_modules/@sicmutils/threestrap/src/renderers/index.js
 
@@ -45517,6 +45506,11 @@ external_THREE_.VRRenderer = VRRenderer;
 
 
 // These should probably be in their own build!
+
+
+
+
+
 
 
 
@@ -48779,10 +48773,6 @@ const paramToGL = function (gl, p) {
   if (p === external_THREE_.UnsignedShort5551Type) {
     return gl.UNSIGNED_SHORT_5_5_5_1;
   }
-  if (p === external_THREE_.UnsignedShort565Type) {
-    return gl.UNSIGNED_SHORT_5_6_5;
-  }
-
   if (p === external_THREE_.ByteType) {
     return gl.BYTE;
   }
@@ -67163,7 +67153,7 @@ class readback_Readback extends Renderable {
       // Direct sampling
       encoder = this.shaders.shader();
       encoder.pipe(sampler);
-      encoder.pipe(glsl_namespaceObject.truncateVec4(4, 1));
+      encoder.pipe(truncateVec(4, 1));
       encoder.pipe("float.encode");
       sampler = encoder;
     }
@@ -68384,7 +68374,7 @@ const render_classes_Classes = {
 
 
 
-;// CONCATENATED MODULE: ../shadergraph/src/graph/graph.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/graph/graph.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -68497,7 +68487,7 @@ class Graph {
 }
 Graph.initClass();
 
-;// CONCATENATED MODULE: ../shadergraph/src/graph/outlet.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/graph/outlet.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -68637,7 +68627,7 @@ class Outlet {
 }
 Outlet.initClass();
 
-;// CONCATENATED MODULE: ../shadergraph/src/graph/node.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/graph/node.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -68656,7 +68646,7 @@ class graph_node_Node {
   static initClass() {
     this.index = 0;
   }
-  static id(name) {
+  static id(_name) {
     return ++graph_node_Node.index;
   }
 
@@ -68816,7 +68806,7 @@ class graph_node_Node {
   }
 
   // Disconnect entire node
-  disconnect(node) {
+  disconnect(_node) {
     let outlet;
     for (outlet of Array.from(this.inputs)) {
       outlet.disconnect();
@@ -68873,7 +68863,6 @@ class graph_node_Node {
   // Remove outlet object from node.
   _remove(outlet) {
     const key = this._key(outlet);
-    const { inout } = outlet;
 
     // Sanity checks
     if (outlet.node !== this) {
@@ -68900,7 +68889,7 @@ class graph_node_Node {
 }
 graph_node_Node.initClass();
 
-;// CONCATENATED MODULE: ../shadergraph/src/graph/index.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/graph/index.js
 
 const { IN, OUT } = Graph;
 
@@ -68908,7 +68897,7 @@ const { IN, OUT } = Graph;
 
 
 
-;// CONCATENATED MODULE: ../shadergraph/src/linker/snippet.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/linker/snippet.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -69109,9 +69098,9 @@ class Snippet {
 }
 Snippet.initClass();
 
-// EXTERNAL MODULE: ../shadergraph/src/linker/priority.js
-var linker_priority = __webpack_require__(737);
-;// CONCATENATED MODULE: ../shadergraph/src/linker/assemble.js
+// EXTERNAL MODULE: ./node_modules/shadergraph/src/linker/priority.js
+var linker_priority = __webpack_require__(981);
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/linker/assemble.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -69309,7 +69298,7 @@ const assemble = function (language, namespace, calls, requires) {
   return process();
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/linker/program.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/linker/program.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -69389,7 +69378,7 @@ class Program {
 }
 Program.initClass();
 
-;// CONCATENATED MODULE: ../shadergraph/src/linker/link.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/linker/link.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -69546,7 +69535,7 @@ const link_link = function (language, links, modules, exported) {
   return process();
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/linker/layout.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/linker/layout.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -69612,7 +69601,7 @@ class Layout {
   }
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/linker/index.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/linker/index.js
 
 
 const { load } = Snippet;
@@ -69624,7 +69613,7 @@ const { load } = Snippet;
 
 
 
-;// CONCATENATED MODULE: ../shadergraph/src/block/block.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/block/block.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -69842,7 +69831,7 @@ function block_guard_(value, transform) {
     : undefined;
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/block/call.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/block/call.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -69894,7 +69883,7 @@ class Call extends Block {
   }
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/block/callback.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/block/callback.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -70006,7 +69995,7 @@ class Callback extends Block {
   }
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/block/isolate.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/block/isolate.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -70105,7 +70094,7 @@ class Isolate extends Block {
   }
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/block/join.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/block/join.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -70156,14 +70145,14 @@ class join_Join extends Block {
   }
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/block/index.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/block/index.js
 
 
 
 
 
 
-;// CONCATENATED MODULE: ../shadergraph/src/visualize/serialize.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/visualize/serialize.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -70173,8 +70162,6 @@ class join_Join extends Block {
  */
 // Dump graph for debug/visualization purposes
 
-
-const isCallback = (outlet) => outlet.type[0] === "(";
 
 var serialize = function (graph) {
   const nodes = [];
@@ -70267,7 +70254,7 @@ var serialize = function (graph) {
   return { nodes, links };
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/factory/hash.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/factory/hash.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -70335,7 +70322,7 @@ const hash = function (string) {
   return (h ^= h >>> 16);
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/visualize/markup.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/visualize/markup.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -70398,7 +70385,7 @@ var _activate = function (el) {
       popup.parentNode.classList.add("shadergraph-has-code");
       return popup.parentNode.addEventListener(
         "click",
-        (event) =>
+        (_event) =>
           (popup.style.display = {
             block: "none",
             none: "block",
@@ -70689,7 +70676,7 @@ const markup_merge = function (markup) {
   }
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/visualize/index.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/visualize/index.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -70771,7 +70758,7 @@ const inspect = function () {
   return element;
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/factory/factory.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/factory/factory.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -70993,7 +70980,7 @@ class Factory {
   }
 
   // Make subgraph and connect to tail
-  _isolate(sub, main) {
+  _isolate(sub, _main) {
     if (sub.nodes.length) {
       let block;
       const subgraph = this._subgraph(sub);
@@ -71013,7 +71000,7 @@ class Factory {
   }
 
   // Convert to callback and connect to tail
-  _callback(sub, main) {
+  _callback(sub, _main) {
     if (sub.nodes.length) {
       let block;
       const subgraph = this._subgraph(sub);
@@ -71238,7 +71225,7 @@ class State {
   }
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/factory/material.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/factory/material.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -71331,7 +71318,7 @@ class material_Material {
   }
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/factory/library.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/factory/library.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -71389,7 +71376,7 @@ const library = function (language, snippets, load) {
   return fetch;
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/factory/queue.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/factory/queue.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -71475,7 +71462,7 @@ const queue = function (limit) {
   };
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/factory/cache.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/factory/cache.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -71512,7 +71499,7 @@ const cache = function (fetch) {
   };
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/factory/index.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/factory/index.js
 
 
 
@@ -71521,7 +71508,7 @@ const cache = function (fetch) {
 
 
 
-;// CONCATENATED MODULE: ../shadergraph/src/glsl/compile.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/glsl/compile.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -71534,7 +71521,7 @@ const cache = function (fetch) {
 */
 
 const compile = function (program) {
-  const { ast, code, signatures } = program;
+  const { code, signatures } = program;
 
   // Prepare list of placeholders
   const placeholders = replaced(signatures);
@@ -71543,17 +71530,6 @@ const compile = function (program) {
   const assembler = string_compiler(code, placeholders);
 
   return [signatures, assembler];
-};
-
-// #####
-
-const compile_tick = function () {
-  const now = +new Date();
-  return function (label) {
-    const delta = +new Date() - now;
-    console.log(label, delta + " ms");
-    return delta;
-  };
 };
 
 var replaced = function (signatures) {
@@ -71594,7 +71570,7 @@ var string_compiler = function (code, placeholders) {
 
   // Strip comments
   code = code.replace(/\/\/[^\n]*/g, "");
-  code = code.replace(/\/\*([^*]|\*[^\/])*\*\//g, "");
+  code = code.replace(/\/\*([^*]|\*[^/])*\*\//g, "");
 
   // Strip all preprocessor commands (lazy)
   //code = code.replace /^#[^\n]*/mg, ''
@@ -71634,13 +71610,13 @@ var string_compiler = function (code, placeholders) {
   };
 };
 
-// EXTERNAL MODULE: ../shadergraph/node_modules/glsl-tokenizer/string.js
-var string = __webpack_require__(664);
+// EXTERNAL MODULE: ./node_modules/glsl-tokenizer/string.js
+var string = __webpack_require__(932);
 var string_default = /*#__PURE__*/__webpack_require__.n(string);
-// EXTERNAL MODULE: ../shadergraph/node_modules/glsl-parser/direct.js
-var direct = __webpack_require__(150);
+// EXTERNAL MODULE: ./node_modules/glsl-parser/direct.js
+var direct = __webpack_require__(706);
 var direct_default = /*#__PURE__*/__webpack_require__.n(direct);
-;// CONCATENATED MODULE: ../shadergraph/src/glsl/decl.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/glsl/decl.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -71680,7 +71656,6 @@ decl.external = function (node) {
   let c = node.children;
 
   let storage = get(c[1]);
-  const struct = get(c[3]);
   const type = get(c[4]);
   const list = c[5];
 
@@ -71717,7 +71692,6 @@ decl.function = function (node) {
   //    console.log 'function', node
 
   const storage = get(c[1]);
-  const struct = get(c[3]);
   const type = get(c[4]);
   const func = c[5];
   const ident = get(func.children[0]);
@@ -71872,8 +71846,7 @@ class Definition {
   }
 
   copy(name, meta) {
-    let def;
-    return (def = new Definition(
+    return new Definition(
       name != null ? name : this.name,
       this.type,
       this.spec,
@@ -71881,15 +71854,15 @@ class Definition {
       this.value,
       this.inout,
       meta
-    ));
+    );
   }
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/glsl/constants.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/glsl/constants.js
 const SHADOW_ARG = "_i_o";
 const RETURN_ARG = "return";
 
-;// CONCATENATED MODULE: ../shadergraph/src/glsl/parse.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/glsl/parse.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -72189,7 +72162,7 @@ var parse_tick = function () {
   };
 };
 
-;// CONCATENATED MODULE: ../shadergraph/src/glsl/generate.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/glsl/generate.js
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -72281,7 +72254,6 @@ function same(a, b) {
 function call(lookup, dangling, entry, signature, body) {
   const args = [];
   let ret = "";
-  const rets = 1;
 
   for (let arg of Array.from(signature)) {
     var id, shadow;
@@ -72291,7 +72263,6 @@ function call(lookup, dangling, entry, signature, body) {
     let other = null;
     let meta = null;
     let omit = false;
-    const { inout } = arg;
 
     const isReturn = name === RETURN_ARG;
 
@@ -72370,7 +72341,6 @@ function build(body, calls) {
   // Check if we're only calling one snippet with identical signature
   // and not building void main();
   if (calls && calls.length === 1 && entry !== "main") {
-    const a = body;
     const b = calls[0].module;
 
     if (same(body.signature, b.main.signature)) {
@@ -72496,7 +72466,8 @@ const generate_link = (link, out) => {
 
   // Build wrapper function for the calling side
   const outer = body();
-  const wrapper = call(_lookup, _dangling, entry, external.signature, outer);
+  call(_lookup, _dangling, entry, external.signature, outer);
+
   outer.calls = inner.calls;
   outer.entry = name;
 
@@ -72509,7 +72480,7 @@ function defuse(code) {
   // Don't try this at home kids
   const re =
     /([A-Za-z0-9_]+\s+)?[A-Za-z0-9_]+\s+[A-Za-z0-9_]+\s*\([^)]*\)\s*;\s*/gm;
-  const strip = (code) => code.replace(re, (m) => "");
+  const strip = (code) => code.replace(re, (_m) => "");
 
   // Split into scopes by braces
   const blocks = code.split(/(?=[{}])/g);
@@ -72558,7 +72529,7 @@ function dedupe(code) {
   const map = {};
   const re =
     /((attribute|uniform|varying)\s+)[A-Za-z0-9_]+\s+([A-Za-z0-9_]+)\s*(\[[^\]]*\]\s*)?;\s*/gm;
-  return code.replace(re, function (m, qual, type, name, struct) {
+  return code.replace(re, function (m, qual, type, name, _struct) {
     if (map[name]) {
       return "";
     }
@@ -72591,13 +72562,13 @@ function hoist(code) {
   return lines.join("\n");
 }
 
-;// CONCATENATED MODULE: ../shadergraph/src/glsl/index.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/glsl/index.js
 
 
 
 
 
-;// CONCATENATED MODULE: ../shadergraph/src/index.js
+;// CONCATENATED MODULE: ./node_modules/shadergraph/src/index.js
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -73684,7 +73655,7 @@ Context.initClass();
 
 
 
-const version = "0.0.5";
+const version = "2.0.0";
 
 // Just because
 const π = Math.PI;
