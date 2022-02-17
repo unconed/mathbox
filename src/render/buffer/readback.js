@@ -263,7 +263,7 @@ export class Readback extends Renderable {
 
   post() {
     const currentTarget = this.renderer.getRenderTarget();
-    this.renderer.setRenderTarget(this.byteMemo.target.write);
+    this.renderer.setRenderTarget(this.byteMemo.target.targets[0]);
     this.gl.readPixels(
       0,
       0,

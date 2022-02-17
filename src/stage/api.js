@@ -185,7 +185,7 @@ export class API {
 
   off() {
     const args = arguments;
-    this._targets.map((x) => x.on.apply(x, args));
+    this._targets.map((x) => x.off.apply(x, args));
     return this;
   }
 

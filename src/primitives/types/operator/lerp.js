@@ -195,12 +195,13 @@ export class Lerp extends Operator {
       vec[i] = centered ? "0.5" : "0.0";
     }
 
+    let vec4;
+
     // Add centered sampling offset (from source)
     if (any && resize) {
-      vec = `vec4(${vec})`;
-      // TODO is this right? it was vec4 before.
-      operator.pipe(UGLSL.binaryOperator(4, "+", vec));
-      indexer.pipe(UGLSL.binaryOperator(4, "+", vec));
+      vec4 = `vec4(${vec})`;
+      operator.pipe(UGLSL.binaryOperator(4, "+", vec4));
+      indexer.pipe(UGLSL.binaryOperator(4, "+", vec4));
     }
 
     // Addressing relative to target
@@ -214,8 +215,8 @@ export class Lerp extends Operator {
 
     // Remove centered sampling offset (to target)
     if (any && resize) {
-      operator.pipe(UGLSL.binaryOperator(4, "-", vec));
-      indexer.pipe(UGLSL.binaryOperator(4, "-", vec));
+      operator.pipe(UGLSL.binaryOperator(4, "-", vec4));
+      indexer.pipe(UGLSL.binaryOperator(4, "-", vec4));
     }
 
     // Make sampler
