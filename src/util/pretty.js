@@ -66,9 +66,9 @@ const formatPrimes = [
 ];
 
 const prettyNumber = function (options) {
-  let cache, compact, e, pi, precision, tau, threshold;
+  let cache, compact, e, pi, tau;
   if (options) {
-    ({ cache, compact, tau, pi, e, threshold, precision } = options);
+    ({ cache, compact, tau, pi, e } = options);
   }
 
   compact = +!!(compact != null ? compact : true);
@@ -315,7 +315,8 @@ const prettyFormat = function (str) {
 
   str = escapeHTML(str);
 
-  for (let arg of Array.from(args)) {
+  // eslint-disable-next-line no-unused-vars
+  for (let _arg of Array.from(args)) {
     str = str.replace(/%([a-z])/, function (_, f) {
       const v = args.shift();
       switch (f) {

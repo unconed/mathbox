@@ -164,7 +164,7 @@ export class TextAtlas extends Atlas {
   }
 
   draw(text) {
-    let data, i, imageData, j;
+    let data, i, j;
     let w = this.width;
     const h = this.lineHeight;
     const o = this.outline;
@@ -188,7 +188,7 @@ export class TextAtlas extends Atlas {
       // Alpha sprite (fast)
       let asc, end;
       ctx.fillText(text, x, y);
-      ({ data } = imageData = ctx.getImageData(0, 0, w, h));
+      ({ data } = ctx.getImageData(0, 0, w, h));
       j = 3; // Skip to alpha channel
       for (
         i = 0, end = data.length / 4, asc = 0 <= end;
@@ -226,7 +226,7 @@ export class TextAtlas extends Atlas {
       ctx.fillText(text, x, y);
 
       // Pull image data
-      ({ data } = imageData = ctx.getImageData(0, 0, w, h));
+      ({ data } = ctx.getImageData(0, 0, w, h));
       j = 0;
       const { gamma } = this;
 
