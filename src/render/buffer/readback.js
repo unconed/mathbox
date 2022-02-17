@@ -143,7 +143,7 @@ export class Readback extends Renderable {
       // Direct sampling
       encoder = this.shaders.shader();
       encoder.pipe(sampler);
-      encoder.pipe(UGLSL.truncateVec4(4, 1));
+      encoder.pipe(UGLSL.truncateVec(4, 1));
       encoder.pipe("float.encode");
       sampler = encoder;
     }

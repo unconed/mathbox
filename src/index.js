@@ -23,7 +23,7 @@ import * as util from "./util";
 import { Bootstrap } from "@sicmutils/threestrap/src/bootstrap.js";
 import { Context as ctx } from "./context.js";
 
-export const version = "0.0.5";
+export const version = "2.1.0";
 
 // Just because
 export const π = Math.PI;

@@ -53,10 +53,6 @@ export const paramToGL = function (gl, p) {
   if (p === CONST.UnsignedShort5551Type) {
     return gl.UNSIGNED_SHORT_5_5_5_1;
   }
-  if (p === CONST.UnsignedShort565Type) {
-    return gl.UNSIGNED_SHORT_5_6_5;
-  }
-
   if (p === CONST.ByteType) {
     return gl.BYTE;
   }
