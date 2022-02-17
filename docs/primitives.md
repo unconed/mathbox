@@ -347,7 +347,7 @@
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
  * *shaded* = `false` (bool) - Shade mesh
- * *size* = `2` (positive number) - Line width
+ * *width* = `2` (positive number) - Line width
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
@@ -424,7 +424,7 @@
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
  * *rangeX* = `[-1, 1]` (vec2) - Range on axis
  * *rangeY* = `[-1, 1]` (vec2) - Range on axis
- * *size* = `2` (positive number) - Line width
+ * *width* = `2` (positive number) - Line width
  * *startX* = `true` (bool) - Include start
  * *startY* = `true` (bool) - Include start
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
@@ -1322,4 +1322,3 @@
  * *realtime* = `false` (bool) - Run on real time, not clock time
  * *type* = `"float"` (type) - Texture data type
  * *width* = `1` (nullable number) - Voxel width
-

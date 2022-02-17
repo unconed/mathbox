@@ -62,6 +62,8 @@ export class Animator {
         const emitter = type.emitter(from, to);
         from.emitterFrom = emitter;
         to.emitterTo = emitter;
+        emitter.lerp(f);
+        return emitter;
       }
 
       // Generic binary operator

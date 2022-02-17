@@ -126,7 +126,7 @@ export class DOM extends Primitive {
     if (this.readback == null) {
       return;
     }
-    this.dom.render(this.isVisible ? this.emitter.nodes() : []);
+    this.dom.render(this.isVisible ? this.emitter.nodes() : null);
   }
 
   callback(data) {

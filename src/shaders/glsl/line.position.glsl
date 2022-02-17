@@ -8,7 +8,7 @@ uniform float focusDepth;
 uniform vec4 geometryClip;
 attribute vec4 position4;
 
-// (Start/mid/end -1/0/1, top/bottom -1,1) 
+// (Start/mid/end -1/0/1, top/bottom -1,1)
 attribute vec2 line;
 
 // 0...1 for round or bevel joins
@@ -72,20 +72,25 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
       float z = max(0.00001, -end.z);
       depth = mix(z, focusDepth, lineDepth);
     }
-    
+
     // Absolute arrow length
     float size = arrowSize * depth;
 
     // Adjust clip range
     // Approach linear scaling with cubic ease the smaller we get
     float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);
-    float scale = 1.0 - mini * mini * mini; 
+    float scale = 1.0 - mini * mini * mini;
     float invrange = 1.0 / (size * scale);
-  
+
     // Clip end
-    diff = normalize(end - center);
-    float d = dot(end - pos, diff);
-    vClipEnds.x = d * invrange - 1.0;
+    diff = end - center;
+    if(diff == vec3(0.0))
+      vClipEnds.x = -1.0;
+    else {
+      diff = normalize(end - center);
+      float d = dot(end - pos, diff);
+      vClipEnds.x = d * invrange - 1.0;
+    }
   }
 
   if (clipStyle.x > 0.0) {
@@ -95,20 +100,25 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
       float z = max(0.00001, -start.z);
       depth = mix(z, focusDepth, lineDepth);
     }
-    
+
     // Absolute arrow length
     float size = arrowSize * depth;
 
     // Adjust clip range
     // Approach linear scaling with cubic ease the smaller we get
     float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);
-    float scale = 1.0 - mini * mini * mini; 
+    float scale = 1.0 - mini * mini * mini;
     float invrange = 1.0 / (size * scale);
-  
-    // Clip start 
-    diff = normalize(center - start);
-    float d = dot(pos - start, diff);
-    vClipEnds.y = d * invrange - 1.0;
+
+    // Clip start
+    diff = center - start;
+    if(diff == vec3(0.0))
+      vClipEnds.y = -1.0;
+    else {
+      diff = normalize(center - start);
+      float d = dot(pos - start, diff);
+      vClipEnds.y = d * invrange - 1.0;
+    }
   }
 
 
@@ -171,7 +181,7 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
   float l2 = dot(d.zw, d.zw);
 
   if (l1 + l2 > 0.0) {
-    
+
     if (edge > 0.5 || l2 == 0.0) {
       vec2 nl = normalize(d.xy);
       vec2 tl = vec2(nl.y, -nl.x);
@@ -226,7 +236,7 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
       // Average tangent
       vec2 tc = normalize(tl + tr);
 #endif
-    
+
       // Miter join
       float cosA   = dot(nl, tc);
       float sinA   = max(0.1, abs(dot(tl, tc)));

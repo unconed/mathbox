@@ -56,6 +56,11 @@ export class DOM extends Overlay {
       el = this.el("div", null, el);
     }
 
+    // Create empty div if el is null
+    if (el == null) {
+      el = this.el("div");
+    }
+
     // See if it can be mounted directly
     const naked = el.type === "div";
 

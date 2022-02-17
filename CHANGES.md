@@ -1,5 +1,19 @@
 ### MathBox Changelog
 
+2.1.1
+
+!16 applies JS-ported patches from the following open merge requests:
+
+  - https://gitgud.io/unconed/mathbox/-/merge_requests/11/
+  - https://gitgud.io/unconed/mathbox/-/merge_requests/10
+  - https://gitgud.io/unconed/mathbox/-/merge_requests/9
+  - https://gitgud.io/unconed/mathbox/-/merge_requests/8
+  - https://gitgud.io/unconed/mathbox/-/merge_requests/7
+  - https://gitgud.io/unconed/mathbox/-/merge_requests/6
+  - https://gitgud.io/unconed/mathbox/-/merge_requests/5
+
+  Thanks to @bobqwatsonsapphire, @carl00s01 and @Beddington for these fixes.
+
 0.0.5
 
 - ⚠️ Rename array `length` to `width` for consistency.
