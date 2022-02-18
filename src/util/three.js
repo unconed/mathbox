@@ -75,9 +75,6 @@ export const paramToGL = function (gl, p) {
   if (p === CONST.AlphaFormat) {
     return gl.ALPHA;
   }
-  if (p === CONST.RGBFormat) {
-    return gl.RGB;
-  }
   if (p === CONST.RGBAFormat) {
     return gl.RGBA;
   }
