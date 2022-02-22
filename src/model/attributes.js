@@ -72,7 +72,7 @@ export class Attributes {
 
   compute() {
     if (this.bound.length) {
-      for (let cb of Array.from(this.bound)) {
+      for (const cb of Array.from(this.bound)) {
         this.invoke(cb);
       }
     }
@@ -85,7 +85,7 @@ export class Attributes {
     }
 
     [calls, this.pending] = Array.from([this.pending, []]);
-    for (let callback of Array.from(calls)) {
+    for (const callback of Array.from(calls)) {
       callback();
     }
 
@@ -105,7 +105,7 @@ export class Attributes {
 
 const shallowCopy = function (x) {
   const out = {};
-  for (let k in x) {
+  for (const k in x) {
     const v = x[k];
     out[k] = v;
   }
@@ -115,7 +115,8 @@ const shallowCopy = function (x) {
 class Data {
   constructor(object, config, _attributes) {
     let key, ns, oldComputed, oldExpr, oldOrig, oldProps, spec;
-    let { traits, props, finals, freeform } = config;
+    let { props } = config;
+    const { traits, finals, freeform } = config;
     const data = this;
 
     // Save existing (original) values if re-applying
@@ -244,9 +245,9 @@ class Data {
 
     const _bound = {};
     const _eval = {};
-    var _expr = {};
-    var _computed = {};
-    var _finals = {};
+    const _expr = {};
+    const _computed = {};
+    const _finals = {};
 
     const bind = function (key, expression, computed) {
       if (computed == null) {
@@ -414,11 +415,11 @@ class Data {
 
     // Validate value for key
     const makers = {};
-    var validators = {};
+    const validators = {};
     const equalors = {};
 
-    var equals = (key, value, target) => equalors[key](value, target);
-    var validate = (key, value, target, invalid) =>
+    const equals = (key, value, target) => equalors[key](value, target);
+    const validate = (key, value, target, invalid) =>
       validators[key](value, target, invalid);
 
     object.validate = function (key, value) {
@@ -442,7 +443,7 @@ class Data {
     let changed = {};
     let touched = {};
     const getNS = (key) => key.split(".")[0];
-    var change = function (key, value) {
+    const change = function (key, value) {
       if (!dirty) {
         dirty = true;
         _attributes.queue(digest, object, key, value);
@@ -464,7 +465,7 @@ class Data {
     };
 
     // Notify listeners of accumulated changes
-    var digest = function () {
+    const digest = function () {
       // Swap double buffered changes objects
       let k;
       event.changed = changes;
@@ -488,7 +489,7 @@ class Data {
 
       return (() => {
         const result = [];
-        for (let trait in event.touched) {
+        for (const trait in event.touched) {
           event.type = `change:${trait}`;
           result.push(object.trigger(event));
         }
@@ -512,7 +513,7 @@ class Data {
       (() => {
         const result = [];
         for (let key in spec) {
-          var value;
+          let value;
           const type = spec[key];
           key = [name, key].join(".");
           const short = shorthand(key);

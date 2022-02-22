@@ -11,7 +11,7 @@
  */
 
 import * as Model from "../model";
-import { Binder } from "@sicmutils/threestrap/src/binder.js";
+import { Binder } from "threestrap/src/binder.js";
 
 export class Primitive {
   static initClass() {
@@ -155,7 +155,7 @@ export class Primitive {
       self = this;
     }
     if (object instanceof Array) {
-      for (let o of Array.from(object)) {
+      for (const o of Array.from(object)) {
         return this.__listen(o, type, method, self);
       }
     }
@@ -185,7 +185,7 @@ export class Primitive {
       return;
     }
 
-    for (let [object, type, handler] of Array.from(this._handlers.listen)) {
+    for (const [object, type, handler] of Array.from(this._handlers.listen)) {
       object.off(type, handler);
     }
     return (this._handlers.listen = []);
@@ -240,7 +240,7 @@ export class Primitive {
         return list;
       }
       let out = [];
-      for (let sub of Array.from(list)) {
+      for (const sub of Array.from(list)) {
         if (sub instanceof Array) {
           out = out.concat(sub);
         } else {
@@ -250,7 +250,7 @@ export class Primitive {
       return out;
     };
 
-    var resolve = (selector) => {
+    const resolve = (selector) => {
       // Direct JS binding, no watcher.
       let node, nodes;
       if (typeof selector === "object") {
@@ -381,7 +381,7 @@ export class Primitive {
       return;
     }
 
-    for (let watcher of Array.from(this._handlers.watch)) {
+    for (const watcher of Array.from(this._handlers.watch)) {
       if (watcher != null) {
         watcher.unwatch();
       }
@@ -400,7 +400,7 @@ export class Primitive {
     if (!this._handlers.compute.length) {
       return;
     }
-    for (let key of Array.from(this._handlers.compute)) {
+    for (const key of Array.from(this._handlers.compute)) {
       this.node.unbind(key, true);
     }
     return (this._handlers.compute = []);

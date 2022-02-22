@@ -10,7 +10,7 @@
 import "./splash.js";
 
 // NOTE this import triggers the installation of all plugins as a side effect.
-import "@sicmutils/threestrap";
+import "threestrap";
 
 import * as model from "./model";
 import * as overlay from "./overlay";
@@ -20,7 +20,7 @@ import * as shaders from "./shaders";
 import * as stage from "./stage";
 import * as util from "./util";
 
-import { Bootstrap } from "@sicmutils/threestrap/src/bootstrap.js";
+import { Bootstrap } from "threestrap/src/bootstrap.js";
 import { Context as ctx } from "./context.js";
 
 export const version = "2.1.0";

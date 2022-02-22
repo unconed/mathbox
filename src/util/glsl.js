@@ -62,7 +62,7 @@ vec4 float2ByteIndex(vec4 xyzw, out float channelIndex) {
 
 // Sample data texture array
 export const sample2DArray = function (textures) {
-  var divide = function (a, b) {
+  const divide = function (a, b) {
     let out;
     if (a === b) {
       out = `\
@@ -276,9 +276,9 @@ return ${value};
 `;
 
 function __range__(left, right, inclusive) {
-  let range = [];
-  let ascending = left < right;
-  let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  const range = [];
+  const ascending = left < right;
+  const end = !inclusive ? right : ascending ? right + 1 : right - 1;
   for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
     range.push(i);
   }

@@ -102,16 +102,17 @@ const prettyNumber = function (options) {
       }
     };
 
-    for (let k in formatFactors[formatIndex]) {
+    for (const k in formatFactors[formatIndex]) {
       const f = formatFactors[formatIndex][k];
       if (checkUnit(v / f)) {
         match(`${formatMultiple(v / f, 1, k, compact)}`);
       } else {
+        // eslint-disable-next-line prefer-const
         for (let [denom, list] of Array.from(formatPrimes)) {
           let numer = (v / f) * denom;
           if (checkUnit(numer)) {
-            for (let p of Array.from(list)) {
-              var d, n;
+            for (const p of Array.from(list)) {
+              let d, n;
               while (checkUnit((n = numer / p)) && checkUnit((d = denom / p))) {
                 numer = n;
                 denom = d;
@@ -145,7 +146,7 @@ const prettyPrint = function (markup, level) {
   return console[level].apply(console, markup);
 };
 
-var prettyMarkup = function (markup) {
+const prettyMarkup = function (markup) {
   // quick n dirty
 
   const tag = "color:rgb(128,0,128)";
@@ -224,7 +225,7 @@ var prettyMarkup = function (markup) {
 const prettyJSXProp = (k, v) => prettyJSXPair(k, v, "=");
 const prettyJSXBind = (k, v) => prettyJSXPair(k, v, "=>");
 
-var prettyJSXPair = (function () {
+const prettyJSXPair = (function () {
   const formatNumber = prettyNumber({ compact: false });
 
   return function (k, v, op) {
@@ -242,7 +243,7 @@ var prettyJSXPair = (function () {
         return `{${v}}`;
       }
     };
-    var value = function (v) {
+    const value = function (v) {
       if (v instanceof Array) {
         return `[${v.map(value).join(", ")}]`;
       }
@@ -280,7 +281,7 @@ var prettyJSXPair = (function () {
                 "{" +
                 (() => {
                   const result = [];
-                  for (let kk in v) {
+                  for (const kk in v) {
                     const vv = v[kk];
                     if (Object.prototype.hasOwnProperty.call(v, kk)) {
                       result.push(`${key(kk)}: ${value(vv)}`);
@@ -316,7 +317,7 @@ const prettyFormat = function (str) {
   str = escapeHTML(str);
 
   // eslint-disable-next-line no-unused-vars
-  for (let _arg of Array.from(args)) {
+  for (const _arg of Array.from(args)) {
     str = str.replace(/%([a-z])/, function (_, f) {
       const v = args.shift();
       switch (f) {

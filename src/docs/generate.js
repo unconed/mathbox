@@ -25,7 +25,7 @@ for (type in Primitives.Types.Classes) {
     let ns;
     [trait, ns] = Array.from(trait.split(":"));
     const suffix = ns != null ? titleCase(ns) : "";
-    for (let k in TraitDefs[trait]) {
+    for (const k in TraitDefs[trait]) {
       const v = TraitDefs[trait][k];
       if (TraitDefs[trait] != null) {
         def[k + suffix] = v;
@@ -60,7 +60,7 @@ for (type in defs) {
   const props = Object.keys(def);
   props.sort();
 
-  for (let key of Array.from(props)) {
+  for (const key of Array.from(props)) {
     const prop = def[key];
 
     let ex =
@@ -92,7 +92,7 @@ types.sort();
 const modules = Object.keys(index);
 modules.sort();
 
-for (let m of modules) {
+for (const m of modules) {
   console.log(`#### ${m}\n\n`);
   console.log(index[m].join("\n"));
   console.log("\n");
