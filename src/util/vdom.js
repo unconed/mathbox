@@ -65,7 +65,7 @@ export const recycle = function (el) {
   HEAP.push(el);
 
   if (children != null) {
-    for (let child of Array.from(children)) {
+    for (const child of Array.from(children)) {
       recycle(child);
     }
   }
@@ -159,7 +159,7 @@ export const apply = function (el, last, node, parent, index) {
             if (el.props == null) {
               el.props = {};
             }
-            for (let k in comp.defaultProps) {
+            for (const k in comp.defaultProps) {
               const v = comp.defaultProps[k];
               if (el.props[k] == null) {
                 el.props[k] = v;
@@ -273,7 +273,7 @@ export const apply = function (el, last, node, parent, index) {
   }
 };
 
-var mount = function (el, parent, index) {
+const mount = function (el, parent, index) {
   let node;
   if (index == null) {
     index = 0;
@@ -305,7 +305,7 @@ var mount = function (el, parent, index) {
       if (el.props == null) {
         el.props = {};
       }
-      for (let k in comp.defaultProps) {
+      for (const k in comp.defaultProps) {
         const v = comp.defaultProps[k];
         if (el.props[k] == null) {
           el.props[k] = v;
@@ -345,7 +345,7 @@ var mount = function (el, parent, index) {
     } else {
       // VDOM Node
       node = document.createElement(el.type);
-      for (let key in el.props) {
+      for (const key in el.props) {
         const value = el.props[key];
         set(node, key, value);
       }
@@ -375,19 +375,19 @@ var mount = function (el, parent, index) {
   return node;
 };
 
-var unmount = function (comp, node) {
+const unmount = function (comp, node) {
   if (comp) {
     if (typeof comp.willUnmount === "function") {
       comp.willUnmount();
     }
-    for (let k in comp) {
+    for (const k in comp) {
       delete comp[k];
     }
   }
 
   return (() => {
     const result = [];
-    for (let child of Array.from(node.childNodes)) {
+    for (const child of Array.from(node.childNodes)) {
       unmount(child._COMPONENT, child);
       result.push(delete child._COMPONENT);
     }
@@ -405,7 +405,7 @@ const prop = function (key) {
 
   key = key[0].toUpperCase() + key.slice(1);
   const prefixes = ["webkit", "moz", "ms", "o"];
-  for (let prefix of Array.from(prefixes)) {
+  for (const prefix of Array.from(prefixes)) {
     if (document.documentElement.style[prefix + key] != null) {
       return prefix + key;
     }
@@ -413,13 +413,13 @@ const prop = function (key) {
 };
 
 const map = {};
-for (let key of ["transform"]) {
+for (const key of ["transform"]) {
   map[key] = prop(key);
 }
 
-var set = function (node, key, value, orig) {
+const set = function (node, key, value, orig) {
   if (key === "style") {
-    for (let k in value) {
+    for (const k in value) {
       const v = value[k];
       if ((orig != null ? orig[k] : undefined) !== v) {
         node.style[map[k] != null ? map[k] : k] = v;
@@ -443,9 +443,9 @@ var set = function (node, key, value, orig) {
   }
 };
 
-var unset = function (node, key, orig) {
+const unset = function (node, key, orig) {
   if (key === "style") {
-    for (let k in orig) {
+    for (const k in orig) {
       node.style[map[k] != null ? map[k] : k] = "";
     }
     return;
@@ -472,7 +472,7 @@ export const createClass = function (prototype) {
     didUpdate: "componentDidUpdate",
     willUnmount: "componentWillUnmount",
   };
-  for (let a in aliases) {
+  for (const a in aliases) {
     const b = aliases[a];
     if (prototype[a] == null) {
       prototype[a] = prototype[b];
@@ -553,9 +553,9 @@ export const createClass = function (prototype) {
 };
 
 function __range__(left, right, inclusive) {
-  let range = [];
-  let ascending = left < right;
-  let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  const range = [];
+  const ascending = left < right;
+  const end = !inclusive ? right : ascending ? right + 1 : right - 1;
   for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
     range.push(i);
   }

@@ -53,7 +53,7 @@ export class Group extends Node {
 
   empty() {
     const children = this.children.slice().reverse();
-    for (let node of Array.from(children)) {
+    for (const node of Array.from(children)) {
       this.remove(node);
     }
   }

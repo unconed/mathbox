@@ -1,6 +1,6 @@
 {
   "name": "mathbox",
-  "version": "2.1.0",
+  "version": "2.1.1-dev",
   "description": "Presentation-quality WebGL math graphing",
   "repository": {
     "type": "git",
@@ -20,9 +20,9 @@
   },
   "prettier": {},
   "dependencies": {
-    "@sicmutils/threestrap": "^0.4.0",
-    "cssauron": "^1.4.0",
-    "shadergraph": "^2.1.2"
+    "@sicmutils/cssauron": "^1.4.0",
+    "shadergraph": "^2.1.3",
+    "threestrap": "^0.4.1"
   },
   "peerDependencies": {
     "three": ">=0.118.0"
@@ -42,7 +42,6 @@
     "karma-chrome-launcher": "^3.1.0",
     "karma-jasmine": "^4.0.1",
     "prettier": "2.3.1",
-    "stream-browserify": "^2.0.2",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.7.2",
     "webpack-stream": "^6.1.2"

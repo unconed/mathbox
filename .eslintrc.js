@@ -12,10 +12,12 @@ module.exports = {
     "sourceType": "module"
   },
   "rules": {
+    "no-var": "warn",
     "sort-imports": "error",
     "no-unused-vars": [
       1,
       {"argsIgnorePattern": "^_"}
-    ]
+    ],
+    "prefer-const": "warn"
   },
 };

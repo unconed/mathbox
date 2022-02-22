@@ -11,7 +11,7 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-const cssauron = require("cssauron");
+const cssauron = require("@sicmutils/cssauron");
 
 const ALL = "*";
 const ID = /^#([A-Za-z0-9_])$/;
@@ -70,7 +70,7 @@ export class Model {
     this.root.on("remove", remove);
 
     // Track node lifecycle
-    var adopt = (node) => {
+    const adopt = (node) => {
       addNode(node);
       addType(node);
       addTraits(node);
@@ -80,7 +80,7 @@ export class Model {
       return force(node);
     };
 
-    var dispose = (node) => {
+    const dispose = (node) => {
       removeNode(node);
       removeType(node);
       removeTraits(node);
@@ -93,14 +93,14 @@ export class Model {
 
     // Watcher cycle for catching changes in id/classes
     const prime = (node) => {
-      for (let watcher of Array.from(this.watchers)) {
+      for (const watcher of Array.from(this.watchers)) {
         watcher.match = watcher.matcher(node);
       }
       return null;
     };
 
     const check = (node) => {
-      for (let watcher of Array.from(this.watchers)) {
+      for (const watcher of Array.from(this.watchers)) {
         const fire =
           watcher.fire ||
           (watcher.fire = watcher.match !== watcher.matcher(node));
@@ -114,8 +114,8 @@ export class Model {
       return null;
     };
 
-    var force = (node) => {
-      for (let watcher of Array.from(this.watchers)) {
+    const force = (node) => {
+      for (const watcher of Array.from(this.watchers)) {
         const fire = watcher.fire || (watcher.fire = watcher.matcher(node));
         if (fire) {
           this.lastNode = node;
@@ -131,7 +131,7 @@ export class Model {
       if (!this.fire) {
         return false;
       }
-      for (let watcher of Array.from(this.watchers.slice())) {
+      for (const watcher of Array.from(this.watchers.slice())) {
         if (watcher.fire) {
           watcher.fire = false;
           watcher.handler();
@@ -142,7 +142,7 @@ export class Model {
     };
 
     // Track id/class changes
-    var update = (event, node, init) => {
+    const update = (event, node, init) => {
       const _id = init || event.changed["node.id"];
       const _klass = init || event.changed["node.classes"];
       let primed = false;
@@ -195,7 +195,7 @@ export class Model {
       if (tags == null) {
         return;
       }
-      for (let k of Array.from(tags)) {
+      for (const k of Array.from(tags)) {
         const list = sets[k] != null ? sets[k] : [];
         list.push(node);
         sets[k] = list;
@@ -207,7 +207,7 @@ export class Model {
       if (tags == null) {
         return;
       }
-      for (let k of Array.from(tags)) {
+      for (const k of Array.from(tags)) {
         const list = sets[k];
         const index = list.indexOf(node);
         if (index >= 0) {
@@ -232,7 +232,7 @@ export class Model {
     const unhashTags = (array) => delete array.hash;
 
     // Track IDs (live)
-    var addID = (id, node) => {
+    const addID = (id, node) => {
       if (this.ids[id]) {
         throw new Error(`Duplicate node id \`${id}\``);
       }
@@ -243,7 +243,7 @@ export class Model {
       return (node.id = id != null ? id : node._id);
     };
 
-    var removeID = (id, node) => {
+    const removeID = (id, node) => {
       if (id != null) {
         delete this.ids[id];
       }
@@ -251,14 +251,14 @@ export class Model {
     };
 
     // Track classes (live)
-    var addClasses = (classes, node) => {
+    const addClasses = (classes, node) => {
       addTags(this.classes, classes, node);
       if (classes != null) {
         return hashTags(classes);
       }
     };
 
-    var removeClasses = (classes, node) => {
+    const removeClasses = (classes, node) => {
       removeTags(this.classes, classes, node);
       if (classes != null) {
         return unhashTags(classes);
@@ -266,20 +266,20 @@ export class Model {
     };
 
     // Track nodes
-    var addNode = (node) => this.nodes.push(node);
-    var removeNode = (node) => this.nodes.splice(this.nodes.indexOf(node), 1);
+    const addNode = (node) => this.nodes.push(node);
+    const removeNode = (node) => this.nodes.splice(this.nodes.indexOf(node), 1);
 
     // Track nodes by type
-    var addType = (node) => addTags(this.types, [node.type], node);
-    var removeType = (node) => removeTags(this.types, [node.type], node);
+    const addType = (node) => addTags(this.types, [node.type], node);
+    const removeType = (node) => removeTags(this.types, [node.type], node);
 
     // Track nodes by trait
-    var addTraits = (node) => {
+    const addTraits = (node) => {
       addTags(this.traits, node.traits, node);
       return hashTags(node.traits);
     };
 
-    var removeTraits = (node) => {
+    const removeTraits = (node) => {
       removeTags(this.traits, node.traits, node);
       return unhashTags(node.traits);
     };
@@ -293,7 +293,7 @@ export class Model {
     const matcher = this._matcher(selector);
     return (() => {
       const result = [];
-      for (let node of Array.from(nodes)) {
+      for (const node of Array.from(nodes)) {
         if (matcher(node)) {
           result.push(node);
         }
@@ -305,7 +305,7 @@ export class Model {
   // Filter array by ancestry
   ancestry(nodes, parents) {
     const out = [];
-    for (let node of Array.from(nodes)) {
+    for (const node of Array.from(nodes)) {
       let { parent } = node;
       while (parent != null) {
         if (Array.from(parents).includes(parent)) {

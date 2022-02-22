@@ -11,7 +11,7 @@
  */
 
 import * as Pretty from "../util/pretty.js";
-import { Binder } from "@sicmutils/threestrap/src/binder.js";
+import { Binder } from "threestrap/src/binder.js";
 
 let nodeIndex = 0;
 
@@ -144,9 +144,9 @@ export class Node {
     const map = (x) => k / (x + k);
     const lerp = (t) => b + (a - b) * t;
 
-    var a = 1 + 1 / k;
-    var b = 0;
-    for (let index of Array.from(path)) {
+    let a = 1 + 1 / k;
+    let b = 0;
+    for (const index of Array.from(path)) {
       const f = map(index + 1);
       const g = map(index + 2);
       [a, b] = Array.from([lerp(f), lerp(g)]);

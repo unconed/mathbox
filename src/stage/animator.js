@@ -30,7 +30,7 @@ export class Animator {
     const { time } = this.context;
     return (this.anims = (() => {
       const result = [];
-      for (let anim of Array.from(this.anims)) {
+      for (const anim of Array.from(this.anims)) {
         if (anim.update(time) !== false) {
           result.push(anim);
         }
@@ -214,12 +214,15 @@ class Animation {
     }
 
     const clock = this.getTime();
-    let { value, queue } = this;
+    let { value } = this;
+    const { queue } = this;
 
     let active = false;
     while (!active) {
-      var stage;
-      var { from, to, start, end, step, complete, ease } = (stage = queue[0]);
+      const stage = queue[0];
+
+      let { from } = stage;
+      const { to, start, end, step, complete, ease } = stage;
 
       if (from == null) {
         from = stage.from = this.type.clone(this.value);

@@ -177,7 +177,7 @@ export const makeEmitter = function (thunk, items, channels) {
 
   let next = null;
   while (items > 0) {
-    var n = Math.min(items, 8);
+    const n = Math.min(items, 8);
     outer = (() => {
       switch (n) {
         case 1:
@@ -269,6 +269,8 @@ export const getThunk = function (data) {
   let c = sizes.pop();
   const d = sizes.pop();
 
+  let i, first, second, third, fourth;
+
   switch (nesting) {
     case 0:
       thunk = () => 0;
@@ -276,14 +278,14 @@ export const getThunk = function (data) {
       break;
 
     case 1:
-      var i = 0;
+      i = 0;
       thunk = () => data[i++];
       thunk.reset = () => (i = 0);
       break;
 
     case 2:
       i = j = 0;
-      var first = data[j] != null ? data[j] : [];
+      first = data[j] != null ? data[j] : [];
 
       thunk = function () {
         const x = first[i++];
@@ -303,7 +305,7 @@ export const getThunk = function (data) {
 
     case 3:
       i = j = k = 0;
-      var second = data[k] != null ? data[k] : [];
+      second = data[k] != null ? data[k] : [];
       first = second[j] != null ? second[j] : [];
 
       thunk = function () {
@@ -330,7 +332,7 @@ export const getThunk = function (data) {
 
     case 4:
       i = j = k = l = 0;
-      var third = data[l] != null ? data[l] : [];
+      third = data[l] != null ? data[l] : [];
       second = third[k] != null ? third[k] : [];
       first = second[j] != null ? second[j] : [];
 
@@ -364,7 +366,7 @@ export const getThunk = function (data) {
 
     case 5:
       i = j = k = l = m = 0;
-      var fourth = data[m] != null ? data[m] : [];
+      fourth = data[m] != null ? data[m] : [];
       third = fourth[l] != null ? fourth[l] : [];
       second = third[k] != null ? third[k] : [];
       first = second[j] != null ? second[j] : [];
@@ -427,7 +429,6 @@ export const getThunk = function (data) {
 
 export const getStreamer = function (array, samples, channels, items) {
   let i, j;
-  let emit;
   let limit = (i = j = 0);
 
   const reset = function () {
@@ -494,7 +495,7 @@ export const getStreamer = function (array, samples, channels, items) {
     }
   })();
 
-  emit = (() => {
+  const emit = (() => {
     switch (channels) {
       case 1:
         return function (x) {
@@ -690,9 +691,9 @@ export const getLerpThunk = function (data1, data2) {
 };
 
 function __range__(left, right, inclusive) {
-  let range = [];
-  let ascending = left < right;
-  let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  const range = [];
+  const ascending = left < right;
+  const end = !inclusive ? right : ascending ? right + 1 : right - 1;
   for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
     range.push(i);
   }

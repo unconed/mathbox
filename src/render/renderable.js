@@ -22,14 +22,14 @@ export class Renderable {
   }
 
   _adopt(uniforms) {
-    for (let key in uniforms) {
+    for (const key in uniforms) {
       const value = uniforms[key];
       this.uniforms[key] = value;
     }
   }
 
   _set(uniforms) {
-    for (let key in uniforms) {
+    for (const key in uniforms) {
       const value = uniforms[key];
       if (this.uniforms[key] != null) {
         this.uniforms[key].value = value;

@@ -10,8 +10,8 @@
 // Merge multiple objects
 export const merge = function () {
   const x = {};
-  for (let obj of Array.from(arguments)) {
-    for (let k in obj) {
+  for (const obj of Array.from(arguments)) {
+    for (const k in obj) {
       const v = obj[k];
       x[k] = v;
     }
@@ -34,9 +34,9 @@ export const parseQuoted = function (str) {
 
   str = str.split(/(?=(?:\\.|["' ,]))/g);
   let quote = false;
-  var list = [];
+  const list = [];
 
-  for (let chunk of Array.from(str)) {
+  for (const chunk of Array.from(str)) {
     const char = chunk[0];
     const token = chunk.slice(1);
     switch (char) {

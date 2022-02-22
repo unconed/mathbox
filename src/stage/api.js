@@ -38,7 +38,7 @@ export class API {
     this.length = this._targets.length;
 
     // Primitive factory. This is where all API methods are assigned.
-    for (let type of Array.from(this._context.controller.getTypes())) {
+    for (const type of Array.from(this._context.controller.getTypes())) {
       if (!["root"].includes(type)) {
         this[type] = (options, binds) => this.add(type, options, binds);
       }
@@ -97,7 +97,7 @@ export class API {
 
     // Add to target
     const nodes = [];
-    for (let target of this._targets) {
+    for (const target of this._targets) {
       const node = controller.make(type, options, binds);
       controller.add(node, target);
       nodes.push(node);
@@ -111,14 +111,14 @@ export class API {
     if (selector) {
       return this.select(selector).remove();
     }
-    for (let target of Array.from(this._targets.slice().reverse())) {
+    for (const target of Array.from(this._targets.slice().reverse())) {
       this._context.controller.remove(target);
     }
     return this._pop();
   }
 
   set(key, value) {
-    for (let target of Array.from(this._targets)) {
+    for (const target of Array.from(this._targets)) {
       this._context.controller.set(target, key, value);
     }
     return this;
@@ -141,14 +141,14 @@ export class API {
   }
 
   bind(key, value) {
-    for (let target of Array.from(this._targets)) {
+    for (const target of Array.from(this._targets)) {
       this._context.controller.bind(target, key, value);
     }
     return this;
   }
 
   unbind(key) {
-    for (let target of Array.from(this._targets)) {
+    for (const target of Array.from(this._targets)) {
       this._context.controller.unbind(target, key);
     }
     return this;
@@ -218,7 +218,7 @@ export class API {
       owner.constructor.toString().match("function +([^(]*)")[1];
 
     const shaders = [];
-    for (let shader of Array.from(info.shaders)) {
+    for (const shader of Array.from(info.shaders)) {
       const name = getName(shader.owner);
       shaders.push(`${name} - Vertex`);
       shaders.push(shader.vertex);
@@ -253,7 +253,7 @@ export class API {
         list.push(map(node));
       }
       if (node.children != null) {
-        for (let child of Array.from(node.children)) {
+        for (const child of Array.from(node.children)) {
           self(child, list);
         }
       }
@@ -285,8 +285,8 @@ export class API {
     };
 
     // Inspect all targets
-    for (let target of Array.from(this._targets)) {
-      var renderables;
+    for (const target of Array.from(this._targets)) {
+      let renderables;
       if (print) {
         target.print(selector, "info");
       }
@@ -301,7 +301,7 @@ export class API {
         ),
       };
 
-      for (let k in _info) {
+      for (const k in _info) {
         info[k] = info[k].concat(_info[k]);
       }
     }
@@ -311,9 +311,9 @@ export class API {
 }
 
 function __range__(left, right, inclusive) {
-  let range = [];
-  let ascending = left < right;
-  let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  const range = [];
+  const ascending = left < right;
+  const end = !inclusive ? right : ascending ? right + 1 : right - 1;
   for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
     range.push(i);
   }
