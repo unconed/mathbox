@@ -127,6 +127,8 @@ Use `.print()`, `.inspect()` and `.debug()` to show information about a selectio
 
 ---
 
+## Development
+
 /src tree:
 
 - model/ - DOM tree + CSS selector handling
@@ -136,12 +138,14 @@ Use `.print()`, `.inspect()` and `.debug()` to show information about a selectio
 - stage/ - API / controllers
 - util/ - It's inevitable
 
-/vendor
+Uses `gulp` to build itself.
+
+---
+
+## Related Projects
 
 - [threestrap](https://github.com/unconed/threestrap) - Three.js bootstrapper
 - [shadergraph](https://github.com/unconed/shadergraph) - Functional GLSL linker
-
-Uses `gulp` to build itself.
 
 ---
 
