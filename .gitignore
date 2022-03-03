@@ -5,3 +5,4 @@
 release/mathbox-0.0.x*
 *bower_components
 decaffeinate*
+build_testing/

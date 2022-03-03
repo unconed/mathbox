@@ -1,6 +1,5 @@
 const path = require("path");
-const webpack = require("webpack");
-const TerserPlugin = require("terser-webpack-plugin");
+const baseConfig = require("./webpack.config.base");
 
 const libraryName = "MathBox";
 const PATHS = {
@@ -48,32 +47,7 @@ const config = {
     library: libraryName,
     umdNamedDefine: true,
   },
-  resolve: {
-    extensions: [
-      // '.ts',
-      ".js",
-    ],
-    fallback: {
-      stream: require.resolve("stream-browserify"),
-    },
-  },
-  plugins: [
-    new webpack.ProvidePlugin({
-      Buffer: ["buffer", "Buffer"],
-      process: "process/browser",
-    }),
-  ],
-  // Activate source maps for the bundles in order to preserve the original
-  // source when the user debugs the application
-  devtool: "source-map",
-  optimization: {
-    minimize: true,
-    minimizer: [
-      new TerserPlugin({
-        test: /\.min\.js$/,
-      }),
-    ],
-  },
+  ...baseConfig,
 };
 
 module.exports = config;
