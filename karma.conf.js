@@ -1,5 +1,3 @@
-const { resolve } = require("path");
-
 module.exports = function (config) {
   config.set({
     browsers: ["Chrome"],

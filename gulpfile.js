@@ -7,7 +7,7 @@ const watch = require("gulp-watch");
 const shell = require("gulp-shell");
 const jsify = require("./vendor/gulp-jsify");
 
-const webpackConfig = require("./webpack.config.js");
+const webpackConfig = require("./config/webpack.config.js");
 
 const builds = {
   bundle: "build/mathbox.js",
