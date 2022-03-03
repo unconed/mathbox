@@ -6,9 +6,13 @@
     "type": "git",
     "url": "https://gitgud.io/unconed/mathbox"
   },
-  "main": "src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    "import": "./src/index.js"
+  },
+  "main": "./src/index.js",
   "files": [
-    "/src",
+    "src",
     "build",
     "*.md",
     "FUNDING.yml"
@@ -16,8 +20,8 @@
   "scripts": {
     "docs": "gulp docs",
     "build": "gulp",
-    "test": "concurrently 'webpack --config webpack.config.testing.js' 'karma start --single-run'",
-    "test:watch": "concurrently 'webpack --watch --config webpack.config.testing.js' 'karma start'"
+    "test": "concurrently 'webpack --config config/webpack.config.testing.js' 'karma start --single-run'",
+    "test:watch": "concurrently 'webpack --watch --config config/webpack.config.testing.js' 'karma start'"
   },
   "prettier": {},
   "dependencies": {
@@ -49,5 +53,12 @@
     "webpack-stream": "^6.1.2"
   },
   "author": "Steven Wittens",
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "mathbox",
+    "threejs",
+    "visualizations",
+    "mathematics",
+    "webgl"
+  ]
 }

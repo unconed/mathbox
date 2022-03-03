@@ -3,8 +3,8 @@ const baseConfig = require("./webpack.config.base");
 
 const libraryName = "MathBox";
 const PATHS = {
-  entryPoint: path.resolve(__dirname, "src/index.js"),
-  bundles: path.resolve(__dirname, "dist"),
+  entryPoint: path.resolve(__dirname, "../src/index.js"),
+  bundles: path.resolve(__dirname, "../build"),
 };
 
 const config = {
