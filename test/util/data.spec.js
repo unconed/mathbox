@@ -160,7 +160,7 @@ describe("util.data", function () {
   });
 
   it("parses 2D JS array dimensions", function () {
-    const map = (channels) => (x) => __range__(1, channels, true);
+    const map = (channels) => (_x) => __range__(1, channels, true);
 
     let spec = Data.getDimensions([1, 2, 3].map(map(2)), {
       items: 1,
@@ -314,7 +314,7 @@ describe("util.data", function () {
   });
 
   it("parses 3D JS array dimensions", function () {
-    const map = (channels) => (x) => __range__(1, channels, true);
+    const map = (channels) => (_x) => __range__(1, channels, true);
     const nest = (f, g) => (x) => f(x).map(g);
 
     let spec = Data.getDimensions([1, 2, 3, 4, 5].map(nest(map(3), map(2))), {
@@ -445,9 +445,8 @@ describe("util.data", function () {
 
   it("thunks a 2D array", function () {
     let index = 1;
-    const map = (channels) => (x) =>
+    const map = (channels) => (_x) =>
       __range__(index, (index += channels), false);
-    const nest = (f, g) => (x) => f(x).map(g);
 
     const data = [1, 2, 3].map(map(2));
     const thunk = Data.getThunk(data);
@@ -471,7 +470,7 @@ describe("util.data", function () {
 
   it("thunks a 3D array", function () {
     let index = 1;
-    const map = (channels) => (x) =>
+    const map = (channels) => (_x) =>
       __range__(index, (index += channels), false);
     const nest = (f, g) => (x) => f(x).map(g);
 
@@ -497,7 +496,7 @@ describe("util.data", function () {
 
   it("thunks a 4D array", function () {
     let index = 1;
-    const map = (channels) => (x) =>
+    const map = (channels) => (_x) =>
       __range__(index, (index += channels), false);
     const nest = (f, g) => (x) => f(x).map(g);
 
@@ -523,7 +522,7 @@ describe("util.data", function () {
 
   it("thunks a 5D array", function () {
     let index = 1;
-    const map = (channels) => (x) =>
+    const map = (channels) => (_x) =>
       __range__(index, (index += channels), false);
     const nest = (f, g) => (x) => f(x).map(g);
 
@@ -621,9 +620,9 @@ describe("util.data", function () {
 });
 
 function __range__(left, right, inclusive) {
-  let range = [];
-  let ascending = left < right;
-  let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  const range = [];
+  const ascending = left < right;
+  const end = !inclusive ? right : ascending ? right + 1 : right - 1;
   for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
     range.push(i);
   }

@@ -46,7 +46,7 @@ describe("primitives.types.types", function () {
       items: 4,
     };
 
-    for (let key in map) {
+    for (const key in map) {
       i = map[key];
       prime();
       x = axis.validate(key, value, invalid);
@@ -107,7 +107,7 @@ describe("primitives.types.types", function () {
       items: 4,
     };
 
-    for (let key in map) {
+    for (const key in map) {
       i = map[key];
       prime();
       x = axis.validate(key, value, invalid);

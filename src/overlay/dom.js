@@ -36,7 +36,7 @@ export class DOM extends Overlay {
   }
 
   unmount(_overlay) {
-    if (this.overlay.parentNode) {
+    if (this.overlay && this.overlay.parentNode) {
       this.element.removeChild(this.overlay);
     }
     return (this.overlay = null);
