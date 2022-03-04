@@ -23,7 +23,7 @@ export class Move extends Transition {
       moveFrom: this.node.attributes["move.from"],
       moveTo: this.node.attributes["move.to"],
     };
-    for (let k in object) {
+    for (const k in object) {
       const v = object[k];
       this.uniforms[k] = v;
     }

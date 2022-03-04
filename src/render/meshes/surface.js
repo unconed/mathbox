@@ -17,18 +17,10 @@ export class Surface extends Base {
     let defs, f;
     super(renderer, shaders, options);
 
-    let {
-      uniforms,
-      material,
-      position,
-      color,
-      mask,
-      map,
-      combine,
-      linear,
-      stpq,
-      intUV,
-    } = options;
+    let { uniforms, material } = options;
+
+    const { position, color, mask, map, combine, linear, stpq, intUV } =
+      options;
 
     if (uniforms == null) {
       uniforms = {};

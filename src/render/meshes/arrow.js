@@ -17,17 +17,10 @@ export class Arrow extends Base {
     let f;
     super(renderer, shaders, options);
 
-    let {
-      uniforms,
-      material,
-      position,
-      color,
-      mask,
-      map,
-      combine,
-      stpq,
-      linear,
-    } = options;
+    let { uniforms } = options;
+
+    const { material, position, color, mask, map, combine, stpq, linear } =
+      options;
     if (uniforms == null) {
       uniforms = {};
     }

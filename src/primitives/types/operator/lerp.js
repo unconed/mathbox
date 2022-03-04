@@ -183,7 +183,7 @@ export class Lerp extends Operator {
     operator.pipe("resample.padding", uniforms);
 
     // Prepare centered sampling offset
-    let vec = [];
+    const vec = [];
     let any = false;
     const iterable = ["width", "height", "depth", "items"];
     for (i = 0; i < iterable.length; i++) {

@@ -20,21 +20,21 @@ export class Base extends Renderable {
   }
 
   raw() {
-    for (let object of Array.from(this.renders)) {
+    for (const object of Array.from(this.renders)) {
       this._raw(object);
     }
     return null;
   }
 
   depth(write, test) {
-    for (let object of Array.from(this.renders)) {
+    for (const object of Array.from(this.renders)) {
       this._depth(object, write, test);
     }
     return null;
   }
 
   polygonOffset(factor, units) {
-    for (let object of Array.from(this.renders)) {
+    for (const object of Array.from(this.renders)) {
       this._polygonOffset(object, factor, units);
     }
     return null;
@@ -47,7 +47,7 @@ export class Base extends Renderable {
   }
 
   hide() {
-    for (let object of Array.from(this.renders)) {
+    for (const object of Array.from(this.renders)) {
       this._hide(object);
     }
     return null;

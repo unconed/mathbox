@@ -79,9 +79,9 @@ export class Spread extends Operator {
     return (() => {
       const result = [];
       for (i = 0; i < order.length; i++) {
-        var offset;
+        let offset;
         key = order[i];
-        var spread = this.props[key];
+        const spread = this.props[key];
         const anchor = this.props[align[i]];
 
         if (spread != null) {
@@ -96,7 +96,7 @@ export class Spread extends Operator {
           (() => {
             const result1 = [];
             for (k = 0; k <= 3; k++) {
-              var left;
+              let left;
               v =
                 (left = spread != null ? spread.getComponent(k) : undefined) !=
                 null

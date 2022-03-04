@@ -119,7 +119,7 @@ Bootstrap.registerPlugin("splash", {
       return (() => {
         const result = [];
         for (let i = 0; i < this.gyro.length; i++) {
-          var t;
+          let t;
           const el = this.gyro[i];
           this.transforms[i] = t = increment(this.transforms[i]);
           result.push((el.style.transform = el.style.WebkitTransform = t));

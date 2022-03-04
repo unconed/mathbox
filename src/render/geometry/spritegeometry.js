@@ -104,7 +104,7 @@ export class SpriteGeometry extends ClipGeometry {
             asc4 ? l < end4 : l > end4;
             asc4 ? l++ : l--
           ) {
-            for (let v of Array.from(quad)) {
+            for (const v of Array.from(quad)) {
               position(x, y, z, l);
               sprite(v[0], v[1]);
             }

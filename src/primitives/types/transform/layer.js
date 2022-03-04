@@ -33,7 +33,8 @@ export class Layer extends Transform {
 
     const _enum = this.node.attributes["layer.fit"].enum;
 
-    let { fit, depth } = this.props;
+    let { fit } = this.props;
+    const { depth } = this.props;
 
     // Convert contain/cover into x/y
     switch (fit) {

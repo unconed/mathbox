@@ -65,7 +65,7 @@ export class Strip extends Primitive {
 
   make() {
     // Bind to attached data sources
-    let color, join, stroke, uniforms;
+    let color, uniforms;
     this._helpers.bind.make([
       { to: "geometry.points", trait: "source" },
       { to: "geometry.colors", trait: "source" },
@@ -91,9 +91,7 @@ export class Strip extends Primitive {
     const unitUniforms = this._inherit("unit").getUnitUniforms();
 
     // Get display properties
-    let { line } = this.props;
-    let { shaded } = this.props;
-    let { fill } = this.props;
+    const { line, shaded, fill, stroke, join } = this.props;
 
     // Auto z-bias wireframe over surface
     const wireUniforms = {};
@@ -103,9 +101,6 @@ export class Strip extends Primitive {
     // Fetch geometry dimensions
     const dims = this.bind.points.getDimensions();
     const { items, width, height, depth } = dims;
-
-    // Get display properties
-    ({ line, shaded, fill, stroke, join } = this.props);
 
     // Build color lookup
     if (this.bind.colors) {

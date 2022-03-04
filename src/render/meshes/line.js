@@ -18,8 +18,9 @@ export class Line extends Base {
     let left;
     super(renderer, shaders, options);
 
-    let {
-      uniforms,
+    let { uniforms, stroke, join } = options;
+
+    const {
       material,
       position,
       color,
@@ -29,8 +30,6 @@ export class Line extends Base {
       stpq,
       linear,
       clip,
-      stroke,
-      join,
       proximity,
     } = options;
 

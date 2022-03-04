@@ -116,7 +116,7 @@ export class RenderTarget {
   }
 
   dispose() {
-    for (let target of Array.from(this.targets)) {
+    for (const target of Array.from(this.targets)) {
       target.dispose();
     }
     return (this.targets = this.reads = this.write = null);

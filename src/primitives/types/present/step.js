@@ -57,7 +57,8 @@ export class Step extends Track {
     // Update playhead in response to slide change
     return this._listen("slide", "slide.step", (e) => {
       let left;
-      let { delay, duration, pace, speed, playback, rewind, skip, trigger } =
+      let { duration } = this.props;
+      const { delay, pace, speed, playback, rewind, skip, trigger } =
         this.props;
 
       // Note: enter phase is from index 0 to 1
@@ -87,7 +88,7 @@ export class Step extends Track {
       const skips = this.stops.slice(Math.min(last, i), Math.max(last, i));
       let free = 0;
       last = skips.shift();
-      for (let stop of Array.from(skips)) {
+      for (const stop of Array.from(skips)) {
         if (last === stop) {
           free++;
         }
@@ -139,9 +140,9 @@ export class Step extends Track {
 Step.initClass();
 
 function __range__(left, right, inclusive) {
-  let range = [];
-  let ascending = left < right;
-  let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  const range = [];
+  const ascending = left < right;
+  const end = !inclusive ? right : ascending ? right + 1 : right - 1;
   for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
     range.push(i);
   }

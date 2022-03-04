@@ -128,9 +128,9 @@ export class TextAtlas extends Atlas {
 
   end() {
     const { mapped } = this;
-    for (let row of Array.from(this.rows.slice())) {
+    for (const row of Array.from(this.rows.slice())) {
       if (row.alive === 0) {
-        for (let key of Array.from(row.keys)) {
+        for (const key of Array.from(row.keys)) {
           delete mapped[key];
         }
         this.collapse(row);

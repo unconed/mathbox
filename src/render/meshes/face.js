@@ -17,17 +17,8 @@ export class Face extends Base {
     let f;
     super(renderer, shaders, options);
 
-    let {
-      uniforms,
-      material,
-      position,
-      color,
-      mask,
-      map,
-      combine,
-      stpq,
-      linear,
-    } = options;
+    let { uniforms, material } = options;
+    const { position, color, mask, map, combine, stpq, linear } = options;
 
     if (uniforms == null) {
       uniforms = {};

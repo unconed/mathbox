@@ -22,10 +22,8 @@ export class Data extends Source {
   }
 
   emitter(channels, items) {
-    let emitter;
-    const { data } = this.props;
-    const { bind } = this.props;
-    const { expr } = this.props;
+    let emitter, resolve;
+    const { data, bind, expr } = this.props;
 
     if (data != null) {
       // Make new emitter if data geometry doesn't match
@@ -44,7 +42,7 @@ export class Data extends Source {
       emitter = this.dataEmitter;
     } else if (resolve != null) {
       // Hook up data-bound expression to its source
-      var resolve = this._inherit("resolve");
+      resolve = this._inherit("resolve");
       emitter = this.callback(resolve.callback(bind));
     } else if (expr != null) {
       // Convert given free expression to appropriate callback

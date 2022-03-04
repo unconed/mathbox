@@ -139,19 +139,19 @@ export class LineGeometry extends ClipGeometry {
         asc3 ? l < end3 : l > end3;
         asc3 ? l++ : l--
       ) {
-        var asc4, end4;
+        let asc4, end4;
         for (
           z = 0, end4 = ribbons, asc4 = 0 <= end4;
           asc4 ? z < end4 : z > end4;
           asc4 ? z++ : z--
         ) {
-          var asc5, end5;
+          let asc5, end5;
           for (
             y = 0, end5 = strips, asc5 = 0 <= end5;
             asc5 ? y < end5 : y > end5;
             asc5 ? y++ : y--
           ) {
-            var asc6, end6, i1;
+            let asc6, end6, i1;
             for (
               i1 = 0, x = i1, end6 = samples, asc6 = 0 <= end6;
               asc6 ? i1 < end6 : i1 > end6;
@@ -204,19 +204,19 @@ export class LineGeometry extends ClipGeometry {
         asc8 ? l < end8 : l > end8;
         asc8 ? l++ : l--
       ) {
-        var asc9, end9;
+        let asc9, end9;
         for (
           z = 0, end9 = ribbons, asc9 = 0 <= end9;
           asc9 ? z < end9 : z > end9;
           asc9 ? z++ : z--
         ) {
-          var asc10, end10;
+          let asc10, end10;
           for (
             y = 0, end10 = strips, asc10 = 0 <= end10;
             asc10 ? y < end10 : y > end10;
             asc10 ? y++ : y--
           ) {
-            var asc11, end11, j1;
+            let asc11, end11, j1;
             for (
               j1 = 0, x = j1, end11 = samples, asc11 = 0 <= end11;
               asc11 ? j1 < end11 : j1 > end11;

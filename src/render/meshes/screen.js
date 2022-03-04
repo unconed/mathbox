@@ -17,7 +17,9 @@ export class Screen extends Base {
     let f;
     super(renderer, shaders, options);
 
-    let { uniforms, map, combine, stpq, linear } = options;
+    let { uniforms } = options;
+    const { map, combine, stpq, linear } = options;
+
     if (uniforms == null) {
       uniforms = {};
     }

@@ -124,7 +124,7 @@ export class Grid extends Primitive {
     const transpose = ["0000", "x000", "y000", "z000", "w000"][axes[1]];
 
     // Stroke style
-    var { stroke, join } = this.props;
+    const { stroke, join } = this.props;
 
     this.axes = [];
     lineX && this.axes.push(axis("x.", "y.", null));
@@ -151,7 +151,7 @@ export class Grid extends Primitive {
     this._helpers.object.unmake();
     this._helpers.span.unmake();
 
-    for (let axis of this.axes) {
+    for (const axis of this.axes) {
       axis.buffer.dispose();
     }
 
@@ -213,7 +213,7 @@ export class Grid extends Primitive {
     };
 
     // Fetch grid range in both dimensions
-    var { axes, origin } = this.props;
+    const { axes, origin } = this.props;
     const range1 = this._helpers.span.get("x.", axes[0]);
     const range2 = this._helpers.span.get("y.", axes[1]);
 
