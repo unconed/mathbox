@@ -8,6 +8,7 @@ const PATHS = {
 };
 
 const config = {
+  ...baseConfig,
   entry: {
     "mathbox-bundle": [PATHS.entryPoint],
     "mathbox.min": [PATHS.entryPoint],
@@ -47,7 +48,14 @@ const config = {
     library: libraryName,
     umdNamedDefine: true,
   },
-  ...baseConfig,
+  module: {
+    rules: [
+      {
+        test: /\.glsl$/,
+        type: "asset/source",
+      },
+    ],
+  },
 };
 
 module.exports = config;

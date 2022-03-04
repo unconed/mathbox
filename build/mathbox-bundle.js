@@ -11,129 +11,12 @@
 return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 459:
-/***/ ((module) => {
-
-module.exports = {"arrow.position": "uniform float worldUnit;\nuniform float lineDepth;\nuniform float lineWidth;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nuniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw, 1.0);\n  left  = getPosition(vec4(near, xyzw.yzw), 0.0);\n  start = getPosition(vec4(far, xyzw.yzw), 0.0);\n}\n\nmat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {\n\n  float depth = focusDepth;\n  if (lineDepth < 1.0) {\n    // Depth blending\n    float z = max(0.00001, -right.z);\n    depth = mix(z, focusDepth, lineDepth);\n  }\n    \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small\n  // Approach linear scaling with cubic ease the smaller we get\n  float size = arrowSize * lineWidth * worldUnit * depth * 1.25;\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = size * scale;\n  \n  // Size to 2.5:1 ratio\n  float rangeNB = range / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * rangeNB,  0),\n              vec4(b * rangeNB,  0),\n              vec4(t * range, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  vec4 p = min(geometryClip, position4);\n  \n  getArrowGeometry(p, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n",
-"axis.position": "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw, inout vec4 stpq) {\n  return axisStep * xyzw.x + axisPosition;\n}\n",
-"cartesian.position": "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position, inout vec4 stpq) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n",
-"cartesian4.position": "uniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform vec4 viewScale;\nuniform vec4 viewOffset;\n\nvec4 getCartesian4Position(vec4 position, inout vec4 stpq) {\n  return position * basisScale + basisOffset;\n}\n",
-"clamp.position": "uniform vec4 clampLimit;\n\nvec4 getClampXYZW(vec4 xyzw) {\n  return clamp(xyzw, vec4(0.0), clampLimit);\n}\n",
-"color.opaque": "vec4 opaqueColor(vec4 color) {\n  return vec4(color.rgb, 1.0);\n}\n",
-"face.position": "uniform vec4 geometryClip;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getFacePosition() {\n  vec4 p = min(geometryClip, position4);\n  return getPosition(p, 1.0);\n}\n",
-"face.position.normal": "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid getFaceGeometry(vec4 xyzw, out vec3 pos, out vec3 normal) {\n  vec3 a, b, c;\n\n  a   = getPosition(vec4(xyzw.xyz, 0.0), 0.0);\n  b   = getPosition(vec4(xyzw.xyz, 1.0), 0.0);\n  c   = getPosition(vec4(xyzw.xyz, 2.0), 0.0);\n\n  pos = getPosition(xyzw, 1.0);\n  normal = normalize(cross(c - a, b - a));\n}\n\nvec3 getFacePositionNormal() {\n  vec3 center, normal;\n\n  getFaceGeometry(position4, center, normal);\n  vNormal   = normal;\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);\n  vPosition = -center;\n\n  return center;\n}\n",
-"float.encode": "/*\nFloat encoding technique by\nCarlos Scheidegger\nhttps://github.com/cscheid/lux/blob/master/src/shade/bits/encode_float.js\n\nConversion to GLSL by:\nhttp://concord-consortium.github.io/lab/experiments/webgl-gpgpu/script.js\n*/\n\nfloat shift_right(float v, float amt) { \n  v = floor(v) + 0.5; \n  return floor(v / exp2(amt)); \n}\n\nfloat shift_left(float v, float amt) { \n  return floor(v * exp2(amt) + 0.5); \n}\n\nfloat mask_last(float v, float bits) { \n  return mod(v, shift_left(1.0, bits)); \n}\n\nfloat extract_bits(float num, float from, float to) { \n  from = floor(from + 0.5); to = floor(to + 0.5); \n  return mask_last(shift_right(num, from), to - from); \n}\n\nvec4 encode_float(float val) { \n  if (val == 0.0) return vec4(0, 0, 0, 0); \n  float valuesign = val > 0.0 ? 0.0 : 1.0; \n  val = abs(val); \n  float exponent = floor(log2(val)); \n  float biased_exponent = exponent + 127.0; \n  float fraction = ((val / exp2(exponent)) - 1.0) * 8388608.0; \n  float t = biased_exponent / 2.0; \n  float last_bit_of_biased_exponent = fract(t) * 2.0; \n  float remaining_bits_of_biased_exponent = floor(t); \n  float byte4 = extract_bits(fraction, 0.0, 8.0) / 255.0; \n  float byte3 = extract_bits(fraction, 8.0, 16.0) / 255.0; \n  float byte2 = (last_bit_of_biased_exponent * 128.0 + extract_bits(fraction, 16.0, 23.0)) / 255.0; \n  float byte1 = (valuesign * 128.0 + remaining_bits_of_biased_exponent) / 255.0; \n  return vec4(byte4, byte3, byte2, byte1); \n}\n",
-"float.index.pack": "uniform vec4 indexModulus;\n\nvec4 getSample(vec4 xyzw);\nvec4 getIndex(vec4 xyzw);\n\nvec4 floatPackIndex(vec4 xyzw) {\n  vec4 value = getSample(xyzw);\n  vec4 index = getIndex(xyzw);\n\n  vec4 offset = floor(index + .5) * indexModulus;\n  vec2 sum2 = offset.xy + offset.zw;\n  float sum = sum2.x + sum2.y;\n  return vec4(value.xyz, sum);\n}",
-"float.stretch": "vec4 getSample(vec4 xyzw);\n\nfloat floatStretch(vec4 xyzw, float channelIndex) {\n  vec4 sample = getSample(xyzw);\n  vec2 xy = channelIndex > 1.5 ? sample.zw : sample.xy;\n  return mod(channelIndex, 2.0) > .5 ? xy.y : xy.x;\n}",
-"fragment.clip.dashed": "varying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n\nvoid clipStrokeFragment() {\n  bool odd = mod(vClipStrokeIndex, 2.0) >= 1.0;\n\n  vec3 tangent;\n  if (odd) {\n    tangent = vClipStrokeOdd;\n  }\n  else {\n    tangent = vClipStrokeEven;\n  }\n\n  float travel = dot(vClipStrokePosition, normalize(tangent)) / vClipStrokeWidth;\n  if (mod(travel, 16.0) > 8.0) {\n    discard;\n  }\n}\n",
-"fragment.clip.dotted": "varying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n\nvoid clipStrokeFragment() {\n  bool odd = mod(vClipStrokeIndex, 2.0) >= 1.0;\n\n  vec3 tangent;\n  if (odd) {\n    tangent = vClipStrokeOdd;\n  }\n  else {\n    tangent = vClipStrokeEven;\n  }\n\n  float travel = dot(vClipStrokePosition, normalize(tangent)) / vClipStrokeWidth;\n  if (mod(travel, 4.0) > 2.0) {\n    discard;\n  }\n}\n",
-"fragment.clip.ends": "varying vec2 vClipEnds;\n\nvoid clipEndsFragment() {\n  if (vClipEnds.x < 0.0 || vClipEnds.y < 0.0) discard;\n}\n",
-"fragment.clip.proximity": "varying float vClipProximity;\n\nvoid clipProximityFragment() {\n  if (vClipProximity >= 0.5) discard;\n}",
-"fragment.color": "void setFragmentColor(vec4 color) {\n  gl_FragColor = color;\n}",
-"fragment.map.rgba": "vec4 fragmentRGBA(vec4 rgba, vec4 stpq) {\n  return rgba;\n}",
-"fragment.solid": "void setFragmentColor(vec4 color) {\n  if (color.a < 1.0) discard;\n  gl_FragColor = color;\n}",
-"fragment.transparent": "void setFragmentColor(vec4 color) {\n  if (color.a >= 1.0) discard;\n  gl_FragColor = color;\n}",
-"grid.position": "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzw) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzw.y, 0.0)).x;\n  vec4 offAxis = gridStep * xyzw.x + gridPosition;\n  return onAxis + offAxis;\n}\n",
-"grow.position": "uniform float growScale;\nuniform vec4  growMask;\nuniform vec4  growAnchor;\n\nvec4 getSample(vec4 xyzw);\n\nvec4 getGrowSample(vec4 xyzw) {\n  vec4 anchor = xyzw * growMask + growAnchor;\n\n  vec4 position = getSample(xyzw);\n  vec4 center = getSample(anchor);\n\n  return mix(center, position, growScale);\n}",
-"join.position": "uniform float joinStride;\nuniform float joinStrideInv;\n\nfloat getIndex(vec4 xyzw);\nvec4 getRest(vec4 xyzw);\nvec4 injectIndices(float a, float b);\n\nvec4 getJoinXYZW(vec4 xyzw) {\n\n  float a = getIndex(xyzw);\n  float b = a * joinStrideInv;\n\n  float integer  = floor(b);\n  float fraction = b - integer;\n  \n  return injectIndices(fraction * joinStride, integer) + getRest(xyzw);\n}\n",
-"label.alpha": "varying float vPixelSize;\n\nvec4 getLabelAlphaColor(vec4 color, vec4 sample) {\n  float mask = clamp(sample.r * 1000.0, 0.0, 1.0);\n  float alpha = (sample.r - .5) * vPixelSize + .5;\n  float a = mask * alpha * color.a;\n  if (a <= 0.0) discard;\n  return vec4(color.xyz, a);\n}\n",
-"label.map": "vec2 mapUV(vec4 uvwo, vec4 stpq) {\n  return uvwo.xy;\n}\n",
-"label.outline": "uniform float outlineExpand;\nuniform float outlineStep;\nuniform vec3  outlineColor;\n\nvarying float vPixelSize;\n\nconst float PIXEL_STEP = 255.0 / 16.0;\n\nvec4 getLabelOutlineColor(vec4 color, vec4 sample) {\n  float ps = vPixelSize * PIXEL_STEP;\n  float os = outlineStep;\n\n  float sdf = sample.r - .5 + outlineExpand;\n  vec2  sdfs = vec2(sdf, sdf + os);\n  vec2  alpha = clamp(sdfs * ps + .5, 0.0, 1.0);\n\n  if (alpha.y <= 0.0) {\n    discard;\n  }\n\n  vec3 blend = color.xyz;\n  if (alpha.y > alpha.x) {\n    blend = sqrt(mix(outlineColor * outlineColor, blend * blend, alpha.x));\n  }\n  \n  return vec4(blend, alpha.y * color.a);\n}\n",
-"layer.position": "uniform vec4 layerScale;\nuniform vec4 layerBias;\n\nvec4 layerPosition(vec4 position, inout vec4 stpq) {\n  return layerScale * position + layerBias;\n}\n",
-"lerp.depth": "// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpDepth(vec4 xyzw) {\n  float x = xyzw.z;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xy, i, xyzw.w);\n  vec4 xyzw2 = vec4(xyzw.xy, i + 1.0, xyzw.w);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
-"lerp.height": "// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpHeight(vec4 xyzw) {\n  float x = xyzw.y;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
-"lerp.items": "// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpItems(vec4 xyzw) {\n  float x = xyzw.w;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
-"lerp.width": "// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpWidth(vec4 xyzw) {\n  float x = xyzw.x;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n",
-"line.position": "// Units and calibration\nuniform float worldUnit;\nuniform float lineWidth;\nuniform float lineDepth;\nuniform float focusDepth;\n\n// General data index\nuniform vec4 geometryClip;\nattribute vec4 position4;\n\n// (Start/mid/end -1/0/1, top/bottom -1,1)\nattribute vec2 line;\n\n// 0...1 for round or bevel joins\n#ifdef LINE_JOIN_DETAIL\nattribute float joint;\n#else\nconst float joint = 0.0;\n#endif\n\n// Knock out excessively long line segments (e.g. for asymtpotes)\n#ifdef LINE_PROXIMITY\nuniform float lineProximity;\nvarying float vClipProximity;\n#endif\n\n// Ghetto line stroking (local only, not global)\n#ifdef LINE_STROKE\nvarying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\n// Clip line ends for arrows / decoration\n#ifdef LINE_CLIP\nuniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\n\nattribute vec2 strip;\n\nvarying vec2 vClipEnds;\n\nvoid clipEnds(vec4 xyzw, vec3 center, vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, xyzw.yzw);\n  vec3 end   = getPosition(xyzwE, 0.0);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, xyzw.yzw);\n  vec3 start = getPosition(xyzwS, 0.0);\n\n  // Measure length\n  vec3 diff = end - start;\n  float l = length(diff) * clipSpace;\n\n  // Arrow length (=2.5x radius)\n  float arrowSize = 1.25 * clipRange * lineWidth * worldUnit;\n\n  vClipEnds = vec2(1.0);\n\n  if (clipStyle.y > 0.0) {\n    // Depth blend end\n    float depth = focusDepth;\n    if (lineDepth < 1.0) {\n      float z = max(0.00001, -end.z);\n      depth = mix(z, focusDepth, lineDepth);\n    }\n\n    // Absolute arrow length\n    float size = arrowSize * depth;\n\n    // Adjust clip range\n    // Approach linear scaling with cubic ease the smaller we get\n    float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);\n    float scale = 1.0 - mini * mini * mini;\n    float invrange = 1.0 / (size * scale);\n\n    // Clip end\n    diff = end - center;\n    if(diff == vec3(0.0))\n      vClipEnds.x = -1.0;\n    else {\n      diff = normalize(end - center);\n      float d = dot(end - pos, diff);\n      vClipEnds.x = d * invrange - 1.0;\n    }\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Depth blend start\n    float depth = focusDepth;\n    if (lineDepth < 1.0) {\n      float z = max(0.00001, -start.z);\n      depth = mix(z, focusDepth, lineDepth);\n    }\n\n    // Absolute arrow length\n    float size = arrowSize * depth;\n\n    // Adjust clip range\n    // Approach linear scaling with cubic ease the smaller we get\n    float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);\n    float scale = 1.0 - mini * mini * mini;\n    float invrange = 1.0 / (size * scale);\n\n    // Clip start\n    diff = center - start;\n    if(diff == vec3(0.0))\n      vClipEnds.y = -1.0;\n    else {\n      diff = normalize(center - start);\n      float d = dot(pos - start, diff);\n      vClipEnds.y = d * invrange - 1.0;\n    }\n  }\n\n\n}\n#endif\n\n// Adjust left/center/right to be inside near/far z range\nconst float epsilon = 1e-5;\nvoid fixCenter(inout vec3 left, inout vec3 center, inout vec3 right) {\n  if (center.z >= 0.0) {\n    if (left.z < 0.0) {\n      float d = (center.z + epsilon) / (center.z - left.z);\n      center = mix(center, left, d);\n    }\n    else if (right.z < 0.0) {\n      float d = (center.z + epsilon) / (center.z - right.z);\n      center = mix(center, right, d);\n    }\n  }\n\n  if (left.z >= 0.0) {\n    if (center.z < 0.0) {\n      float d = (left.z + epsilon) / (left.z - center.z);\n      left = mix(left, center, d);\n    }\n  }\n\n  if (right.z >= 0.0) {\n    if (center.z < 0.0) {\n      float d = (right.z + epsilon) / (right.z - center.z);\n      right = mix(right, center, d);\n    }\n  }\n}\n\n// Sample the source data in an edge-aware manner\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw, 1.0);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta, 0.0) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta, 0.0) : center;\n}\n\n// Calculate the position for a vertex along the line, including joins\nvec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float width, float offset, float joint) {\n  vec2 join = vec2(1.0, 0.0);\n\n  fixCenter(left, center, right);\n\n  vec4 a = vec4(left.xy, right.xy);\n  vec4 b = a / vec4(left.zz, right.zz);\n\n  vec2 l = b.xy;\n  vec2 r = b.zw;\n  vec2 c = center.xy / center.z;\n\n  vec4 d = vec4(l, c) - vec4(c, r);\n  float l1 = dot(d.xy, d.xy);\n  float l2 = dot(d.zw, d.zw);\n\n  if (l1 + l2 > 0.0) {\n\n    if (edge > 0.5 || l2 == 0.0) {\n      vec2 nl = normalize(d.xy);\n      vec2 tl = vec2(nl.y, -nl.x);\n\n#ifdef LINE_PROXIMITY\n      vClipProximity = 1.0;\n#endif\n\n#ifdef LINE_STROKE\n      vClipStrokeEven = vClipStrokeOdd = normalize(left - center);\n#endif\n      join = tl;\n    }\n    else if (edge < -0.5 || l1 == 0.0) {\n      vec2 nr = normalize(d.zw);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n#ifdef LINE_PROXIMITY\n      vClipProximity = 1.0;\n#endif\n\n#ifdef LINE_STROKE\n      vClipStrokeEven = vClipStrokeOdd = normalize(center - right);\n#endif\n      join = tr;\n    }\n    else {\n      // Limit join stretch for tiny segments\n      float lmin2 = min(l1, l2) / (width * width);\n\n      // Hide line segment if ratio of leg lengths exceeds promixity threshold\n#ifdef LINE_PROXIMITY\n      float lr     = l1 / l2;\n      float rl     = l2 / l1;\n      float ratio  = max(lr, rl);\n      float thresh = lineProximity + 1.0;\n      vClipProximity = (ratio > thresh * thresh) ? 1.0 : 0.0;\n#endif\n\n      // Calculate normals/tangents\n      vec2 nl = normalize(d.xy);\n      vec2 nr = normalize(d.zw);\n\n      // Calculate tangents\n      vec2 tl = vec2(nl.y, -nl.x);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n#ifdef LINE_PROXIMITY\n      // Mix tangents according to leg lengths\n      vec2 tc = normalize(mix(tl, tr, l1/(l1+l2)));\n#else\n      // Average tangent\n      vec2 tc = normalize(tl + tr);\n#endif\n\n      // Miter join\n      float cosA   = dot(nl, tc);\n      float sinA   = max(0.1, abs(dot(tl, tc)));\n      float factor = cosA / sinA;\n      float scale  = sqrt(1.0 + min(lmin2, factor * factor));\n\n      // Stroke normals\n#ifdef LINE_STROKE\n      vec3 stroke1 = normalize(left - center);\n      vec3 stroke2 = normalize(center - right);\n\n      if (odd) {\n        vClipStrokeEven = stroke1;\n        vClipStrokeOdd  = stroke2;\n      }\n      else {\n        vClipStrokeEven = stroke2;\n        vClipStrokeOdd  = stroke1;\n      }\n#endif\n\n#ifdef LINE_JOIN_MITER\n      // Apply straight up miter\n      join = tc * scale;\n#endif\n\n#ifdef LINE_JOIN_ROUND\n      // Slerp bevel join into circular arc\n      float dotProduct = dot(nl, nr);\n      float angle = acos(dotProduct);\n      float sinT  = sin(angle);\n      join = (sin((1.0 - joint) * angle) * tl + sin(joint * angle) * tr) / sinT;\n#endif\n\n#ifdef LINE_JOIN_BEVEL\n      // Direct bevel join between two flat ends\n      float dotProduct = dot(nl, nr);\n      join = mix(tl, tr, joint);\n#endif\n\n#ifdef LINE_JOIN_DETAIL\n      // Check if on inside or outside of joint\n      float crossProduct = nl.x * nr.y - nl.y * nr.x;\n      if (offset * crossProduct < 0.0) {\n        // For near-180-degree bends, correct back to a miter to avoid discontinuities\n        float ratio = clamp(-dotProduct * 2.0 - 1.0, 0.0, 1.0);\n        // Otherwise collapse the inside vertices into one.\n        join = mix(tc * scale, join, ratio * ratio * ratio);\n      }\n#endif\n\n    }\n    return vec3(join, 0.0);\n  }\n  else {\n    return vec3(0.0);\n  }\n\n}\n\n// Calculate final line position\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  // left/center/right\n  float edge = line.x;\n  // up/down\n  float offset = line.y;\n\n  // Clip data\n  vec4 p = min(geometryClip, position4);\n  edge += max(0.0, position4.x - geometryClip.x);\n\n  // Get position + adjacent neighbours\n  getLineGeometry(p, edge, left, center, right);\n\n#ifdef LINE_STROKE\n  // Set parameters for line stroke fragment shader\n  vClipStrokePosition = center;\n  vClipStrokeIndex = p.x;\n  bool odd = mod(p.x, 2.0) >= 1.0;\n#else\n  bool odd = true;\n#endif\n\n  // Divide line width up/down\n  float width = lineWidth * 0.5;\n\n  float depth = focusDepth;\n  if (lineDepth < 1.0) {\n    // Depth blending\n    float z = max(0.00001, -center.z);\n    depth = mix(z, focusDepth, lineDepth);\n  }\n  width *= depth;\n\n  // Convert to world units\n  width *= worldUnit;\n\n  // Calculate line join\n  join = getLineJoin(edge, odd, left, center, right, width, offset, joint);\n  vec3 pos = center + join * offset * width;\n\n#ifdef LINE_STROKE\n  vClipStrokeWidth = width;\n#endif\n\n#ifdef LINE_CLIP\n  clipEnds(p, center, pos);\n#endif\n\n  return pos;\n}\n",
-"map.2d.data": "uniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 map2DData(vec2 xy) {\n  return (xy + dataPointer) * dataResolution;\n}\n",
-"map.2d.data.wrap": "uniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 map2DData(vec2 xy) {\n  return fract((xy + dataPointer) * dataResolution);\n}\n",
-"map.xyzw.2dv": "void mapXyzw2DV(vec4 xyzw, out vec2 xy, out float z) {\n  xy = xyzw.xy;\n  z  = xyzw.z;\n}\n\n",
-"map.xyzw.align": "vec4 alignXYZW(vec4 xyzw) {\n  return floor(xyzw + .5);\n}\n\n",
-"map.xyzw.texture": "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 mapXyzwTexture(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i, y) + vec2(x, z) * vec2(textureItems, textureHeight);\n}\n\n",
-"mesh.fragment.color": "varying vec4 vColor;\n\nvec4 getColor() {\n  return vColor;\n}\n",
-"mesh.fragment.map": "#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\nvec4 getSample(vec4 uvwo, vec4 stpq);\n\nvec4 getMapColor() {\n  #ifdef POSITION_STPQ\n  vec4 stpq = vSTPQ;\n  #else\n  vec4 stpq = vec4(0.0);\n  #endif\n\n  #ifdef POSITION_U\n  vec4 uvwo = vec4(vU, 0.0, 0.0, 0.0);\n  #endif\n  #ifdef POSITION_UV\n  vec4 uvwo = vec4(vUV, 0.0, 0.0);\n  #endif\n  #ifdef POSITION_UVW\n  vec4 uvwo = vec4(vUVW, 0.0);\n  #endif\n  #ifdef POSITION_UVWO\n  vec4 uvwo = vec4(vUVWO);\n  #endif\n\n  return getSample(uvwo, stpq);\n}\n",
-"mesh.fragment.mask": "varying float vMask;\n\nfloat ease(float t) {\n  t = clamp(t, 0.0, 1.0);\n  return t * t * (3.0 - 2.0 * t);\n}\n\nvec4 maskColor() {\n  if (vMask <= 0.0) discard;\n  return vec4(vec3(1.0), ease(vMask));\n}\n",
-"mesh.fragment.material": "#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\nvec4 getSample(vec4 rgba, vec4 stpq);\n\nvec4 getMaterialColor(vec4 rgba) {\n  vec4 stpq = vec4(0.0);\n\n  #ifdef POSITION_U\n  stpq.x = vU;\n  #endif\n  #ifdef POSITION_UV\n  stpq.xy = vUV;\n  #endif\n  #ifdef POSITION_UVW\n  stpq.xyz = vUVW;\n  #endif\n  #ifdef POSITION_UVWO\n  stpq = vUVWO;\n  #endif\n\n  #ifdef POSITION_STPQ\n  stpq = vSTPQ;\n  #endif\n\n  return getSample(rgba, stpq);\n}\n",
-"mesh.fragment.shaded": "varying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 offSpecular(vec3 color) {\n  vec3 c = 1.0 - color;\n  return 1.0 - c * c;\n}\n\nvec4 getShadedColor(vec4 rgba) {\n  \n  vec3 color = rgba.xyz;\n  vec3 color2 = offSpecular(rgba.xyz);\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\treturn vec4(color * (diffuse * .9 + .05) + .25 * color2 * specular, rgba.a);\n}\n",
-"mesh.fragment.texture": "",
-"mesh.gamma.in": "vec4 getGammaInColor(vec4 rgba) {\n  return vec4(rgba.rgb * rgba.rgb, rgba.a);\n}\n",
-"mesh.gamma.out": "vec4 getGammaOutColor(vec4 rgba) {\n  return vec4(sqrt(rgba.rgb), rgba.a);\n}\n",
-"mesh.map.uvwo": "vec4 mapUVWO(vec4 uvwo, vec4 stpq) {\n  return uvwo;\n}\n",
-"mesh.position": "uniform vec4 geometryClip;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getMeshPosition() {\n  vec4 p = min(geometryClip, position4);\n  return getPosition(p, 1.0);\n}\n",
-"mesh.vertex.color": "attribute vec4 position4;\nuniform vec4 geometryClip;\nvarying vec4 vColor;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvoid vertexColor() {\n  vec4 p = min(geometryClip, position4);\n  vColor = getSample(p);\n}\n",
-"mesh.vertex.mask": "attribute vec4 position4;\nuniform vec4 geometryResolution;\nuniform vec4 geometryClip;\nvarying float vMask;\n\n// External\nfloat getSample(vec4 xyzw);\n\nvoid maskLevel() {\n  vec4 p = min(geometryClip, position4);\n  vMask = getSample(p * geometryResolution);\n}\n",
-"mesh.vertex.position": "uniform vec4 geometryResolution;\n\n#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut);\n\nvec3 getMeshPosition(vec4 xyzw, float canonical) {\n  vec4 stpqOut, stpqIn = xyzw * geometryResolution;\n  vec3 xyz = getPosition(xyzw, stpqIn, stpqOut);\n\n  #ifdef POSITION_MAP\n  if (canonical > 0.5) {\n    #ifdef POSITION_STPQ\n    vSTPQ = stpqOut;\n    #endif\n    #ifdef POSITION_U\n    vU = stpqOut.x;\n    #endif\n    #ifdef POSITION_UV\n    vUV = stpqOut.xy;\n    #endif\n    #ifdef POSITION_UVW\n    vUVW = stpqOut.xyz;\n    #endif\n    #ifdef POSITION_UVWO\n    vUVWO = stpqOut;\n    #endif\n  }\n  #endif\n  return xyz;\n}\n",
-"move.position": "uniform float transitionEnter;\nuniform float transitionExit;\nuniform vec4  transitionScale;\nuniform vec4  transitionBias;\nuniform float transitionSkew;\nuniform float transitionActive;\n\nuniform vec4  moveFrom;\nuniform vec4  moveTo;\n\nfloat ease(float t) {\n  t = clamp(t, 0.0, 1.0);\n  return 1.0 - (2.0 - t) * t;\n}\n\nvec4 getTransitionPosition(vec4 xyzw, inout vec4 stpq) {\n  if (transitionActive < 0.5) return xyzw;\n\n  float enter   = transitionEnter;\n  float exit    = transitionExit;\n  float skew    = transitionSkew;\n  vec4  scale   = transitionScale;\n  vec4  bias    = transitionBias;\n\n  float factor  = 1.0 + skew;\n  float offset  = dot(vec4(1.0), stpq * scale + bias);\n\n  float a1 = ease(enter * factor - offset);\n  float a2 = ease(exit  * factor + offset - skew);\n\n  return xyzw + a1 * moveFrom + a2 * moveTo;\n}",
-"object.mask.default": "vec4 getMask(vec4 xyzw) {\n  return vec4(1.0);\n}",
-"point.alpha.circle": "varying float vPixelSize;\n\nfloat getDiscAlpha(float mask) {\n  // Approximation: 1 - x*x is approximately linear around x = 1 with slope 2\n  return vPixelSize * (1.0 - mask);\n  //  return vPixelSize * 2.0 * (1.0 - sqrt(mask));\n}\n",
-"point.alpha.circle.hollow": "varying float vPixelSize;\n\nfloat getDiscHollowAlpha(float mask) {\n  return vPixelSize * (0.5 - 2.0 * abs(sqrt(mask) - .75));\n}\n",
-"point.alpha.generic": "varying float vPixelSize;\n\nfloat getGenericAlpha(float mask) {\n  return vPixelSize * 2.0 * (1.0 - mask);\n}\n",
-"point.alpha.generic.hollow": "varying float vPixelSize;\n\nfloat getGenericHollowAlpha(float mask) {\n  return vPixelSize * (0.5 - 2.0 * abs(mask - .75));\n}\n",
-"point.edge": "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha >= 1.0) {\n    discard;\n  }\n  gl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n",
-"point.fill": "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha < 1.0) {\n    discard;\n  }\n  gl_FragColor = color;\n}\n\n",
-"point.mask.circle": "varying float vPixelSize;\n\nfloat getCircleMask(vec2 uv) {\n  return dot(uv, uv);\n}\n",
-"point.mask.diamond": "varying float vPixelSize;\n\nfloat getDiamondMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return a.x + a.y;\n}\n",
-"point.mask.down": "varying float vPixelSize;\n\nfloat getTriangleDownMask(vec2 uv) {\n  uv.y += .25;\n  return max(uv.y, abs(uv.x) * .866 - uv.y * .5 + .6);\n}\n",
-"point.mask.left": "varying float vPixelSize;\n\nfloat getTriangleLeftMask(vec2 uv) {\n  uv.x += .25;\n  return max(uv.x, abs(uv.y) * .866 - uv.x * .5 + .6);\n}\n",
-"point.mask.right": "varying float vPixelSize;\n\nfloat getTriangleRightMask(vec2 uv) {\n  uv.x -= .25;\n  return max(-uv.x, abs(uv.y) * .866 + uv.x * .5 + .6);\n}\n",
-"point.mask.square": "varying float vPixelSize;\n\nfloat getSquareMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return max(a.x, a.y);\n}\n",
-"point.mask.up": "varying float vPixelSize;\n\nfloat getTriangleUpMask(vec2 uv) {\n  uv.y -= .25;\n  return max(-uv.y, abs(uv.x) * .866 + uv.y * .5 + .6);\n}\n",
-"point.position": "uniform float pointDepth;\n\nuniform float pixelUnit;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\nconst float pointScale = POINT_SHAPE_SCALE;\n\n// External\nfloat getPointSize(vec4 xyzw);\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getPointPosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 center = getPosition(p, 1.0);\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float z = -center.z;\n  float depth = mix(z, focusDepth, pointDepth);\n  \n  // Match device/unit mapping \n  // Sprite goes from -1..1, width = 2.\n  float pointSize = getPointSize(p);\n  float size = pointScale * pointSize * pixelUnit * .5;\n  float depthSize = depth * size;\n  \n  // Pad sprite by half a pixel to make the anti-aliasing straddle the pixel edge\n  // Note: pixelsize measures radius\n  float pixelSize = .5 * (pointDepth > 0.0 ? depthSize / z : size);\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * depthSize * renderScaleInv * padFactor, 0.0);\n}\n",
-"point.size.uniform": "uniform float pointSize;\n\nfloat getPointSize(vec4 xyzw) {\n  return pointSize;\n}",
-"point.size.varying": "uniform float pointSize;\n\nvec4 getSample(vec4 xyzw);\n\nfloat getPointSize(vec4 xyzw) {\n  return pointSize * getSample(xyzw).x;\n}",
-"polar.position": "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position, inout vec4 stpq) {\n  if (polarBend > 0.0) {\n\n    if (polarBend < 0.001) {\n      // Factor out large addition/subtraction of polarFocus\n      // to avoid numerical error\n      // sin(x) ~ x\n      // cos(x) ~ 1 - x * x / 2\n      vec2 pb = position.xy * polarBend;\n      float ppbbx = pb.x * pb.x;\n      return viewMatrix * vec4(\n        position.x * (1.0 - polarBend + (pb.y * polarAspect)),\n        position.y * (1.0 - .5 * ppbbx) - (.5 * ppbbx) * polarFocus / polarAspect,\n        position.z + position.x * polarHelix * polarBend,\n        1.0\n      );\n    }\n    else {\n      vec2 xy = position.xy * vec2(polarBend, polarAspect);\n      float radius = polarFocus + xy.y;\n      return viewMatrix * vec4(\n        sin(xy.x) * radius,\n        (cos(xy.x) * radius - polarFocus) / polarAspect,\n        position.z + position.x * polarHelix * polarBend,\n        1.0\n      );\n    }\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"project.position": "uniform float styleZBias;\nuniform float styleZIndex;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n\n  // Apply relative Z bias\n  float bias  = (1.0 - styleZBias / 32768.0);\n  pos.z *= bias;\n  \n  // Apply large scale Z index changes\n  if (styleZIndex > 0.0) {\n    float z = pos.z / pos.w;\n    pos.z = ((z + 1.0) / (styleZIndex + 1.0) - 1.0) * pos.w;\n  }\n  \n  gl_Position = pos;\n}",
-"project.readback": "// This is three.js' global uniform, missing from fragment shaders.\nuniform mat4 projectionMatrix;\n\nvec4 readbackPosition(vec3 position, vec4 stpq) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  vec3 final = pos.xyz / pos.w;\n  if (final.z < -1.0) {\n    return vec4(0.0, 0.0, 0.0, -1.0);\n  }\n  else {\n    return vec4(final, -position.z);\n  }\n}\n",
-"raw.position.scale": "uniform vec4 geometryScale;\nattribute vec4 position4;\n\nvec4 getRawPositionScale() {\n  return geometryScale * position4;\n}\n",
-"repeat.position": "uniform vec4 repeatModulus;\n\nvec4 getRepeatXYZW(vec4 xyzw) {\n  return mod(xyzw + .5, repeatModulus) - .5;\n}\n",
-"resample.padding": "uniform vec4 resampleBias;\n\nvec4 resamplePadding(vec4 xyzw) {\n  return xyzw + resampleBias;\n}",
-"resample.relative": "uniform vec4 resampleFactor;\n\nvec4 resampleRelative(vec4 xyzw) {\n  return xyzw * resampleFactor;\n}",
-"reveal.mask": "uniform float transitionEnter;\nuniform float transitionExit;\nuniform vec4  transitionScale;\nuniform vec4  transitionBias;\nuniform float transitionSkew;\nuniform float transitionActive;\n\nfloat getTransitionSDFMask(vec4 stpq) {\n  if (transitionActive < 0.5) return 1.0;\n\n  float enter   = transitionEnter;\n  float exit    = transitionExit;\n  float skew    = transitionSkew;\n  vec4  scale   = transitionScale;\n  vec4  bias    = transitionBias;\n\n  float factor  = 1.0 + skew;\n  float offset  = dot(vec4(1.0), stpq * scale + bias);\n\n  vec2 d = vec2(enter, exit) * factor + vec2(-offset, offset - skew);\n  if (exit  == 1.0) return d.x;\n  if (enter == 1.0) return d.y;\n  return min(d.x, d.y);\n}",
-"root.position": "vec3 getRootPosition(vec4 position, in vec4 stpqIn, out vec4 stpqOut) {\n  stpqOut = stpqIn; // avoid inout confusion\n  return position.xyz;\n}",
-"sample.2d": "uniform sampler2D dataTexture;\n\nvec4 sample2D(vec2 uv) {\n  return texture2D(dataTexture, uv);\n}\n",
-"scale.position": "uniform vec4 scaleAxis;\nuniform vec4 scaleOffset;\n\nvec4 sampleData(float x);\n\nvec4 getScalePosition(vec4 xyzw) {\n  return scaleAxis * sampleData(xyzw.x).x + scaleOffset;\n}\n",
-"screen.map.stpq": "uniform vec4 remapSTPQScale;\n\nvec4 screenMapSTPQ(vec4 xyzw, out vec4 stpq) {\n  stpq = xyzw * remapSTPQScale;\n  return xyzw;\n}\n",
-"screen.map.xy": "uniform vec2 remapUVScale;\n\nvec4 screenMapXY(vec4 uvwo, vec4 stpq) {\n  return vec4(floor(remapUVScale * uvwo.xy), 0.0, 0.0);\n}\n",
-"screen.map.xyzw": "uniform vec2 remapUVScale;\nuniform vec2 remapModulus;\nuniform vec2 remapModulusInv;\n\nvec4 screenMapXYZW(vec4 uvwo, vec4 stpq) {\n  vec2 st = floor(remapUVScale * uvwo.xy);\n  vec2 xy = st * remapModulusInv;\n  vec2 ixy = floor(xy);\n  vec2 fxy = xy - ixy;\n  vec2 zw = fxy * remapModulus;\n  return vec4(ixy.x, zw.y, ixy.y, zw.x);\n}\n",
-"screen.pass.uv": "vec2 screenPassUV(vec4 uvwo, vec4 stpq) {\n  return uvwo.xy;\n}\n",
-"screen.position": "void setScreenPosition(vec4 position) {\n  gl_Position = vec4(position.xy * 2.0 - 1.0, 0.5, 1.0);\n}\n",
-"slice.position": "uniform vec4 sliceOffset;\n\nvec4 getSliceOffset(vec4 xyzw) {\n  return xyzw + sliceOffset;\n}\n",
-"spherical.position": "uniform float sphericalBend;\nuniform float sphericalFocus;\nuniform float sphericalAspectX;\nuniform float sphericalAspectY;\nuniform float sphericalScaleY;\n\nuniform mat4 viewMatrix;\n\nvec4 getSphericalPosition(vec4 position, inout vec4 stpq) {\n  if (sphericalBend > 0.0001) {\n\n    vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);\n    float radius = sphericalFocus + xyz.z;\n    float cosine = cos(xyz.y) * radius;\n\n    return viewMatrix * vec4(\n      sin(xyz.x) * cosine,\n      sin(xyz.y) * radius * sphericalAspectY,\n      (cos(xyz.x) * cosine - sphericalFocus) / sphericalAspectX,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"split.position": "uniform float splitStride;\n\nvec2 getIndices(vec4 xyzw);\nvec4 getRest(vec4 xyzw);\nvec4 injectIndex(float v);\n\nvec4 getSplitXYZW(vec4 xyzw) {\n  vec2 uv = getIndices(xyzw);\n  float offset = uv.x + uv.y * splitStride;\n  return injectIndex(offset) + getRest(xyzw);\n}\n",
-"spread.position": "uniform vec4 spreadOffset;\nuniform mat4 spreadMatrix;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvec4 getSpreadSample(vec4 xyzw) {\n  vec4 sample = getSample(xyzw);\n  return sample + spreadMatrix * (spreadOffset + xyzw);\n}\n",
-"sprite.fragment": "varying vec2 vSprite;\n\nvec4 getSample(vec2 xy);\n\nvec4 getSpriteColor() {\n  return getSample(vSprite);\n}",
-"sprite.position": "uniform vec2 spriteOffset;\nuniform float spriteScale;\nuniform float spriteDepth;\nuniform float spriteSnap;\n\nuniform vec2 renderOdd;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float pixelUnit;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\nvec4 getSprite(vec4 xyzw);\n\nvec3 getSpritePosition() {\n  // Clip points\n  vec4 p = min(geometryClip, position4);\n  float diff = length(position4 - p);\n  if (diff > 0.0) {\n    return vec3(0.0, 0.0, 1000.0);\n  }\n\n  // Make sprites\n  vec3 center = getPosition(p, 1.0);\n  vec4 atlas = getSprite(p);\n\n  // Sprite goes from -1..1, width = 2.\n  // -1..1 -> -0.5..0.5\n  vec2 halfSprite = sprite * .5;\n  vec2 halfFlipSprite = vec2(halfSprite.x, -halfSprite.y);\n\n#ifdef POSITION_UV\n  // Assign UVs\n  vUV = atlas.xy + atlas.zw * (halfFlipSprite + .5);\n#endif\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float depth = focusDepth, z;\n  z = -center.z;\n  if (spriteDepth < 1.0) {\n    depth = mix(z, focusDepth, spriteDepth);\n  }\n  \n  // Match device/unit mapping \n  float size = pixelUnit * spriteScale;\n  float depthSize = depth * size;\n\n  // Calculate pixelSize for anti-aliasing\n  float pixelSize = (spriteDepth > 0.0 ? depthSize / z : size);\n  vPixelSize = pixelSize;\n\n  // Position sprite\n  vec2 atlasOdd = fract(atlas.zw / 2.0);\n  vec2 offset = (spriteOffset + halfSprite * atlas.zw) * depthSize;\n  if (spriteSnap > 0.5) {\n    // Snap to pixel (w/ epsilon shift to avoid jitter)\n    return vec3(((floor(center.xy / center.z * renderScale + 0.001) + renderOdd + atlasOdd) * center.z + offset) * renderScaleInv, center.z);\n  }\n  else {\n    // Place directly\n    return center + vec3(offset * renderScaleInv, 0.0);\n  }\n\n}\n",
-"stereographic.position": "uniform float stereoBend;\n\nuniform mat4 viewMatrix;\n\nvec4 getStereoPosition(vec4 position, inout vec4 stpq) {\n  if (stereoBend > 0.0001) {\n\n    vec3 pos = position.xyz;\n    float r = length(pos);\n    float z = r + pos.z;\n    vec3 project = vec3(pos.xy / z, r);\n    \n    vec3 lerped = mix(pos, project, stereoBend);\n\n    return viewMatrix * vec4(lerped, 1.0);\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}",
-"stereographic4.position": "uniform float stereoBend;\nuniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getStereographic4Position(vec4 position, inout vec4 stpq) {\n  \n  vec4 transformed;\n  if (stereoBend > 0.0001) {\n\n    float r = length(position);\n    float w = r + position.w;\n    vec4 project = vec4(position.xyz / w, r);\n    \n    transformed = mix(position, project, stereoBend);\n  }\n  else {\n    transformed = position;\n  }\n\n  vec4 pos4 = transformed * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n",
-"stpq.sample.2d": "varying vec2 vST;\n\nvec4 getSample(vec2 st);\n\nvec4 getSTSample() {\n  return getSample(vST);\n}\n",
-"stpq.xyzw.2d": "varying vec2 vUV;\n\nvoid setRawUV(vec4 xyzw) {\n  vUV = xyzw.xy;\n}\n",
-"strip.position.normal": "uniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec3 strip;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid getStripGeometry(vec4 xyzw, vec3 strip, out vec3 pos, out vec3 normal) {\n  vec3 a, b, c;\n\n  a   = getPosition(xyzw, 1.0);\n  b   = getPosition(vec4(xyzw.xyz, strip.x), 0.0);\n  c   = getPosition(vec4(xyzw.xyz, strip.y), 0.0);\n\n  normal = normalize(cross(c - a, b - a)) * strip.z;\n  \n  pos = a;\n}\n\nvec3 getStripPositionNormal() {\n  vec3 center, normal;\n\n  vec4 p = min(geometryClip, position4);\n\n  getStripGeometry(p, strip, center, normal);\n  vNormal   = normal;\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);\n  vPosition = -center;\n\n  return center;\n}\n",
-"style.color": "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvec4 getStyleColor() {\n  return vec4(styleColor, styleOpacity);\n}\n",
-"subdivide.depth": "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideDepth(vec4 xyzw) {\n  float x = xyzw.z;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  return sampleData(vec4(xyzw.xy, i + g, xyzw.w));\n}\n",
-"subdivide.depth.lerp": "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideDepthLerp(vec4 xyzw) {\n  float x = xyzw.z;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  vec4 xyzw1 = vec4(xyzw.xy, i, xyzw.w);\n  vec4 xyzw2 = vec4(xyzw.xy, i + 1.0, xyzw.w);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, g);\n}\n",
-"subdivide.height": "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideHeight(vec4 xyzw) {\n  float x = xyzw.y;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  return sampleData(vec4(xyzw.x, i + g, xyzw.zw));\n}\n",
-"subdivide.height.lerp": "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideHeightLerp(vec4 xyzw) {\n  float x = xyzw.y;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, g);\n}\n",
-"subdivide.items": "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideItems(vec4 xyzw) {\n  float x = xyzw.w;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  return sampleData(vec4(xyzw.xyz, i + g));\n}\n",
-"subdivide.items.lerp": "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideItemsLerp(vec4 xyzw) {\n  float x = xyzw.w;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, g);\n}\n",
-"subdivide.width": "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideWidth(vec4 xyzw) {\n  float x = xyzw.x;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  return sampleData(vec4(i + g, xyzw.yzw));\n}\n",
-"subdivide.width.lerp": "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideWidthLerp(vec4 xyzw) {\n  float x = xyzw.x;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, g);\n}\n",
-"surface.mask.hollow": "attribute vec4 position4;\n\nfloat getSurfaceHollowMask(vec4 xyzw) {\n  vec4 df = abs(fract(position4) - .5);\n  vec2 df2 = min(df.xy, df.zw);\n  float df3 = min(df2.x, df2.y);\n  return df3;\n}",
-"surface.position": "uniform vec4 geometryClip;\nuniform vec4 geometryResolution;\nuniform vec4 mapSize;\n\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getSurfacePosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 xyz = getPosition(p, 1.0);\n\n  // Overwrite UVs\n#ifdef POSITION_UV\n#ifdef POSITION_UV_INT\n  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;\n#else\n  vUV = position4.xy * geometryResolution.xy;\n#endif\n#endif\n\n  return xyz;\n}\n",
-"surface.position.normal": "uniform vec4 mapSize;\nuniform vec4 geometryResolution;\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 surface;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvoid getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec4 deltaX = vec4(1.0, 0.0, 0.0, 0.0);\n  vec4 deltaY = vec4(0.0, 1.0, 0.0, 0.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xyzw, 1.0);\n  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX, 0.0) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX, 0.0) : center;\n  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY, 0.0) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY, 0.0) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xyzw, 1.0);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX, 0.0) : (2.0 * center - getPosition(xyzw - deltaX, 0.0));\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY, 0.0) : (2.0 * center - getPosition(xyzw - deltaY, 0.0));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  vec4 p = min(geometryClip, position4);\n\n  getSurfaceGeometry(p, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz); // hardcoded directional light\n  vPosition = -center;\n\n#ifdef POSITION_UV\n#ifdef POSITION_UV_INT\n  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;\n#else\n  vUV = position4.xy * geometryResolution.xy;\n#endif\n#endif\n  \n  return center;\n}\n",
-"ticks.position": "uniform float worldUnit;\nuniform float focusDepth;\nuniform float tickSize;\nuniform float tickEpsilon;\nuniform vec3  tickNormal;\nuniform vec2  tickStrip;\n\nvec4 getSample(vec4 xyzw);\n\nvec3 transformPosition(vec4 position, in vec4 stpqIn, out vec4 stpqOut);\n\nvec3 getTickPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut) {\n  float epsilon = tickEpsilon;\n\n  // determine tick direction\n  float leftX  = max(tickStrip.x, xyzw.y - 1.0);\n  float rightX = min(tickStrip.y, xyzw.y + 1.0);\n  \n  vec4 left    = getSample(vec4(leftX,  xyzw.zw, 0.0));\n  vec4 right   = getSample(vec4(rightX, xyzw.zw, 0.0));\n  vec4 diff    = right - left;\n\n  vec3 normal  = cross(normalize(diff.xyz + vec3(diff.w)), tickNormal);\n  float bias   = max(0.0, 1.0 - length(normal) * 2.0);\n       normal  = mix(normal, tickNormal.yzx, bias * bias);\n  \n  // transform (point) and (point + delta)\n  vec4 center  = getSample(vec4(xyzw.yzw, 0.0));\n  vec4 delta   = vec4(normal, 0.0) * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + delta;\n\n  vec4 _;\n  vec3 c = transformPosition(a, stpqIn, stpqOut);\n  vec3 d = transformPosition(b, stpqIn, _);\n  \n  // sample on either side to create line\n  float line = xyzw.x - .5;\n  vec3  mid  = c;\n  vec3  side = normalize(d - c);\n\n  return mid + side * line * tickSize * worldUnit * focusDepth;\n}\n",
-"transform3.position": "uniform mat4 transformMatrix;\n\nvec4 transformPosition(vec4 position, inout vec4 stpq) {\n  return transformMatrix * vec4(position.xyz, 1.0);\n}\n",
-"transform4.position": "uniform mat4 transformMatrix;\nuniform vec4 transformOffset;\n\nvec4 transformPosition(vec4 position, inout vec4 stpq) {\n  return transformMatrix * position + transformOffset;\n}\n",
-"view.position": "// Implicit three.js uniform\n// uniform mat4 viewMatrix;\n\nvec4 getViewPosition(vec4 position, inout vec4 stpq) {\n  return (viewMatrix * vec4(position.xyz, 1.0));\n}\n"};
-
-
-/***/ }),
-
 /***/ 671:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 module.exports = language
 
-var tokenizer = __webpack_require__(820)
+var tokenizer = __webpack_require__(4820)
 
 function language(lookups, matchComparison) {
   return function(selector) {
@@ -578,12 +461,12 @@ function caseSensitiveComparison(type, pattern, data) {
 
 /***/ }),
 
-/***/ 820:
+/***/ 4820:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 module.exports = tokenize
 
-var through = __webpack_require__(547)
+var through = __webpack_require__(6547)
 
 var PSEUDOSTART = 'pseudo-start'
   , ATTR_START = 'attr-start'
@@ -913,10 +796,10 @@ function tokenize() {
 
 /***/ }),
 
-/***/ 36:
+/***/ 7485:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var parse = __webpack_require__(805);
+var parse = __webpack_require__(8805);
 
 module.exports = parseArray;
 
@@ -933,7 +816,7 @@ function parseArray(tokens) {
 
 /***/ }),
 
-/***/ 837:
+/***/ 3837:
 /***/ ((module) => {
 
 let state, token, tokens, idx;
@@ -1214,13 +1097,13 @@ function fail(message) {
 
 /***/ }),
 
-/***/ 805:
+/***/ 8805:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 module.exports = parser;
 
-const full_parse_expr = __webpack_require__(837),
-  Scope = __webpack_require__(816);
+const full_parse_expr = __webpack_require__(3837),
+  Scope = __webpack_require__(8816);
 
 // singleton!
 const Advance = new Object();
@@ -2333,7 +2216,7 @@ function is_precision(token) {
 
 /***/ }),
 
-/***/ 816:
+/***/ 8816:
 /***/ ((module) => {
 
 module.exports = scope;
@@ -2375,7 +2258,7 @@ proto.find = function (name, fail) {
 
 /***/ }),
 
-/***/ 742:
+/***/ 9742:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2533,7 +2416,7 @@ function fromByteArray (uint8) {
 
 /***/ }),
 
-/***/ 764:
+/***/ 8764:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -2547,9 +2430,9 @@ function fromByteArray (uint8) {
 
 
 
-var base64 = __webpack_require__(742)
+var base64 = __webpack_require__(9742)
 var ieee754 = __webpack_require__(645)
-var isArray = __webpack_require__(826)
+var isArray = __webpack_require__(5826)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -4330,7 +4213,7 @@ function isnan (val) {
 
 /***/ }),
 
-/***/ 187:
+/***/ 7187:
 /***/ ((module) => {
 
 "use strict";
@@ -4835,16 +4718,16 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
 
 /***/ }),
 
-/***/ 460:
+/***/ 8460:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 module.exports = tokenize
 
-var literals100 = __webpack_require__(529)
-  , operators = __webpack_require__(679)
-  , builtins100 = __webpack_require__(222)
-  , literals300es = __webpack_require__(914)
-  , builtins300es = __webpack_require__(537)
+var literals100 = __webpack_require__(7529)
+  , operators = __webpack_require__(7679)
+  , builtins100 = __webpack_require__(2222)
+  , literals300es = __webpack_require__(2914)
+  , builtins300es = __webpack_require__(9537)
 
 var NORMAL = 999          // <-- never emitted
   , TOKEN = 9999          // <-- never emitted
@@ -5217,11 +5100,11 @@ function tokenize(opt) {
 
 /***/ }),
 
-/***/ 537:
+/***/ 9537:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // 300es builtins/reserved words that were previously valid in v100
-var v100 = __webpack_require__(222)
+var v100 = __webpack_require__(2222)
 
 // The texture2D|Cube functions have been removed
 // And the gl_ features are updated
@@ -5293,7 +5176,7 @@ module.exports = v100.concat([
 
 /***/ }),
 
-/***/ 222:
+/***/ 2222:
 /***/ ((module) => {
 
 module.exports = [
@@ -5450,10 +5333,10 @@ module.exports = [
 
 /***/ }),
 
-/***/ 914:
+/***/ 2914:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var v100 = __webpack_require__(529)
+var v100 = __webpack_require__(7529)
 
 module.exports = v100.slice().concat([
    'layout'
@@ -5544,7 +5427,7 @@ module.exports = v100.slice().concat([
 
 /***/ }),
 
-/***/ 529:
+/***/ 7529:
 /***/ ((module) => {
 
 module.exports = [
@@ -5645,7 +5528,7 @@ module.exports = [
 
 /***/ }),
 
-/***/ 679:
+/***/ 7679:
 /***/ ((module) => {
 
 module.exports = [
@@ -5699,10 +5582,10 @@ module.exports = [
 
 /***/ }),
 
-/***/ 932:
+/***/ 9932:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var tokenize = __webpack_require__(460)
+var tokenize = __webpack_require__(8460)
 
 module.exports = tokenizeString
 
@@ -5811,7 +5694,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 /***/ }),
 
-/***/ 717:
+/***/ 5717:
 /***/ ((module) => {
 
 if (typeof Object.create === 'function') {
@@ -5845,7 +5728,7 @@ if (typeof Object.create === 'function') {
 
 /***/ }),
 
-/***/ 826:
+/***/ 5826:
 /***/ ((module) => {
 
 var toString = {}.toString;
@@ -5857,7 +5740,7 @@ module.exports = Array.isArray || function (arr) {
 
 /***/ }),
 
-/***/ 155:
+/***/ 4155:
 /***/ ((module) => {
 
 // shim for using process in browser
@@ -6048,11 +5931,11 @@ process.umask = function() { return 0; };
 
 /***/ }),
 
-/***/ 509:
+/***/ 9509:
 /***/ ((module, exports, __webpack_require__) => {
 
 /* eslint-disable node/no-deprecated-api */
-var buffer = __webpack_require__(764)
+var buffer = __webpack_require__(8764)
 var Buffer = buffer.Buffer
 
 // alternative to using Object.keys for old browsers
@@ -6117,7 +6000,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 
 /***/ }),
 
-/***/ 981:
+/***/ 3981:
 /***/ ((__unused_webpack_module, exports) => {
 
 /*
@@ -6177,7 +6060,7 @@ exports.max = function (a, b) {
 
 /***/ }),
 
-/***/ 466:
+/***/ 3466:
 /***/ (function(module) {
 
 // stats.js - http://github.com/mrdoob/stats.js
@@ -6189,7 +6072,7 @@ b.fillRect(d,m,n,p);b.fillStyle=l;b.globalAlpha=.9;b.fillRect(d,m,n,p);return{do
 
 /***/ }),
 
-/***/ 830:
+/***/ 2830:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -6215,17 +6098,17 @@ b.fillRect(d,m,n,p);b.fillStyle=l;b.globalAlpha=.9;b.fillRect(d,m,n,p);return{do
 
 module.exports = Stream;
 
-var EE = (__webpack_require__(187).EventEmitter);
-var inherits = __webpack_require__(717);
+var EE = (__webpack_require__(7187).EventEmitter);
+var inherits = __webpack_require__(5717);
 
 inherits(Stream, EE);
-Stream.Readable = __webpack_require__(577);
+Stream.Readable = __webpack_require__(6577);
 Stream.Writable = __webpack_require__(323);
-Stream.Duplex = __webpack_require__(656);
-Stream.Transform = __webpack_require__(473);
-Stream.PassThrough = __webpack_require__(366);
-Stream.finished = __webpack_require__(86)
-Stream.pipeline = __webpack_require__(472)
+Stream.Duplex = __webpack_require__(8656);
+Stream.Transform = __webpack_require__(4473);
+Stream.PassThrough = __webpack_require__(2366);
+Stream.finished = __webpack_require__(1086)
+Stream.pipeline = __webpack_require__(6472)
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -6325,7 +6208,7 @@ Stream.prototype.pipe = function(dest, options) {
 
 /***/ }),
 
-/***/ 106:
+/***/ 8106:
 /***/ ((module) => {
 
 "use strict";
@@ -6460,11 +6343,11 @@ module.exports.q = codes;
 
 /***/ }),
 
-/***/ 656:
+/***/ 8656:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(155);
+/* provided dependency */ var process = __webpack_require__(4155);
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6506,11 +6389,11 @@ var objectKeys = Object.keys || function (obj) {
 
 module.exports = Duplex;
 
-var Readable = __webpack_require__(577);
+var Readable = __webpack_require__(6577);
 
 var Writable = __webpack_require__(323);
 
-__webpack_require__(717)(Duplex, Readable);
+__webpack_require__(5717)(Duplex, Readable);
 
 {
   // Allow the keys array to be GC'ed.
@@ -6607,7 +6490,7 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 
 /***/ }),
 
-/***/ 366:
+/***/ 2366:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -6638,9 +6521,9 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(473);
+var Transform = __webpack_require__(4473);
 
-__webpack_require__(717)(PassThrough, Transform);
+__webpack_require__(5717)(PassThrough, Transform);
 
 function PassThrough(options) {
   if (!(this instanceof PassThrough)) return new PassThrough(options);
@@ -6653,11 +6536,11 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 
 /***/ }),
 
-/***/ 577:
+/***/ 6577:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(155);
+/* provided dependency */ var process = __webpack_require__(4155);
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6689,7 +6572,7 @@ var Duplex;
 Readable.ReadableState = ReadableState;
 /*<replacement>*/
 
-var EE = (__webpack_require__(187).EventEmitter);
+var EE = (__webpack_require__(7187).EventEmitter);
 
 var EElistenerCount = function EElistenerCount(emitter, type) {
   return emitter.listeners(type).length;
@@ -6699,11 +6582,11 @@ var EElistenerCount = function EElistenerCount(emitter, type) {
 /*<replacement>*/
 
 
-var Stream = __webpack_require__(194);
+var Stream = __webpack_require__(3194);
 /*</replacement>*/
 
 
-var Buffer = (__webpack_require__(764).Buffer);
+var Buffer = (__webpack_require__(8764).Buffer);
 
 var OurUint8Array = __webpack_require__.g.Uint8Array || function () {};
 
@@ -6729,14 +6612,14 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 
-var BufferList = __webpack_require__(686);
+var BufferList = __webpack_require__(9686);
 
-var destroyImpl = __webpack_require__(29);
+var destroyImpl = __webpack_require__(1029);
 
 var _require = __webpack_require__(94),
     getHighWaterMark = _require.getHighWaterMark;
 
-var _require$codes = (__webpack_require__(106)/* .codes */ .q),
+var _require$codes = (__webpack_require__(8106)/* .codes */ .q),
     ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
     ERR_STREAM_PUSH_AFTER_EOF = _require$codes.ERR_STREAM_PUSH_AFTER_EOF,
     ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
@@ -6747,7 +6630,7 @@ var StringDecoder;
 var createReadableStreamAsyncIterator;
 var from;
 
-__webpack_require__(717)(Readable, Stream);
+__webpack_require__(5717)(Readable, Stream);
 
 var errorOrDestroy = destroyImpl.errorOrDestroy;
 var kProxyEvents = ['error', 'close', 'destroy', 'pause', 'resume'];
@@ -6764,7 +6647,7 @@ function prependListener(emitter, event, fn) {
 }
 
 function ReadableState(options, stream, isDuplex) {
-  Duplex = Duplex || __webpack_require__(656);
+  Duplex = Duplex || __webpack_require__(8656);
   options = options || {}; // Duplex streams are both readable and writable, but share
   // the same options object.
   // However, some cases require setting options to different
@@ -6820,14 +6703,14 @@ function ReadableState(options, stream, isDuplex) {
   this.encoding = null;
 
   if (options.encoding) {
-    if (!StringDecoder) StringDecoder = (__webpack_require__(553)/* .StringDecoder */ .s);
+    if (!StringDecoder) StringDecoder = (__webpack_require__(2553)/* .StringDecoder */ .s);
     this.decoder = new StringDecoder(options.encoding);
     this.encoding = options.encoding;
   }
 }
 
 function Readable(options) {
-  Duplex = Duplex || __webpack_require__(656);
+  Duplex = Duplex || __webpack_require__(8656);
   if (!(this instanceof Readable)) return new Readable(options); // Checking for a Stream.Duplex instance is faster here instead of inside
   // the ReadableState constructor, at least with V8 6.5
 
@@ -6982,7 +6865,7 @@ Readable.prototype.isPaused = function () {
 
 
 Readable.prototype.setEncoding = function (enc) {
-  if (!StringDecoder) StringDecoder = (__webpack_require__(553)/* .StringDecoder */ .s);
+  if (!StringDecoder) StringDecoder = (__webpack_require__(2553)/* .StringDecoder */ .s);
   var decoder = new StringDecoder(enc);
   this._readableState.decoder = decoder; // If setEncoding(null), decoder.encoding equals utf8
 
@@ -7768,7 +7651,7 @@ function endReadableNT(state, stream) {
 if (typeof Symbol === 'function') {
   Readable.from = function (iterable, opts) {
     if (from === undefined) {
-      from = __webpack_require__(265);
+      from = __webpack_require__(1265);
     }
 
     return from(Readable, iterable, opts);
@@ -7785,7 +7668,7 @@ function indexOf(xs, x) {
 
 /***/ }),
 
-/***/ 473:
+/***/ 4473:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -7854,15 +7737,15 @@ function indexOf(xs, x) {
 
 module.exports = Transform;
 
-var _require$codes = (__webpack_require__(106)/* .codes */ .q),
+var _require$codes = (__webpack_require__(8106)/* .codes */ .q),
     ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
     ERR_MULTIPLE_CALLBACK = _require$codes.ERR_MULTIPLE_CALLBACK,
     ERR_TRANSFORM_ALREADY_TRANSFORMING = _require$codes.ERR_TRANSFORM_ALREADY_TRANSFORMING,
     ERR_TRANSFORM_WITH_LENGTH_0 = _require$codes.ERR_TRANSFORM_WITH_LENGTH_0;
 
-var Duplex = __webpack_require__(656);
+var Duplex = __webpack_require__(8656);
 
-__webpack_require__(717)(Transform, Duplex);
+__webpack_require__(5717)(Transform, Duplex);
 
 function afterTransform(er, data) {
   var ts = this._transformState;
@@ -7997,7 +7880,7 @@ function done(stream, er, data) {
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(155);
+/* provided dependency */ var process = __webpack_require__(4155);
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -8057,17 +7940,17 @@ Writable.WritableState = WritableState;
 /*<replacement>*/
 
 var internalUtil = {
-  deprecate: __webpack_require__(927)
+  deprecate: __webpack_require__(4927)
 };
 /*</replacement>*/
 
 /*<replacement>*/
 
-var Stream = __webpack_require__(194);
+var Stream = __webpack_require__(3194);
 /*</replacement>*/
 
 
-var Buffer = (__webpack_require__(764).Buffer);
+var Buffer = (__webpack_require__(8764).Buffer);
 
 var OurUint8Array = __webpack_require__.g.Uint8Array || function () {};
 
@@ -8079,12 +7962,12 @@ function _isUint8Array(obj) {
   return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
 }
 
-var destroyImpl = __webpack_require__(29);
+var destroyImpl = __webpack_require__(1029);
 
 var _require = __webpack_require__(94),
     getHighWaterMark = _require.getHighWaterMark;
 
-var _require$codes = (__webpack_require__(106)/* .codes */ .q),
+var _require$codes = (__webpack_require__(8106)/* .codes */ .q),
     ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
     ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
     ERR_MULTIPLE_CALLBACK = _require$codes.ERR_MULTIPLE_CALLBACK,
@@ -8096,12 +7979,12 @@ var _require$codes = (__webpack_require__(106)/* .codes */ .q),
 
 var errorOrDestroy = destroyImpl.errorOrDestroy;
 
-__webpack_require__(717)(Writable, Stream);
+__webpack_require__(5717)(Writable, Stream);
 
 function nop() {}
 
 function WritableState(options, stream, isDuplex) {
-  Duplex = Duplex || __webpack_require__(656);
+  Duplex = Duplex || __webpack_require__(8656);
   options = options || {}; // Duplex streams are both readable and writable, but share
   // the same options object.
   // However, some cases require setting options to different
@@ -8227,7 +8110,7 @@ if (typeof Symbol === 'function' && Symbol.hasInstance && typeof Function.protot
 }
 
 function Writable(options) {
-  Duplex = Duplex || __webpack_require__(656); // Writable ctor is applied to Duplexes, too.
+  Duplex = Duplex || __webpack_require__(8656); // Writable ctor is applied to Duplexes, too.
   // `realHasInstance` is necessary because using plain `instanceof`
   // would return false, as no `_writableState` property is attached.
   // Trying to use the custom `instanceof` for Writable here will also break the
@@ -8702,14 +8585,14 @@ Writable.prototype._destroy = function (err, cb) {
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(155);
+/* provided dependency */ var process = __webpack_require__(4155);
 
 
 var _Object$setPrototypeO;
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var finished = __webpack_require__(86);
+var finished = __webpack_require__(1086);
 
 var kLastResolve = Symbol('lastResolve');
 var kLastReject = Symbol('lastReject');
@@ -8913,7 +8796,7 @@ module.exports = createReadableStreamAsyncIterator;
 
 /***/ }),
 
-/***/ 686:
+/***/ 9686:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -8931,10 +8814,10 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var _require = __webpack_require__(764),
+var _require = __webpack_require__(8764),
     Buffer = _require.Buffer;
 
-var _require2 = __webpack_require__(862),
+var _require2 = __webpack_require__(9862),
     inspect = _require2.inspect;
 
 var custom = inspect && inspect.custom || 'inspect';
@@ -9130,11 +9013,11 @@ function () {
 
 /***/ }),
 
-/***/ 29:
+/***/ 1029:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(155);
+/* provided dependency */ var process = __webpack_require__(4155);
  // undocumented cb() API, needed for core, not for public API
 
 function destroy(err, cb) {
@@ -9243,7 +9126,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 86:
+/***/ 1086:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -9251,7 +9134,7 @@ module.exports = {
 // permission from the author, Mathias Buus (@mafintosh).
 
 
-var ERR_STREAM_PREMATURE_CLOSE = (__webpack_require__(106)/* .codes.ERR_STREAM_PREMATURE_CLOSE */ .q.ERR_STREAM_PREMATURE_CLOSE);
+var ERR_STREAM_PREMATURE_CLOSE = (__webpack_require__(8106)/* .codes.ERR_STREAM_PREMATURE_CLOSE */ .q.ERR_STREAM_PREMATURE_CLOSE);
 
 function once(callback) {
   var called = false;
@@ -9354,7 +9237,7 @@ module.exports = eos;
 
 /***/ }),
 
-/***/ 265:
+/***/ 1265:
 /***/ ((module) => {
 
 module.exports = function () {
@@ -9364,7 +9247,7 @@ module.exports = function () {
 
 /***/ }),
 
-/***/ 472:
+/***/ 6472:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -9383,7 +9266,7 @@ function once(callback) {
   };
 }
 
-var _require$codes = (__webpack_require__(106)/* .codes */ .q),
+var _require$codes = (__webpack_require__(8106)/* .codes */ .q),
     ERR_MISSING_ARGS = _require$codes.ERR_MISSING_ARGS,
     ERR_STREAM_DESTROYED = _require$codes.ERR_STREAM_DESTROYED;
 
@@ -9402,7 +9285,7 @@ function destroyer(stream, reading, writing, callback) {
   stream.on('close', function () {
     closed = true;
   });
-  if (eos === undefined) eos = __webpack_require__(86);
+  if (eos === undefined) eos = __webpack_require__(1086);
   eos(stream, {
     readable: reading,
     writable: writing
@@ -9474,7 +9357,7 @@ module.exports = pipeline;
 "use strict";
 
 
-var ERR_INVALID_OPT_VALUE = (__webpack_require__(106)/* .codes.ERR_INVALID_OPT_VALUE */ .q.ERR_INVALID_OPT_VALUE);
+var ERR_INVALID_OPT_VALUE = (__webpack_require__(8106)/* .codes.ERR_INVALID_OPT_VALUE */ .q.ERR_INVALID_OPT_VALUE);
 
 function highWaterMarkFrom(options, isDuplex, duplexKey) {
   return options.highWaterMark != null ? options.highWaterMark : isDuplex ? options[duplexKey] : null;
@@ -9502,15 +9385,15 @@ module.exports = {
 
 /***/ }),
 
-/***/ 194:
+/***/ 3194:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-module.exports = __webpack_require__(187).EventEmitter;
+module.exports = __webpack_require__(7187).EventEmitter;
 
 
 /***/ }),
 
-/***/ 553:
+/***/ 2553:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -9539,7 +9422,7 @@ module.exports = __webpack_require__(187).EventEmitter;
 
 /*<replacement>*/
 
-var Buffer = (__webpack_require__(509).Buffer);
+var Buffer = (__webpack_require__(9509).Buffer);
 /*</replacement>*/
 
 var isEncoding = Buffer.isEncoding || function (encoding) {
@@ -9813,11 +9696,11 @@ function simpleEnd(buf) {
 
 /***/ }),
 
-/***/ 547:
+/***/ 6547:
 /***/ ((module, exports, __webpack_require__) => {
 
-/* provided dependency */ var process = __webpack_require__(155);
-var Stream = __webpack_require__(830)
+/* provided dependency */ var process = __webpack_require__(4155);
+var Stream = __webpack_require__(2830)
 
 // through
 //
@@ -9929,7 +9812,7 @@ function through (write, end, opts) {
 
 /***/ }),
 
-/***/ 927:
+/***/ 4927:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 
@@ -10003,6 +9886,886 @@ function config (name) {
 
 /***/ }),
 
+/***/ 6555:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float worldUnit;\nuniform float lineDepth;\nuniform float lineWidth;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nuniform float arrowSize;\nuniform float arrowSpace;\n\nattribute vec4 position4;\nattribute vec3 arrow;\nattribute vec2 attach;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvoid getArrowGeometry(vec4 xyzw, float near, float far, out vec3 left, out vec3 right, out vec3 start) {\n  right = getPosition(xyzw, 1.0);\n  left  = getPosition(vec4(near, xyzw.yzw), 0.0);\n  start = getPosition(vec4(far, xyzw.yzw), 0.0);\n}\n\nmat4 getArrowMatrix(vec3 left, vec3 right, vec3 start) {\n\n  float depth = focusDepth;\n  if (lineDepth < 1.0) {\n    // Depth blending\n    float z = max(0.00001, -right.z);\n    depth = mix(z, focusDepth, lineDepth);\n  }\n    \n  vec3 diff = left - right;\n  float l = length(diff);\n  if (l == 0.0) {\n    return mat4(1.0, 0.0, 0.0, 0.0,\n                0.0, 1.0, 0.0, 0.0,\n                0.0, 0.0, 1.0, 0.0,\n                0.0, 0.0, 0.0, 1.0);\n  }\n\n  // Construct TBN matrix around shaft\n  vec3 t = normalize(diff);\n  vec3 n = normalize(cross(t, t.yzx + vec3(.1, .2, .3)));\n  vec3 b = cross(n, t);\n  \n  // Shrink arrows when vector gets too small\n  // Approach linear scaling with cubic ease the smaller we get\n  float size = arrowSize * lineWidth * worldUnit * depth * 1.25;\n  diff = right - start;\n  l = length(diff) * arrowSpace;\n  float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);\n  float scale = 1.0 - mini * mini * mini;\n  float range = size * scale;\n  \n  // Size to 2.5:1 ratio\n  float rangeNB = range / 2.5;\n\n  // Anchor at end position\n  return mat4(vec4(n * rangeNB,  0),\n              vec4(b * rangeNB,  0),\n              vec4(t * range, 0),\n              vec4(right,  1.0));\n}\n\nvec3 getArrowPosition() {\n  vec3 left, right, start;\n  \n  vec4 p = min(geometryClip, position4);\n  \n  getArrowGeometry(p, attach.x, attach.y, left, right, start);\n  mat4 matrix = getArrowMatrix(left, right, start);\n  return (matrix * vec4(arrow.xyz, 1.0)).xyz;\n\n}\n";
+
+/***/ }),
+
+/***/ 9805:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 axisStep;\nuniform vec4 axisPosition;\n\nvec4 getAxisPosition(vec4 xyzw, inout vec4 stpq) {\n  return axisStep * xyzw.x + axisPosition;\n}\n";
+
+/***/ }),
+
+/***/ 6644:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform mat4 viewMatrix;\n\nvec4 getCartesianPosition(vec4 position, inout vec4 stpq) {\n  return viewMatrix * vec4(position.xyz, 1.0);\n}\n";
+
+/***/ }),
+
+/***/ 8776:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform vec4 viewScale;\nuniform vec4 viewOffset;\n\nvec4 getCartesian4Position(vec4 position, inout vec4 stpq) {\n  return position * basisScale + basisOffset;\n}\n";
+
+/***/ }),
+
+/***/ 3611:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 clampLimit;\n\nvec4 getClampXYZW(vec4 xyzw) {\n  return clamp(xyzw, vec4(0.0), clampLimit);\n}\n";
+
+/***/ }),
+
+/***/ 4441:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec4 opaqueColor(vec4 color) {\n  return vec4(color.rgb, 1.0);\n}\n";
+
+/***/ }),
+
+/***/ 8914:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 geometryClip;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getFacePosition() {\n  vec4 p = min(geometryClip, position4);\n  return getPosition(p, 1.0);\n}\n";
+
+/***/ }),
+
+/***/ 834:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "attribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid getFaceGeometry(vec4 xyzw, out vec3 pos, out vec3 normal) {\n  vec3 a, b, c;\n\n  a   = getPosition(vec4(xyzw.xyz, 0.0), 0.0);\n  b   = getPosition(vec4(xyzw.xyz, 1.0), 0.0);\n  c   = getPosition(vec4(xyzw.xyz, 2.0), 0.0);\n\n  pos = getPosition(xyzw, 1.0);\n  normal = normalize(cross(c - a, b - a));\n}\n\nvec3 getFacePositionNormal() {\n  vec3 center, normal;\n\n  getFaceGeometry(position4, center, normal);\n  vNormal   = normal;\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);\n  vPosition = -center;\n\n  return center;\n}\n";
+
+/***/ }),
+
+/***/ 4344:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "/*\nFloat encoding technique by\nCarlos Scheidegger\nhttps://github.com/cscheid/lux/blob/master/src/shade/bits/encode_float.js\n\nConversion to GLSL by:\nhttp://concord-consortium.github.io/lab/experiments/webgl-gpgpu/script.js\n*/\n\nfloat shift_right(float v, float amt) { \n  v = floor(v) + 0.5; \n  return floor(v / exp2(amt)); \n}\n\nfloat shift_left(float v, float amt) { \n  return floor(v * exp2(amt) + 0.5); \n}\n\nfloat mask_last(float v, float bits) { \n  return mod(v, shift_left(1.0, bits)); \n}\n\nfloat extract_bits(float num, float from, float to) { \n  from = floor(from + 0.5); to = floor(to + 0.5); \n  return mask_last(shift_right(num, from), to - from); \n}\n\nvec4 encode_float(float val) { \n  if (val == 0.0) return vec4(0, 0, 0, 0); \n  float valuesign = val > 0.0 ? 0.0 : 1.0; \n  val = abs(val); \n  float exponent = floor(log2(val)); \n  float biased_exponent = exponent + 127.0; \n  float fraction = ((val / exp2(exponent)) - 1.0) * 8388608.0; \n  float t = biased_exponent / 2.0; \n  float last_bit_of_biased_exponent = fract(t) * 2.0; \n  float remaining_bits_of_biased_exponent = floor(t); \n  float byte4 = extract_bits(fraction, 0.0, 8.0) / 255.0; \n  float byte3 = extract_bits(fraction, 8.0, 16.0) / 255.0; \n  float byte2 = (last_bit_of_biased_exponent * 128.0 + extract_bits(fraction, 16.0, 23.0)) / 255.0; \n  float byte1 = (valuesign * 128.0 + remaining_bits_of_biased_exponent) / 255.0; \n  return vec4(byte4, byte3, byte2, byte1); \n}\n";
+
+/***/ }),
+
+/***/ 632:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 indexModulus;\n\nvec4 getSample(vec4 xyzw);\nvec4 getIndex(vec4 xyzw);\n\nvec4 floatPackIndex(vec4 xyzw) {\n  vec4 value = getSample(xyzw);\n  vec4 index = getIndex(xyzw);\n\n  vec4 offset = floor(index + .5) * indexModulus;\n  vec2 sum2 = offset.xy + offset.zw;\n  float sum = sum2.x + sum2.y;\n  return vec4(value.xyz, sum);\n}";
+
+/***/ }),
+
+/***/ 4998:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec4 getSample(vec4 xyzw);\n\nfloat floatStretch(vec4 xyzw, float channelIndex) {\n  vec4 sample = getSample(xyzw);\n  vec2 xy = channelIndex > 1.5 ? sample.zw : sample.xy;\n  return mod(channelIndex, 2.0) > .5 ? xy.y : xy.x;\n}";
+
+/***/ }),
+
+/***/ 1552:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n\nvoid clipStrokeFragment() {\n  bool odd = mod(vClipStrokeIndex, 2.0) >= 1.0;\n\n  vec3 tangent;\n  if (odd) {\n    tangent = vClipStrokeOdd;\n  }\n  else {\n    tangent = vClipStrokeEven;\n  }\n\n  float travel = dot(vClipStrokePosition, normalize(tangent)) / vClipStrokeWidth;\n  if (mod(travel, 16.0) > 8.0) {\n    discard;\n  }\n}\n";
+
+/***/ }),
+
+/***/ 4018:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n\nvoid clipStrokeFragment() {\n  bool odd = mod(vClipStrokeIndex, 2.0) >= 1.0;\n\n  vec3 tangent;\n  if (odd) {\n    tangent = vClipStrokeOdd;\n  }\n  else {\n    tangent = vClipStrokeEven;\n  }\n\n  float travel = dot(vClipStrokePosition, normalize(tangent)) / vClipStrokeWidth;\n  if (mod(travel, 4.0) > 2.0) {\n    discard;\n  }\n}\n";
+
+/***/ }),
+
+/***/ 5400:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying vec2 vClipEnds;\n\nvoid clipEndsFragment() {\n  if (vClipEnds.x < 0.0 || vClipEnds.y < 0.0) discard;\n}\n";
+
+/***/ }),
+
+/***/ 9408:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vClipProximity;\n\nvoid clipProximityFragment() {\n  if (vClipProximity >= 0.5) discard;\n}";
+
+/***/ }),
+
+/***/ 5189:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "void setFragmentColor(vec4 color) {\n  gl_FragColor = color;\n}";
+
+/***/ }),
+
+/***/ 7495:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec4 fragmentRGBA(vec4 rgba, vec4 stpq) {\n  return rgba;\n}";
+
+/***/ }),
+
+/***/ 1768:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "void setFragmentColor(vec4 color) {\n  if (color.a < 1.0) discard;\n  gl_FragColor = color;\n}";
+
+/***/ }),
+
+/***/ 6440:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "void setFragmentColor(vec4 color) {\n  if (color.a >= 1.0) discard;\n  gl_FragColor = color;\n}";
+
+/***/ }),
+
+/***/ 740:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 gridPosition;\nuniform vec4 gridStep;\nuniform vec4 gridAxis;\n\nvec4 sampleData(vec2 xy);\n\nvec4 getGridPosition(vec4 xyzw) {\n  vec4 onAxis  = gridAxis * sampleData(vec2(xyzw.y, 0.0)).x;\n  vec4 offAxis = gridStep * xyzw.x + gridPosition;\n  return onAxis + offAxis;\n}\n";
+
+/***/ }),
+
+/***/ 7000:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float growScale;\nuniform vec4  growMask;\nuniform vec4  growAnchor;\n\nvec4 getSample(vec4 xyzw);\n\nvec4 getGrowSample(vec4 xyzw) {\n  vec4 anchor = xyzw * growMask + growAnchor;\n\n  vec4 position = getSample(xyzw);\n  vec4 center = getSample(anchor);\n\n  return mix(center, position, growScale);\n}";
+
+/***/ }),
+
+/***/ 4221:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float joinStride;\nuniform float joinStrideInv;\n\nfloat getIndex(vec4 xyzw);\nvec4 getRest(vec4 xyzw);\nvec4 injectIndices(float a, float b);\n\nvec4 getJoinXYZW(vec4 xyzw) {\n\n  float a = getIndex(xyzw);\n  float b = a * joinStrideInv;\n\n  float integer  = floor(b);\n  float fraction = b - integer;\n  \n  return injectIndices(fraction * joinStride, integer) + getRest(xyzw);\n}\n";
+
+/***/ }),
+
+/***/ 8219:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nvec4 getLabelAlphaColor(vec4 color, vec4 sample) {\n  float mask = clamp(sample.r * 1000.0, 0.0, 1.0);\n  float alpha = (sample.r - .5) * vPixelSize + .5;\n  float a = mask * alpha * color.a;\n  if (a <= 0.0) discard;\n  return vec4(color.xyz, a);\n}\n";
+
+/***/ }),
+
+/***/ 8258:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec2 mapUV(vec4 uvwo, vec4 stpq) {\n  return uvwo.xy;\n}\n";
+
+/***/ }),
+
+/***/ 995:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float outlineExpand;\nuniform float outlineStep;\nuniform vec3  outlineColor;\n\nvarying float vPixelSize;\n\nconst float PIXEL_STEP = 255.0 / 16.0;\n\nvec4 getLabelOutlineColor(vec4 color, vec4 sample) {\n  float ps = vPixelSize * PIXEL_STEP;\n  float os = outlineStep;\n\n  float sdf = sample.r - .5 + outlineExpand;\n  vec2  sdfs = vec2(sdf, sdf + os);\n  vec2  alpha = clamp(sdfs * ps + .5, 0.0, 1.0);\n\n  if (alpha.y <= 0.0) {\n    discard;\n  }\n\n  vec3 blend = color.xyz;\n  if (alpha.y > alpha.x) {\n    blend = sqrt(mix(outlineColor * outlineColor, blend * blend, alpha.x));\n  }\n  \n  return vec4(blend, alpha.y * color.a);\n}\n";
+
+/***/ }),
+
+/***/ 4494:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 layerScale;\nuniform vec4 layerBias;\n\nvec4 layerPosition(vec4 position, inout vec4 stpq) {\n  return layerScale * position + layerBias;\n}\n";
+
+/***/ }),
+
+/***/ 1744:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpDepth(vec4 xyzw) {\n  float x = xyzw.z;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xy, i, xyzw.w);\n  vec4 xyzw2 = vec4(xyzw.xy, i + 1.0, xyzw.w);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n";
+
+/***/ }),
+
+/***/ 9012:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpHeight(vec4 xyzw) {\n  float x = xyzw.y;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n";
+
+/***/ }),
+
+/***/ 8151:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpItems(vec4 xyzw) {\n  float x = xyzw.w;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n";
+
+/***/ }),
+
+/***/ 7199:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 lerpWidth(vec4 xyzw) {\n  float x = xyzw.x;\n  float i = floor(x);\n  float f = x - i;\n    \n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, f);\n}\n";
+
+/***/ }),
+
+/***/ 2662:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "// Units and calibration\nuniform float worldUnit;\nuniform float lineWidth;\nuniform float lineDepth;\nuniform float focusDepth;\n\n// General data index\nuniform vec4 geometryClip;\nattribute vec4 position4;\n\n// (Start/mid/end -1/0/1, top/bottom -1,1)\nattribute vec2 line;\n\n// 0...1 for round or bevel joins\n#ifdef LINE_JOIN_DETAIL\nattribute float joint;\n#else\nconst float joint = 0.0;\n#endif\n\n// Knock out excessively long line segments (e.g. for asymtpotes)\n#ifdef LINE_PROXIMITY\nuniform float lineProximity;\nvarying float vClipProximity;\n#endif\n\n// Ghetto line stroking (local only, not global)\n#ifdef LINE_STROKE\nvarying float vClipStrokeWidth;\nvarying float vClipStrokeIndex;\nvarying vec3  vClipStrokeEven;\nvarying vec3  vClipStrokeOdd;\nvarying vec3  vClipStrokePosition;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\n// Clip line ends for arrows / decoration\n#ifdef LINE_CLIP\nuniform float clipRange;\nuniform vec2  clipStyle;\nuniform float clipSpace;\n\nattribute vec2 strip;\n\nvarying vec2 vClipEnds;\n\nvoid clipEnds(vec4 xyzw, vec3 center, vec3 pos) {\n\n  // Sample end of line strip\n  vec4 xyzwE = vec4(strip.y, xyzw.yzw);\n  vec3 end   = getPosition(xyzwE, 0.0);\n\n  // Sample start of line strip\n  vec4 xyzwS = vec4(strip.x, xyzw.yzw);\n  vec3 start = getPosition(xyzwS, 0.0);\n\n  // Measure length\n  vec3 diff = end - start;\n  float l = length(diff) * clipSpace;\n\n  // Arrow length (=2.5x radius)\n  float arrowSize = 1.25 * clipRange * lineWidth * worldUnit;\n\n  vClipEnds = vec2(1.0);\n\n  if (clipStyle.y > 0.0) {\n    // Depth blend end\n    float depth = focusDepth;\n    if (lineDepth < 1.0) {\n      float z = max(0.00001, -end.z);\n      depth = mix(z, focusDepth, lineDepth);\n    }\n\n    // Absolute arrow length\n    float size = arrowSize * depth;\n\n    // Adjust clip range\n    // Approach linear scaling with cubic ease the smaller we get\n    float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);\n    float scale = 1.0 - mini * mini * mini;\n    float invrange = 1.0 / (size * scale);\n\n    // Clip end\n    diff = end - center;\n    if(diff == vec3(0.0))\n      vClipEnds.x = -1.0;\n    else {\n      diff = normalize(end - center);\n      float d = dot(end - pos, diff);\n      vClipEnds.x = d * invrange - 1.0;\n    }\n  }\n\n  if (clipStyle.x > 0.0) {\n    // Depth blend start\n    float depth = focusDepth;\n    if (lineDepth < 1.0) {\n      float z = max(0.00001, -start.z);\n      depth = mix(z, focusDepth, lineDepth);\n    }\n\n    // Absolute arrow length\n    float size = arrowSize * depth;\n\n    // Adjust clip range\n    // Approach linear scaling with cubic ease the smaller we get\n    float mini = clamp(1.0 - l / size * .333, 0.0, 1.0);\n    float scale = 1.0 - mini * mini * mini;\n    float invrange = 1.0 / (size * scale);\n\n    // Clip start\n    diff = center - start;\n    if(diff == vec3(0.0))\n      vClipEnds.y = -1.0;\n    else {\n      diff = normalize(center - start);\n      float d = dot(pos - start, diff);\n      vClipEnds.y = d * invrange - 1.0;\n    }\n  }\n\n\n}\n#endif\n\n// Adjust left/center/right to be inside near/far z range\nconst float epsilon = 1e-5;\nvoid fixCenter(inout vec3 left, inout vec3 center, inout vec3 right) {\n  if (center.z >= 0.0) {\n    if (left.z < 0.0) {\n      float d = (center.z + epsilon) / (center.z - left.z);\n      center = mix(center, left, d);\n    }\n    else if (right.z < 0.0) {\n      float d = (center.z + epsilon) / (center.z - right.z);\n      center = mix(center, right, d);\n    }\n  }\n\n  if (left.z >= 0.0) {\n    if (center.z < 0.0) {\n      float d = (left.z + epsilon) / (left.z - center.z);\n      left = mix(left, center, d);\n    }\n  }\n\n  if (right.z >= 0.0) {\n    if (center.z < 0.0) {\n      float d = (right.z + epsilon) / (right.z - center.z);\n      right = mix(right, center, d);\n    }\n  }\n}\n\n// Sample the source data in an edge-aware manner\nvoid getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {\n  vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);\n\n  center =                 getPosition(xyzw, 1.0);\n  left   = (edge > -0.5) ? getPosition(xyzw - delta, 0.0) : center;\n  right  = (edge < 0.5)  ? getPosition(xyzw + delta, 0.0) : center;\n}\n\n// Calculate the position for a vertex along the line, including joins\nvec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float width, float offset, float joint) {\n  vec2 join = vec2(1.0, 0.0);\n\n  fixCenter(left, center, right);\n\n  vec4 a = vec4(left.xy, right.xy);\n  vec4 b = a / vec4(left.zz, right.zz);\n\n  vec2 l = b.xy;\n  vec2 r = b.zw;\n  vec2 c = center.xy / center.z;\n\n  vec4 d = vec4(l, c) - vec4(c, r);\n  float l1 = dot(d.xy, d.xy);\n  float l2 = dot(d.zw, d.zw);\n\n  if (l1 + l2 > 0.0) {\n\n    if (edge > 0.5 || l2 == 0.0) {\n      vec2 nl = normalize(d.xy);\n      vec2 tl = vec2(nl.y, -nl.x);\n\n#ifdef LINE_PROXIMITY\n      vClipProximity = 1.0;\n#endif\n\n#ifdef LINE_STROKE\n      vClipStrokeEven = vClipStrokeOdd = normalize(left - center);\n#endif\n      join = tl;\n    }\n    else if (edge < -0.5 || l1 == 0.0) {\n      vec2 nr = normalize(d.zw);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n#ifdef LINE_PROXIMITY\n      vClipProximity = 1.0;\n#endif\n\n#ifdef LINE_STROKE\n      vClipStrokeEven = vClipStrokeOdd = normalize(center - right);\n#endif\n      join = tr;\n    }\n    else {\n      // Limit join stretch for tiny segments\n      float lmin2 = min(l1, l2) / (width * width);\n\n      // Hide line segment if ratio of leg lengths exceeds promixity threshold\n#ifdef LINE_PROXIMITY\n      float lr     = l1 / l2;\n      float rl     = l2 / l1;\n      float ratio  = max(lr, rl);\n      float thresh = lineProximity + 1.0;\n      vClipProximity = (ratio > thresh * thresh) ? 1.0 : 0.0;\n#endif\n\n      // Calculate normals/tangents\n      vec2 nl = normalize(d.xy);\n      vec2 nr = normalize(d.zw);\n\n      // Calculate tangents\n      vec2 tl = vec2(nl.y, -nl.x);\n      vec2 tr = vec2(nr.y, -nr.x);\n\n#ifdef LINE_PROXIMITY\n      // Mix tangents according to leg lengths\n      vec2 tc = normalize(mix(tl, tr, l1/(l1+l2)));\n#else\n      // Average tangent\n      vec2 tc = normalize(tl + tr);\n#endif\n\n      // Miter join\n      float cosA   = dot(nl, tc);\n      float sinA   = max(0.1, abs(dot(tl, tc)));\n      float factor = cosA / sinA;\n      float scale  = sqrt(1.0 + min(lmin2, factor * factor));\n\n      // Stroke normals\n#ifdef LINE_STROKE\n      vec3 stroke1 = normalize(left - center);\n      vec3 stroke2 = normalize(center - right);\n\n      if (odd) {\n        vClipStrokeEven = stroke1;\n        vClipStrokeOdd  = stroke2;\n      }\n      else {\n        vClipStrokeEven = stroke2;\n        vClipStrokeOdd  = stroke1;\n      }\n#endif\n\n#ifdef LINE_JOIN_MITER\n      // Apply straight up miter\n      join = tc * scale;\n#endif\n\n#ifdef LINE_JOIN_ROUND\n      // Slerp bevel join into circular arc\n      float dotProduct = dot(nl, nr);\n      float angle = acos(dotProduct);\n      float sinT  = sin(angle);\n      join = (sin((1.0 - joint) * angle) * tl + sin(joint * angle) * tr) / sinT;\n#endif\n\n#ifdef LINE_JOIN_BEVEL\n      // Direct bevel join between two flat ends\n      float dotProduct = dot(nl, nr);\n      join = mix(tl, tr, joint);\n#endif\n\n#ifdef LINE_JOIN_DETAIL\n      // Check if on inside or outside of joint\n      float crossProduct = nl.x * nr.y - nl.y * nr.x;\n      if (offset * crossProduct < 0.0) {\n        // For near-180-degree bends, correct back to a miter to avoid discontinuities\n        float ratio = clamp(-dotProduct * 2.0 - 1.0, 0.0, 1.0);\n        // Otherwise collapse the inside vertices into one.\n        join = mix(tc * scale, join, ratio * ratio * ratio);\n      }\n#endif\n\n    }\n    return vec3(join, 0.0);\n  }\n  else {\n    return vec3(0.0);\n  }\n\n}\n\n// Calculate final line position\nvec3 getLinePosition() {\n  vec3 left, center, right, join;\n\n  // left/center/right\n  float edge = line.x;\n  // up/down\n  float offset = line.y;\n\n  // Clip data\n  vec4 p = min(geometryClip, position4);\n  edge += max(0.0, position4.x - geometryClip.x);\n\n  // Get position + adjacent neighbours\n  getLineGeometry(p, edge, left, center, right);\n\n#ifdef LINE_STROKE\n  // Set parameters for line stroke fragment shader\n  vClipStrokePosition = center;\n  vClipStrokeIndex = p.x;\n  bool odd = mod(p.x, 2.0) >= 1.0;\n#else\n  bool odd = true;\n#endif\n\n  // Divide line width up/down\n  float width = lineWidth * 0.5;\n\n  float depth = focusDepth;\n  if (lineDepth < 1.0) {\n    // Depth blending\n    float z = max(0.00001, -center.z);\n    depth = mix(z, focusDepth, lineDepth);\n  }\n  width *= depth;\n\n  // Convert to world units\n  width *= worldUnit;\n\n  // Calculate line join\n  join = getLineJoin(edge, odd, left, center, right, width, offset, joint);\n  vec3 pos = center + join * offset * width;\n\n#ifdef LINE_STROKE\n  vClipStrokeWidth = width;\n#endif\n\n#ifdef LINE_CLIP\n  clipEnds(p, center, pos);\n#endif\n\n  return pos;\n}\n";
+
+/***/ }),
+
+/***/ 6640:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 map2DData(vec2 xy) {\n  return (xy + dataPointer) * dataResolution;\n}\n";
+
+/***/ }),
+
+/***/ 8567:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec2 dataResolution;\nuniform vec2 dataPointer;\n\nvec2 map2DData(vec2 xy) {\n  return fract((xy + dataPointer) * dataResolution);\n}\n";
+
+/***/ }),
+
+/***/ 9292:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "void mapXyzw2DV(vec4 xyzw, out vec2 xy, out float z) {\n  xy = xyzw.xy;\n  z  = xyzw.z;\n}\n\n";
+
+/***/ }),
+
+/***/ 2246:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec4 alignXYZW(vec4 xyzw) {\n  return floor(xyzw + .5);\n}\n\n";
+
+/***/ }),
+
+/***/ 1103:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float textureItems;\nuniform float textureHeight;\n\nvec2 mapXyzwTexture(vec4 xyzw) {\n  \n  float x = xyzw.x;\n  float y = xyzw.y;\n  float z = xyzw.z;\n  float i = xyzw.w;\n  \n  return vec2(i, y) + vec2(x, z) * vec2(textureItems, textureHeight);\n}\n\n";
+
+/***/ }),
+
+/***/ 3453:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying vec4 vColor;\n\nvec4 getColor() {\n  return vColor;\n}\n";
+
+/***/ }),
+
+/***/ 2963:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\nvec4 getSample(vec4 uvwo, vec4 stpq);\n\nvec4 getMapColor() {\n  #ifdef POSITION_STPQ\n  vec4 stpq = vSTPQ;\n  #else\n  vec4 stpq = vec4(0.0);\n  #endif\n\n  #ifdef POSITION_U\n  vec4 uvwo = vec4(vU, 0.0, 0.0, 0.0);\n  #endif\n  #ifdef POSITION_UV\n  vec4 uvwo = vec4(vUV, 0.0, 0.0);\n  #endif\n  #ifdef POSITION_UVW\n  vec4 uvwo = vec4(vUVW, 0.0);\n  #endif\n  #ifdef POSITION_UVWO\n  vec4 uvwo = vec4(vUVWO);\n  #endif\n\n  return getSample(uvwo, stpq);\n}\n";
+
+/***/ }),
+
+/***/ 512:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vMask;\n\nfloat ease(float t) {\n  t = clamp(t, 0.0, 1.0);\n  return t * t * (3.0 - 2.0 * t);\n}\n\nvec4 maskColor() {\n  if (vMask <= 0.0) discard;\n  return vec4(vec3(1.0), ease(vMask));\n}\n";
+
+/***/ }),
+
+/***/ 3970:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\nvec4 getSample(vec4 rgba, vec4 stpq);\n\nvec4 getMaterialColor(vec4 rgba) {\n  vec4 stpq = vec4(0.0);\n\n  #ifdef POSITION_U\n  stpq.x = vU;\n  #endif\n  #ifdef POSITION_UV\n  stpq.xy = vUV;\n  #endif\n  #ifdef POSITION_UVW\n  stpq.xyz = vUVW;\n  #endif\n  #ifdef POSITION_UVWO\n  stpq = vUVWO;\n  #endif\n\n  #ifdef POSITION_STPQ\n  stpq = vSTPQ;\n  #endif\n\n  return getSample(rgba, stpq);\n}\n";
+
+/***/ }),
+
+/***/ 3001:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 offSpecular(vec3 color) {\n  vec3 c = 1.0 - color;\n  return 1.0 - c * c;\n}\n\nvec4 getShadedColor(vec4 rgba) {\n  \n  vec3 color = rgba.xyz;\n  vec3 color2 = offSpecular(rgba.xyz);\n\n  vec3 normal = normalize(vNormal);\n  vec3 light = normalize(vLight);\n  vec3 position = normalize(vPosition);\n  \n  float side    = gl_FrontFacing ? -1.0 : 1.0;\n  float cosine  = side * dot(normal, light);\n  float diffuse = mix(max(0.0, cosine), .5 + .5 * cosine, .1);\n  \n  vec3  halfLight = normalize(light + position);\n\tfloat cosineHalf = max(0.0, side * dot(normal, halfLight));\n\tfloat specular = pow(cosineHalf, 16.0);\n\t\n\treturn vec4(color * (diffuse * .9 + .05) + .25 * color2 * specular, rgba.a);\n}\n";
+
+/***/ }),
+
+/***/ 4279:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "";
+
+/***/ }),
+
+/***/ 1956:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec4 getGammaInColor(vec4 rgba) {\n  return vec4(rgba.rgb * rgba.rgb, rgba.a);\n}\n";
+
+/***/ }),
+
+/***/ 4862:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec4 getGammaOutColor(vec4 rgba) {\n  return vec4(sqrt(rgba.rgb), rgba.a);\n}\n";
+
+/***/ }),
+
+/***/ 8190:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec4 mapUVWO(vec4 uvwo, vec4 stpq) {\n  return uvwo;\n}\n";
+
+/***/ }),
+
+/***/ 5599:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 geometryClip;\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getMeshPosition() {\n  vec4 p = min(geometryClip, position4);\n  return getPosition(p, 1.0);\n}\n";
+
+/***/ }),
+
+/***/ 9542:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "attribute vec4 position4;\nuniform vec4 geometryClip;\nvarying vec4 vColor;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvoid vertexColor() {\n  vec4 p = min(geometryClip, position4);\n  vColor = getSample(p);\n}\n";
+
+/***/ }),
+
+/***/ 6582:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "attribute vec4 position4;\nuniform vec4 geometryResolution;\nuniform vec4 geometryClip;\nvarying float vMask;\n\n// External\nfloat getSample(vec4 xyzw);\n\nvoid maskLevel() {\n  vec4 p = min(geometryClip, position4);\n  vMask = getSample(p * geometryResolution);\n}\n";
+
+/***/ }),
+
+/***/ 3042:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 geometryResolution;\n\n#ifdef POSITION_STPQ\nvarying vec4 vSTPQ;\n#endif\n#ifdef POSITION_U\nvarying float vU;\n#endif\n#ifdef POSITION_UV\nvarying vec2 vUV;\n#endif\n#ifdef POSITION_UVW\nvarying vec3 vUVW;\n#endif\n#ifdef POSITION_UVWO\nvarying vec4 vUVWO;\n#endif\n\n// External\nvec3 getPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut);\n\nvec3 getMeshPosition(vec4 xyzw, float canonical) {\n  vec4 stpqOut, stpqIn = xyzw * geometryResolution;\n  vec3 xyz = getPosition(xyzw, stpqIn, stpqOut);\n\n  #ifdef POSITION_MAP\n  if (canonical > 0.5) {\n    #ifdef POSITION_STPQ\n    vSTPQ = stpqOut;\n    #endif\n    #ifdef POSITION_U\n    vU = stpqOut.x;\n    #endif\n    #ifdef POSITION_UV\n    vUV = stpqOut.xy;\n    #endif\n    #ifdef POSITION_UVW\n    vUVW = stpqOut.xyz;\n    #endif\n    #ifdef POSITION_UVWO\n    vUVWO = stpqOut;\n    #endif\n  }\n  #endif\n  return xyz;\n}\n";
+
+/***/ }),
+
+/***/ 3536:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float transitionEnter;\nuniform float transitionExit;\nuniform vec4  transitionScale;\nuniform vec4  transitionBias;\nuniform float transitionSkew;\nuniform float transitionActive;\n\nuniform vec4  moveFrom;\nuniform vec4  moveTo;\n\nfloat ease(float t) {\n  t = clamp(t, 0.0, 1.0);\n  return 1.0 - (2.0 - t) * t;\n}\n\nvec4 getTransitionPosition(vec4 xyzw, inout vec4 stpq) {\n  if (transitionActive < 0.5) return xyzw;\n\n  float enter   = transitionEnter;\n  float exit    = transitionExit;\n  float skew    = transitionSkew;\n  vec4  scale   = transitionScale;\n  vec4  bias    = transitionBias;\n\n  float factor  = 1.0 + skew;\n  float offset  = dot(vec4(1.0), stpq * scale + bias);\n\n  float a1 = ease(enter * factor - offset);\n  float a2 = ease(exit  * factor + offset - skew);\n\n  return xyzw + a1 * moveFrom + a2 * moveTo;\n}";
+
+/***/ }),
+
+/***/ 1960:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec4 getMask(vec4 xyzw) {\n  return vec4(1.0);\n}";
+
+/***/ }),
+
+/***/ 1488:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getDiscAlpha(float mask) {\n  // Approximation: 1 - x*x is approximately linear around x = 1 with slope 2\n  return vPixelSize * (1.0 - mask);\n  //  return vPixelSize * 2.0 * (1.0 - sqrt(mask));\n}\n";
+
+/***/ }),
+
+/***/ 7702:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getDiscHollowAlpha(float mask) {\n  return vPixelSize * (0.5 - 2.0 * abs(sqrt(mask) - .75));\n}\n";
+
+/***/ }),
+
+/***/ 7165:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getGenericAlpha(float mask) {\n  return vPixelSize * 2.0 * (1.0 - mask);\n}\n";
+
+/***/ }),
+
+/***/ 6850:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getGenericHollowAlpha(float mask) {\n  return vPixelSize * (0.5 - 2.0 * abs(mask - .75));\n}\n";
+
+/***/ }),
+
+/***/ 1335:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha >= 1.0) {\n    discard;\n  }\n  gl_FragColor = vec4(color.rgb, alpha * color.a);\n}\n";
+
+/***/ }),
+
+/***/ 446:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying vec2 vSprite;\n\nfloat getSpriteMask(vec2 xy);\nfloat getSpriteAlpha(float mask);\n\nvoid setFragmentColorFill(vec4 color) {\n  float mask = getSpriteMask(vSprite);\n  if (mask > 1.0) {\n    discard;\n  }\n  float alpha = getSpriteAlpha(mask);\n  if (alpha < 1.0) {\n    discard;\n  }\n  gl_FragColor = color;\n}\n\n";
+
+/***/ }),
+
+/***/ 5481:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getCircleMask(vec2 uv) {\n  return dot(uv, uv);\n}\n";
+
+/***/ }),
+
+/***/ 9260:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getDiamondMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return a.x + a.y;\n}\n";
+
+/***/ }),
+
+/***/ 7737:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getTriangleDownMask(vec2 uv) {\n  uv.y += .25;\n  return max(uv.y, abs(uv.x) * .866 - uv.y * .5 + .6);\n}\n";
+
+/***/ }),
+
+/***/ 7294:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getTriangleLeftMask(vec2 uv) {\n  uv.x += .25;\n  return max(uv.x, abs(uv.y) * .866 - uv.x * .5 + .6);\n}\n";
+
+/***/ }),
+
+/***/ 1360:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getTriangleRightMask(vec2 uv) {\n  uv.x -= .25;\n  return max(-uv.x, abs(uv.y) * .866 + uv.x * .5 + .6);\n}\n";
+
+/***/ }),
+
+/***/ 8496:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getSquareMask(vec2 uv) {\n  vec2 a = abs(uv);\n  return max(a.x, a.y);\n}\n";
+
+/***/ }),
+
+/***/ 139:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying float vPixelSize;\n\nfloat getTriangleUpMask(vec2 uv) {\n  uv.y -= .25;\n  return max(-uv.y, abs(uv.x) * .866 + uv.y * .5 + .6);\n}\n";
+
+/***/ }),
+
+/***/ 3537:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float pointDepth;\n\nuniform float pixelUnit;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying vec2 vSprite;\nvarying float vPixelSize;\n\nconst float pointScale = POINT_SHAPE_SCALE;\n\n// External\nfloat getPointSize(vec4 xyzw);\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getPointPosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 center = getPosition(p, 1.0);\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float z = -center.z;\n  float depth = mix(z, focusDepth, pointDepth);\n  \n  // Match device/unit mapping \n  // Sprite goes from -1..1, width = 2.\n  float pointSize = getPointSize(p);\n  float size = pointScale * pointSize * pixelUnit * .5;\n  float depthSize = depth * size;\n  \n  // Pad sprite by half a pixel to make the anti-aliasing straddle the pixel edge\n  // Note: pixelsize measures radius\n  float pixelSize = .5 * (pointDepth > 0.0 ? depthSize / z : size);\n  float paddedSize = pixelSize + 0.5;\n  float padFactor = paddedSize / pixelSize;\n\n  vPixelSize = paddedSize;\n  vSprite    = sprite;\n\n  return center + vec3(sprite * depthSize * renderScaleInv * padFactor, 0.0);\n}\n";
+
+/***/ }),
+
+/***/ 6485:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float pointSize;\n\nfloat getPointSize(vec4 xyzw) {\n  return pointSize;\n}";
+
+/***/ }),
+
+/***/ 6860:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float pointSize;\n\nvec4 getSample(vec4 xyzw);\n\nfloat getPointSize(vec4 xyzw) {\n  return pointSize * getSample(xyzw).x;\n}";
+
+/***/ }),
+
+/***/ 8879:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float polarBend;\nuniform float polarFocus;\nuniform float polarAspect;\nuniform float polarHelix;\n\nuniform mat4 viewMatrix;\n\nvec4 getPolarPosition(vec4 position, inout vec4 stpq) {\n  if (polarBend > 0.0) {\n\n    if (polarBend < 0.001) {\n      // Factor out large addition/subtraction of polarFocus\n      // to avoid numerical error\n      // sin(x) ~ x\n      // cos(x) ~ 1 - x * x / 2\n      vec2 pb = position.xy * polarBend;\n      float ppbbx = pb.x * pb.x;\n      return viewMatrix * vec4(\n        position.x * (1.0 - polarBend + (pb.y * polarAspect)),\n        position.y * (1.0 - .5 * ppbbx) - (.5 * ppbbx) * polarFocus / polarAspect,\n        position.z + position.x * polarHelix * polarBend,\n        1.0\n      );\n    }\n    else {\n      vec2 xy = position.xy * vec2(polarBend, polarAspect);\n      float radius = polarFocus + xy.y;\n      return viewMatrix * vec4(\n        sin(xy.x) * radius,\n        (cos(xy.x) * radius - polarFocus) / polarAspect,\n        position.z + position.x * polarHelix * polarBend,\n        1.0\n      );\n    }\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}";
+
+/***/ }),
+
+/***/ 4980:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float styleZBias;\nuniform float styleZIndex;\n\nvoid setPosition(vec3 position) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n\n  // Apply relative Z bias\n  float bias  = (1.0 - styleZBias / 32768.0);\n  pos.z *= bias;\n  \n  // Apply large scale Z index changes\n  if (styleZIndex > 0.0) {\n    float z = pos.z / pos.w;\n    pos.z = ((z + 1.0) / (styleZIndex + 1.0) - 1.0) * pos.w;\n  }\n  \n  gl_Position = pos;\n}";
+
+/***/ }),
+
+/***/ 2076:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "// This is three.js' global uniform, missing from fragment shaders.\nuniform mat4 projectionMatrix;\n\nvec4 readbackPosition(vec3 position, vec4 stpq) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  vec3 final = pos.xyz / pos.w;\n  if (final.z < -1.0) {\n    return vec4(0.0, 0.0, 0.0, -1.0);\n  }\n  else {\n    return vec4(final, -position.z);\n  }\n}\n";
+
+/***/ }),
+
+/***/ 8923:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 geometryScale;\nattribute vec4 position4;\n\nvec4 getRawPositionScale() {\n  return geometryScale * position4;\n}\n";
+
+/***/ }),
+
+/***/ 3103:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 repeatModulus;\n\nvec4 getRepeatXYZW(vec4 xyzw) {\n  return mod(xyzw + .5, repeatModulus) - .5;\n}\n";
+
+/***/ }),
+
+/***/ 4831:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 resampleBias;\n\nvec4 resamplePadding(vec4 xyzw) {\n  return xyzw + resampleBias;\n}";
+
+/***/ }),
+
+/***/ 9311:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 resampleFactor;\n\nvec4 resampleRelative(vec4 xyzw) {\n  return xyzw * resampleFactor;\n}";
+
+/***/ }),
+
+/***/ 8970:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float transitionEnter;\nuniform float transitionExit;\nuniform vec4  transitionScale;\nuniform vec4  transitionBias;\nuniform float transitionSkew;\nuniform float transitionActive;\n\nfloat getTransitionSDFMask(vec4 stpq) {\n  if (transitionActive < 0.5) return 1.0;\n\n  float enter   = transitionEnter;\n  float exit    = transitionExit;\n  float skew    = transitionSkew;\n  vec4  scale   = transitionScale;\n  vec4  bias    = transitionBias;\n\n  float factor  = 1.0 + skew;\n  float offset  = dot(vec4(1.0), stpq * scale + bias);\n\n  vec2 d = vec2(enter, exit) * factor + vec2(-offset, offset - skew);\n  if (exit  == 1.0) return d.x;\n  if (enter == 1.0) return d.y;\n  return min(d.x, d.y);\n}";
+
+/***/ }),
+
+/***/ 1250:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec3 getRootPosition(vec4 position, in vec4 stpqIn, out vec4 stpqOut) {\n  stpqOut = stpqIn; // avoid inout confusion\n  return position.xyz;\n}";
+
+/***/ }),
+
+/***/ 4597:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform sampler2D dataTexture;\n\nvec4 sample2D(vec2 uv) {\n  return texture2D(dataTexture, uv);\n}\n";
+
+/***/ }),
+
+/***/ 3725:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 scaleAxis;\nuniform vec4 scaleOffset;\n\nvec4 sampleData(float x);\n\nvec4 getScalePosition(vec4 xyzw) {\n  return scaleAxis * sampleData(xyzw.x).x + scaleOffset;\n}\n";
+
+/***/ }),
+
+/***/ 5124:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 remapSTPQScale;\n\nvec4 screenMapSTPQ(vec4 xyzw, out vec4 stpq) {\n  stpq = xyzw * remapSTPQScale;\n  return xyzw;\n}\n";
+
+/***/ }),
+
+/***/ 3895:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec2 remapUVScale;\n\nvec4 screenMapXY(vec4 uvwo, vec4 stpq) {\n  return vec4(floor(remapUVScale * uvwo.xy), 0.0, 0.0);\n}\n";
+
+/***/ }),
+
+/***/ 4561:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec2 remapUVScale;\nuniform vec2 remapModulus;\nuniform vec2 remapModulusInv;\n\nvec4 screenMapXYZW(vec4 uvwo, vec4 stpq) {\n  vec2 st = floor(remapUVScale * uvwo.xy);\n  vec2 xy = st * remapModulusInv;\n  vec2 ixy = floor(xy);\n  vec2 fxy = xy - ixy;\n  vec2 zw = fxy * remapModulus;\n  return vec4(ixy.x, zw.y, ixy.y, zw.x);\n}\n";
+
+/***/ }),
+
+/***/ 4846:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "vec2 screenPassUV(vec4 uvwo, vec4 stpq) {\n  return uvwo.xy;\n}\n";
+
+/***/ }),
+
+/***/ 6360:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "void setScreenPosition(vec4 position) {\n  gl_Position = vec4(position.xy * 2.0 - 1.0, 0.5, 1.0);\n}\n";
+
+/***/ }),
+
+/***/ 4799:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 sliceOffset;\n\nvec4 getSliceOffset(vec4 xyzw) {\n  return xyzw + sliceOffset;\n}\n";
+
+/***/ }),
+
+/***/ 3036:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float sphericalBend;\nuniform float sphericalFocus;\nuniform float sphericalAspectX;\nuniform float sphericalAspectY;\nuniform float sphericalScaleY;\n\nuniform mat4 viewMatrix;\n\nvec4 getSphericalPosition(vec4 position, inout vec4 stpq) {\n  if (sphericalBend > 0.0001) {\n\n    vec3 xyz = position.xyz * vec3(sphericalBend, sphericalBend / sphericalAspectY * sphericalScaleY, sphericalAspectX);\n    float radius = sphericalFocus + xyz.z;\n    float cosine = cos(xyz.y) * radius;\n\n    return viewMatrix * vec4(\n      sin(xyz.x) * cosine,\n      sin(xyz.y) * radius * sphericalAspectY,\n      (cos(xyz.x) * cosine - sphericalFocus) / sphericalAspectX,\n      1.0\n    );\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}";
+
+/***/ }),
+
+/***/ 9635:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float splitStride;\n\nvec2 getIndices(vec4 xyzw);\nvec4 getRest(vec4 xyzw);\nvec4 injectIndex(float v);\n\nvec4 getSplitXYZW(vec4 xyzw) {\n  vec2 uv = getIndices(xyzw);\n  float offset = uv.x + uv.y * splitStride;\n  return injectIndex(offset) + getRest(xyzw);\n}\n";
+
+/***/ }),
+
+/***/ 9838:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 spreadOffset;\nuniform mat4 spreadMatrix;\n\n// External\nvec4 getSample(vec4 xyzw);\n\nvec4 getSpreadSample(vec4 xyzw) {\n  vec4 sample = getSample(xyzw);\n  return sample + spreadMatrix * (spreadOffset + xyzw);\n}\n";
+
+/***/ }),
+
+/***/ 546:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying vec2 vSprite;\n\nvec4 getSample(vec2 xy);\n\nvec4 getSpriteColor() {\n  return getSample(vSprite);\n}";
+
+/***/ }),
+
+/***/ 5289:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec2 spriteOffset;\nuniform float spriteScale;\nuniform float spriteDepth;\nuniform float spriteSnap;\n\nuniform vec2 renderOdd;\nuniform float renderScale;\nuniform float renderScaleInv;\nuniform float pixelUnit;\nuniform float focusDepth;\n\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 sprite;\n\nvarying float vPixelSize;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\nvec4 getSprite(vec4 xyzw);\n\nvec3 getSpritePosition() {\n  // Clip points\n  vec4 p = min(geometryClip, position4);\n  float diff = length(position4 - p);\n  if (diff > 0.0) {\n    return vec3(0.0, 0.0, 1000.0);\n  }\n\n  // Make sprites\n  vec3 center = getPosition(p, 1.0);\n  vec4 atlas = getSprite(p);\n\n  // Sprite goes from -1..1, width = 2.\n  // -1..1 -> -0.5..0.5\n  vec2 halfSprite = sprite * .5;\n  vec2 halfFlipSprite = vec2(halfSprite.x, -halfSprite.y);\n\n#ifdef POSITION_UV\n  // Assign UVs\n  vUV = atlas.xy + atlas.zw * (halfFlipSprite + .5);\n#endif\n\n  // Depth blending\n  // TODO: orthographic camera\n  // Workaround: set depth = 0\n  float depth = focusDepth, z;\n  z = -center.z;\n  if (spriteDepth < 1.0) {\n    depth = mix(z, focusDepth, spriteDepth);\n  }\n  \n  // Match device/unit mapping \n  float size = pixelUnit * spriteScale;\n  float depthSize = depth * size;\n\n  // Calculate pixelSize for anti-aliasing\n  float pixelSize = (spriteDepth > 0.0 ? depthSize / z : size);\n  vPixelSize = pixelSize;\n\n  // Position sprite\n  vec2 atlasOdd = fract(atlas.zw / 2.0);\n  vec2 offset = (spriteOffset + halfSprite * atlas.zw) * depthSize;\n  if (spriteSnap > 0.5) {\n    // Snap to pixel (w/ epsilon shift to avoid jitter)\n    return vec3(((floor(center.xy / center.z * renderScale + 0.001) + renderOdd + atlasOdd) * center.z + offset) * renderScaleInv, center.z);\n  }\n  else {\n    // Place directly\n    return center + vec3(offset * renderScaleInv, 0.0);\n  }\n\n}\n";
+
+/***/ }),
+
+/***/ 5553:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float stereoBend;\n\nuniform mat4 viewMatrix;\n\nvec4 getStereoPosition(vec4 position, inout vec4 stpq) {\n  if (stereoBend > 0.0001) {\n\n    vec3 pos = position.xyz;\n    float r = length(pos);\n    float z = r + pos.z;\n    vec3 project = vec3(pos.xy / z, r);\n    \n    vec3 lerped = mix(pos, project, stereoBend);\n\n    return viewMatrix * vec4(lerped, 1.0);\n  }\n  else {\n    return viewMatrix * vec4(position.xyz, 1.0);\n  }\n}";
+
+/***/ }),
+
+/***/ 4873:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float stereoBend;\nuniform vec4 basisScale;\nuniform vec4 basisOffset;\nuniform mat4 viewMatrix;\nuniform vec2 view4D;\n\nvec4 getStereographic4Position(vec4 position, inout vec4 stpq) {\n  \n  vec4 transformed;\n  if (stereoBend > 0.0001) {\n\n    float r = length(position);\n    float w = r + position.w;\n    vec4 project = vec4(position.xyz / w, r);\n    \n    transformed = mix(position, project, stereoBend);\n  }\n  else {\n    transformed = position;\n  }\n\n  vec4 pos4 = transformed * basisScale - basisOffset;\n  vec3 xyz = (viewMatrix * vec4(pos4.xyz, 1.0)).xyz;\n  return vec4(xyz, pos4.w * view4D.y + view4D.x);\n}\n";
+
+/***/ }),
+
+/***/ 3829:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying vec2 vST;\n\nvec4 getSample(vec2 st);\n\nvec4 getSTSample() {\n  return getSample(vST);\n}\n";
+
+/***/ }),
+
+/***/ 9157:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "varying vec2 vUV;\n\nvoid setRawUV(vec4 xyzw) {\n  vUV = xyzw.xy;\n}\n";
+
+/***/ }),
+
+/***/ 8593:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec3 strip;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvoid getStripGeometry(vec4 xyzw, vec3 strip, out vec3 pos, out vec3 normal) {\n  vec3 a, b, c;\n\n  a   = getPosition(xyzw, 1.0);\n  b   = getPosition(vec4(xyzw.xyz, strip.x), 0.0);\n  c   = getPosition(vec4(xyzw.xyz, strip.y), 0.0);\n\n  normal = normalize(cross(c - a, b - a)) * strip.z;\n  \n  pos = a;\n}\n\nvec3 getStripPositionNormal() {\n  vec3 center, normal;\n\n  vec4 p = min(geometryClip, position4);\n\n  getStripGeometry(p, strip, center, normal);\n  vNormal   = normal;\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz);\n  vPosition = -center;\n\n  return center;\n}\n";
+
+/***/ }),
+
+/***/ 8570:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec3 styleColor;\nuniform float styleOpacity;\n\nvec4 getStyleColor() {\n  return vec4(styleColor, styleOpacity);\n}\n";
+
+/***/ }),
+
+/***/ 9534:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideDepth(vec4 xyzw) {\n  float x = xyzw.z;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  return sampleData(vec4(xyzw.xy, i + g, xyzw.w));\n}\n";
+
+/***/ }),
+
+/***/ 1643:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideDepthLerp(vec4 xyzw) {\n  float x = xyzw.z;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  vec4 xyzw1 = vec4(xyzw.xy, i, xyzw.w);\n  vec4 xyzw2 = vec4(xyzw.xy, i + 1.0, xyzw.w);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, g);\n}\n";
+
+/***/ }),
+
+/***/ 8630:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideHeight(vec4 xyzw) {\n  float x = xyzw.y;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  return sampleData(vec4(xyzw.x, i + g, xyzw.zw));\n}\n";
+
+/***/ }),
+
+/***/ 8437:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideHeightLerp(vec4 xyzw) {\n  float x = xyzw.y;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  vec4 xyzw1 = vec4(xyzw.x, i, xyzw.zw);\n  vec4 xyzw2 = vec4(xyzw.x, i + 1.0, xyzw.zw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, g);\n}\n";
+
+/***/ }),
+
+/***/ 9284:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideItems(vec4 xyzw) {\n  float x = xyzw.w;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  return sampleData(vec4(xyzw.xyz, i + g));\n}\n";
+
+/***/ }),
+
+/***/ 589:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideItemsLerp(vec4 xyzw) {\n  float x = xyzw.w;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  vec4 xyzw1 = vec4(xyzw.xyz, i);\n  vec4 xyzw2 = vec4(xyzw.xyz, i + 1.0);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, g);\n}\n";
+
+/***/ }),
+
+/***/ 6455:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideWidth(vec4 xyzw) {\n  float x = xyzw.x;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  return sampleData(vec4(i + g, xyzw.yzw));\n}\n";
+
+/***/ }),
+
+/***/ 8540:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float subdivideBevel;\n\n// External\nvec4 sampleData(vec4 xyzw);\n\nvec4 subdivideWidthLerp(vec4 xyzw) {\n  float x = xyzw.x;\n  float i = floor(x);\n  float f = x - i;\n\n  float minf = subdivideBevel * min(f, 1.0 - f);\n  float g = (f > 0.5) ? 1.0 - minf : (f < 0.5) ? minf : 0.5;\n\n  vec4 xyzw1 = vec4(i, xyzw.yzw);\n  vec4 xyzw2 = vec4(i + 1.0, xyzw.yzw);\n  \n  vec4 a = sampleData(xyzw1);\n  vec4 b = sampleData(xyzw2);\n\n  return mix(a, b, g);\n}\n";
+
+/***/ }),
+
+/***/ 7420:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "attribute vec4 position4;\n\nfloat getSurfaceHollowMask(vec4 xyzw) {\n  vec4 df = abs(fract(position4) - .5);\n  vec2 df2 = min(df.xy, df.zw);\n  float df3 = min(df2.x, df2.y);\n  return df3;\n}";
+
+/***/ }),
+
+/***/ 9082:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 geometryClip;\nuniform vec4 geometryResolution;\nuniform vec4 mapSize;\n\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getSurfacePosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 xyz = getPosition(p, 1.0);\n\n  // Overwrite UVs\n#ifdef POSITION_UV\n#ifdef POSITION_UV_INT\n  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;\n#else\n  vUV = position4.xy * geometryResolution.xy;\n#endif\n#endif\n\n  return xyz;\n}\n";
+
+/***/ }),
+
+/***/ 2692:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform vec4 mapSize;\nuniform vec4 geometryResolution;\nuniform vec4 geometryClip;\nattribute vec4 position4;\nattribute vec2 surface;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvoid getSurfaceGeometry(vec4 xyzw, float edgeX, float edgeY, out vec3 left, out vec3 center, out vec3 right, out vec3 up, out vec3 down) {\n  vec4 deltaX = vec4(1.0, 0.0, 0.0, 0.0);\n  vec4 deltaY = vec4(0.0, 1.0, 0.0, 0.0);\n\n  /*\n  // high quality, 5 tap\n  center =                  getPosition(xyzw, 1.0);\n  left   = (edgeX > -0.5) ? getPosition(xyzw - deltaX, 0.0) : center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX, 0.0) : center;\n  down   = (edgeY > -0.5) ? getPosition(xyzw - deltaY, 0.0) : center;\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY, 0.0) : center;\n  */\n  \n  // low quality, 3 tap\n  center =                  getPosition(xyzw, 1.0);\n  left   =                  center;\n  down   =                  center;\n  right  = (edgeX < 0.5)  ? getPosition(xyzw + deltaX, 0.0) : (2.0 * center - getPosition(xyzw - deltaX, 0.0));\n  up     = (edgeY < 0.5)  ? getPosition(xyzw + deltaY, 0.0) : (2.0 * center - getPosition(xyzw - deltaY, 0.0));\n}\n\nvec3 getSurfaceNormal(vec3 left, vec3 center, vec3 right, vec3 up, vec3 down) {\n  vec3 dx = right - left;\n  vec3 dy = up    - down;\n  vec3 n = cross(dy, dx);\n  if (length(n) > 0.0) {\n    return normalize(n);\n  }\n  return vec3(0.0, 1.0, 0.0);\n}\n\nvarying vec3 vNormal;\nvarying vec3 vLight;\nvarying vec3 vPosition;\n\nvec3 getSurfacePositionNormal() {\n  vec3 left, center, right, up, down;\n\n  vec4 p = min(geometryClip, position4);\n\n  getSurfaceGeometry(p, surface.x, surface.y, left, center, right, up, down);\n  vNormal   = getSurfaceNormal(left, center, right, up, down);\n  vLight    = normalize((viewMatrix * vec4(1.0, 2.0, 2.0, 0.0)).xyz); // hardcoded directional light\n  vPosition = -center;\n\n#ifdef POSITION_UV\n#ifdef POSITION_UV_INT\n  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;\n#else\n  vUV = position4.xy * geometryResolution.xy;\n#endif\n#endif\n  \n  return center;\n}\n";
+
+/***/ }),
+
+/***/ 6781:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform float worldUnit;\nuniform float focusDepth;\nuniform float tickSize;\nuniform float tickEpsilon;\nuniform vec3  tickNormal;\nuniform vec2  tickStrip;\n\nvec4 getSample(vec4 xyzw);\n\nvec3 transformPosition(vec4 position, in vec4 stpqIn, out vec4 stpqOut);\n\nvec3 getTickPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut) {\n  float epsilon = tickEpsilon;\n\n  // determine tick direction\n  float leftX  = max(tickStrip.x, xyzw.y - 1.0);\n  float rightX = min(tickStrip.y, xyzw.y + 1.0);\n  \n  vec4 left    = getSample(vec4(leftX,  xyzw.zw, 0.0));\n  vec4 right   = getSample(vec4(rightX, xyzw.zw, 0.0));\n  vec4 diff    = right - left;\n\n  vec3 normal  = cross(normalize(diff.xyz + vec3(diff.w)), tickNormal);\n  float bias   = max(0.0, 1.0 - length(normal) * 2.0);\n       normal  = mix(normal, tickNormal.yzx, bias * bias);\n  \n  // transform (point) and (point + delta)\n  vec4 center  = getSample(vec4(xyzw.yzw, 0.0));\n  vec4 delta   = vec4(normal, 0.0) * epsilon;\n\n  vec4 a = center;\n  vec4 b = center + delta;\n\n  vec4 _;\n  vec3 c = transformPosition(a, stpqIn, stpqOut);\n  vec3 d = transformPosition(b, stpqIn, _);\n  \n  // sample on either side to create line\n  float line = xyzw.x - .5;\n  vec3  mid  = c;\n  vec3  side = normalize(d - c);\n\n  return mid + side * line * tickSize * worldUnit * focusDepth;\n}\n";
+
+/***/ }),
+
+/***/ 2794:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform mat4 transformMatrix;\n\nvec4 transformPosition(vec4 position, inout vec4 stpq) {\n  return transformMatrix * vec4(position.xyz, 1.0);\n}\n";
+
+/***/ }),
+
+/***/ 8316:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "uniform mat4 transformMatrix;\nuniform vec4 transformOffset;\n\nvec4 transformPosition(vec4 position, inout vec4 stpq) {\n  return transformMatrix * position + transformOffset;\n}\n";
+
+/***/ }),
+
+/***/ 7009:
+/***/ ((module) => {
+
+"use strict";
+module.exports = "// Implicit three.js uniform\n// uniform mat4 viewMatrix;\n\nvec4 getViewPosition(vec4 position, inout vec4 stpq) {\n  return (viewMatrix * vec4(position.xyz, 1.0));\n}\n";
+
+/***/ }),
+
 /***/ 824:
 /***/ ((module) => {
 
@@ -10011,7 +10774,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE__824__;
 
 /***/ }),
 
-/***/ 862:
+/***/ 9862:
 /***/ (() => {
 
 /* (ignored) */
@@ -45609,7 +46372,7 @@ Bootstrap.registerPlugin("fullscreen", {
 });
 
 // EXTERNAL MODULE: ./node_modules/stats.js/build/stats.min.js
-var stats_min = __webpack_require__(466);
+var stats_min = __webpack_require__(3466);
 var stats_min_default = /*#__PURE__*/__webpack_require__.n(stats_min);
 ;// CONCATENATED MODULE: ./node_modules/threestrap/src/extra/stats.js
 
@@ -69174,6 +69937,226 @@ const render_classes_Classes = {
 
 
 
+// EXTERNAL MODULE: ./src/shaders/glsl/arrow.position.glsl
+var arrow_position = __webpack_require__(6555);
+// EXTERNAL MODULE: ./src/shaders/glsl/axis.position.glsl
+var axis_position = __webpack_require__(9805);
+// EXTERNAL MODULE: ./src/shaders/glsl/cartesian4.position.glsl
+var cartesian4_position = __webpack_require__(8776);
+// EXTERNAL MODULE: ./src/shaders/glsl/cartesian.position.glsl
+var cartesian_position = __webpack_require__(6644);
+// EXTERNAL MODULE: ./src/shaders/glsl/clamp.position.glsl
+var clamp_position = __webpack_require__(3611);
+// EXTERNAL MODULE: ./src/shaders/glsl/color.opaque.glsl
+var color_opaque = __webpack_require__(4441);
+// EXTERNAL MODULE: ./src/shaders/glsl/face.position.glsl
+var face_position = __webpack_require__(8914);
+// EXTERNAL MODULE: ./src/shaders/glsl/face.position.normal.glsl
+var face_position_normal = __webpack_require__(834);
+// EXTERNAL MODULE: ./src/shaders/glsl/float.encode.glsl
+var float_encode = __webpack_require__(4344);
+// EXTERNAL MODULE: ./src/shaders/glsl/float.index.pack.glsl
+var float_index_pack = __webpack_require__(632);
+// EXTERNAL MODULE: ./src/shaders/glsl/float.stretch.glsl
+var float_stretch = __webpack_require__(4998);
+// EXTERNAL MODULE: ./src/shaders/glsl/fragment.clip.dashed.glsl
+var fragment_clip_dashed = __webpack_require__(1552);
+// EXTERNAL MODULE: ./src/shaders/glsl/fragment.clip.dotted.glsl
+var fragment_clip_dotted = __webpack_require__(4018);
+// EXTERNAL MODULE: ./src/shaders/glsl/fragment.clip.ends.glsl
+var fragment_clip_ends = __webpack_require__(5400);
+// EXTERNAL MODULE: ./src/shaders/glsl/fragment.clip.proximity.glsl
+var fragment_clip_proximity = __webpack_require__(9408);
+// EXTERNAL MODULE: ./src/shaders/glsl/fragment.color.glsl
+var fragment_color = __webpack_require__(5189);
+// EXTERNAL MODULE: ./src/shaders/glsl/fragment.map.rgba.glsl
+var fragment_map_rgba = __webpack_require__(7495);
+// EXTERNAL MODULE: ./src/shaders/glsl/fragment.solid.glsl
+var fragment_solid = __webpack_require__(1768);
+// EXTERNAL MODULE: ./src/shaders/glsl/fragment.transparent.glsl
+var fragment_transparent = __webpack_require__(6440);
+// EXTERNAL MODULE: ./src/shaders/glsl/grid.position.glsl
+var grid_position = __webpack_require__(740);
+// EXTERNAL MODULE: ./src/shaders/glsl/grow.position.glsl
+var grow_position = __webpack_require__(7000);
+// EXTERNAL MODULE: ./src/shaders/glsl/join.position.glsl
+var join_position = __webpack_require__(4221);
+// EXTERNAL MODULE: ./src/shaders/glsl/label.alpha.glsl
+var label_alpha = __webpack_require__(8219);
+// EXTERNAL MODULE: ./src/shaders/glsl/label.map.glsl
+var label_map = __webpack_require__(8258);
+// EXTERNAL MODULE: ./src/shaders/glsl/label.outline.glsl
+var label_outline = __webpack_require__(995);
+// EXTERNAL MODULE: ./src/shaders/glsl/layer.position.glsl
+var layer_position = __webpack_require__(4494);
+// EXTERNAL MODULE: ./src/shaders/glsl/lerp.depth.glsl
+var lerp_depth = __webpack_require__(1744);
+// EXTERNAL MODULE: ./src/shaders/glsl/lerp.height.glsl
+var lerp_height = __webpack_require__(9012);
+// EXTERNAL MODULE: ./src/shaders/glsl/lerp.items.glsl
+var lerp_items = __webpack_require__(8151);
+// EXTERNAL MODULE: ./src/shaders/glsl/lerp.width.glsl
+var lerp_width = __webpack_require__(7199);
+// EXTERNAL MODULE: ./src/shaders/glsl/line.position.glsl
+var line_position = __webpack_require__(2662);
+// EXTERNAL MODULE: ./src/shaders/glsl/map.2d.data.glsl
+var map_2d_data = __webpack_require__(6640);
+// EXTERNAL MODULE: ./src/shaders/glsl/map.2d.data.wrap.glsl
+var map_2d_data_wrap = __webpack_require__(8567);
+// EXTERNAL MODULE: ./src/shaders/glsl/map.xyzw.2dv.glsl
+var map_xyzw_2dv = __webpack_require__(9292);
+// EXTERNAL MODULE: ./src/shaders/glsl/map.xyzw.align.glsl
+var map_xyzw_align = __webpack_require__(2246);
+// EXTERNAL MODULE: ./src/shaders/glsl/map.xyzw.texture.glsl
+var map_xyzw_texture = __webpack_require__(1103);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.fragment.color.glsl
+var mesh_fragment_color = __webpack_require__(3453);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.fragment.map.glsl
+var mesh_fragment_map = __webpack_require__(2963);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.fragment.mask.glsl
+var mesh_fragment_mask = __webpack_require__(512);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.fragment.material.glsl
+var mesh_fragment_material = __webpack_require__(3970);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.fragment.shaded.glsl
+var mesh_fragment_shaded = __webpack_require__(3001);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.fragment.texture.glsl
+var mesh_fragment_texture = __webpack_require__(4279);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.gamma.in.glsl
+var mesh_gamma_in = __webpack_require__(1956);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.gamma.out.glsl
+var mesh_gamma_out = __webpack_require__(4862);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.map.uvwo.glsl
+var mesh_map_uvwo = __webpack_require__(8190);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.position.glsl
+var mesh_position = __webpack_require__(5599);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.vertex.color.glsl
+var mesh_vertex_color = __webpack_require__(9542);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.vertex.mask.glsl
+var mesh_vertex_mask = __webpack_require__(6582);
+// EXTERNAL MODULE: ./src/shaders/glsl/mesh.vertex.position.glsl
+var mesh_vertex_position = __webpack_require__(3042);
+// EXTERNAL MODULE: ./src/shaders/glsl/move.position.glsl
+var move_position = __webpack_require__(3536);
+// EXTERNAL MODULE: ./src/shaders/glsl/object.mask.default.glsl
+var object_mask_default = __webpack_require__(1960);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.alpha.circle.glsl
+var point_alpha_circle = __webpack_require__(1488);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.alpha.circle.hollow.glsl
+var point_alpha_circle_hollow = __webpack_require__(7702);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.alpha.generic.glsl
+var point_alpha_generic = __webpack_require__(7165);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.alpha.generic.hollow.glsl
+var point_alpha_generic_hollow = __webpack_require__(6850);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.edge.glsl
+var point_edge = __webpack_require__(1335);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.fill.glsl
+var point_fill = __webpack_require__(446);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.mask.circle.glsl
+var point_mask_circle = __webpack_require__(5481);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.mask.diamond.glsl
+var point_mask_diamond = __webpack_require__(9260);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.mask.down.glsl
+var point_mask_down = __webpack_require__(7737);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.mask.left.glsl
+var point_mask_left = __webpack_require__(7294);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.mask.right.glsl
+var point_mask_right = __webpack_require__(1360);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.mask.square.glsl
+var point_mask_square = __webpack_require__(8496);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.mask.up.glsl
+var point_mask_up = __webpack_require__(139);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.position.glsl
+var point_position = __webpack_require__(3537);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.size.uniform.glsl
+var point_size_uniform = __webpack_require__(6485);
+// EXTERNAL MODULE: ./src/shaders/glsl/point.size.varying.glsl
+var point_size_varying = __webpack_require__(6860);
+// EXTERNAL MODULE: ./src/shaders/glsl/polar.position.glsl
+var polar_position = __webpack_require__(8879);
+// EXTERNAL MODULE: ./src/shaders/glsl/project.position.glsl
+var project_position = __webpack_require__(4980);
+// EXTERNAL MODULE: ./src/shaders/glsl/project.readback.glsl
+var project_readback = __webpack_require__(2076);
+// EXTERNAL MODULE: ./src/shaders/glsl/raw.position.scale.glsl
+var raw_position_scale = __webpack_require__(8923);
+// EXTERNAL MODULE: ./src/shaders/glsl/repeat.position.glsl
+var repeat_position = __webpack_require__(3103);
+// EXTERNAL MODULE: ./src/shaders/glsl/resample.padding.glsl
+var resample_padding = __webpack_require__(4831);
+// EXTERNAL MODULE: ./src/shaders/glsl/resample.relative.glsl
+var resample_relative = __webpack_require__(9311);
+// EXTERNAL MODULE: ./src/shaders/glsl/reveal.mask.glsl
+var reveal_mask = __webpack_require__(8970);
+// EXTERNAL MODULE: ./src/shaders/glsl/root.position.glsl
+var root_position = __webpack_require__(1250);
+// EXTERNAL MODULE: ./src/shaders/glsl/sample.2d.glsl
+var sample_2d = __webpack_require__(4597);
+// EXTERNAL MODULE: ./src/shaders/glsl/scale.position.glsl
+var scale_position = __webpack_require__(3725);
+// EXTERNAL MODULE: ./src/shaders/glsl/screen.map.stpq.glsl
+var screen_map_stpq = __webpack_require__(5124);
+// EXTERNAL MODULE: ./src/shaders/glsl/screen.map.xy.glsl
+var screen_map_xy = __webpack_require__(3895);
+// EXTERNAL MODULE: ./src/shaders/glsl/screen.map.xyzw.glsl
+var screen_map_xyzw = __webpack_require__(4561);
+// EXTERNAL MODULE: ./src/shaders/glsl/screen.pass.uv.glsl
+var screen_pass_uv = __webpack_require__(4846);
+// EXTERNAL MODULE: ./src/shaders/glsl/screen.position.glsl
+var screen_position = __webpack_require__(6360);
+// EXTERNAL MODULE: ./src/shaders/glsl/slice.position.glsl
+var slice_position = __webpack_require__(4799);
+// EXTERNAL MODULE: ./src/shaders/glsl/spherical.position.glsl
+var spherical_position = __webpack_require__(3036);
+// EXTERNAL MODULE: ./src/shaders/glsl/split.position.glsl
+var split_position = __webpack_require__(9635);
+// EXTERNAL MODULE: ./src/shaders/glsl/spread.position.glsl
+var spread_position = __webpack_require__(9838);
+// EXTERNAL MODULE: ./src/shaders/glsl/sprite.fragment.glsl
+var sprite_fragment = __webpack_require__(546);
+// EXTERNAL MODULE: ./src/shaders/glsl/sprite.position.glsl
+var sprite_position = __webpack_require__(5289);
+// EXTERNAL MODULE: ./src/shaders/glsl/stereographic4.position.glsl
+var stereographic4_position = __webpack_require__(4873);
+// EXTERNAL MODULE: ./src/shaders/glsl/stereographic.position.glsl
+var stereographic_position = __webpack_require__(5553);
+// EXTERNAL MODULE: ./src/shaders/glsl/stpq.sample.2d.glsl
+var stpq_sample_2d = __webpack_require__(3829);
+// EXTERNAL MODULE: ./src/shaders/glsl/stpq.xyzw.2d.glsl
+var stpq_xyzw_2d = __webpack_require__(9157);
+// EXTERNAL MODULE: ./src/shaders/glsl/strip.position.normal.glsl
+var strip_position_normal = __webpack_require__(8593);
+// EXTERNAL MODULE: ./src/shaders/glsl/style.color.glsl
+var style_color = __webpack_require__(8570);
+// EXTERNAL MODULE: ./src/shaders/glsl/subdivide.depth.glsl
+var subdivide_depth = __webpack_require__(9534);
+// EXTERNAL MODULE: ./src/shaders/glsl/subdivide.depth.lerp.glsl
+var subdivide_depth_lerp = __webpack_require__(1643);
+// EXTERNAL MODULE: ./src/shaders/glsl/subdivide.height.glsl
+var subdivide_height = __webpack_require__(8630);
+// EXTERNAL MODULE: ./src/shaders/glsl/subdivide.height.lerp.glsl
+var subdivide_height_lerp = __webpack_require__(8437);
+// EXTERNAL MODULE: ./src/shaders/glsl/subdivide.items.glsl
+var subdivide_items = __webpack_require__(9284);
+// EXTERNAL MODULE: ./src/shaders/glsl/subdivide.items.lerp.glsl
+var subdivide_items_lerp = __webpack_require__(589);
+// EXTERNAL MODULE: ./src/shaders/glsl/subdivide.width.glsl
+var subdivide_width = __webpack_require__(6455);
+// EXTERNAL MODULE: ./src/shaders/glsl/subdivide.width.lerp.glsl
+var subdivide_width_lerp = __webpack_require__(8540);
+// EXTERNAL MODULE: ./src/shaders/glsl/surface.mask.hollow.glsl
+var surface_mask_hollow = __webpack_require__(7420);
+// EXTERNAL MODULE: ./src/shaders/glsl/surface.position.glsl
+var surface_position = __webpack_require__(9082);
+// EXTERNAL MODULE: ./src/shaders/glsl/surface.position.normal.glsl
+var surface_position_normal = __webpack_require__(2692);
+// EXTERNAL MODULE: ./src/shaders/glsl/ticks.position.glsl
+var ticks_position = __webpack_require__(6781);
+// EXTERNAL MODULE: ./src/shaders/glsl/transform3.position.glsl
+var transform3_position = __webpack_require__(2794);
+// EXTERNAL MODULE: ./src/shaders/glsl/transform4.position.glsl
+var transform4_position = __webpack_require__(8316);
+// EXTERNAL MODULE: ./src/shaders/glsl/view.position.glsl
+var view_position = __webpack_require__(7009);
 ;// CONCATENATED MODULE: ./node_modules/shadergraph/src/graph/graph.js
 /*
  * decaffeinate suggestions:
@@ -69899,7 +70882,7 @@ class Snippet {
 Snippet.initClass();
 
 // EXTERNAL MODULE: ./node_modules/shadergraph/src/linker/priority.js
-var linker_priority = __webpack_require__(981);
+var linker_priority = __webpack_require__(3981);
 ;// CONCATENATED MODULE: ./node_modules/shadergraph/src/linker/assemble.js
 /*
  * decaffeinate suggestions:
@@ -72418,10 +73401,10 @@ const string_compiler = function (code, placeholders) {
 };
 
 // EXTERNAL MODULE: ./node_modules/glsl-tokenizer/string.js
-var string = __webpack_require__(932);
+var string = __webpack_require__(9932);
 var string_default = /*#__PURE__*/__webpack_require__.n(string);
 // EXTERNAL MODULE: ./node_modules/@sicmutils/glsl-parser/direct.js
-var direct = __webpack_require__(36);
+var direct = __webpack_require__(7485);
 var direct_default = /*#__PURE__*/__webpack_require__.n(direct);
 ;// CONCATENATED MODULE: ./node_modules/shadergraph/src/glsl/decl.js
 /*
@@ -73493,8 +74476,229 @@ const factory_Factory = function (snippets) {
 ;// CONCATENATED MODULE: ./src/shaders/index.js
 
 
-// Compiled in build step
-const Snippets = __webpack_require__(459);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const Snippets = {
+  "arrow.position": arrow_position,
+  "axis.position": axis_position,
+  "cartesian.position": cartesian_position,
+  "cartesian4.position": cartesian4_position,
+  "clamp.position": clamp_position,
+  "color.opaque": color_opaque,
+  "face.position": face_position,
+  "face.position.normal": face_position_normal,
+  "float.encode": float_encode,
+  "float.index.pack": float_index_pack,
+  "float.stretch": float_stretch,
+  "fragment.clip.dashed": fragment_clip_dashed,
+  "fragment.clip.dotted": fragment_clip_dotted,
+  "fragment.clip.ends": fragment_clip_ends,
+  "fragment.clip.proximity": fragment_clip_proximity,
+  "fragment.color": fragment_color,
+  "fragment.map.rgba": fragment_map_rgba,
+  "fragment.solid": fragment_solid,
+  "fragment.transparent": fragment_transparent,
+  "grid.position": grid_position,
+  "grow.position": grow_position,
+  "join.position": join_position,
+  "label.alpha": label_alpha,
+  "label.map": label_map,
+  "label.outline": label_outline,
+  "layer.position": layer_position,
+  "lerp.depth": lerp_depth,
+  "lerp.height": lerp_height,
+  "lerp.items": lerp_items,
+  "lerp.width": lerp_width,
+  "line.position": line_position,
+  "map.2d.data": map_2d_data,
+  "map.2d.data.wrap": map_2d_data_wrap,
+  "map.xyzw.2dv": map_xyzw_2dv,
+  "map.xyzw.align": map_xyzw_align,
+  "map.xyzw.texture": map_xyzw_texture,
+  "mesh.fragment.color": mesh_fragment_color,
+  "mesh.fragment.map": mesh_fragment_map,
+  "mesh.fragment.mask": mesh_fragment_mask,
+  "mesh.fragment.material": mesh_fragment_material,
+  "mesh.fragment.shaded": mesh_fragment_shaded,
+  "mesh.fragment.texture": mesh_fragment_texture,
+  "mesh.gamma.in": mesh_gamma_in,
+  "mesh.gamma.out": mesh_gamma_out,
+  "mesh.map.uvwo": mesh_map_uvwo,
+  "mesh.position": mesh_position,
+  "mesh.vertex.color": mesh_vertex_color,
+  "mesh.vertex.mask": mesh_vertex_mask,
+  "mesh.vertex.position": mesh_vertex_position,
+  "move.position": move_position,
+  "object.mask.default": object_mask_default,
+  "point.alpha.circle": point_alpha_circle,
+  "point.alpha.circle.hollow": point_alpha_circle_hollow,
+  "point.alpha.generic": point_alpha_generic,
+  "point.alpha.generic.hollow": point_alpha_generic_hollow,
+  "point.edge": point_edge,
+  "point.fill": point_fill,
+  "point.mask.circle": point_mask_circle,
+  "point.mask.diamond": point_mask_diamond,
+  "point.mask.down": point_mask_down,
+  "point.mask.left": point_mask_left,
+  "point.mask.right": point_mask_right,
+  "point.mask.square": point_mask_square,
+  "point.mask.up": point_mask_up,
+  "point.position": point_position,
+  "point.size.uniform": point_size_uniform,
+  "point.size.varying": point_size_varying,
+  "polar.position": polar_position,
+  "project.position": project_position,
+  "project.readback": project_readback,
+  "raw.position.scale": raw_position_scale,
+  "repeat.position": repeat_position,
+  "resample.padding": resample_padding,
+  "resample.relative": resample_relative,
+  "reveal.mask": reveal_mask,
+  "root.position": root_position,
+  "sample.2d": sample_2d,
+  "scale.position": scale_position,
+  "screen.map.stpq": screen_map_stpq,
+  "screen.map.xy": screen_map_xy,
+  "screen.map.xyzw": screen_map_xyzw,
+  "screen.pass.uv": screen_pass_uv,
+  "screen.position": screen_position,
+  "slice.position": slice_position,
+  "spherical.position": spherical_position,
+  "split.position": split_position,
+  "spread.position": spread_position,
+  "sprite.fragment": sprite_fragment,
+  "sprite.position": sprite_position,
+  "stereographic.position": stereographic_position,
+  "stereographic4.position": stereographic4_position,
+  "stpq.sample.2d": stpq_sample_2d,
+  "stpq.xyzw.2d": stpq_xyzw_2d,
+  "strip.position.normal": strip_position_normal,
+  "style.color": style_color,
+  "subdivide.depth": subdivide_depth,
+  "subdivide.depth.lerp": subdivide_depth_lerp,
+  "subdivide.height": subdivide_height,
+  "subdivide.height.lerp": subdivide_height_lerp,
+  "subdivide.items": subdivide_items,
+  "subdivide.items.lerp": subdivide_items_lerp,
+  "subdivide.width": subdivide_width,
+  "subdivide.width.lerp": subdivide_width_lerp,
+  "surface.mask.hollow": surface_mask_hollow,
+  "surface.position": surface_position,
+  "surface.position.normal": surface_position_normal,
+  "ticks.position": ticks_position,
+  "transform3.position": transform3_position,
+  "transform4.position": transform4_position,
+  "view.position": view_position,
+};
+
+
 
 ;// CONCATENATED MODULE: ./src/stage/animator.js
 // TODO: This file was created by bulk-decaffeinate.
@@ -74468,7 +75672,7 @@ Context.initClass();
 
 
 
-const version = "2.1.0";
+const version = "2.1.1";
 
 // Just because
 const π = Math.PI;

@@ -39,7 +39,6 @@
     "gulp": "^4.0.2",
     "gulp-concat": "^2.6.1",
     "gulp-eslint": "^6.0.0",
-    "gulp-jsify": "file:./vendor/gulp-jsify",
     "gulp-rename": "^2.0.0",
     "gulp-shell": "^0.8.0",
     "gulp-watch": "^5.0.1",
