@@ -11,6 +11,14 @@ module.exports = {
       stream: require.resolve("stream-browserify"),
     },
   },
+  module: {
+    rules: [
+      {
+        test: /\.glsl$/,
+        type: "asset/source",
+      },
+    ],
+  },
   plugins: [
     new webpack.ProvidePlugin({
       Buffer: ["buffer", "Buffer"],

@@ -5,7 +5,6 @@ const compiler = require("webpack");
 const webpack = require("webpack-stream");
 const watch = require("gulp-watch");
 const shell = require("gulp-shell");
-const jsify = require("./vendor/gulp-jsify");
 
 const webpackConfig = require("./config/webpack.config.js");
 
@@ -16,18 +15,9 @@ const builds = {
 
 const css = ["node_modules/shadergraph/build/*.css", "src/**/*.css"];
 
-const glsls = ["src/shaders/glsl/**/*.glsl"];
-
 const files = ["src/**/*.js"];
 
-const source = files.concat(glsls).concat(css);
-
-gulp.task("glsl", function () {
-  return gulp
-    .src(glsls)
-    .pipe(jsify("shaders.js", "module.exports"))
-    .pipe(gulp.dest("./build/"));
-});
+const source = files.concat(css);
 
 gulp.task("pack", function () {
   return webpack(webpackConfig, compiler, function (_err, _stats) {
@@ -56,7 +46,7 @@ gulp.task("watch-build-watch", function () {
 
 // Main tasks
 
-const buildTask = gulp.series("glsl", "pack", "css");
+const buildTask = gulp.series("pack", "css");
 
 gulp.task("default", buildTask);
 
