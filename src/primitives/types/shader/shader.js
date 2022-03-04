@@ -38,7 +38,8 @@ export class Shader extends Primitive {
     // Convert uniforms to attributes
     const types = this._types;
     const uniforms = {};
-    var make = (type) => {
+    const make = (type) => {
+      let t;
       switch (type) {
         case "i":
           return types.int();
@@ -57,7 +58,7 @@ export class Shader extends Primitive {
         case "t":
           return types.object();
         default:
-          var t = type.split("");
+          t = type.split("");
           if (t.pop() === "v") {
             return types.array(make(t.join("")));
           } else {
@@ -66,8 +67,8 @@ export class Shader extends Primitive {
       }
     };
 
-    for (let def of Array.from(snippet._signatures.uniform)) {
-      var type;
+    for (const def of Array.from(snippet._signatures.uniform)) {
+      let type;
       if ((type = make(def.type))) {
         uniforms[def.name] = type;
       }
@@ -128,7 +129,7 @@ export class Shader extends Primitive {
 
     // Require sources
     if (this.bind.sources != null) {
-      for (let source of Array.from(this.bind.sources)) {
+      for (const source of Array.from(this.bind.sources)) {
         s.require(source.sourceShader(this._shaders.shader()));
       }
     }

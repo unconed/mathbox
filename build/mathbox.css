@@ -215,6 +215,67 @@
   font-family: sans-serif;
 }
 
+.mathbox-overlays {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  overflow: hidden;
+}
+.mathbox-overlays > div {
+  transform-style: preserve-3d;
+}
+.mathbox-overlay > div {
+  position: absolute;
+  will-change: transform, opacity;
+}
+.mathbox-label {
+  font-family: sans-serif;
+}
+.mathbox-outline-1 {
+  text-shadow: -1px -1px 0px rgb(255, 255, 255), 1px 1px 0px rgb(255, 255, 255),
+    -1px 1px 0px rgb(255, 255, 255), 1px -1px 0px rgb(255, 255, 255),
+    1px 0px 1px rgb(255, 255, 255), -1px 0px 1px rgb(255, 255, 255),
+    0px -1px 1px rgb(255, 255, 255), 0px 1px 1px rgb(255, 255, 255);
+}
+.mathbox-outline-2 {
+  text-shadow: 0px -2px 0px rgb(255, 255, 255), 0px 2px 0px rgb(255, 255, 255),
+    -2px 0px 0px rgb(255, 255, 255), 2px 0px 0px rgb(255, 255, 255),
+    -1px -2px 0px rgb(255, 255, 255), -2px -1px 0px rgb(255, 255, 255),
+    -1px 2px 0px rgb(255, 255, 255), -2px 1px 0px rgb(255, 255, 255),
+    1px 2px 0px rgb(255, 255, 255), 2px 1px 0px rgb(255, 255, 255),
+    1px -2px 0px rgb(255, 255, 255), 2px -1px 0px rgb(255, 255, 255);
+}
+.mathbox-outline-3 {
+  text-shadow: 3px 0px 0px rgb(255, 255, 255), -3px 0px 0px rgb(255, 255, 255),
+    0px 3px 0px rgb(255, 255, 255), 0px -3px 0px rgb(255, 255, 255),
+    -2px -2px 0px rgb(255, 255, 255), -2px 2px 0px rgb(255, 255, 255),
+    2px 2px 0px rgb(255, 255, 255), 2px -2px 0px rgb(255, 255, 255),
+    -1px -2px 1px rgb(255, 255, 255), -2px -1px 1px rgb(255, 255, 255),
+    -1px 2px 1px rgb(255, 255, 255), -2px 1px 1px rgb(255, 255, 255),
+    1px 2px 1px rgb(255, 255, 255), 2px 1px 1px rgb(255, 255, 255),
+    1px -2px 1px rgb(255, 255, 255), 2px -1px 1px rgb(255, 255, 255);
+}
+.mathbox-outline-4 {
+  text-shadow: 4px 0px 0px rgb(255, 255, 255), -4px 0px 0px rgb(255, 255, 255),
+    0px 4px 0px rgb(255, 255, 255), 0px -4px 0px rgb(255, 255, 255),
+    -3px -2px 0px rgb(255, 255, 255), -3px 2px 0px rgb(255, 255, 255),
+    3px 2px 0px rgb(255, 255, 255), 3px -2px 0px rgb(255, 255, 255),
+    -2px -3px 0px rgb(255, 255, 255), -2px 3px 0px rgb(255, 255, 255),
+    2px 3px 0px rgb(255, 255, 255), 2px -3px 0px rgb(255, 255, 255),
+    -1px -2px 1px rgb(255, 255, 255), -2px -1px 1px rgb(255, 255, 255),
+    -1px 2px 1px rgb(255, 255, 255), -2px 1px 1px rgb(255, 255, 255),
+    1px 2px 1px rgb(255, 255, 255), 2px 1px 1px rgb(255, 255, 255),
+    1px -2px 1px rgb(255, 255, 255), 2px -1px 1px rgb(255, 255, 255);
+}
+.mathbox-outline-fill,
+.mathbox-outline-fill * {
+  color: #fff !important;
+}
+
 .mathbox-loader {
   position: absolute;
   top: 50%;
@@ -350,65 +411,4 @@
 }
 .mathbox-splash-blue .mathbox-logo > :nth-child(2) > :nth-child(3) {
   border-color: #75eaff;
-}
-
-.mathbox-overlays {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  transform-style: preserve-3d;
-  overflow: hidden;
-}
-.mathbox-overlays > div {
-  transform-style: preserve-3d;
-}
-.mathbox-overlay > div {
-  position: absolute;
-  will-change: transform, opacity;
-}
-.mathbox-label {
-  font-family: sans-serif;
-}
-.mathbox-outline-1 {
-  text-shadow: -1px -1px 0px rgb(255, 255, 255), 1px 1px 0px rgb(255, 255, 255),
-    -1px 1px 0px rgb(255, 255, 255), 1px -1px 0px rgb(255, 255, 255),
-    1px 0px 1px rgb(255, 255, 255), -1px 0px 1px rgb(255, 255, 255),
-    0px -1px 1px rgb(255, 255, 255), 0px 1px 1px rgb(255, 255, 255);
-}
-.mathbox-outline-2 {
-  text-shadow: 0px -2px 0px rgb(255, 255, 255), 0px 2px 0px rgb(255, 255, 255),
-    -2px 0px 0px rgb(255, 255, 255), 2px 0px 0px rgb(255, 255, 255),
-    -1px -2px 0px rgb(255, 255, 255), -2px -1px 0px rgb(255, 255, 255),
-    -1px 2px 0px rgb(255, 255, 255), -2px 1px 0px rgb(255, 255, 255),
-    1px 2px 0px rgb(255, 255, 255), 2px 1px 0px rgb(255, 255, 255),
-    1px -2px 0px rgb(255, 255, 255), 2px -1px 0px rgb(255, 255, 255);
-}
-.mathbox-outline-3 {
-  text-shadow: 3px 0px 0px rgb(255, 255, 255), -3px 0px 0px rgb(255, 255, 255),
-    0px 3px 0px rgb(255, 255, 255), 0px -3px 0px rgb(255, 255, 255),
-    -2px -2px 0px rgb(255, 255, 255), -2px 2px 0px rgb(255, 255, 255),
-    2px 2px 0px rgb(255, 255, 255), 2px -2px 0px rgb(255, 255, 255),
-    -1px -2px 1px rgb(255, 255, 255), -2px -1px 1px rgb(255, 255, 255),
-    -1px 2px 1px rgb(255, 255, 255), -2px 1px 1px rgb(255, 255, 255),
-    1px 2px 1px rgb(255, 255, 255), 2px 1px 1px rgb(255, 255, 255),
-    1px -2px 1px rgb(255, 255, 255), 2px -1px 1px rgb(255, 255, 255);
-}
-.mathbox-outline-4 {
-  text-shadow: 4px 0px 0px rgb(255, 255, 255), -4px 0px 0px rgb(255, 255, 255),
-    0px 4px 0px rgb(255, 255, 255), 0px -4px 0px rgb(255, 255, 255),
-    -3px -2px 0px rgb(255, 255, 255), -3px 2px 0px rgb(255, 255, 255),
-    3px 2px 0px rgb(255, 255, 255), 3px -2px 0px rgb(255, 255, 255),
-    -2px -3px 0px rgb(255, 255, 255), -2px 3px 0px rgb(255, 255, 255),
-    2px 3px 0px rgb(255, 255, 255), 2px -3px 0px rgb(255, 255, 255),
-    -1px -2px 1px rgb(255, 255, 255), -2px -1px 1px rgb(255, 255, 255),
-    -1px 2px 1px rgb(255, 255, 255), -2px 1px 1px rgb(255, 255, 255),
-    1px 2px 1px rgb(255, 255, 255), 2px 1px 1px rgb(255, 255, 255),
-    1px -2px 1px rgb(255, 255, 255), 2px -1px 1px rgb(255, 255, 255);
-}
-.mathbox-outline-fill,
-.mathbox-outline-fill * {
-  color: #fff !important;
 }

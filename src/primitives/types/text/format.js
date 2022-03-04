@@ -45,6 +45,7 @@ export class Format extends Operator {
   textIsSDF() {
     return this.props.sdf > 0;
   }
+
   textHeight() {
     return this.props.detail;
   }
@@ -156,7 +157,8 @@ export class Format extends Operator {
       init
     ) {
       let map;
-      let { digits, expr, data } = this.props;
+      let { expr } = this.props;
+      const { digits, data } = this.props;
 
       if (expr == null) {
         if (data != null) {

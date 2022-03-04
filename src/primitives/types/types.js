@@ -54,7 +54,7 @@ import { Vector4 } from "three/src/math/Vector4.js";
 //   # Option 3: Return new value
 //   return +value
 //
-var _Types = {
+const _Types = {
   array(type, size, value = null) {
     const lerp = type.lerp
       ? function (a, b, target, f) {
@@ -1408,7 +1408,7 @@ var _Types = {
 };
 
 const decorate = function (types) {
-  for (let k in types) {
+  for (const k in types) {
     const type = types[k];
     types[k] = ((type) =>
       function () {
@@ -1437,9 +1437,9 @@ const decorate = function (types) {
 export const Types = decorate(_Types);
 
 function __range__(left, right, inclusive) {
-  let range = [];
-  let ascending = left < right;
-  let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  const range = [];
+  const ascending = left < right;
+  const end = !inclusive ? right : ascending ? right + 1 : right - 1;
   for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
     range.push(i);
   }

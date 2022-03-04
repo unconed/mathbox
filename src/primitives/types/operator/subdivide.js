@@ -74,7 +74,8 @@ export class Subdivide extends Operator {
     }
 
     // Get resampled dimensions
-    let { items, width, height, depth, lerp } = this.props;
+    let { lerp } = this.props;
+    const { items, width, height, depth } = this.props;
 
     this.resampled = {};
     if (items != null) {

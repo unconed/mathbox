@@ -37,8 +37,9 @@ const helpers = {
 
       // Fetch attached objects and bind to them
       // Attach rebuild watcher for DOM changes to bound nodes
-      for (let slot of Array.from(slots)) {
-        let { to, trait, optional, unique, multiple, callback } = slot;
+      for (const slot of Array.from(slots)) {
+        let { callback } = slot;
+        const { to, trait, optional, unique, multiple } = slot;
 
         if (callback == null) {
           callback = this.rebuild;
@@ -78,7 +79,7 @@ const helpers = {
           }
 
           if (multiple) {
-            for (let s of Array.from(source)) {
+            for (const s of Array.from(source)) {
               this.bound.push(s);
             }
           } else {
@@ -245,7 +246,7 @@ const helpers = {
       if (shader == null) {
         shader = this._shaders.shader();
       }
-      for (var pass = 0; pass <= 2; pass++) {
+      for (let pass = 0; pass <= 2; pass++) {
         shader = __guard__(this._inherit("fragment"), (x) =>
           x.fragment(shader, pass)
         );
@@ -273,7 +274,7 @@ const helpers = {
       if (shader == null) {
         shader = this._shaders.shader();
       }
-      for (var pass = 0; pass <= 3; pass++) {
+      for (let pass = 0; pass <= 3; pass++) {
         shader = __guard__(this._inherit("vertex"), (x) =>
           x.vertex(shader, pass)
         );
@@ -316,7 +317,7 @@ const helpers = {
         return onVisible();
       };
 
-      var onVisible = () => {
+      const onVisible = () => {
         let left;
         const last = this.isVisible;
         let self =
@@ -335,7 +336,7 @@ const helpers = {
         }
       };
 
-      var visibleParent = this._inherit("visible");
+      const visibleParent = this._inherit("visible");
       if (visibleParent) {
         this._listen(visibleParent, "visible.change", onVisible);
       }
@@ -363,7 +364,7 @@ const helpers = {
         return onActive();
       };
 
-      var onActive = () => {
+      const onActive = () => {
         let left;
         const last = this.isActive;
         let self =
@@ -381,7 +382,7 @@ const helpers = {
         }
       };
 
-      var activeParent = this._inherit("active");
+      const activeParent = this._inherit("active");
       if (activeParent) {
         this._listen(activeParent, "active.change", onActive);
       }
@@ -453,7 +454,7 @@ const helpers = {
         }
       };
 
-      var onVisible = () => {
+      const onVisible = () => {
         const order = zOrder != null ? -zOrder : this.node.order;
 
         const visible =
@@ -463,7 +464,7 @@ const helpers = {
           if (hasStyle) {
             return (() => {
               const result = [];
-              for (let o of Array.from(this.objects)) {
+              for (const o of Array.from(this.objects)) {
                 o.show(opacity < 1, blending, order);
                 result.push(o.depth(zWrite, zTest));
               }
@@ -472,7 +473,7 @@ const helpers = {
           } else {
             return (() => {
               const result1 = [];
-              for (let o of Array.from(this.objects)) {
+              for (const o of Array.from(this.objects)) {
                 result1.push(o.show(true, blending, order));
               }
               return result1;
@@ -481,7 +482,7 @@ const helpers = {
         } else {
           return (() => {
             const result2 = [];
-            for (let o of Array.from(this.objects)) {
+            for (const o of Array.from(this.objects)) {
               result2.push(o.hide());
             }
             return result2;
@@ -493,7 +494,7 @@ const helpers = {
       this._listen(this.node, "reindex", onVisible);
       this._listen(this, "visible.change", onVisible);
 
-      for (let object of Array.from(this.objects)) {
+      for (const object of Array.from(this.objects)) {
         objectScene.adopt(object);
       }
       return onVisible();
@@ -640,7 +641,7 @@ const helpers = {
 
       //console.log 'worldUnit', world, pixel, rscale, isAbsolute
 
-      var root = this.is("root") ? this : this._inherit("root");
+      const root = this.is("root") ? this : this._inherit("root");
       //@_listen root, 'root.resize', handler
       //@_listen root, 'root.camera', handler
       //@_listen @node, 'change:unit', handler
@@ -655,7 +656,7 @@ const helpers = {
 
     get() {
       const u = {};
-      for (let k in this.unitUniforms) {
+      for (const k in this.unitUniforms) {
         const v = this.unitUniforms[k];
         u[k] = v.value;
       }
@@ -670,14 +671,14 @@ const helpers = {
 
 export const Helpers = function (object, traits) {
   const h = {};
-  for (let trait of Array.from(traits)) {
-    var methods;
+  for (const trait of Array.from(traits)) {
+    let methods;
     if (!(methods = helpers[trait])) {
       continue;
     }
 
     h[trait] = {};
-    for (let key in methods) {
+    for (const key in methods) {
       const method = methods[key];
       h[trait][key] = method.bind(object);
     }

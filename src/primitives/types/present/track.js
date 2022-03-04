@@ -16,7 +16,7 @@ import { Primitive } from "../../primitive.js";
 
 const deepCopy = function (x) {
   const out = {};
-  for (let k in x) {
+  for (const k in x) {
     const v = x[k];
     if (v instanceof Array) {
       out[k] = v.slice();
@@ -242,7 +242,8 @@ export class Track extends Primitive {
   }
 
   update() {
-    let { playhead, script } = this;
+    let { playhead } = this;
+    const { script } = this;
     const { ease, seek } = this.props;
     const node = this.targetNode;
 

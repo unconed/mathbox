@@ -17,8 +17,8 @@ export class Sprite extends Base {
     let f;
     super(renderer, shaders, options);
 
-    let {
-      uniforms,
+    let { uniforms } = options;
+    const {
       material,
       position,
       sprite,
@@ -29,6 +29,7 @@ export class Sprite extends Base {
       mask,
       stpq,
     } = options;
+
     if (uniforms == null) {
       uniforms = {};
     }

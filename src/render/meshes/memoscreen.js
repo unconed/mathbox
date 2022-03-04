@@ -52,7 +52,7 @@ export class MemoScreen extends Screen {
     this.memo = options;
     this.uniforms = uniforms;
 
-    for (let object of Array.from(this.renders)) {
+    for (const object of Array.from(this.renders)) {
       object.transparent = false;
     }
   }

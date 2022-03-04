@@ -17,17 +17,8 @@ export class Strip extends Base {
     let f;
     super(renderer, shaders, options);
 
-    let {
-      uniforms,
-      material,
-      position,
-      color,
-      mask,
-      map,
-      combine,
-      linear,
-      stpq,
-    } = options;
+    let { uniforms, material } = options;
+    const { position, color, mask, map, combine, linear, stpq } = options;
 
     if (uniforms == null) {
       uniforms = {};

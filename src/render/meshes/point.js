@@ -18,8 +18,9 @@ export class Point extends Base {
     let f, left;
     super(renderer, shaders, options);
 
-    let {
-      uniforms,
+    let { uniforms, shape, fill } = options;
+
+    const {
       material,
       position,
       color,
@@ -28,9 +29,7 @@ export class Point extends Base {
       map,
       combine,
       linear,
-      shape,
       optical,
-      fill,
       stpq,
     } = options;
 

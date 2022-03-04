@@ -50,7 +50,7 @@ export class Present extends Parent {
       return;
     }
 
-    for (let controller of Array.from(this.dirty)) {
+    for (const controller of Array.from(this.dirty)) {
       this.slideReset(controller);
     }
 
@@ -93,7 +93,8 @@ export class Present extends Parent {
         }
         return result;
       })();
-    var parents = traverse(function (el) {
+
+    const parents = traverse(function (el) {
       if (el.parent.traits.hash.present) {
         return null;
       } else {
@@ -102,7 +103,7 @@ export class Present extends Parent {
     });
 
     // Helpers
-    var isSlide = (el) => nodes.indexOf(el) >= 0;
+    const isSlide = (el) => nodes.indexOf(el) >= 0;
 
     // Order paths (leaf -> parent slide -> ...)
     const order = (paths) =>
@@ -156,7 +157,7 @@ export class Present extends Parent {
     const split = function (steps) {
       const relative = [];
       const absolute = [];
-      for (let step of Array.from(steps)) {
+      for (const step of Array.from(steps)) {
         (step[0].props.steps != null ? relative : absolute).push(step);
       }
       return [relative, absolute];
@@ -228,7 +229,7 @@ export class Present extends Parent {
     };
 
     // Remove duplicates
-    var dedupe = function (step) {
+    const dedupe = function (step) {
       if (step) {
         return (() => {
           const result = [];
@@ -246,7 +247,7 @@ export class Present extends Parent {
     };
 
     // Finalize individual step by document order
-    var finalize = (step) => step.sort((a, b) => a.order - b.order);
+    const finalize = (step) => step.sort((a, b) => a.order - b.order);
 
     const paths = slides(nodes);
     const steps = order(paths);

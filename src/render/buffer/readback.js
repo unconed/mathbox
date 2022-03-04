@@ -68,7 +68,8 @@ export class Readback extends Renderable {
     const { indexer } = options;
     const isIndexed = indexer != null && !indexer.empty();
 
-    let { items, width, height, depth, stpq } = this;
+    let { stpq } = this;
+    const { items, width, height, depth } = this;
 
     let sampler = map;
     if (isIndexed) {
@@ -340,7 +341,7 @@ export class Readback extends Renderable {
       emit = (x, y, z, w) => callback(x, y, z, w, i, j, k, l);
     }
 
-    var i = (j = k = l = m = 0);
+    let i = (j = k = l = m = 0);
     while (!done() && m < limit) {
       m++;
       const repeat = consume(emit);

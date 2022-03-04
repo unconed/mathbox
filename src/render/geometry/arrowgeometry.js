@@ -78,7 +78,7 @@ export class ArrowGeometry extends ClipGeometry {
       asc1 ? i < end1 : i > end1;
       asc1 ? i++ : i--
     ) {
-      var asc2, end2;
+      let asc2, end2;
       const tip = base++;
       const back = tip + sides + 1;
 
@@ -122,7 +122,7 @@ export class ArrowGeometry extends ClipGeometry {
           asc5 ? y < end5 : y > end5;
           asc5 ? y++ : y--
         ) {
-          var asc6, end6;
+          let asc6, end6;
           position(x, y, z, l);
           arrow(0, 0, 0);
           attach(near, far);
