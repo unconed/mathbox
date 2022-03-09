@@ -48,14 +48,6 @@ const config = {
     library: libraryName,
     umdNamedDefine: true,
   },
-  module: {
-    rules: [
-      {
-        test: /\.glsl$/,
-        type: "asset/source",
-      },
-    ],
-  },
 };
 
 module.exports = config;
