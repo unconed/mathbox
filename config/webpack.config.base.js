@@ -7,9 +7,6 @@ module.exports = {
       // '.ts',
       ".js",
     ],
-    fallback: {
-      stream: require.resolve("stream-browserify"),
-    },
   },
   plugins: [
     new webpack.ProvidePlugin({
