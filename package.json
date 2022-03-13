@@ -20,12 +20,12 @@
   "scripts": {
     "docs": "gulp docs",
     "build": "gulp",
-    "test": "concurrently 'webpack --config config/webpack.config.testing.js' 'karma start --single-run'",
+    "test": "webpack --config config/webpack.config.testing.js && karma start --single-run",
     "test:watch": "concurrently 'webpack --watch --config config/webpack.config.testing.js' 'karma start'"
   },
   "prettier": {},
   "dependencies": {
-    "@sicmutils/cssauron": "^1.4.0",
+    "css-select": "^4.2.1",
     "shadergraph": "^2.1.3",
     "threestrap": "^0.4.1"
   },
