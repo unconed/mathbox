@@ -1,6 +1,4 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-export const Traits = {
+export default {
   node: {
     id: ["Unique ID", "nullable string", "null", '"sampler"'],
     classes: ["Custom classes", "string array", "[]", '["big"]'],
@@ -226,7 +224,7 @@ export const Traits = {
     depth: ["Depth scaling", "number", 1],
   },
   line: {
-    size: ["Line width", "positive number", 2],
+    width: ["Line width", "positive number", 2],
     stroke: ["Line stroke (solid, dotted, dashed)", "stroke", '"solid"'],
     depth: ["Depth scaling", "number", 1],
     proximity: ["Proximity threshold", "nullable number", "null", "10"],

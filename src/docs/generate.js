@@ -6,13 +6,11 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
+import * as Primitives from '../primitives'
+import PrimitiveDefs from './primitives.js'
+import TraitDefs from './traits.js'
+
 let def, _module, type;
-require("../node");
-
-const TraitDefs = require("./traits");
-const PrimitiveDefs = require("./primitives");
-
-const Primitives = require("../primitives");
 
 const defs = {};
 

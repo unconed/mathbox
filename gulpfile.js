@@ -4,7 +4,6 @@ const concat = require("gulp-concat");
 const compiler = require("webpack");
 const webpack = require("webpack-stream");
 const watch = require("gulp-watch");
-const shell = require("gulp-shell");
 
 const webpackConfig = require("./config/webpack.config.js");
 
@@ -51,11 +50,5 @@ const buildTask = gulp.series("pack", "css");
 gulp.task("default", buildTask);
 
 gulp.task("build", buildTask);
-
-// TODO fix!
-gulp.task(
-  "docs",
-  shell.task(["node src/docs/generate.js > docs/primitives.md"])
-);
 
 gulp.task("watch-build", gulp.series("build", "watch-build-watch"));

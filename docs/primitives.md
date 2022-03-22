@@ -218,6 +218,7 @@
  * *start* = `true` (bool) - Draw start arrow
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
+ * *width* = `2` (positive number) - Line width
  * *zBias* = `-1` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
@@ -347,9 +348,9 @@
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
  * *shaded* = `false` (bool) - Shade mesh
- * *width* = `2` (positive number) - Line width
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
+ * *width* = `2` (positive number) - Line width
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
@@ -424,13 +425,13 @@
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
  * *rangeX* = `[-1, 1]` (vec2) - Range on axis
  * *rangeY* = `[-1, 1]` (vec2) - Range on axis
- * *width* = `2` (positive number) - Line width
  * *startX* = `true` (bool) - Include start
  * *startY* = `true` (bool) - Include start
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *unitX* = `1` (number) - Reference unit
  * *unitY* = `1` (number) - Reference unit
  * *visible* = `true` (bool) - Visibility for rendering
+ * *width* = `1` (positive number) - Line width
  * *zBias* = `-2` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
@@ -607,6 +608,7 @@
  * *start* = `true` (bool) - Draw start arrow
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
+ * *width* = `2` (positive number) - Line width
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
@@ -1049,9 +1051,9 @@
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
  * *shaded* = `false` (bool) - Shade mesh
- * *size* = `2` (positive number) - Line width
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
+ * *width* = `2` (positive number) - Line width
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
@@ -1095,9 +1097,9 @@
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
  * *shaded* = `false` (bool) - Shade mesh
- * *size* = `2` (positive number) - Line width
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
+ * *width* = `2` (positive number) - Line width
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
@@ -1165,6 +1167,7 @@
  * *size* = `10` (number) - Tick size
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
+ * *width* = `2` (positive number) - Line width
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
@@ -1234,6 +1237,7 @@
  * *start* = `true` (bool) - Draw start arrow
  * *stroke* = `"solid"` (stroke) - Line stroke (solid, dotted, dashed)
  * *visible* = `true` (bool) - Visibility for rendering
+ * *width* = `2` (positive number) - Line width
  * *zBias* = `0` (positive number) - Z-Bias (3D stacking)
  * *zIndex* = `0` (positive int) - Z-Index (2D stacking)
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
@@ -1322,3 +1326,4 @@
  * *realtime* = `false` (bool) - Run on real time, not clock time
  * *type* = `"float"` (type) - Texture data type
  * *width* = `1` (nullable number) - Voxel width
+

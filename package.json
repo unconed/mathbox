@@ -18,7 +18,7 @@
     "FUNDING.yml"
   ],
   "scripts": {
-    "docs": "gulp docs",
+    "docs": "npx webpack --config config/webpack.config.docs.js && node build_docs/generate.js > docs/primitives.md",
     "build": "gulp",
     "test": "webpack --config config/webpack.config.testing.js && karma start --single-run",
     "test:watch": "concurrently 'webpack --watch --config config/webpack.config.testing.js' 'karma start'"
@@ -40,7 +40,6 @@
     "gulp-concat": "^2.6.1",
     "gulp-eslint": "^6.0.0",
     "gulp-rename": "^2.0.0",
-    "gulp-shell": "^0.8.0",
     "gulp-watch": "^5.0.1",
     "jasmine-core": "^3.7.1",
     "karma": "^6.3.3",
