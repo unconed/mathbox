@@ -1,6 +1,4 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-export const Classes = {
+export default {
   axis: ["draw", "Draw an axis", {}, { end: "true", zBias: "-1" }],
   face: ["draw", "Draw polygon faces"],
   grid: ["draw", "Draw a 2D line grid", {}, { width: "1", zBias: "-2" }],
