@@ -1,20 +1,46 @@
 ### MathBox Changelog
 
-2.1.1
+#### 2.1.2
+
+- Typescript Improvements:
+  - [Add typedefs](https://gitgud.io/unconed/mathbox/-/merge_requests/28/)
+  - [Cc more types](https://gitgud.io/unconed/mathbox/-/merge_requests/29/)
+  - [add placeholder type alias for options](https://gitgud.io/unconed/mathbox/-/merge_requests/30/)
+  - [broad select type to include selections, node, str](https://gitgud.io/unconed/mathbox/-/merge_requests/32/)
+  - [add emitter types](https://gitgud.io/unconed/mathbox/-/merge_requests/33/)
+  - [make emitter params not optional](https://gitgud.io/unconed/mathbox/-/merge_requests/34/)
+- Make mathbox work better with Webpack 5 Workflows: (See https://gitgud.io/unconed/mathbox/-/issues/20)
+  - [Replace cssauron with css-select](https://gitgud.io/unconed/mathbox/-/merge_requests/25/)
+  - [move shaders to js](https://gitgud.io/unconed/mathbox/-/merge_requests/24/)
+  - [add selection tests](https://gitgud.io/unconed/mathbox/-/merge_requests/21/)
+  - [Add shaders.js to the bundle, delete vendored gulp-jsify](https://gitgud.io/unconed/mathbox/-/merge_requests/20/)
+  - [fix `npm run test`; run with karma+webpack](https://gitgud.io/unconed/mathbox/-/merge_requests/18/)
+- Linting improvements:
+  - [Remove final batch of lint warnings](https://gitgud.io/unconed/mathbox/-/merge_requests/23/)
+  - [Enable linter rule to prefer const and let to var, prep for upgrade](https://gitgud.io/unconed/mathbox/-/merge_requests/15/)
+  - [Fix last eslint warnings](https://gitgud.io/unconed/mathbox/-/merge_requests/14/)
+- Miscellaneous
+  - [Remove missing RGBFormat](https://gitgud.io/unconed/mathbox/-/merge_requests/17/)
+  - [export mathbox.css](https://gitgud.io/unconed/mathbox/-/merge_requests/31/)
+  - [Tidy config, update package.json fields](https://gitgud.io/unconed/mathbox/-/merge_requests/19/)
+  - [Fix unmount error from dom.js](https://gitgud.io/unconed/mathbox/-/merge_requests/22/)
+  - [fix docs command](https://gitgud.io/unconed/mathbox/-/merge_requests/27/)
+
+#### 2.1.1
 
 !16 applies JS-ported patches from the following open merge requests:
 
-  - https://gitgud.io/unconed/mathbox/-/merge_requests/11/
-  - https://gitgud.io/unconed/mathbox/-/merge_requests/10
-  - https://gitgud.io/unconed/mathbox/-/merge_requests/9
-  - https://gitgud.io/unconed/mathbox/-/merge_requests/8
-  - https://gitgud.io/unconed/mathbox/-/merge_requests/7
-  - https://gitgud.io/unconed/mathbox/-/merge_requests/6
-  - https://gitgud.io/unconed/mathbox/-/merge_requests/5
+- https://gitgud.io/unconed/mathbox/-/merge_requests/11/
+- https://gitgud.io/unconed/mathbox/-/merge_requests/10
+- https://gitgud.io/unconed/mathbox/-/merge_requests/9
+- https://gitgud.io/unconed/mathbox/-/merge_requests/8
+- https://gitgud.io/unconed/mathbox/-/merge_requests/7
+- https://gitgud.io/unconed/mathbox/-/merge_requests/6
+- https://gitgud.io/unconed/mathbox/-/merge_requests/5
 
-  Thanks to @bobqwatsonsapphire, @carl00s01 and @Beddington for these fixes.
+Thanks to @bobqwatsonsapphire, @carl00s01 and @Beddington for these fixes.
 
-0.0.5
+#### 0.0.5
 
 - ⚠️ Rename array `length` to `width` for consistency.
 - ⚠️ Reverse the polarity on `zOrder`, higher zOrder should be drawn later.
@@ -31,7 +57,7 @@
 - Fix bug when a text atlas is emptied completely.
 - Minor documentation improvements (basic API).
 
-0.0.4
+#### 0.0.4
 
 - New `<readback />` sink that exposes internal readback functionality.
 - Make `<array />`, `<matrix />`, `<voxel />` and `<text />` auto-detect `null` dimensions from `data` if given.
@@ -54,7 +80,7 @@
 - Added `lineBias` prop to set Z-bias between surface/face and its wireframe.
 - Allow passing modified STPQ coordinates from `<vertex />` to `<fragment />` (see `fragmentcolor.html` example)
 
-0.0.3
+#### 0.0.3
 
 - New `docs/intro.md`, add nullable examples to `docs/primitives.md`.
 - Add `sizes` binding to `<point />` to change per-point size.
