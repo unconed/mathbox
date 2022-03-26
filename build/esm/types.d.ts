@@ -1,6 +1,11 @@
 import type * as TT from "./node_types";
 import type { Alignments, Axes, AxesWithZero, BlendingModes, Optional } from "./primitives/types/types_typed";
 export * from "./node_types";
+/**
+ * Placeholder for threestrap typings.
+ * @hidden
+ */
+export declare type Threestrap = any;
 export type { Alignments, Axes, AxesWithZero, BlendingModes, Optional };
 export declare type Props = {
     area: TT.AreaProps;
@@ -172,7 +177,7 @@ export interface MathboxSelection<Type extends NodeType> {
     getAll(): PropsNoramlized[Type][];
     remove: () => void;
     print: () => MathboxSelection<Type>;
-    select: (query: string) => MathboxSelection<NodeType>;
+    select<N extends NodeType = NodeType>(query: string): MathboxSelection<N>;
     /**
      * Print (in the console) the DOM nodes in this selection.
      * Called automatically on first load.
@@ -180,6 +185,11 @@ export interface MathboxSelection<Type extends NodeType> {
     inspect(): void;
     /** Display a visual representation of all shader snippets, how they are wired, with the GLSL available on mouseover. */
     debug(): void;
+    /** Is this selection wrapping a leaf node? */
+    isLeaf: boolean;
+    /** Is this selection wrapping the root node? */
+    isRoot: boolean;
+    three: Type extends "root" ? Threestrap : undefined;
     [index: number]: MathboxNode<Type>;
     /**
      * The number of nodes contained in this selection.
