@@ -193,7 +193,9 @@ export interface MathboxSelection<Type extends NodeType> {
   getAll(): PropsNoramlized[Type][];
   remove: () => void;
   print: () => MathboxSelection<Type>;
-  select: (query: string) => MathboxSelection<NodeType>;
+
+  select<N extends NodeType = NodeType>(query: string): MathboxSelection<N>;
+
   /**
    * Print (in the console) the DOM nodes in this selection.
    * Called automatically on first load.
