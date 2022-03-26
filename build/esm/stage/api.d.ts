@@ -1,0 +1,40 @@
+export class API {
+    constructor(_context: any, _up: any, _targets: any);
+    v2(): API;
+    _context: any;
+    _up: any;
+    _targets: any;
+    isRoot: boolean;
+    isLeaf: boolean;
+    length: any;
+    select(selector: any): API;
+    eq(index: any): API;
+    filter(callback: any): API;
+    map(callback: any): any[];
+    map(callback: any): any;
+    each(callback: any): API;
+    add(type: any, options: any, binds: any): any;
+    remove(selector: any): any;
+    set(key: any, value: any): API;
+    getAll(key: any): any[];
+    get(key: any): any;
+    evaluate(key: any, time: any): any;
+    bind(key: any, value: any): API;
+    unbind(key: any): API;
+    end(): any;
+    _push(targets: any): API;
+    _pop(): any;
+    _reset(): any;
+    on(...args: any[]): API;
+    off(...args: any[]): API;
+    toString(): any;
+    toMarkup(): any;
+    print(): API;
+    debug(): any;
+    inspect(selector: any, trait: any, print: any): {
+        nodes: any;
+        renderables: never[];
+        renders: never[];
+        shaders: never[];
+    };
+}

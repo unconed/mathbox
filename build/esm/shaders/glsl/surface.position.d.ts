@@ -1,0 +1,2 @@
+declare var _default: "uniform vec4 geometryClip;\nuniform vec4 geometryResolution;\nuniform vec4 mapSize;\n\nattribute vec4 position4;\n\n// External\nvec3 getPosition(vec4 xyzw, float canonical);\n\nvec3 getSurfacePosition() {\n  vec4 p = min(geometryClip, position4);\n  vec3 xyz = getPosition(p, 1.0);\n\n  // Overwrite UVs\n#ifdef POSITION_UV\n#ifdef POSITION_UV_INT\n  vUV = -.5 + (position4.xy * geometryResolution.xy) * mapSize.xy;\n#else\n  vUV = position4.xy * geometryResolution.xy;\n#endif\n#endif\n\n  return xyz;\n}\n";
+export default _default;

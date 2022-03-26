@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "outDir": "./build/esm/",
+    "noImplicitAny": true,
+    "module": "es6",
+    "target": "es6",
+    "allowJs": true,
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "baseUrl": "./",
+    "declaration": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
