@@ -8,6 +8,12 @@ import type {
 } from "./primitives/types/types_typed";
 export * from "./node_types";
 
+/**
+ * Placeholder for threestrap typings.
+ * @hidden
+ */
+export type Threestrap = any;
+
 export type { Alignments, Axes, AxesWithZero, BlendingModes, Optional };
 
 export type Props = {
@@ -197,6 +203,14 @@ export interface MathboxSelection<Type extends NodeType> {
   /** Display a visual representation of all shader snippets, how they are wired, with the GLSL available on mouseover. */
   debug(): void;
 
+  /** Is this selection wrapping a leaf node? */
+  isLeaf: boolean;
+  /** Is this selection wrapping the root node? */
+  isRoot: boolean;
+
+  three: Type extends "root" ? Threestrap : undefined;
+
+  // array-esque interface
   [index: number]: MathboxNode<Type>;
   /**
    * The number of nodes contained in this selection.
