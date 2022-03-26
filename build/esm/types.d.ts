@@ -730,4 +730,5 @@ export interface MathboxSelection<Type extends NodeType> {
      */
     voxel(props?: TT.VoxelProps): MathboxSelection<"voxel">;
 }
-export declare function mathBox(opts?: any): MathboxSelection<"root">;
+export declare type MathBoxOptions = any;
+export declare function mathBox(opts?: MathBoxOptions): MathboxSelection<"root">;
