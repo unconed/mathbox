@@ -4,5 +4,5 @@
  * This is webpack specific syntax and the arguments to require.context must be
  * literals since this is transformed while webpack parses.
  */
-const contextualRequire = require.context("./", true, /\.spec\.js$/);
+const contextualRequire = require.context("./", true, /\.spec\.[jt]s$/);
 contextualRequire.keys().forEach(contextualRequire);

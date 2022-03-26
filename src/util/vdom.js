@@ -461,6 +461,13 @@ const unset = function (node, key, orig) {
   }
 };
 
+/**
+ * This needs explicit any -> any typings for ts to emit declarations.
+ * Typescript can't handle class declarations inside functions very well.
+ *
+ * @param {any} prototype
+ * @returns {any}
+ */
 export const createClass = function (prototype) {
   let left;
   const aliases = {

@@ -1,0 +1,43 @@
+export class Context {
+    static initClass(): void;
+    constructor(renderer: any, scene?: null, camera?: null);
+    canvas: any;
+    element: any;
+    shaders: any;
+    renderables: Render.Factory;
+    overlays: Overlay.Factory;
+    scene: any;
+    camera: any;
+    defaultCamera: any;
+    attributes: Model.Attributes;
+    primitives: Primitives.Factory;
+    root: any;
+    model: Model.Model;
+    guard: Model.Guard;
+    controller: Stage.Controller;
+    animator: Stage.Animator;
+    api: Stage.API;
+    speed: number;
+    time: {
+        now: number;
+        time: number;
+        delta: number;
+        clock: number;
+        step: number;
+    };
+    init(): Context;
+    destroy(): Context;
+    resize(size: any): Context;
+    frame(time: any): Context;
+    pre(time: any): Context;
+    update(): Context;
+    render(): Context;
+    post(): Context;
+    setWarmup(n: any): Context;
+    getPending(): any;
+}
+import * as Render from "./render";
+import * as Overlay from "./overlay";
+import * as Model from "./model";
+import * as Primitives from "./primitives";
+import * as Stage from "./stage";
