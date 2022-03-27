@@ -7,7 +7,7 @@
  * specifying types that are only consumed in our source code, but no good for
  * specifying types that should be included in the output.
  */
-import type { MathboxNode } from "../../types";
+import type { MathboxNode, MathboxSelection } from "../../types";
 import { Types as TypesUntyped } from "./types";
 
 type OnInvalid = () => void;
@@ -101,7 +101,10 @@ export type TypeGenerators = {
   ): Type<Optional<AxesWithZero>, number>;
   select(
     defaultValue?: string
-  ): Type<Optional<string | MathboxNode>, string | MathboxNode>;
+  ): Type<
+    Optional<string | MathboxNode | MathboxSelection>,
+    string | MathboxNode | MathboxSelection
+  >;
 
   letters<I, O>(
     type: Type<I, O>,
