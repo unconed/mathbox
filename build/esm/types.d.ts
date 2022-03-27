@@ -154,7 +154,7 @@ export interface MathboxNode<T extends NodeType = NodeType> {
 /**
  * @typeParam Type The type(s) of MathBox nodes in this selection.
  */
-export interface MathboxSelection<Type extends NodeType> {
+export interface MathboxSelection<Type extends NodeType = NodeType> {
     /**
      * Set properties on all nodes in this selection.
      */
