@@ -161,51 +161,52 @@ export type TypeGenerators = {
 export const Types: TypeGenerators = TypesUntyped;
 
 type Emit = (...xyzw: number[]) => void;
+
 export type ArrayEmitter = (
   emit: Emit,
-  i?: number,
-  t?: number,
-  delta?: number
+  i: number,
+  t: number,
+  delta: number
 ) => void;
 export type IntervalEmitter = (
   emit: Emit,
-  x?: number,
-  i?: number,
-  t?: number,
-  delta?: number
+  x: number,
+  i: number,
+  t: number,
+  delta: number
 ) => void;
 export type MatrixEmitter = (
   emit: Emit,
-  i?: number,
-  j?: number,
-  t?: number,
-  delta?: number
+  i: number,
+  j: number,
+  t: number,
+  delta: number
 ) => void;
 export type AreaEmitter = (
   emit: Emit,
-  x?: number,
-  y?: number,
-  i?: number,
-  j?: number,
-  t?: number,
-  delta?: number
+  x: number,
+  y: number,
+  i: number,
+  j: number,
+  t: number,
+  delta: number
 ) => void;
 export type VoxelEmitter = (
   emit: Emit,
-  i?: number,
-  j?: number,
-  k?: number,
-  t?: number,
-  delta?: number
+  i: number,
+  j: number,
+  k: number,
+  t: number,
+  delta: number
 ) => void;
 export type VolumeEmitter = (
   emit: Emit,
-  x?: number,
-  y?: number,
-  z?: number,
-  i?: number,
-  j?: number,
-  k?: number,
-  t?: number,
-  delta?: number
+  x: number,
+  y: number,
+  z: number,
+  i: number,
+  j: number,
+  k: number,
+  t: number,
+  delta: number
 ) => void;

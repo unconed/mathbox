@@ -116,7 +116,7 @@ export declare const Traits: {
         live: import("./types_typed").Type<import("./types_typed").Optional<boolean>, boolean>;
     };
     buffer: {
-        channels: import("./types_typed").Type<import("./types_typed").Optional<1 | 4 | 2 | 3>, 1 | 4 | 2 | 3>;
+        channels: import("./types_typed").Type<import("./types_typed").Optional<1 | 2 | 3 | 4>, 1 | 2 | 3 | 4>;
         items: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
         fps: import("./types_typed").Type<import("./types_typed").Optional<number>, number | null>;
         hurry: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
@@ -338,7 +338,7 @@ export declare const Traits: {
         type: any;
         expr: import("./types_typed").Type<unknown, unknown>;
         data: any;
-        channels: import("./types_typed").Type<import("./types_typed").Optional<1 | 4 | 2 | 3>, 1 | 4 | 2 | 3>;
+        channels: import("./types_typed").Type<import("./types_typed").Optional<1 | 2 | 3 | 4>, 1 | 2 | 3 | 4>;
         items: import("./types_typed").Type<import("./types_typed").Optional<number>, number | null>;
         width: import("./types_typed").Type<import("./types_typed").Optional<number>, number | null>;
         height: import("./types_typed").Type<import("./types_typed").Optional<number>, number | null>;
