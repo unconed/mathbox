@@ -1,3 +1,4 @@
+import type { AreaEmitter, ArrayEmitter, IntervalEmitter, MatrixEmitter, VolumeEmitter, VoxelEmitter } from "./primitives/types/types_typed";
 import { Traits as TraitsValue } from "./primitives/types/traits";
 declare type Traits = typeof TraitsValue;
 interface GetTraitsNode {
@@ -1987,24 +1988,28 @@ interface SetTraitsNow {
  * @category data
  */
 export interface AreaPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsMatrix, GetTraitsTexture, GetTraitsArea {
+    expr: AreaEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.area | area}.
  * @category data
  */
 export interface AreaProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsMatrix, SetTraitsTexture, SetTraitsArea {
+    expr?: AreaEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.array | array}.
  * @category data
  */
 export interface ArrayPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsArray, GetTraitsTexture {
+    expr: ArrayEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.array | array}.
  * @category data
  */
 export interface ArrayProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsArray, SetTraitsTexture {
+    expr?: ArrayEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.axis | axis}.
@@ -2201,12 +2206,14 @@ export declare type InheritProps = SetTraitsNode;
  * @category data
  */
 export interface IntervalPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsTexture, GetTraitsArray, GetTraitsSpan, GetTraitsInterval, GetTraitsSampler {
+    expr: IntervalEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.interval | interval}.
  * @category data
  */
 export interface IntervalProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsTexture, SetTraitsArray, SetTraitsSpan, SetTraitsInterval, SetTraitsSampler {
+    expr?: IntervalEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.join | join}.
@@ -2285,12 +2292,14 @@ export interface MaskProps extends SetTraitsNode, SetTraitsInclude {
  * @category data
  */
 export interface MatrixPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsTexture, GetTraitsMatrix {
+    expr: MatrixEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.matrix | matrix}.
  * @category data
  */
 export interface MatrixProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsTexture, SetTraitsMatrix {
+    expr?: MatrixEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.memo | memo}.
@@ -2741,23 +2750,27 @@ export interface ViewProps extends SetTraitsNode, SetTraitsObject, SetTraitsView
  * @category data
  */
 export interface VolumePropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsTexture, GetTraitsVoxel, GetTraitsVolume {
+    expr: VolumeEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.volume | volume}.
  * @category data
  */
 export interface VolumeProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsTexture, SetTraitsVoxel, SetTraitsVolume {
+    expr?: VolumeEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.voxel | voxel}.
  * @category data
  */
 export interface VoxelPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsTexture, GetTraitsVoxel {
+    expr: VoxelEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.voxel | voxel}.
  * @category data
  */
 export interface VoxelProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsTexture, SetTraitsVoxel {
+    expr?: VoxelEmitter;
 }
 export {};

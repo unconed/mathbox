@@ -1,6 +1,7 @@
 import type * as TT from "./node_types";
-import type { Alignments, Axes, AxesWithZero, BlendingModes, Optional } from "./primitives/types/types_typed";
+import type { Alignments, AreaEmitter, ArrayEmitter, Axes, AxesWithZero, BlendingModes, IntervalEmitter, MatrixEmitter, Optional, VolumeEmitter, VoxelEmitter } from "./primitives/types/types_typed";
 export * from "./node_types";
+export { AreaEmitter, ArrayEmitter, IntervalEmitter, MatrixEmitter, VolumeEmitter, VoxelEmitter, };
 /**
  * Placeholder for threestrap typings.
  * @hidden
