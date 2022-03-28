@@ -1,11 +1,3 @@
-/**
- * Manual typings for types.js.
- *
- * Why not name this types.d.ts? Because then it won't be included in the build,
- * see https://stackoverflow.com/a/56440335/2747370. dts files are good for
- * specifying types that are only consumed in our source code, but no good for
- * specifying types that should be included in the output.
- */
 import type { MathboxNode, MathboxSelection } from "../../types";
 declare type OnInvalid = () => void;
 declare type Validate<In, Out> = (value: In, target: unknown, invalid: OnInvalid) => Out;
@@ -77,4 +69,11 @@ export declare type TypeGenerators = {
     data: any;
 };
 export declare const Types: TypeGenerators;
+declare type Emit = (...xyzw: number[]) => void;
+export declare type ArrayEmitter = (emit: Emit, i?: number, t?: number, delta?: number) => void;
+export declare type IntervalEmitter = (emit: Emit, x?: number, i?: number, t?: number, delta?: number) => void;
+export declare type MatrixEmitter = (emit: Emit, i?: number, j?: number, t?: number, delta?: number) => void;
+export declare type AreaEmitter = (emit: Emit, x?: number, y?: number, i?: number, j?: number, t?: number, delta?: number) => void;
+export declare type VoxelEmitter = (emit: Emit, i?: number, j?: number, k?: number, t?: number, delta?: number) => void;
+export declare type VolumeEmitter = (emit: Emit, x?: number, y?: number, z?: number, i?: number, j?: number, k?: number, t?: number, delta?: number) => void;
 export {};

@@ -7,6 +7,7 @@
  * specifying types that are only consumed in our source code, but no good for
  * specifying types that should be included in the output.
  */
+import { number } from "src/util/pretty";
 import type { MathboxNode, MathboxSelection } from "../../types";
 import { Types as TypesUntyped } from "./types";
 
@@ -158,3 +159,53 @@ export type TypeGenerators = {
 };
 
 export const Types: TypeGenerators = TypesUntyped;
+
+type Emit = (...xyzw: number[]) => void;
+export type ArrayEmitter = (
+  emit: Emit,
+  i?: number,
+  t?: number,
+  delta?: number
+) => void;
+export type IntervalEmitter = (
+  emit: Emit,
+  x?: number,
+  i?: number,
+  t?: number,
+  delta?: number
+) => void;
+export type MatrixEmitter = (
+  emit: Emit,
+  i?: number,
+  j?: number,
+  t?: number,
+  delta?: number
+) => void;
+export type AreaEmitter = (
+  emit: Emit,
+  x?: number,
+  y?: number,
+  i?: number,
+  j?: number,
+  t?: number,
+  delta?: number
+) => void;
+export type VoxelEmitter = (
+  emit: Emit,
+  i?: number,
+  j?: number,
+  k?: number,
+  t?: number,
+  delta?: number
+) => void;
+export type VolumeEmitter = (
+  emit: Emit,
+  x?: number,
+  y?: number,
+  z?: number,
+  i?: number,
+  j?: number,
+  k?: number,
+  t?: number,
+  delta?: number
+) => void;
