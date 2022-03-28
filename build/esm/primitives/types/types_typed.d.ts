@@ -70,10 +70,10 @@ export declare type TypeGenerators = {
 };
 export declare const Types: TypeGenerators;
 declare type Emit = (...xyzw: number[]) => void;
-export declare type ArrayEmitter = (emit: Emit, i?: number, t?: number, delta?: number) => void;
-export declare type IntervalEmitter = (emit: Emit, x?: number, i?: number, t?: number, delta?: number) => void;
-export declare type MatrixEmitter = (emit: Emit, i?: number, j?: number, t?: number, delta?: number) => void;
-export declare type AreaEmitter = (emit: Emit, x?: number, y?: number, i?: number, j?: number, t?: number, delta?: number) => void;
-export declare type VoxelEmitter = (emit: Emit, i?: number, j?: number, k?: number, t?: number, delta?: number) => void;
-export declare type VolumeEmitter = (emit: Emit, x?: number, y?: number, z?: number, i?: number, j?: number, k?: number, t?: number, delta?: number) => void;
+export declare type ArrayEmitter = (emit: Emit, i: number, t: number, delta: number) => void;
+export declare type IntervalEmitter = (emit: Emit, x: number, i: number, t: number, delta: number) => void;
+export declare type MatrixEmitter = (emit: Emit, i: number, j: number, t: number, delta: number) => void;
+export declare type AreaEmitter = (emit: Emit, x: number, y: number, i: number, j: number, t: number, delta: number) => void;
+export declare type VoxelEmitter = (emit: Emit, i: number, j: number, k: number, t: number, delta: number) => void;
+export declare type VolumeEmitter = (emit: Emit, x: number, y: number, z: number, i: number, j: number, k: number, t: number, delta: number) => void;
 export {};
