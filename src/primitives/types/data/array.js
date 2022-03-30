@@ -150,8 +150,8 @@ export class Array_ extends Buffer {
     }
 
     if (changed["array.width"]) {
-      const { width } = this.props;
-      if (width > this.space.width) {
+      const { width, bufferWidth } = this.props;
+      if (width > bufferWidth) {
         return this.rebuild();
       }
     }
