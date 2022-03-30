@@ -48029,8 +48029,8 @@ class Array_ extends Buffer {
     }
 
     if (changed["array.width"]) {
-      const { width } = this.props;
-      if (width > this.space.width) {
+      const { width, bufferWidth } = this.props;
+      if (width > bufferWidth) {
         return this.rebuild();
       }
     }
@@ -48354,15 +48354,15 @@ class Matrix extends Buffer {
     }
 
     if (changed["matrix.width"]) {
-      const { width } = this.props;
-      if (width > this.space.width) {
+      const { width, bufferWidth } = this.props;
+      if (width > bufferWidth) {
         return this.rebuild();
       }
     }
 
     if (changed["matrix.height"]) {
-      const { height } = this.props;
-      if (height > this.space.height) {
+      const { height, bufferHeight } = this.props;
+      if (height > bufferHeight) {
         return this.rebuild();
       }
     }
@@ -48716,22 +48716,22 @@ class Voxel extends Buffer {
     }
 
     if (changed["voxel.width"]) {
-      const { width } = this.props;
-      if (width > this.space.width) {
+      const { width, bufferWidth } = this.props;
+      if (width > bufferWidth) {
         return this.rebuild();
       }
     }
 
     if (changed["voxel.height"]) {
-      const { height } = this.props;
-      if (height > this.space.height) {
+      const { height, bufferHeight } = this.props;
+      if (height > bufferHeight) {
         return this.rebuild();
       }
     }
 
     if (changed["voxel.depth"]) {
-      const { depth } = this.props;
-      if (depth > this.space.depth) {
+      const { depth, bufferDepth } = this.props;
+      if (depth > bufferDepth) {
         return this.rebuild();
       }
     }

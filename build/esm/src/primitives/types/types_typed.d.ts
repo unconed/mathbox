@@ -1,12 +1,4 @@
-/**
- * Manual typings for types.js.
- *
- * Why not name this types.d.ts? Because then it won't be included in the build,
- * see https://stackoverflow.com/a/56440335/2747370. dts files are good for
- * specifying types that are only consumed in our source code, but no good for
- * specifying types that should be included in the output.
- */
-import type { MathboxNode } from "../../types";
+import type { MathboxNode, MathboxSelection } from "../../types";
 declare type OnInvalid = () => void;
 declare type Validate<In, Out> = (value: In, target: unknown, invalid: OnInvalid) => Out;
 export interface Type<In, Out> {
@@ -40,7 +32,7 @@ export declare type TypeGenerators = {
     transitionState(defaultValue?: TransitionStates): Type<Optional<TransitionStates>, TransitionStates>;
     axis(value?: Axes, allowZero?: false): Type<Optional<Axes>, number>;
     axis(value: AxesWithZero, allowZero: true): Type<Optional<AxesWithZero>, number>;
-    select(defaultValue?: string): Type<Optional<string | MathboxNode>, string | MathboxNode>;
+    select(defaultValue?: string): Type<Optional<string | MathboxNode | MathboxSelection>, string | MathboxNode | MathboxSelection>;
     letters<I, O>(type: Type<I, O>, size?: number, value?: string): Type<Optional<string | I[]>, O[]>;
     int(value?: number): Type<Optional<number>, number>;
     round(value?: number): Type<Optional<number>, number>;
@@ -77,4 +69,11 @@ export declare type TypeGenerators = {
     data: any;
 };
 export declare const Types: TypeGenerators;
+declare type Emit = (...xyzw: number[]) => void;
+export declare type ArrayEmitter = (emit: Emit, i: number, t: number, delta: number) => void;
+export declare type IntervalEmitter = (emit: Emit, x: number, i: number, t: number, delta: number) => void;
+export declare type MatrixEmitter = (emit: Emit, i: number, j: number, t: number, delta: number) => void;
+export declare type AreaEmitter = (emit: Emit, x: number, y: number, i: number, j: number, t: number, delta: number) => void;
+export declare type VoxelEmitter = (emit: Emit, i: number, j: number, k: number, t: number, delta: number) => void;
+export declare type VolumeEmitter = (emit: Emit, x: number, y: number, z: number, i: number, j: number, k: number, t: number, delta: number) => void;
 export {};

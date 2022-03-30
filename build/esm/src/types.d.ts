@@ -1,6 +1,12 @@
 import type * as TT from "./node_types";
-import type { Alignments, Axes, AxesWithZero, BlendingModes, Optional } from "./primitives/types/types_typed";
+import type { Alignments, AreaEmitter, ArrayEmitter, Axes, AxesWithZero, BlendingModes, IntervalEmitter, MatrixEmitter, Optional, VolumeEmitter, VoxelEmitter } from "./primitives/types/types_typed";
 export * from "./node_types";
+export { AreaEmitter, ArrayEmitter, IntervalEmitter, MatrixEmitter, VolumeEmitter, VoxelEmitter, };
+/**
+ * Placeholder for threestrap typings.
+ * @hidden
+ */
+export declare type Threestrap = any;
 export type { Alignments, Axes, AxesWithZero, BlendingModes, Optional };
 export declare type Props = {
     area: TT.AreaProps;
@@ -145,11 +151,15 @@ export declare type NodeType = keyof Props;
 export interface MathboxNode<T extends NodeType = NodeType> {
     type: string;
     props: PropsNoramlized[T];
+    /**
+     * @hidden @internal
+     */
+    controller: any;
 }
 /**
  * @typeParam Type The type(s) of MathBox nodes in this selection.
  */
-export interface MathboxSelection<Type extends NodeType> {
+export interface MathboxSelection<Type extends NodeType = NodeType> {
     /**
      * Set properties on all nodes in this selection.
      */
@@ -172,15 +182,38 @@ export interface MathboxSelection<Type extends NodeType> {
     getAll(): PropsNoramlized[Type][];
     remove: () => void;
     print: () => MathboxSelection<Type>;
-    select: (query: string) => MathboxSelection<NodeType>;
+    select<N extends NodeType = NodeType>(query: string): MathboxSelection<N>;
     /**
-     * @hidden Matched nodes by index.
+     * Print (in the console) the DOM nodes in this selection.
+     * Called automatically on first load.
      */
+    inspect(): void;
+    /** Display a visual representation of all shader snippets, how they are wired, with the GLSL available on mouseover. */
+    debug(): void;
+    /** Is this selection wrapping a leaf node? */
+    isLeaf: boolean;
+    /** Is this selection wrapping the root node? */
+    isRoot: boolean;
+    three: Type extends "root" ? Threestrap : undefined;
     [index: number]: MathboxNode<Type>;
     /**
      * The number of nodes contained in this selection.
      */
     length: number;
+    /**
+     * Iterate over a selection's nodes in document order and discard the return
+     * values. Returns the original selection.
+     */
+    each(cb: (node: MathboxNode<Type>, i?: number, selection?: MathboxSelection<Type>) => void): MathboxSelection<Type>;
+    /**
+     * Iterate over a selection's nodes in document order and return the resulting
+     * values as an array.
+     * */
+    map<S>(cb: (node: MathboxNode<Type>, i?: number, selection?: MathboxSelection<Type>) => S): S[];
+    /**
+     * Return the ith node in this selection, indexed from 0.
+     */
+    eq(i: number): MathboxSelection<Type>;
     /**
      * Create new `area` node.
      *
@@ -702,4 +735,5 @@ export interface MathboxSelection<Type extends NodeType> {
      */
     voxel(props?: TT.VoxelProps): MathboxSelection<"voxel">;
 }
-export declare function mathBox(opts?: any): MathboxSelection<"root">;
+export declare type MathBoxOptions = any;
+export declare function mathBox(opts?: MathBoxOptions): MathboxSelection<"root">;

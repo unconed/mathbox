@@ -1,3 +1,4 @@
+import type { AreaEmitter, ArrayEmitter, IntervalEmitter, MatrixEmitter, VolumeEmitter, VoxelEmitter } from "./primitives/types/types_typed";
 import { Traits as TraitsValue } from "./primitives/types/traits";
 declare type Traits = typeof TraitsValue;
 interface GetTraitsNode {
@@ -10,13 +11,13 @@ interface SetTraitsNode {
      * @default `null`
      * @example `"sampler"`
      */
-    id: Parameters<Traits["node"]["id"]["validate"]>[0];
+    id?: Parameters<Traits["node"]["id"]["validate"]>[0];
     /**
      * Custom classes
      * @default `[]`
      * @example `["big"]`
      */
-    classes: Parameters<Traits["node"]["classes"]["validate"]>[0];
+    classes?: Parameters<Traits["node"]["classes"]["validate"]>[0];
 }
 interface GetTraitsEntity {
     active: ReturnType<Traits["entity"]["active"]["validate"]>;
@@ -26,7 +27,7 @@ interface SetTraitsEntity {
      * Updates continuously
      * @default `true`
      */
-    active: Parameters<Traits["entity"]["active"]["validate"]>[0];
+    active?: Parameters<Traits["entity"]["active"]["validate"]>[0];
 }
 interface GetTraitsObject {
     visible: ReturnType<Traits["object"]["visible"]["validate"]>;
@@ -36,7 +37,7 @@ interface SetTraitsObject {
      * Visibility for rendering
      * @default `true`
      */
-    visible: Parameters<Traits["object"]["visible"]["validate"]>[0];
+    visible?: Parameters<Traits["object"]["visible"]["validate"]>[0];
 }
 interface GetTraitsUnit {
     scale: ReturnType<Traits["unit"]["scale"]["validate"]>;
@@ -49,18 +50,18 @@ interface SetTraitsUnit {
      * @default `null`
      * @example `720`
      */
-    scale: Parameters<Traits["unit"]["scale"]["validate"]>[0];
+    scale?: Parameters<Traits["unit"]["scale"]["validate"]>[0];
     /**
      * (Vertical) Field-of-view to calibrate units for (degrees)
      * @default `null`
      * @example `60`
      */
-    fov: Parameters<Traits["unit"]["fov"]["validate"]>[0];
+    fov?: Parameters<Traits["unit"]["fov"]["validate"]>[0];
     /**
      * Camera focus distance in world units
      * @default `1`
      */
-    focus: Parameters<Traits["unit"]["focus"]["validate"]>[0];
+    focus?: Parameters<Traits["unit"]["focus"]["validate"]>[0];
 }
 interface GetTraitsSpan {
     range: ReturnType<Traits["span"]["range"]["validate"]>;
@@ -70,7 +71,7 @@ interface SetTraitsSpan {
      * Range on axis
      * @default `[-1, 1]`
      */
-    range: Parameters<Traits["span"]["range"]["validate"]>[0];
+    range?: Parameters<Traits["span"]["range"]["validate"]>[0];
 }
 interface GetTraitsView {
     range: ReturnType<Traits["view"]["range"]["validate"]>;
@@ -80,7 +81,7 @@ interface SetTraitsView {
      * 4D range in view
      * @default `[[-1, 1], [-1, 1], [-1, 1], [-1, 1]]`
      */
-    range: Parameters<Traits["view"]["range"]["validate"]>[0];
+    range?: Parameters<Traits["view"]["range"]["validate"]>[0];
 }
 interface GetTraitsView3 {
     position: ReturnType<Traits["view3"]["position"]["validate"]>;
@@ -94,27 +95,27 @@ interface SetTraitsView3 {
      * 3D Position
      * @default `[0, 0, 0]`
      */
-    position: Parameters<Traits["view3"]["position"]["validate"]>[0];
+    position?: Parameters<Traits["view3"]["position"]["validate"]>[0];
     /**
      * 3D Quaternion
      * @default `[0, 0, 0, 1]`
      */
-    quaternion: Parameters<Traits["view3"]["quaternion"]["validate"]>[0];
+    quaternion?: Parameters<Traits["view3"]["quaternion"]["validate"]>[0];
     /**
      * 3D Euler rotation
      * @default `[0, 0, 0]`
      */
-    rotation: Parameters<Traits["view3"]["rotation"]["validate"]>[0];
+    rotation?: Parameters<Traits["view3"]["rotation"]["validate"]>[0];
     /**
      * 3D Scale
      * @default `[1, 1, 1]`
      */
-    scale: Parameters<Traits["view3"]["scale"]["validate"]>[0];
+    scale?: Parameters<Traits["view3"]["scale"]["validate"]>[0];
     /**
      * Euler order
      * @default `xyz`
      */
-    eulerOrder: Parameters<Traits["view3"]["eulerOrder"]["validate"]>[0];
+    eulerOrder?: Parameters<Traits["view3"]["eulerOrder"]["validate"]>[0];
 }
 interface GetTraitsView4 {
     position: ReturnType<Traits["view4"]["position"]["validate"]>;
@@ -125,12 +126,12 @@ interface SetTraitsView4 {
      * 4D Position
      * @default `[0, 0, 0, 0]`
      */
-    position: Parameters<Traits["view4"]["position"]["validate"]>[0];
+    position?: Parameters<Traits["view4"]["position"]["validate"]>[0];
     /**
      * 4D Scale
      * @default `[1, 1, 1, 1]`
      */
-    scale: Parameters<Traits["view4"]["scale"]["validate"]>[0];
+    scale?: Parameters<Traits["view4"]["scale"]["validate"]>[0];
 }
 interface GetTraitsLayer {
     depth: ReturnType<Traits["layer"]["depth"]["validate"]>;
@@ -141,12 +142,12 @@ interface SetTraitsLayer {
      * 3D Depth
      * @default `1`
      */
-    depth: Parameters<Traits["layer"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["layer"]["depth"]["validate"]>[0];
     /**
      * Fit to (contain, cover, x, y)
      * @default `y`
      */
-    fit: Parameters<Traits["layer"]["fit"]["validate"]>[0];
+    fit?: Parameters<Traits["layer"]["fit"]["validate"]>[0];
 }
 interface GetTraitsVertex {
     pass: ReturnType<Traits["vertex"]["pass"]["validate"]>;
@@ -156,7 +157,7 @@ interface SetTraitsVertex {
      * Vertex pass (data, view, world, eye)
      * @default `"view"`
      */
-    pass: Parameters<Traits["vertex"]["pass"]["validate"]>[0];
+    pass?: Parameters<Traits["vertex"]["pass"]["validate"]>[0];
 }
 interface GetTraitsFragment {
     pass: ReturnType<Traits["fragment"]["pass"]["validate"]>;
@@ -167,12 +168,12 @@ interface SetTraitsFragment {
      * Fragment pass (color, light, rgba)
      * @default `"light"`
      */
-    pass: Parameters<Traits["fragment"]["pass"]["validate"]>[0];
+    pass?: Parameters<Traits["fragment"]["pass"]["validate"]>[0];
     /**
      * Pass RGBA values in sRGB instead of linear RGB
      * @default `false`
      */
-    gamma: Parameters<Traits["fragment"]["gamma"]["validate"]>[0];
+    gamma?: Parameters<Traits["fragment"]["gamma"]["validate"]>[0];
 }
 interface GetTraitsTransform3 {
     position: ReturnType<Traits["transform3"]["position"]["validate"]>;
@@ -187,32 +188,32 @@ interface SetTraitsTransform3 {
      * 3D Position
      * @default `[0, 0, 0]`
      */
-    position: Parameters<Traits["transform3"]["position"]["validate"]>[0];
+    position?: Parameters<Traits["transform3"]["position"]["validate"]>[0];
     /**
      * 3D Quaternion
      * @default `[0, 0, 0, 1]`
      */
-    quaternion: Parameters<Traits["transform3"]["quaternion"]["validate"]>[0];
+    quaternion?: Parameters<Traits["transform3"]["quaternion"]["validate"]>[0];
     /**
      * 3D Euler rotation
      * @default `[0, 0, 0]`
      */
-    rotation: Parameters<Traits["transform3"]["rotation"]["validate"]>[0];
+    rotation?: Parameters<Traits["transform3"]["rotation"]["validate"]>[0];
     /**
      * 3D Euler order
      * @default `xyz`
      */
-    eulerOrder: Parameters<Traits["transform3"]["eulerOrder"]["validate"]>[0];
+    eulerOrder?: Parameters<Traits["transform3"]["eulerOrder"]["validate"]>[0];
     /**
      * 3D Scale
      * @default `[1, 1, 1]`
      */
-    scale: Parameters<Traits["transform3"]["scale"]["validate"]>[0];
+    scale?: Parameters<Traits["transform3"]["scale"]["validate"]>[0];
     /**
      * 3D Projective Matrix
      * @default `[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]`
      */
-    matrix: Parameters<Traits["transform3"]["matrix"]["validate"]>[0];
+    matrix?: Parameters<Traits["transform3"]["matrix"]["validate"]>[0];
 }
 interface GetTraitsTransform4 {
     position: ReturnType<Traits["transform4"]["position"]["validate"]>;
@@ -224,17 +225,17 @@ interface SetTraitsTransform4 {
      * 4D Position
      * @default `[0, 0, 0, 0]`
      */
-    position: Parameters<Traits["transform4"]["position"]["validate"]>[0];
+    position?: Parameters<Traits["transform4"]["position"]["validate"]>[0];
     /**
      * 4D Scale
      * @default `[1, 1, 1, 1]`
      */
-    scale: Parameters<Traits["transform4"]["scale"]["validate"]>[0];
+    scale?: Parameters<Traits["transform4"]["scale"]["validate"]>[0];
     /**
      * 4D Affine Matrix
      * @default `[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]`
      */
-    matrix: Parameters<Traits["transform4"]["matrix"]["validate"]>[0];
+    matrix?: Parameters<Traits["transform4"]["matrix"]["validate"]>[0];
 }
 interface GetTraitsCamera {
     proxy: ReturnType<Traits["camera"]["proxy"]["validate"]>;
@@ -251,48 +252,48 @@ interface SetTraitsCamera {
      * Re-use existing camera
      * @default `false`
      */
-    proxy: Parameters<Traits["camera"]["proxy"]["validate"]>[0];
+    proxy?: Parameters<Traits["camera"]["proxy"]["validate"]>[0];
     /**
      * 3D Position
      * @default `null`
      * @example `[1, 2, 3]`
      */
-    position: Parameters<Traits["camera"]["position"]["validate"]>[0];
+    position?: Parameters<Traits["camera"]["position"]["validate"]>[0];
     /**
      * 3D Quaternion
      * @default `null`
      * @example `[0.707, 0, 0, 0.707]`
      */
-    quaternion: Parameters<Traits["camera"]["quaternion"]["validate"]>[0];
+    quaternion?: Parameters<Traits["camera"]["quaternion"]["validate"]>[0];
     /**
      * 3D Euler rotation
      * @default `null`
      * @example `[π/2, 0, 0]`
      */
-    rotation: Parameters<Traits["camera"]["rotation"]["validate"]>[0];
+    rotation?: Parameters<Traits["camera"]["rotation"]["validate"]>[0];
     /**
      * 3D Look at
      * @default `null`
      * @example `[2, 3, 4]`
      */
-    lookAt: Parameters<Traits["camera"]["lookAt"]["validate"]>[0];
+    lookAt?: Parameters<Traits["camera"]["lookAt"]["validate"]>[0];
     /**
      * 3D Up
      * @default `null`
      * @example `[0, 1, 0]`
      */
-    up: Parameters<Traits["camera"]["up"]["validate"]>[0];
+    up?: Parameters<Traits["camera"]["up"]["validate"]>[0];
     /**
      * 3D Euler order
      * @default `"xyz"`
      */
-    eulerOrder: Parameters<Traits["camera"]["eulerOrder"]["validate"]>[0];
+    eulerOrder?: Parameters<Traits["camera"]["eulerOrder"]["validate"]>[0];
     /**
      * Field-of-view (degrees)
      * @default `null`
      * @example `60`
      */
-    fov: Parameters<Traits["camera"]["fov"]["validate"]>[0];
+    fov?: Parameters<Traits["camera"]["fov"]["validate"]>[0];
 }
 interface GetTraitsPolar {
     bend: ReturnType<Traits["polar"]["bend"]["validate"]>;
@@ -303,12 +304,12 @@ interface SetTraitsPolar {
      * Amount of polar bend
      * @default `1`
      */
-    bend: Parameters<Traits["polar"]["bend"]["validate"]>[0];
+    bend?: Parameters<Traits["polar"]["bend"]["validate"]>[0];
     /**
      * Expand into helix
      * @default `0`
      */
-    helix: Parameters<Traits["polar"]["helix"]["validate"]>[0];
+    helix?: Parameters<Traits["polar"]["helix"]["validate"]>[0];
 }
 interface GetTraitsSpherical {
     bend: ReturnType<Traits["spherical"]["bend"]["validate"]>;
@@ -318,7 +319,7 @@ interface SetTraitsSpherical {
      * Amount of spherical bend
      * @default `1`
      */
-    bend: Parameters<Traits["spherical"]["bend"]["validate"]>[0];
+    bend?: Parameters<Traits["spherical"]["bend"]["validate"]>[0];
 }
 interface GetTraitsStereographic {
     bend: ReturnType<Traits["stereographic"]["bend"]["validate"]>;
@@ -328,7 +329,7 @@ interface SetTraitsStereographic {
      * Amount of stereographic bend
      * @default `1`
      */
-    bend: Parameters<Traits["stereographic"]["bend"]["validate"]>[0];
+    bend?: Parameters<Traits["stereographic"]["bend"]["validate"]>[0];
 }
 interface GetTraitsInterval {
     axis: ReturnType<Traits["interval"]["axis"]["validate"]>;
@@ -338,7 +339,7 @@ interface SetTraitsInterval {
      * Axis
      * @default `1`
      */
-    axis: Parameters<Traits["interval"]["axis"]["validate"]>[0];
+    axis?: Parameters<Traits["interval"]["axis"]["validate"]>[0];
 }
 interface GetTraitsArea {
     axes: ReturnType<Traits["area"]["axes"]["validate"]>;
@@ -348,7 +349,7 @@ interface SetTraitsArea {
      * Axis pair
      * @default `[1, 2]`
      */
-    axes: Parameters<Traits["area"]["axes"]["validate"]>[0];
+    axes?: Parameters<Traits["area"]["axes"]["validate"]>[0];
 }
 interface GetTraitsVolume {
     axes: ReturnType<Traits["volume"]["axes"]["validate"]>;
@@ -358,7 +359,7 @@ interface SetTraitsVolume {
      * Axis triplet
      * @default `[1, 2, 3]`
      */
-    axes: Parameters<Traits["volume"]["axes"]["validate"]>[0];
+    axes?: Parameters<Traits["volume"]["axes"]["validate"]>[0];
 }
 interface GetTraitsOrigin {
     origin: ReturnType<Traits["origin"]["origin"]["validate"]>;
@@ -368,7 +369,7 @@ interface SetTraitsOrigin {
      * 4D Origin
      * @default `[0, 0, 0, 0]`
      */
-    origin: Parameters<Traits["origin"]["origin"]["validate"]>[0];
+    origin?: Parameters<Traits["origin"]["origin"]["validate"]>[0];
 }
 interface GetTraitsScale {
     divide: ReturnType<Traits["scale"]["divide"]["validate"]>;
@@ -386,47 +387,47 @@ interface SetTraitsScale {
      * Number of divisions
      * @default `10`
      */
-    divide: Parameters<Traits["scale"]["divide"]["validate"]>[0];
+    divide?: Parameters<Traits["scale"]["divide"]["validate"]>[0];
     /**
      * Reference unit
      * @default `1`
      */
-    unit: Parameters<Traits["scale"]["unit"]["validate"]>[0];
+    unit?: Parameters<Traits["scale"]["unit"]["validate"]>[0];
     /**
      * Power base for sub/super units
      * @default `10`
      */
-    base: Parameters<Traits["scale"]["base"]["validate"]>[0];
+    base?: Parameters<Traits["scale"]["base"]["validate"]>[0];
     /**
      * Scale type
      * @default `"linear"`
      */
-    mode: Parameters<Traits["scale"]["mode"]["validate"]>[0];
+    mode?: Parameters<Traits["scale"]["mode"]["validate"]>[0];
     /**
      * Include start
      * @default `true`
      */
-    start: Parameters<Traits["scale"]["start"]["validate"]>[0];
+    start?: Parameters<Traits["scale"]["start"]["validate"]>[0];
     /**
      * Include end
      * @default `true`
      */
-    end: Parameters<Traits["scale"]["end"]["validate"]>[0];
+    end?: Parameters<Traits["scale"]["end"]["validate"]>[0];
     /**
      * Include zero
      * @default `true`
      */
-    zero: Parameters<Traits["scale"]["zero"]["validate"]>[0];
+    zero?: Parameters<Traits["scale"]["zero"]["validate"]>[0];
     /**
      * Scale factor
      * @default `1`
      */
-    factor: Parameters<Traits["scale"]["factor"]["validate"]>[0];
+    factor?: Parameters<Traits["scale"]["factor"]["validate"]>[0];
     /**
      * Snap to nice numbers
      * @default `true`
      */
-    nice: Parameters<Traits["scale"]["nice"]["validate"]>[0];
+    nice?: Parameters<Traits["scale"]["nice"]["validate"]>[0];
 }
 interface GetTraitsGrid {
     lineX: ReturnType<Traits["grid"]["lineX"]["validate"]>;
@@ -440,27 +441,27 @@ interface SetTraitsGrid {
      * Draw X lines
      * @default `true`
      */
-    lineX: Parameters<Traits["grid"]["lineX"]["validate"]>[0];
+    lineX?: Parameters<Traits["grid"]["lineX"]["validate"]>[0];
     /**
      * Draw Y lines
      * @default `true`
      */
-    lineY: Parameters<Traits["grid"]["lineY"]["validate"]>[0];
+    lineY?: Parameters<Traits["grid"]["lineY"]["validate"]>[0];
     /**
      * UVWO map on matching axes
      * @default `true`
      */
-    crossed: Parameters<Traits["grid"]["crossed"]["validate"]>[0];
+    crossed?: Parameters<Traits["grid"]["crossed"]["validate"]>[0];
     /**
      * Close X lines
      * @default `false`
      */
-    closedX: Parameters<Traits["grid"]["closedX"]["validate"]>[0];
+    closedX?: Parameters<Traits["grid"]["closedX"]["validate"]>[0];
     /**
      * Close Y lines
      * @default `false`
      */
-    closedY: Parameters<Traits["grid"]["closedY"]["validate"]>[0];
+    closedY?: Parameters<Traits["grid"]["closedY"]["validate"]>[0];
 }
 interface GetTraitsAxis {
     detail: ReturnType<Traits["axis"]["detail"]["validate"]>;
@@ -471,12 +472,12 @@ interface SetTraitsAxis {
      * Geometric detail
      * @default `1`
      */
-    detail: Parameters<Traits["axis"]["detail"]["validate"]>[0];
+    detail?: Parameters<Traits["axis"]["detail"]["validate"]>[0];
     /**
      * UVWO map on matching axis
      * @default `true`
      */
-    crossed: Parameters<Traits["axis"]["crossed"]["validate"]>[0];
+    crossed?: Parameters<Traits["axis"]["crossed"]["validate"]>[0];
 }
 interface GetTraitsData {
     data: ReturnType<Traits["data"]["data"]["validate"]>;
@@ -489,21 +490,21 @@ interface SetTraitsData {
      * Data array
      * @default `null`
      */
-    data: Parameters<Traits["data"]["data"]["validate"]>[0];
+    data?: Parameters<Traits["data"]["data"]["validate"]>[0];
     /**
      * Data emitter expression
      * @default `null`
      */
-    expr: Parameters<Traits["data"]["expr"]["validate"]>[0];
+    expr?: Parameters<Traits["data"]["expr"]["validate"]>[0];
     /**
      *
      */
-    bind: Parameters<Traits["data"]["bind"]["validate"]>[0];
+    bind?: Parameters<Traits["data"]["bind"]["validate"]>[0];
     /**
      * Update continuously
      * @default `true`
      */
-    live: Parameters<Traits["data"]["live"]["validate"]>[0];
+    live?: Parameters<Traits["data"]["live"]["validate"]>[0];
 }
 interface GetTraitsBuffer {
     channels: ReturnType<Traits["buffer"]["channels"]["validate"]>;
@@ -520,43 +521,43 @@ interface SetTraitsBuffer {
      * Number of channels
      * @default `4`
      */
-    channels: Parameters<Traits["buffer"]["channels"]["validate"]>[0];
+    channels?: Parameters<Traits["buffer"]["channels"]["validate"]>[0];
     /**
      * Number of items
      * @default `4`
      */
-    items: Parameters<Traits["buffer"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["buffer"]["items"]["validate"]>[0];
     /**
      * Frames-per-second update rate
      * @default `null`
      * @example `60`
      */
-    fps: Parameters<Traits["buffer"]["fps"]["validate"]>[0];
+    fps?: Parameters<Traits["buffer"]["fps"]["validate"]>[0];
     /**
      * Maximum frames to hurry per frame
      * @default `5`
      */
-    hurry: Parameters<Traits["buffer"]["hurry"]["validate"]>[0];
+    hurry?: Parameters<Traits["buffer"]["hurry"]["validate"]>[0];
     /**
      * Maximum frames to track
      * @default `60`
      */
-    limit: Parameters<Traits["buffer"]["limit"]["validate"]>[0];
+    limit?: Parameters<Traits["buffer"]["limit"]["validate"]>[0];
     /**
      * Run on real time, not clock time
      * @default `false`
      */
-    realtime: Parameters<Traits["buffer"]["realtime"]["validate"]>[0];
+    realtime?: Parameters<Traits["buffer"]["realtime"]["validate"]>[0];
     /**
      * Pass clock time to data
      * @default `false`
      */
-    observe: Parameters<Traits["buffer"]["observe"]["validate"]>[0];
+    observe?: Parameters<Traits["buffer"]["observe"]["validate"]>[0];
     /**
      * Use (fast) integer lookups
      * @default `false`
      */
-    aligned: Parameters<Traits["buffer"]["aligned"]["validate"]>[0];
+    aligned?: Parameters<Traits["buffer"]["aligned"]["validate"]>[0];
 }
 interface GetTraitsSampler {
     centered: ReturnType<Traits["sampler"]["centered"]["validate"]>;
@@ -567,12 +568,12 @@ interface SetTraitsSampler {
      * Centered instead of corner sampling
      * @default `false`
      */
-    centered: Parameters<Traits["sampler"]["centered"]["validate"]>[0];
+    centered?: Parameters<Traits["sampler"]["centered"]["validate"]>[0];
     /**
      * Number of samples padding
      * @default `0`
      */
-    padding: Parameters<Traits["sampler"]["padding"]["validate"]>[0];
+    padding?: Parameters<Traits["sampler"]["padding"]["validate"]>[0];
 }
 interface GetTraitsArray {
     width: ReturnType<Traits["array"]["width"]["validate"]>;
@@ -584,17 +585,17 @@ interface SetTraitsArray {
      * Array width
      * @default `1`
      */
-    width: Parameters<Traits["array"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["array"]["width"]["validate"]>[0];
     /**
      * Array buffer width
      * @default `1`
      */
-    bufferWidth: Parameters<Traits["array"]["bufferWidth"]["validate"]>[0];
+    bufferWidth?: Parameters<Traits["array"]["bufferWidth"]["validate"]>[0];
     /**
      * Array history
      * @default `1`
      */
-    history: Parameters<Traits["array"]["history"]["validate"]>[0];
+    history?: Parameters<Traits["array"]["history"]["validate"]>[0];
 }
 interface GetTraitsMatrix {
     width: ReturnType<Traits["matrix"]["width"]["validate"]>;
@@ -608,27 +609,27 @@ interface SetTraitsMatrix {
      * Matrix width
      * @default `1`
      */
-    width: Parameters<Traits["matrix"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["matrix"]["width"]["validate"]>[0];
     /**
      * Matrix height
      * @default `1`
      */
-    height: Parameters<Traits["matrix"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["matrix"]["height"]["validate"]>[0];
     /**
      * Matrix history
      * @default `1`
      */
-    history: Parameters<Traits["matrix"]["history"]["validate"]>[0];
+    history?: Parameters<Traits["matrix"]["history"]["validate"]>[0];
     /**
      * Matrix buffer width
      * @default `1`
      */
-    bufferWidth: Parameters<Traits["matrix"]["bufferWidth"]["validate"]>[0];
+    bufferWidth?: Parameters<Traits["matrix"]["bufferWidth"]["validate"]>[0];
     /**
      * Matrix buffer height
      * @default `1`
      */
-    bufferHeight: Parameters<Traits["matrix"]["bufferHeight"]["validate"]>[0];
+    bufferHeight?: Parameters<Traits["matrix"]["bufferHeight"]["validate"]>[0];
 }
 interface GetTraitsVoxel {
     width: ReturnType<Traits["voxel"]["width"]["validate"]>;
@@ -643,32 +644,32 @@ interface SetTraitsVoxel {
      * Voxel width
      * @default `1`
      */
-    width: Parameters<Traits["voxel"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["voxel"]["width"]["validate"]>[0];
     /**
      * Voxel height
      * @default `1`
      */
-    height: Parameters<Traits["voxel"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["voxel"]["height"]["validate"]>[0];
     /**
      * Voxel depth
      * @default `1`
      */
-    depth: Parameters<Traits["voxel"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["voxel"]["depth"]["validate"]>[0];
     /**
      * Voxel buffer width
      * @default `1`
      */
-    bufferWidth: Parameters<Traits["voxel"]["bufferWidth"]["validate"]>[0];
+    bufferWidth?: Parameters<Traits["voxel"]["bufferWidth"]["validate"]>[0];
     /**
      * Voxel buffer height
      * @default `1`
      */
-    bufferHeight: Parameters<Traits["voxel"]["bufferHeight"]["validate"]>[0];
+    bufferHeight?: Parameters<Traits["voxel"]["bufferHeight"]["validate"]>[0];
     /**
      * Voxel buffer depth
      * @default `1`
      */
-    bufferDepth: Parameters<Traits["voxel"]["bufferDepth"]["validate"]>[0];
+    bufferDepth?: Parameters<Traits["voxel"]["bufferDepth"]["validate"]>[0];
 }
 interface GetTraitsStyle {
     opacity: ReturnType<Traits["style"]["opacity"]["validate"]>;
@@ -685,43 +686,43 @@ interface SetTraitsStyle {
      * Opacity
      * @default `1`
      */
-    opacity: Parameters<Traits["style"]["opacity"]["validate"]>[0];
+    opacity?: Parameters<Traits["style"]["opacity"]["validate"]>[0];
     /**
      * Color
      * @default `"rgb(128, 128, 128)"`
      */
-    color: Parameters<Traits["style"]["color"]["validate"]>[0];
+    color?: Parameters<Traits["style"]["color"]["validate"]>[0];
     /**
      * Blending mode ('no, normal, add, subtract, multiply)
      * @default `"normal"`
      */
-    blending: Parameters<Traits["style"]["blending"]["validate"]>[0];
+    blending?: Parameters<Traits["style"]["blending"]["validate"]>[0];
     /**
      * Write Z buffer
      * @default `true`
      */
-    zWrite: Parameters<Traits["style"]["zWrite"]["validate"]>[0];
+    zWrite?: Parameters<Traits["style"]["zWrite"]["validate"]>[0];
     /**
      * Test Z buffer
      * @default `true`
      */
-    zTest: Parameters<Traits["style"]["zTest"]["validate"]>[0];
+    zTest?: Parameters<Traits["style"]["zTest"]["validate"]>[0];
     /**
      * Z-Index (2D stacking)
      * @default `0`
      */
-    zIndex: Parameters<Traits["style"]["zIndex"]["validate"]>[0];
+    zIndex?: Parameters<Traits["style"]["zIndex"]["validate"]>[0];
     /**
      * Z-Bias (3D stacking)
      * @default `0`
      */
-    zBias: Parameters<Traits["style"]["zBias"]["validate"]>[0];
+    zBias?: Parameters<Traits["style"]["zBias"]["validate"]>[0];
     /**
      * Z-Order (drawing order)
      * @default `null`
      * @example `2`
      */
-    zOrder: Parameters<Traits["style"]["zOrder"]["validate"]>[0];
+    zOrder?: Parameters<Traits["style"]["zOrder"]["validate"]>[0];
 }
 interface GetTraitsGeometry {
     points: ReturnType<Traits["geometry"]["points"]["validate"]>;
@@ -732,13 +733,13 @@ interface SetTraitsGeometry {
      * Points data source
      * @default `<`
      */
-    points: Parameters<Traits["geometry"]["points"]["validate"]>[0];
+    points?: Parameters<Traits["geometry"]["points"]["validate"]>[0];
     /**
      * Colors data source
      * @default `null`
      * @example `"#colors"`
      */
-    colors: Parameters<Traits["geometry"]["colors"]["validate"]>[0];
+    colors?: Parameters<Traits["geometry"]["colors"]["validate"]>[0];
 }
 interface GetTraitsPoint {
     size: ReturnType<Traits["point"]["size"]["validate"]>;
@@ -753,33 +754,33 @@ interface SetTraitsPoint {
      * Point size
      * @default `4`
      */
-    size: Parameters<Traits["point"]["size"]["validate"]>[0];
+    size?: Parameters<Traits["point"]["size"]["validate"]>[0];
     /**
      * Point sizes data source
      * @default `null`
      * @example `"#sizes"`
      */
-    sizes: Parameters<Traits["point"]["sizes"]["validate"]>[0];
+    sizes?: Parameters<Traits["point"]["sizes"]["validate"]>[0];
     /**
      * Point shape (circle, square, diamond, up, down, left, right)
      * @default `"circle"`
      */
-    shape: Parameters<Traits["point"]["shape"]["validate"]>[0];
+    shape?: Parameters<Traits["point"]["shape"]["validate"]>[0];
     /**
      * Optical or exact sizing
      * @default `true`
      */
-    optical: Parameters<Traits["point"]["optical"]["validate"]>[0];
+    optical?: Parameters<Traits["point"]["optical"]["validate"]>[0];
     /**
      * Fill shape
      * @default `true`
      */
-    fill: Parameters<Traits["point"]["fill"]["validate"]>[0];
+    fill?: Parameters<Traits["point"]["fill"]["validate"]>[0];
     /**
      * Depth scaling
      * @default `1`
      */
-    depth: Parameters<Traits["point"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["point"]["depth"]["validate"]>[0];
 }
 interface GetTraitsLine {
     width: ReturnType<Traits["line"]["width"]["validate"]>;
@@ -794,32 +795,32 @@ interface SetTraitsLine {
      * Line width
      * @default `2`
      */
-    width: Parameters<Traits["line"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["line"]["width"]["validate"]>[0];
     /**
      * Depth scaling
      * @default `1`
      */
-    depth: Parameters<Traits["line"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["line"]["depth"]["validate"]>[0];
     /**
      *
      */
-    join: Parameters<Traits["line"]["join"]["validate"]>[0];
+    join?: Parameters<Traits["line"]["join"]["validate"]>[0];
     /**
      * Line stroke (solid, dotted, dashed)
      * @default `"solid"`
      */
-    stroke: Parameters<Traits["line"]["stroke"]["validate"]>[0];
+    stroke?: Parameters<Traits["line"]["stroke"]["validate"]>[0];
     /**
      * Proximity threshold
      * @default `null`
      * @example `10`
      */
-    proximity: Parameters<Traits["line"]["proximity"]["validate"]>[0];
+    proximity?: Parameters<Traits["line"]["proximity"]["validate"]>[0];
     /**
      * Close line
      * @default `false`
      */
-    closed: Parameters<Traits["line"]["closed"]["validate"]>[0];
+    closed?: Parameters<Traits["line"]["closed"]["validate"]>[0];
 }
 interface GetTraitsMesh {
     fill: ReturnType<Traits["mesh"]["fill"]["validate"]>;
@@ -832,23 +833,23 @@ interface SetTraitsMesh {
      * Fill mesh
      * @default `true`
      */
-    fill: Parameters<Traits["mesh"]["fill"]["validate"]>[0];
+    fill?: Parameters<Traits["mesh"]["fill"]["validate"]>[0];
     /**
      * Shade mesh
      * @default `false`
      */
-    shaded: Parameters<Traits["mesh"]["shaded"]["validate"]>[0];
+    shaded?: Parameters<Traits["mesh"]["shaded"]["validate"]>[0];
     /**
      * Texture map source
      * @default `null`
      * @example `"#map"`
      */
-    map: Parameters<Traits["mesh"]["map"]["validate"]>[0];
+    map?: Parameters<Traits["mesh"]["map"]["validate"]>[0];
     /**
      * Z-Bias for lines on fill
      * @default `5`
      */
-    lineBias: Parameters<Traits["mesh"]["lineBias"]["validate"]>[0];
+    lineBias?: Parameters<Traits["mesh"]["lineBias"]["validate"]>[0];
 }
 interface GetTraitsStrip {
     line: ReturnType<Traits["strip"]["line"]["validate"]>;
@@ -858,7 +859,7 @@ interface SetTraitsStrip {
      * Draw line
      * @default `false`
      */
-    line: Parameters<Traits["strip"]["line"]["validate"]>[0];
+    line?: Parameters<Traits["strip"]["line"]["validate"]>[0];
 }
 interface GetTraitsFace {
     line: ReturnType<Traits["face"]["line"]["validate"]>;
@@ -868,7 +869,7 @@ interface SetTraitsFace {
      * Draw line
      * @default `false`
      */
-    line: Parameters<Traits["face"]["line"]["validate"]>[0];
+    line?: Parameters<Traits["face"]["line"]["validate"]>[0];
 }
 interface GetTraitsArrow {
     size: ReturnType<Traits["arrow"]["size"]["validate"]>;
@@ -880,17 +881,17 @@ interface SetTraitsArrow {
      * Arrow size
      * @default `3`
      */
-    size: Parameters<Traits["arrow"]["size"]["validate"]>[0];
+    size?: Parameters<Traits["arrow"]["size"]["validate"]>[0];
     /**
      * Draw start arrow
      * @default `true`
      */
-    start: Parameters<Traits["arrow"]["start"]["validate"]>[0];
+    start?: Parameters<Traits["arrow"]["start"]["validate"]>[0];
     /**
      * Draw end arrow
      * @default `true`
      */
-    end: Parameters<Traits["arrow"]["end"]["validate"]>[0];
+    end?: Parameters<Traits["arrow"]["end"]["validate"]>[0];
 }
 interface GetTraitsTicks {
     normal: ReturnType<Traits["ticks"]["normal"]["validate"]>;
@@ -902,17 +903,17 @@ interface SetTraitsTicks {
      * Normal for reference plane
      * @default `true`
      */
-    normal: Parameters<Traits["ticks"]["normal"]["validate"]>[0];
+    normal?: Parameters<Traits["ticks"]["normal"]["validate"]>[0];
     /**
      * Tick size
      * @default `10`
      */
-    size: Parameters<Traits["ticks"]["size"]["validate"]>[0];
+    size?: Parameters<Traits["ticks"]["size"]["validate"]>[0];
     /**
      * Tick epsilon
      * @default `0.0001`
      */
-    epsilon: Parameters<Traits["ticks"]["epsilon"]["validate"]>[0];
+    epsilon?: Parameters<Traits["ticks"]["epsilon"]["validate"]>[0];
 }
 interface GetTraitsAttach {
     offset: ReturnType<Traits["attach"]["offset"]["validate"]>;
@@ -924,17 +925,17 @@ interface SetTraitsAttach {
      * 2D offset
      * @default `[0, -20]`
      */
-    offset: Parameters<Traits["attach"]["offset"]["validate"]>[0];
+    offset?: Parameters<Traits["attach"]["offset"]["validate"]>[0];
     /**
      * Snap to pixel
      * @default `false`
      */
-    snap: Parameters<Traits["attach"]["snap"]["validate"]>[0];
+    snap?: Parameters<Traits["attach"]["snap"]["validate"]>[0];
     /**
      * Depth scaling
      * @default `0`
      */
-    depth: Parameters<Traits["attach"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["attach"]["depth"]["validate"]>[0];
 }
 interface GetTraitsFormat {
     digits: ReturnType<Traits["format"]["digits"]["validate"]>;
@@ -948,23 +949,23 @@ interface SetTraitsFormat {
      * @default `null`
      * @example `2`
      */
-    digits: Parameters<Traits["format"]["digits"]["validate"]>[0];
+    digits?: Parameters<Traits["format"]["digits"]["validate"]>[0];
     /**
      * Array of labels
      * @default `null`
      * @example `["Grumpy", "Sleepy", "Sneezy"]`
      */
-    data: Parameters<Traits["format"]["data"]["validate"]>[0];
+    data?: Parameters<Traits["format"]["data"]["validate"]>[0];
     /**
      * Label formatter expression
      * @default `null`
      */
-    expr: Parameters<Traits["format"]["expr"]["validate"]>[0];
+    expr?: Parameters<Traits["format"]["expr"]["validate"]>[0];
     /**
      * Update continuously
      * @default `true`
      */
-    live: Parameters<Traits["format"]["live"]["validate"]>[0];
+    live?: Parameters<Traits["format"]["live"]["validate"]>[0];
 }
 interface GetTraitsFont {
     font: ReturnType<Traits["font"]["font"]["validate"]>;
@@ -979,35 +980,35 @@ interface SetTraitsFont {
      * Font family
      * @default `"sans-serif"`
      */
-    font: Parameters<Traits["font"]["font"]["validate"]>[0];
+    font?: Parameters<Traits["font"]["font"]["validate"]>[0];
     /**
      * Font style
      * @default `""`
      * @example `"italic"`
      */
-    style: Parameters<Traits["font"]["style"]["validate"]>[0];
+    style?: Parameters<Traits["font"]["style"]["validate"]>[0];
     /**
      * Font variant
      * @default `""`
      * @example `"small-caps"`
      */
-    variant: Parameters<Traits["font"]["variant"]["validate"]>[0];
+    variant?: Parameters<Traits["font"]["variant"]["validate"]>[0];
     /**
      * Font weight
      * @default `""`
      * @example `"bold"`
      */
-    weight: Parameters<Traits["font"]["weight"]["validate"]>[0];
+    weight?: Parameters<Traits["font"]["weight"]["validate"]>[0];
     /**
      * Font detail
      * @default `24`
      */
-    detail: Parameters<Traits["font"]["detail"]["validate"]>[0];
+    detail?: Parameters<Traits["font"]["detail"]["validate"]>[0];
     /**
      * Signed distance field range
      * @default `5`
      */
-    sdf: Parameters<Traits["font"]["sdf"]["validate"]>[0];
+    sdf?: Parameters<Traits["font"]["sdf"]["validate"]>[0];
 }
 interface GetTraitsLabel {
     text: ReturnType<Traits["label"]["text"]["validate"]>;
@@ -1021,27 +1022,27 @@ interface SetTraitsLabel {
      * Text source
      * @default `"<"`
      */
-    text: Parameters<Traits["label"]["text"]["validate"]>[0];
+    text?: Parameters<Traits["label"]["text"]["validate"]>[0];
     /**
      * Text size
      * @default `16`
      */
-    size: Parameters<Traits["label"]["size"]["validate"]>[0];
+    size?: Parameters<Traits["label"]["size"]["validate"]>[0];
     /**
      * Outline size
      * @default `2`
      */
-    outline: Parameters<Traits["label"]["outline"]["validate"]>[0];
+    outline?: Parameters<Traits["label"]["outline"]["validate"]>[0];
     /**
      * Expand glyphs
      * @default `0`
      */
-    expand: Parameters<Traits["label"]["expand"]["validate"]>[0];
+    expand?: Parameters<Traits["label"]["expand"]["validate"]>[0];
     /**
      * Outline background
      * @default `"rgb(255, 255, 255)"`
      */
-    background: Parameters<Traits["label"]["background"]["validate"]>[0];
+    background?: Parameters<Traits["label"]["background"]["validate"]>[0];
 }
 interface GetTraitsOverlay {
     opacity: ReturnType<Traits["overlay"]["opacity"]["validate"]>;
@@ -1052,12 +1053,12 @@ interface SetTraitsOverlay {
      * Opacity
      * @default `1`
      */
-    opacity: Parameters<Traits["overlay"]["opacity"]["validate"]>[0];
+    opacity?: Parameters<Traits["overlay"]["opacity"]["validate"]>[0];
     /**
      * Z-Index (2D stacking)
      * @default `0`
      */
-    zIndex: Parameters<Traits["overlay"]["zIndex"]["validate"]>[0];
+    zIndex?: Parameters<Traits["overlay"]["zIndex"]["validate"]>[0];
 }
 interface GetTraitsDom {
     points: ReturnType<Traits["dom"]["points"]["validate"]>;
@@ -1074,43 +1075,43 @@ interface SetTraitsDom {
      * Points data source
      * @default `"<"`
      */
-    points: Parameters<Traits["dom"]["points"]["validate"]>[0];
+    points?: Parameters<Traits["dom"]["points"]["validate"]>[0];
     /**
      * HTML data source
      * @default `"<"`
      */
-    html: Parameters<Traits["dom"]["html"]["validate"]>[0];
+    html?: Parameters<Traits["dom"]["html"]["validate"]>[0];
     /**
      * Text size
      * @default `16`
      */
-    size: Parameters<Traits["dom"]["size"]["validate"]>[0];
+    size?: Parameters<Traits["dom"]["size"]["validate"]>[0];
     /**
      * Outline size
      * @default `2`
      */
-    outline: Parameters<Traits["dom"]["outline"]["validate"]>[0];
+    outline?: Parameters<Traits["dom"]["outline"]["validate"]>[0];
     /**
      * HTML zoom
      * @default `1`
      */
-    zoom: Parameters<Traits["dom"]["zoom"]["validate"]>[0];
+    zoom?: Parameters<Traits["dom"]["zoom"]["validate"]>[0];
     /**
      * Color
      * @default `"rgb(255, 255, 255)"`
      */
-    color: Parameters<Traits["dom"]["color"]["validate"]>[0];
+    color?: Parameters<Traits["dom"]["color"]["validate"]>[0];
     /**
      * HTML attributes
      * @default `null`
      * @example `{"style": {"color": "red"}}`
      */
-    attributes: Parameters<Traits["dom"]["attributes"]["validate"]>[0];
+    attributes?: Parameters<Traits["dom"]["attributes"]["validate"]>[0];
     /**
      * Allow pointer events
      * @default `false`
      */
-    pointerEvents: Parameters<Traits["dom"]["pointerEvents"]["validate"]>[0];
+    pointerEvents?: Parameters<Traits["dom"]["pointerEvents"]["validate"]>[0];
 }
 interface GetTraitsTexture {
     minFilter: ReturnType<Traits["texture"]["minFilter"]["validate"]>;
@@ -1122,17 +1123,17 @@ interface SetTraitsTexture {
      * Texture minification filtering
      * @default `"nearest"`
      */
-    minFilter: Parameters<Traits["texture"]["minFilter"]["validate"]>[0];
+    minFilter?: Parameters<Traits["texture"]["minFilter"]["validate"]>[0];
     /**
      * Texture magnification filtering
      * @default `"nearest"`
      */
-    magFilter: Parameters<Traits["texture"]["magFilter"]["validate"]>[0];
+    magFilter?: Parameters<Traits["texture"]["magFilter"]["validate"]>[0];
     /**
      * Texture data type
      * @default `"float"`
      */
-    type: Parameters<Traits["texture"]["type"]["validate"]>[0];
+    type?: Parameters<Traits["texture"]["type"]["validate"]>[0];
 }
 interface GetTraitsShader {
     sources: ReturnType<Traits["shader"]["sources"]["validate"]>;
@@ -1146,23 +1147,23 @@ interface SetTraitsShader {
      * @default `null`
      * @example `["#pressure", "#divergence"]`
      */
-    sources: Parameters<Traits["shader"]["sources"]["validate"]>[0];
+    sources?: Parameters<Traits["shader"]["sources"]["validate"]>[0];
     /**
      * Shader language
      * @default `"glsl"`
      */
-    language: Parameters<Traits["shader"]["language"]["validate"]>[0];
+    language?: Parameters<Traits["shader"]["language"]["validate"]>[0];
     /**
      * Shader code
      * @default `""`
      */
-    code: Parameters<Traits["shader"]["code"]["validate"]>[0];
+    code?: Parameters<Traits["shader"]["code"]["validate"]>[0];
     /**
      * Shader uniform objects (three.js style)
      * @default `null`
      * @example `{ time: { type: 'f', value: 3 }}`
      */
-    uniforms: Parameters<Traits["shader"]["uniforms"]["validate"]>[0];
+    uniforms?: Parameters<Traits["shader"]["uniforms"]["validate"]>[0];
 }
 interface GetTraitsInclude {
     shader: ReturnType<Traits["include"]["shader"]["validate"]>;
@@ -1172,7 +1173,7 @@ interface SetTraitsInclude {
      * Shader to use
      * @default `"<"`
      */
-    shader: Parameters<Traits["include"]["shader"]["validate"]>[0];
+    shader?: Parameters<Traits["include"]["shader"]["validate"]>[0];
 }
 interface GetTraitsOperator {
     source: ReturnType<Traits["operator"]["source"]["validate"]>;
@@ -1182,7 +1183,7 @@ interface SetTraitsOperator {
      * Input source
      * @default `"<"`
      */
-    source: Parameters<Traits["operator"]["source"]["validate"]>[0];
+    source?: Parameters<Traits["operator"]["source"]["validate"]>[0];
 }
 interface GetTraitsSpread {
     unit: ReturnType<Traits["spread"]["unit"]["validate"]>;
@@ -1200,51 +1201,51 @@ interface SetTraitsSpread {
      * Spread per item (absolute) or array (relative)
      * @default `"relative"`
      */
-    unit: Parameters<Traits["spread"]["unit"]["validate"]>[0];
+    unit?: Parameters<Traits["spread"]["unit"]["validate"]>[0];
     /**
      * Items offset
      * @default `null`
      * @example `[1.5, 0, 0, 0]`
      */
-    items: Parameters<Traits["spread"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["spread"]["items"]["validate"]>[0];
     /**
      * Width offset
      * @default `null`
      * @example `[1.5, 0, 0, 0]`
      */
-    width: Parameters<Traits["spread"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["spread"]["width"]["validate"]>[0];
     /**
      * Height offset
      * @default `null`
      * @example `[1.5, 0, 0, 0]`
      */
-    height: Parameters<Traits["spread"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["spread"]["height"]["validate"]>[0];
     /**
      * Depth offset
      * @default `null`
      * @example `[1.5, 0, 0, 0]`
      */
-    depth: Parameters<Traits["spread"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["spread"]["depth"]["validate"]>[0];
     /**
      * Items alignment
      * @default `0`
      */
-    alignItems: Parameters<Traits["spread"]["alignItems"]["validate"]>[0];
+    alignItems?: Parameters<Traits["spread"]["alignItems"]["validate"]>[0];
     /**
      * Width alignment
      * @default `0`
      */
-    alignWidth: Parameters<Traits["spread"]["alignWidth"]["validate"]>[0];
+    alignWidth?: Parameters<Traits["spread"]["alignWidth"]["validate"]>[0];
     /**
      * Height alignment
      * @default `0`
      */
-    alignHeight: Parameters<Traits["spread"]["alignHeight"]["validate"]>[0];
+    alignHeight?: Parameters<Traits["spread"]["alignHeight"]["validate"]>[0];
     /**
      * Depth alignment
      * @default `0`
      */
-    alignDepth: Parameters<Traits["spread"]["alignDepth"]["validate"]>[0];
+    alignDepth?: Parameters<Traits["spread"]["alignDepth"]["validate"]>[0];
 }
 interface GetTraitsGrow {
     scale: ReturnType<Traits["grow"]["scale"]["validate"]>;
@@ -1258,31 +1259,31 @@ interface SetTraitsGrow {
      * Scale factor
      * @default `1`
      */
-    scale: Parameters<Traits["grow"]["scale"]["validate"]>[0];
+    scale?: Parameters<Traits["grow"]["scale"]["validate"]>[0];
     /**
      * Items alignment
      * @default `null`
      * @example `0`
      */
-    items: Parameters<Traits["grow"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["grow"]["items"]["validate"]>[0];
     /**
      * Width alignment
      * @default `null`
      * @example `0`
      */
-    width: Parameters<Traits["grow"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["grow"]["width"]["validate"]>[0];
     /**
      * Height alignment
      * @default `null`
      * @example `0`
      */
-    height: Parameters<Traits["grow"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["grow"]["height"]["validate"]>[0];
     /**
      * Depth alignment
      * @default `null`
      * @example `0`
      */
-    depth: Parameters<Traits["grow"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["grow"]["depth"]["validate"]>[0];
 }
 interface GetTraitsSplit {
     order: ReturnType<Traits["split"]["order"]["validate"]>;
@@ -1295,23 +1296,23 @@ interface SetTraitsSplit {
      * Axis order
      * @default `"wxyz"`
      */
-    order: Parameters<Traits["split"]["order"]["validate"]>[0];
+    order?: Parameters<Traits["split"]["order"]["validate"]>[0];
     /**
      * Axis to split
      * @default `null`
      * @example `x`
      */
-    axis: Parameters<Traits["split"]["axis"]["validate"]>[0];
+    axis?: Parameters<Traits["split"]["axis"]["validate"]>[0];
     /**
      * Tuple length
      * @default `1`
      */
-    length: Parameters<Traits["split"]["length"]["validate"]>[0];
+    length?: Parameters<Traits["split"]["length"]["validate"]>[0];
     /**
      * Tuple overlap
      * @default `1`
      */
-    overlap: Parameters<Traits["split"]["overlap"]["validate"]>[0];
+    overlap?: Parameters<Traits["split"]["overlap"]["validate"]>[0];
 }
 interface GetTraitsJoin {
     order: ReturnType<Traits["join"]["order"]["validate"]>;
@@ -1323,18 +1324,18 @@ interface SetTraitsJoin {
      * Axis order
      * @default `"wxyz"`
      */
-    order: Parameters<Traits["join"]["order"]["validate"]>[0];
+    order?: Parameters<Traits["join"]["order"]["validate"]>[0];
     /**
      * Axis to join
      * @default `null`
      * @example `x`
      */
-    axis: Parameters<Traits["join"]["axis"]["validate"]>[0];
+    axis?: Parameters<Traits["join"]["axis"]["validate"]>[0];
     /**
      * Tuple overlap
      * @default `1`
      */
-    overlap: Parameters<Traits["join"]["overlap"]["validate"]>[0];
+    overlap?: Parameters<Traits["join"]["overlap"]["validate"]>[0];
 }
 interface GetTraitsSwizzle {
     order: ReturnType<Traits["swizzle"]["order"]["validate"]>;
@@ -1344,7 +1345,7 @@ interface SetTraitsSwizzle {
      * Swizzle order
      * @default `xyzw`
      */
-    order: Parameters<Traits["swizzle"]["order"]["validate"]>[0];
+    order?: Parameters<Traits["swizzle"]["order"]["validate"]>[0];
 }
 interface GetTraitsTranspose {
     order: ReturnType<Traits["transpose"]["order"]["validate"]>;
@@ -1354,7 +1355,7 @@ interface SetTraitsTranspose {
      * Transpose order
      * @default `xyzw`
      */
-    order: Parameters<Traits["transpose"]["order"]["validate"]>[0];
+    order?: Parameters<Traits["transpose"]["order"]["validate"]>[0];
 }
 interface GetTraitsRepeat {
     items: ReturnType<Traits["repeat"]["items"]["validate"]>;
@@ -1367,22 +1368,22 @@ interface SetTraitsRepeat {
      * Repeat items
      * @default `1`
      */
-    items: Parameters<Traits["repeat"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["repeat"]["items"]["validate"]>[0];
     /**
      * Repeat width
      * @default `1`
      */
-    width: Parameters<Traits["repeat"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["repeat"]["width"]["validate"]>[0];
     /**
      * Repeat height
      * @default `1`
      */
-    height: Parameters<Traits["repeat"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["repeat"]["height"]["validate"]>[0];
     /**
      * Repeat depth
      * @default `1`
      */
-    depth: Parameters<Traits["repeat"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["repeat"]["depth"]["validate"]>[0];
 }
 interface GetTraitsSlice {
     items: ReturnType<Traits["slice"]["items"]["validate"]>;
@@ -1396,25 +1397,25 @@ interface SetTraitsSlice {
      * @default `null`
      * @example `[2, 4]`
      */
-    items: Parameters<Traits["slice"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["slice"]["items"]["validate"]>[0];
     /**
      * Slice from, to width (excluding to)
      * @default `null`
      * @example `[2, 4]`
      */
-    width: Parameters<Traits["slice"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["slice"]["width"]["validate"]>[0];
     /**
      * Slice from, to height (excluding to)
      * @default `null`
      * @example `[2, 4]`
      */
-    height: Parameters<Traits["slice"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["slice"]["height"]["validate"]>[0];
     /**
      * Slice from, to depth (excluding to)
      * @default `null`
      * @example `[2, 4]`
      */
-    depth: Parameters<Traits["slice"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["slice"]["depth"]["validate"]>[0];
 }
 interface GetTraitsLerp {
     size: ReturnType<Traits["lerp"]["size"]["validate"]>;
@@ -1428,31 +1429,31 @@ interface SetTraitsLerp {
      * Scaling mode (relative, absolute)
      * @default `"absolute"`
      */
-    size: Parameters<Traits["lerp"]["size"]["validate"]>[0];
+    size?: Parameters<Traits["lerp"]["size"]["validate"]>[0];
     /**
      * Lerp to items
      * @default `null`
      * @example `5`
      */
-    items: Parameters<Traits["lerp"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["lerp"]["items"]["validate"]>[0];
     /**
      * Lerp to width
      * @default `null`
      * @example `5`
      */
-    width: Parameters<Traits["lerp"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["lerp"]["width"]["validate"]>[0];
     /**
      * Lerp to height
      * @default `null`
      * @example `5`
      */
-    height: Parameters<Traits["lerp"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["lerp"]["height"]["validate"]>[0];
     /**
      * Lerp to depth
      * @default `null`
      * @example `5`
      */
-    depth: Parameters<Traits["lerp"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["lerp"]["depth"]["validate"]>[0];
 }
 interface GetTraitsSubdivide {
     items: ReturnType<Traits["subdivide"]["items"]["validate"]>;
@@ -1468,35 +1469,35 @@ interface SetTraitsSubdivide {
      * @default `null`
      * @example `5`
      */
-    items: Parameters<Traits["subdivide"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["subdivide"]["items"]["validate"]>[0];
     /**
      * Divisions of width
      * @default `null`
      * @example `5`
      */
-    width: Parameters<Traits["subdivide"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["subdivide"]["width"]["validate"]>[0];
     /**
      * Divisions of height
      * @default `null`
      * @example `5`
      */
-    height: Parameters<Traits["subdivide"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["subdivide"]["height"]["validate"]>[0];
     /**
      * Divisions of depth
      * @default `null`
      * @example `5`
      */
-    depth: Parameters<Traits["subdivide"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["subdivide"]["depth"]["validate"]>[0];
     /**
      * Fraction to end outward from vertices
      * @default `1`
      */
-    bevel: Parameters<Traits["subdivide"]["bevel"]["validate"]>[0];
+    bevel?: Parameters<Traits["subdivide"]["bevel"]["validate"]>[0];
     /**
      * Interpolate values with computed indices
      * @default `true`
      */
-    lerp: Parameters<Traits["subdivide"]["lerp"]["validate"]>[0];
+    lerp?: Parameters<Traits["subdivide"]["lerp"]["validate"]>[0];
 }
 interface GetTraitsResample {
     indices: ReturnType<Traits["resample"]["indices"]["validate"]>;
@@ -1513,46 +1514,46 @@ interface SetTraitsResample {
      * Resample indices
      * @default `4`
      */
-    indices: Parameters<Traits["resample"]["indices"]["validate"]>[0];
+    indices?: Parameters<Traits["resample"]["indices"]["validate"]>[0];
     /**
      * Resample channels
      * @default `4`
      */
-    channels: Parameters<Traits["resample"]["channels"]["validate"]>[0];
+    channels?: Parameters<Traits["resample"]["channels"]["validate"]>[0];
     /**
      * Source sampling (relative, absolute)
      * @default `"relative"`
      */
-    sample: Parameters<Traits["resample"]["sample"]["validate"]>[0];
+    sample?: Parameters<Traits["resample"]["sample"]["validate"]>[0];
     /**
      * Scaling mode (relative, absolute)
      * @default `"absolute"`
      */
-    size: Parameters<Traits["resample"]["size"]["validate"]>[0];
+    size?: Parameters<Traits["resample"]["size"]["validate"]>[0];
     /**
      * Resample factor items
      * @default `null`
      * @example `10`
      */
-    items: Parameters<Traits["resample"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["resample"]["items"]["validate"]>[0];
     /**
      * Resample factor width
      * @default `null`
      * @example `10`
      */
-    width: Parameters<Traits["resample"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["resample"]["width"]["validate"]>[0];
     /**
      * Resample factor height
      * @default `null`
      * @example `10`
      */
-    height: Parameters<Traits["resample"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["resample"]["height"]["validate"]>[0];
     /**
      * Resample factor depth
      * @default `null`
      * @example `10`
      */
-    depth: Parameters<Traits["resample"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["resample"]["depth"]["validate"]>[0];
 }
 interface GetTraitsReadback {
     type: ReturnType<Traits["readback"]["type"]["validate"]>;
@@ -1569,42 +1570,42 @@ interface SetTraitsReadback {
      * Readback data type (float, unsignedByte)
      * @default `"float"`
      */
-    type: Parameters<Traits["readback"]["type"]["validate"]>[0];
+    type?: Parameters<Traits["readback"]["type"]["validate"]>[0];
     /**
      * Readback consume expression
      * @default `null`
      */
-    expr: Parameters<Traits["readback"]["expr"]["validate"]>[0];
+    expr?: Parameters<Traits["readback"]["expr"]["validate"]>[0];
     /**
      * Readback data buffer (read only)
      * @default `[]`
      */
-    data: Parameters<Traits["readback"]["data"]["validate"]>[0];
+    data?: Parameters<Traits["readback"]["data"]["validate"]>[0];
     /**
      * Readback channels (read only)
      * @default `4`
      */
-    channels: Parameters<Traits["readback"]["channels"]["validate"]>[0];
+    channels?: Parameters<Traits["readback"]["channels"]["validate"]>[0];
     /**
      * Readback items (read only)
      * @default `1`
      */
-    items: Parameters<Traits["readback"]["items"]["validate"]>[0];
+    items?: Parameters<Traits["readback"]["items"]["validate"]>[0];
     /**
      * Readback width (read only)
      * @default `1`
      */
-    width: Parameters<Traits["readback"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["readback"]["width"]["validate"]>[0];
     /**
      * Readback height (read only)
      * @default `1`
      */
-    height: Parameters<Traits["readback"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["readback"]["height"]["validate"]>[0];
     /**
      * Readback depth (read only)
      * @default `1`
      */
-    depth: Parameters<Traits["readback"]["depth"]["validate"]>[0];
+    depth?: Parameters<Traits["readback"]["depth"]["validate"]>[0];
 }
 interface GetTraitsRoot {
     speed: ReturnType<Traits["root"]["speed"]["validate"]>;
@@ -1615,12 +1616,12 @@ interface SetTraitsRoot {
      * Global speed
      * @default `1`
      */
-    speed: Parameters<Traits["root"]["speed"]["validate"]>[0];
+    speed?: Parameters<Traits["root"]["speed"]["validate"]>[0];
     /**
      * Active camera
      * @default `"[camera]"`
      */
-    camera: Parameters<Traits["root"]["camera"]["validate"]>[0];
+    camera?: Parameters<Traits["root"]["camera"]["validate"]>[0];
 }
 interface GetTraitsRtt {
     size: ReturnType<Traits["rtt"]["size"]["validate"]>;
@@ -1632,24 +1633,24 @@ interface SetTraitsRtt {
     /**
      *
      */
-    size: Parameters<Traits["rtt"]["size"]["validate"]>[0];
+    size?: Parameters<Traits["rtt"]["size"]["validate"]>[0];
     /**
      * RTT width
      * @default `null`
      * @example `640`
      */
-    width: Parameters<Traits["rtt"]["width"]["validate"]>[0];
+    width?: Parameters<Traits["rtt"]["width"]["validate"]>[0];
     /**
      * RTT height
      * @default `null`
      * @example `360`
      */
-    height: Parameters<Traits["rtt"]["height"]["validate"]>[0];
+    height?: Parameters<Traits["rtt"]["height"]["validate"]>[0];
     /**
      * RTT history
      * @default `1`
      */
-    history: Parameters<Traits["rtt"]["history"]["validate"]>[0];
+    history?: Parameters<Traits["rtt"]["history"]["validate"]>[0];
 }
 interface GetTraitsCompose {
     alpha: ReturnType<Traits["compose"]["alpha"]["validate"]>;
@@ -1659,7 +1660,7 @@ interface SetTraitsCompose {
      * Compose with alpha transparency
      * @default `false`
      */
-    alpha: Parameters<Traits["compose"]["alpha"]["validate"]>[0];
+    alpha?: Parameters<Traits["compose"]["alpha"]["validate"]>[0];
 }
 interface GetTraitsPresent {
     index: ReturnType<Traits["present"]["index"]["validate"]>;
@@ -1671,17 +1672,17 @@ interface SetTraitsPresent {
      * Present slide number
      * @default `1`
      */
-    index: Parameters<Traits["present"]["index"]["validate"]>[0];
+    index?: Parameters<Traits["present"]["index"]["validate"]>[0];
     /**
      * Apply directional transitions
      * @default `true`
      */
-    directed: Parameters<Traits["present"]["directed"]["validate"]>[0];
+    directed?: Parameters<Traits["present"]["directed"]["validate"]>[0];
     /**
      * Presentation length (computed)
      * @default `0`
      */
-    length: Parameters<Traits["present"]["length"]["validate"]>[0];
+    length?: Parameters<Traits["present"]["length"]["validate"]>[0];
 }
 interface GetTraitsSlide {
     order: ReturnType<Traits["slide"]["order"]["validate"]>;
@@ -1696,34 +1697,34 @@ interface SetTraitsSlide {
      * Slide order
      * @default `0`
      */
-    order: Parameters<Traits["slide"]["order"]["validate"]>[0];
+    order?: Parameters<Traits["slide"]["order"]["validate"]>[0];
     /**
      * Slide steps
      * @default `1`
      */
-    steps: Parameters<Traits["slide"]["steps"]["validate"]>[0];
+    steps?: Parameters<Traits["slide"]["steps"]["validate"]>[0];
     /**
      * Appear early steps
      * @default `0`
      */
-    early: Parameters<Traits["slide"]["early"]["validate"]>[0];
+    early?: Parameters<Traits["slide"]["early"]["validate"]>[0];
     /**
      * Stay late steps
      * @default `0`
      */
-    late: Parameters<Traits["slide"]["late"]["validate"]>[0];
+    late?: Parameters<Traits["slide"]["late"]["validate"]>[0];
     /**
      * Appear from step
      * @default `null`
      * @example `2`
      */
-    from: Parameters<Traits["slide"]["from"]["validate"]>[0];
+    from?: Parameters<Traits["slide"]["from"]["validate"]>[0];
     /**
      * Disappear on step
      * @default `null`
      * @example `4`
      */
-    to: Parameters<Traits["slide"]["to"]["validate"]>[0];
+    to?: Parameters<Traits["slide"]["to"]["validate"]>[0];
 }
 interface GetTraitsTransition {
     stagger: ReturnType<Traits["transition"]["stagger"]["validate"]>;
@@ -1742,51 +1743,51 @@ interface SetTraitsTransition {
      * @default `[0, 0, 0, 0]`
      * @example `[2, 1, 0, 0]`
      */
-    stagger: Parameters<Traits["transition"]["stagger"]["validate"]>[0];
+    stagger?: Parameters<Traits["transition"]["stagger"]["validate"]>[0];
     /**
      * Enter state
      * @default `null`
      * @example `0.5`
      */
-    enter: Parameters<Traits["transition"]["enter"]["validate"]>[0];
+    enter?: Parameters<Traits["transition"]["enter"]["validate"]>[0];
     /**
      * Exit state
      * @default `null`
      * @example `0.5`
      */
-    exit: Parameters<Traits["transition"]["exit"]["validate"]>[0];
+    exit?: Parameters<Traits["transition"]["exit"]["validate"]>[0];
     /**
      * Transition delay
      * @default `0`
      */
-    delay: Parameters<Traits["transition"]["delay"]["validate"]>[0];
+    delay?: Parameters<Traits["transition"]["delay"]["validate"]>[0];
     /**
      * Transition enter delay
      * @default `null`
      * @example `0.3`
      */
-    delayEnter: Parameters<Traits["transition"]["delayEnter"]["validate"]>[0];
+    delayEnter?: Parameters<Traits["transition"]["delayEnter"]["validate"]>[0];
     /**
      * Transition exit delay
      * @default `null`
      * @example `0.3`
      */
-    delayExit: Parameters<Traits["transition"]["delayExit"]["validate"]>[0];
+    delayExit?: Parameters<Traits["transition"]["delayExit"]["validate"]>[0];
     /**
      * Transition duration
      * @default `0.3`
      */
-    duration: Parameters<Traits["transition"]["duration"]["validate"]>[0];
+    duration?: Parameters<Traits["transition"]["duration"]["validate"]>[0];
     /**
      * Transition enter duration
      * @default `0.3`
      */
-    durationEnter: Parameters<Traits["transition"]["durationEnter"]["validate"]>[0];
+    durationEnter?: Parameters<Traits["transition"]["durationEnter"]["validate"]>[0];
     /**
      * Transition exit duration
      * @default `0.3`
      */
-    durationExit: Parameters<Traits["transition"]["durationExit"]["validate"]>[0];
+    durationExit?: Parameters<Traits["transition"]["durationExit"]["validate"]>[0];
 }
 interface GetTraitsMove {
     from: ReturnType<Traits["move"]["from"]["validate"]>;
@@ -1797,12 +1798,12 @@ interface SetTraitsMove {
      * Enter from
      * @default `[0, 0, 0, 0]`
      */
-    from: Parameters<Traits["move"]["from"]["validate"]>[0];
+    from?: Parameters<Traits["move"]["from"]["validate"]>[0];
     /**
      * Exit to
      * @default `[0, 0, 0, 0]`
      */
-    to: Parameters<Traits["move"]["to"]["validate"]>[0];
+    to?: Parameters<Traits["move"]["to"]["validate"]>[0];
 }
 interface GetTraitsSeek {
     seek: ReturnType<Traits["seek"]["seek"]["validate"]>;
@@ -1813,7 +1814,7 @@ interface SetTraitsSeek {
      * @default `null`
      * @example `4`
      */
-    seek: Parameters<Traits["seek"]["seek"]["validate"]>[0];
+    seek?: Parameters<Traits["seek"]["seek"]["validate"]>[0];
 }
 interface GetTraitsTrack {
     target: ReturnType<Traits["track"]["target"]["validate"]>;
@@ -1825,18 +1826,18 @@ interface SetTraitsTrack {
      * Animation target
      * @default `"<"`
      */
-    target: Parameters<Traits["track"]["target"]["validate"]>[0];
+    target?: Parameters<Traits["track"]["target"]["validate"]>[0];
     /**
      * Animation script
      * @default `{}`
      * @example `{ "0": { props: { color: "red" }, expr: { size: function (t) { return Math.sin(t) + 1; }}}, "1": ...}`
      */
-    script: Parameters<Traits["track"]["script"]["validate"]>[0];
+    script?: Parameters<Traits["track"]["script"]["validate"]>[0];
     /**
      * Animation ease (linear, cosine, binary, hold)
      * @default `"cosine"`
      */
-    ease: Parameters<Traits["track"]["ease"]["validate"]>[0];
+    ease?: Parameters<Traits["track"]["ease"]["validate"]>[0];
 }
 interface GetTraitsTrigger {
     trigger: ReturnType<Traits["trigger"]["trigger"]["validate"]>;
@@ -1846,7 +1847,7 @@ interface SetTraitsTrigger {
      * Trigger on step
      * @default `1`
      */
-    trigger: Parameters<Traits["trigger"]["trigger"]["validate"]>[0];
+    trigger?: Parameters<Traits["trigger"]["trigger"]["validate"]>[0];
 }
 interface GetTraitsStep {
     playback: ReturnType<Traits["step"]["playback"]["validate"]>;
@@ -1864,48 +1865,48 @@ interface SetTraitsStep {
      * Playhead ease (linear, cosine, binary, hold)
      * @default `"linear"`
      */
-    playback: Parameters<Traits["step"]["playback"]["validate"]>[0];
+    playback?: Parameters<Traits["step"]["playback"]["validate"]>[0];
     /**
      * Playhead stops
      * @default `null`
      * @example `[0, 1, 3, 5]`
      */
-    stops: Parameters<Traits["step"]["stops"]["validate"]>[0];
+    stops?: Parameters<Traits["step"]["stops"]["validate"]>[0];
     /**
      * Step delay
      * @default `0`
      */
-    delay: Parameters<Traits["step"]["delay"]["validate"]>[0];
+    delay?: Parameters<Traits["step"]["delay"]["validate"]>[0];
     /**
      * Step duration
      * @default `0.3`
      */
-    duration: Parameters<Traits["step"]["duration"]["validate"]>[0];
+    duration?: Parameters<Traits["step"]["duration"]["validate"]>[0];
     /**
      * Step pace
      * @default `0`
      */
-    pace: Parameters<Traits["step"]["pace"]["validate"]>[0];
+    pace?: Parameters<Traits["step"]["pace"]["validate"]>[0];
     /**
      * Step speed
      * @default `1`
      */
-    speed: Parameters<Traits["step"]["speed"]["validate"]>[0];
+    speed?: Parameters<Traits["step"]["speed"]["validate"]>[0];
     /**
      * Step rewind factor
      * @default `2`
      */
-    rewind: Parameters<Traits["step"]["rewind"]["validate"]>[0];
+    rewind?: Parameters<Traits["step"]["rewind"]["validate"]>[0];
     /**
      * Speed up through skips
      * @default `true`
      */
-    skip: Parameters<Traits["step"]["skip"]["validate"]>[0];
+    skip?: Parameters<Traits["step"]["skip"]["validate"]>[0];
     /**
      * Run on real time, not clock time
      * @default `false`
      */
-    realtime: Parameters<Traits["step"]["realtime"]["validate"]>[0];
+    realtime?: Parameters<Traits["step"]["realtime"]["validate"]>[0];
 }
 interface GetTraitsPlay {
     delay: ReturnType<Traits["play"]["delay"]["validate"]>;
@@ -1921,37 +1922,37 @@ interface SetTraitsPlay {
      * Play delay
      * @default `0`
      */
-    delay: Parameters<Traits["play"]["delay"]["validate"]>[0];
+    delay?: Parameters<Traits["play"]["delay"]["validate"]>[0];
     /**
      * Play pace
      * @default `1`
      */
-    pace: Parameters<Traits["play"]["pace"]["validate"]>[0];
+    pace?: Parameters<Traits["play"]["pace"]["validate"]>[0];
     /**
      * Play speed
      * @default `1`
      */
-    speed: Parameters<Traits["play"]["speed"]["validate"]>[0];
+    speed?: Parameters<Traits["play"]["speed"]["validate"]>[0];
     /**
      * Play from
      * @default `0`
      */
-    from: Parameters<Traits["play"]["from"]["validate"]>[0];
+    from?: Parameters<Traits["play"]["from"]["validate"]>[0];
     /**
      * Play until
      * @default `Infinity`
      */
-    to: Parameters<Traits["play"]["to"]["validate"]>[0];
+    to?: Parameters<Traits["play"]["to"]["validate"]>[0];
     /**
      * Run on real time, not clock time
      * @default `false`
      */
-    realtime: Parameters<Traits["play"]["realtime"]["validate"]>[0];
+    realtime?: Parameters<Traits["play"]["realtime"]["validate"]>[0];
     /**
      * Loop
      * @default `false`
      */
-    loop: Parameters<Traits["play"]["loop"]["validate"]>[0];
+    loop?: Parameters<Traits["play"]["loop"]["validate"]>[0];
 }
 interface GetTraitsNow {
     now: ReturnType<Traits["now"]["now"]["validate"]>;
@@ -1965,46 +1966,50 @@ interface SetTraitsNow {
      * @default `null`
      * @example `1444094929.619`
      */
-    now: Parameters<Traits["now"]["now"]["validate"]>[0];
+    now?: Parameters<Traits["now"]["now"]["validate"]>[0];
     /**
      * Seek to time
      * @default `null`
      */
-    seek: Parameters<Traits["now"]["seek"]["validate"]>[0];
+    seek?: Parameters<Traits["now"]["seek"]["validate"]>[0];
     /**
      * Time pace
      * @default `1`
      */
-    pace: Parameters<Traits["now"]["pace"]["validate"]>[0];
+    pace?: Parameters<Traits["now"]["pace"]["validate"]>[0];
     /**
      * Time speed
      * @default `1`
      */
-    speed: Parameters<Traits["now"]["speed"]["validate"]>[0];
+    speed?: Parameters<Traits["now"]["speed"]["validate"]>[0];
 }
 /**
  * Normalized properties for {@link MathboxSelection.area | area}.
  * @category data
  */
 export interface AreaPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsMatrix, GetTraitsTexture, GetTraitsArea {
+    expr: AreaEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.area | area}.
  * @category data
  */
 export interface AreaProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsMatrix, SetTraitsTexture, SetTraitsArea {
+    expr?: AreaEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.array | array}.
  * @category data
  */
 export interface ArrayPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsArray, GetTraitsTexture {
+    expr: ArrayEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.array | array}.
  * @category data
  */
 export interface ArrayProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsArray, SetTraitsTexture {
+    expr?: ArrayEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.axis | axis}.
@@ -2190,25 +2195,25 @@ export interface HtmlProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData
  * Normalized properties for {@link MathboxSelection.inherit | inherit}.
  * @category base
  */
-export interface InheritPropsNormalized extends GetTraitsNode {
-}
+export declare type InheritPropsNormalized = GetTraitsNode;
 /**
  * Properties for {@link MathboxSelection.inherit | inherit}.
  * @category base
  */
-export interface InheritProps extends SetTraitsNode {
-}
+export declare type InheritProps = SetTraitsNode;
 /**
  * Normalized properties for {@link MathboxSelection.interval | interval}.
  * @category data
  */
 export interface IntervalPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsTexture, GetTraitsArray, GetTraitsSpan, GetTraitsInterval, GetTraitsSampler {
+    expr: IntervalEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.interval | interval}.
  * @category data
  */
 export interface IntervalProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsTexture, SetTraitsArray, SetTraitsSpan, SetTraitsInterval, SetTraitsSampler {
+    expr?: IntervalEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.join | join}.
@@ -2287,12 +2292,14 @@ export interface MaskProps extends SetTraitsNode, SetTraitsInclude {
  * @category data
  */
 export interface MatrixPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsTexture, GetTraitsMatrix {
+    expr: MatrixEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.matrix | matrix}.
  * @category data
  */
 export interface MatrixProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsTexture, SetTraitsMatrix {
+    expr?: MatrixEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.memo | memo}.
@@ -2743,23 +2750,27 @@ export interface ViewProps extends SetTraitsNode, SetTraitsObject, SetTraitsView
  * @category data
  */
 export interface VolumePropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsTexture, GetTraitsVoxel, GetTraitsVolume {
+    expr: VolumeEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.volume | volume}.
  * @category data
  */
 export interface VolumeProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsTexture, SetTraitsVoxel, SetTraitsVolume {
+    expr?: VolumeEmitter;
 }
 /**
  * Normalized properties for {@link MathboxSelection.voxel | voxel}.
  * @category data
  */
 export interface VoxelPropsNormalized extends GetTraitsNode, GetTraitsBuffer, GetTraitsData, GetTraitsTexture, GetTraitsVoxel {
+    expr: VoxelEmitter | null;
 }
 /**
  * Properties for {@link MathboxSelection.voxel | voxel}.
  * @category data
  */
 export interface VoxelProps extends SetTraitsNode, SetTraitsBuffer, SetTraitsData, SetTraitsTexture, SetTraitsVoxel {
+    expr?: VoxelEmitter;
 }
 export {};

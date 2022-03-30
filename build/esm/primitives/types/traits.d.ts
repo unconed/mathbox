@@ -164,12 +164,12 @@ export declare const Traits: {
         zOrder: import("./types_typed").Type<import("./types_typed").Optional<number>, number | null>;
     };
     geometry: {
-        points: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
-        colors: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props> | null>;
+        points: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
+        colors: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props> | null>;
     };
     point: {
         size: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
-        sizes: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props> | null>;
+        sizes: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props> | null>;
         shape: any;
         optical: import("./types_typed").Type<import("./types_typed").Optional<boolean>, boolean>;
         fill: import("./types_typed").Type<import("./types_typed").Optional<boolean>, boolean>;
@@ -186,7 +186,7 @@ export declare const Traits: {
     mesh: {
         fill: import("./types_typed").Type<import("./types_typed").Optional<boolean>, boolean>;
         shaded: import("./types_typed").Type<import("./types_typed").Optional<boolean>, boolean>;
-        map: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props> | null>;
+        map: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props> | null>;
         lineBias: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
     };
     strip: {
@@ -225,7 +225,7 @@ export declare const Traits: {
         sdf: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
     };
     label: {
-        text: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
+        text: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
         size: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
         outline: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
         expand: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
@@ -236,8 +236,8 @@ export declare const Traits: {
         zIndex: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
     };
     dom: {
-        points: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
-        html: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
+        points: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
+        html: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
         size: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
         outline: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
         zoom: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
@@ -251,16 +251,16 @@ export declare const Traits: {
         type: any;
     };
     shader: {
-        sources: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props> | null>;
+        sources: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props> | null>;
         language: import("./types_typed").Type<import("./types_typed").Optional<string>, string>;
         code: import("./types_typed").Type<import("./types_typed").Optional<string>, string>;
         uniforms: import("./types_typed").Type<unknown, unknown>;
     };
     include: {
-        shader: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
+        shader: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
     };
     operator: {
-        source: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
+        source: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
     };
     spread: {
         unit: any;
@@ -346,10 +346,10 @@ export declare const Traits: {
     };
     root: {
         speed: import("./types_typed").Type<import("./types_typed").Optional<number>, number>;
-        camera: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
+        camera: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
     };
     inherit: {
-        source: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
+        source: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
         traits: import("./types_typed").Type<import("./types_typed").Optional<string>[], string[]>;
     };
     rtt: {
@@ -393,7 +393,7 @@ export declare const Traits: {
         seek: import("./types_typed").Type<import("./types_typed").Optional<number>, number | null>;
     };
     track: {
-        target: import("./types_typed").Type<import("./types_typed").Optional<string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>, string | import("../../types").MathboxNode<keyof import("../../types").Props> | import("../../types").MathboxSelection<keyof import("../../types").Props>>;
+        target: import("./types_typed").Type<import("./types_typed").Optional<string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>, string | import("../..").MathboxNode<keyof import("../..").Props> | import("../..").MathboxSelection<keyof import("../..").Props>>;
         script: any;
         ease: any;
     };

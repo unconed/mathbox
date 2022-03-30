@@ -151,6 +151,10 @@ export declare type NodeType = keyof Props;
 export interface MathboxNode<T extends NodeType = NodeType> {
     type: string;
     props: PropsNoramlized[T];
+    /**
+     * @hidden @internal
+     */
+    controller: any;
 }
 /**
  * @typeParam Type The type(s) of MathBox nodes in this selection.

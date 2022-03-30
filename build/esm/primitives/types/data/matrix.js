@@ -131,14 +131,14 @@ export class Matrix extends Buffer {
             return;
         }
         if (changed["matrix.width"]) {
-            const { width } = this.props;
-            if (width > this.space.width) {
+            const { width, bufferWidth } = this.props;
+            if (width > bufferWidth) {
                 return this.rebuild();
             }
         }
         if (changed["matrix.height"]) {
-            const { height } = this.props;
-            if (height > this.space.height) {
+            const { height, bufferHeight } = this.props;
+            if (height > bufferHeight) {
                 return this.rebuild();
             }
         }
