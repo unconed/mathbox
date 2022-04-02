@@ -27,7 +27,7 @@
     "typedoc": "npx typedoc --options ./config/typedoc.json",
     "build:bundle": "webpack --config config/webpack.config.js",
     "build:module": "tsc",
-    "build": "concurrently 'npm run build:bundle' 'npm run build:module' 'gulp css'",
+    "build": "rm -rf build && concurrently 'npm run build:bundle' 'npm run build:module' 'gulp css'",
     "docs": "npx webpack --config config/webpack.config.docs.js && node build_docs/generate.js > docs/primitives.md",
     "format": "prettier src",
     "lint": "eslint \"src/**/*.{ts,js}\" --max-warnings=0",

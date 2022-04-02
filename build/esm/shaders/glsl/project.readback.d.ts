@@ -1,2 +1,0 @@
-declare var _default: "// This is three.js' global uniform, missing from fragment shaders.\nuniform mat4 projectionMatrix;\n\nvec4 readbackPosition(vec3 position, vec4 stpq) {\n  vec4 pos = projectionMatrix * vec4(position, 1.0);\n  vec3 final = pos.xyz / pos.w;\n  if (final.z < -1.0) {\n    return vec4(0.0, 0.0, 0.0, -1.0);\n  }\n  else {\n    return vec4(final, -position.z);\n  }\n}\n";
-export default _default;
