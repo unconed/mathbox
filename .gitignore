@@ -9,3 +9,5 @@ build_testing/
 build_docs/
 # for now out least
 typedoc/
+*.egg-info
+.ipynb*
