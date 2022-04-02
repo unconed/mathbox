@@ -65987,6 +65987,7 @@ vec4 getAxisPosition(vec4 xyzw, inout vec4 stpq) {
   return axisStep * xyzw.x + axisPosition;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/cartesian4.position.js
 /* harmony default export */ const cartesian4_position = (/* glsl */`uniform vec4 basisScale;
 uniform vec4 basisOffset;
@@ -65997,6 +65998,7 @@ vec4 getCartesian4Position(vec4 position, inout vec4 stpq) {
   return position * basisScale + basisOffset;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/cartesian.position.js
 /* harmony default export */ const cartesian_position = (/* glsl */`uniform mat4 viewMatrix;
 
@@ -66004,6 +66006,7 @@ vec4 getCartesianPosition(vec4 position, inout vec4 stpq) {
   return viewMatrix * vec4(position.xyz, 1.0);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/clamp.position.js
 /* harmony default export */ const clamp_position = (/* glsl */`uniform vec4 clampLimit;
 
@@ -66011,11 +66014,13 @@ vec4 getClampXYZW(vec4 xyzw) {
   return clamp(xyzw, vec4(0.0), clampLimit);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/color.opaque.js
 /* harmony default export */ const color_opaque = (/* glsl */`vec4 opaqueColor(vec4 color) {
   return vec4(color.rgb, 1.0);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/face.position.js
 /* harmony default export */ const face_position = (/* glsl */`uniform vec4 geometryClip;
 attribute vec4 position4;
@@ -66028,6 +66033,7 @@ vec3 getFacePosition() {
   return getPosition(p, 1.0);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/face.position.normal.js
 /* harmony default export */ const face_position_normal = (/* glsl */`attribute vec4 position4;
 
@@ -66060,6 +66066,7 @@ vec3 getFacePositionNormal() {
   return center;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/float.encode.js
 /* harmony default export */ const float_encode = (/* glsl */`/*
 Float encoding technique by
@@ -66105,6 +66112,7 @@ vec4 encode_float(float val) {
   return vec4(byte4, byte3, byte2, byte1); 
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/float.index.pack.js
 /* harmony default export */ const float_index_pack = (/* glsl */`uniform vec4 indexModulus;
 
@@ -66120,6 +66128,7 @@ vec4 floatPackIndex(vec4 xyzw) {
   float sum = sum2.x + sum2.y;
   return vec4(value.xyz, sum);
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/float.stretch.js
 /* harmony default export */ const float_stretch = (/* glsl */`vec4 getSample(vec4 xyzw);
 
@@ -66128,6 +66137,7 @@ float floatStretch(vec4 xyzw, float channelIndex) {
   vec2 xy = channelIndex > 1.5 ? sample.zw : sample.xy;
   return mod(channelIndex, 2.0) > .5 ? xy.y : xy.x;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/fragment.clip.dashed.js
 /* harmony default export */ const fragment_clip_dashed = (/* glsl */`varying float vClipStrokeWidth;
 varying float vClipStrokeIndex;
@@ -66152,6 +66162,7 @@ void clipStrokeFragment() {
   }
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/fragment.clip.dotted.js
 /* harmony default export */ const fragment_clip_dotted = (/* glsl */`varying float vClipStrokeWidth;
 varying float vClipStrokeIndex;
@@ -66176,6 +66187,7 @@ void clipStrokeFragment() {
   }
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/fragment.clip.ends.js
 /* harmony default export */ const fragment_clip_ends = (/* glsl */`varying vec2 vClipEnds;
 
@@ -66183,30 +66195,36 @@ void clipEndsFragment() {
   if (vClipEnds.x < 0.0 || vClipEnds.y < 0.0) discard;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/fragment.clip.proximity.js
 /* harmony default export */ const fragment_clip_proximity = (/* glsl */`varying float vClipProximity;
 
 void clipProximityFragment() {
   if (vClipProximity >= 0.5) discard;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/fragment.color.js
 /* harmony default export */ const fragment_color = (/* glsl */`void setFragmentColor(vec4 color) {
   gl_FragColor = color;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/fragment.map.rgba.js
 /* harmony default export */ const fragment_map_rgba = (/* glsl */`vec4 fragmentRGBA(vec4 rgba, vec4 stpq) {
   return rgba;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/fragment.solid.js
 /* harmony default export */ const fragment_solid = (/* glsl */`void setFragmentColor(vec4 color) {
   if (color.a < 1.0) discard;
   gl_FragColor = color;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/fragment.transparent.js
 /* harmony default export */ const fragment_transparent = (/* glsl */`void setFragmentColor(vec4 color) {
   if (color.a >= 1.0) discard;
   gl_FragColor = color;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/grid.position.js
 /* harmony default export */ const grid_position = (/* glsl */`uniform vec4 gridPosition;
 uniform vec4 gridStep;
@@ -66220,6 +66238,7 @@ vec4 getGridPosition(vec4 xyzw) {
   return onAxis + offAxis;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/grow.position.js
 /* harmony default export */ const grow_position = (/* glsl */`uniform float growScale;
 uniform vec4  growMask;
@@ -66235,6 +66254,7 @@ vec4 getGrowSample(vec4 xyzw) {
 
   return mix(center, position, growScale);
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/join.position.js
 /* harmony default export */ const join_position = (/* glsl */`uniform float joinStride;
 uniform float joinStrideInv;
@@ -66254,6 +66274,7 @@ vec4 getJoinXYZW(vec4 xyzw) {
   return injectIndices(fraction * joinStride, integer) + getRest(xyzw);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/label.alpha.js
 /* harmony default export */ const label_alpha = (/* glsl */`varying float vPixelSize;
 
@@ -66265,11 +66286,13 @@ vec4 getLabelAlphaColor(vec4 color, vec4 sample) {
   return vec4(color.xyz, a);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/label.map.js
 /* harmony default export */ const label_map = (/* glsl */`vec2 mapUV(vec4 uvwo, vec4 stpq) {
   return uvwo.xy;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/label.outline.js
 /* harmony default export */ const label_outline = (/* glsl */`uniform float outlineExpand;
 uniform float outlineStep;
@@ -66299,6 +66322,7 @@ vec4 getLabelOutlineColor(vec4 color, vec4 sample) {
   return vec4(blend, alpha.y * color.a);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/layer.position.js
 /* harmony default export */ const layer_position = (/* glsl */`uniform vec4 layerScale;
 uniform vec4 layerBias;
@@ -66307,6 +66331,7 @@ vec4 layerPosition(vec4 position, inout vec4 stpq) {
   return layerScale * position + layerBias;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/lerp.depth.js
 /* harmony default export */ const lerp_depth = (/* glsl */`// External
 vec4 sampleData(vec4 xyzw);
@@ -66325,6 +66350,7 @@ vec4 lerpDepth(vec4 xyzw) {
   return mix(a, b, f);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/lerp.height.js
 /* harmony default export */ const lerp_height = (/* glsl */`// External
 vec4 sampleData(vec4 xyzw);
@@ -66343,6 +66369,7 @@ vec4 lerpHeight(vec4 xyzw) {
   return mix(a, b, f);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/lerp.items.js
 /* harmony default export */ const lerp_items = (/* glsl */`// External
 vec4 sampleData(vec4 xyzw);
@@ -66361,6 +66388,7 @@ vec4 lerpItems(vec4 xyzw) {
   return mix(a, b, f);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/lerp.width.js
 /* harmony default export */ const lerp_width = (/* glsl */`// External
 vec4 sampleData(vec4 xyzw);
@@ -66379,6 +66407,7 @@ vec4 lerpWidth(vec4 xyzw) {
   return mix(a, b, f);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/line.position.js
 /* harmony default export */ const line_position = (/* glsl */`// Units and calibration
 uniform float worldUnit;
@@ -66733,6 +66762,7 @@ vec3 getLinePosition() {
   return pos;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/map.2d.data.js
 /* harmony default export */ const map_2d_data = (/* glsl */`uniform vec2 dataResolution;
 uniform vec2 dataPointer;
@@ -66741,6 +66771,7 @@ vec2 map2DData(vec2 xy) {
   return (xy + dataPointer) * dataResolution;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/map.2d.data.wrap.js
 /* harmony default export */ const map_2d_data_wrap = (/* glsl */`uniform vec2 dataResolution;
 uniform vec2 dataPointer;
@@ -66749,6 +66780,7 @@ vec2 map2DData(vec2 xy) {
   return fract((xy + dataPointer) * dataResolution);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/map.xyzw.2dv.js
 /* harmony default export */ const map_xyzw_2dv = (/* glsl */`void mapXyzw2DV(vec4 xyzw, out vec2 xy, out float z) {
   xy = xyzw.xy;
@@ -66756,12 +66788,14 @@ vec2 map2DData(vec2 xy) {
 }
 
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/map.xyzw.align.js
 /* harmony default export */ const map_xyzw_align = (/* glsl */`vec4 alignXYZW(vec4 xyzw) {
   return floor(xyzw + .5);
 }
 
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/map.xyzw.texture.js
 /* harmony default export */ const map_xyzw_texture = (/* glsl */`uniform float textureItems;
 uniform float textureHeight;
@@ -66777,6 +66811,7 @@ vec2 mapXyzwTexture(vec4 xyzw) {
 }
 
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.fragment.color.js
 /* harmony default export */ const mesh_fragment_color = (/* glsl */`varying vec4 vColor;
 
@@ -66784,6 +66819,7 @@ vec4 getColor() {
   return vColor;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.fragment.map.js
 /* harmony default export */ const mesh_fragment_map = (/* glsl */`#ifdef POSITION_STPQ
 varying vec4 vSTPQ;
@@ -66826,6 +66862,7 @@ vec4 getMapColor() {
   return getSample(uvwo, stpq);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.fragment.mask.js
 /* harmony default export */ const mesh_fragment_mask = (/* glsl */`varying float vMask;
 
@@ -66839,6 +66876,7 @@ vec4 maskColor() {
   return vec4(vec3(1.0), ease(vMask));
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.fragment.material.js
 /* harmony default export */ const mesh_fragment_material = (/* glsl */`#ifdef POSITION_STPQ
 varying vec4 vSTPQ;
@@ -66881,6 +66919,7 @@ vec4 getMaterialColor(vec4 rgba) {
   return getSample(rgba, stpq);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.fragment.shaded.js
 /* harmony default export */ const mesh_fragment_shaded = (/* glsl */`varying vec3 vNormal;
 varying vec3 vLight;
@@ -66911,23 +66950,28 @@ vec4 getShadedColor(vec4 rgba) {
 	return vec4(color * (diffuse * .9 + .05) + .25 * color2 * specular, rgba.a);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.fragment.texture.js
 /* harmony default export */ const mesh_fragment_texture = (/* glsl */``);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.gamma.in.js
 /* harmony default export */ const mesh_gamma_in = (/* glsl */`vec4 getGammaInColor(vec4 rgba) {
   return vec4(rgba.rgb * rgba.rgb, rgba.a);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.gamma.out.js
 /* harmony default export */ const mesh_gamma_out = (/* glsl */`vec4 getGammaOutColor(vec4 rgba) {
   return vec4(sqrt(rgba.rgb), rgba.a);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.map.uvwo.js
 /* harmony default export */ const mesh_map_uvwo = (/* glsl */`vec4 mapUVWO(vec4 uvwo, vec4 stpq) {
   return uvwo;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.position.js
 /* harmony default export */ const mesh_position = (/* glsl */`uniform vec4 geometryClip;
 attribute vec4 position4;
@@ -66940,6 +66984,7 @@ vec3 getMeshPosition() {
   return getPosition(p, 1.0);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.vertex.color.js
 /* harmony default export */ const mesh_vertex_color = (/* glsl */`attribute vec4 position4;
 uniform vec4 geometryClip;
@@ -66953,6 +66998,7 @@ void vertexColor() {
   vColor = getSample(p);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.vertex.mask.js
 /* harmony default export */ const mesh_vertex_mask = (/* glsl */`attribute vec4 position4;
 uniform vec4 geometryResolution;
@@ -66967,6 +67013,7 @@ void maskLevel() {
   vMask = getSample(p * geometryResolution);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/mesh.vertex.position.js
 /* harmony default export */ const mesh_vertex_position = (/* glsl */`uniform vec4 geometryResolution;
 
@@ -67015,6 +67062,7 @@ vec3 getMeshPosition(vec4 xyzw, float canonical) {
   return xyz;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/move.position.js
 /* harmony default export */ const move_position = (/* glsl */`uniform float transitionEnter;
 uniform float transitionExit;
@@ -67048,10 +67096,12 @@ vec4 getTransitionPosition(vec4 xyzw, inout vec4 stpq) {
 
   return xyzw + a1 * moveFrom + a2 * moveTo;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/object.mask.default.js
 /* harmony default export */ const object_mask_default = (/* glsl */`vec4 getMask(vec4 xyzw) {
   return vec4(1.0);
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.alpha.circle.js
 /* harmony default export */ const point_alpha_circle = (/* glsl */`varying float vPixelSize;
 
@@ -67061,6 +67111,7 @@ float getDiscAlpha(float mask) {
   //  return vPixelSize * 2.0 * (1.0 - sqrt(mask));
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.alpha.circle.hollow.js
 /* harmony default export */ const point_alpha_circle_hollow = (/* glsl */`varying float vPixelSize;
 
@@ -67068,6 +67119,7 @@ float getDiscHollowAlpha(float mask) {
   return vPixelSize * (0.5 - 2.0 * abs(sqrt(mask) - .75));
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.alpha.generic.js
 /* harmony default export */ const point_alpha_generic = (/* glsl */`varying float vPixelSize;
 
@@ -67075,6 +67127,7 @@ float getGenericAlpha(float mask) {
   return vPixelSize * 2.0 * (1.0 - mask);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.alpha.generic.hollow.js
 /* harmony default export */ const point_alpha_generic_hollow = (/* glsl */`varying float vPixelSize;
 
@@ -67082,6 +67135,7 @@ float getGenericHollowAlpha(float mask) {
   return vPixelSize * (0.5 - 2.0 * abs(mask - .75));
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.edge.js
 /* harmony default export */ const point_edge = (/* glsl */`varying vec2 vSprite;
 
@@ -67100,6 +67154,7 @@ void setFragmentColorFill(vec4 color) {
   gl_FragColor = vec4(color.rgb, alpha * color.a);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.fill.js
 /* harmony default export */ const point_fill = (/* glsl */`varying vec2 vSprite;
 
@@ -67119,6 +67174,7 @@ void setFragmentColorFill(vec4 color) {
 }
 
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.mask.circle.js
 /* harmony default export */ const point_mask_circle = (/* glsl */`varying float vPixelSize;
 
@@ -67126,6 +67182,7 @@ float getCircleMask(vec2 uv) {
   return dot(uv, uv);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.mask.diamond.js
 /* harmony default export */ const point_mask_diamond = (/* glsl */`varying float vPixelSize;
 
@@ -67134,6 +67191,7 @@ float getDiamondMask(vec2 uv) {
   return a.x + a.y;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.mask.down.js
 /* harmony default export */ const point_mask_down = (/* glsl */`varying float vPixelSize;
 
@@ -67142,6 +67200,7 @@ float getTriangleDownMask(vec2 uv) {
   return max(uv.y, abs(uv.x) * .866 - uv.y * .5 + .6);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.mask.left.js
 /* harmony default export */ const point_mask_left = (/* glsl */`varying float vPixelSize;
 
@@ -67150,6 +67209,7 @@ float getTriangleLeftMask(vec2 uv) {
   return max(uv.x, abs(uv.y) * .866 - uv.x * .5 + .6);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.mask.right.js
 /* harmony default export */ const point_mask_right = (/* glsl */`varying float vPixelSize;
 
@@ -67158,6 +67218,7 @@ float getTriangleRightMask(vec2 uv) {
   return max(-uv.x, abs(uv.y) * .866 + uv.x * .5 + .6);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.mask.square.js
 /* harmony default export */ const point_mask_square = (/* glsl */`varying float vPixelSize;
 
@@ -67166,6 +67227,7 @@ float getSquareMask(vec2 uv) {
   return max(a.x, a.y);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.mask.up.js
 /* harmony default export */ const point_mask_up = (/* glsl */`varying float vPixelSize;
 
@@ -67174,6 +67236,7 @@ float getTriangleUpMask(vec2 uv) {
   return max(-uv.y, abs(uv.x) * .866 + uv.y * .5 + .6);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.position.js
 /* harmony default export */ const point_position = (/* glsl */`uniform float pointDepth;
 
@@ -67223,12 +67286,14 @@ vec3 getPointPosition() {
   return center + vec3(sprite * depthSize * renderScaleInv * padFactor, 0.0);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.size.uniform.js
 /* harmony default export */ const point_size_uniform = (/* glsl */`uniform float pointSize;
 
 float getPointSize(vec4 xyzw) {
   return pointSize;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/point.size.varying.js
 /* harmony default export */ const point_size_varying = (/* glsl */`uniform float pointSize;
 
@@ -67237,6 +67302,7 @@ vec4 getSample(vec4 xyzw);
 float getPointSize(vec4 xyzw) {
   return pointSize * getSample(xyzw).x;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/polar.position.js
 /* harmony default export */ const polar_position = (/* glsl */`uniform float polarBend;
 uniform float polarFocus;
@@ -67277,6 +67343,7 @@ vec4 getPolarPosition(vec4 position, inout vec4 stpq) {
     return viewMatrix * vec4(position.xyz, 1.0);
   }
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/project.position.js
 /* harmony default export */ const project_position = (/* glsl */`uniform float styleZBias;
 uniform float styleZIndex;
@@ -67296,6 +67363,7 @@ void setPosition(vec3 position) {
   
   gl_Position = pos;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/project.readback.js
 /* harmony default export */ const project_readback = (/* glsl */`// This is three.js' global uniform, missing from fragment shaders.
 uniform mat4 projectionMatrix;
@@ -67311,6 +67379,7 @@ vec4 readbackPosition(vec3 position, vec4 stpq) {
   }
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/raw.position.scale.js
 /* harmony default export */ const raw_position_scale = (/* glsl */`uniform vec4 geometryScale;
 attribute vec4 position4;
@@ -67319,6 +67388,7 @@ vec4 getRawPositionScale() {
   return geometryScale * position4;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/repeat.position.js
 /* harmony default export */ const repeat_position = (/* glsl */`uniform vec4 repeatModulus;
 
@@ -67326,18 +67396,21 @@ vec4 getRepeatXYZW(vec4 xyzw) {
   return mod(xyzw + .5, repeatModulus) - .5;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/resample.padding.js
 /* harmony default export */ const resample_padding = (/* glsl */`uniform vec4 resampleBias;
 
 vec4 resamplePadding(vec4 xyzw) {
   return xyzw + resampleBias;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/resample.relative.js
 /* harmony default export */ const resample_relative = (/* glsl */`uniform vec4 resampleFactor;
 
 vec4 resampleRelative(vec4 xyzw) {
   return xyzw * resampleFactor;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/reveal.mask.js
 /* harmony default export */ const reveal_mask = (/* glsl */`uniform float transitionEnter;
 uniform float transitionExit;
@@ -67363,11 +67436,13 @@ float getTransitionSDFMask(vec4 stpq) {
   if (enter == 1.0) return d.y;
   return min(d.x, d.y);
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/root.position.js
 /* harmony default export */ const root_position = (/* glsl */`vec3 getRootPosition(vec4 position, in vec4 stpqIn, out vec4 stpqOut) {
   stpqOut = stpqIn; // avoid inout confusion
   return position.xyz;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/sample.2d.js
 /* harmony default export */ const sample_2d = (/* glsl */`uniform sampler2D dataTexture;
 
@@ -67375,6 +67450,7 @@ vec4 sample2D(vec2 uv) {
   return texture2D(dataTexture, uv);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/scale.position.js
 /* harmony default export */ const scale_position = (/* glsl */`uniform vec4 scaleAxis;
 uniform vec4 scaleOffset;
@@ -67385,6 +67461,7 @@ vec4 getScalePosition(vec4 xyzw) {
   return scaleAxis * sampleData(xyzw.x).x + scaleOffset;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/screen.map.stpq.js
 /* harmony default export */ const screen_map_stpq = (/* glsl */`uniform vec4 remapSTPQScale;
 
@@ -67393,6 +67470,7 @@ vec4 screenMapSTPQ(vec4 xyzw, out vec4 stpq) {
   return xyzw;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/screen.map.xy.js
 /* harmony default export */ const screen_map_xy = (/* glsl */`uniform vec2 remapUVScale;
 
@@ -67400,6 +67478,7 @@ vec4 screenMapXY(vec4 uvwo, vec4 stpq) {
   return vec4(floor(remapUVScale * uvwo.xy), 0.0, 0.0);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/screen.map.xyzw.js
 /* harmony default export */ const screen_map_xyzw = (/* glsl */`uniform vec2 remapUVScale;
 uniform vec2 remapModulus;
@@ -67414,16 +67493,19 @@ vec4 screenMapXYZW(vec4 uvwo, vec4 stpq) {
   return vec4(ixy.x, zw.y, ixy.y, zw.x);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/screen.pass.uv.js
 /* harmony default export */ const screen_pass_uv = (/* glsl */`vec2 screenPassUV(vec4 uvwo, vec4 stpq) {
   return uvwo.xy;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/screen.position.js
 /* harmony default export */ const screen_position = (/* glsl */`void setScreenPosition(vec4 position) {
   gl_Position = vec4(position.xy * 2.0 - 1.0, 0.5, 1.0);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/slice.position.js
 /* harmony default export */ const slice_position = (/* glsl */`uniform vec4 sliceOffset;
 
@@ -67431,6 +67513,7 @@ vec4 getSliceOffset(vec4 xyzw) {
   return xyzw + sliceOffset;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/spherical.position.js
 /* harmony default export */ const spherical_position = (/* glsl */`uniform float sphericalBend;
 uniform float sphericalFocus;
@@ -67458,6 +67541,7 @@ vec4 getSphericalPosition(vec4 position, inout vec4 stpq) {
     return viewMatrix * vec4(position.xyz, 1.0);
   }
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/split.position.js
 /* harmony default export */ const split_position = (/* glsl */`uniform float splitStride;
 
@@ -67471,6 +67555,7 @@ vec4 getSplitXYZW(vec4 xyzw) {
   return injectIndex(offset) + getRest(xyzw);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/spread.position.js
 /* harmony default export */ const spread_position = (/* glsl */`uniform vec4 spreadOffset;
 uniform mat4 spreadMatrix;
@@ -67483,6 +67568,7 @@ vec4 getSpreadSample(vec4 xyzw) {
   return sample + spreadMatrix * (spreadOffset + xyzw);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/sprite.fragment.js
 /* harmony default export */ const sprite_fragment = (/* glsl */`varying vec2 vSprite;
 
@@ -67491,6 +67577,7 @@ vec4 getSample(vec2 xy);
 vec4 getSpriteColor() {
   return getSample(vSprite);
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/sprite.position.js
 /* harmony default export */ const sprite_position = (/* glsl */`uniform vec2 spriteOffset;
 uniform float spriteScale;
@@ -67566,6 +67653,7 @@ vec3 getSpritePosition() {
 
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/stereographic4.position.js
 /* harmony default export */ const stereographic4_position = (/* glsl */`uniform float stereoBend;
 uniform vec4 basisScale;
@@ -67593,6 +67681,7 @@ vec4 getStereographic4Position(vec4 position, inout vec4 stpq) {
   return vec4(xyz, pos4.w * view4D.y + view4D.x);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/stereographic.position.js
 /* harmony default export */ const stereographic_position = (/* glsl */`uniform float stereoBend;
 
@@ -67614,6 +67703,7 @@ vec4 getStereoPosition(vec4 position, inout vec4 stpq) {
     return viewMatrix * vec4(position.xyz, 1.0);
   }
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/stpq.sample.2d.js
 /* harmony default export */ const stpq_sample_2d = (/* glsl */`varying vec2 vST;
 
@@ -67623,6 +67713,7 @@ vec4 getSTSample() {
   return getSample(vST);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/stpq.xyzw.2d.js
 /* harmony default export */ const stpq_xyzw_2d = (/* glsl */`varying vec2 vUV;
 
@@ -67630,6 +67721,7 @@ void setRawUV(vec4 xyzw) {
   vUV = xyzw.xy;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/strip.position.normal.js
 /* harmony default export */ const strip_position_normal = (/* glsl */`uniform vec4 geometryClip;
 attribute vec4 position4;
@@ -67667,6 +67759,7 @@ vec3 getStripPositionNormal() {
   return center;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/style.color.js
 /* harmony default export */ const style_color = (/* glsl */`uniform vec3 styleColor;
 uniform float styleOpacity;
@@ -67675,6 +67768,7 @@ vec4 getStyleColor() {
   return vec4(styleColor, styleOpacity);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/subdivide.depth.js
 /* harmony default export */ const subdivide_depth = (/* glsl */`uniform float subdivideBevel;
 
@@ -67692,6 +67786,7 @@ vec4 subdivideDepth(vec4 xyzw) {
   return sampleData(vec4(xyzw.xy, i + g, xyzw.w));
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/subdivide.depth.lerp.js
 /* harmony default export */ const subdivide_depth_lerp = (/* glsl */`uniform float subdivideBevel;
 
@@ -67715,6 +67810,7 @@ vec4 subdivideDepthLerp(vec4 xyzw) {
   return mix(a, b, g);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/subdivide.height.js
 /* harmony default export */ const subdivide_height = (/* glsl */`uniform float subdivideBevel;
 
@@ -67732,6 +67828,7 @@ vec4 subdivideHeight(vec4 xyzw) {
   return sampleData(vec4(xyzw.x, i + g, xyzw.zw));
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/subdivide.height.lerp.js
 /* harmony default export */ const subdivide_height_lerp = (/* glsl */`uniform float subdivideBevel;
 
@@ -67755,6 +67852,7 @@ vec4 subdivideHeightLerp(vec4 xyzw) {
   return mix(a, b, g);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/subdivide.items.js
 /* harmony default export */ const subdivide_items = (/* glsl */`uniform float subdivideBevel;
 
@@ -67772,6 +67870,7 @@ vec4 subdivideItems(vec4 xyzw) {
   return sampleData(vec4(xyzw.xyz, i + g));
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/subdivide.items.lerp.js
 /* harmony default export */ const subdivide_items_lerp = (/* glsl */`uniform float subdivideBevel;
 
@@ -67795,6 +67894,7 @@ vec4 subdivideItemsLerp(vec4 xyzw) {
   return mix(a, b, g);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/subdivide.width.js
 /* harmony default export */ const subdivide_width = (/* glsl */`uniform float subdivideBevel;
 
@@ -67812,6 +67912,7 @@ vec4 subdivideWidth(vec4 xyzw) {
   return sampleData(vec4(i + g, xyzw.yzw));
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/subdivide.width.lerp.js
 /* harmony default export */ const subdivide_width_lerp = (/* glsl */`uniform float subdivideBevel;
 
@@ -67835,6 +67936,7 @@ vec4 subdivideWidthLerp(vec4 xyzw) {
   return mix(a, b, g);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/surface.mask.hollow.js
 /* harmony default export */ const surface_mask_hollow = (/* glsl */`attribute vec4 position4;
 
@@ -67844,6 +67946,7 @@ float getSurfaceHollowMask(vec4 xyzw) {
   float df3 = min(df2.x, df2.y);
   return df3;
 }`);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/surface.position.js
 /* harmony default export */ const surface_position = (/* glsl */`uniform vec4 geometryClip;
 uniform vec4 geometryResolution;
@@ -67870,6 +67973,7 @@ vec3 getSurfacePosition() {
   return xyz;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/surface.position.normal.js
 /* harmony default export */ const surface_position_normal = (/* glsl */`uniform vec4 mapSize;
 uniform vec4 geometryResolution;
@@ -67936,6 +68040,7 @@ vec3 getSurfacePositionNormal() {
   return center;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/ticks.position.js
 /* harmony default export */ const ticks_position = (/* glsl */`uniform float worldUnit;
 uniform float focusDepth;
@@ -67982,6 +68087,7 @@ vec3 getTickPosition(vec4 xyzw, in vec4 stpqIn, out vec4 stpqOut) {
   return mid + side * line * tickSize * worldUnit * focusDepth;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/transform3.position.js
 /* harmony default export */ const transform3_position = (/* glsl */`uniform mat4 transformMatrix;
 
@@ -67989,6 +68095,7 @@ vec4 transformPosition(vec4 position, inout vec4 stpq) {
   return transformMatrix * vec4(position.xyz, 1.0);
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/transform4.position.js
 /* harmony default export */ const transform4_position = (/* glsl */`uniform mat4 transformMatrix;
 uniform vec4 transformOffset;
@@ -67997,6 +68104,7 @@ vec4 transformPosition(vec4 position, inout vec4 stpq) {
   return transformMatrix * position + transformOffset;
 }
 `);
+
 ;// CONCATENATED MODULE: ./src/shaders/glsl/view.position.js
 /* harmony default export */ const view_position = (/* glsl */`// Implicit three.js uniform
 // uniform mat4 viewMatrix;
@@ -68005,6 +68113,7 @@ vec4 getViewPosition(vec4 position, inout vec4 stpq) {
   return (viewMatrix * vec4(position.xyz, 1.0));
 }
 `);
+
 ;// CONCATENATED MODULE: ./node_modules/shadergraph/src/graph/graph.js
 /*
  * decaffeinate suggestions:
