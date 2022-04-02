@@ -27,6 +27,7 @@ export {
  * Placeholder for threestrap typings.
  * @hidden
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Threestrap = any;
 
 export type { Alignments, Axes, AxesWithZero, BlendingModes, Optional };
@@ -181,6 +182,7 @@ export interface MathboxNode<T extends NodeType = NodeType> {
   /**
    * @hidden @internal
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   controller: any;
 }
 
@@ -796,6 +798,7 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
   voxel(props?: TT.VoxelProps): MathboxSelection<"voxel">;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type MathBoxOptions = any;
 
 export declare function mathBox(

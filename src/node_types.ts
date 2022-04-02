@@ -800,11 +800,13 @@ interface SetTraitsVoxel {
   bufferDepth?: Parameters<Traits["voxel"]["bufferDepth"]["validate"]>[0];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface GetTraitsResolve {
   expr: ReturnType<Traits["resolve"]["expr"]["validate"]>;
   items: ReturnType<Traits["resolve"]["items"]["validate"]>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface SetTraitsResolve {
   /**
    *
@@ -1932,11 +1934,13 @@ interface SetTraitsRoot {
   camera?: Parameters<Traits["root"]["camera"]["validate"]>[0];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface GetTraitsInherit {
   source: ReturnType<Traits["inherit"]["source"]["validate"]>;
   traits: ReturnType<Traits["inherit"]["traits"]["validate"]>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface SetTraitsInherit {
   /**
    * Inherit from node

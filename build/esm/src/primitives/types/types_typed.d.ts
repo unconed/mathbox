@@ -1,3 +1,11 @@
+/**
+ * Manual typings for types.js.
+ *
+ * Why not name this types.d.ts? Because then it won't be included in the build,
+ * see https://stackoverflow.com/a/56440335/2747370. dts files are good for
+ * specifying types that are only consumed in our source code, but no good for
+ * specifying types that should be included in the output.
+ */
 import type { MathboxNode, MathboxSelection } from "../../types";
 declare type OnInvalid = () => void;
 declare type Validate<In, Out> = (value: In, target: unknown, invalid: OnInvalid) => Out;

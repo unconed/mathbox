@@ -1,0 +1,20 @@
+name: tests
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  linting_and_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run format
+      - run: npm run lint
+      - run: npm run test

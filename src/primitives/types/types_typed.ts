@@ -7,7 +7,6 @@
  * specifying types that are only consumed in our source code, but no good for
  * specifying types that should be included in the output.
  */
-import { number } from "src/util/pretty";
 import type { MathboxNode, MathboxSelection } from "../../types";
 import { Types as TypesUntyped } from "./types";
 
