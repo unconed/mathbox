@@ -32,7 +32,7 @@
     "format": "prettier src",
     "lint": "eslint \"src/**/*.{ts,js}\" --max-warnings=0",
     "autofix": "npm run format -- --write && npm run lint -- --fix",
-    "test": "webpack --config config/webpack.config.testing.js && karma start --single-run",
+    "test": "webpack --config config/webpack.config.testing.js && karma start --single-run --browsers=ChromeHeadless",
     "test:watch": "concurrently 'webpack --watch --config config/webpack.config.testing.js' 'karma start'",
     "prepack": "npm run build"
   },
