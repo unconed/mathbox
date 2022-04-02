@@ -4,3 +4,6 @@
  * NOT included in the compiled code.
  */
 export * from "./types";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export declare const Primitives: any;
