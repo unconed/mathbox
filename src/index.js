@@ -153,7 +153,7 @@ Bootstrap.registerPlugin("mathbox", {
       three.MathBox.init();
 
       return setTimeout(() => {
-        if (this.options.inspect) {
+        if (this.options.inspect && three.MathBox) {
           return this.inspect(three);
         }
       });
