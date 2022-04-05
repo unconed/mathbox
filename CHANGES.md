@@ -1,5 +1,15 @@
 ### MathBox Changelog
 
+#### 2.1.3
+
+Some bugfixes:
+
+- [do not call inspect if mathbox was destroyed](https://github.com/unconed/mathbox/pull/23) Fixes an issue where Mathbox would asynchronously error if instances were destroyed immediately after creation.
+- [Add a Jupyter Notebook example](https://github.com/unconed/mathbox/pull/17) _Note: This currently uses an outdated version of Mathbox._
+- [Fix sampling bug](https://gitgud.io/unconed/mathbox/-/merge_requests/36) Fixes a bug where `width`, `height`, and `depth` could be increased but not decreased
+- Mathbox has been moved from GitGud to Github. Various CI/Development enhancements:
+  - https://github.com/unconed/mathbox/pull/22, https://github.com/unconed/mathbox/pull/20, https://github.com/unconed/mathbox/pull/11
+
 #### 2.1.2
 
 - Typescript Improvements:

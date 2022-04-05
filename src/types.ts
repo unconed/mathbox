@@ -804,3 +804,5 @@ export type MathBoxOptions = any;
 export declare function mathBox(
   opts?: MathBoxOptions
 ): MathboxSelection<"root">;
+
+export declare const version: string;
