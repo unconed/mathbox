@@ -8,7 +8,8 @@
     "moduleResolution": "node",
     "strictNullChecks": true,
     "baseUrl": "./",
-    "declaration": true
+    "declaration": true,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
