@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@types/jasmine": "^3.10.3",
+    "@types/three": "^0.139.0",
     "@typescript-eslint/eslint-plugin": "^5.14.0",
     "@typescript-eslint/parser": "^5.14.0",
     "concurrently": "^7.0.0",
@@ -60,6 +61,7 @@
     "karma-chrome-launcher": "^3.1.0",
     "karma-jasmine": "^4.0.1",
     "prettier": "2.3.1",
+    "three": "^0.139.2",
     "ts-loader": "^9.2.8",
     "typedoc": "^0.22.13",
     "typescript": "^4.6.2",
