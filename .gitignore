@@ -2,8 +2,6 @@
 /bower_modules/*
 .DS_Store
 .tmp/*
-release/mathbox-0.0.x*
-*bower_components
 decaffeinate*
 build/
 build_testing/
