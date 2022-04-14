@@ -1,5 +1,13 @@
 ### MathBox Changelog
 
+### 2.1.4
+
+Some bugfixes:
+
+- [Fix issue with shaded surfaces being too dark](https://github.com/unconed/mathbox/pull/26) Surface shading now looks like it did in 0.0.5. Previously both sides were being shaded as the backside.
+- [Fix issue with gridlines on filled surfaces](https://github.com/unconed/mathbox/pull/27) Gridlines now appear as the surface's color if surface is unfilled, and as slightly darker if surfaces are filled.
+- [Remove the releases directory](https://github.com/unconed/mathbox/pull/28) Old releases, including the zipped bundles, are available at https://github.com/unconed/mathbox/releases
+
 #### 2.1.3
 
 Some bugfixes:
@@ -38,7 +46,7 @@ Some bugfixes:
 
 #### 2.1.1
 
-!16 applies JS-ported patches from the following open merge requests:
+ported patches from the following open merge requests:
 
 - https://gitgud.io/unconed/mathbox/-/merge_requests/11/
 - https://gitgud.io/unconed/mathbox/-/merge_requests/10
