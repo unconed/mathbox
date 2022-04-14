@@ -277,13 +277,13 @@ export class Surface extends Primitive {
       this.wireColor.copy(color);
       if (fill) {
         const c = this.wireScratch;
-        c.setRGB(color.x, color.y, color.z);
+        c.setRGB(color.r, color.g, color.b);
         this._convertLinearToGamma(
           this._convertGammaToLinear(c).multiplyScalar(0.75)
         );
-        this.wireColor.x = c.r;
-        this.wireColor.y = c.g;
-        this.wireColor.z = c.b;
+        this.wireColor.r = c.r;
+        this.wireColor.g = c.g;
+        this.wireColor.b = c.b;
       }
     }
 
