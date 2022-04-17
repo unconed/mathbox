@@ -29,13 +29,25 @@ _Note: this repo uses submodules, clone it with `--recursive` or do a `git submo
 
 ---
 
-## Download
+## Installation
 
-Install via npm:
+- via npm:
 
-```bash
-npm install mathbox
-```
+  ```bash
+  npm install mathbox
+  ```
+
+- or CDN:
+  ```html
+  <script
+    type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+  ></script>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+  />
+  ```
 
 Open the included `/examples` to see more demos.
 
@@ -56,32 +68,28 @@ Join us in the [MathBox Google Group](https://groups.google.com/forum/#!forum/ma
 
 ---
 
-## Usage
-
-Include the bundle:
-
-```html
-<script src="./mathbox-bundle.js"></script>
-```
+## Basic Usage
 
 Construct a MathBox instance using the provided `mathBox()` constructor:
 
 ```javascript
-var mathbox = mathBox(options);
-if (mathbox.fallback) throw "WebGL not supported";
+import { mathBox } from "mathbox";
+import "mathbox/mathbox.css";
 
-var three = mathbox.three;
+const mathbox = mathBox(options);
+
+const three = mathbox.three;
 // three.renderer, three.scene, three.camera
 ```
 
 See [threestrap](https://github.com/unconed/threestrap) for all available `options`. e.g. To spawn inside a specific element, do:
 
-```javascript
-var element = document.querySelector("#my-thing");
-var mathbox = MathBox.mathBox({ element: element });
+```js
+const element = document.querySelector("#my-thing");
+const mathbox = MathBox.mathBox({ element: element });
 ```
 
-On initialization, it returns a MathBox API object, wrapping the MathBox <root>. You can spawn new nodes:
+On initialization, it returns a MathBox API object, wrapping the MathBox `<root/>`. You can spawn new nodes:
 
 ```jsx
 <cartesian
@@ -99,8 +107,8 @@ On initialization, it returns a MathBox API object, wrapping the MathBox <root>.
 
 via
 
-```javascript
-var view = mathbox
+```js
+const view = mathbox
   .cartesian({
     range: [
       [-2, 2],
@@ -124,21 +132,6 @@ mathbox.select("cartesian > axis");
 ```
 
 Use `.print()`, `.inspect()` and `.debug()` to show information about a selection.
-
----
-
-## Development
-
-/src tree:
-
-- model/ - DOM tree + CSS selector handling
-- primitives/ - The DOM node types (the legos)
-- render/ - Smart proxies for Three.js (the glue)
-- shaders/ - GLSL code
-- stage/ - API / controllers
-- util/ - It's inevitable
-
-Uses `gulp` to build itself.
 
 ---
 
