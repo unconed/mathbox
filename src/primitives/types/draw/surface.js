@@ -73,10 +73,11 @@ export class Surface extends Primitive {
 
   make() {
     // Bind to attached data sources
-    let color;
+    let color, normal;
     this._helpers.bind.make([
       { to: "geometry.points", trait: "source" },
       { to: "geometry.colors", trait: "source" },
+      { to: "mesh.normals", trait: "source" },
       { to: "mesh.map", trait: "source" },
     ]);
 
@@ -126,8 +127,15 @@ export class Surface extends Primitive {
     const objects = [];
     this.proximity = proximity;
 
+    // Fetch normals
+    if (this.bind.normals != null) {
+      normal = this._shaders.shader();
+      this.bind.normals.sourceShader(normal);
+      this._helpers.shade.normal(normal);
+    }
+
     // Build color lookup
-    if (this.bind.colors) {
+    if (this.bind.colors != null) {
       color = this._shaders.shader();
       this.bind.colors.sourceShader(color);
     }
@@ -165,6 +173,7 @@ export class Surface extends Primitive {
         layers: items,
         position,
         color,
+        normal,
         zUnits: -zUnits,
         stroke,
         join,

@@ -180,6 +180,7 @@ export class Grid extends Primitive {
       touched["area"] ||
       touched["grid"] ||
       touched["view"] ||
+      touched["origin"] ||
       init
     ) {
       return this.updateRanges();

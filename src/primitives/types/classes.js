@@ -1,7 +1,16 @@
 /* eslint-disable sort-imports */
 import { Group, Inherit, Root, Unit } from "./base";
 import { Camera } from "./camera";
-import { Area, Array_, Interval, Matrix, Scale, Volume, Voxel } from "./data";
+import {
+  Area,
+  Array_,
+  Interval,
+  Latch,
+  Matrix,
+  Scale,
+  Volume,
+  Voxel,
+} from "./data";
 import {
   Axis,
   Face,
@@ -33,6 +42,7 @@ import {
   Readback,
   Repeat,
   Resample,
+  Reverse,
   Slice,
   Split,
   Spread,
@@ -87,6 +97,7 @@ export const Classes = {
   voxel: Voxel,
   volume: Volume,
   scale: Scale,
+  latch: Latch,
 
   html: HTML,
   dom: DOM,
@@ -104,6 +115,7 @@ export const Classes = {
   readback: Readback,
   resample: Resample,
   repeat: Repeat,
+  reverse: Reverse,
   swizzle: Swizzle,
   spread: Spread,
   split: Split,

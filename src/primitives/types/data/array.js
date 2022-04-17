@@ -151,6 +151,8 @@ export class Array_ extends Buffer {
 
     if (changed["array.width"]) {
       const { width, bufferWidth } = this.props;
+      this.spec.width = width;
+
       if (width > bufferWidth) {
         return this.rebuild();
       }
@@ -183,6 +185,7 @@ export class Array_ extends Buffer {
     }
 
     const { data } = this.props;
+    let { width } = this.width;
     const { space, used } = this;
     const l = used.width;
 
@@ -206,7 +209,7 @@ export class Array_ extends Buffer {
         }
         return this.buffer.update();
       } else {
-        let width = this.spec.width || 1;
+        width = this.spec.width || 1;
 
         this.buffer.setActive(width);
 

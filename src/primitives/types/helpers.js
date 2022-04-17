@@ -255,6 +255,11 @@ const helpers = {
       return shader;
     },
 
+    normal(shader) {
+      shader.pipe(UGLSL.swizzleVec4("xyz"));
+      return shader;
+    },
+
     map(shader) {
       if (!shader) {
         return shader;

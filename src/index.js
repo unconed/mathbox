@@ -23,13 +23,12 @@ import * as util from "./util";
 import { Bootstrap } from "threestrap/src/bootstrap.js";
 import { Context as ctx } from "./context.js";
 
-export const version = "2.1.4";
-
 // Just because
 export const π = Math.PI;
 export const τ = π * 2;
 export const e = Math.E;
 export const Context = ctx;
+export const version = ctx.version;
 export const Model = model;
 export const Overlay = overlay;
 export const Primitives = primitives;

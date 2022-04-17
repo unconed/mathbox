@@ -39,7 +39,9 @@ export class Operator extends Source {
   }
 
   init() {
-    return (this.sourceSpec = [{ to: "operator.source", trait: "source" }]);
+    return (this.sourceSpec = [
+      { to: "operator.source", trait: "source", optional: true },
+    ]);
   }
 
   make() {

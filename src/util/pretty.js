@@ -262,9 +262,9 @@ const prettyJSXPair = (function () {
           } else {
             `${v}`;
           }
-          v = v.replace(/^function (\([^)]+\))/, "$1 =>");
+          v = v.replace(/^function (\([^)]*\))/, "$1 =>");
           return (v = v.replace(
-            /^(\([^)]+\)) =>\s*{\s*return\s*([^}]+)\s*;\s*}/,
+            /^(\([^)]*\)) =>\s*{\s*return\s*([^}]+)\s*;\s*}/,
             "$1 => $2"
           ));
         case "number":

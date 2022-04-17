@@ -77,6 +77,7 @@ export class MatrixBuffer extends DataBuffer {
         repeat = callback(emit, i, j);
         if (++i === n - pad) {
           skip(pad);
+          k += pad;
           i = 0;
           j++;
         }

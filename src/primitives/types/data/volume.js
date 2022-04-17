@@ -136,5 +136,13 @@ export class Volume extends Voxel {
     super.unmake();
     return this._helpers.span.unmake();
   }
+
+  change(changed, touched, init) {
+    super.change(changed, touched, init);
+
+    if (touched["x"] || touched["y"] || touched["z"]) {
+      this.updateSpan();
+    }
+  }
 }
 Volume.initClass();

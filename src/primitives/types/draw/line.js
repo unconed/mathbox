@@ -82,7 +82,7 @@ export class Line extends Primitive {
     const { start, end } = this.props;
 
     // Stroke style
-    const { stroke, join, proximity } = this.props;
+    const { stroke, join, proximity, closed } = this.props;
     this.proximity = proximity;
 
     // Fetch geometry dimensions
@@ -123,6 +123,7 @@ export class Line extends Primitive {
       stroke,
       join,
       proximity,
+      closed,
       mask,
       material,
     });
@@ -140,6 +141,7 @@ export class Line extends Primitive {
           layers,
           position,
           color,
+          closed,
           mask,
           material,
         })
@@ -156,6 +158,7 @@ export class Line extends Primitive {
           layers,
           position,
           color,
+          closed,
           mask,
           material,
         })

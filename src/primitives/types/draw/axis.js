@@ -161,7 +161,13 @@ export class Axis extends Primitive {
       return this.rebuild();
     }
 
-    if (touched["interval"] || touched["span"] || touched["view"] || init) {
+    if (
+      touched["interval"] ||
+      touched["span"] ||
+      touched["view"] ||
+      touched["origin"] ||
+      init
+    ) {
       return this.updateRanges();
     }
   }

@@ -78,15 +78,14 @@ export class Memo extends Operator {
   }
 
   unmake() {
-    super.unmake();
+    this._helpers.active.unmake();
 
     if (this.bind.source != null) {
-      this._helpers.active.unmake();
-
       this.memo.unadopt(this.compose);
       this.memo.dispose();
+      this.memo = this.compose = null;
 
-      return (this.memo = this.compose = null);
+      super.unmake();
     }
   }
 

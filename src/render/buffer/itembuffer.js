@@ -63,12 +63,15 @@ export class ItemBuffer extends DataBuffer {
         repeat = callback(emit, i, j, k, l);
         if (++l === p - padW) {
           skip(padW);
+          m += padW;
           l = 0;
           if (++i === n - padX) {
             skip(p * padX);
+            m += p * padX;
             i = 0;
             if (++j === m - padY) {
               skip(p * n * padY);
+              m += p * n * padY;
               j = 0;
               k++;
             }
