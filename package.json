@@ -39,6 +39,7 @@
   "prettier": {},
   "dependencies": {
     "css-select": "^4.2.1",
+    "lodash": "^4.17.21",
     "shadergraph": "^2.1.3",
     "threestrap": "^0.4.1"
   },
