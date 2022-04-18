@@ -9,6 +9,14 @@ vec3 getPosition(vec4 xyzw, float canonical);
 
 vec3 getSurfacePosition() {
   vec4 p = min(geometryClip, position4);
+
+#ifdef SURFACE_CLOSED_X
+  if (p.x == geometryClip.x) p.x = 0.0;
+#endif
+#ifdef SURFACE_CLOSED_Y
+  if (p.y == geometryClip.y) p.y = 0.0;
+#endif
+
   vec3 xyz = getPosition(p, 1.0);
 
   // Overwrite UVs

@@ -107,9 +107,8 @@ export class ArrowGeometry extends ClipGeometry {
       base += sides + 1;
     }
 
-    const step = flip ? 1 : -1;
-    const far = flip ? samples - 1 : 0;
-    const near = anchor + step;
+    const near = flip ? 1 : closed ? samples - 1 : -1;
+    const far = flip && !closed ? samples - 1 : 0;
     const x = anchor;
 
     for (
@@ -172,7 +171,7 @@ export class ArrowGeometry extends ClipGeometry {
 
     this._clipGeometry(samples, strips, ribbons, layers);
 
-    if (samples > this.anchor) {
+    if (samples > 0) {
       const dims = [layers, ribbons, strips];
       const maxs = [this.layers, this.ribbons, this.strips];
       quads = this.sides * this._reduce(dims, maxs);

@@ -34,7 +34,7 @@ class Latch extends Parent {
   }
 
   swap() {
-    let { deep, data } = this.props;
+    const { deep, data } = this.props;
     const dirty = deep ? !deepEq(data, this.data) : data != this.data;
     if (dirty) {
       this.data = deep ? clone(data) : data;

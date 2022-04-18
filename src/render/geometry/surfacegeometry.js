@@ -51,9 +51,6 @@ export class SurfaceGeometry extends ClipGeometry {
     this.surfaces = surfaces = +options.surfaces || 1;
     this.layers = layers = +options.layers || 1;
 
-    const wrapX = width - (closedX ? 1 : 0);
-    const wrapY = height - (closedY ? 1 : 0);
-
     this.segmentsX = segmentsX = Math.max(0, width - 1);
     this.segmentsY = segmentsY = Math.max(0, height - 1);
 
@@ -107,30 +104,6 @@ export class SurfaceGeometry extends ClipGeometry {
       base += width;
     }
 
-    const edgerX = closedX
-      ? () => 0
-      : function (x) {
-          if (x === 0) {
-            return -1;
-          } else if (x === segmentsX) {
-            return 1;
-          } else {
-            return 0;
-          }
-        };
-
-    const edgerY = closedY
-      ? () => 0
-      : function (y) {
-          if (y === 0) {
-            return -1;
-          } else if (y === segmentsY) {
-            return 1;
-          } else {
-            return 0;
-          }
-        };
-
     for (
       let l = 0, end3 = layers, asc3 = 0 <= end3;
       asc3 ? l < end3 : l > end3;
@@ -146,24 +119,12 @@ export class SurfaceGeometry extends ClipGeometry {
           asc5 ? i1 < end5 : i1 > end5;
           asc5 ? i1++ : i1--, y = i1
         ) {
-          if (closedY) {
-            y = y % wrapY;
-          }
-          const edgeY = edgerY(y);
-
           for (
             let j1 = 0, x = j1, end6 = width, asc6 = 0 <= end6;
             asc6 ? j1 < end6 : j1 > end6;
             asc6 ? j1++ : j1--, x = j1
           ) {
-            if (closedX) {
-              x = x % wrapX;
-            }
-            const edgeX = edgerX(x);
-
             position(x, y, z, l);
-
-            surface(edgeX, edgeY);
           }
         }
       }
@@ -175,10 +136,10 @@ export class SurfaceGeometry extends ClipGeometry {
 
   clip(width, height, surfaces, layers) {
     if (width == null) {
-      ({ width } = this);
+      width = this.width - this.closedX;
     }
     if (height == null) {
-      ({ height } = this);
+      height = this.height - this.closedY;
     }
     if (surfaces == null) {
       ({ surfaces } = this);
@@ -186,6 +147,9 @@ export class SurfaceGeometry extends ClipGeometry {
     if (layers == null) {
       ({ layers } = this);
     }
+    width += this.closedX;
+    height += this.closedY;
+
     const segmentsX = Math.max(0, width - 1);
     const segmentsY = Math.max(0, height - 1);
 
