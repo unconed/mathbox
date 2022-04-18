@@ -1,6 +1,6 @@
 import { Parent } from "../base/parent.js";
-import isEqual from "lodash/eqDeep";
 import cloneDeep from "lodash/cloneDeep";
+import isEqual from "lodash/eqDeep";
 
 class Latch extends Parent {
   static initClass() {
