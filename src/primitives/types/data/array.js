@@ -185,7 +185,7 @@ export class Array_ extends Buffer {
     }
 
     const { data } = this.props;
-    let { width } = this.width;
+    let { width } = this.props;
     const { space, used } = this;
     const l = used.width;
 

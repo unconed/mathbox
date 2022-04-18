@@ -6,6 +6,7 @@ export * from "./memo.js";
 export * from "./readback.js";
 export * from "./resample.js";
 export * from "./repeat.js";
+export * from "./reverse.js";
 export * from "./swizzle.js";
 export * from "./spread.js";
 export * from "./split.js";
