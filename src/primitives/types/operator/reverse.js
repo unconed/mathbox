@@ -23,9 +23,8 @@ export class Reverse extends Operator {
     return this.bind.source.sourceShader(shader);
   }
 
-  _resolveScale(key, dims) {
+  _resolveScale(key, _dims) {
     const range = this.props[key];
-    const dim = dims[key];
     return range ? -1 : 1;
   }
 
@@ -79,7 +78,7 @@ export class Reverse extends Operator {
     return super.resize(...arguments);
   }
 
-  change(changed, touched, init) {
+  change(_changed, touched, _init) {
     if (touched["operator"]) {
       return this.rebuild();
     }

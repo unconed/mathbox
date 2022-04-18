@@ -71,7 +71,6 @@ export class SurfaceGeometry extends ClipGeometry {
 
     const index = this._emitter("index");
     const position = this._emitter("position4");
-    const surface = this._emitter("surface");
 
     let base = 0;
     for (
