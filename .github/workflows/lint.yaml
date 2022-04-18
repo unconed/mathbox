@@ -1,11 +1,11 @@
-name: Tests
+name: Linter
 
 on:
   pull_request:
   branches: [master]
 
 jobs:
-  tests:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -16,4 +16,4 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run format
-      - run: npm run test
+      - run: npm run lint
