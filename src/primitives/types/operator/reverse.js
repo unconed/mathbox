@@ -1,64 +1,92 @@
-// Operator = require './operator'
-// Util     = require '../../../util'
+import { Operator } from "./operator.js";
 
-// class Reverse extends Operator
-//   @traits = ['node', 'bind', 'operator', 'source', 'index', 'reverse']
+export class Reverse extends Operator {
+  static initClass() {
+    this.traits = ["node", "bind", "operator", "source", "index", "reverse"];
+  }
 
-//   getDimensions:       () -> @bind.source.getDimensions()
-//   getActiveDimensions: () -> @bind.source.getActiveDimensions()
-//   getFutureDimensions: () -> @bind.source.getFutureDimensions()
-//   getIndexDimensions:  () -> @bind.source.getIndexDimensions()
+  getDimensions() {
+    return this.bind.source.getDimensions();
+  }
+  getActiveDimensions() {
+    return this.bind.source.getActiveDimensions();
+  }
+  getFutureDimensions() {
+    return this.bind.source.getFutureDimensions();
+  }
+  getIndexDimensions() {
+    return this.bind.source.getIndexDimensions();
+  }
 
-//   sourceShader: (shader) ->
-//     shader.pipe 'reverse.position', @uniforms
-//     @bind.source.sourceShader shader
+  sourceShader(shader) {
+    shader.pipe("reverse.position", this.uniforms);
+    return this.bind.source.sourceShader(shader);
+  }
 
-//   _resolveScale: (key, dims) ->
-//     range = @props[key]
-//     dim   = dims[key]
-//     if range then -1 else 1
+  _resolveScale(key, dims) {
+    const range = this.props[key];
+    const dim = dims[key];
+    return range ? -1 : 1;
+  }
 
-//   _resolveOffset: (key, dims) ->
-//     range = @props[key]
-//     dim   = dims[key]
-//     if range then dim - 1 else 0
+  _resolveOffset(key, dims) {
+    const range = this.props[key];
+    const dim = dims[key];
+    if (range) {
+      return dim - 1;
+    } else {
+      return 0;
+    }
+  }
 
-//   make: () ->
-//     super
-//     return unless @bind.source?
+  make() {
+    super.make(...arguments);
+    if (this.bind.source == null) {
+      return;
+    }
 
-//     @uniforms =
-//       reverseScale:  @_attributes.make @_types.vec4()
-//       reverseOffset: @_attributes.make @_types.vec4()
+    return (this.uniforms = {
+      reverseScale: this._attributes.make(this._types.vec4()),
+      reverseOffset: this._attributes.make(this._types.vec4()),
+    });
+  }
 
-//   unmake: () ->
-//     super
+  unmake() {
+    return super.unmake(...arguments);
+  }
 
-//   resize: () ->
-//     return unless @bind.source?
+  resize() {
+    if (this.bind.source == null) {
+      return;
+    }
 
-//     dims = @bind.source.getActiveDimensions()
+    const dims = this.bind.source.getActiveDimensions();
 
-//     @uniforms.reverseScale.value.set(
-//       @_resolveScale('width',  dims),
-//       @_resolveScale('height', dims),
-//       @_resolveScale('depth',  dims),
-//       @_resolveScale('items',  dims),
-//     )
+    this.uniforms.reverseScale.value.set(
+      this._resolveScale("width", dims),
+      this._resolveScale("height", dims),
+      this._resolveScale("depth", dims),
+      this._resolveScale("items", dims)
+    );
 
-//     @uniforms.reverseOffset.value.set(
-//       @_resolveOffset('width',  dims),
-//       @_resolveOffset('height', dims),
-//       @_resolveOffset('depth',  dims),
-//       @_resolveOffset('items',  dims),
-//     )
+    this.uniforms.reverseOffset.value.set(
+      this._resolveOffset("width", dims),
+      this._resolveOffset("height", dims),
+      this._resolveOffset("depth", dims),
+      this._resolveOffset("items", dims)
+    );
 
-//     super
+    return super.resize(...arguments);
+  }
 
-//   change: (changed, touched, init) ->
-//     return @rebuild() if touched['operator']
+  change(changed, touched, init) {
+    if (touched["operator"]) {
+      return this.rebuild();
+    }
 
-//     if touched['reverse']
-//       @resize()
-
-// module.exports = Reverse
+    if (touched["reverse"]) {
+      return this.resize();
+    }
+  }
+}
+Reverse.initClass();

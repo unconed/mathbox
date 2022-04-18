@@ -39,7 +39,8 @@ export class Buffer extends Data {
   make() {
     super.make();
 
-    return (this.clockParent = this._inherit("latch"));
+    this.clockParent = this._inherit("clock");
+    this.latchParent = this._inherit("latch");
   }
 
   unmake() {
