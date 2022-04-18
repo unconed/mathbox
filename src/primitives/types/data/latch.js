@@ -1,12 +1,6 @@
 import { Parent } from "../base/parent.js";
-
-function clone(x) {
-  return x && JSON.parse(JSON.stringify(x));
-}
-
-function deepEq(a, b) {
-  return JSON.stringify(a) == JSON.stringify(b);
-}
+import isEqual from "lodash/eqDeep";
+import cloneDeep from "lodash/cloneDeep";
 
 class Latch extends Parent {
   static initClass() {
@@ -35,9 +29,9 @@ class Latch extends Parent {
 
   swap() {
     const { deep, data } = this.props;
-    const dirty = deep ? !deepEq(data, this.data) : data != this.data;
+    const dirty = deep ? !isEqual(data, this.data) : data != this.data;
     if (dirty) {
-      this.data = deep ? clone(data) : data;
+      this.data = deep ? cloneDeep(data) : data;
     }
   }
 
