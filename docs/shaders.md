@@ -3,7 +3,7 @@
 MathBox offloads most of its computations onto the GPU. As it assembles shaders on the fly, you can easily insert your own pieces of shader code. This is either as part of the usual vertex/fragment shader, or as a (re)sampler, which processes pure data, whether it's values, colors, sprites, weights, and so on.
 
 The `<shader>` node lets you add a GLSL shader you have written into Mathbox. The specific form of the shader will depend on the operator that uses the shader (`<resample>`, `<retext>`, `<mask>`, `<vertex>` or `<fragment>`). By default, they will link up with a preceding `<shader>`, but you can select any shader node using the `shader` prop.
-  
+
 The shader snippet it references will look something like this:
 
     <script type="application/glsl" id="map-temporal-blur">
@@ -45,7 +45,13 @@ For example, for a `.shader({ code: "#multi-shader", sources: ["#array1", "#arra
       }
     </script>
 
-This samples both arrays and combines it with the third (implied) source. The order of the function definitions is matched with the array, their names are ignored. Note that external sources always have the signature `vec4 function(vec4)`, unlike implied sources, which depend on use (see below).
+This samples both arrays and combines it with the third (implied) source. The
+order of the function definitions is matched with the array, their names are
+ignored.
+
+The callback signature depends on both indices and channels, mapping to
+float/vec2/vec3/vec4. Indices specifies the type of the argument, channels the
+return type. The example above is the default `{indices: 4, channels: 4}`:
 
 ## Resample
 
@@ -58,7 +64,7 @@ The callback signature depends on both indices and channels, mapping to float/ve
       uniform vec3 dataSize;         // dimensions
       uniform vec3 targetResolution; //
       uniform vec3 targetSize;       //
-      
+
       vec4 getSample(vec3 xyz);         // indices 3, channels 4
       vec4 getFramesSample(vec3 xyz) {  //
         return getSample(xyz);          //
@@ -66,7 +72,7 @@ The callback signature depends on both indices and channels, mapping to float/ve
     </script>
 
 Used e.g. as
-  
+
     mathbox
     .matrix({ ... })
     .shader({
@@ -103,7 +109,7 @@ Now you can take your array of source data, `#colors`, and retext your strings t
     <script type="application/glsl" id="retext-shader">
       vec4 getColorSample(vec4 xyzw);
       vec4 getTextSample(vec4 xyzw);
-    
+
       vec4 resample(vec4 xyzw) {
         vec4 rgba = getColorSample(xyzw);
         float i   = floor(rgba.r * 255.0 + .5);
@@ -191,7 +197,7 @@ Fragment is a raw fragment shader stage (per pixel/sample). It takes a color (rg
     .fragment()
       // Fragment shaded shapes
     .end()
-  
+
   * Colors outside the range 0...1 may be used in a floating point render-to-texture.
   * Set `.fragment({ gamma: false })` to operate directly in linear RGB rather than sRGB.
   * Applying a fragment shader will disable the built-in shader for surfaces.
@@ -204,4 +210,3 @@ Fragment is a raw fragment shader stage (per pixel/sample). It takes a color (rg
  * `vec4( v.yx, 0.5, 1.0 )` is shorthand for `vec4( v.y, v.x, 0.5, 1.0 )`
  * `vec3( 7.0 )` is shorthand for `vec3( 7.0, 7.0, 7.0 )`
  * Your shader does not need to call `getSample()` if it can compute its results just from the coordinates passed in to it.
-

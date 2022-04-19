@@ -31,6 +31,7 @@ export class Line extends Base {
       linear,
       clip,
       proximity,
+      closed,
     } = options;
 
     if (uniforms == null) {
@@ -73,6 +74,9 @@ export class Line extends Base {
     defs["LINE_JOIN_" + join.toUpperCase()] = "";
     if (detail > 1) {
       defs["LINE_JOIN_DETAIL"] = detail;
+    }
+    if (closed) {
+      defs["LINE_CLOSED"] = "";
     }
 
     const v = factory.vertex;

@@ -52,10 +52,9 @@ export class LineGeometry extends ClipGeometry {
     const lines = samples - 1;
     this.joints = joints = detail - 1;
 
-    this.vertices = vertices = (lines - 1) * joints + samples;
-    this.segments = segments = (lines - 1) * joints + lines;
+    this.vertices = vertices = (lines - (closed ? 0 : 1)) * joints + samples;
+    this.segments = segments = (lines - (closed ? 0 : 1)) * joints + lines;
 
-    const wrap = samples - (closed ? 1 : 0);
     const points = vertices * strips * ribbons * layers * 2;
     const quads = segments * strips * ribbons * layers;
     const triangles = quads * 2;
@@ -68,11 +67,7 @@ export class LineGeometry extends ClipGeometry {
     );
     this.setAttribute(
       "line",
-      new BufferAttribute(new Float32Array(points * 2), 2)
-    );
-    this.setAttribute(
-      "strip",
-      new BufferAttribute(new Float32Array(points * 2), 2)
+      new BufferAttribute(new Float32Array(points * 1), 1)
     );
     if (detail > 1) {
       this.setAttribute(
@@ -84,7 +79,6 @@ export class LineGeometry extends ClipGeometry {
     const index = this._emitter("index");
     const position = this._emitter("position4");
     const line = this._emitter("line");
-    const strip = this._emitter("strip");
     if (detail > 1) {
       joint = this._emitter("joint");
     }
@@ -157,20 +151,14 @@ export class LineGeometry extends ClipGeometry {
               asc6 ? i1 < end6 : i1 > end6;
               asc6 ? i1++ : i1--, x = i1
             ) {
-              if (closed) {
-                x = x % wrap;
-              }
               edge = edger(x);
 
               if (edge !== 0) {
                 position(x, y, z, l);
                 position(x, y, z, l);
 
-                line(edge, 1);
-                line(edge, -1);
-
-                strip(0, segments);
-                strip(0, segments);
+                line(1);
+                line(-1);
 
                 joint(0.5);
                 joint(0.5);
@@ -183,11 +171,8 @@ export class LineGeometry extends ClipGeometry {
                   position(x, y, z, l);
                   position(x, y, z, l);
 
-                  line(edge, 1);
-                  line(edge, -1);
-
-                  strip(0, segments);
-                  strip(0, segments);
+                  line(1);
+                  line(-1);
 
                   joint(m / joints);
                   joint(m / joints);
@@ -222,19 +207,11 @@ export class LineGeometry extends ClipGeometry {
               asc11 ? j1 < end11 : j1 > end11;
               asc11 ? j1++ : j1--, x = j1
             ) {
-              if (closed) {
-                x = x % wrap;
-              }
-              edge = edger(x);
-
               position(x, y, z, l);
               position(x, y, z, l);
 
-              line(edge, 1);
-              line(edge, -1);
-
-              strip(0, segments);
-              strip(0, segments);
+              line(1);
+              line(-1);
             }
           }
         }
@@ -258,12 +235,12 @@ export class LineGeometry extends ClipGeometry {
     if (layers == null) {
       ({ layers } = this);
     }
-    let segments = Math.max(0, samples - (this.closed ? 0 : 1));
 
-    const vertices = samples + (samples - 2) * this.joints;
-    segments = vertices - 1;
+    const vertices = samples + (samples - (this.closed ? 0 : 2)) * this.joints;
+    const segments = vertices - (this.closed ? 0 : 1);
+    samples += this.closed;
 
-    this._clipGeometry(vertices, strips, ribbons, layers);
+    this._clipGeometry(samples, strips, ribbons, layers);
     return this._clipOffsets(
       6,
       segments,

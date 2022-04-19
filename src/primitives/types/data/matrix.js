@@ -160,6 +160,8 @@ export class Matrix extends Buffer {
 
     if (changed["matrix.width"]) {
       const { width, bufferWidth } = this.props;
+      this.spec.width = width;
+
       if (width > bufferWidth) {
         return this.rebuild();
       }
@@ -167,6 +169,8 @@ export class Matrix extends Buffer {
 
     if (changed["matrix.height"]) {
       const { height, bufferHeight } = this.props;
+      this.spec.height = height;
+
       if (height > bufferHeight) {
         return this.rebuild();
       }
@@ -233,9 +237,9 @@ export class Matrix extends Buffer {
         const length = this.buffer.update();
 
         used.width = _w = width;
-        used.height = Math.ceil(length / _w);
+        used.height = Math.min(height, Math.ceil(length / _w));
         if (used.height === 1) {
-          return (used.width = length);
+          used.width = Math.min(width, length);
         }
       }
     });

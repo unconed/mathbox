@@ -14,12 +14,12 @@ import { SurfaceGeometry } from "../geometry/surfacegeometry.js";
 
 export class Surface extends Base {
   constructor(renderer, shaders, options) {
-    let defs, f;
+    let f;
     super(renderer, shaders, options);
 
     let { uniforms, material } = options;
 
-    const { position, color, mask, map, combine, linear, stpq, intUV } =
+    const { position, color, normal, mask, map, combine, linear, stpq, intUV } =
       options;
 
     if (uniforms == null) {
@@ -43,22 +43,35 @@ export class Surface extends Base {
     this._adopt(uniforms);
     this._adopt(this.geometry.uniforms);
 
+    const defs = {};
+    if (options.closedX) {
+      defs.SURFACE_CLOSED_X = "";
+    }
+    if (options.closedY) {
+      defs.SURFACE_CLOSED_Y = "";
+    }
+    if (intUV) {
+      defs.POSITION_UV_INT = "";
+    }
+
     const factory = shaders.material();
 
     const v = factory.vertex;
 
-    if (intUV) {
-      defs = { POSITION_UV_INT: "" };
-    }
-
     v.pipe(this._vertexColor(color, mask));
 
     v.require(this._vertexPosition(position, material, map, 2, stpq));
-    if (!material) {
-      v.pipe("surface.position", this.uniforms, defs);
-    }
-    if (material) {
+
+    if (normal) {
+      v.require(normal);
       v.pipe("surface.position.normal", this.uniforms, defs);
+    } else {
+      if (!material) {
+        v.pipe("surface.position", this.uniforms, defs);
+      }
+      if (material) {
+        v.pipe("surface.position.shaded", this.uniforms, defs);
+      }
     }
     v.pipe("project.position", this.uniforms);
 

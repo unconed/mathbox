@@ -83,5 +83,12 @@ export class Interval extends Array_ {
     super.unmake();
     return this._helpers.span.unmake();
   }
+
+  change(changed, touched, init) {
+    super.change(changed, touched, init);
+    if (touched["span"]) {
+      this.updateSpan();
+    }
+  }
 }
 Interval.initClass();

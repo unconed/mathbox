@@ -23,7 +23,7 @@ Cones to attach as arrowheads on line strips
 
 export class ArrowGeometry extends ClipGeometry {
   constructor(options) {
-    let anchor, flip, k, layers, ribbons, samples, sides, strips;
+    let anchor, flip, closed, k, layers, ribbons, samples, sides, strips;
     let asc, end;
     super(options);
 
@@ -35,8 +35,13 @@ export class ArrowGeometry extends ClipGeometry {
     this.ribbons = ribbons = +options.ribbons || 1;
     this.layers = layers = +options.layers || 1;
     this.flip = flip = options.flip != null ? options.flip : false;
+    this.closed = closed = options.closed != null ? options.closed : false;
     this.anchor = anchor =
-      options.anchor != null ? options.anchor : flip ? 0 : samples - 1;
+      options.anchor != null
+        ? options.anchor
+        : flip || closed
+        ? 0
+        : samples - 1;
 
     const arrows = strips * ribbons * layers;
     const points = (sides + 2) * arrows;
@@ -102,9 +107,8 @@ export class ArrowGeometry extends ClipGeometry {
       base += sides + 1;
     }
 
-    const step = flip ? 1 : -1;
-    const far = flip ? samples - 1 : 0;
-    const near = anchor + step;
+    const near = flip ? 1 : closed ? samples - 1 : -1;
+    const far = flip && !closed ? samples - 1 : 0;
     const x = anchor;
 
     for (
@@ -167,7 +171,7 @@ export class ArrowGeometry extends ClipGeometry {
 
     this._clipGeometry(samples, strips, ribbons, layers);
 
-    if (samples > this.anchor) {
+    if (samples > 0) {
       const dims = [layers, ribbons, strips];
       const maxs = [this.layers, this.ribbons, this.strips];
       quads = this.sides * this._reduce(dims, maxs);

@@ -12,6 +12,11 @@ export default {
     visible: ["Visibility for rendering", "bool", "true"],
   },
 
+  latch: {
+    data: ["Data to monitor for changes", "nullable object", null],
+    deep: ["Do deep value comparison", "boolean", true],
+  },
+
   unit: {
     scale: [
       "(Vertical) Reference scale of viewport in pixels",
@@ -31,6 +36,7 @@ export default {
   span: {
     range: ["Range on axis", "vec2", "[-1, 1]"],
   },
+
   view: {
     range: [
       "4D range in view",
@@ -233,6 +239,7 @@ export default {
   mesh: {
     fill: ["Fill mesh", "bool", true],
     shaded: ["Shade mesh", "bool", false],
+    normals: ["Normals data source", "nullable select", "null", "#normals"],
     map: ["Texture map source", "nullable select", "null", '"#map"'],
     lineBias: ["Z-Bias for lines on fill", "number", 5],
   },
@@ -318,6 +325,8 @@ export default {
       "null",
       '["#pressure", "#divergence"]',
     ],
+    indices: ["Source indices", "number", 4],
+    channels: ["Source channels", "number", 4],
     language: ["Shader language", "string", '"glsl"'],
     code: ["Shader code", "string", '""'],
     uniforms: [
@@ -379,6 +388,13 @@ export default {
     height: ["Repeat height", "number", "1"],
     depth: ["Repeat depth", "number", "1"],
   },
+  reverse: {
+    items: ["Reverse items", "boolean", "false"],
+    width: ["Reverse width", "boolean", "false"],
+    height: ["Reverse height", "boolean", "false"],
+    depth: ["Reverse depth", "boolean", "false"],
+  },
+
   slice: {
     items: [
       "Slice from, to items (excluding to)",

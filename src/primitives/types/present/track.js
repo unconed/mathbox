@@ -132,14 +132,14 @@ export class Track extends Primitive {
       }
 
       if (step instanceof Array) {
-        // [props, expr] array
+        // [props, bind] array
         step = {
           key: +key,
           props: step[0] != null ? deepCopy(step[0]) : {},
-          expr: step[1] != null ? deepCopy(step[1]) : {},
+          bind: step[1] != null ? deepCopy(step[1]) : {},
         };
       } else {
-        if (step.key == null && !step.props && !step.expr) {
+        if (step.key == null && !step.props && !step.bind) {
           // Direct props object (iffy, but people will do this anyhow)
           step = { props: deepCopy(step) };
         } else {
@@ -152,8 +152,8 @@ export class Track extends Primitive {
         if (step.props == null) {
           step.props = {};
         }
-        if (step.expr == null) {
-          step.expr = {};
+        if (step.bind == null) {
+          step.bind = {};
         }
       }
 
@@ -195,8 +195,8 @@ export class Track extends Primitive {
     }
     for (key in script) {
       step = script[key];
-      for (k in step.expr) {
-        v = step.expr[k];
+      for (k in step.bind) {
+        v = step.bind[k];
         props[k] = true;
       }
     }
@@ -227,10 +227,10 @@ export class Track extends Primitive {
         v = object.validate(k, step.props[k] != null ? step.props[k] : v);
         props[k] = step.props[k] = v;
 
-        if (step.expr[k] != null && typeof step.expr[k] !== "function") {
+        if (step.bind[k] != null && typeof step.bind[k] !== "function") {
           console.warn(this.node.toMarkup());
-          message = `${this.node.toString()} - Expression \`${
-            step.expr[k]
+          message = `${this.node.toString()} - Bind expression \`${
+            step.bind[k]
           }\` on property \`${k}\` is not a function`;
           throw new Error(message);
         }
@@ -317,8 +317,8 @@ export class Track extends Primitive {
 
       // Create prop expression interpolator
       const live = (key) => {
-        const fromE = from.expr[key];
-        const toE = to.expr[key];
+        const fromE = from.bind[key];
+        const toE = to.bind[key];
         const fromP = from.props[key];
         const toP = to.props[key];
 
@@ -412,12 +412,12 @@ export class Track extends Primitive {
 
       // Handle expr / props on both ends
       const expr = {};
-      for (k in from.expr) {
+      for (k in from.bind) {
         if (expr[k] == null) {
           expr[k] = live(k);
         }
       }
-      for (k in to.expr) {
+      for (k in to.bind) {
         if (expr[k] == null) {
           expr[k] = live(k);
         }

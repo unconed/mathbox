@@ -53,6 +53,28 @@ export class Base extends Renderable {
     return null;
   }
 
+  _injectPreamble(preamble, code) {
+    const program = preamble + "\n" + code;
+    if (code.match(/#extension/)) {
+      return this._hoist(program);
+    } else {
+      return program;
+    }
+  }
+
+  _hoist(code) {
+    const lines = code.split("\n");
+    const out = [];
+    for (const line of Array.from(lines)) {
+      if (line.match(/^\s*#extension/)) {
+        out.unshift(line);
+      } else {
+        out.push(line);
+      }
+    }
+    return out.join("\n");
+  }
+
   _material(options) {
     const precision = this.renderer.capabilities.precision;
 
@@ -88,9 +110,13 @@ uniform vec3 cameraPosition;\
       (key) => (material[key] = options[key])
     );
 
-    material.vertexShader = [vertexPrefix, material.vertexShader].join("\n");
-    material.fragmentShader = [fragmentPrefix, material.fragmentShader].join(
-      "\n"
+    material.vertexShader = this._injectPreamble(
+      vertexPrefix,
+      material.vertexShader
+    );
+    material.fragmentShader = this._injectPreamble(
+      fragmentPrefix,
+      material.fragmentShader
     );
     return material;
   }

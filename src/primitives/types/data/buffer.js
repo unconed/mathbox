@@ -39,7 +39,8 @@ export class Buffer extends Data {
   make() {
     super.make();
 
-    return (this.clockParent = this._inherit("clock"));
+    this.clockParent = this._inherit("clock");
+    this.latchParent = this._inherit("latch");
   }
 
   unmake() {
@@ -71,7 +72,10 @@ export class Buffer extends Data {
     const { live, fps, hurry, limit, realtime, observe } = this.props;
 
     const filled = this.buffer.getFilled();
-    if (!!filled && !live) {
+    if (filled && !live) {
+      return;
+    }
+    if (this.latchParent && !this.latchParent.isDirty) {
       return;
     }
 
@@ -83,6 +87,11 @@ export class Buffer extends Data {
       delta = realtime ? time.delta : time.step;
       const frame = 1 / fps;
       step = realtime && observe ? speed * frame : frame;
+
+      if (Math.abs(time.time - this.bufferTime) > time.step * limit) {
+        this.bufferTime = time.time;
+        this.bufferClock = time.clock;
+      }
 
       this.bufferSlack = Math.min(limit / fps, slack + delta);
       this.bufferDelta = delta;

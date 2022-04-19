@@ -153,6 +153,8 @@ export class Voxel extends Buffer {
 
     if (changed["voxel.width"]) {
       const { width, bufferWidth } = this.props;
+      this.spec.width = width;
+
       if (width > bufferWidth) {
         return this.rebuild();
       }
@@ -160,6 +162,8 @@ export class Voxel extends Buffer {
 
     if (changed["voxel.height"]) {
       const { height, bufferHeight } = this.props;
+      this.spec.height = height;
+
       if (height > bufferHeight) {
         return this.rebuild();
       }
@@ -167,6 +171,8 @@ export class Voxel extends Buffer {
 
     if (changed["voxel.depth"]) {
       const { depth, bufferDepth } = this.props;
+      this.spec.depth = depth;
+
       if (depth > bufferDepth) {
         return this.rebuild();
       }
@@ -241,12 +247,12 @@ export class Voxel extends Buffer {
 
         used.width = _w = width;
         used.height = _h = height;
-        used.depth = Math.ceil(length / _w / _h);
+        used.depth = Math.min(depth, Math.ceil(length / _w / _h));
 
         if (used.depth === 1) {
-          used.height = Math.ceil(length / _w);
+          used.height = Math.min(height, Math.ceil(length / _w));
           if (used.height === 1) {
-            return (used.width = length);
+            used.width = Math.min(width, length);
           }
         }
       }

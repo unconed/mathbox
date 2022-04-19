@@ -112,7 +112,7 @@ export class Sprite extends Base {
     this.geometry.dispose();
     this.edgeMaterial.dispose();
     this.fillMaterial.dispose();
-    this.nreders =
+    this.renders =
       this.geometry =
       this.edgeMaterial =
       this.fillMaterial =

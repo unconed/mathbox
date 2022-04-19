@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Partially Filled Data</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+       - a minified version mathbox.min.js is also available;
+       - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link rel="stylesheet" href="../../build/mathbox.css" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "stats"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(-0.5, 1.4, -2.3);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+      three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+
+      ramp = (t) => Math.sin(t) * 0.5 + 0.5;
+
+      // Mathbox view
+      view = mathbox
+        .set({
+          scale: 720,
+          focus: 3,
+        })
+        .cartesian({
+          range: [
+            [0, 1],
+            [-0.5, 0.5],
+            [0, 1],
+          ],
+          scale: [1, 1, 1],
+        });
+
+      view.grid({
+        axes: "xz",
+        width: 2,
+      });
+
+      view
+        .array(
+          {
+            // Reserve space ahead of time
+            bufferWidth: 6,
+            width: 3,
+            channels: 3,
+            expr: (emit, i) => {
+              emit(i / 5, 0, 0);
+            },
+          },
+          {
+            // Change size at runtime
+            width: (t) => Math.floor(3 + ramp(t * 0.9) * 3.5),
+          }
+        )
+        .line({
+          color: 0x00ffff,
+          width: 5,
+          opacity: 0.5,
+          zWrite: false,
+          start: true,
+          end: true,
+        })
+        .point({
+          color: 0x00ffff,
+          size: 10,
+          opacity: 0.5,
+          zWrite: false,
+        });
+
+      view
+        .matrix(
+          {
+            // Reserve space ahead of time
+            bufferWidth: 6,
+            bufferHeight: 6,
+            width: 3,
+            height: 2,
+            channels: 3,
+            expr: (emit, i, j) => {
+              emit(i / 5, 0, 0.2 + j / 10);
+            },
+          },
+          {
+            // Change size at runtime
+            width: (t) => Math.floor(3 + ramp(t) * 3),
+            height: (t) => Math.floor(2 + ramp(t * 0.7) * 3),
+          }
+        )
+        .point({
+          color: 0xffff00,
+          size: 10,
+          opacity: 0.5,
+          zWrite: false,
+        });
+
+      view
+        .voxel(
+          {
+            // Reserve space ahead of time
+            bufferWidth: 6,
+            bufferHeight: 6,
+            bufferDepth: 6,
+            width: 4,
+            height: 3,
+            depth: 2,
+            channels: 3,
+            expr: (emit, i, j, k) => {
+              emit(i / 5, k / 10, 0.6 + j / 10);
+            },
+          },
+          {
+            // Change size at runtime
+            width: (t) => Math.floor(4 + ramp(t * 1.1) * 2),
+            height: (t) => Math.floor(3 + ramp(t * 0.8) * 3),
+            depth: (t) => Math.floor(2 + ramp(t * 0.6) * 3),
+          }
+        )
+        .point({
+          color: 0xff00ff,
+          size: 10,
+          opacity: 0.5,
+          zWrite: false,
+        });
+    </script>
+  </body>
+</html>

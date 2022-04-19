@@ -1,5 +1,6 @@
 export * from "./array.js";
 export * from "./interval.js";
+export * from "./latch.js";
 export * from "./matrix.js";
 export * from "./area.js";
 export * from "./voxel.js";

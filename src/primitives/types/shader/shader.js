@@ -8,6 +8,8 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
+
+import * as UGLSL from "../../../util/glsl.js";
 import { Primitive } from "../../primitive.js";
 
 export class Shader extends Primitive {
@@ -104,7 +106,7 @@ export class Shader extends Primitive {
     if (uniforms == null) {
       uniforms = {};
     }
-    const { code } = this.props;
+    const { code, indices, channels } = this.props;
 
     // Merge in prop attributes as uniforms
     for (k in this.node.attributes) {
@@ -130,7 +132,15 @@ export class Shader extends Primitive {
     // Require sources
     if (this.bind.sources != null) {
       for (const source of Array.from(this.bind.sources)) {
-        s.require(source.sourceShader(this._shaders.shader()));
+        s.callback();
+        if (indices != 4) {
+          s.pipe(UGLSL.extendVec(indices, 4));
+        }
+        s.pipe(source.sourceShader(this._shaders.shader()));
+        if (channels != 4) {
+          s.pipe(UGLSL.truncateVec(4, channels));
+        }
+        s.join();
       }
     }
 

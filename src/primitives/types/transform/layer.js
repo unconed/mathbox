@@ -49,10 +49,15 @@ export class Layer extends Transform {
     // Fit x/y
     switch (fit) {
       case _enum.x:
-        this.uniforms.layerScale.value.set(pitch * aspect, pitch * aspect);
+        this.uniforms.layerScale.value.set(
+          pitch * aspect,
+          pitch * aspect,
+          1,
+          1
+        );
         break;
       case _enum.y:
-        this.uniforms.layerScale.value.set(pitch, pitch);
+        this.uniforms.layerScale.value.set(pitch, pitch, 1, 1);
         break;
     }
 

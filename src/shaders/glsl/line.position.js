@@ -8,8 +8,8 @@ uniform float focusDepth;
 uniform vec4 geometryClip;
 attribute vec4 position4;
 
-// (Start/mid/end -1/0/1, top/bottom -1,1)
-attribute vec2 line;
+// (Top/bottom -1,1)
+attribute float line;
 
 // 0...1 for round or bevel joins
 #ifdef LINE_JOIN_DETAIL
@@ -48,20 +48,32 @@ varying vec2 vClipEnds;
 
 void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
 
-  // Sample end of line strip
-  vec4 xyzwE = vec4(strip.y, xyzw.yzw);
-  vec3 end   = getPosition(xyzwE, 0.0);
-
   // Sample start of line strip
-  vec4 xyzwS = vec4(strip.x, xyzw.yzw);
+  vec4 xyzwS = vec4(0.0, xyzw.yzw);
   vec3 start = getPosition(xyzwS, 0.0);
 
+  // Sample middle of line strip
+  vec4 xyzwM = vec4(geometryClip.x / 2.0, xyzw.yzw);
+  vec3 middle = getPosition(xyzwM, 0.0);
+
+#ifdef LINE_CLOSED
+  vec3 end = start;
+#else
+  // Sample other end of line strip
+  vec4 xyzwE = vec4(geometryClip.x, xyzw.yzw);
+  vec3 end   = getPosition(xyzwE, 0.0);
+#endif
+
   // Measure length
-  vec3 diff = end - start;
-  float l = length(diff) * clipSpace;
+  float l = max(length(end - middle), length(middle - start)) * clipSpace * 2.0;
 
   // Arrow length (=2.5x radius)
   float arrowSize = 1.25 * clipRange * lineWidth * worldUnit;
+
+#ifdef LINE_CLOSED
+  // Clip around start/end
+  end = start;
+#endif
 
   vClipEnds = vec2(1.0);
 
@@ -83,7 +95,7 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
     float invrange = 1.0 / (size * scale);
 
     // Clip end
-    diff = end - center;
+    vec3 diff = end - center;
     if(diff == vec3(0.0))
       vClipEnds.x = -1.0;
     else {
@@ -111,7 +123,7 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
     float invrange = 1.0 / (size * scale);
 
     // Clip start
-    diff = center - start;
+    vec3 diff = center - start;
     if(diff == vec3(0.0))
       vClipEnds.y = -1.0;
     else {
@@ -120,8 +132,6 @@ void clipEnds(vec4 xyzw, vec3 center, vec3 pos) {
       vClipEnds.y = d * invrange - 1.0;
     }
   }
-
-
 }
 #endif
 
@@ -154,13 +164,22 @@ void fixCenter(inout vec3 left, inout vec3 center, inout vec3 right) {
   }
 }
 
+vec4 wrapAround(vec4 xyzw) {
+#ifdef LINE_CLOSED
+  float gx = geometryClip.x;
+  if (xyzw.x < 0.0) xyzw.x += gx;
+  if (xyzw.x >= gx) xyzw.x -= gx;
+#endif
+  return xyzw;
+}
+
 // Sample the source data in an edge-aware manner
 void getLineGeometry(vec4 xyzw, float edge, out vec3 left, out vec3 center, out vec3 right) {
   vec4 delta = vec4(1.0, 0.0, 0.0, 0.0);
 
-  center =                 getPosition(xyzw, 1.0);
-  left   = (edge > -0.5) ? getPosition(xyzw - delta, 0.0) : center;
-  right  = (edge < 0.5)  ? getPosition(xyzw + delta, 0.0) : center;
+  center = getPosition(xyzw, 1.0);
+  left   = (edge > -0.5) ? getPosition(wrapAround(xyzw - delta), 0.0) : center;
+  right  = (edge < 0.5)  ? getPosition(wrapAround(xyzw + delta), 0.0) : center;
 }
 
 // Calculate the position for a vertex along the line, including joins
@@ -301,14 +320,20 @@ vec3 getLineJoin(float edge, bool odd, vec3 left, vec3 center, vec3 right, float
 vec3 getLinePosition() {
   vec3 left, center, right, join;
 
-  // left/center/right
-  float edge = line.x;
-  // up/down
-  float offset = line.y;
+  // Up/down along segment
+  float offset = line;
 
   // Clip data
   vec4 p = min(geometryClip, position4);
-  edge += max(0.0, position4.x - geometryClip.x);
+
+  // Left/center/right
+  float edge = 0.0;
+#ifdef LINE_CLOSED
+  if (p.x == geometryClip.x) p.x = 0.0;
+#else
+  if (p.x == geometryClip.x) edge = 1.0;
+  if (p.x == 0.0) edge = -1.0;
+#endif
 
   // Get position + adjacent neighbours
   getLineGeometry(p, edge, left, center, right);
@@ -337,7 +362,11 @@ vec3 getLinePosition() {
   width *= worldUnit;
 
   // Calculate line join
+#ifdef LINE_CLOSED
+  join = getLineJoin(0.0, odd, left, center, right, width, offset, joint);
+#else
   join = getLineJoin(edge, odd, left, center, right, width, offset, joint);
+#endif
   vec3 pos = center + join * offset * width;
 
 #ifdef LINE_STROKE

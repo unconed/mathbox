@@ -107,6 +107,7 @@ export class Scale extends Source {
       touched["interval"] ||
       touched["span"] ||
       touched["scale"] ||
+      touched["origin"] ||
       init
     ) {
       return this.updateRanges();

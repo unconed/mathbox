@@ -35,10 +35,16 @@ export class Arrow extends Base {
       layers: options.layers,
       anchor: options.anchor,
       flip: options.flip,
+      closed: options.closed,
     });
 
     this._adopt(uniforms);
     this._adopt(this.geometry.uniforms);
+
+    const defs = {};
+    if (closed) {
+      defs["ARROW_CLOSED"] = "";
+    }
 
     const factory = shaders.material();
 
@@ -47,7 +53,7 @@ export class Arrow extends Base {
     v.pipe(this._vertexColor(color, mask));
 
     v.require(this._vertexPosition(position, material, map, 1, stpq));
-    v.pipe("arrow.position", this.uniforms);
+    v.pipe("arrow.position", this.uniforms, defs);
     v.pipe("project.position", this.uniforms);
 
     factory.fragment = f = this._fragmentColor(

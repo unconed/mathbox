@@ -73,6 +73,7 @@ import repeatposition from "./glsl/repeat.position";
 import resamplepadding from "./glsl/resample.padding";
 import resamplerelative from "./glsl/resample.relative";
 import revealmask from "./glsl/reveal.mask";
+import reverseposition from "./glsl/reverse.position";
 import rootposition from "./glsl/root.position";
 import sample2d from "./glsl/sample.2d";
 import scaleposition from "./glsl/scale.position";
@@ -104,6 +105,7 @@ import subdividewidthlerp from "./glsl/subdivide.width.lerp";
 import surfacemaskhollow from "./glsl/surface.mask.hollow";
 import surfaceposition from "./glsl/surface.position";
 import surfacepositionnormal from "./glsl/surface.position.normal";
+import surfacepositionshaded from "./glsl/surface.position.shaded";
 import ticksposition from "./glsl/ticks.position";
 import transform3position from "./glsl/transform3.position";
 import transform4position from "./glsl/transform4.position";
@@ -185,6 +187,7 @@ export const Snippets = {
   "resample.padding": resamplepadding,
   "resample.relative": resamplerelative,
   "reveal.mask": revealmask,
+  "reverse.position": reverseposition,
   "root.position": rootposition,
   "sample.2d": sample2d,
   "scale.position": scaleposition,
@@ -216,6 +219,7 @@ export const Snippets = {
   "surface.mask.hollow": surfacemaskhollow,
   "surface.position": surfaceposition,
   "surface.position.normal": surfacepositionnormal,
+  "surface.position.shaded": surfacepositionshaded,
   "ticks.position": ticksposition,
   "transform3.position": transform3position,
   "transform4.position": transform4position,
