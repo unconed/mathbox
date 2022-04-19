@@ -39,7 +39,7 @@ export class Reverse extends Operator {
   }
 
   make() {
-    super.make(...arguments);
+    super.make();
     if (this.bind.source == null) {
       return;
     }
@@ -51,7 +51,7 @@ export class Reverse extends Operator {
   }
 
   unmake() {
-    return super.unmake(...arguments);
+    return super.unmake();
   }
 
   resize() {
@@ -75,7 +75,7 @@ export class Reverse extends Operator {
       this._resolveOffset("items", dims)
     );
 
-    return super.resize(...arguments);
+    return super.resize();
   }
 
   change(_changed, touched, _init) {
