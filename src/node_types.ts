@@ -55,6 +55,24 @@ interface SetTraitsObject {
   visible?: Parameters<Traits["object"]["visible"]["validate"]>[0];
 }
 
+interface GetTraitsLatch {
+  data: ReturnType<Traits["latch"]["data"]["validate"]>;
+  deep: ReturnType<Traits["latch"]["deep"]["validate"]>;
+}
+
+interface SetTraitsLatch {
+  /**
+   * Data to monitor for changes
+   * @default `null`
+   */
+  data?: Parameters<Traits["latch"]["data"]["validate"]>[0];
+  /**
+   * Do deep value comparison
+   * @default `true`
+   */
+  deep?: Parameters<Traits["latch"]["deep"]["validate"]>[0];
+}
+
 interface GetTraitsUnit {
   scale: ReturnType<Traits["unit"]["scale"]["validate"]>;
   fov: ReturnType<Traits["unit"]["fov"]["validate"]>;
@@ -1000,6 +1018,7 @@ interface GetTraitsMesh {
   fill: ReturnType<Traits["mesh"]["fill"]["validate"]>;
   shaded: ReturnType<Traits["mesh"]["shaded"]["validate"]>;
   map: ReturnType<Traits["mesh"]["map"]["validate"]>;
+  normals: ReturnType<Traits["mesh"]["normals"]["validate"]>;
   lineBias: ReturnType<Traits["mesh"]["lineBias"]["validate"]>;
 }
 
@@ -1022,7 +1041,12 @@ interface SetTraitsMesh {
    * @example `"#map"`
    */
   map?: Parameters<Traits["mesh"]["map"]["validate"]>[0];
-
+  /**
+   * Normals data source
+   * @default `null`
+   * @example `"#normals"`
+   */
+  normals?: Parameters<Traits["mesh"]["normals"]["validate"]>[0];
   /**
    * Z-Bias for lines on fill
    * @default `5`
@@ -1367,6 +1391,8 @@ interface SetTraitsTexture {
 interface GetTraitsShader {
   sources: ReturnType<Traits["shader"]["sources"]["validate"]>;
   language: ReturnType<Traits["shader"]["language"]["validate"]>;
+  indices: ReturnType<Traits["shader"]["indices"]["validate"]>;
+  channels: ReturnType<Traits["shader"]["channels"]["validate"]>;
   code: ReturnType<Traits["shader"]["code"]["validate"]>;
   uniforms: ReturnType<Traits["shader"]["uniforms"]["validate"]>;
 }
@@ -1390,6 +1416,18 @@ interface SetTraitsShader {
    * @default `""`
    */
   code?: Parameters<Traits["shader"]["code"]["validate"]>[0];
+
+  /**
+   * Source indices
+   * @default `4`
+   */
+  indices?: Parameters<Traits["shader"]["indices"]["validate"]>[0];
+
+  /**
+   * Source channels
+   * @default `4`
+   */
+  channels?: Parameters<Traits["shader"]["channels"]["validate"]>[0];
 
   /**
    * Shader uniform objects (three.js style)
@@ -1692,6 +1730,36 @@ interface SetTraitsSlice {
    * @example `[2, 4]`
    */
   depth?: Parameters<Traits["slice"]["depth"]["validate"]>[0];
+}
+
+interface GetTraitsReverse {
+  items: ReturnType<Traits["reverse"]["items"]["validate"]>;
+  width: ReturnType<Traits["reverse"]["width"]["validate"]>;
+  height: ReturnType<Traits["reverse"]["height"]["validate"]>;
+  depth: ReturnType<Traits["reverse"]["depth"]["validate"]>;
+}
+
+interface SetTraitsReverse {
+  /**
+   * Reverse items
+   * @default `false`
+   */
+  items?: Parameters<Traits["reverse"]["items"]["validate"]>[0];
+  /**
+   * Reverse width
+   * @default `false`
+   */
+  width?: Parameters<Traits["reverse"]["width"]["validate"]>[0];
+  /**
+   * Reverse height
+   * @default `false`
+   */
+  height?: Parameters<Traits["reverse"]["height"]["validate"]>[0];
+  /**
+   * Reverse depth
+   * @default `false`
+   */
+  depth?: Parameters<Traits["reverse"]["depth"]["validate"]>[0];
 }
 
 interface GetTraitsLerp {
@@ -2832,6 +2900,24 @@ export interface LabelProps
     SetTraitsGeometry {}
 
 /**
+ * Normalized properties for {@link MathboxSelection.latch | latch}.
+ * @category data
+ */
+export interface LatchPropsNormalized
+  extends GetTraitsNode,
+    GetTraitsLatch,
+    GetTraitsEntity {}
+
+/**
+ * Properties for {@link MathboxSelection.latch | latch}.
+ * @category data
+ */
+export interface LatchProps
+  extends SetTraitsNode,
+    SetTraitsLatch,
+    SetTraitsEntity {}
+
+/**
  * Normalized properties for {@link MathboxSelection.layer | layer}.
  * @category transform
  */
@@ -3150,6 +3236,24 @@ export interface RevealPropsNormalized
  * @category present
  */
 export interface RevealProps extends SetTraitsNode, SetTraitsTransition {}
+
+/**
+ * Normalized properties for {@link MathboxSelection.reverse | reverse}.
+ * @category operator
+ */
+export interface ReversePropsNormalized
+  extends GetTraitsNode,
+    GetTraitsOperator,
+    GetTraitsReverse {}
+
+/**
+ * Properties for {@link MathboxSelection.reverse | reverse}.
+ * @category operator
+ */
+export interface ReverseProps
+  extends SetTraitsNode,
+    SetTraitsOperator,
+    SetTraitsReverse {}
 
 /**
  * Normalized properties for {@link MathboxSelection.root | root}.
