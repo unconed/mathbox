@@ -12,6 +12,10 @@ import type {
   VolumeEmitter,
   VoxelEmitter,
 } from "./primitives/types/types_typed";
+import { Classes } from "./primitives/types/classes";
+
+export type NodeType = keyof typeof Classes;
+
 export * from "./node_types";
 
 export {
@@ -54,6 +58,7 @@ export type Props = {
   interval: TT.IntervalProps;
   join: TT.JoinProps;
   label: TT.LabelProps;
+  latch: TT.LatchProps;
   layer: TT.LayerProps;
   lerp: TT.LerpProps;
   line: TT.LineProps;
@@ -71,6 +76,7 @@ export type Props = {
   resample: TT.ResampleProps;
   retext: TT.RetextProps;
   reveal: TT.RevealProps;
+  reverse: TT.ReverseProps;
   root: TT.RootProps;
   rtt: TT.RttProps;
   scale: TT.ScaleProps;
@@ -122,6 +128,7 @@ export type PropsNoramlized = {
   interval: TT.IntervalPropsNormalized;
   join: TT.JoinPropsNormalized;
   label: TT.LabelPropsNormalized;
+  latch: TT.LatchPropsNormalized;
   layer: TT.LayerPropsNormalized;
   lerp: TT.LerpPropsNormalized;
   line: TT.LinePropsNormalized;
@@ -139,6 +146,7 @@ export type PropsNoramlized = {
   resample: TT.ResamplePropsNormalized;
   retext: TT.RetextPropsNormalized;
   reveal: TT.RevealPropsNormalized;
+  reverse: TT.ReversePropsNormalized;
   root: TT.RootPropsNormalized;
   rtt: TT.RttPropsNormalized;
   scale: TT.ScalePropsNormalized;
@@ -167,8 +175,6 @@ export type PropsNoramlized = {
   volume: TT.VolumePropsNormalized;
   voxel: TT.VoxelPropsNormalized;
 };
-
-export type NodeType = keyof Props;
 
 /**
  * MathBox (virtual)-DOM Nodes.
@@ -441,6 +447,14 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    */
   label(props?: TT.LabelProps): MathboxSelection<"label">;
   /**
+   * Create new `latch` node.
+   *
+   * See also {@link LatchProps} and {@link LatchPropsNormalized}.
+   *
+   * @category data
+   */
+  latch(props?: TT.LatchProps): MathboxSelection<"latch">;
+  /**
    * Create new `layer` node.
    *
    * See also {@link LayerProps} and {@link LayerPropsNormalized}.
@@ -576,6 +590,14 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    * @category present
    */
   reveal(props?: TT.RevealProps): MathboxSelection<"reveal">;
+  /**
+   * Create new `reveal` node.
+   *
+   * See also {@link ReverseProps} and {@link ReversePropsNormalized}.
+   *
+   * @category operator
+   */
+  reverse(props?: TT.ReverseProps): MathboxSelection<"reverse">;
   /**
    * Create new `root` node.
    *
