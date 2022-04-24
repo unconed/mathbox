@@ -1,5 +1,24 @@
 ### MathBox Changelog
 
+### 2.2.0
+
+- [#32](https://github.com/unconed/mathbox/pull/32) and [#34](https://github.com/unconed/mathbox/pull/34)Ported Steven's changes from [0.0.6-dev](https://github.com/unconed/mathbox/blob/dev/CHANGES.md):
+
+    - When specifying `fps` on a data buffer, catch up correctly if starting late (e.g. on a slide)
+    - Add `indices` and `channels` props to `<shader />` to match `<resample />`.
+    - Add missing docs for line `width`.
+    - Rename `expr` in script steps (steps, play, ...) to `bind` to avoid collision with `expr` prop.
+    - Fix origin/range changes not being picked up
+    - Force `<layer />` to flatten to an orthogonal view
+    - Fix rendering of partially filled buffers
+    - Make closed lines/vectors work properly
+    - Make closed surfaces work properly
+    - Add optional `normals` to `<surface />`
+    - Add `<latch />` to control expr/data updates when conditions change
+- [#33 Separate linting and tests in Github Actions](https://github.com/unconed/mathbox/pull/33)
+- [#31 remove gulp-eslint](https://github.com/unconed/mathbox/pull/31)
+- [#30 add developing.MD](https://github.com/unconed/mathbox/pull/30)
+
 ### 2.1.4
 
 Some bugfixes:
