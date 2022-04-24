@@ -31,7 +31,7 @@ export class Context {
       Util,
       DOM: Util.VDOM,
     };
-    this.Version = "2.1.4";
+    this.Version = "2.2.0";
   }
 
   //-------------------------------------------------------------------
