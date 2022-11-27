@@ -78,23 +78,19 @@ export class Base extends Renderable {
   _material(options) {
     const precision = this.renderer.capabilities.precision;
 
-    const vertexPrefix = `\
-    precision ${precision} float;
+    const vertexPrefix = `    precision ${precision} float;
     precision ${precision} int;
 uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat3 normalMatrix;
-uniform vec3 cameraPosition;\
-`;
+uniform vec3 cameraPosition;`;
 
-    const fragmentPrefix = `\
-    precision ${precision} float;
+    const fragmentPrefix = `    precision ${precision} float;
     precision ${precision} int;
 uniform mat4 viewMatrix;
-uniform vec3 cameraPosition;\
-`;
+uniform vec3 cameraPosition;`;
 
     const shaderOptions = {};
     Object.assign(shaderOptions, options);

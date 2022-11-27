@@ -41,15 +41,13 @@ Bootstrap.registerPlugin("splash", {
     this.destroy();
 
     const { color } = this.options;
-    const html = `\
-<div class="mathbox-loader mathbox-splash-${color}">
+    const html = `<div class="mathbox-loader mathbox-splash-${color}">
   <div class="mathbox-logo">
     <div> <div></div><div></div><div></div> </div>
     <div> <div></div><div></div><div></div> </div>
   </div>
   <div class="mathbox-progress"><div></div></div>
-</div>\
-`;
+</div>`;
 
     this.div = div = document.createElement("div");
     div.innerHTML = html;

@@ -50,14 +50,12 @@ export const mapByte2FloatOffset = function (stretch) {
     stretch = 4;
   }
   const factor = toFloatString(stretch);
-  return `\
-vec4 float2ByteIndex(vec4 xyzw, out float channelIndex) {
+  return `vec4 float2ByteIndex(vec4 xyzw, out float channelIndex) {
   float relative = xyzw.w / ${factor};
   float w = floor(relative);
   channelIndex = (relative - w) * ${factor};
   return vec4(xyzw.xyz, w);
-}\
-`;
+}`;
 };
 
 // Sample data texture array
@@ -65,49 +63,39 @@ export const sample2DArray = function (textures) {
   const divide = function (a, b) {
     let out;
     if (a === b) {
-      out = `\
-return texture2D(dataTextures[${a}], uv);\
-`;
+      out = `return texture2D(dataTextures[${a}], uv);`;
     } else {
       const mid = Math.ceil(a + (b - a) / 2);
-      out = `\
-if (z < ${mid - 0.5}) {
+      out = `if (z < ${mid - 0.5}) {
   ${divide(a, mid - 1)}
 }
 else {
   ${divide(mid, b)}
-}\
-`;
+}`;
     }
     return (out = out.replace(/\n/g, "\n  "));
   };
 
   const body = divide(0, textures - 1);
 
-  return `\
-uniform sampler2D dataTextures[${textures}];
+  return `uniform sampler2D dataTextures[${textures}];
 
 vec4 sample2DArray(vec2 uv, float z) {
   ${body}
-}\
-`;
+}`;
 };
 
 // Binary operator
 export const binaryOperator = function (type, op, curry) {
   type = toType(type);
   if (curry != null) {
-    return `\
-${type} binaryOperator(${type} a) {
+    return `${type} binaryOperator(${type} a) {
   return a ${op} ${curry};
-}\
-`;
+}`;
   } else {
-    return `\
-${type} binaryOperator(${type} a, ${type} b) {
+    return `${type} binaryOperator(${type} a, ${type} b) {
   return a ${op} b;
-}\
-`;
+}`;
   }
 };
 
@@ -136,9 +124,7 @@ export const extendVec = function (from, to, value) {
   });
   const ctor = parts.join(",");
 
-  return `\
-${to} extendVec(${from} v) { return ${to}(${ctor}); }\
-`;
+  return `${to} extendVec(${from} v) { return ${to}(${ctor}); }`;
 };
 
 // Truncate n-vector
@@ -152,9 +138,7 @@ export const truncateVec = function (from, to) {
   from = toType(from);
   to = toType(to);
 
-  return `\
-${to} truncateVec(${from} v) { return v${swizzle}; }\
-`;
+  return `${to} truncateVec(${from} v) { return v${swizzle}; }`;
 };
 
 // Inject float into 4-component vector
@@ -182,11 +166,9 @@ export const injectVec4 = function (order) {
     order.length
   );
 
-  return `\
-vec4 inject(${args}) {
+  return `vec4 inject(${args}) {
   return vec4(${mask});
-}\
-`;
+}`;
 };
 
 // Apply 4-component vector swizzle
@@ -213,11 +195,9 @@ export const swizzleVec4 = function (order, size = null) {
   }
   const mask = order.join(", ");
 
-  return `\
-vec${size} swizzle(vec4 xyzw) {
+  return `vec${size} swizzle(vec4 xyzw) {
   return vec${size}(${mask});
-}\
-`.replace(/vec1/g, "float");
+}`.replace(/vec1/g, "float");
 };
 
 // Invert full or truncated swizzles for pointer lookups
@@ -243,11 +223,9 @@ export const invertSwizzleVec4 = function (order) {
 
   const mask = swizzler.join(", ");
 
-  return `\
-vec4 invertSwizzle(vec4 xyzw) {
+  return `vec4 invertSwizzle(vec4 xyzw) {
   return vec4(${mask});
-}\
-`;
+}`;
 };
 
 export const identity = function (type) {
@@ -257,23 +235,17 @@ export const identity = function (type) {
       ["inout", t, String.fromCharCode(97 + i)].join(" ")
     );
     args = args.join(", ");
-    return `\
-void identity(${args}) { }\
-`;
+    return `void identity(${args}) { }`;
   } else {
-    return `\
-${type} identity(${type} x) {
+    return `${type} identity(${type} x) {
   return x;
-}\
-`;
+}`;
   }
 };
 
-export const constant = (type, value) => `\
-${type} constant() {
+export const constant = (type, value) => `${type} constant() {
 return ${value};
-}\
-`;
+}`;
 
 function __range__(left, right, inclusive) {
   const range = [];
