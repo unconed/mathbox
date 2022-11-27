@@ -76,7 +76,7 @@ export class TextAtlas extends Atlas {
     const quote = (str) => `${str.replace(/(['"\\])/g, "\\$1")}`;
     const font = this.font.map(quote).join(", ");
 
-    const context = canvas.getContext("2d");
+    const context = canvas.getContext("2d", { willReadFrequently: true });
     context.font = `${this.style} ${this.variant} ${this.weight} ${this.size}px ${font}`;
     context.fillStyle = "#FF0000";
     context.textAlign = "left";
