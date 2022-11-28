@@ -214,8 +214,7 @@ export class API {
     console.log("Renders: ", info.renders);
     console.log("Shaders: ", info.shaders);
 
-    const getName = (owner) =>
-      owner.constructor.toString().match("function +([^(]*)")[1];
+    const getName = (owner) => owner.constructor.name;
 
     const shaders = [];
     for (const shader of Array.from(info.shaders)) {
