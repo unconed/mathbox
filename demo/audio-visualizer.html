@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - 133.7 FM</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/TrackballControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+
+  <script type="application/glsl" id="map-rotate">
+    uniform vec3 dataResolution;
+    uniform vec3 dataSize;
+    const float COS = .995;
+    const float SIN = .01;
+    vec4 getSample(vec3 xyz);
+    vec4 getFramesSample(vec3 xyz) {
+      vec2 pos = xyz.xy * dataResolution.xy - .5;
+      pos = ((pos * vec2(16.0, 9.0)) * mat2(COS, SIN, -SIN, COS) * .98) / vec2(16.0, 9.0);
+      xyz.xy = (pos + .5) * dataSize.xy;
+      return getSample(xyz) - .01;
+    }
+  </script>
+
+  <script type="application/glsl" id="map-temporal-blur">
+    uniform float time;
+    uniform float modulate;
+    uniform float pattern;
+    uniform float warp;
+    uniform float shift;
+    vec4 getSample(vec3 xyz);
+    vec4 getFramesSample(vec3 xyz) {
+      // Convolve 4 last buffers
+      vec4 color = (
+        getSample(xyz) +
+        getSample(xyz + vec3(0.0, 0.0, 1.0)) +
+        getSample(xyz + vec3(0.0, 0.0, 2.0)) +
+        getSample(xyz + vec3(0.0, 0.0, 3.0))
+      ) / 4.0;
+
+      // Grayscale
+      float v = color.x + color.y + color.z;
+
+      // Warp effect
+      vec2 xy = xyz.xy;
+      xy = xy + warp * sin(vec2(xy.y, xy.x) / 16.0) * 8.0;
+
+      // Calculate shift bias
+      float d = shift * sin((xy.x + xy.y) / 16.0 + time / 4.0) * 4.0;
+
+      // Radial and tiled pattern
+      float r = length(xy - vec2(64.0, 36.0));
+      float m = abs(fract((r + time) / 32.0) - .5);
+
+      // Map with warped signed distance + bias
+      vec2 sxy = abs(fract(vec2(xy + time) / vec2(32.0, 32.0)) - .5);
+      m = mix(min(sxy.x, sxy.y), m, pattern);
+      float s = mix(1.0, 2.0 * clamp(32.0 * m - 8.0 + d, 0.0, 1.0), modulate);
+
+      return vec4(vec3(v * v) / 8.0 * s, 1.0);
+    }
+  </script>
+
+  <script type="application/glsl" id="map-xy-to-xyz">
+    vec3 getSample(vec3 xyz);
+    vec3 getFramesSample(vec3 xyz) {
+      vec3 c = getSample(xyz);
+      vec2 uv = (xyz.xy - vec2(64.0, 36.0)) / vec2(64.0, 36.0) * vec2(16.0 / 9.0, 1.0);
+      float f = xyz.z * 2.0 - 1.0;
+      return vec3(uv, (c.x + c.y + c.z) * .1 * f);
+    }
+  </script>
+
+  <script type="application/glsl" id="map-z-to-color">
+    uniform float modulate1;
+    uniform float modulate2;
+    uniform float modulate3;
+    uniform float modulate4;
+    uniform float modulate5;
+    vec4 getSample(vec2 xy);
+    vec4 getFramesSample(vec2 xy) {
+      vec3 c = getSample(xy).xyz;
+      c = c.z * vec3(c.z * vec2(c.z, 1.0), 1.0);
+      c = mix(c, mix(c.yzx, c.zxy, modulate1), modulate2);
+      c = mix(c, mix(abs(sin(c.yxz * 2.0)), c.zyx, modulate3), modulate4);
+      c = mix(c, mix(c.yzx * c.yzx, c.zxy * c.zxy, modulate1), modulate5);
+      return vec4(c, 1.0);
+    }
+  </script>
+
+  <script type="application/glsl" id="map-z-to-color-2">
+    uniform float modulate1;
+    uniform float modulate2;
+    uniform float modulate3;
+    uniform float modulate4;
+    uniform float modulate5;
+    vec4 getSample(vec2 xy);
+    vec4 getFramesSample(vec2 xy) {
+      vec3 c = getSample(xy).xyz;
+      c = vec3(.01) + sqrt(c.z * vec3(c.z * vec2(c.z, 1.0), 1.0));
+      c = mix(c, mix(c.yzx, c.zxy, modulate1), modulate2);
+      c = mix(c, mix(abs(sin(c.yxz * 2.0)), c.zyx, modulate3), modulate4);
+      c = mix(c, mix(c.yzx * c.yzx, c.zxy * c.zxy, modulate1), modulate5);
+      return vec4(c, 1.0);
+    }
+  </script>
+
+  <body>
+    <div id="browser" style="display: none">
+      Note: Web audio support required.<br />Try Chrome or Firefox.
+    </div>
+    <div id="about"></div>
+    <div id="pause" class="playerbutton">
+      <div><div></div></div>
+    </div>
+    <div id="play" class="playerbutton">
+      <div><div></div></div>
+    </div>
+    <div id="loading" class="playerbutton">
+      <div><div></div></div>
+    </div>
+    <script>
+      window.onload = function () {
+        setTimeout(function () {
+          play.style.display = "block";
+          pause.style.display = "block";
+        }, 500);
+
+        var audioSupport = window.AudioContext || window.webkitAudioContext;
+        var safari =
+          navigator.userAgent.match(/Safari/) &&
+          !navigator.userAgent.match(/Chrome/);
+        if (safari || !audioSupport) {
+          document.querySelector("#browser").style.display = "block";
+        }
+      };
+
+      // Play/pause
+      var play = document.querySelector("#play");
+      play.onclick = function () {
+        loadAudio();
+        play.style.display = "none";
+      };
+
+      var pause = document.querySelector("#pause");
+      pause.onclick = function () {
+        if (audio) audio.pause();
+        play.style.display = "block";
+      };
+
+      // Song info (experimental)
+      var songTimer = null;
+      var songInfo = "http://fm.acko.net/status-json.xsl";
+      var infoEl = document.querySelector("#about");
+      var trackSongInfo = function () {
+        if (!songTimer) {
+          songTimer = setTimeout(pingSong, 20000);
+          pingSong();
+        }
+      };
+      var untrackSongInfo = function () {
+        if (songTimer) clearTimeout(songTimer);
+        songTimer = null;
+        infoEl.style.opacity = 0;
+      };
+      var pingSong = function () {
+        fetch(songInfo, "json", function (err, xhr) {
+          if (
+            xhr.response &&
+            xhr.response.icestats &&
+            xhr.response.icestats.source
+          ) {
+            var song = xhr.response.icestats.source.title;
+            infoEl.textContent = "♫  " + song;
+            infoEl.style.opacity = 1;
+
+            if (songTimer) clearTimeout(songTimer);
+            songTimer = setTimeout(pingSong, 20000);
+          }
+        });
+      };
+      var fetch = function (url, type, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.responseType = type;
+        xhr.addEventListener("load", function () {
+          callback(xhr.status == 404, xhr);
+        });
+        xhr.send();
+      };
+
+      // Load audio
+      var audio;
+      var loadAudio = function (url) {
+        if (!audio) {
+          audio = new Audio();
+          var sources = [["audio/mpeg", "http://fm.acko.net/1337.mp3"]];
+
+          sources.forEach(function (source) {
+            if (!url && audio.canPlayType(source[0])) {
+              url = source[1];
+            }
+          });
+          audio.oncanplay = function () {
+            if (!audioHandler) {
+              makeAudioPipe(audio);
+            }
+          };
+          audio.oncanplaythrough = function () {
+            loading.style.display = "none";
+            audio.play();
+          };
+
+          if (!url) {
+            alert("Browser MP3 support required.");
+            throw "Browser MP3 support required.";
+          }
+          audio.onplaying = function () {
+            trackSongInfo();
+          };
+          audio.onended = function () {
+            play.style.display = "block";
+          };
+          loading.style.display = "block";
+          audio.crossOrigin = "anonymous";
+          audio.src = url;
+        } else {
+          audio.play();
+        }
+      };
+
+      // Audio analyzer
+      var audioHandler, audioCurrentTime;
+      var makeAudioPipe = function (element) {
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        var ctx = new AudioContext();
+
+        var source = ctx.createMediaElementSource(element);
+
+        var analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+
+        var scratchTime = new Float32Array(analyser.fftSize);
+
+        var bufferFreq = new Float32Array(analyser.frequencyBinCount);
+        var bufferTime = new Float32Array(analyser.fftSize);
+        three.on(
+          "update",
+          (audioHandler = function () {
+            analyser.getFloatFrequencyData(bufferFreq);
+
+            // Web Audio support is spotty
+            if (analyser.getFloatTimeDomainData) {
+              analyser.getFloatTimeDomainData(bufferTime);
+            } else {
+              analyser.getByteTimeDomainData(scratchTime);
+              for (var i = 0; i < analyser.fftSize; ++i) {
+                bufferTime[i] = scratchTime[i];
+              }
+            }
+          })
+        );
+
+        mathbox.select("#audioFreq").set("data", bufferFreq);
+        mathbox.select("#audioTime").set("data", bufferTime);
+
+        source.connect(analyser);
+        analyser.connect(ctx.destination);
+      };
+      const π = Math.PI;
+      // Mathbox
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "fullscreen", "ui"],
+        renderer: {
+          parameters: {
+            antialias: false,
+          },
+        },
+        controls: {
+          klass: THREE.TrackballControls,
+          parameters: {
+            noZoom: true,
+          },
+        },
+        size: {
+          maxRenderWidth: 1920,
+          maxRenderHeight: 1080,
+        },
+        loop: {
+          start: window == top.window,
+        },
+      });
+
+      var three = mathbox.three;
+      three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+
+      var seed1 = Math.random();
+      var seed2 = Math.random();
+
+      // Mathbox DOM
+      mathbox
+        .set({
+          scale: 720,
+        })
+        .camera({
+          proxy: true,
+          position: [0.3, 0.1, 2],
+        })
+        .group()
+        .array({
+          id: "audioTime",
+          data: [],
+          width: 1024,
+          channels: 1,
+        })
+        .array({
+          id: "audioFreq",
+          data: [],
+          width: 512,
+          channels: 1,
+        });
+
+      mathbox
+        .rtt({
+          id: "render",
+          width: 64 * 4,
+          height: 36 * 4,
+          type: "unsignedByte",
+          minFilter: "nearest",
+          magFilter: "nearest",
+        })
+        .camera({
+          position: [0, 0, 2.5],
+        })
+        .group()
+        .swizzle({
+          source: "#audioTime",
+          order: "yx",
+        })
+        .spread({
+          width: [3.6, 0, 0, 0],
+        })
+        .shader({
+          code: [
+            "vec4 getSample(vec4 xyzw);",
+            "vec4 getColor(vec4 xyzw) {",
+            "  float h = (getSample(xyzw).y);",
+            "  return vec4(vec3(h), 1.0);",
+            "}",
+          ].join("\n"),
+        })
+        .resample({})
+        .transform({
+          scale: [1, 1, 1],
+        })
+        .line({
+          points: "<<",
+          colors: "<",
+          width: 7,
+          color: 0xffffff,
+          opacity: 0.4,
+          blending: "add",
+        })
+        .end()
+        .end()
+
+        .cartesian(
+          {
+            range: [
+              [-2, 2],
+              [-1, 1],
+              [-1, 1],
+            ],
+            scale: [π / 2, 1 / 4, 1 / 4],
+          },
+          {
+            quaternion: function (t) {
+              c = Math.cos(t / 3 + seed2);
+              s = Math.sin(t / 3 + seed2);
+              c2 = Math.cos(t / 8.71 + seed1);
+              s2 = Math.sin(t / 8.71 + seed1);
+              return [s * s2, s * c2, 0.2, c];
+            },
+          }
+        )
+        .grid({
+          divideX: 4,
+          divideY: 4,
+          zBias: 10,
+          opacity: 0.1,
+          color: 0xffdfe0,
+          width: 6,
+        })
+        .end()
+        .end()
+
+        .rtt({
+          id: "rtt1",
+          history: 4,
+          width: 64 * 4,
+          height: 36 * 4,
+          type: "unsignedByte",
+        })
+        .shader({
+          code: "#map-rotate",
+        })
+        .resample({
+          id: "resample1",
+          indices: 3,
+          channels: 4,
+        })
+        .compose({
+          color: "#ffffff",
+          zWrite: false,
+        })
+        .compose({
+          source: "#render",
+          blending: "add",
+          color: "#ffffff",
+          zWrite: false,
+        })
+        .end();
+
+      var modulate = 0;
+      var warp = 0;
+      var pattern = 0;
+
+      mathbox
+        .rtt({
+          id: "rtt2",
+          width: 64 * 4,
+          height: 36 * 4,
+          type: "float",
+        })
+        .camera({
+          position: [0, 0, 2.5],
+        })
+        .clock(
+          {},
+          {
+            seek: function (t) {
+              return audio ? audio.currentTime : t;
+            },
+          }
+        )
+        .shader(
+          {
+            code: "#map-temporal-blur",
+          },
+          {
+            time: function (t) {
+              return t * 16.0;
+            },
+            modulate: function (t) {
+              var bang = Math.max(
+                0,
+                Math.sin(t * 0.1 - 1 + seed1 + Math.sin(t * 0.0311)) * 3 - 2
+              );
+              modulate = bang * bang;
+              return modulate;
+            },
+            pattern: function (t) {
+              var bang = Math.max(
+                0,
+                Math.sin(t * 0.134 + 1 + seed2 + Math.sin(t * 0.0471)) * 0.5 +
+                  0.5
+              );
+              pattern = bang * bang;
+              return pattern;
+            },
+            warp: function (t) {
+              var bang = Math.sin(t * 0.119 + 1 + Math.sin(t * 0.0771));
+              warp = bang * bang;
+              return warp;
+            },
+            shift: function (t) {
+              var bang = Math.max(
+                0,
+                Math.sin(t * 0.116 + Math.sin(t * 0.0631)) * 3 - 2
+              );
+              shift = bang * bang;
+              return shift;
+            },
+          }
+        )
+        .resample({
+          id: "resample2",
+          source: "#rtt1",
+          indices: 3,
+          channels: 4,
+        })
+        .compose({
+          color: "#fff",
+          zWrite: false,
+        })
+        .end()
+        .transform({
+          scale: [1, 0.35, 1],
+        })
+        .swizzle({
+          source: "#audioTime",
+          order: "yx",
+        })
+        .spread({
+          width: [3.444, 0, 0, 0],
+        })
+        .shader({
+          code: [
+            "vec4 getSample(vec4 xyzw);",
+            "vec4 getColor(vec4 xyzw) {",
+            "  float h = getSample(xyzw).y;",
+            "  return vec4(vec3(h) * .2, 1.0);",
+            "}",
+          ].join("\n"),
+        })
+        .resample({})
+        .line({
+          points: "<<",
+          colors: "<",
+          width: 50,
+          color: 0xffffff,
+          opacity: 1,
+          blending: "add",
+        })
+        .end()
+        .end()
+        .resample({
+          width: 129,
+          height: 73,
+        })
+        .repeat({
+          depth: 2,
+          id: "lerp",
+        })
+
+        .shader({
+          code: "#map-xy-to-xyz",
+        })
+        .resample({
+          indices: 3,
+          channels: 3,
+        })
+
+        .transpose({
+          order: "xywz",
+          id: "transpose",
+        })
+
+        .transpose({
+          source: "#lerp",
+          order: "xywz",
+          id: "color",
+        })
+
+        .clock(
+          {},
+          {
+            seek: function (t) {
+              return audio ? audio.currentTime : t;
+            },
+          }
+        )
+        .clock(
+          {
+            id: "disco",
+          },
+          {
+            speed: function (t) {
+              var bang = Math.max(
+                0,
+                Math.sin(t * 0.081 - 1 + Math.sin(t * 0.0211)) * 5 - 4
+              );
+              return bang > 0 ? 1 : 0.2;
+            },
+          }
+        )
+
+        .shader(
+          {
+            code: "#map-z-to-color",
+          },
+          {
+            modulate1: function (t) {
+              return Math.cos((t + 1) * 0.417 + seed2 * 5) * 0.5 + 0.5;
+            },
+            modulate2: function (t) {
+              return (
+                Math.cos((t + 1) * 0.617 + seed1 + Math.sin(t * 0.133)) * 0.5 +
+                0.5
+              );
+            },
+            modulate3: function (t) {
+              return Math.cos((t + 1) * 0.217 + seed2 + 2.0) * 0.5 + 0.5;
+            },
+            modulate4: function (t) {
+              return (
+                Math.cos(
+                  (t + 1) * 0.117 + seed2 * 3 + 3.0 + Math.sin(t * 0.133)
+                ) *
+                  0.5 +
+                0.5
+              );
+            },
+            modulate5: function (t) {
+              return (
+                Math.cos(
+                  (t + 1) * 0.017 + seed1 * 5 + 2.0 + Math.sin(t * 0.033)
+                ) *
+                  0.5 +
+                0.5
+              );
+            },
+          }
+        )
+        .resample({
+          source: "#lerp",
+          id: "color1",
+          indices: 2,
+          channels: 4,
+        })
+
+        .shader(
+          {
+            code: "#map-z-to-color-2",
+          },
+          {
+            modulate1: function (t) {
+              return Math.cos((t + 1) * 0.417 + seed2 * 5) * 0.5 + 0.5;
+            },
+            modulate2: function (t) {
+              return (
+                Math.cos((t + 1) * 0.617 + seed1 + Math.sin(t * 0.133)) * 0.5 +
+                0.5
+              );
+            },
+            modulate3: function (t) {
+              return Math.cos((t + 1) * 0.217 + seed2 + 2.0) * 0.5 + 0.5;
+            },
+            modulate4: function (t) {
+              return (
+                Math.cos(
+                  (t + 1) * 0.117 + seed2 * 3 + 3.0 + Math.sin(t * 0.133)
+                ) *
+                  0.5 +
+                0.5
+              );
+            },
+            modulate5: function (t) {
+              return (
+                Math.cos(
+                  (t + 1) * 0.017 + seed1 * 4 + 2.0 + Math.sin(t * 0.033)
+                ) *
+                  0.5 +
+                0.5
+              );
+            },
+          }
+        )
+        .resample({
+          source: "#lerp",
+          id: "color2",
+          indices: 2,
+          channels: 4,
+        })
+
+        .end()
+
+        .polar(
+          {
+            bend: 1,
+          },
+          {
+            quaternion: function (t) {
+              t = t / 3;
+              c = Math.cos(t / 4 + seed1);
+              s = Math.sin(t / 4 + seed1);
+              c2 = Math.cos(t / 11.71 + seed2) * 1.71;
+              s2 = Math.sin(t / 11.71 + seed2) * 1.71;
+              return [s * s2, s * c2, -0.2, c];
+            },
+          }
+        )
+        .cartesian({
+          range: [
+            [-16 / 9 - 0.001, 16 / 9 + 0.001],
+            [-1, 1],
+            [-1, 1],
+          ],
+          scale: [π, (π * 9) / 16, (π * 9) / 16],
+          rotation: [π / 2, 0, 0],
+          position: [0, 1, 0],
+        })
+        .play({
+          pace: 1,
+          loop: true,
+          to: 233,
+          script: {
+            100: { props: { quaternion: [0, 0, 0, 1] } },
+            115: {
+              expr: {
+                quaternion: function (t) {
+                  return [
+                    0.4 + 0.3 * Math.cos(t * 0.00117),
+                    0.5 + 0.3 * Math.sin(t * 0.001),
+                    0.1,
+                    0,
+                  ];
+                },
+              },
+            },
+            145: {
+              expr: {
+                quaternion: function (t) {
+                  return [
+                    0.3,
+                    0.6 * Math.sin(t * 0.00103),
+                    0.2 * Math.sin(t * 0.00107),
+                    -1,
+                  ];
+                },
+              },
+            },
+            160: { props: { quaternion: [0, 0, 0, -1] } },
+          },
+        })
+        .lerp({
+          source: "#transpose",
+          width: 33,
+          height: 19,
+        })
+        .lerp({
+          source: "#color2",
+          width: 33,
+          height: 19,
+        })
+        .transform()
+        .line({
+          points: "<<",
+          colors: "<",
+          color: "#ffffff",
+          width: 2,
+          zBias: 5,
+        })
+        .line({
+          points: "<<",
+          colors: "<",
+          color: "#ffffff",
+          width: 4,
+          opacity: 0.5,
+          zBias: 6,
+          zWrite: false,
+        })
+        .end()
+        .play({
+          to: 160,
+          loop: true,
+          script: {
+            19: { position: [0, 0, 0] },
+            39: { position: [0, 0, 2] },
+            57: { position: [0, 0, 0] },
+          },
+        })
+        .transpose({
+          source: "<<",
+          order: "yxzw",
+        })
+        .transpose({
+          source: "<<",
+          order: "yxzw",
+        })
+        .transform()
+        .line({
+          points: "<<",
+          colors: "<",
+          color: "#ffffff",
+          width: 2,
+          zBias: 5,
+        })
+        .line({
+          points: "<<",
+          colors: "<",
+          color: "#ffffff",
+          width: 4,
+          opacity: 0.5,
+          zBias: 6,
+          zWrite: false,
+        })
+        .end()
+        .play({
+          to: 160,
+          loop: true,
+          script: {
+            19: { position: [0, 0, 0] },
+            39: { position: [0, 0, -2] },
+            57: { position: [0, 0, 0] },
+          },
+        })
+
+        .transform()
+        .point({
+          points: "<<",
+          colors: "<",
+          color: "#ffffff",
+          size: 10,
+          zBias: 5,
+          zOrder: -1,
+          blending: "add",
+          zWrite: false,
+        })
+        .end()
+        .play({
+          to: 160,
+          loop: true,
+          script: {
+            19: { position: [0, 0, 0] },
+            39: { position: [0, 0, -1] },
+            57: { position: [0, 0, 0] },
+          },
+        })
+        .transform()
+        .point({
+          points: "#transpose",
+          colors: "#color2",
+          color: "#ffffff",
+          size: 5,
+          zBias: 5,
+          zOrder: -1,
+          blending: "add",
+          zWrite: false,
+        })
+        .end()
+        .play({
+          to: 160,
+          loop: true,
+          script: {
+            19: { position: [0, 0, 0] },
+            39: { position: [0, 0, 1] },
+            57: { position: [0, 0, 0] },
+          },
+        })
+        .vector({
+          points: "#transpose",
+          colors: "#color1",
+          color: "#ffffff",
+          start: false,
+          end: false,
+          width: 40,
+          opacity: 0.03,
+          blending: "add",
+          zWrite: false,
+          zOrder: 2,
+        });
+    </script>
+
+    <style type="text/css">
+      body {
+        font-size: 16px;
+        line-height: 28px;
+        font-weight: normal;
+        font-style: normal;
+      }
+      body * {
+        box-sizing: content-box;
+      }
+      .playerbutton {
+        position: absolute;
+        z-index: 10001;
+        left: 50%;
+        top: 50%;
+        margin-left: -100px;
+        margin-top: -100px;
+        width: 200px;
+        height: 200px;
+        cursor: pointer;
+      }
+      .playerbutton > div {
+        margin: 50px auto;
+        width: 100px;
+        height: 100px;
+        border-radius: 50% 50%;
+        background: rgb(120, 139, 149);
+        color: #fff;
+        overflow: hidden;
+      }
+      #play div div,
+      #loading div div {
+        margin: 30px 30px 0 30px;
+        width: 0px;
+        border-top: 20px solid transparent;
+        border-left: 40px solid #fff;
+        border-bottom: 20px solid transparent;
+      }
+      #pause div div {
+        margin: 30px 30px 0 30px;
+        display: block;
+        width: 10px;
+        height: 40px;
+        border-left: 15px solid #fff;
+        border-right: 15px solid #fff;
+      }
+      #pause {
+        opacity: 0;
+        -webkit-transition: opacity 0.25s ease-in-out;
+        transition: opacity 0.25s ease-in-out;
+      }
+      #pause:hover {
+        opacity: 1;
+      }
+      #loading {
+        display: none;
+        cursor: wait;
+      }
+      #loading > div {
+        -webkit-animation: load 1.4s infinite linear;
+        animation: load 1.4s infinite linear;
+      }
+      #play,
+      #pause {
+        display: none;
+      }
+      #about {
+        opacity: 0;
+        -webkit-transition: opacity 0.5s ease-in-out;
+        transition: opacity 0.5s ease-in-out;
+
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+
+        border-radius: 2px;
+        background: rgba(0, 0, 0, 0.25);
+        color: #fff;
+        padding: 5px 10px;
+        text-align: center;
+
+        font-size: 12px;
+      }
+      #browser {
+        display: none;
+
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        -webkit-transform: translate(-50%, 0);
+        transform: translate(-50%, 0);
+
+        border-radius: 2px;
+        background: rgba(0, 0, 0, 0.25);
+        color: #fff;
+        padding: 5px 10px;
+        text-align: center;
+
+        font-size: 12px;
+        font-weight: bold;
+      }
+      @-webkit-keyframes load {
+        0% {
+          -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+        }
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes load {
+        0% {
+          -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+        }
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </body>
+</html>

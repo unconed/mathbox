@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Vertex Pass</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script type="application/glsl" id="vertex-warp">
+      uniform float time;
+      uniform float intensity;
+
+      vec4 warpVertex(vec4 xyzw, inout vec4 stpq) {
+        xyzw +=   0.2 * intensity * (sin(xyzw.yzwx * 1.91 + time + sin(xyzw.wxyz * 1.74 + time)));
+        xyzw +=   0.1 * intensity * (sin(xyzw.yzwx * 4.03 + time + sin(xyzw.wxyz * 2.74 + time)));
+        xyzw +=  0.05 * intensity * (sin(xyzw.yzwx * 8.39 + time + sin(xyzw.wxyz * 4.18 + time)));
+        xyzw += 0.025 * intensity * (sin(xyzw.yzwx * 15.1 + time + sin(xyzw.wxyz * 9.18 + time)));
+
+        return xyzw;
+      }
+    </script>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "stats"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      var three = mathbox.three;
+
+      three.camera.position.set(0, 0, 3);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      function pingpong(t) {
+        return -Math.cos(t / 4);
+      }
+
+      mathbox.set({
+        scale: 600,
+        focus: 3,
+      });
+
+      var warpShader = mathbox.shader(
+        {
+          code: "#vertex-warp",
+        },
+        {
+          time: function (t) {
+            return t / 4;
+          },
+          intensity: function (t) {
+            t = t / 4;
+            intensity = 0.5 + 0.5 * Math.cos(t / 3);
+            intensity = 1.0 - Math.pow(intensity, 4);
+            return intensity;
+          },
+        }
+      );
+
+      var transition = mathbox.reveal(
+        {
+          stagger: [10, 0, 0, 0],
+        },
+        {
+          enter: function (t) {
+            return 1.0 - Math.pow(1.0 - Math.min(1, (1 + pingpong(t)) * 2), 2);
+          },
+          exit: function (t) {
+            return 1.0 - Math.pow(1.0 - Math.min(1, (1 - pingpong(t)) * 2), 2);
+          },
+        }
+      );
+
+      var view = transition
+        .vertex({
+          pass: "view",
+        })
+        .polar({
+          bend: 0.25,
+          range: [
+            [-MathBox.π, MathBox.π],
+            [0, 1],
+            [-1, 1],
+          ],
+          scale: [2, 1, 1],
+        });
+
+      view
+        .transform({
+          position: [0, 0.5, 0],
+        })
+        .axis({
+          detail: 512,
+        })
+        .scale({
+          divide: 10,
+          unit: MathBox.π,
+          base: 2,
+        })
+        .ticks({
+          width: 3,
+          classes: ["foo", "bar"],
+        })
+        .scale({
+          divide: 5,
+          unit: MathBox.π,
+          base: 2,
+        })
+        .format({
+          expr: function (x) {
+            return x ? (x / MathBox.π).toPrecision(2) + "π" : 0;
+          },
+        })
+        .label({
+          depth: 0.5,
+          zIndex: 1,
+        });
+
+      view.axis({
+        axis: 2,
+        detail: 128,
+        crossed: true,
+      });
+      view
+        .transform({
+          position: [MathBox.π / 2, 0, 0],
+        })
+        .axis({
+          axis: 2,
+          detail: 128,
+          crossed: true,
+        });
+      view
+        .transform({
+          position: [-MathBox.π / 2, 0, 0],
+        })
+        .axis({
+          axis: 2,
+          detail: 128,
+          crossed: true,
+        });
+
+      view
+        .interval({
+          id: "sampler",
+          width: 512,
+          expr: function (emit, x, i, t) {
+            emit(
+              x,
+              0.5 +
+                0.25 * Math.sin(x + t) +
+                0.25 * Math.sin(x * 1.91 + t * 1.81)
+            );
+          },
+          channels: 2,
+        })
+        .grid({
+          divideX: 40,
+          detailX: 512,
+          divideY: 20,
+          detailY: 128,
+          width: 1,
+          opacity: 0.5,
+          unitX: MathBox.π,
+          baseX: 2,
+          zBias: -5,
+        })
+        .line({
+          points: "#sampler",
+          color: 0x3090ff,
+          width: 5,
+        });
+    </script>
+  </body>
+</html>

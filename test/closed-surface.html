@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Closed Surface</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+       - a minified version mathbox.min.js is also available;
+       - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link rel="stylesheet" href="../../build/mathbox.css" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "stats"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(-3.5, 2.2, -3.3);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      view = mathbox.cartesian({
+        range: [
+          [-1, 1],
+          [-1, 1],
+          [-1, 1],
+        ],
+        scale: [1, 1, 1],
+      });
+
+      view.axis({
+        axis: 1,
+      });
+      view.axis({
+        axis: 3,
+      });
+
+      view.grid({
+        width: 5,
+        opacity: 0.5,
+        axes: [1, 3],
+      });
+
+      // Horizontally closed, explicit normals
+      var sphere = view
+        .matrix({
+          id: "sphere",
+          bufferWidth: 128,
+          bufferHeight: 64,
+          width: 64,
+          height: 32,
+          live: false,
+          expr: (emit, i, j, time) => {
+            let φ = (i / 64) * MathBox.τ;
+            let θ = (j / 31 - 0.5) * MathBox.π;
+
+            emit(
+              Math.cos(φ) * Math.cos(θ),
+              Math.sin(θ),
+              Math.sin(φ) * Math.cos(θ)
+            );
+          },
+          channels: 3,
+        })
+        .transform({
+          scale: [0.5, 0.5, 0.5],
+        })
+        .surface({
+          points: "<",
+          normals: "<",
+          color: 0x3090ff,
+          shaded: true,
+          closedX: true,
+        });
+
+      // Completely closed, implicit normals
+      var torus = view
+        .matrix({
+          id: "torus",
+          bufferWidth: 128,
+          bufferHeight: 64,
+          width: 64,
+          height: 32,
+          live: false,
+          expr: (emit, i, j, time) => {
+            let φ = (i / 64) * MathBox.τ;
+            let θ = (j / 32) * MathBox.τ;
+
+            let x = Math.cos(φ) * 0.5 + 2;
+            let y = Math.sin(φ) * 0.5;
+
+            emit(x * Math.cos(θ), y, x * Math.sin(θ));
+          },
+          channels: 3,
+        })
+        .transform({
+          scale: [0.5, 0.5, 0.5],
+        })
+        .surface({
+          points: "<",
+          color: 0x3090ff,
+          shaded: true,
+          closedX: true,
+          closedY: true,
+        });
+    </script>
+  </body>
+</html>

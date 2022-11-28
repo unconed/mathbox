@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Curvedots</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(0, 0, 3);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      view = mathbox.cartesian({
+        range: [
+          [-2, 2],
+          [-1, 1],
+          [-1, 1],
+        ],
+        scale: [2, 1, 1],
+      });
+
+      view.interval({
+        id: "sampler",
+        width: 32,
+        expr: function (emit, x, i, time) {
+          y =
+            Math.sin(x + time) +
+            (i % 2) * Math.sin(x * 400000 + time * 5 + x * x * 10000) * 0.05;
+          emit(x, y);
+        },
+        channels: 2,
+      });
+
+      view.spread({
+        unit: "absolute",
+        height: [0, 0.05, 0, 0],
+      });
+
+      view.split({
+        axis: "x",
+        length: 3,
+        overlap: 0,
+      });
+      view.join({
+        axis: "x",
+        overlap: 1,
+      });
+
+      view.line({
+        color: 0x3090ff,
+        width: 5,
+      });
+      view.point({
+        color: 0x3090ff,
+        size: 30,
+      });
+
+      // presentation integration
+      messageHandler = function (event) {
+        d = event.data;
+        if (d && (d = d.mathBoxDirector) && d.method == "go") {
+          v = Math.max(0, Math.min(1, d.args[0] - 3));
+          mathbox.select("#sampler").set({ history: v * 25 });
+        }
+      }.bind(this);
+      window.addEventListener("message", messageHandler);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Hyperbolic Curvature</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+       - a minified version mathbox.min.js is also available;
+       - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui@latest/build/dat.gui.min.js"></script>
+    <link rel="stylesheet" href="../../build/mathbox.css" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "mathbox"],
+        controls: {
+          // Orbit controls, i.e. Euler angles, with gimbal lock
+          klass: THREE.OrbitControls,
+
+          // Trackball controls, i.e. Free quaternion rotation
+          //klass: THREE.TrackballControls,
+        },
+      });
+      if (mathbox.fallback) throw "WebGL not supported";
+
+      var three = mathbox.three;
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      // Dat GUI
+      var gui = new dat.GUI();
+      var props = {
+        angle: 180,
+        x: 0,
+        z: 0,
+      };
+      gui.add(props, "angle").min(0).max(360).step(5);
+      gui.add(props, "x").min(-1).max(1).step(0.05);
+      gui.add(props, "z").min(-1).max(1).step(0.05);
+
+      // DOM
+      mathbox.set("focus", 3);
+
+      var camera = mathbox.camera({
+        proxy: true,
+        position: [1, 1, 3],
+      });
+
+      var view = mathbox.clock({ speed: 1 / 16 }).cartesian({
+        range: [
+          [-2, 2],
+          [-4, 4],
+          [-2, 2],
+        ],
+        scale: [1, 1, 1],
+      });
+
+      // Axes + grid
+      view
+        .axis({
+          axis: 1,
+          width: 3,
+          color: "black",
+        })
+        .axis({
+          axis: 3,
+          width: 3,
+          color: "black",
+        })
+        .grid({
+          axes: "xz",
+          width: 2,
+          divideX: 10,
+          divideY: 10,
+          color: "black",
+        });
+
+      // Use a dummy shader to cache cosine / sine
+      var shader = view.shader(
+        {
+          code: "uniform float tCos;\nuniform float tSin;\nvoid main() { };",
+        },
+        {
+          tCos: function () {
+            return Math.cos((props.angle * MathBox.τ) / 360);
+          },
+          tSin: function () {
+            return Math.sin((props.angle * MathBox.τ) / 360);
+          },
+        }
+      );
+      var cache = shader.get();
+
+      // Compute 2D area of a rotated hyberbolic surface
+      var data = view.area({
+        axes: "xz",
+        expr: function (emit, x, z, i, j, t) {
+          var cos = cache.tCos;
+          var sin = cache.tSin;
+
+          var x2 = x + props.x;
+          var z2 = z + props.z;
+
+          var x3 = x2 * cos + z2 * sin;
+          var z3 = -x2 * sin + z2 * cos;
+
+          emit(x, x3 * x3 - z3 * z3, z);
+        },
+        width: 65,
+        height: 65,
+        channels: 3,
+      });
+
+      // X slice at origin
+      var sliceX = view
+        .group()
+        .slice({
+          height: [32, 33],
+        })
+        .line({
+          color: 0xc00040,
+          width: 5,
+          zBias: 3,
+        })
+        .end();
+
+      // Y slice at origin
+      var sliceY = view
+        .group()
+        .slice({
+          width: [32, 33],
+        })
+        .transpose({
+          order: "yx",
+        })
+        .line({
+          color: 0x0080f0,
+          width: 5,
+          zBias: 3,
+        })
+        .end();
+
+      // Draw surface
+      var surface = view.surface({
+        lineX: true,
+        lineY: true,
+        shaded: true,
+        color: 0xcccccc,
+        lineBias: 1,
+        opacity: 0.75,
+      });
+    </script>
+  </body>
+</html>

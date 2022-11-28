@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - LaTeX Label (KaTeX)</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.js"></script>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      // Define global DOM handler to format 'latex' into an HTML span
+      MathBox.DOM.Types.latex = MathBox.DOM.createClass({
+        render: function (el) {
+          this.props.innerHTML = katex.renderToString(this.children);
+          return el("span", this.props);
+        },
+      });
+
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "stats"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+        camera: {
+          near: 0.01,
+          far: 1000,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(1.1, 1.45, 1);
+      three.camera.lookAt(new THREE.Vector3());
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      view = mathbox
+        .unit({
+          scale: null,
+        })
+        .cartesian({
+          range: [
+            [-2, 2],
+            [-1, 1],
+            [-1, 1],
+          ],
+          scale: [2, 1, 1],
+        });
+
+      view.axis({
+        zBias: -10,
+        end: true,
+        width: 10,
+      });
+
+      view.axis({
+        axis: 2,
+        zBias: -10,
+        end: true,
+        width: 10,
+      });
+
+      view.grid({
+        divideX: 30,
+        width: 10,
+        opacity: 0.5,
+        zBias: -10,
+        axes: [1, 3],
+      });
+
+      view.interval({
+        width: 8,
+        expr: function (emit, x, i, time) {
+          y = Math.sin(x + (time * 0.2) / 4) * 0.7;
+          emit(x, y);
+        },
+        channels: 2,
+      });
+
+      view.repeat({
+        height: 3,
+        depth: 2,
+      });
+      view.spread({
+        unit: "absolute",
+        height: [0, 0, 0.5],
+        depth: [0, 0.5, 0],
+      });
+
+      view
+        .point({
+          color: 0x3090ff,
+          size: 40,
+        })
+
+        .html({
+          width: 8,
+          height: 3,
+          depth: 2,
+          expr: function (emit, el, i, j, k, l, time) {
+            // Emit latex element
+            emit(
+              el(
+                "latex",
+                null,
+                "c = \\mathbf{F} \\pm\\sqrt{" + i + " a^2 + " + j + " b^2}"
+              )
+            );
+          },
+        })
+        .dom({
+          snap: false,
+          offset: [0, -32],
+          depth: 0.5,
+          size: 24,
+          zoom: 1,
+          outline: 2,
+        });
+    </script>
+  </body>
+</html>

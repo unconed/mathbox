@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Helitoroidal Surface</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/TrackballControls.js"
+    ></script>
+    <!--
+       - a minified version mathbox.min.js is also available;
+       - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui@latest/build/dat.gui.min.js"></script>
+    <link rel="stylesheet" href="../../build/mathbox.css" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "mathbox"],
+        controls: {
+          // Trackball controls, i.e. Free quaternion rotation
+          klass: THREE.TrackballControls,
+        },
+      });
+      if (mathbox.fallback) throw "WebGL not supported";
+
+      var three = mathbox.three;
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      // Dat GUI
+      var gui = new dat.GUI();
+      var props = {
+        n: 16,
+        r1: 1,
+        r2: 0.3,
+        r3: 0.1,
+      };
+      gui.add(props, "n").min(0).max(32).step(1);
+      gui.add(props, "r1").min(0).max(3).step(0.01);
+      gui.add(props, "r2").min(0.01).max(0.5).step(0.01);
+      gui.add(props, "r3").min(0.01).max(0.2).step(0.01);
+
+      // DOM
+      mathbox.set("focus", 3);
+
+      var camera = mathbox.camera({
+        proxy: true,
+        position: [1, 1, 3],
+      });
+
+      var view = mathbox.clock({ speed: 1 / 16 }).cartesian({
+        range: [
+          [-1, 1],
+          [-1, 1],
+          [-1, 1],
+        ],
+        scale: [1, 1, 1],
+        quaternion: [0.7, 0, 0, 0.7],
+      });
+
+      var vs = new THREE.Vector3();
+      var spine = function (θ) {
+        var s, c, x, y, z, x2, y2, z2, r;
+
+        var a = θ * props.n;
+        var b = θ;
+
+        s = Math.sin(a);
+        c = Math.cos(a);
+
+        r = props.r2 + props.r3;
+        x = 1 + c * r;
+        y = 0;
+        z = s * r;
+
+        s = Math.sin(b);
+        c = Math.cos(b);
+
+        r = props.r1;
+        x2 = x * c * r;
+        y2 = x * s * r;
+        z2 = z * r;
+
+        return vs.set(x2, y2, z2);
+      };
+
+      var circle = function (θ) {
+        var s, c, x, y, z;
+
+        var b = θ;
+
+        s = Math.sin(b);
+        c = Math.cos(b);
+
+        x = c * props.r1;
+        y = s * props.r1;
+        z = 0;
+
+        return vs.set(x, y, z);
+      };
+
+      // Compute TBN matrix
+      var vo = new THREE.Vector3();
+      var vt = new THREE.Vector3();
+      var vb = new THREE.Vector3();
+      var vn = new THREE.Vector3();
+      var mtbn = new THREE.Matrix4();
+      var e = 0.001;
+      var tbn = function (θ) {
+        var f;
+
+        vt.copy(vo.copy(spine(θ)));
+        vt.sub(spine(θ + e));
+        vt.multiplyScalar(1 / e);
+        vt.normalize();
+
+        if (props.n) {
+          vb.copy(circle(θ));
+          vb.sub(circle(θ + e));
+          vb.multiplyScalar(1 / e);
+        } else {
+          vb.copy(vo);
+        }
+        vb.normalize();
+
+        vn.crossVectors(vt, vb);
+        vn.normalize();
+
+        vb.crossVectors(vt, vn);
+        vb.normalize();
+
+        mtbn.set(
+          vt.x,
+          vb.x,
+          vn.x,
+          vo.x,
+          vt.y,
+          vb.y,
+          vn.y,
+          vo.y,
+          vt.z,
+          vb.z,
+          vn.z,
+          vo.z,
+          0,
+          0,
+          0,
+          1
+        );
+
+        return mtbn;
+      };
+
+      // Compute helitoroidal surface
+      var data = view.area({
+        rangeX: [-MathBox.π, MathBox.π],
+        rangeY: [-MathBox.π, MathBox.π],
+        expr: function (emit, θ, φ, i, j, t) {
+          var f = spine(θ);
+          var m = tbn(θ);
+
+          var c = Math.cos(φ);
+          var s = Math.sin(φ);
+
+          vs.set(0, c * props.r3, s * props.r3);
+          vs.applyMatrix4(m);
+
+          emit(vs.x, vs.y, vs.z);
+        },
+        width: 512,
+        height: 16,
+        channels: 3,
+      });
+
+      // Draw spine curve
+      var helitoroidalSurface = view.surface({
+        shaded: true,
+        color: 0xcc0040,
+        lineY: true,
+        width: 1,
+      });
+
+      var curves1 = view
+        .resample({
+          height: 5,
+        })
+        .line({
+          color: 0xffffff,
+          width: 2,
+        });
+    </script>
+  </body>
+</html>

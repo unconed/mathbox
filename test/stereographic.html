@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Stereographic</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(0, 0, 10);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      stereo = mathbox
+        .set({
+          focus: 10,
+        })
+        .stereographic({
+          scale: [2, 2, 2],
+          bend: 1,
+        });
+
+      q1 = new THREE.Quaternion();
+      q2 = new THREE.Quaternion();
+      spherical = stereo.spherical(
+        {
+          range: [
+            [-MathBox.π, MathBox.π],
+            [-MathBox.π / 2, MathBox.π / 2],
+            [-1, 1],
+          ],
+        },
+        {
+          quaternion: function (t) {
+            q1.x = Math.cos(t * 0.123);
+            q1.y = Math.cos(t * 0.224 - 1);
+            q1.z = Math.cos(t * 0.161 + 1);
+            q1.w = Math.cos(t * 0.193 + 2);
+            q1.normalize();
+
+            q2.slerp(q1, 0.05);
+            return q2;
+          },
+        }
+      );
+
+      spherical
+        .transform({
+          position: [0, 0, 1],
+        })
+        .grid({
+          detailX: 128,
+          detailY: 128,
+          unitX: MathBox.π,
+          unitY: MathBox.π,
+          divideX: 20,
+          divideY: 20,
+        });
+    </script>
+  </body>
+</html>

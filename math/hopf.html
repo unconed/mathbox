@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Stereographic Hopf Fibration</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(2.3, 1, 2);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      time = 0;
+      angle = 0;
+      deform = 0;
+      skew = 0;
+
+      fa = 6;
+      fb = 4;
+
+      three.on("update", function () {
+        time = three.Time.clock * 0.6;
+        angle = wobbler(time / 5) * 0.6 + MathBox.π / 4 + 0.2;
+        skew = wobbler(time / 16.1) * 0.25;
+        deform = wobbler(time / 7.1);
+
+        if (deform == 0) {
+          fa = (Math.ceil(Math.random() * 2) + 1) * 2;
+          fb = (Math.ceil(Math.random() * 2) + 1) * 2;
+        }
+
+        deform *= cosineEase(time - 2);
+      });
+
+      clamp = function (x, a, b) {
+        return Math.max(a, Math.min(b, x));
+      };
+
+      cosineEase = function (t) {
+        return 0.5 - 0.5 * Math.cos(clamp(t, 0, 1) * MathBox.π);
+      };
+
+      wobbler = function (t) {
+        t = Math.sin(
+          (Math.min(1, Math.max(-1, 0.7 * Math.asin(Math.cos(MathBox.π * t)))) *
+            MathBox.τ) /
+            4
+        );
+        return t * 0.5 - 0.5;
+      };
+
+      hopf = function (emit, ϕ, θ, γ) {
+        η =
+          θ / 2 +
+          (Math.cos(ϕ * 2 + time) * skew + Math.cos(ϕ * fa)) * 0.15 * deform;
+        ξ1 = ϕ + Math.cos(γ * fb + time) * 0.25 * deform;
+        ξ2 = γ;
+
+        sum = ξ1 + ξ2;
+        diff = ξ1 - ξ2;
+
+        s = Math.sin(η);
+        c = Math.cos(η);
+
+        x = Math.cos(sum) * s;
+        y = Math.sin(sum) * s;
+        z = Math.cos(diff) * c;
+        w = Math.sin(diff) * c;
+
+        emit(z, y, w, x);
+      };
+
+      view = mathbox
+        .unit({
+          scale: 500,
+        })
+        .stereographic4({
+          range: [
+            [-4, 4],
+            [-4, 4],
+            [-4, 4],
+            [-1, 1],
+          ],
+          scale: [4, 4, 4, 1],
+        });
+
+      view.area({
+        rangeX: [-MathBox.π, MathBox.π],
+        rangeY: [-MathBox.π / 2, MathBox.π / 2],
+        width: 127,
+        height: 16,
+        centeredX: false,
+        centeredY: true,
+        expr: function (emit, x, y, i, j) {
+          ϕ = y;
+          θ = angle;
+          hopf(emit, ϕ, θ, x);
+        },
+        channels: 4,
+      });
+      view.line({
+        color: 0x3080ff,
+        zBias: 10,
+        width: 3,
+      });
+
+      view.area({
+        rangeX: [-MathBox.π, MathBox.π],
+        rangeY: [-0.6, 0.6],
+        width: 127,
+        height: 63,
+        expr: function (emit, x, y, i, j) {
+          ϕ = y + time;
+          θ = angle;
+          hopf(emit, ϕ, θ, x);
+        },
+        channels: 4,
+      });
+      view.surface({
+        shaded: true,
+        color: 0x3080ff,
+        zBias: -5,
+      });
+
+      view.area({
+        rangeX: [-MathBox.π, MathBox.π],
+        rangeY: [-MathBox.π / 2, MathBox.π / 2],
+        width: 127,
+        height: 63,
+        expr: function (emit, x, y, i, j) {
+          ϕ = y;
+          θ = angle;
+          hopf(emit, ϕ, θ, x);
+        },
+        channels: 4,
+      });
+      view.surface({
+        shaded: true,
+        color: 0xffffff,
+        opacity: 0.5,
+        zBias: -10,
+      });
+    </script>
+  </body>
+</html>

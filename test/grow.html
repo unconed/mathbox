@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Grow</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core"],
+      });
+      var three = mathbox.three;
+
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      function previous() {
+        present.set("index", present.get("index") - 1);
+      }
+
+      function next() {
+        present.set("index", present.get("index") + 1);
+      }
+
+      if (window == top)
+        window.onkeydown = function (e) {
+          switch (e.keyCode) {
+            case 37:
+            case 38:
+              previous();
+              break;
+            case 39:
+            case 40:
+              next();
+              break;
+          }
+          //console.log(present.get('index'));
+        };
+
+      var size = 1.2;
+      var scale = 1.6;
+      var view = mathbox.cartesian({
+        range: [
+          [-size, size],
+          [-size, size],
+          [-size, size],
+        ],
+        scale: [scale, scale, scale],
+      });
+
+      view.axis({
+        axis: "x",
+        size: 5,
+        color: "red",
+      });
+      view.axis({
+        axis: "y",
+        size: 5,
+        color: "green",
+      });
+
+      var present = view.present({
+        index: 1,
+      });
+
+      // Nest the whole presentation in a slide
+      // This means any .step() directly inside will follow present.index directly
+      var slide = present.slide();
+
+      // Camera has a global script of steps
+      slide
+        .camera({
+          lookAt: [0, 0, 0],
+          proxy: true,
+        })
+        .step({
+          pace: 1,
+          script: {
+            0: { position: [0, 0, 3], up: [0, 1, 0] },
+            1: { position: [0, -2.5, 0.4], up: [0, 0, 1] },
+          },
+        });
+
+      // Points are visible the entire presentation
+      slide
+        .array({
+          width: 16,
+          items: 2,
+          channels: 3,
+          fps: 60,
+          live: false,
+          expr: function (emit) {
+            var x = Math.random() * 2 - 1;
+            var y = Math.random() * 2 - 1;
+            emit(x, y, 0); // footprint
+            emit(x, y, x * x + y * y); // point
+          },
+        })
+        // Grow points on step 2
+        // Use first item as reference point
+        .grow({
+          items: "first",
+        })
+        .step({
+          delay: 2,
+          pace: 2,
+          trigger: 1,
+          script: [{ props: { scale: 0 } }, { props: { scale: 1 } }],
+        })
+        // Connect footprint and point with line
+        .vector({
+          width: 3,
+        })
+        // Draw second point only
+        .slice({
+          items: [1, 2],
+        })
+        .point({
+          size: 8,
+        });
+
+      // Paraboloid is revealed next and stays for 2 steps
+      // Make a subslide for this to keep the current slide visible too
+      slide
+        .slide({
+          steps: 2,
+        })
+        .reveal({
+          delay: 1,
+          duration: 1.2,
+        })
+        .area({
+          axes: "xy",
+          width: 24,
+          height: 24,
+          channels: 3,
+          items: 1,
+          live: false,
+          expr: function (emit, x, y) {
+            emit(x, y, x * x + y * y);
+          },
+        })
+        .surface({
+          opacity: 0.2,
+          shaded: true,
+          lineX: true,
+          lineY: true,
+        })
+        .step({
+          script: [{ props: { opacity: 0.2 } }, { props: { opacity: 1 } }],
+        });
+    </script>
+
+    <div
+      style="
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        margin-left: -60px;
+        width: 120px;
+        font-size: 20px;
+        text-align: center;
+      "
+    >
+      <button onclick="previous()">&lt;</button
+      ><button onclick="next()">&gt;</button>
+    </div>
+  </body>
+</html>

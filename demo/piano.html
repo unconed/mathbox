@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Piano</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      /*
+{DocComment} Piano
+Generates 5 black and 7 white keys of a piano keyboard, and then uses repeat
+and spread to make multiple copies. There is a wavy-shader that makes the
+keyboard ripple, and there is a keytilt-shader that takes the stream of points
+for the keyboard and a separate stream indicating which keys are down, and
+combines them to 'play' the piano.
+*/
+    </script>
+
+    <script type="application/glsl" id="wavy-shader">
+      // Warps coordinates.  Makes the whole keyboard wave.
+      uniform float time;         // Additional declaration to import time.
+      vec4 getSample(vec4 xyz);
+
+      vec4 getFramesSample(vec4 wxyz) {
+        vec4 v= getSample(wxyz);
+        float t = v.x + time ;
+        // Use 'beat frequencies' between two close frequencies to make a warping
+        // in y and z that comes and goes.
+        // We are making a very small adjustment on the coordinate, v.
+        v = v + 0.003*vec4(
+            0.3*cos( 4.4 * t ),
+            cos( 4.3 * t )-cos( 4.2 * t ),
+            cos( 4.1 * t )-cos( 4.0 * t )+2.5,
+            0.0);
+        return( v );
+      }
+    </script>
+
+    <script type="application/glsl" id="keytilt-shader">
+      // Moves selected keys down.
+      // We stream data in from two sources....
+      vec4 getSampleA(vec4 xyzw);   // External source, key movement.
+      vec4 getSample(vec4 xyzw);    // Original source, points of all keys.
+
+      vec4 getFramesSample(vec4 xyzw) {
+        vec4  v = getSample(xyzw);
+        float a = getSampleA(xyzw).x;
+        //This commented out line for 'u' is an alternative that just moves the whole key down.
+        //vec4  u = vec4( 0.0, 0.0, a, 0.0 );
+
+        //This value for 'u' moves the front down more than the back.
+        //As the angle we are tilting through is small, that's good enough.
+        vec4  u = vec4( 0.0, 0.0, a * (v.y +0.2)* 3.5, 0.0 );
+        return vec4( v + u);
+      }
+    </script>
+
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+      three.renderer.setClearColor(new THREE.Color(0x6060a0), 1.0);
+
+      var view = mathbox.camera({
+        lookAt: [0, 0, 0],
+        position: [0.7, 0.4, -0.2],
+        up: [0, 1, 0],
+        proxy: true,
+      });
+
+      // Wrap the view inside a presentation slide to control scripts
+      view = view
+        .present({
+          index: 1,
+        })
+        .slide({
+          steps: 2,
+        });
+
+      // Add a translucent grid
+      view
+        .grid({
+          width: 5,
+          opacity: 0.5,
+          axes: [1, 3],
+          color: 0x2020a0,
+          blending: "add",
+          zOrder: 1,
+          zWrite: false,
+        })
+
+        // Fade out on step
+        .step({
+          pace: 3,
+          script: [{ props: { opacity: 0.5 } }, { props: { opacity: 0 } }],
+        });
+
+      // Emits the four points of one face of a cuboid.
+      // The faces are numbered 0..5.
+      // The cuboid has dimensions w,h,d and is positioned at x,y,z.
+      function cuboid_face(emit, w, h, d, x, y, z, face) {
+        // faces 3,4,5 are displaced relative to their partner
+        // faces 1,2,3.
+        if (face == 3) x += w;
+        if (face == 4) y += h;
+        if (face == 5) z += d;
+
+        // It's now as if we are drawing face 0,1 or 2.
+        face = face % 3;
+
+        // Each face lacks one of the 3 dimensions.
+        // The conditionals ensure we generate 4 points, not 6.
+        // We are just stepping in two of the dimensions.
+        if (face != 0) {
+          x += w;
+          emit(x, y, z);
+        }
+        if (face != 1) {
+          y += h;
+          emit(x, y, z);
+        }
+        if (face != 2) {
+          z += d;
+          emit(x, y, z);
+        }
+        if (face != 0) {
+          x -= w;
+          emit(x, y, z);
+        }
+        if (face != 1) {
+          y -= h;
+          emit(x, y, z);
+        }
+        if (face != 2) {
+          z -= d;
+          emit(x, y, z);
+        }
+      }
+
+      // The white keys of a piano repeat after 7
+      // We could set nKeys to 56 here. Instead we set it low
+      // and then repeat on the GPU.
+      // This example was originally built without nRepeats, and
+      // then adapted to repeat on the GPU.
+      nKeys = 7; // White keys generated in javascript
+      nRepeats = 8; // Number of repeats on GPU. (usually 8, can be as high as 800)
+      // Fewer black keys.
+      nBlackKeys = Math.floor((nKeys * 5) / 7 + 0.5);
+      var keyDepth1 = 1.5; // Distance front edge to black key.
+      var keyDepth2 = 3; // Distance from start of black key to back.
+      var keyGap = 0.1; // Gap between keys.
+      var keyPlayInterval = 2; // How often we have a key that's down.
+
+      // r is the width of one white key, and is used to scale all the other
+      // measurements.
+      var r = 2 / (nKeys * nRepeats * (1 + keyGap));
+
+      // This array with an item per key can set which keys are down, individually.
+      // Our formula for delta is setting every 2nd key.
+      view.array({
+        width: nKeys * nRepeats,
+        channels: 1,
+        expr: function (emit, key, t) {
+          adjustedTime = t * (5 + (key % 7) / 10) + key;
+          delta = (0.25 / nRepeats) * Math.max(0, Math.sin(adjustedTime) - 0.7);
+          emit(key % keyPlayInterval == 0 ? -delta : 0);
+        },
+      });
+
+      // The next four nodes convert our
+      // (nKeys x nRepeats) array into the shape
+      // (4) * (12 * nKeys) * (nRepeats)
+      view.repeat({
+        items: 4 * 12, // 4 points per face, 12 faces per key.
+      });
+      // The splits and joins don't affect the number of points.
+      view.split({
+        axis: "width",
+        length: nKeys,
+      });
+      view.split({
+        axis: "items",
+        length: 4,
+      });
+      view.join({
+        id: "whitekeydown",
+        axis: "width",
+      });
+
+      // The white keys.
+      view.array({
+        // 12 faces per white key.
+        // (Because we draw each white key as two cuboids).
+        // We are drawing one more face than we need to for each white key.
+        // It is worth it for the convenience of simpler building blocks.
+        id: "whitekeys",
+        width: 12 * nKeys,
+        items: 4, // Four points per face
+        channels: 3, // Three dimensions per point
+        expr: function (emit, i, t) {
+          var key = Math.floor(i / 12); // Key number 0..nKeys-1 in this repetition
+          var cuboid = Math.floor(i / 6); // Cuboid number 0..2*nKeys-1 in this repetition
+          var face = i % 6; // Face number 0..5 for this cuboid.
+
+          // Keys start on the left
+          var xDisplace = -1 / (r * nRepeats);
+          // Keys are 1 unit apart, plus a gap
+          xDisplace += key * (1 + keyGap);
+
+          // Settings for even numbered cuboids, the front of the keys.
+          var yDisplace = 0;
+          var keyWidth = 1.0;
+          var keyDepth = keyDepth1;
+
+          // Odd numbered cuboids have black keys and are longer, further back,
+          // displaced and narrower than the cuboid at the 'front' of the key.
+          if (cuboid % 2 == 1) {
+            keyDepth = keyDepth2; // longer
+            yDisplace = keyDepth1; // further back
+
+            // All but 0 and 4 are displaced half a black key width to the right.
+            if (key % 4 != 0) xDisplace += 0.25 + keyGap / 2;
+
+            // 0,3,4 and 6 are slightly wider than 1,2 and 5.
+            if (key == 0 || key == 3 || key == 4 || key == 6)
+              keyWidth = 0.75 - keyGap / 2;
+            else {
+              keyWidth = 0.5 - keyGap;
+            }
+          }
+
+          // r is the unit of size.
+          cuboid_face(
+            emit,
+            -r * keyWidth,
+            -r * keyDepth,
+            r / 4,
+            -r * xDisplace,
+            -r * yDisplace,
+            r / 4,
+            face
+          );
+        },
+      });
+
+      // 'repeat' replicates in one of the dimensions.
+      // We were only using the width and items dimensions, so this
+      // repeat on 'height' adds a new dimension to our array of points.
+      view.repeat({
+        height: nRepeats,
+      });
+
+      // 'spread' transfers information from our array dimensions into
+      // the vec4's actually in the array.
+      // We're spreading based on the newly added dimension.
+      // That's quite a common pattern.
+      var whitekeys = view.spread({
+        unit: "absolute",
+        height: [-2 / nRepeats, 0, 0, 0], // Affect only the 'x' of the vec4s.
+      });
+
+      // This shader is merging two streams of information.
+      // The whitekeydown source has one float item per key.
+      // It's being merged with 48x vec4 for each key that give the faces.
+      // This only defines the shader.
+      view.shader({
+        sources: ["#whitekeydown"], // extra sources, in addition to whitekeys.
+        code: "#keytilt-shader",
+      });
+
+      // This actually invokes the shader.
+      // The shader is implicitly bound.
+      // Leave this out, and the keys won't play.
+      view.resample({
+        width: 12 * nKeys,
+        height: nRepeats,
+      });
+
+      // These two steps warp the keyboard.
+      view.shader(
+        {
+          code: "#wavy-shader",
+        },
+        // The second argument to shader (or indeed any node) says what properties
+        // are recalculated every tick.  Exception: <expr> is re-evaluated every tick,
+        // by default, even though in the first argument.
+        {
+          time: function (t) {
+            return t;
+          },
+        }
+      );
+      view.resample({
+        width: 12 * nKeys,
+        height: nRepeats,
+      });
+
+      // The earlier emits put values in to x,y,z, but the way we are viewing this,
+      // our 'y' goes into the page and our z goes up.  We wouldn't need this
+      // swizzle if we'd emitted xyz in a different order.
+      view.swizzle({
+        order: "yzxw",
+      });
+
+      // Explode the geometry on step
+      view
+        .spread({
+          unit: "relative",
+        })
+        .step({
+          pace: 3,
+          script: [
+            { props: { width: [0, 0, 0], height: [0, 0, 0] } },
+            { props: { width: [0, 1, 0], height: [0, 0, -1] } },
+          ],
+        });
+
+      // Draw the white keys.
+      // Take groups of four items, from the full width x height array of points,
+      // and treat those groups as faces (rectangles).
+      view.face({
+        color: 0xffffff,
+        shaded: true,
+      });
+
+      // The black keys
+      view.array({
+        width: 6 * nBlackKeys,
+        expr: function (emit, i, t) {
+          var face = i % 6; // Face number 0..5 within cuboid
+          var key = Math.floor(i / 6); // Key number 0..nBlackKeys-1
+
+          var yDisplace = keyDepth1 + keyGap;
+          var keyWidth = 0.5; // Half the width of a white key
+          var keyDepth = keyDepth2;
+
+          var xDisplace = -1 / (r * nRepeats); // start on the left
+          // The 7/5 indicates 5 black keys need to be spread out to the space that
+          // 7 white keys take. The first black key starts 0.75 of a key over, plus
+          // half a key gap.
+          xDisplace +=
+            Math.floor((key * 7) / 5) * (1 + keyGap) + 0.75 + keyGap / 2;
+
+          cuboid_face(
+            emit,
+            -r * keyWidth,
+            -r * keyDepth,
+            r / 2,
+            -r * xDisplace,
+            -r * yDisplace,
+            r / 4,
+            face
+          );
+        },
+        items: 4, // 4 points per face.
+        channels: 3, // xyz values for each point.
+      });
+
+      view.repeat({
+        height: nRepeats,
+      });
+      view.spread({
+        unit: "absolute",
+        height: [-2 / nRepeats, 0, 0, 0],
+      });
+
+      view.shader(
+        {
+          code: "#wavy-shader",
+        },
+        {
+          time: function (t) {
+            return t;
+          },
+        }
+      );
+      view.resample({
+        width: 6 * nBlackKeys,
+        height: nRepeats,
+      });
+      view.swizzle({
+        order: "yzxw",
+      });
+
+      // Explode the geometry on step
+      view
+        .spread({
+          unit: "relative",
+        })
+        .step({
+          pace: 3,
+          script: [
+            { props: { width: [0, 0, 0], height: [0, 0, 0] } },
+            { props: { width: [0, 1, 0], height: [1, 0, 0] } },
+          ],
+        });
+
+      // Draw the black keys.
+      view.face({
+        color: 0x000000,
+        shaded: true,
+      });
+
+      // Control presentation with button, swap between slide 1 and 2.
+      var present = mathbox.select("present");
+      var toggle = false;
+      var explode = function () {
+        toggle = !toggle;
+        present.set("index", 1 + toggle);
+      };
+    </script>
+
+    <button
+      style="
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        margin-left: -60px;
+        width: 120px;
+        font-size: 20px;
+      "
+      onclick="explode()"
+    >
+      Explode
+    </button>
+  </body>
+</html>

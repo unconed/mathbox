@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Repeat</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+        camera: {
+          near: 0.1,
+          far: 1000,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(7, 2, -7);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      time = 0;
+      three.on("update", function () {
+        time = three.Time.now;
+
+        t = Math.max(three.Time.clock, 0) / 20;
+        t = t < 0.5 ? t * t : t - 0.25;
+
+        o = 0.5 - 0.5 * Math.cos(Math.min(1, t) * MathBox.π);
+        p = 0.5 - 0.5 * Math.cos(t * 4 * MathBox.π);
+        q = 0.5 - 0.5 * Math.cos(t * 1.13 * MathBox.π);
+        m = 0.5 - 0.5 * Math.cos(t * 0.387 * MathBox.π);
+        n = 0.5 - 0.5 * Math.cos(Math.max(0, Math.min(1, t - 40)) * MathBox.π);
+
+        r = t * 2;
+        c = Math.cos(r);
+        s = Math.sin(r);
+        view.set("quaternion", [0, s, 0, c]);
+
+        view.set("bend", lerp(0.005, 0.721 - p * 0.1, o));
+        view.set("helix", o * 0.1);
+
+        r = o * 0.2 + q * 0.8 - m * 2 + n;
+        c = Math.cos(r);
+        s = Math.sin(r);
+        r = m * 0.1;
+        cc = Math.cos(r);
+        ss = Math.sin(r);
+        surface.set("quaternion", [s * cc, 0, s * ss, c]);
+      });
+
+      view = mathbox.set({ scale: 720, focus: 3 }).polar({
+        bend: 1 / 128,
+        range: [
+          [-MathBox.π, MathBox.π],
+          [-1, 1],
+          [-1, 1],
+        ],
+        scale: [2, 2, 2],
+      });
+
+      view.interval({
+        width: 32,
+        centered: false,
+        expr: function (emit, x, i) {
+          var a = Math.sin(x + time) * 0.5 - 1;
+          var b = Math.cos(x - time * 0.917) * 0.25 - 1;
+
+          emit(a);
+          emit(b);
+        },
+        items: 2,
+        channels: 1,
+      });
+      view.swizzle({
+        order: "yx",
+      });
+      view.repeat({
+        height: 20,
+        depth: 11,
+      });
+      view.spread({
+        id: "spread",
+        unit: "absolute",
+        width: [MathBox.π / 31, 0, 0, 0],
+        height: [MathBox.π, 0, 0, 0],
+        depth: [0, 0, 1 / 10, 0],
+      });
+      view.transpose({
+        order: "zwxy",
+      });
+
+      view
+        .transform({
+          classes: ["surface"],
+          position: [0, 2, 0],
+        })
+        .surface({
+          color: 0x3090ff,
+          shaded: true,
+          lineX: true,
+          lineY: true,
+        })
+        .transpose({
+          source: "#spread",
+          order: "wxzy",
+        })
+        .surface({
+          color: 0x3090ff,
+          shaded: true,
+          lineX: true,
+          lineY: true,
+        });
+
+      surface = mathbox.select("transform.surface");
+    </script>
+  </body>
+</html>

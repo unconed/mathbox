@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Curve</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(0, 0, 3);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      view = mathbox
+        .set({
+          focus: 3,
+        })
+        .cartesian({
+          range: [
+            [-2, 2],
+            [-1, 1],
+            [-1, 1],
+          ],
+          scale: [2, 1, 1],
+        });
+
+      view.axis({
+        detail: 30,
+      });
+
+      view.axis({
+        axis: 2,
+      });
+
+      view.scale({
+        divide: 10,
+      });
+      view.ticks({
+        classes: ["foo", "bar"],
+        width: 2,
+      });
+
+      view.grid({
+        divideX: 30,
+        width: 1,
+        opacity: 0.5,
+        zBias: -5,
+      });
+
+      view.interval({
+        id: "sampler",
+        width: 64,
+        expr: function (emit, x, i, t) {
+          y = Math.sin(x + t) * 0.7; // + (i%2)*Math.sin(x * 400000 + t * 5 + x * x * 10000)*.05;
+          emit(x, y);
+        },
+        channels: 2,
+      });
+
+      view.line({
+        points: "#sampler",
+        color: 0x3090ff,
+        width: 5,
+      });
+
+      view
+        .transform({
+          position: [0, 0.1, 0],
+        })
+        .line({
+          points: "#sampler",
+          color: 0x3090ff,
+          width: 5,
+          stroke: "dotted",
+        });
+
+      view
+        .transform({
+          position: [0, -0.1, 0],
+        })
+        .line({
+          points: "#sampler",
+          color: 0x3090ff,
+          width: 5,
+          stroke: "dashed",
+        });
+    </script>
+  </body>
+</html>

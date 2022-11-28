@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Stereographic Quaternion Hypersphere</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script type="application/glsl" id="rotate4D">
+      uniform float cos1;
+      uniform float sin1;
+      uniform float cos2;
+      uniform float sin2;
+      uniform float cos3;
+      uniform float sin3;
+      uniform float cos4;
+      uniform float sin4;
+
+      vec4 getRotate4D(vec4 xyzw, inout vec4 stpq) {
+        xyzw.xy = xyzw.xy * mat2(cos1, sin1, -sin1, cos1);
+        xyzw.zw = xyzw.zw * mat2(cos2, sin2, -sin2, cos2);
+        xyzw.xz = xyzw.xz * mat2(cos3, sin3, -sin3, cos3);
+        xyzw.yw = xyzw.yw * mat2(cos4, sin4, -sin4, cos4);
+
+        return xyzw;
+      }
+    </script>
+    <script>
+      var π = Math.PI;
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+
+      mathbox.three.camera.position.set(0, 0, 3);
+      mathbox.three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      var red = 0xdf2000;
+      var green = 0x20a000;
+      var blue = 0x3090ff;
+
+      view = mathbox
+        .set({
+          scale: 500,
+        })
+        .clock({
+          speed: 0.25,
+        })
+        .stereographic4()
+        .shader(
+          {
+            code: "#rotate4D",
+          },
+          {
+            cos1: function (t) {
+              return Math.cos(t * 0.111);
+            },
+            sin1: function (t) {
+              return Math.sin(t * 0.111);
+            },
+            cos2: function (t) {
+              return Math.cos(t * 0.151 + 1);
+            },
+            sin2: function (t) {
+              return Math.sin(t * 0.151 + 1);
+            },
+            cos3: function (t) {
+              return Math.cos(t * 0.071 + Math.sin(t * 0.081));
+            },
+            sin3: function (t) {
+              return Math.sin(t * 0.071 + Math.sin(t * 0.081));
+            },
+            cos4: function (t) {
+              return Math.cos(t * 0.053 + Math.sin(t * 0.066) + 1);
+            },
+            sin4: function (t) {
+              return Math.sin(t * 0.053 + Math.sin(t * 0.066) + 1);
+            },
+          }
+        )
+        .vertex();
+
+      var q1 = new THREE.Quaternion();
+      var q2 = new THREE.Quaternion();
+
+      view.area({
+        rangeX: [-π / 2, π / 2],
+        rangeY: [0, 2 * π],
+        width: 129,
+        height: 65,
+        expr: function (emit, θ, ϕ, i, j) {
+          q1.set(0, 0, Math.sin(θ), Math.cos(θ));
+          q2.set(0, Math.sin(ϕ), 0, Math.cos(ϕ));
+          q1.multiply(q2);
+          emit(q1.x, q1.y, q1.z, q1.w);
+        },
+        live: false,
+        channels: 4,
+      });
+      view.line({
+        color: blue,
+      });
+
+      // ===========================================================================
+
+      view.area({
+        rangeX: [-π / 2, π / 2],
+        rangeY: [0, 2 * π],
+        width: 129,
+        height: 65,
+        expr: function (emit, θ, ϕ, i, j) {
+          q1.set(0, Math.sin(θ), 0, Math.cos(θ));
+          q2.set(Math.sin(ϕ), 0, 0, Math.cos(ϕ));
+          q1.multiply(q2);
+          emit(q1.x, q1.y, q1.z, q1.w);
+        },
+        live: false,
+        channels: 4,
+      });
+      view.line({
+        color: green,
+      });
+
+      // ===========================================================================
+
+      view.area({
+        rangeX: [-π / 2, π / 2],
+        rangeY: [0, 2 * π],
+        width: 129,
+        height: 65,
+        expr: function (emit, θ, ϕ, i, j) {
+          q1.set(Math.sin(θ), 0, 0, Math.cos(θ));
+          q2.set(0, 0, Math.sin(ϕ), Math.cos(ϕ));
+          q1.multiply(q2);
+          emit(q1.x, q1.y, q1.z, q1.w);
+        },
+        live: false,
+        channels: 4,
+      });
+      view.line({
+        color: red,
+      });
+
+      // ===========================================================================
+    </script>
+  </body>
+</html>

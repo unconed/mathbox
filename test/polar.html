@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Polar</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      view = mathbox
+        .set({
+          focus: 3,
+        })
+        .camera({
+          proxy: true,
+          position: [0, 0, 3],
+        })
+        .polar({
+          bend: 1,
+          range: [
+            [-2 * MathBox.π, 2 * MathBox.π],
+            [0, 1],
+            [-1, 1],
+          ],
+          scale: [2, 1, 1],
+          helix: 0.1,
+        });
+
+      view
+        .transform({
+          position: [0, 0.5, 0],
+        })
+        .axis({
+          detail: 256,
+        })
+        .scale({
+          divide: 10,
+          unit: MathBox.π,
+          base: 2,
+        })
+        .ticks({
+          width: 2,
+          classes: ["foo", "bar"],
+        })
+        .ticks({
+          opacity: 0.5,
+          width: 1,
+          size: 50,
+          normal: [0, 1, 0],
+          classes: ["foo", "bar"],
+        });
+
+      view.axis({
+        axis: 2,
+      });
+      view
+        .transform({
+          position: [MathBox.π / 2, 0, 0],
+        })
+        .axis({
+          axis: 2,
+        });
+      view
+        .transform({
+          position: [-MathBox.π / 2, 0, 0],
+        })
+        .axis({
+          axis: 2,
+        });
+
+      view
+        .interval({
+          id: "sampler",
+          width: 256,
+          expr: function (emit, x, i, t) {
+            emit(x, 0.5 + 0.5 * Math.sin((x + t) * 3));
+          },
+          channels: 2,
+        })
+        .line({
+          points: "#sampler",
+          color: 0x3090ff,
+          width: 5,
+        });
+
+      view
+        .area({
+          width: 256,
+          height: 2,
+        })
+        .surface({
+          color: "#fff",
+          opacity: 0.75,
+          zBias: -10,
+        });
+
+      view.grid({
+        divideX: 5,
+        detailX: 256,
+        width: 1,
+        opacity: 0.5,
+        unitX: MathBox.π,
+        baseX: 2,
+        zBias: -5,
+        zOrder: -2,
+      });
+    </script>
+  </body>
+</html>

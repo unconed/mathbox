@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - 4D Stereographic</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      // Init MathBox
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "stats"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      // Set camera and background
+      three.camera.position.set(2.3, 1, 2);
+      three.camera.lookAt(new THREE.Vector3());
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      // Animation routine
+      time = 0;
+      first = true;
+      q1 = new THREE.Quaternion();
+      q2 = new THREE.Quaternion();
+      b1 = b2 = 0;
+      boing = 0;
+      three.on("update", function () {
+        time = three.Time.now;
+
+        // Slerp to oscillating target quaternion
+        q1.x = Math.cos(time * 0.123);
+        q1.y = Math.cos(time * 0.224 - 1);
+        q1.z = Math.cos(time * 0.161 + 1);
+        q1.w = Math.cos(time * 0.193 + 2);
+        q1.normalize();
+
+        q2.slerp(q1, 0.05);
+        if (first) q2.copy(q1);
+        first = false;
+
+        // Boing effect
+        f = 0.05;
+        b1 += (b2 - b1) * f;
+        b2 += (boing - b2) * f;
+        boing *= 0.995;
+
+        s = 0.7 + b1;
+
+        // Use slerped q as rotation
+        wrapper.set("quaternion", q2);
+
+        // Use target as projection offset
+        view.set("position", [q1.x * s, q1.y * s, q1.z * s, q1.w * s]);
+      });
+
+      // Boing onclick
+      three.bind("element.click", {
+        click: function () {
+          boing += 1;
+        },
+      });
+
+      // Stereographic 4D
+      wrapper = mathbox.transform();
+      view = wrapper
+        .stereographic4({
+          range: [
+            [-4, 4],
+            [-4, 4],
+            [-4, 4],
+            [-1, 1],
+          ],
+          scale: [4, 4, 4, 1],
+        })
+        .transform4();
+
+      /// Grids
+
+      view
+        .transform4({
+          position: [1, 0, 0, 0],
+        })
+        .grid({
+          axes: [2, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [3, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [2, 3],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        });
+
+      ///
+
+      view
+        .transform4({
+          position: [0, 1, 0, 0],
+        })
+        .grid({
+          axes: [1, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [3, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [1, 3],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        });
+
+      ///
+
+      view
+        .transform4({
+          position: [0, 0, 1, 0],
+        })
+        .grid({
+          axes: [1, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [2, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [1, 2],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        });
+
+      ///
+
+      view
+        .transform4({
+          position: [-1, 0, 0, 0],
+        })
+        .grid({
+          axes: [2, 4],
+          detailX: 75,
+          detailY: 31,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [3, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [2, 3],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        });
+
+      ///
+
+      view
+        .transform4({
+          position: [0, -1, 0, 0],
+        })
+        .grid({
+          axes: [1, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [3, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [1, 3],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        });
+
+      ///
+
+      view
+        .transform4({
+          position: [0, 0, -1, 0],
+        })
+        .grid({
+          axes: [1, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [2, 4],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [1, 2],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        });
+
+      ///
+
+      view
+        .transform4({
+          position: [0, 0, 0, 1],
+        })
+        .grid({
+          axes: [1, 3],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [2, 3],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [1, 2],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        });
+
+      ///
+
+      view
+        .transform4({
+          position: [0, 0, 0, -1],
+        })
+        .grid({
+          axes: [1, 3],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [2, 3],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        })
+        .grid({
+          axes: [1, 2],
+          detailX: 75,
+          detailY: 75,
+          width: 2,
+          opacity: 0.5,
+          zBias: -60,
+        });
+    </script>
+  </body>
+</html>

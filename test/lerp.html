@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Lerp Test</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(2.3, 1, 2);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      view = mathbox.cartesian({
+        range: [
+          [-6, 6],
+          [-1, 1],
+          [-1, 1],
+        ],
+        scale: [6, 1, 1],
+      });
+
+      view
+        .interval({
+          width: 16, // number of red data points
+          items: 2,
+          channels: 2,
+          expr: function (emit, x, i, time) {
+            var d = Math.sin((x + time) * 2) / 2;
+
+            emit(x, 0);
+            emit(x, d);
+          },
+        })
+        .vector({
+          color: 0xc02050,
+          width: 16,
+          size: 3,
+          end: true,
+        });
+
+      view.lerp({
+        // number of blue interpolated values
+        // = 16 original samples + (15 gaps * 8 samples per gap)
+        width: 136,
+      });
+      // drop the first sample in each group of 9
+      // so that red and blue vectors don't overlap
+      view
+        .split({
+          axis: "x",
+          length: 9,
+        })
+        .slice({
+          width: [1, 9],
+        })
+        .join({
+          axis: "x",
+        });
+      //draw the blue vectors
+      view.vector({
+        color: 0x3090ff,
+        width: 10,
+        size: 2.5,
+        end: true,
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Present Present</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/TrackballControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "mathbox"],
+        controls: {
+          // Orbit controls, i.e. Euler angles, with gimbal lock
+          klass: THREE.OrbitControls,
+
+          // Trackball controls, i.e. Free quaternion rotation
+          //klass: THREE.TrackballControls,
+        },
+      });
+      if (mathbox.fallback) throw "WebGL not supported";
+
+      var three = mathbox.three;
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      mathbox.camera({ position: [0, 0, 3], proxy: true });
+
+      if (window == top) {
+        // arrow keys left/right up/down
+        window.onkeydown = function (e) {
+          switch (e.keyCode) {
+            case 37:
+            case 38:
+              present.set("index", present.get("index") - 1);
+              break;
+            case 39:
+            case 40:
+              present.set("index", present.get("index") + 1);
+              break;
+          }
+        };
+      }
+
+      // Top level presentation
+      var present = mathbox.present({
+        index: 1,
+      });
+
+      // With one 6-step slide
+      present
+        .slide({
+          steps: 6,
+        })
+
+        // With a presentation with 3 slides inside
+        .present()
+        .slide()
+        .reveal()
+        .interval({
+          width: 32,
+          channels: 2,
+          expr: function (emit, x, i, t) {
+            emit(x, Math.sin(x + t));
+          },
+        })
+        .point({
+          size: 10,
+          color: 0x3090ff,
+        })
+        .line({
+          width: 5,
+          color: 0x3090ff,
+        })
+        .slice({
+          width: [16, 17],
+        })
+        .format({
+          data: ["1"],
+        })
+        .label({
+          size: 40,
+        })
+        .end()
+        .end()
+
+        .slide()
+        .reveal()
+        .interval({
+          width: 32,
+          channels: 2,
+          expr: function (emit, x, i, t) {
+            emit(x, Math.cos(x - t));
+          },
+        })
+        .point({
+          size: 10,
+          color: 0xc05020,
+        })
+        .line({
+          width: 5,
+          color: 0xc05020,
+        })
+        .slice({
+          width: [16, 17],
+        })
+        .format({
+          data: ["2"],
+        })
+        .label({
+          size: 40,
+        })
+        .end()
+        .end()
+
+        .slide()
+        .reveal()
+        .interval({
+          width: 32,
+          channels: 2,
+          expr: function (emit, x, i, t) {
+            emit(x, Math.sin(x * 2 + t));
+          },
+        })
+        .point({
+          size: 10,
+          color: 0x40b000,
+        })
+        .line({
+          width: 5,
+          color: 0x40b000,
+        })
+        .slice({
+          width: [16, 17],
+        })
+        .format({
+          data: ["3"],
+        })
+        .label({
+          size: 40,
+        })
+        .end()
+        .end()
+
+        .end()
+
+        // We step through the inner presentation using the outer one.
+        .step({
+          duration: 0,
+          script: [
+            { props: { index: 1 } },
+            { props: { index: 2 } },
+            { props: { index: 1 } },
+            { props: { index: 3 } },
+            { props: { index: 2 } },
+            { props: { index: 1 } },
+          ],
+        });
+    </script>
+  </body>
+</html>

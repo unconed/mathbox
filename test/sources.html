@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Multiple Sources</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script type="application/glsl" id="combine-samples">
+      // Two external sources
+      vec4 getSampleA(vec4 xyzw);
+      vec4 getSampleB(vec4 xyzw);
+
+      // Original resampled source (unused)
+      vec4 getSampleDummy(vec4 xyzw);
+
+      // Resample shader
+      vec4 getSample(vec4 xyzw) {
+        // Get two floats and multiply them
+        float a = getSampleA(vec4(xyzw.x, 0.0, 0.0, 0.0)).x;
+        float b = getSampleB(vec4(xyzw.y, 0.0, 0.0, 0.0)).x;
+
+        // Return as y value
+        return vec4(0.0, a * b, 0.0, 0.0);
+      }
+    </script>
+    <script>
+      // Initialize mathbox
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "stats"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      // Cartesian box
+      view = mathbox
+        .set({
+          scale: 720,
+          focus: 5,
+        })
+        .camera({
+          proxy: true,
+          position: [2, 1, 3],
+        })
+        .cartesian({
+          range: [
+            [0, 1],
+            [0, 1],
+            [0, 1],
+          ],
+          scale: [1, 2 / 3, 1],
+        });
+
+      view.axis({
+        axis: 1,
+        width: 3,
+      });
+      view.axis({
+        axis: 2,
+        width: 3,
+      });
+      view.axis({
+        axis: 3,
+        width: 3,
+      });
+
+      view.grid({
+        width: 2,
+        opacity: 0.5,
+        axes: [1, 2],
+        zOrder: 1,
+      });
+      view.grid({
+        width: 2,
+        opacity: 0.5,
+        axes: [2, 3],
+        zOrder: 1,
+      });
+      view.grid({
+        width: 2,
+        opacity: 0.5,
+        axes: [1, 3],
+        zOrder: 1,
+      });
+
+      // Make 1D array of values
+      var array1 = view.interval({
+        width: 64,
+        channels: 1,
+        expr: function (emit, x, i, t) {
+          emit(Math.sin(x * 5 + t) * 0.5 + 0.5);
+        },
+      });
+
+      // Draw as curve on X axis
+      view
+        .swizzle({
+          order: "yx",
+        })
+        .spread({
+          unit: "relative",
+          alignWidth: "first",
+          width: [1, 0, 0],
+        })
+        .line({
+          width: 3,
+          color: 0x3090ff,
+        });
+
+      // Make 1D array of values
+      var array2 = view.interval({
+        id: "array2",
+        width: 64,
+        channels: 1,
+        expr: function (emit, x, i, t) {
+          emit(Math.cos(x * 5 - t) * 0.5 + 0.5);
+        },
+      });
+
+      // Draw as curve on Z axis
+      view
+        .swizzle({
+          order: "yx",
+        })
+        .spread({
+          unit: "relative",
+          alignWidth: "first",
+          width: [0, 0, 1],
+        })
+        .line({
+          width: 3,
+          color: 0x40a000,
+        });
+
+      view
+        // Make dummy 1x1 matrix
+        .matrix()
+
+        // Use resample shader to multiply two 1D arrays as X and Y.
+        .shader({
+          sources: [array1, "#array2"], // Array of selections and selectors
+          code: "#combine-samples",
+        })
+        .resample({
+          sample: "absolute",
+          width: 64,
+          height: 64,
+        })
+        // Spread values out on X and Z
+        .spread({
+          unit: "relative",
+          alignWidth: "first",
+          alignHeight: "first",
+          width: [1, 0, 0],
+          height: [0, 0, 1],
+        })
+        // Points and grid
+        .surface({
+          fill: false,
+          lineX: true,
+          lineY: true,
+          width: 1,
+        })
+        .point({
+          size: 2,
+        });
+    </script>
+  </body>
+</html>

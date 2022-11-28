@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - RTT Feedback History</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script type="application/glsl" id="rtt-water">
+      vec4 getSample(vec3 xyz);
+      vec4 getFramesSample(vec3 xyz) {
+        vec4 c = getSample(xyz + vec3( 0.0, 0.0, 1.0));
+        vec3 t = getSample(xyz + vec3( 0.0, 1.0, 0.0)).xyz;
+        vec3 b = getSample(xyz + vec3( 0.0,-1.0, 0.0)).xyz;
+        vec3 l = getSample(xyz + vec3(-1.0, 0.0, 0.0)).xyz;
+        vec3 r = getSample(xyz + vec3( 1.0, 0.0, 0.0)).xyz;
+        return vec4((t + b + l + r) / 2.0 - c.xyz, c.w);
+      }
+    </script>
+    <script>
+      mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      three = mathbox.three;
+
+      three.camera.position.set(0.3, 1, 3);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      time = 0;
+      origin = new THREE.Vector3();
+      three.on("update", function (event) {
+        time = three.Time.clock;
+        x = Math.cos(time) * 3;
+        z = Math.sin(time) * 3;
+
+        c = rtt[0].controller.rtt.camera;
+        c.position.set(x, 0, z);
+        c.lookAt(origin);
+
+        c = three.camera;
+        c.position.set(x, 1, z);
+        c.lookAt(origin);
+      });
+
+      mathbox
+        .unit({
+          scale: 720,
+        })
+        .rtt({
+          history: 2,
+          type: "unsignedByte",
+        })
+        .shader({
+          code: "#rtt-water",
+        })
+        .resample({
+          indices: 3,
+          channels: 4,
+        })
+        .compose({
+          color: "#ffffff",
+          zWrite: false,
+        })
+        .cartesian({
+          range: [
+            [-2, 2],
+            [-1, 1],
+            [-1, 1],
+          ],
+          scale: [2, 1, 1],
+        })
+        .grid({
+          divideX: 2,
+          divideY: 2,
+          zBias: 10,
+          opacity: 0.25,
+          color: 0xc0e0ff,
+          width: 5,
+        })
+        .end()
+        .end()
+        .compose({
+          color: "#fff",
+          zWrite: false,
+        });
+
+      rtt = mathbox.select("rtt");
+    </script>
+  </body>
+</html>

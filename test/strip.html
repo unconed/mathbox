@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Strip</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "stats"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      var three = mathbox.three;
+
+      three.camera.position.set(-0.5, 0.4, -1.3);
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      // Mathbox view
+      var view = mathbox.cartesian({
+        range: [
+          [-1, 1],
+          [-0.5, 1.5],
+          [-1, 1],
+        ],
+        scale: [1, 1, 1],
+      });
+
+      view.array({
+        width: 100,
+        items: 2,
+        channels: 2,
+        live: false, // expr is iterated once
+        expr: function (emit, i) {
+          emit((i / 100) * 2 - 1, 0);
+          emit((i / 100) * 2 - 1, Math.random());
+        },
+      });
+      view.repeat({
+        height: 2,
+      });
+      view.spread({
+        unit: "absolute",
+        height: [1.5 / 100, 0, 0],
+      });
+      view.join({
+        order: "wy",
+      });
+      view.strip({
+        color: 0xc05020,
+        shaded: false,
+      });
+    </script>
+  </body>
+</html>

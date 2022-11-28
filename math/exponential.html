@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Complex Exponential</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+       - a minified version mathbox.min.js is also available;
+       - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui@latest/build/dat.gui.min.js"></script>
+    <link rel="stylesheet" href="../../build/mathbox.css" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var blue = 0x3090ff;
+      var white = 0xffffff;
+
+      var props = {
+        projectionAngle: 90,
+      };
+      var gui = new dat.GUI();
+      gui.add(props, "projectionAngle").min(0).max(360).step(0.5);
+
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+
+      mathbox.three.camera.position.set(3, 2, 5);
+      mathbox.three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+
+      var view = mathbox
+        .set({
+          scale: 500,
+        })
+        .cartesian()
+        .transform4(
+          {},
+          {
+            matrix: function () {
+              var a = (props.projectionAngle * MathBox.τ) / 360;
+              return [
+                1,
+                0,
+                0,
+                Math.cos(a),
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                Math.sin(a),
+                0,
+                0,
+                0,
+                1,
+              ];
+            },
+          }
+        );
+
+      view
+        .area({
+          rangeX: [-3, 1],
+          rangeY: [-2 * MathBox.π, 2 * MathBox.π],
+          width: 129,
+          height: 65,
+          expr: function (emit, x, y, i, j) {
+            var r = Math.exp(x);
+
+            emit(Math.cos(y) * r, Math.sin(y) * r, x, y);
+          },
+          channels: 4,
+        })
+        .surface({
+          color: white,
+          zBias: -0.25,
+        })
+        .line({
+          color: blue,
+          width: 4,
+        })
+        .transpose({
+          order: "yxzw",
+        })
+        .line({
+          color: blue,
+          width: 4,
+        });
+    </script>
+  </body>
+</html>

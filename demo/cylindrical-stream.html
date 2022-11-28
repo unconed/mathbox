@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Cylindrical Stream</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      const π = Math.PI;
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      var three = mathbox.three;
+
+      three.camera.position.set(5.5, 0.5, -2.3);
+      three.renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+
+      var objs = null;
+      var time = 0;
+      three.on("update", function () {
+        clock = three.Time.frames / 60;
+        time = clock;
+
+        t = Math.max(clock, 0) / 2;
+        t = t < 0.5 ? t * t : t - 0.25;
+
+        f = t / 8;
+        c = Math.cos(f);
+        s = Math.sin(f);
+        view.set("quaternion", [0, -s, 0, c]);
+
+        t = Math.max(clock - 4, 0) / 2;
+        t = t < 0.5 ? t * t : t - 0.25;
+
+        f = t / 3.71;
+        c = Math.cos(f);
+        s = Math.sin(f);
+
+        if (objs) objs.set("quaternion", [-s, 0, 0, c]);
+      });
+
+      var view = mathbox
+        .unit({
+          scale: 720,
+          focus: 4,
+        })
+        .polar({
+          range: [
+            [-π, π],
+            [0, 1],
+            [-1, 1],
+          ],
+          scale: [2, 2, 2],
+        });
+
+      view
+        .transform({
+          position: [0, 0.5, 0],
+        })
+        .grid({
+          unitX: π / 6,
+          baseX: 2,
+          zWrite: false,
+          detailX: 81,
+          divideX: 6,
+          divideY: 10,
+          axes: "xz",
+          blending: "add",
+          color: 0x00f0b0,
+          opacity: 0.2,
+        });
+
+      view
+        .transform({
+          position: [0, 0.5, 0],
+        })
+        .grid({
+          unitX: π / 3,
+          baseX: 2,
+          zWrite: false,
+          detailX: 81,
+          divideX: 3,
+          divideY: 3,
+          axes: "xz",
+          blending: "add",
+          color: 0x00f0b0,
+          opacity: 0.2,
+        });
+
+      view
+        .transform({
+          position: [0, 1, 0],
+        })
+        .grid({
+          unitX: π / 3,
+          baseX: 2,
+          zWrite: false,
+          detailX: 81,
+          divideX: 3,
+          divideY: 3,
+          axes: "xz",
+          blending: "add",
+          color: 0x00f0b0,
+          opacity: 0.36,
+        });
+
+      view.interval({
+        centered: true,
+        axis: "z",
+        width: 512,
+        history: 64,
+        fps: 60,
+        expr: function (emit, x, i, t) {
+          j = Math.floor(i / 2);
+          theta = (t / 2) * (1 + Math.sin(j * j * j + j) * 0.5) * 4;
+          rad =
+            Math.sin(j * 12 + j * j) * 0.5 +
+            Math.sin(((j * 0.018 + 1 + Math.sin(j) * 0.3) * t) / 2);
+          emit(theta, rad * 0.5, x / π);
+        },
+        channels: 3,
+      });
+      view.split({
+        axis: "width",
+        length: 2,
+      });
+      view.spread({
+        unit: "absolute",
+        width: [0, 0, 0.02, 0],
+        depth: [0, 0, 0.01, 0],
+        id: "split",
+      });
+      view.transpose({
+        order: "xzyw",
+        id: "strips",
+      });
+
+      view
+        .transform({
+          classes: ["surface"],
+          position: [0, 0.75, 0],
+          scale: [1, 1, π],
+        })
+        .surface({
+          width: 1.5,
+          zBias: 2,
+          color: 0x3070ff,
+          points: "<",
+          fill: false,
+          lineY: true,
+        });
+
+      view
+        .transform({
+          classes: ["surface"],
+          position: [0, 0.75, 0],
+          scale: [1, 1, π],
+        })
+        .shader({
+          code: [
+            "uniform vec4 dataResolution;",
+            "vec4 getPosition(vec4 xyzw);",
+            "vec4 getColor(vec4 xyzw) {",
+            "  return vec4(mix(vec3(1.0), vec3(1.0, 2.0, 1.5), mod(xyzw.z, 3.0) / 2.0) * (1.0 - vec3(xyzw.y * dataResolution.y)), 1.0);",
+            "}",
+          ].join("\n"),
+        })
+        .resample()
+        .surface({
+          width: 2,
+          color: 0x3090ff,
+          points: "<<",
+          colors: "<",
+          shaded: true,
+        });
+
+      objs = mathbox.select("transform.surface");
+    </script>
+  </body>
+</html>
