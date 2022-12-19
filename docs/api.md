@@ -63,6 +63,7 @@ Here `time` is the elapsed clock time, while `delta` is the difference in time w
 * `set({ propName: value, ... })` - Set multiple props to the values provided.
 * `bind("propName", function(t, d) { ... })` - Invoke the function every frame and set the prop to its return value.
 * `bind({ propName: function(t, d) { ... }, ... })` - Invoke functions every frame to set multiple props to the return values.
+* `unbind("propname")` - Stop invoking the bound function for this prop each frame.
 
 Example: `present.set('index', present.get('index') + 1);`
 
