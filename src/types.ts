@@ -225,6 +225,8 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
     prop: P,
     value: (time: number, delta: number) => Props[Type][P]
   ): MathboxSelection<Type>;
+
+  unbind<P extends keyof Props[Type]>(prop: P): void;
   
   /**
    * Return all props for the first node in this node.
