@@ -29,7 +29,7 @@
     "build:module": "tsc",
     "build": "rm -rf build && concurrently 'npm run build:bundle' 'npm run build:module' 'gulp css'",
     "docs": "npx webpack --config config/webpack.config.docs.js && node build_docs/generate.js > docs/primitives.md",
-    "format": "prettier src",
+    "format": "prettier src --check",
     "lint": "eslint \"src/**/*.{ts,js}\" --max-warnings=0",
     "autofix": "npm run format -- --write && npm run lint -- --fix",
     "test": "webpack --config config/webpack.config.testing.js && karma start --single-run --browsers=ChromeHeadless",

@@ -44,15 +44,15 @@ describe("live properties", () => {
 
     const size1 = p.get("size")
     const opacity1 = p.get("opacity")
-    expect(Math.abs(size1 - 20.5)).toBeLessThan(0.12)
-    expect(Math.abs(opacity1 - 0.5)).toBeLessThan(0.12)
+    expect(Math.abs(size1 - 20.5)).toBeLessThan(0.2)
+    expect(Math.abs(opacity1 - 0.5)).toBeLessThan(0.2)
 
     p.unbind("opacity")
     await sleep(500);
 
     const size2 = p.get("size")
     const opacity2 = p.get("opacity")
-    expect(Math.abs(size2 - 21)).toBeLessThan(0.15)
+    expect(Math.abs(size2 - 21)).toBeLessThan(0.2)
     expect(opacity2).toBe(opacity1)
   });
 
@@ -70,7 +70,7 @@ describe("live properties", () => {
 
     const size1 = p.get("size")
     const opacity1 = p.get("opacity")
-    expect(Math.abs(size1 - 20.5)).toBeLessThan(0.12)
-    expect(Math.abs(opacity1 - 0.5)).toBeLessThan(0.12)
+    expect(Math.abs(size1 - 20.5)).toBeLessThan(0.2)
+    expect(Math.abs(opacity1 - 0.5)).toBeLessThan(0.2)
   })
 });
