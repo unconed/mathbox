@@ -27,6 +27,7 @@
  * [voxel](#data/voxel) - 3D voxels
  * [volume](#data/volume) - 3D sampled voxels
  * [scale](#data/scale) - Human-friendly divisions on an axis, subdivided as needed
+ * [latch](#data/latch) - Control expr/data updates when conditions change
 
 
 #### draw
@@ -54,6 +55,7 @@
  * [readback](#operator/readback) - Read data back to a binary JavaScript array
  * [resample](#operator/resample) - Resample data to new dimensions with a shader
  * [repeat](#operator/repeat) - Repeat data in one or more dimensions
+ * [reverse](#operator/reverse) - Reverse data in one or more dimensions
  * [swizzle](#operator/swizzle) - Swizzle data values
  * [spread](#operator/spread) - Spread data values according to array indices
  * [split](#operator/split) - Split one array dimension into two by splitting rows/columns/etc
@@ -344,6 +346,7 @@
  * *line* = `false` (bool) - Draw line
  * *lineBias* = `5` (number) - Z-Bias for lines on fill
  * *map* = `null` (nullable select) - Texture map source, e.g. `"#map"`
+ * *normals* = `null` (nullable select) - Normals data source, e.g. `#normals`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
@@ -557,6 +560,16 @@
  * *zOrder* = `null` (nullable number) - Z-Order (drawing order), e.g. `2`
  * *zTest* = `true` (bool) - Test Z buffer
  * *zWrite* = `true` (bool) - Write Z buffer
+
+####  <a name="data/latch"></a>`data/latch`
+
+*Control expr/data updates when conditions change*
+
+ * *active* = `true` (bool) - Updates continuously
+ * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
+ * *data* = `null` (nullable object) - Data to monitor for changes
+ * *deep* = `true` (boolean) - Do deep value comparison
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
 
 ####  <a name="transform/layer"></a>`transform/layer`
 
@@ -854,6 +867,18 @@
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
  * *stagger* = `[0, 0, 0, 0]` (vec4) - Stagger dimensions, e.g. `[2, 1, 0, 0]`
 
+####  <a name="operator/reverse"></a>`operator/reverse`
+
+*Reverse data in one or more dimensions*
+
+ * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
+ * *depth* = `false` (boolean) - Reverse depth
+ * *height* = `false` (boolean) - Reverse height
+ * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
+ * *items* = `false` (boolean) - Reverse items
+ * *source* = `"<"` (select) - Input source
+ * *width* = `false` (boolean) - Reverse width
+
 ####  <a name="base/root"></a>`base/root`
 
 *Tree root*
@@ -906,9 +931,11 @@
 
 *Custom shader snippet*
 
+ * *channels* = `4` (number) - Source channels
  * *classes* = `[]` (string array) - Custom classes, e.g. `["big"]`
  * *code* = `""` (string) - Shader code
  * *id* = `null` (nullable string) - Unique ID, e.g. `"sampler"`
+ * *indices* = `4` (number) - Source indices
  * *language* = `"glsl"` (string) - Shader language
  * *sources* = `null` (nullable select) - Sampler sources, e.g. `["#pressure", "#divergence"]`
  * *uniforms* = `null` (nullable object) - Shader uniform objects (three.js style), e.g. `{ time: { type: 'f', value: 3 }}`
@@ -1047,6 +1074,7 @@
  * *line* = `false` (bool) - Draw line
  * *lineBias* = `5` (number) - Z-Bias for lines on fill
  * *map* = `null` (nullable select) - Texture map source, e.g. `"#map"`
+ * *normals* = `null` (nullable select) - Normals data source, e.g. `#normals`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`
@@ -1093,6 +1121,7 @@
  * *lineX* = `false` (bool) - Draw X lines
  * *lineY* = `false` (bool) - Draw Y lines
  * *map* = `null` (nullable select) - Texture map source, e.g. `"#map"`
+ * *normals* = `null` (nullable select) - Normals data source, e.g. `#normals`
  * *opacity* = `1` (positive number) - Opacity
  * *points* = `<` (select) - Points data source
  * *proximity* = `null` (nullable number) - Proximity threshold, e.g. `10`

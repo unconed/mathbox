@@ -55,6 +55,7 @@ export default {
     { expr: "function (emit, x, y, z, i, j, k, time, delta) { ... }" },
   ],
   scale: ["data", "Human-friendly divisions on an axis, subdivided as needed"],
+  latch: ["data", "Control expr/data updates when conditions change"],
 
   html: ["overlay", "HTML element source"],
   dom: ["overlay", "HTML DOM injector"],
@@ -89,6 +90,7 @@ export default {
   ],
   resample: ["operator", "Resample data to new dimensions with a shader"],
   repeat: ["operator", "Repeat data in one or more dimensions"],
+  reverse: ["operator", "Reverse data in one or more dimensions"],
   swizzle: ["operator", "Swizzle data values"],
   spread: ["operator", "Spread data values according to array indices"],
   split: [
