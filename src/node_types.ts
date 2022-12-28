@@ -10,6 +10,14 @@ import { Traits as TraitsValue } from "./primitives/types/traits";
 
 type Traits = typeof TraitsValue;
 
+/**
+ * Create a type with the same keys as `R` but with the suffix `S` appended.
+ * Keys of `R` that are not strings are ignored.
+ */
+type Suffixed<R, S extends string> = {
+  [K in keyof R as K extends string ? `${K}${S}` : never]: R[K];
+};
+
 interface GetTraitsNode {
   id: ReturnType<Traits["node"]["id"]["validate"]>;
   classes: ReturnType<Traits["node"]["classes"]["validate"]>;
@@ -2459,7 +2467,11 @@ export interface AreaPropsNormalized
     GetTraitsData,
     GetTraitsMatrix,
     GetTraitsTexture,
-    GetTraitsArea {
+    GetTraitsArea,
+    Suffixed<GetTraitsSpan, "X">,
+    Suffixed<GetTraitsSpan, "Y">,
+    Suffixed<GetTraitsSampler, "X">,
+    Suffixed<GetTraitsSampler, "Y"> {
   expr: AreaEmitter | null;
 }
 
@@ -2473,7 +2485,11 @@ export interface AreaProps
     SetTraitsData,
     SetTraitsMatrix,
     SetTraitsTexture,
-    SetTraitsArea {
+    SetTraitsArea,
+    Suffixed<SetTraitsSpan, "X">,
+    Suffixed<SetTraitsSpan, "Y">,
+    Suffixed<SetTraitsSampler, "X">,
+    Suffixed<SetTraitsSampler, "Y"> {
   expr?: AreaEmitter;
 }
 
@@ -2742,7 +2758,13 @@ export interface GridPropsNormalized
     GetTraitsLine,
     GetTraitsGrid,
     GetTraitsArea,
-    GetTraitsOrigin {}
+    GetTraitsOrigin,
+    Suffixed<GetTraitsAxis, "X">,
+    Suffixed<GetTraitsAxis, "Y">,
+    Suffixed<GetTraitsScale, "X">,
+    Suffixed<GetTraitsScale, "Y">,
+    Suffixed<GetTraitsSpan, "X">,
+    Suffixed<GetTraitsSpan, "Y"> {}
 
 /**
  * Properties for {@link MathboxSelection.grid | grid}.
@@ -2755,7 +2777,13 @@ export interface GridProps
     SetTraitsLine,
     SetTraitsGrid,
     SetTraitsArea,
-    SetTraitsOrigin {}
+    SetTraitsOrigin,
+    Suffixed<SetTraitsAxis, "X">,
+    Suffixed<SetTraitsAxis, "Y">,
+    Suffixed<SetTraitsScale, "X">,
+    Suffixed<SetTraitsScale, "Y">,
+    Suffixed<SetTraitsSpan, "X">,
+    Suffixed<SetTraitsSpan, "Y"> {}
 
 /**
  * Normalized properties for {@link MathboxSelection.group | group}.
@@ -2942,7 +2970,11 @@ export interface LayerProps
 export interface LerpPropsNormalized
   extends GetTraitsNode,
     GetTraitsOperator,
-    GetTraitsLerp {}
+    GetTraitsLerp,
+    Suffixed<GetTraitsSampler, "X">,
+    Suffixed<GetTraitsSampler, "Y">,
+    Suffixed<GetTraitsSampler, "Z">,
+    Suffixed<GetTraitsSampler, "W"> {}
 
 /**
  * Properties for {@link MathboxSelection.lerp | lerp}.
@@ -2951,7 +2983,11 @@ export interface LerpPropsNormalized
 export interface LerpProps
   extends SetTraitsNode,
     SetTraitsOperator,
-    SetTraitsLerp {}
+    SetTraitsLerp,
+    Suffixed<SetTraitsSampler, "X">,
+    Suffixed<SetTraitsSampler, "Y">,
+    Suffixed<SetTraitsSampler, "Z">,
+    Suffixed<SetTraitsSampler, "W"> {}
 
 /**
  * Normalized properties for {@link MathboxSelection.line | line}.
@@ -3191,7 +3227,11 @@ export interface ResamplePropsNormalized
   extends GetTraitsNode,
     GetTraitsOperator,
     GetTraitsResample,
-    GetTraitsInclude {}
+    GetTraitsInclude,
+    Suffixed<GetTraitsSampler, "X">,
+    Suffixed<GetTraitsSampler, "Y">,
+    Suffixed<GetTraitsSampler, "Z">,
+    Suffixed<GetTraitsSampler, "W"> {}
 
 /**
  * Properties for {@link MathboxSelection.resample | resample}.
@@ -3201,7 +3241,11 @@ export interface ResampleProps
   extends SetTraitsNode,
     SetTraitsOperator,
     SetTraitsResample,
-    SetTraitsInclude {}
+    SetTraitsInclude,
+    Suffixed<SetTraitsSampler, "X">,
+    Suffixed<SetTraitsSampler, "Y">,
+    Suffixed<SetTraitsSampler, "Z">,
+    Suffixed<SetTraitsSampler, "W"> {}
 
 /**
  * Normalized properties for {@link MathboxSelection.retext | retext}.
@@ -3211,7 +3255,11 @@ export interface RetextPropsNormalized
   extends GetTraitsNode,
     GetTraitsOperator,
     GetTraitsResample,
-    GetTraitsInclude {}
+    GetTraitsInclude,
+    Suffixed<GetTraitsSampler, "X">,
+    Suffixed<GetTraitsSampler, "Y">,
+    Suffixed<GetTraitsSampler, "Z">,
+    Suffixed<GetTraitsSampler, "W"> {}
 
 /**
  * Properties for {@link MathboxSelection.retext | retext}.
@@ -3221,7 +3269,11 @@ export interface RetextProps
   extends SetTraitsNode,
     SetTraitsOperator,
     SetTraitsResample,
-    SetTraitsInclude {}
+    SetTraitsInclude,
+    Suffixed<SetTraitsSampler, "X">,
+    Suffixed<SetTraitsSampler, "Y">,
+    Suffixed<SetTraitsSampler, "Z">,
+    Suffixed<SetTraitsSampler, "W"> {}
 
 /**
  * Normalized properties for {@link MathboxSelection.reveal | reveal}.
@@ -3763,7 +3815,13 @@ export interface VolumePropsNormalized
     GetTraitsData,
     GetTraitsTexture,
     GetTraitsVoxel,
-    GetTraitsVolume {
+    GetTraitsVolume,
+    Suffixed<GetTraitsSpan, "X">,
+    Suffixed<GetTraitsSpan, "Y">,
+    Suffixed<GetTraitsSpan, "Z">,
+    Suffixed<GetTraitsSampler, "X">,
+    Suffixed<GetTraitsSampler, "Y">,
+    Suffixed<GetTraitsSampler, "Z"> {
   expr: VolumeEmitter | null;
 }
 
@@ -3777,7 +3835,13 @@ export interface VolumeProps
     SetTraitsData,
     SetTraitsTexture,
     SetTraitsVoxel,
-    SetTraitsVolume {
+    SetTraitsVolume,
+    Suffixed<SetTraitsSpan, "X">,
+    Suffixed<SetTraitsSpan, "Y">,
+    Suffixed<SetTraitsSpan, "Z">,
+    Suffixed<SetTraitsSampler, "X">,
+    Suffixed<SetTraitsSampler, "Y">,
+    Suffixed<SetTraitsSampler, "Z"> {
   expr?: VolumeEmitter;
 }
 
