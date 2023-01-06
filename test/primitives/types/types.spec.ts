@@ -1,5 +1,6 @@
 import * as MathBox from "../../../src";
 import type { Axes, AxesWithZero } from "../../../src/types";
+import { Color } from "three"
 
 const { Types } = MathBox.Primitives.Types;
 
@@ -213,4 +214,14 @@ describe("primitives.types.types", function () {
     }
     expect(invalid).toHaveBeenCalledTimes(4);
   });
+
+  it("validates color", () => {
+    const color = Types.color();
+    const value = color.make();
+
+    // Default color is 0.5, 0.5, 0.5
+    expect(value.equals(new Color(0.5, 0.5, 0.5))).toBe(true);
+
+    const invalid = jasmine.createSpy();
+  })
 });

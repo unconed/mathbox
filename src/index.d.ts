@@ -5,5 +5,5 @@
  */
 export * from "./types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export declare const Primitives: any;
+import * as Primitives from "./primitives"
+export { Primitives }

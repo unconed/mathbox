@@ -7,6 +7,7 @@
  * specifying types that are only consumed in our source code, but no good for
  * specifying types that should be included in the output.
  */
+import type { Color, ColorRepresentation } from "three";
 import type { MathboxNode, MathboxSelection } from "../../types";
 import { Types as TypesUntyped } from "./types";
 
@@ -132,7 +133,7 @@ export type TypeGenerators = {
   mat4: any;
 
   quat: any;
-  color: any;
+  color(r?: number, g?: number, b?: number, a?: number): Type<Optional<ColorRepresentation>, Color>;
   transpose(order?: string | Axes[]): Type<Optional<string | Axes[]>, number[]>;
 
   swizzle(
