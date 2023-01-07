@@ -9,7 +9,12 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-import { Object3D, PerspectiveCamera, Scene as ThreeScene, WebGLRenderTarget  } from "three";
+import {
+  Object3D,
+  PerspectiveCamera,
+  Scene as ThreeScene,
+  WebGLRenderTarget,
+} from "three";
 import { Renderable } from "./renderable.js";
 
 /*

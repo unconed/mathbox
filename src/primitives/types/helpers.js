@@ -14,7 +14,7 @@
 import * as UGLSL from "../../util/glsl.js";
 import * as UTicks from "../../util/ticks.js";
 
-import { NormalBlending, Vector2, Vector3 } from "three"
+import { NormalBlending, Vector2, Vector3 } from "three";
 
 /*
 

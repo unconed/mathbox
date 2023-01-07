@@ -15,11 +15,7 @@ Provides easy access to past rendered frames
 @reads[] and @write contain WebGLRenderTargets whose internal pointers are rotated automatically
 */
 
-import {
-  NearestFilter,
-  RGBAFormat,
-  UnsignedByteType,
-} from "three";
+import { NearestFilter, RGBAFormat, UnsignedByteType } from "three";
 import { Vector2 } from "three";
 import { WebGLRenderTarget } from "three";
 

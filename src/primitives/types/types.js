@@ -34,7 +34,7 @@ import {
   UnsignedShortType,
   Vector2,
   Vector3,
-  Vector4
+  Vector4,
 } from "three";
 
 // Property types
