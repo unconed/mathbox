@@ -14,9 +14,8 @@
 import * as UGLSL from "../../util/glsl.js";
 import * as UTicks from "../../util/ticks.js";
 
-import { NormalBlending } from "three/src/constants.js";
-import { Vector2 } from "three/src/math/Vector2.js";
-import { Vector3 } from "three/src/math/Vector3.js";
+import { NormalBlending, Vector2, Vector3 } from "three"
+
 /*
 
 This is the general dumping ground for trait behavior.

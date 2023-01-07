@@ -8,7 +8,7 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-import { BufferAttribute } from "three/src/core/BufferAttribute.js";
+import { BufferAttribute } from "three";
 import { ClipGeometry } from "./clipgeometry.js";
 
 /*

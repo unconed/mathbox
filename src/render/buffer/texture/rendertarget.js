@@ -19,9 +19,9 @@ import {
   NearestFilter,
   RGBAFormat,
   UnsignedByteType,
-} from "three/src/constants.js";
-import { Vector2 } from "three/src/math/Vector2.js";
-import { WebGLRenderTarget } from "three/src/renderers/WebGLRenderTarget.js";
+} from "three";
+import { Vector2 } from "three";
+import { WebGLRenderTarget } from "three";
 
 export class RenderTarget {
   constructor(gl, width, height, frames, options) {

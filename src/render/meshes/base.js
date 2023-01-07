@@ -10,7 +10,7 @@
 
 import * as UGLSL from "../../util/glsl.js";
 
-import { RawShaderMaterial } from "three/src/materials/RawShaderMaterial.js";
+import { RawShaderMaterial } from "three";
 import { Renderable } from "../renderable.js";
 
 export class Base extends Renderable {

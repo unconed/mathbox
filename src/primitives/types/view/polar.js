@@ -11,7 +11,7 @@
 import * as UAxis from "../../../util/axis.js";
 import * as UThree from "../../../util/three.js";
 
-import { Vector2 } from "three/src/math/Vector2.js";
+import { Vector2 } from "three";
 import { View } from "./view.js";
 
 export class Polar extends View {

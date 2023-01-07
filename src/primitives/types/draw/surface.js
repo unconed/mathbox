@@ -9,7 +9,7 @@
  */
 
 import * as UJS from "../../../util/js.js";
-import { Color } from "three/src/math/Color.js";
+import { Color } from "three";
 import { Primitive } from "../../primitive.js";
 
 export class Surface extends Primitive {

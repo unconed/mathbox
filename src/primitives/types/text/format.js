@@ -8,7 +8,7 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-import { FloatType, NearestFilter } from "three/src/constants.js";
+import { FloatType, NearestFilter } from "three";
 import { Operator } from "../operator/operator.js";
 
 export class Format extends Operator {

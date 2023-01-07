@@ -6,11 +6,8 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
+import { DoubleSide, Mesh, MeshBasicMaterial, PlaneGeometry } from "three";
 import { Base } from "./base.js";
-import { DoubleSide } from "three/src/constants.js";
-import { Mesh } from "three/src/objects/Mesh.js";
-import { MeshBasicMaterial } from "three/src/materials/MeshBasicMaterial.js";
-import { PlaneGeometry } from "three/src/geometries/PlaneGeometry.js";
 
 export class Debug extends Base {
   constructor(renderer, shaders, options) {
