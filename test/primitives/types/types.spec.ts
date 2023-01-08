@@ -218,10 +218,40 @@ describe("primitives.types.types", function () {
   it("validates color", () => {
     const color = Types.color();
     const value = color.make();
+    const target = new Color()
+    const onInvalid = jasmine.createSpy();
 
     // Default color is 0.5, 0.5, 0.5
-    expect(value.equals(new Color(0.5, 0.5, 0.5))).toBe(true);
+    expect(value).toEqual(new Color(0.5, 0.5, 0.5));
 
-    const invalid = jasmine.createSpy();
+
+    // string colors work
+    expect(
+      color.validate("red", target, onInvalid)
+    ).toEqual(new Color(1, 0, 0));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    // ThreeJS Colors work
+    expect(
+      color.validate(new Color(0.1, 0.2, 0.3), target, onInvalid)
+    ).toEqual(new Color(0.1, 0.2, 0.3));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    // Array colors are RGB
+    expect(
+      color.validate([0.3,0.4,0.5], target, onInvalid)
+    ).toEqual(new Color(0.3,0.4,0.5));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    // Numbers are interpretted as hex
+    expect(
+      color.validate(parseInt("00FFFF", 16), target, onInvalid)
+    ).toEqual(new Color(0,1,1));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    // Null is invalid
+    color.validate(null, target, onInvalid)
+    expect(onInvalid).toHaveBeenCalled();
+    onInvalid.calls.reset()
   })
 });

@@ -5,5 +5,5 @@
  */
 export * from "./types";
 
-import * as Primitives from "./primitives"
-export { Primitives }
+import * as Primitives from "./primitives";
+export { Primitives };

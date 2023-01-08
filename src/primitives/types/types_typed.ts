@@ -7,8 +7,9 @@
  * specifying types that are only consumed in our source code, but no good for
  * specifying types that should be included in the output.
  */
-import type { Color, ColorRepresentation } from "three";
 import type { MathboxNode, MathboxSelection } from "../../types";
+import type { Color } from "three";
+
 import { Types as TypesUntyped } from "./types";
 
 type OnInvalid = () => void;
@@ -61,6 +62,15 @@ export type Alignments = "left" | "middle" | "right" | number;
  * If specified as a number, should range between -1 ("enter") to +1 ("exit").
  */
 export type TransitionStates = "enter" | "visible" | "exiit" | number;
+
+/**
+ * A representation of a color. Can be:
+ *  - a string, which is parsed by THREE.Color
+ *  - a THREE.Color instance
+ *  - a number, which is interpreted as a hex value
+ *  - an array of numbers, which is interpreted as an RGB value
+ */
+type ColorDescription = string | Color | number | number[];
 
 export type TypeGenerators = {
   // Helpers
@@ -133,7 +143,12 @@ export type TypeGenerators = {
   mat4: any;
 
   quat: any;
-  color(r?: number, g?: number, b?: number, a?: number): Type<Optional<ColorRepresentation>, Color>;
+  color(
+    r?: number,
+    g?: number,
+    b?: number,
+    a?: number
+  ): Type<Optional<ColorDescription>, Color>;
   transpose(order?: string | Axes[]): Type<Optional<string | Axes[]>, number[]>;
 
   swizzle(
