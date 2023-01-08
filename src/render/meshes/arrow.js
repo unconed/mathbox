@@ -7,10 +7,9 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
+import { DoubleSide, Mesh } from "three";
 import { ArrowGeometry } from "../geometry/arrowgeometry.js";
 import { Base } from "./base.js";
-import { DoubleSide } from "three/src/constants.js";
-import { Mesh } from "three/src/objects/Mesh.js";
 
 export class Arrow extends Base {
   constructor(renderer, shaders, options) {

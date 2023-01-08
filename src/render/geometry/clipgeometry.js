@@ -8,7 +8,7 @@
  */
 
 import { Geometry } from "./geometry.js";
-import { Vector4 } from "three/src/math/Vector4.js";
+import { Vector4 } from "three";
 
 // Instanced geometry that is clippable along 4 dimensions
 export class ClipGeometry extends Geometry {

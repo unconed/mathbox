@@ -12,11 +12,10 @@
 import * as UData from "../../util/data.js";
 import * as UGLSL from "../../util/glsl.js";
 
-import { FloatType, UnsignedByteType } from "three/src/constants.js";
+import { FloatType, UnsignedByteType, Vector4 } from "three";
 import { Memo } from "./memo.js";
 import { MemoScreen } from "../meshes/memoscreen.js";
 import { Renderable } from "../renderable.js";
-import { Vector4 } from "three/src/math/Vector4.js";
 
 /*
  * Readback up to 4D array of up to 4D data from GL

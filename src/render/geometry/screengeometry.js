@@ -8,7 +8,7 @@
  */
 
 import { SurfaceGeometry } from "./surfacegeometry.js";
-import { Vector4 } from "three/src/math/Vector4.js";
+import { Vector4 } from "three";
 
 /*
 Grid Surface in normalized screen space

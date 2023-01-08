@@ -7,7 +7,7 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-import { RGBAFormat } from "three/src/constants.js";
+import { RGBAFormat } from "three";
 import { RenderToTexture } from "./rendertotexture.js";
 
 /*

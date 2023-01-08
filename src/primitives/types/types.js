@@ -16,26 +16,26 @@ import * as UJS from "../../util/js.js";
 
 import {
   ByteType,
+  Color,
   FloatType,
   IntType,
   LinearFilter,
   LinearMipMapLinearFilter,
   LinearMipMapNearestFilter,
+  Matrix3,
+  Matrix4,
   NearestFilter,
   NearestMipMapLinearFilter,
   NearestMipMapNearestFilter,
+  Quaternion,
   ShortType,
   UnsignedByteType,
   UnsignedIntType,
   UnsignedShortType,
-} from "three/src/constants.js";
-import { Color } from "three/src/math/Color.js";
-import { Matrix3 } from "three/src/math/Matrix3.js";
-import { Matrix4 } from "three/src/math/Matrix4.js";
-import { Quaternion } from "three/src/math/Quaternion.js";
-import { Vector2 } from "three/src/math/Vector2.js";
-import { Vector3 } from "three/src/math/Vector3.js";
-import { Vector4 } from "three/src/math/Vector4.js";
+  Vector2,
+  Vector3,
+  Vector4,
+} from "three";
 
 // Property types
 //

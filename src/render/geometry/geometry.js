@@ -9,7 +9,7 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-import { BufferGeometry } from "three/src/core/BufferGeometry.js";
+import { BufferGeometry } from "three";
 
 export class Geometry extends BufferGeometry {
   constructor() {

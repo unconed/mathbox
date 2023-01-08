@@ -6,12 +6,8 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-import * as CONST from "three/src/constants.js";
-
-import { Euler } from "three/src/math/Euler.js";
-import { Matrix4 } from "three/src/math/Matrix4.js";
-import { Quaternion } from "three/src/math/Quaternion.js";
-import { Vector3 } from "three/src/math/Vector3.js";
+import * as CONST from "three";
+import { Euler, Matrix4, Quaternion, Vector3 } from "three";
 
 export const paramToGL = function (gl, p) {
   if (p === CONST.RepeatWrapping) {

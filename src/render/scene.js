@@ -9,11 +9,13 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-import { Object3D } from "three/src/core/Object3D.js";
-import { PerspectiveCamera } from "three/src/cameras/PerspectiveCamera.js";
+import {
+  Object3D,
+  PerspectiveCamera,
+  Scene as ThreeScene,
+  WebGLRenderTarget,
+} from "three";
 import { Renderable } from "./renderable.js";
-import { Scene as ThreeScene } from "three/src/scenes/Scene.js";
-import { WebGLRenderTarget } from "three/src/renderers/WebGLRenderTarget.js";
 
 /*
  All MathBox renderables sit inside this root, to keep things tidy.

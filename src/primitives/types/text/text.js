@@ -10,7 +10,7 @@
 
 import * as UData from "../../../util/data.js";
 
-import { FloatType, NearestFilter } from "three/src/constants.js";
+import { FloatType, NearestFilter } from "three";
 import { Buffer } from "../data/buffer.js";
 import { Voxel } from "../data/voxel.js";
 

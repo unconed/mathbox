@@ -7,11 +7,10 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-import * as CONST from "three/src/constants.js";
+import * as CONST from "three";
 import * as UThree from "../../../util/three.js";
 
-import { Texture } from "three/src/textures/Texture.js";
-import { Vector2 } from "three/src/math/Vector2.js";
+import { Texture, Vector2 } from "three";
 
 /*
 Manually allocated GL texture for data streaming.

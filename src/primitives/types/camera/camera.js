@@ -9,9 +9,8 @@
  */
 
 import * as UThree from "../../../util/three.js";
-import { Euler } from "three/src/math/Euler.js";
+import { Euler, Quaternion } from "three";
 import { Primitive } from "../../primitive.js";
-import { Quaternion } from "three/src/math/Quaternion.js";
 
 export class Camera extends Primitive {
   static initClass() {

@@ -10,12 +10,9 @@
 
 import * as UGLSL from "../../util/glsl.js";
 
-import { PerspectiveCamera } from "three/src/cameras/PerspectiveCamera.js";
+import { PerspectiveCamera, Scene, Vector2, Vector3 } from "three";
 import { RenderTarget } from "./texture/rendertarget.js";
 import { Renderable } from "../renderable.js";
-import { Scene } from "three/src/scenes/Scene.js";
-import { Vector2 } from "three/src/math/Vector2.js";
-import { Vector3 } from "three/src/math/Vector3.js";
 
 /*
  * Render-To-Texture with history

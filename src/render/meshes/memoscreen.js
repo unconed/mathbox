@@ -8,9 +8,8 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
+import { Vector2, Vector4 } from "three";
 import { Screen } from "./screen.js";
-import { Vector2 } from "three/src/math/Vector2.js";
-import { Vector4 } from "three/src/math/Vector4.js";
 
 export class MemoScreen extends Screen {
   constructor(renderer, shaders, options) {

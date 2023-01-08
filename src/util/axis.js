@@ -7,7 +7,7 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-import { Vector4 } from "three/src/math/Vector4.js";
+import { Vector4 } from "three";
 
 export const setOrigin = function (vec, dimensions, origin) {
   if (+dimensions === dimensions) {

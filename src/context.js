@@ -16,7 +16,7 @@ import * as Shaders from "./shaders";
 import * as Stage from "./stage";
 import * as Util from "./util";
 
-import { PerspectiveCamera } from "three/src/cameras/PerspectiveCamera.js";
+import { PerspectiveCamera } from "three";
 
 export class Context {
   static initClass() {

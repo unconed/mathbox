@@ -8,10 +8,9 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
+import { DoubleSide, Mesh } from "three";
 import { Base } from "./base.js";
-import { DoubleSide } from "three/src/constants.js";
 import { LineGeometry } from "../geometry/linegeometry.js";
-import { Mesh } from "three/src/objects/Mesh.js";
 
 export class Line extends Base {
   constructor(renderer, shaders, options) {

@@ -1,5 +1,9 @@
 ### MathBox Changelog
 
+### 2.2.2 (unreleased)
+
+- Changed how Mathbox imports ThreeJS. Previously, Mathbox (usually) imported from `three/src`. Now it consistently imports from `three`. This change should generally not affect users unless they were using `instanceof` checks.
+
 ### 2.2.1
 - Add Typescript support for live properties and `bind`. [#43](https://github.com/unconed/mathbox/pull/43)
 
