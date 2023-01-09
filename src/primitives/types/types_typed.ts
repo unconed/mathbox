@@ -7,8 +7,8 @@
  * specifying types that are only consumed in our source code, but no good for
  * specifying types that should be included in the output.
  */
+import type { Color, Vector2, Vector3, Vector4 } from "three";
 import type { MathboxNode, MathboxSelection } from "../../types";
-import type { Color } from "three";
 
 import { Types as TypesUntyped } from "./types";
 
@@ -72,6 +72,10 @@ export type TransitionStates = "enter" | "visible" | "exiit" | number;
  */
 type ColorDescription = string | Color | number | number[];
 
+type Vec2Like = number | number[] | Vector2;
+type Vec3Like = number | number[] | Vector3;
+type Vec4Like = number | number[] | Vector4;
+
 export type TypeGenerators = {
   // Helpers
   nullable<I, O>(type: Type<I, O>): Type<null | I, null | O>;
@@ -132,12 +136,17 @@ export type TypeGenerators = {
   object: any;
   timestamp: any;
 
-  vec2: any;
-  ivec2: any;
-  vec3: any;
-  ivec3: any;
-  vec4: any;
-  ivec4: any;
+  vec2(x?: number, y?: number): Type<Vec2Like, Vector2>;
+  ivec2(x?: number, y?: number): Type<Vec2Like, Vector2>;
+  vec3(x?: number, y?: number, z?: number): Type<Vec3Like, Vector3>;
+  ivec3(x?: number, y?: number, z?: number): Type<Vec3Like, Vector3>;
+  vec4(x?: number, y?: number, z?: number, w?: number): Type<Vec4Like, Vector4>;
+  ivec4(
+    x?: number,
+    y?: number,
+    z?: number,
+    w?: number
+  ): Type<Vec4Like, Vector4>;
 
   mat3: any;
   mat4: any;
@@ -148,7 +157,7 @@ export type TypeGenerators = {
     g?: number,
     b?: number,
     a?: number
-  ): Type<Optional<ColorDescription>, Color>;
+  ): Type<ColorDescription, Color>;
   transpose(order?: string | Axes[]): Type<Optional<string | Axes[]>, number[]>;
 
   swizzle(

@@ -1,6 +1,6 @@
 import * as MathBox from "../../../src";
 import type { Axes, AxesWithZero } from "../../../src/types";
-import { Color } from "three"
+import { Color, Vector2 } from "three"
 
 const { Types } = MathBox.Primitives.Types;
 
@@ -249,8 +249,38 @@ describe("primitives.types.types", function () {
     ).toEqual(new Color(0,1,1));
     expect(onInvalid).not.toHaveBeenCalled();
 
-    // Null is invalid
+    // @ts-expect-error Null is invalid; should call invalid
     color.validate(null, target, onInvalid)
+    expect(onInvalid).toHaveBeenCalled();
+    onInvalid.calls.reset()
+  })
+
+  it("validates vec2", () => {
+    const vec2 = Types.vec2(2, 8);
+    const value = vec2.make();
+    const target = new Vector2()
+    const onInvalid = jasmine.createSpy();
+
+    expect(value).toEqual(new Vector2(2, 8));
+
+
+    expect(
+      vec2.validate(1, target, onInvalid)
+    ).toEqual(new Vector2(1, 8));
+    expect(onInvalid).not.toHaveBeenCalled();
+    
+    expect(
+      vec2.validate([10, 20], target, onInvalid)
+    ).toEqual(new Vector2(10, 20));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    expect(
+      vec2.validate(new Vector2(30, 40), target, onInvalid)
+    ).toEqual(new Vector2(30, 40));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    // @ts-expect-error Null is invalid; should call invalid
+    vec2.validate(null, target, onInvalid)
     expect(onInvalid).toHaveBeenCalled();
     onInvalid.calls.reset()
   })
