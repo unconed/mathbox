@@ -1,6 +1,6 @@
 import * as MathBox from "../../../src";
 import type { Axes, AxesWithZero } from "../../../src/types";
-import { Color, Vector2 } from "three"
+import { Color, Vector2, Vector3, Vector4 } from "three"
 
 const { Types } = MathBox.Primitives.Types;
 
@@ -281,6 +281,66 @@ describe("primitives.types.types", function () {
 
     // @ts-expect-error Null is invalid; should call invalid
     vec2.validate(null, target, onInvalid)
+    expect(onInvalid).toHaveBeenCalled();
+    onInvalid.calls.reset()
+  })
+
+  it("validates vec3", () => {
+    const vec3 = Types.vec3(2, 8, 16);
+    const value = vec3.make();
+    const target = new Vector3()
+    const onInvalid = jasmine.createSpy();
+
+    expect(value).toEqual(new Vector3(2, 8, 16));
+
+
+    expect(
+      vec3.validate(1, target, onInvalid)
+    ).toEqual(new Vector3(1, 8, 16));
+    expect(onInvalid).not.toHaveBeenCalled();
+    
+    expect(
+      vec3.validate([10, 20, 30], target, onInvalid)
+    ).toEqual(new Vector3(10, 20, 30));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    expect(
+      vec3.validate(new Vector3(30, 40, 50), target, onInvalid)
+    ).toEqual(new Vector3(30, 40, 50));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    // @ts-expect-error Null is invalid; should call invalid
+    vec3.validate(null, target, onInvalid)
+    expect(onInvalid).toHaveBeenCalled();
+    onInvalid.calls.reset()
+  })
+
+  it("validates vec4", () => {
+    const vec4 = Types.vec4(2, 8, 16, 32);
+    const value = vec4.make();
+    const target = new Vector4()
+    const onInvalid = jasmine.createSpy();
+
+    expect(value).toEqual(new Vector4(2, 8, 16, 32));
+
+
+    expect(
+      vec4.validate(1, target, onInvalid)
+    ).toEqual(new Vector4(1, 8, 16, 32));
+    expect(onInvalid).not.toHaveBeenCalled();
+    
+    expect(
+      vec4.validate([10, 20, 30, 40], target, onInvalid)
+    ).toEqual(new Vector4(10, 20, 30, 40));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    expect(
+      vec4.validate(new Vector4(30, 40, 50, 60), target, onInvalid)
+    ).toEqual(new Vector4(30, 40, 50, 60));
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    // @ts-expect-error Null is invalid; should call invalid
+    vec4.validate(null, target, onInvalid)
     expect(onInvalid).toHaveBeenCalled();
     onInvalid.calls.reset()
   })
