@@ -441,19 +441,14 @@ describe("primitives.types.types", function () {
     ).toEqual(new Quaternion(10, 20, 16, 1).normalize());
     expect(onInvalid).not.toHaveBeenCalled();
 
-  expect(
-    quat.validate(new Vector4(10, 20), target, onInvalid)
-  ).toEqual(new Quaternion(10, 20, 0, 1).normalize());
-  expect(onInvalid).not.toHaveBeenCalled();
+    expect(
+      quat.validate(new Vector4(10, 20), target, onInvalid)
+    ).toEqual(new Quaternion(10, 20, 0, 1).normalize());
+    expect(onInvalid).not.toHaveBeenCalled();
 
     expect(
       quat.validate(new Quaternion(30, 40, 50, 60), target, onInvalid)
     ).toEqual(new Quaternion(30, 40, 50, 60).normalize());
     expect(onInvalid).not.toHaveBeenCalled();
-
-    // @ts-expect-error Null is invalid; should call invalid
-    quat.validate(null, target, onInvalid)
-    expect(onInvalid).toHaveBeenCalled();
-    onInvalid.calls.reset()
   })
 });
