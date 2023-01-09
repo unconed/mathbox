@@ -7,7 +7,15 @@
  * specifying types that are only consumed in our source code, but no good for
  * specifying types that should be included in the output.
  */
-import type { Color, Vector2, Vector3, Vector4 } from "three";
+import type {
+  Color,
+  Matrix3,
+  Matrix4,
+  Quaternion,
+  Vector2,
+  Vector3,
+  Vector4,
+} from "three";
 import type { MathboxNode, MathboxSelection } from "../../types";
 
 import { Types as TypesUntyped } from "./types";
@@ -148,10 +156,42 @@ export type TypeGenerators = {
     w?: number
   ): Type<Vec4Like, Vector4>;
 
-  mat3: any;
-  mat4: any;
+  mat3(
+    n11?: number,
+    n12?: number,
+    n13?: number,
+    n21?: number,
+    n22?: number,
+    n23?: number,
+    n31?: number,
+    n32?: number,
+    n33?: number
+  ): Type<number[] | Matrix3, Matrix3>;
+  mat4(
+    n11?: number,
+    n12?: number,
+    n13?: number,
+    n14?: number,
+    n21?: number,
+    n22?: number,
+    n23?: number,
+    n24?: number,
+    n31?: number,
+    n32?: number,
+    n33?: number,
+    n34?: number,
+    n41?: number,
+    n42?: number,
+    n43?: number,
+    n44?: number
+  ): Type<number[] | Matrix4, Matrix4>;
 
-  quat: any;
+  quat(
+    x?: number,
+    y?: number,
+    z?: number,
+    w?: number
+  ): Type<Vec4Like | Quaternion, Quaternion>;
   color(
     r?: number,
     g?: number,

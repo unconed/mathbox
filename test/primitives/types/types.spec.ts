@@ -1,6 +1,6 @@
 import * as MathBox from "../../../src";
 import type { Axes, AxesWithZero } from "../../../src/types";
-import { Color, Vector2, Vector3, Vector4 } from "three"
+import { Color, Matrix3, Matrix4, Quaternion, Vector2, Vector3, Vector4 } from "three"
 
 const { Types } = MathBox.Primitives.Types;
 
@@ -341,6 +341,118 @@ describe("primitives.types.types", function () {
 
     // @ts-expect-error Null is invalid; should call invalid
     vec4.validate(null, target, onInvalid)
+    expect(onInvalid).toHaveBeenCalled();
+    onInvalid.calls.reset()
+  })
+
+  it("validates mat3", () => {
+    const mat3 = Types.mat3(10, 20, 30);
+    const value = mat3.make();
+    const target = new Matrix3()
+    const onInvalid = jasmine.createSpy();
+
+    const expected1 = new Matrix3()
+    expected1.set(10, 20, 30, 0, 1, 0, 0, 0, 1)
+    expect(value).toEqual(expected1);
+
+
+    const expected2 = new Matrix3()
+    expected2.set(6,5,4,3,2,1,0,0,1)
+    expect(
+      mat3.validate([6, 5, 4, 3 ,2 ,1], target, onInvalid)
+    ).toEqual(expected2);
+    expect(onInvalid).not.toHaveBeenCalled();
+    
+    const input3 = new Matrix3()
+    input3.set(10, 20, 30, 40, 50, 60, 70, 80, 90)
+    const expected3 = new Matrix3()
+    expected3.set(10, 20, 30, 40, 50, 60, 70, 80, 90)
+    expect(
+      mat3.validate(input3, target, onInvalid)
+    ).toEqual(expected3);
+    expect(onInvalid).not.toHaveBeenCalled();
+
+
+    // @ts-expect-error Numbers are invalid; should call invalid
+    mat3.validate(123, target, onInvalid)
+    expect(onInvalid).toHaveBeenCalled();
+    onInvalid.calls.reset()
+  })
+
+  it("validates mat4", () => {
+    const mat4 = Types.mat4(10, 20, 30, 40);
+    const value = mat4.make();
+    const target = new Matrix4()
+    const onInvalid = jasmine.createSpy();
+
+    const expected1 = new Matrix4()
+    expected1.set(10, 20, 30, 40, 0, 1, 0, 0, 0,0,1, 0, 0,0,0, 1)
+    expect(value).toEqual(expected1);
+
+
+    const expected2 = new Matrix4()
+    expected2.set(8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 0, 0, 0, 0, 1)
+    expect(
+      mat4.validate([8, 7, 6, 5, 4, 3, 2, 1], target, onInvalid)
+    ).toEqual(expected2);
+    expect(onInvalid).not.toHaveBeenCalled();
+    
+    const input3 = new Matrix4()
+    input3.set(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
+    const expected3 = new Matrix4()
+    expected3.set(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
+    expect(
+      mat4.validate(input3, target, onInvalid)
+    ).toEqual(expected3);
+    expect(onInvalid).not.toHaveBeenCalled();
+
+
+    // @ts-expect-error Numbers are invalid; should call invalid
+    mat4.validate(123, target, onInvalid)
+    expect(onInvalid).toHaveBeenCalled();
+    onInvalid.calls.reset()
+  })
+
+  it("validates quaternions", () => {
+    const quat = Types.quat(2, 8, 16);
+    const value = quat.make();
+    const target = new Quaternion()
+    const onInvalid = jasmine.createSpy();
+
+
+    /**
+     * This seems like a bug. `Types.quat(...)` accepts default values for xyzw,
+     * but the defaults are usually not used. (They are when passing an array,
+     * but not when passing a Vector4 instance).
+     * 
+     * In pratice this probably doesn't really matter, since Mathbox doesn't
+     * actually use the quat(...) parameters for any of its quaternion properties.
+     */
+    expect(value).toEqual(new Quaternion(0, 0, 0, 1));
+
+
+    expect(
+      quat.validate(10, target, onInvalid)
+    ).toEqual(new Quaternion(10, 8, 16, 1).normalize());
+    expect(onInvalid).not.toHaveBeenCalled();
+    
+    expect(
+      quat.validate([10, 20 ], target, onInvalid)
+    ).toEqual(new Quaternion(10, 20, 16, 1).normalize());
+    expect(onInvalid).not.toHaveBeenCalled();
+
+  expect(
+    quat.validate(new Vector4(10, 20), target, onInvalid)
+  ).toEqual(new Quaternion(10, 20, 0, 1).normalize());
+  expect(onInvalid).not.toHaveBeenCalled();
+
+    expect(
+      quat.validate(new Quaternion(30, 40, 50, 60), target, onInvalid)
+    ).toEqual(new Quaternion(30, 40, 50, 60).normalize());
+    expect(onInvalid).not.toHaveBeenCalled();
+
+    // @ts-expect-error Null is invalid; should call invalid
+    quat.validate(null, target, onInvalid)
     expect(onInvalid).toHaveBeenCalled();
     onInvalid.calls.reset()
   })
