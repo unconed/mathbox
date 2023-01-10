@@ -1,8 +1,12 @@
 ### MathBox Changelog
 
-### 2.2.2 (unreleased)
+### 2.3.0
 
-- Changed how Mathbox imports ThreeJS. Previously, Mathbox (usually) imported from `three/src`. Now it consistently imports from `three`. This change should generally not affect users unless they were using `instanceof` checks.
+- improved TS defintions for color, vector, matrix, and quaternion based properties. [#55](https://github.com/unconed/mathbox/pull/55)
+- Changed how Mathbox imports ThreeJS. Previously, Mathbox (usually) imported from `three/src`. Now it consistently imports from `three`. This change should generally not affect users unless they were using `instanceof` checks. [#53](https://github.com/unconed/mathbox/pull/53)
+- Added TS support for `area.rangeX`, `area.rangeY`, and other X/Y/Z/W-suffixed properties [#50](https://github.com/unconed/mathbox/pull/50)
+- Fixed documentation generation [#51](https://github.com/unconed/mathbox/pull/51)
+- Documented and added typings for `unbind()`. [#45](https://github.com/unconed/mathbox/pull/45)
 
 ### 2.2.1
 - Add Typescript support for live properties and `bind`. [#43](https://github.com/unconed/mathbox/pull/43)
