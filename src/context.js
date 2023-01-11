@@ -16,7 +16,7 @@ import * as Shaders from "./shaders";
 import * as Stage from "./stage";
 import * as Util from "./util";
 
-import { PerspectiveCamera } from "three/src/cameras/PerspectiveCamera.js";
+import { PerspectiveCamera } from "three";
 
 export class Context {
   static initClass() {
@@ -31,7 +31,7 @@ export class Context {
       Util,
       DOM: Util.VDOM,
     };
-    this.Version = "2.2.0";
+    this.Version = "2.2.1";
   }
 
   //-------------------------------------------------------------------

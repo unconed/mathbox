@@ -1,6 +1,6 @@
 {
   "name": "mathbox",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Presentation-quality WebGL math graphing",
   "repository": {
     "type": "git",
@@ -30,7 +30,7 @@
     "build:module": "tsc",
     "build": "rm -rf build && concurrently 'npm run build:bundle' 'npm run build:module' 'gulp css'",
     "docs": "npx webpack --config config/webpack.config.docs.js && node build_docs/generate.js > docs/primitives.md",
-    "format": "prettier src",
+    "format": "prettier src --check",
     "lint": "eslint \"src/**/*.{ts,js}\" --max-warnings=0",
     "autofix": "npm run format -- --write && npm run lint -- --fix",
     "test": "webpack --config config/webpack.config.testing.js && karma start --single-run --browsers=ChromeHeadless",
@@ -42,7 +42,7 @@
     "css-select": "^4.2.1",
     "lodash": "^4.17.21",
     "shadergraph": "^2.1.3",
-    "threestrap": "^0.4.1"
+    "threestrap": "^0.5.1"
   },
   "peerDependencies": {
     "three": ">=0.118.0"
@@ -65,7 +65,7 @@
     "prettier": "2.3.1",
     "three": "^0.139.2",
     "ts-loader": "^9.2.8",
-    "typedoc": "^0.22.13",
+    "typedoc": "^0.23.23",
     "typescript": "^4.6.2",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.9.2"

@@ -13,7 +13,7 @@ import * as UGLSL from "../../util/glsl.js";
 
 import { Buffer } from "./buffer.js";
 import { DataTexture } from "./texture/datatexture.js";
-import { Vector2 } from "three/src/math/Vector2.js";
+import { Vector2 } from "three";
 
 /*
  * Data buffer on the GPU

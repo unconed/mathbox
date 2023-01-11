@@ -1,5 +1,5 @@
 import * as MB from "../../../../src";
-import { Color } from "three/src/math/Color.js";
+import { Color } from "three";
 import { smallPause } from "../../../test_utils";
 
 describe("surface", () => {

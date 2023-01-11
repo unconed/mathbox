@@ -11,7 +11,7 @@
  */
 
 import { Atlas } from "./atlas.js";
-import { UnsignedByteType } from "three/src/constants.js";
+import { UnsignedByteType } from "three";
 
 const SCRATCH_SIZE = 512 / 16;
 

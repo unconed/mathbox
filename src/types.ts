@@ -176,6 +176,10 @@ export type PropsNoramlized = {
   voxel: TT.VoxelPropsNormalized;
 };
 
+type LiveProps<Props> = {
+  [K in keyof Props]: (time: number, delta: number) => Props[K];
+};
+
 /**
  * MathBox (virtual)-DOM Nodes.
  *
@@ -207,6 +211,26 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
     prop: P,
     value: Props[Type][P]
   ): MathboxSelection<Type>;
+
+  /**
+   * Bind properties on all nodes in this selection. Bound property functions
+   * are "live" and re-evaluated on clock frames. See [API Overview](https://github.com/unconed/mathbox/blob/master/docs/api.md#api-overview).
+   */
+  bind(liveProps: LiveProps<Props[Type]>): MathboxSelection<Type>;
+  /**
+   * Bind a single property on all nodes in this selection. Bound property functions
+   * are "live" and re-evaluated on clock frames. See [API Overview](https://github.com/unconed/mathbox/blob/master/docs/api.md#api-overview).
+   */
+  bind<P extends keyof Props[Type]>(
+    prop: P,
+    value: (time: number, delta: number) => Props[Type][P]
+  ): MathboxSelection<Type>;
+
+  /**
+   * Stop invoking the bound function for this prop each frame.
+   */
+  unbind<P extends keyof Props[Type]>(prop: P): void;
+
   /**
    * Return all props for the first node in this node.
    */
@@ -285,7 +309,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category data
    */
-  area(props?: TT.AreaProps): MathboxSelection<"area">;
+  area(
+    props?: TT.AreaProps,
+    liveProps?: LiveProps<TT.AreaProps>
+  ): MathboxSelection<"area">;
   /**
    * Create new `array` node.
    *
@@ -293,7 +320,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category data
    */
-  array(props?: TT.ArrayProps): MathboxSelection<"array">;
+  array(
+    props?: TT.ArrayProps,
+    liveProps?: LiveProps<TT.ArrayProps>
+  ): MathboxSelection<"array">;
   /**
    * Create new `axis` node.
    *
@@ -301,7 +331,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  axis(props?: TT.AxisProps): MathboxSelection<"axis">;
+  axis(
+    props?: TT.AxisProps,
+    liveProps?: LiveProps<TT.AxisProps>
+  ): MathboxSelection<"axis">;
   /**
    * Create new `camera` node.
    *
@@ -309,7 +342,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category camera
    */
-  camera(props?: TT.CameraProps): MathboxSelection<"camera">;
+  camera(
+    props?: TT.CameraProps,
+    liveProps?: LiveProps<TT.CameraProps>
+  ): MathboxSelection<"camera">;
   /**
    * Create new `cartesian` node.
    *
@@ -317,7 +353,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category view
    */
-  cartesian(props?: TT.CartesianProps): MathboxSelection<"cartesian">;
+  cartesian(
+    props?: TT.CartesianProps,
+    liveProps?: LiveProps<TT.CartesianProps>
+  ): MathboxSelection<"cartesian">;
   /**
    * Create new `cartesian4` node.
    *
@@ -325,7 +364,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category view
    */
-  cartesian4(props?: TT.Cartesian4Props): MathboxSelection<"cartesian4">;
+  cartesian4(
+    props?: TT.Cartesian4Props,
+    liveProps?: LiveProps<TT.Cartesian4Props>
+  ): MathboxSelection<"cartesian4">;
   /**
    * Create new `clamp` node.
    *
@@ -333,7 +375,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  clamp(props?: TT.ClampProps): MathboxSelection<"clamp">;
+  clamp(
+    props?: TT.ClampProps,
+    liveProps?: LiveProps<TT.ClampProps>
+  ): MathboxSelection<"clamp">;
   /**
    * Create new `clock` node.
    *
@@ -341,7 +386,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category time
    */
-  clock(props?: TT.ClockProps): MathboxSelection<"clock">;
+  clock(
+    props?: TT.ClockProps,
+    liveProps?: LiveProps<TT.ClockProps>
+  ): MathboxSelection<"clock">;
   /**
    * Create new `compose` node.
    *
@@ -349,7 +397,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category rtt
    */
-  compose(props?: TT.ComposeProps): MathboxSelection<"compose">;
+  compose(
+    props?: TT.ComposeProps,
+    liveProps?: LiveProps<TT.ComposeProps>
+  ): MathboxSelection<"compose">;
   /**
    * Create new `dom` node.
    *
@@ -357,7 +408,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category overlay
    */
-  dom(props?: TT.DomProps): MathboxSelection<"dom">;
+  dom(
+    props?: TT.DomProps,
+    liveProps?: LiveProps<TT.DomProps>
+  ): MathboxSelection<"dom">;
   /**
    * Create new `face` node.
    *
@@ -365,7 +419,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  face(props?: TT.FaceProps): MathboxSelection<"face">;
+  face(
+    props?: TT.FaceProps,
+    liveProps?: LiveProps<TT.FaceProps>
+  ): MathboxSelection<"face">;
   /**
    * Create new `format` node.
    *
@@ -373,7 +430,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category text
    */
-  format(props?: TT.FormatProps): MathboxSelection<"format">;
+  format(
+    props?: TT.FormatProps,
+    liveProps?: LiveProps<TT.FormatProps>
+  ): MathboxSelection<"format">;
   /**
    * Create new `fragment` node.
    *
@@ -381,7 +441,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category transform
    */
-  fragment(props?: TT.FragmentProps): MathboxSelection<"fragment">;
+  fragment(
+    props?: TT.FragmentProps,
+    liveProps?: LiveProps<TT.FragmentProps>
+  ): MathboxSelection<"fragment">;
   /**
    * Create new `grid` node.
    *
@@ -389,7 +452,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  grid(props?: TT.GridProps): MathboxSelection<"grid">;
+  grid(
+    props?: TT.GridProps,
+    liveProps?: LiveProps<TT.GridProps>
+  ): MathboxSelection<"grid">;
   /**
    * Create new `group` node.
    *
@@ -397,7 +463,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category base
    */
-  group(props?: TT.GroupProps): MathboxSelection<"group">;
+  group(
+    props?: TT.GroupProps,
+    liveProps?: LiveProps<TT.GroupProps>
+  ): MathboxSelection<"group">;
   /**
    * Create new `grow` node.
    *
@@ -405,7 +474,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  grow(props?: TT.GrowProps): MathboxSelection<"grow">;
+  grow(
+    props?: TT.GrowProps,
+    liveProps?: LiveProps<TT.GrowProps>
+  ): MathboxSelection<"grow">;
   /**
    * Create new `html` node.
    *
@@ -413,7 +485,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category overlay
    */
-  html(props?: TT.HtmlProps): MathboxSelection<"html">;
+  html(
+    props?: TT.HtmlProps,
+    liveProps?: LiveProps<TT.HtmlProps>
+  ): MathboxSelection<"html">;
   /**
    * Create new `inherit` node.
    *
@@ -421,7 +496,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category base
    */
-  inherit(props?: TT.InheritProps): MathboxSelection<"inherit">;
+  inherit(
+    props?: TT.InheritProps,
+    liveProps?: LiveProps<TT.InheritProps>
+  ): MathboxSelection<"inherit">;
   /**
    * Create new `interval` node.
    *
@@ -429,7 +507,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category data
    */
-  interval(props?: TT.IntervalProps): MathboxSelection<"interval">;
+  interval(
+    props?: TT.IntervalProps,
+    liveProps?: LiveProps<TT.IntervalProps>
+  ): MathboxSelection<"interval">;
   /**
    * Create new `join` node.
    *
@@ -437,7 +518,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  join(props?: TT.JoinProps): MathboxSelection<"join">;
+  join(
+    props?: TT.JoinProps,
+    liveProps?: LiveProps<TT.JoinProps>
+  ): MathboxSelection<"join">;
   /**
    * Create new `label` node.
    *
@@ -445,7 +529,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category text
    */
-  label(props?: TT.LabelProps): MathboxSelection<"label">;
+  label(
+    props?: TT.LabelProps,
+    liveProps?: LiveProps<TT.LabelProps>
+  ): MathboxSelection<"label">;
   /**
    * Create new `latch` node.
    *
@@ -453,7 +540,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category data
    */
-  latch(props?: TT.LatchProps): MathboxSelection<"latch">;
+  latch(
+    props?: TT.LatchProps,
+    liveProps?: LiveProps<TT.LatchProps>
+  ): MathboxSelection<"latch">;
   /**
    * Create new `layer` node.
    *
@@ -461,7 +551,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category transform
    */
-  layer(props?: TT.LayerProps): MathboxSelection<"layer">;
+  layer(
+    props?: TT.LayerProps,
+    liveProps?: LiveProps<TT.LayerProps>
+  ): MathboxSelection<"layer">;
   /**
    * Create new `lerp` node.
    *
@@ -469,7 +562,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  lerp(props?: TT.LerpProps): MathboxSelection<"lerp">;
+  lerp(
+    props?: TT.LerpProps,
+    liveProps?: LiveProps<TT.LerpProps>
+  ): MathboxSelection<"lerp">;
   /**
    * Create new `line` node.
    *
@@ -477,7 +573,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  line(props?: TT.LineProps): MathboxSelection<"line">;
+  line(
+    props?: TT.LineProps,
+    liveProps?: LiveProps<TT.LineProps>
+  ): MathboxSelection<"line">;
   /**
    * Create new `mask` node.
    *
@@ -485,7 +584,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category transform
    */
-  mask(props?: TT.MaskProps): MathboxSelection<"mask">;
+  mask(
+    props?: TT.MaskProps,
+    liveProps?: LiveProps<TT.MaskProps>
+  ): MathboxSelection<"mask">;
   /**
    * Create new `matrix` node.
    *
@@ -493,7 +595,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category data
    */
-  matrix(props?: TT.MatrixProps): MathboxSelection<"matrix">;
+  matrix(
+    props?: TT.MatrixProps,
+    liveProps?: LiveProps<TT.MatrixProps>
+  ): MathboxSelection<"matrix">;
   /**
    * Create new `memo` node.
    *
@@ -501,7 +606,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  memo(props?: TT.MemoProps): MathboxSelection<"memo">;
+  memo(
+    props?: TT.MemoProps,
+    liveProps?: LiveProps<TT.MemoProps>
+  ): MathboxSelection<"memo">;
   /**
    * Create new `move` node.
    *
@@ -509,7 +617,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category present
    */
-  move(props?: TT.MoveProps): MathboxSelection<"move">;
+  move(
+    props?: TT.MoveProps,
+    liveProps?: LiveProps<TT.MoveProps>
+  ): MathboxSelection<"move">;
   /**
    * Create new `now` node.
    *
@@ -517,7 +628,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category time
    */
-  now(props?: TT.NowProps): MathboxSelection<"now">;
+  now(
+    props?: TT.NowProps,
+    liveProps?: LiveProps<TT.NowProps>
+  ): MathboxSelection<"now">;
   /**
    * Create new `play` node.
    *
@@ -525,7 +639,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category present
    */
-  play(props?: TT.PlayProps): MathboxSelection<"play">;
+  play(
+    props?: TT.PlayProps,
+    liveProps?: LiveProps<TT.PlayProps>
+  ): MathboxSelection<"play">;
   /**
    * Create new `point` node.
    *
@@ -533,7 +650,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  point(props?: TT.PointProps): MathboxSelection<"point">;
+  point(
+    props?: TT.PointProps,
+    liveProps?: LiveProps<TT.PointProps>
+  ): MathboxSelection<"point">;
   /**
    * Create new `polar` node.
    *
@@ -541,7 +661,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category view
    */
-  polar(props?: TT.PolarProps): MathboxSelection<"polar">;
+  polar(
+    props?: TT.PolarProps,
+    liveProps?: LiveProps<TT.PolarProps>
+  ): MathboxSelection<"polar">;
   /**
    * Create new `present` node.
    *
@@ -549,7 +672,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category present
    */
-  present(props?: TT.PresentProps): MathboxSelection<"present">;
+  present(
+    props?: TT.PresentProps,
+    liveProps?: LiveProps<TT.PresentProps>
+  ): MathboxSelection<"present">;
   /**
    * Create new `readback` node.
    *
@@ -557,7 +683,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  readback(props?: TT.ReadbackProps): MathboxSelection<"readback">;
+  readback(
+    props?: TT.ReadbackProps,
+    liveProps?: LiveProps<TT.ReadbackProps>
+  ): MathboxSelection<"readback">;
   /**
    * Create new `repeat` node.
    *
@@ -565,7 +694,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  repeat(props?: TT.RepeatProps): MathboxSelection<"repeat">;
+  repeat(
+    props?: TT.RepeatProps,
+    liveProps?: LiveProps<TT.RepeatProps>
+  ): MathboxSelection<"repeat">;
   /**
    * Create new `resample` node.
    *
@@ -573,7 +705,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  resample(props?: TT.ResampleProps): MathboxSelection<"resample">;
+  resample(
+    props?: TT.ResampleProps,
+    liveProps?: LiveProps<TT.ResampleProps>
+  ): MathboxSelection<"resample">;
   /**
    * Create new `retext` node.
    *
@@ -581,7 +716,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category text
    */
-  retext(props?: TT.RetextProps): MathboxSelection<"retext">;
+  retext(
+    props?: TT.RetextProps,
+    liveProps?: LiveProps<TT.RetextProps>
+  ): MathboxSelection<"retext">;
   /**
    * Create new `reveal` node.
    *
@@ -589,7 +727,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category present
    */
-  reveal(props?: TT.RevealProps): MathboxSelection<"reveal">;
+  reveal(
+    props?: TT.RevealProps,
+    liveProps?: LiveProps<TT.RevealProps>
+  ): MathboxSelection<"reveal">;
   /**
    * Create new `reveal` node.
    *
@@ -597,7 +738,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  reverse(props?: TT.ReverseProps): MathboxSelection<"reverse">;
+  reverse(
+    props?: TT.ReverseProps,
+    liveProps?: LiveProps<TT.ReverseProps>
+  ): MathboxSelection<"reverse">;
   /**
    * Create new `root` node.
    *
@@ -605,7 +749,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category base
    */
-  root(props?: TT.RootProps): MathboxSelection<"root">;
+  root(
+    props?: TT.RootProps,
+    liveProps?: LiveProps<TT.RootProps>
+  ): MathboxSelection<"root">;
   /**
    * Create new `rtt` node.
    *
@@ -613,7 +760,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category rtt
    */
-  rtt(props?: TT.RttProps): MathboxSelection<"rtt">;
+  rtt(
+    props?: TT.RttProps,
+    liveProps?: LiveProps<TT.RttProps>
+  ): MathboxSelection<"rtt">;
   /**
    * Create new `scale` node.
    *
@@ -621,7 +771,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category data
    */
-  scale(props?: TT.ScaleProps): MathboxSelection<"scale">;
+  scale(
+    props?: TT.ScaleProps,
+    liveProps?: LiveProps<TT.ScaleProps>
+  ): MathboxSelection<"scale">;
   /**
    * Create new `shader` node.
    *
@@ -629,7 +782,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category shader
    */
-  shader(props?: TT.ShaderProps): MathboxSelection<"shader">;
+  shader(
+    props?: TT.ShaderProps,
+    liveProps?: LiveProps<TT.ShaderProps>
+  ): MathboxSelection<"shader">;
   /**
    * Create new `slice` node.
    *
@@ -637,7 +793,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  slice(props?: TT.SliceProps): MathboxSelection<"slice">;
+  slice(
+    props?: TT.SliceProps,
+    liveProps?: LiveProps<TT.SliceProps>
+  ): MathboxSelection<"slice">;
   /**
    * Create new `slide` node.
    *
@@ -645,7 +804,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category present
    */
-  slide(props?: TT.SlideProps): MathboxSelection<"slide">;
+  slide(
+    props?: TT.SlideProps,
+    liveProps?: LiveProps<TT.SlideProps>
+  ): MathboxSelection<"slide">;
   /**
    * Create new `spherical` node.
    *
@@ -653,7 +815,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category view
    */
-  spherical(props?: TT.SphericalProps): MathboxSelection<"spherical">;
+  spherical(
+    props?: TT.SphericalProps,
+    liveProps?: LiveProps<TT.SphericalProps>
+  ): MathboxSelection<"spherical">;
   /**
    * Create new `split` node.
    *
@@ -661,7 +826,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  split(props?: TT.SplitProps): MathboxSelection<"split">;
+  split(
+    props?: TT.SplitProps,
+    liveProps?: LiveProps<TT.SplitProps>
+  ): MathboxSelection<"split">;
   /**
    * Create new `spread` node.
    *
@@ -669,7 +837,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  spread(props?: TT.SpreadProps): MathboxSelection<"spread">;
+  spread(
+    props?: TT.SpreadProps,
+    liveProps?: LiveProps<TT.SpreadProps>
+  ): MathboxSelection<"spread">;
   /**
    * Create new `step` node.
    *
@@ -677,7 +848,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category present
    */
-  step(props?: TT.StepProps): MathboxSelection<"step">;
+  step(
+    props?: TT.StepProps,
+    liveProps?: LiveProps<TT.StepProps>
+  ): MathboxSelection<"step">;
   /**
    * Create new `stereographic` node.
    *
@@ -686,7 +860,8 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    * @category view
    */
   stereographic(
-    props?: TT.StereographicProps
+    props?: TT.StereographicProps,
+    liveProps?: LiveProps<TT.StereographicProps>
   ): MathboxSelection<"stereographic">;
   /**
    * Create new `stereographic4` node.
@@ -696,7 +871,8 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    * @category view
    */
   stereographic4(
-    props?: TT.Stereographic4Props
+    props?: TT.Stereographic4Props,
+    liveProps?: LiveProps<TT.Stereographic4Props>
   ): MathboxSelection<"stereographic4">;
   /**
    * Create new `strip` node.
@@ -705,7 +881,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  strip(props?: TT.StripProps): MathboxSelection<"strip">;
+  strip(
+    props?: TT.StripProps,
+    liveProps?: LiveProps<TT.StripProps>
+  ): MathboxSelection<"strip">;
   /**
    * Create new `subdivide` node.
    *
@@ -713,7 +892,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  subdivide(props?: TT.SubdivideProps): MathboxSelection<"subdivide">;
+  subdivide(
+    props?: TT.SubdivideProps,
+    liveProps?: LiveProps<TT.SubdivideProps>
+  ): MathboxSelection<"subdivide">;
   /**
    * Create new `surface` node.
    *
@@ -721,7 +903,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  surface(props?: TT.SurfaceProps): MathboxSelection<"surface">;
+  surface(
+    props?: TT.SurfaceProps,
+    liveProps?: LiveProps<TT.SurfaceProps>
+  ): MathboxSelection<"surface">;
   /**
    * Create new `swizzle` node.
    *
@@ -729,7 +914,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  swizzle(props?: TT.SwizzleProps): MathboxSelection<"swizzle">;
+  swizzle(
+    props?: TT.SwizzleProps,
+    liveProps?: LiveProps<TT.SwizzleProps>
+  ): MathboxSelection<"swizzle">;
   /**
    * Create new `text` node.
    *
@@ -737,7 +925,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category text
    */
-  text(props?: TT.TextProps): MathboxSelection<"text">;
+  text(
+    props?: TT.TextProps,
+    liveProps?: LiveProps<TT.TextProps>
+  ): MathboxSelection<"text">;
   /**
    * Create new `ticks` node.
    *
@@ -745,7 +936,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  ticks(props?: TT.TicksProps): MathboxSelection<"ticks">;
+  ticks(
+    props?: TT.TicksProps,
+    liveProps?: LiveProps<TT.TicksProps>
+  ): MathboxSelection<"ticks">;
   /**
    * Create new `transform` node.
    *
@@ -753,7 +947,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category transform
    */
-  transform(props?: TT.TransformProps): MathboxSelection<"transform">;
+  transform(
+    props?: TT.TransformProps,
+    liveProps?: LiveProps<TT.TransformProps>
+  ): MathboxSelection<"transform">;
   /**
    * Create new `transform4` node.
    *
@@ -761,7 +958,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category transform
    */
-  transform4(props?: TT.Transform4Props): MathboxSelection<"transform4">;
+  transform4(
+    props?: TT.Transform4Props,
+    liveProps?: LiveProps<TT.Transform4Props>
+  ): MathboxSelection<"transform4">;
   /**
    * Create new `transpose` node.
    *
@@ -769,7 +969,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category operator
    */
-  transpose(props?: TT.TransposeProps): MathboxSelection<"transpose">;
+  transpose(
+    props?: TT.TransposeProps,
+    liveProps?: LiveProps<TT.TransposeProps>
+  ): MathboxSelection<"transpose">;
   /**
    * Create new `unit` node.
    *
@@ -777,7 +980,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category base
    */
-  unit(props?: TT.UnitProps): MathboxSelection<"unit">;
+  unit(
+    props?: TT.UnitProps,
+    liveProps?: LiveProps<TT.UnitProps>
+  ): MathboxSelection<"unit">;
   /**
    * Create new `vector` node.
    *
@@ -785,7 +991,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category draw
    */
-  vector(props?: TT.VectorProps): MathboxSelection<"vector">;
+  vector(
+    props?: TT.VectorProps,
+    liveProps?: LiveProps<TT.VectorProps>
+  ): MathboxSelection<"vector">;
   /**
    * Create new `vertex` node.
    *
@@ -793,7 +1002,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category transform
    */
-  vertex(props?: TT.VertexProps): MathboxSelection<"vertex">;
+  vertex(
+    props?: TT.VertexProps,
+    liveProps?: LiveProps<TT.VertexProps>
+  ): MathboxSelection<"vertex">;
   /**
    * Create new `view` node.
    *
@@ -801,7 +1013,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category view
    */
-  view(props?: TT.ViewProps): MathboxSelection<"view">;
+  view(
+    props?: TT.ViewProps,
+    liveProps?: LiveProps<TT.ViewProps>
+  ): MathboxSelection<"view">;
   /**
    * Create new `volume` node.
    *
@@ -809,7 +1024,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category data
    */
-  volume(props?: TT.VolumeProps): MathboxSelection<"volume">;
+  volume(
+    props?: TT.VolumeProps,
+    liveProps?: LiveProps<TT.VolumeProps>
+  ): MathboxSelection<"volume">;
   /**
    * Create new `voxel` node.
    *
@@ -817,7 +1035,10 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
    *
    * @category data
    */
-  voxel(props?: TT.VoxelProps): MathboxSelection<"voxel">;
+  voxel(
+    props?: TT.VoxelProps,
+    liveProps?: LiveProps<TT.VoxelProps>
+  ): MathboxSelection<"voxel">;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

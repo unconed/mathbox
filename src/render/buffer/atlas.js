@@ -14,7 +14,7 @@ import * as UGLSL from "../../util/glsl.js";
 import { BackedTexture } from "./texture/backedtexture.js";
 import { DataTexture } from "./texture/datatexture.js";
 import { Renderable } from "../renderable.js";
-import { Vector2 } from "three/src/math/Vector2.js";
+import { Vector2 } from "three";
 
 /*
  * Dynamic sprite atlas
