@@ -106,7 +106,7 @@ export type Props = {
   voxel: TT.VoxelProps;
 };
 
-export type PropsNoramlized = {
+export type PropsNormalized = {
   area: TT.AreaPropsNormalized;
   array: TT.ArrayPropsNormalized;
   axis: TT.AxisPropsNormalized;
@@ -187,7 +187,7 @@ type LiveProps<Props> = {
  */
 export interface MathboxNode<T extends NodeType = NodeType> {
   type: string;
-  props: PropsNoramlized[T];
+  props: PropsNormalized[T];
 
   /**
    * @hidden @internal
@@ -234,15 +234,15 @@ export interface MathboxSelection<Type extends NodeType = NodeType> {
   /**
    * Return all props for the first node in this node.
    */
-  get(): PropsNoramlized[Type];
+  get(): PropsNormalized[Type];
   /**
    * Retrieve a specific property value for the first node in this selection.
    */
-  get<P extends keyof PropsNoramlized[Type]>(prop: P): PropsNoramlized[Type][P];
+  get<P extends keyof PropsNormalized[Type]>(prop: P): PropsNormalized[Type][P];
   /**
    * Return an array of props for all nodes in this node.
    */
-  getAll(): PropsNoramlized[Type][];
+  getAll(): PropsNormalized[Type][];
   remove: () => void;
   print: () => MathboxSelection<Type>;
 
