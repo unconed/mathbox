@@ -588,7 +588,7 @@ const _Types = {
           value = [value];
         }
 
-        if (value instanceof Vector2) {
+        if (value?.isVector2) {
           target.copy(value);
         } else if (value instanceof Array) {
           value = value.concat(defaults.slice(value.length));
@@ -655,7 +655,7 @@ const _Types = {
           value = [value];
         }
 
-        if (value instanceof Vector3) {
+        if (value?.isVector3) {
           target.copy(value);
         } else if (value instanceof Array) {
           value = value.concat(defaults.slice(value.length));
@@ -731,7 +731,7 @@ const _Types = {
           value = [value];
         }
 
-        if (value instanceof Vector4) {
+        if (value?.isVector4) {
           target.copy(value);
         } else if (value instanceof Array) {
           value = value.concat(defaults.slice(value.length));
@@ -826,7 +826,7 @@ const _Types = {
         return m;
       },
       validate(value, target, invalid) {
-        if (value instanceof Matrix3) {
+        if (value?.isMatrix3) {
           target.copy(value);
         } else if (value instanceof Array) {
           value = value.concat(defaults.slice(value.length));
@@ -951,7 +951,7 @@ const _Types = {
         return m;
       },
       validate(value, target, invalid) {
-        if (value instanceof Matrix4) {
+        if (value?.isMatrix4) {
           target.copy(value);
         } else if (value instanceof Array) {
           value = value.concat(defaults.slice(value.length));
@@ -987,7 +987,7 @@ const _Types = {
         return new Quaternion();
       },
       validate(value, target, invalid) {
-        if (value instanceof Quaternion) {
+        if (value?.isQuaternion) {
           target.copy(value);
         } else {
           target = vec4.validate(value, target, invalid);
@@ -1046,7 +1046,7 @@ const _Types = {
           value = new Color(value);
         }
 
-        if (value instanceof Color) {
+        if (value?.isColor) {
           target.copy(value);
         } else if (value instanceof Array) {
           value = value.concat(defaults.slice(value.length));

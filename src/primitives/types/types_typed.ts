@@ -7,7 +7,17 @@
  * specifying types that are only consumed in our source code, but no good for
  * specifying types that should be included in the output.
  */
+import type {
+  Color,
+  Matrix3,
+  Matrix4,
+  Quaternion,
+  Vector2,
+  Vector3,
+  Vector4,
+} from "three";
 import type { MathboxNode, MathboxSelection } from "../../types";
+
 import { Types as TypesUntyped } from "./types";
 
 type OnInvalid = () => void;
@@ -60,6 +70,19 @@ export type Alignments = "left" | "middle" | "right" | number;
  * If specified as a number, should range between -1 ("enter") to +1 ("exit").
  */
 export type TransitionStates = "enter" | "visible" | "exiit" | number;
+
+/**
+ * A representation of a color. Can be:
+ *  - a string, which is parsed by THREE.Color
+ *  - a THREE.Color instance
+ *  - a number, which is interpreted as a hex value
+ *  - an array of numbers, which is interpreted as an RGB value
+ */
+type ColorDescription = string | Color | number | number[];
+
+type Vec2Like = number | number[] | Vector2;
+type Vec3Like = number | number[] | Vector3;
+type Vec4Like = number | number[] | Vector4;
 
 export type TypeGenerators = {
   // Helpers
@@ -121,18 +144,60 @@ export type TypeGenerators = {
   object: any;
   timestamp: any;
 
-  vec2: any;
-  ivec2: any;
-  vec3: any;
-  ivec3: any;
-  vec4: any;
-  ivec4: any;
+  vec2(x?: number, y?: number): Type<Vec2Like, Vector2>;
+  ivec2(x?: number, y?: number): Type<Vec2Like, Vector2>;
+  vec3(x?: number, y?: number, z?: number): Type<Vec3Like, Vector3>;
+  ivec3(x?: number, y?: number, z?: number): Type<Vec3Like, Vector3>;
+  vec4(x?: number, y?: number, z?: number, w?: number): Type<Vec4Like, Vector4>;
+  ivec4(
+    x?: number,
+    y?: number,
+    z?: number,
+    w?: number
+  ): Type<Vec4Like, Vector4>;
 
-  mat3: any;
-  mat4: any;
+  mat3(
+    n11?: number,
+    n12?: number,
+    n13?: number,
+    n21?: number,
+    n22?: number,
+    n23?: number,
+    n31?: number,
+    n32?: number,
+    n33?: number
+  ): Type<number[] | Matrix3, Matrix3>;
+  mat4(
+    n11?: number,
+    n12?: number,
+    n13?: number,
+    n14?: number,
+    n21?: number,
+    n22?: number,
+    n23?: number,
+    n24?: number,
+    n31?: number,
+    n32?: number,
+    n33?: number,
+    n34?: number,
+    n41?: number,
+    n42?: number,
+    n43?: number,
+    n44?: number
+  ): Type<number[] | Matrix4, Matrix4>;
 
-  quat: any;
-  color: any;
+  quat(
+    x?: number,
+    y?: number,
+    z?: number,
+    w?: number
+  ): Type<Vec4Like | Quaternion, Quaternion>;
+  color(
+    r?: number,
+    g?: number,
+    b?: number,
+    a?: number
+  ): Type<ColorDescription, Color>;
   transpose(order?: string | Axes[]): Type<Optional<string | Axes[]>, number[]>;
 
   swizzle(
