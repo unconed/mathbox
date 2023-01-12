@@ -1,28 +1,22 @@
 import * as MB from "../../../../src";
-import { smallPause } from "../../../test_utils";
 
 describe("primitives.types.base.root", () => {
-  it("reacts to changes in width", async () => {
+  it("returns the root from any selection", async () => {
+    const mathbox = MB.mathBox();
+    const root = mathbox.cartesian().root();
+
+    expect(root).toBe(mathbox);
+  });
+
+  it("reacts to changes in properties", async () => {
     const mathbox = MB.mathBox();
     const root = mathbox.root();
-    expect(root).toBe(mathbox);
 
-    // const array = cartesian.array({ width: 16 });
+    // default focus
+    expect(mathbox.get("focus")).toBe(1);
 
-    // const controller = array[0].controller;
-    // const rebuild = spyOn(controller, "rebuild").and.callThrough();
-
-    // expect(rebuild).toHaveBeenCalledTimes(0);
-    // expect(controller.space.width).toBe(16);
-
-    // array.set("width", 32);
-    // await smallPause();
-    // expect(rebuild).toHaveBeenCalledTimes(1);
-    // expect(controller.space.width).toBe(32);
-
-    // array.set("width", 24);
-    // await smallPause();
-    // expect(rebuild).toHaveBeenCalledTimes(2);
-    // expect(controller.space.width).toBe(24);
+    // set via root and see the change reflected in mathbox.
+    mathbox.root({ focus: 10 });
+    expect(mathbox.get("focus")).toBe(10);
   });
 });
