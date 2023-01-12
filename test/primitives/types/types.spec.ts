@@ -243,7 +243,7 @@ describe("primitives.types.types", function () {
     ).toEqual(new Color(0.3,0.4,0.5));
     expect(onInvalid).not.toHaveBeenCalled();
 
-    // Numbers are interpretted as hex
+    // Numbers are interpreted as hex
     expect(
       color.validate(parseInt("00FFFF", 16), target, onInvalid)
     ).toEqual(new Color(0,1,1));
@@ -421,12 +421,11 @@ describe("primitives.types.types", function () {
 
 
     /**
-     * This seems like a bug. `Types.quat(...)` accepts default values for xyzw,
-     * but the defaults are usually not used. (They are when passing an array,
-     * but not when passing a Vector4 instance).
+     * This seems like a bug: quat.make() should be using
+     * the default values provided to Types.quat.
      * 
-     * In pratice this probably doesn't really matter, since Mathbox doesn't
-     * actually use the quat(...) parameters for any of its quaternion properties.
+     * In practice, this isn't really observable because Mathbox never provides
+     * arguments to Types.quat(...)
      */
     expect(value).toEqual(new Quaternion(0, 0, 0, 1));
 
