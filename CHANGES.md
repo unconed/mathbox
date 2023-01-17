@@ -1,5 +1,9 @@
 ### MathBox Changelog
 
+### Unreleased
+
+- Support Typescript `moduleResolution: node16`.
+
 ### 2.3.0
 
 - improved TS defintions for color, vector, matrix, and quaternion based properties. [#55](https://github.com/unconed/mathbox/pull/55)
