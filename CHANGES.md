@@ -1,8 +1,8 @@
 ### MathBox Changelog
 
-### Unreleased
+### 2.3.1
 
-- Support Typescript `moduleResolution: node16`.
+- Specify "types" explicitly in `[package.json].exports` in order to support Typescript `moduleResolution: node16`.
 
 ### 2.3.0
 
