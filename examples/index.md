@@ -10,7 +10,7 @@ Welcome to Mathbox! Enjoy the demos.
 - [Hyperbolic](math/hyperbolic.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/math/hyperbolic.html))
 - [Ortho](math/ortho.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/math/ortho.html))
 - [Procedural](math/procedural.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/math/procedural.html))
-- [Quaternion Hypersphere](math/quat.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/math/quat.html))
+- [Quat](math/quat.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/math/quat.html))
 - [Tiling](math/tiling.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/math/tiling.html))
 - [Water](math/water.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/math/water.html))
 
@@ -29,7 +29,7 @@ Welcome to Mathbox! Enjoy the demos.
 - [Cylindrical](demo/cylindrical.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/cylindrical.html))
 - [Labels](demo/labels.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/labels.html))
 - [Piano](demo/piano.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/piano.html))
-- [Data/Shape Mapping](demo/shapes.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/shapes.html))
+- [Shapes](demo/shapes.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/shapes.html))
 
 ## Test
 
@@ -75,7 +75,7 @@ Welcome to Mathbox! Enjoy the demos.
 - [Readback](test/readback.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/readback.html))
 - [Repeat](test/repeat.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/repeat.html))
 - [Resample](test/resample.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/resample.html))
-- [Render-to-Texture History](test/resample2.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/resample2.html))
+- [Resample2](test/resample2.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/resample2.html))
 - [RTT](test/rtt.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/rtt.html))
 - [Scale](test/scale.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/scale.html))
 - [Scatter](test/scatter.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/scatter.html))
@@ -94,11 +94,11 @@ Welcome to Mathbox! Enjoy the demos.
 - [Transition](test/transition.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/transition.html))
 - [Transpose](test/transpose.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/transpose.html))
 - [Vector](test/vector.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/vector.html))
-- [Vertex Warping](test/vertex.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/vertex.html))
+- [Vertex](test/vertex.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/vertex.html))
 - [Vertex Color](test/vertexcolor.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/vertexcolor.html))
 - [Vertex Feedback](test/vertexfeedback.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/vertexfeedback.html))
 - [Visible](test/visible.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/visible.html))
-- [Volumetric Vectors](test/volume.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/volume.html))
+- [Volume](test/volume.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/volume.html))
 - [World](test/world.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/world.html))
 - [xyzw](test/xyzw.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/xyzw.html))
 - [Z order](test/zorder.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/zorder.html))

@@ -1,20 +1,26 @@
 # MathBox
 
+[![NPM Package][npm]][npm-url]
+[![Build Status][build-status]][build-status-url]
+[![License][license]][license-url]
+
+### Presentation-quality WebGL math graphing
+
 ![MathBox](http://acko.net/files/mathbox2/cover1.jpg)
 
 MathBox is a library for rendering presentation-quality math diagrams in a
-browser using WebGL. Built on top of [Three.js][THREE] and
-[ShaderGraph][SHADERGRAPH] it provides a clean API to visualize mathematical
+browser using WebGL. Built on top of [Three.js][three-url] and
+[ShaderGraph][shadergraph-url] it provides a clean API to visualize mathematical
 relationships and animate them declaratively.
 
 For background, see the [article series on
 Acko.net](http://acko.net/blog/mathbox2/).
 
-Presentations:
+**Presentations**:
 
-- [The Pixel Factory](http://acko.net/files/gltalks/pixelfactory/online.html#0)
+- [The Pixel Factory](http://acko.net/files/gltalks/pixelfactory/online.html#0**
 
-Demos:
+**Demos**:
 
 - [Audio Visualizer](https://mathbox.org/demo/audio-visualizer.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/audio-visualizer.html))
 - [Cylindrical Stream](https://mathbox.org/demo/cylindrical-stream.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/cylindrical-stream.html))
@@ -29,14 +35,14 @@ And many more at https://mathbox.org.
 
 ## Installation
 
-You can install MathBox via [npm][MATHBOXNPM] for use with a bundler like
+You can install MathBox via [npm][npm-url] for use with a bundler like
 [Webpack](https://webpack.js.org/), or include a global `MathBox` object onto
 your page by including the library via CDN.
 
 ### NPM Package
 
 - Run the following in your project's directory to install MathBox and
-  [Three.js][THREEJS] via [npm][MATHBOXNPM]:
+  [Three.js][three-url] via [npm][npm-url]:
 
 ```bash
 npm install --save mathbox three
@@ -86,7 +92,7 @@ styles:
 
 ## Basic Usage
 
-Construct a MathBox instance by passing initialization options to the provided
+Construct a MathBox instance by passing initialization options to the
 `mathBox()` constructor:
 
 ```js
@@ -190,7 +196,6 @@ that builds up an animating, interactive mathematical graph with labeled axes.
 
 For help, see the following resources:
 
--
 - [Glossary](docs/glossary.md) of terms to help get familiar with MathBox and WebGL.
 - [MathBox API](docs/api.md) for typical usage.
 - [List of Primitives](docs/primitives.md) for a full element reference.
@@ -198,31 +203,44 @@ For help, see the following resources:
 - [Context API](docs/context.md) for advanced usage.
 
 For more involved questions, or just to say hi, please join us in the [MathBox
-Google Group](https://groups.google.com/forum/#!forum/mathbox).
+Google Group][google-group-url].
 
 ## Related Projects
 
 - [threestrap](https://github.com/unconed/threestrap) - Three.js bootstrapper
-- [shadergraph](https://github.com/unconed/shadergraph) - Functional GLSL linker
-- [mathbox-react](https://github.com/christopherChudzicki/mathbox-react) - React bindings for Mathbox
-- [mathbox.cljs](https://github.com/mentat-collective/mathbox.cljs) - ClojureScript bindings for Mathbox via mathbox-react
+- [shadergraph][shadergraph-url] - Functional GLSL linker
+- [MathBox-react](https://github.com/christopherChudzicki/mathbox-react) - React bindings for MathBox
+- [MathBox.cljs](https://github.com/mentat-collective/mathbox.cljs) - ClojureScript bindings for MathBox via MathBox-react
 
 ## Who's using MathBox?
 
-- https://www.math3d.org/
-- https://kineticgraphs.org/
-- https://github.com/QBobWatson/ila textbook
-- visualizations at https://sam.zhang.fyi/
-- [Torus Knot Fibration](http://jessebett.com/TorusKnotFibration/)([code](https://github.com/jessebett/TorusKnotFibration))
-- https://rockey-math.github.io/mathbox/graph3d-curve
-- demos listed here https://groups.google.com/g/mathbox/c/Uvyb5fHaLq4
+- [Math3D online graphing calculator](https://www.math3d.org/)
+- [KineticGraphs JS Engine](https://kineticgraphs.org/) ([code](https://github.com/cmakler/kgjs))
+- [Textbook: "Interactive Linear Algebra""](https://textbooks.math.gatech.edu/ila/) ([code](https://github.com/QBobWatson/ila))
+- Many visualizations at [Sam Zhang's homepage](https://sam.zhang.fyi/#projects)
+- Jesse Bettencourt's [Torus Knot Fibration](http://jessebett.com/TorusKnotFibration/) Master's project ([code](https://github.com/jessebett/TorusKnotFibration))
+- [Interactive knot visualizations](https://rockey-math.github.io/mathbox/graph3d-curve)
+
+And the many demos listed on [this
+thread](https://groups.google.com/g/mathbox/c/Uvyb5fHaLq4) of the [MathBox
+Google group][google-group-url].
 
 ## License
 
-MathBox and ShaderGraph (c) Steven Wittens 2013-2022. [MIT License](LICENSE.md).
+[MIT License](LICENSE.md).
+
+MathBox and ShaderGraph (c) Steven Wittens 2013-2022.
 
 Libraries and 3rd party shaders (c) their respective authors.
 
-[THREEJS]: https://threejs.org/
-[SHADERGRAPH]: https://github.com/unconed/shadergraph
-[MATHBOXNPM]: https://npmjs.com/package/mathbox
+[npm]: https://img.shields.io/npm/v/mathbox
+[npm-url]: https://npmjs.com/package/mathbox
+[build-size]: https://badgen.net/bundlephobia/minzip/mathbox
+[build-size-url]: https://bundlephobia.com/result?p=mathbox
+[build-status]: https://github.com/unconed/mathbox/actions/workflows/tests.yaml/badge.svg?branch=master
+[build-status-url]: https://github.com/unconed/mathbox/actions/workflows/tests.yaml
+[license]: https://img.shields.io/badge/license-MIT-brightgreen.svg
+[license-url]: LICENSE.md
+[google-group-url]: https://groups.google.com/forum/#!forum/mathbox
+[three-url]: https://threejs.org/
+[shadergraph-url]: https://github.com/unconed/shadergraph
