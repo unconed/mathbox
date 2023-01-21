@@ -45,7 +45,7 @@ your page by including the library via CDN.
   [Three.js][three-url] via [npm][npm-url]:
 
 ```bash
-npm install --save mathbox three
+npm install mathbox three
 ```
 
 Import `THREE` and `MathBox` (library and stylesheet), along with a controls
@@ -54,9 +54,9 @@ instance that you'll pass to the `MathBox.mathBox` constructor:
 ```js
 import "mathbox/mathbox.css"
 
-import { * as THREE } from "three"
+import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
-import { * as MathBox } from "mathbox"
+import * as MathBox from "mathbox"
 ```
 
 ### Install via CDN
@@ -229,7 +229,7 @@ Google group][google-group-url].
 
 [MIT License](LICENSE.md).
 
-MathBox and ShaderGraph (c) Steven Wittens 2013-2022.
+MathBox and ShaderGraph (c) Steven Wittens 2013-2023.
 
 Libraries and 3rd party shaders (c) their respective authors.
 
