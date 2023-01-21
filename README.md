@@ -18,7 +18,7 @@ Acko.net](http://acko.net/blog/mathbox2/).
 
 **Presentations**:
 
-- [The Pixel Factory](http://acko.net/files/gltalks/pixelfactory/online.html#0**
+- [The Pixel Factory](http://acko.net/files/gltalks/pixelfactory/online.html#0)
 
 **Demos**:
 
