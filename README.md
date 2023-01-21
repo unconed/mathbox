@@ -105,8 +105,9 @@ const options = {
 const root = MathBox.mathBox(options);
 ```
 
+> **Note**
 > See [threestrap](https://github.com/unconed/threestrap) for all available
-`options`.
+> `options`.
 
 To spawn inside a specific element, pass an
 [`HTMLElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement)
@@ -128,6 +129,7 @@ On initialization, `mathBox` returns a MathBox API object, wrapping the MathBox
 `<root/>`. Insert new MathBox nodes into the component tree by calling the
 method associated with the primitive you'd like to add.
 
+> **Note**
 > See [the Primitives doc](docs/primitives.md) for a description of all
 > primitives and their properties.
 
