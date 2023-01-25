@@ -27,9 +27,9 @@ Acko.net](http://acko.net/blog/mathbox2/).
 - [Data/Shape Mapping](https://mathbox.org/demo/shapes.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/shapes.html))
 - [LaTeX/HTML/GL Labels](https://mathbox.org/demo/labels.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/demo/labels.html))
 - [Quaternion Hypersphere](https://mathbox.org/math/quat.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/math/quat.html))
-- [Render-to-Texture History](test/resample2.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/resample2.html))
-- [Vertex Warping](test/vertex.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/vertex.html))
-- [Volumetric Vectors](test/volume.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/volume.html))
+- [Render-to-Texture History](https://mathbox.org/test/resample2.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/resample2.html))
+- [Vertex Warping](https://mathbox.org/test/vertex.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/vertex.html))
+- [Volumetric Vectors](https://mathbox.org/test/volume.html) ([code](https://github.com/unconed/mathbox/blob/master/examples/test/volume.html))
 
 And many more at https://mathbox.org.
 
