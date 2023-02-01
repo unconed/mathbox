@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathBox - Empty</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/TrackballControls.js"
+    ></script>
+
+    <!--
+      - a minified version mathbox.min.js is also available;
+      - recommend using a specific version (not @latest) in public sites
+    -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/mathbox@latest/build/bundle/mathbox.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/mathbox@latest/build/mathbox.css"
+    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+  </head>
+  <body>
+    <script>
+      var mathbox = MathBox.mathBox({
+        plugins: ["core", "controls", "cursor", "mathbox"],
+        controls: {
+          klass: THREE.OrbitControls,
+        },
+      });
+      if (mathbox.fallback) throw "WebGL not supported";
+
+      var three = mathbox.three;
+      three.renderer.setClearColor(new THREE.Color(0xffffff), 1.0);
+      var camera = mathbox.camera({
+        proxy: true,
+        position: [0, 0, 3],
+      });
+      var view = mathbox.cartesian({
+        range: [
+          [-2, 2],
+          [-1, 1],
+        ],
+        scale: [2, 1],
+      });
+      view
+        .axis({
+          axis: 1,
+          width: 3,
+        })
+        .axis({
+          axis: 2,
+          width: 3,
+        })
+        .grid({
+          width: 2,
+          divideX: 20,
+          divideY: 10,
+        });
+
+      // Set a static property and a dynamic property.
+      mathbox.root(
+        { id: "mathbox-root" },
+        {
+          focus: (time, delta) => 5 * Math.sin(time * 0.5),
+        }
+      );
+
+      // Add some data
+      var data = view.interval({
+        expr: function (emit, x, i, t) {
+          emit(x, Math.sin(x + t));
+        },
+        width: 64,
+        channels: 2,
+      });
+
+      // Draw a curve
+      var curve = view.line({
+        width: 5,
+        color: "#3090FF",
+      });
+    </script>
+  </body>
+</html>

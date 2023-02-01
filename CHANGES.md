@@ -1,4 +1,11 @@
-### MathBox Changelog
+## MathBox Changelog
+
+### [unreleased]
+
+- Add a `root` function to the API with the same 2-argument interface as all
+  other primitives. The map provided to the first argument is passed to
+  `mathbox.set`, and the second argument is passed to `mathbox.bind`. `root`
+  returns the root node.
 
 ### 2.3.1
 
@@ -13,6 +20,7 @@
 - Documented and added typings for `unbind()`. [#45](https://github.com/unconed/mathbox/pull/45)
 
 ### 2.2.1
+
 - Add Typescript support for live properties and `bind`. [#43](https://github.com/unconed/mathbox/pull/43)
 
 ### 2.2.0

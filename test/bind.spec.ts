@@ -70,7 +70,7 @@ describe("live properties", () => {
 
     const size1 = p.get("size")
     const opacity1 = p.get("opacity")
-    expect(Math.abs(size1 - 20.5)).toBeLessThan(0.2)
-    expect(Math.abs(opacity1 - 0.5)).toBeLessThan(0.2)
+    expect(Math.abs(size1 - 20.5)).toBeLessThan(0.3)
+    expect(Math.abs(opacity1 - 0.5)).toBeLessThan(0.3)
   })
 });

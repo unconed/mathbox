@@ -43,6 +43,11 @@ export class API {
         this[type] = (options, binds) => this.add(type, options, binds);
       }
     }
+    this["root"] = (options, binds) => {
+      root.set(options);
+      root.bind(binds);
+      return this._reset();
+    };
   }
 
   select(selector) {
@@ -166,7 +171,7 @@ export class API {
   }
   _reset() {
     let left;
-    return (left = this._up != null ? this._up.reset() : undefined) != null
+    return (left = this._up != null ? this._up._reset() : undefined) != null
       ? left
       : this;
   }

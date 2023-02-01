@@ -82,9 +82,9 @@ view
     width: 3,
   })
   .grid({
-    width: 2,  
+    width: 2,
     divideX: 20,
-    divideY: 10,        
+    divideY: 10,
   });
 ```
 
@@ -110,7 +110,7 @@ mathbox.select('axis').set('color', 'black');
 As the on-screen size of elements depends on the position of the camera, we can calibrate our units by setting the `focus` on the `<root>` to match the camera distance:
 
 ```javascript
-mathbox.set('focus', 3);
+mathbox.root({focus: 3});
 ```
 
 Which gives us:
