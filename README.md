@@ -222,6 +222,7 @@ Google Group][google-group-url].
 - Many visualizations at [Sam Zhang's homepage](https://sam.zhang.fyi/#projects)
 - Jesse Bettencourt's [Torus Knot Fibration](http://jessebett.com/TorusKnotFibration/) Master's project ([code](https://github.com/jessebett/TorusKnotFibration))
 - [Interactive knot visualizations](https://rockey-math.github.io/mathbox/graph3d-curve)
+- [2d and 3d integral visualizations](https://www.integral3d.com)
 
 And the many demos listed on [this
 thread](https://groups.google.com/g/mathbox/c/Uvyb5fHaLq4) of the [MathBox
