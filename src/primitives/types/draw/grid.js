@@ -48,13 +48,12 @@ export class Grid extends Primitive {
 
   make() {
     // Build transition mask lookup
-    let axis;
     let mask = this._helpers.object.mask();
 
     // Build fragment material lookup
     const material = this._helpers.shade.pipeline() || false;
 
-    axis = (first, second, transpose) => {
+    const axis = (first, second, transpose) => {
       // Prepare data buffer of tick positions
       let position;
       const detail = this._get(first + "axis.detail");
@@ -133,7 +132,7 @@ export class Grid extends Primitive {
     // Register lines
     const lines = (() => {
       const result = [];
-      for (axis of this.axes) {
+      for (const axis of this.axes) {
         result.push(axis.line);
       }
       return result;
@@ -171,7 +170,7 @@ export class Grid extends Primitive {
       changed["grid.crossed"] ||
       (changed["grid.axes"] && this.props.crossed)
     ) {
-      return this.rebuild();
+      this.rebuild();
     }
 
     if (
@@ -183,12 +182,14 @@ export class Grid extends Primitive {
       touched["origin"] ||
       init
     ) {
-      return this.updateRanges();
+      this.updateRanges();
     }
   }
 
   updateRanges() {
-    const axis = (x, y, range1, range2, axis) => {
+    const { axes, origin } = this.props;
+
+    const axisFn = (x, y, range1, range2, axis) => {
       const { second, resolution, samples, line, buffer, values } = axis;
 
       // Set line steps along first axis
@@ -214,7 +215,6 @@ export class Grid extends Primitive {
     };
 
     // Fetch grid range in both dimensions
-    const { axes, origin } = this.props;
     const range1 = this._helpers.span.get("x.", axes[0]);
     const range2 = this._helpers.span.get("y.", axes[1]);
 
@@ -222,14 +222,11 @@ export class Grid extends Primitive {
     const { lineX, lineY } = this.props;
 
     if (lineX) {
-      axis(axes[0], axes[1], range1, range2, this.axes[0]);
+      axisFn(axes[0], axes[1], range1, range2, this.axes[0]);
     }
     if (lineY) {
-      axis(axes[1], axes[0], range2, range1, this.axes[+lineX]);
+      axisFn(axes[1], axes[0], range2, range1, this.axes[+lineX]);
     }
-    window.cake1 = this.axes[0].buffer;
-    window.cake2 = this.axes[1].buffer;
-    window.cake3 = this.axes[0];
   }
 }
 Grid.initClass();

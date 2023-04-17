@@ -12,11 +12,13 @@ import { Vector4 } from "three";
 export const setOrigin = function (vec, dimensions, origin) {
   if (+dimensions === dimensions) {
     dimensions = [dimensions];
+  } else {
+    dimensions = Array.from(dimensions);
   }
-  const x = Array.from(dimensions).includes(1) ? 0 : origin.x;
-  const y = Array.from(dimensions).includes(2) ? 0 : origin.y;
-  const z = Array.from(dimensions).includes(3) ? 0 : origin.z;
-  const w = Array.from(dimensions).includes(4) ? 0 : origin.w;
+  const x = dimensions.includes(1) ? 0 : origin.x;
+  const y = dimensions.includes(2) ? 0 : origin.y;
+  const z = dimensions.includes(3) ? 0 : origin.z;
+  const w = dimensions.includes(4) ? 0 : origin.w;
   return vec.set(x, y, z, w);
 };
 
