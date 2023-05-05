@@ -67,7 +67,7 @@ export class DataTexture {
       null,
       CONST.LuminanceFormat,
       CONST.LuminanceAlphaFormat,
-      CONST.RGBFormat,
+      undefined // CONST.RGBFormat was removed in r137 of ThreeJS
       CONST.RGBAFormat,
     ][this.channels];
 

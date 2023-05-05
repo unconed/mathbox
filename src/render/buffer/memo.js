@@ -22,6 +22,7 @@ export class Memo extends RenderToTexture {
     const height = options.height || 1;
     const depth = options.depth || 1;
 
+    // RGBFormat was removed in r137 of ThreeJS
     //options.format = [null, THREE.LuminanceFormat, THREE.LuminanceAlphaFormat, THREE.RGBFormat, THREE.RGBAFormat][@channels]
     options.format = RGBAFormat;
     options.width = _width = items * width;
